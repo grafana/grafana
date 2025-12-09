@@ -4,6 +4,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -29,7 +30,9 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
   const provisioningEnabled = config.featureToggles.provisioning;
-  const isUnmanaged = provisioningEnabled && !dashboard.isManagedRepository();
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const hasRepositories = (frontendSettings?.items?.length ?? 0) > 0;
+  const canExportToRepository = provisioningEnabled && !dashboard.isManagedRepository() && hasRepositories;
 
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
@@ -62,8 +65,8 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       onClick: () => onMenuItemClick(shareDashboardType.image),
     });
 
-    // Add "Export to Repository" option for unmanaged dashboards
-    if (isUnmanaged) {
+    // Add "Export to Repository" option for unmanaged dashboards when repositories exist
+    if (canExportToRepository) {
       menuItems.push({
         shareId: 'export-to-repository',
         testId: 'export-to-repository',
@@ -75,7 +78,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
     }
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [isUnmanaged]);
+  }, [canExportToRepository]);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

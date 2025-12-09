@@ -4,6 +4,7 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
@@ -38,6 +39,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [exportSelectedDashboards, setExportSelectedDashboards] = useState<Record<string, boolean>>({});
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const hasRepositories = (frontendSettings?.items?.length ?? 0) > 0;
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
@@ -160,7 +163,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
   const exportLabel = t('browse-dashboards.folder-actions-button.export', 'Export to Repository');
 
-  const canExportToRepository = config.featureToggles.provisioning && !isProvisionedFolder;
+  const canExportToRepository = config.featureToggles.provisioning && !isProvisionedFolder && hasRepositories;
 
   const menu = (
     <Menu>
