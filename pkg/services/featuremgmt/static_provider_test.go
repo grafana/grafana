@@ -93,3 +93,86 @@ ABCD = true
 	enabledFeatureManager := mgr.GetEnabled(ctx)
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }
+
+func Test_StaticProvider_DifferentTypeFlagsNoSilentIgnore(t *testing.T) {
+	staticFlags := map[string]bool{"oldBooleanFlag": true}
+
+	flag := FeatureFlag{
+		Name:       "oldBooleanFlag",
+		Expression: "1.0",
+		Type:       Integer,
+	}
+	_, err := newStaticProvider(staticFlags, []FeatureFlag{flag})
+	assert.EqualError(t, err, "flag oldBooleanFlag already declared as boolean")
+}
+
+func Test_StaticProvider_DifferentType(t *testing.T) {
+	tests := []struct {
+		flags         FeatureFlag
+		defaultValue  any
+		expectedValue any
+		test          int
+	}{
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "true",
+				Type:       Boolean,
+			},
+			defaultValue:  false,
+			expectedValue: true,
+			test:          0,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1.0",
+				Type:       Float,
+			},
+			defaultValue:  0.0,
+			expectedValue: 1.0,
+			test:          1,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "blue",
+				Type:       String,
+			},
+			defaultValue:  "red",
+			expectedValue: "blue",
+			test:          2,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1",
+				Type:       Integer,
+			},
+			defaultValue:  int64(0),
+			expectedValue: int64(1),
+			test:          3,
+		},
+	}
+
+	for _, tt := range tests {
+		provider, err := newStaticProvider(nil, []FeatureFlag{tt.flags})
+		assert.NoError(t, err)
+
+		var result any
+		switch tt.test {
+		case 0:
+			result = provider.BooleanEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(bool), openfeature.FlattenedContext{}).Value
+		case 1:
+			result = provider.FloatEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(float64), openfeature.FlattenedContext{}).Value
+		case 2:
+			result = provider.StringEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(string), openfeature.FlattenedContext{}).Value
+		case 3:
+			result = provider.IntEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(int64), openfeature.FlattenedContext{}).Value
+		case 4:
+			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(map[string]any), openfeature.FlattenedContext{}).Value
+		}
+
+		assert.Equal(t, tt.expectedValue, result)
+	}
+}

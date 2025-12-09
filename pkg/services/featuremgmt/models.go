@@ -126,14 +126,62 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type FeatureFlagType string
+type FeatureFlagType int
 
 const (
-	Boolean = "boolean"
-	Number  = "number"
-	Object  = "object"
-	String  = "string"
+	Boolean FeatureFlagType = iota
+	Integer
+	Float
+	Object
+	String
 )
+
+func (t FeatureFlagType) String() string {
+	switch t {
+	case Boolean:
+		return "boolean"
+	case Integer:
+		return "number"
+	case Float:
+		return "float"
+	case Object:
+		return "object"
+	case String:
+		return "string"
+	}
+
+	return "unknown"
+}
+
+// MarshalJSON marshals the enum as a quoted json string
+func (t FeatureFlagType) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString(`"`)
+	buffer.WriteString(t.String())
+	buffer.WriteString(`"`)
+	return buffer.Bytes(), nil
+}
+
+func (t *FeatureFlagType) UnmarshalJSON(b []byte) error {
+	var j string
+	err := json.Unmarshal(b, &j)
+	if err != nil {
+		return err
+	}
+
+	switch j {
+	case "boolean":
+		*t = Boolean
+	case "number":
+		*t = Integer
+	case "float":
+		*t = Float
+	case "object":
+		*t = Object
+	case "string":
+		*t = String
+	}
+	return nil
+}
 
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {

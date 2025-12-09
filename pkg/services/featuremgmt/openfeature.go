@@ -117,7 +117,7 @@ func createProvider(
 		}
 	}
 
-	return newStaticProvider(staticFlags)
+	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
 func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
