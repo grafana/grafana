@@ -245,7 +245,9 @@ If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agen
 
 - **Private data source connect** - Click in the box to set the default PDC connection from the drop-down menu or create a new connection.
 
-Once you have configured your Elasticsearch data source options, click **Save & test** to test the connection. A successful connection displays the message: **"Elasticsearch data source is healthy."**
+Once you have configured your Elasticsearch data source options, click **Save & test** to test the connection. A successful connection displays the following message: 
+
+`Elasticsearch data source is healthy.`
 
 ## Provision the data source
 
