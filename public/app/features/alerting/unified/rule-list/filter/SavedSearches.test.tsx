@@ -68,7 +68,7 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const listItems = screen.getAllByRole('button', { name: /apply this search/i });
+      const listItems = await screen.findAllByRole('button', { name: /apply this search/i });
       // Default Search should be first (isDefault: true), then alphabetically: Critical Alerts, My Firing Rules
       expect(listItems).toHaveLength(3);
     });
@@ -107,6 +107,7 @@ describe('SavedSearches', () => {
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
       const saveButton = await screen.findByRole('button', { name: /save current search/i });
+      // Check for native disabled attribute (Button component may set aria-disabled inconsistently)
       expect(saveButton).toBeDisabled();
     });
 
@@ -197,9 +198,10 @@ describe('SavedSearches', () => {
       const { user, props } = setup();
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      // Click the apply button (search icon) for "My Firing Rules"
-      const applyButton = await screen.findByRole('button', { name: /apply search "my firing rules"/i });
-      await user.click(applyButton);
+      // Click the apply button (search icon) - uses tooltip as accessible name
+      const applyButtons = await screen.findAllByRole('button', { name: /apply this search/i });
+      // Find the button for "My Firing Rules" (third in sorted list: Default, Critical, My Firing)
+      await user.click(applyButtons[2]);
 
       expect(props.onApply).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -214,9 +216,9 @@ describe('SavedSearches', () => {
       const { user } = setup();
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      // Click the apply button (search icon) for "My Firing Rules"
-      const applyButton = await screen.findByRole('button', { name: /apply search "my firing rules"/i });
-      await user.click(applyButton);
+      // Click the apply button (search icon) - uses tooltip as accessible name
+      const applyButtons = await screen.findAllByRole('button', { name: /apply this search/i });
+      await user.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
