@@ -323,23 +323,40 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: t('dashboard-scene.dashboard-scene.title.unsaved-changes', 'Unsaved changes'),
-        text: t('dashboard-scene.dashboard-scene.title.save-changes-question', 'Do you want to save your changes?'),
-        icon: 'trash-alt',
-        altActionText: 'Save dashboard',
-        yesButtonVariant: 'destructive',
-        yesText: 'Discard',
-        noText: 'Cancel',
-        onAltAction: () => {
-          this.openSaveDrawer({});
-        },
-        onConfirm: () => {
-          this.exitEditModeConfirmed();
-        },
-      })
-    );
+    if (config.featureToggles.dashboardNewLayouts) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.dashboard-scene.title.unsaved-changes', 'Unsaved changes'),
+          text: t('dashboard-scene.dashboard-scene.title.save-changes-question', 'Do you want to save your changes?'),
+          icon: 'trash-alt',
+          altActionText: 'Save dashboard',
+          yesButtonVariant: 'destructive',
+          yesText: 'Discard',
+          noText: 'Cancel',
+          onAltAction: () => {
+            this.openSaveDrawer({});
+          },
+          onConfirm: () => {
+            this.exitEditModeConfirmed();
+          },
+        })
+      );
+    } else {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t(
+            'dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard',
+            'Discard changes to dashboard?'
+          ),
+          text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+          icon: 'trash-alt',
+          yesText: 'Discard',
+          onConfirm: () => {
+            this.exitEditModeConfirmed();
+          },
+        })
+      );
+    }
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
