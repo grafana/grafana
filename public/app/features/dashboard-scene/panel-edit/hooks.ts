@@ -43,10 +43,6 @@ export function useHorizontalResize({ initialWidth, minWidth = 0, maxWidth = Inf
       if (handle?.nodeType === Node.ELEMENT_NODE) {
         handle.addEventListener('mousedown', onMouseDown);
       }
-
-      return () => {
-        handle?.removeEventListener('mousedown', onMouseDown);
-      };
     },
     [maxWidth, minWidth, width]
   );
@@ -83,10 +79,6 @@ export function useVerticalResize({ initialHeight, minHeight = 0, maxHeight = In
       if (handle?.nodeType === Node.ELEMENT_NODE) {
         handle.addEventListener('mousedown', onMouseDown);
       }
-
-      return () => {
-        handle?.removeEventListener('mousedown', onMouseDown);
-      };
     },
     [maxHeight, minHeight, height]
   );

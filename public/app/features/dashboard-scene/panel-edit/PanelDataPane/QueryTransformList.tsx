@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { HTMLAttributes, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, HTMLAttributes, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -500,9 +500,8 @@ export const QueryTransformList = memo(
                                       const showDebugLineAfter = isDebugMode && globalIndex === debugPosition - 1;
 
                                       return (
-                                        <>
+                                        <Fragment key={item.id}>
                                           <div
-                                            key={item.id}
                                             className={cx(styles.cardContainer, {
                                               [styles.cardDebugDisabled]: isDebugDisabled,
                                             })}
@@ -584,7 +583,7 @@ export const QueryTransformList = memo(
                                               </div>
                                             </div>
                                           )}
-                                        </>
+                                        </Fragment>
                                       );
                                     })}
                                     {provided.placeholder}
@@ -655,9 +654,8 @@ export const QueryTransformList = memo(
                                       const showDebugLineAfter = isDebugMode && globalIndex === debugPosition - 1;
 
                                       return (
-                                        <>
+                                        <Fragment key={item.id}>
                                           <div
-                                            key={item.id}
                                             className={cx(styles.cardContainer, {
                                               [styles.cardDebugDisabled]: isDebugDisabled,
                                             })}
@@ -740,7 +738,7 @@ export const QueryTransformList = memo(
                                               </div>
                                             </div>
                                           )}
-                                        </>
+                                        </Fragment>
                                       );
                                     })}
                                     {provided.placeholder}

@@ -148,6 +148,9 @@ function VizAndDataPane({
     };
   }, [controls, dataPane, sidebarState.size, vizHeight, containerHeight]);
 
+  const bottomPaneHeight = containerHeight - vizHeight - 80;
+  const expandedSidebarHeight = containerHeight - 16;
+
   if (!containerHeight) {
     return null;
   }
@@ -177,11 +180,20 @@ function VizAndDataPane({
 
       {dataPane && (
         <>
-          <div className={cx(styles.dataPane, isScrollingLayout && styles.fullSizeEditor)}>
+          <div
+            className={cx(styles.dataPane, isScrollingLayout && styles.fullSizeEditor)}
+            style={{ height: bottomPaneHeight }}
+          >
             <dataPane.Component model={dataPane} />
           </div>
 
-          <div className={styles.sidebar} style={{ width: sidebarWidth }}>
+          <div
+            className={styles.sidebar}
+            style={{
+              height: sidebarState.size === SidebarSize.Mini ? bottomPaneHeight : expandedSidebarHeight,
+              width: sidebarWidth,
+            }}
+          >
             <PanelDataSidebar model={dataPane} sidebarState={sidebarState} setSidebarState={setSidebarState} />
             <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
               <div
