@@ -1,9 +1,9 @@
 module github.com/grafana/grafana/apps/collections
 
-go 1.25.3
+go 1.25.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.48.2
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.2
@@ -20,12 +20,12 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-openapi/jsonpointer v0.22.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.2 // indirect
-	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.48.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.48.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -64,6 +64,6 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.1 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )

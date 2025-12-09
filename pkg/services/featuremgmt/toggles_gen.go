@@ -761,4 +761,12 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagOpentsdbBackendMigration
+	// Run queries through the data source backend
+	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
+
+	// FlagKubernetesAlertingHistorian
+	// Adds support for Kubernetes alerting historian APIs
+	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 )

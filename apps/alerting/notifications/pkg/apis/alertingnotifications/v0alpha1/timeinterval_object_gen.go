@@ -23,6 +23,12 @@ type TimeInterval struct {
 	Spec TimeIntervalSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTimeInterval() *TimeInterval {
+	return &TimeInterval{
+		Spec: *NewTimeIntervalSpec(),
+	}
+}
+
 func (o *TimeInterval) GetSpec() any {
 	return o.Spec
 }

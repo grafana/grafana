@@ -1,4 +1,4 @@
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, AnnotationEventFieldSource } from '@grafana/data';
 import { AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { transformV1ToV2AnnotationQuery, transformV2ToV1AnnotationQuery } from './annotations';
@@ -83,7 +83,6 @@ describe('V1<->V2 annotation convertions', () => {
         hide: false,
         iconColor: 'blue',
         name: 'testdata-annos',
-        builtIn: false,
         query: {
           kind: 'DataQuery',
           group: 'grafana-testdata-datasource',
@@ -138,7 +137,6 @@ describe('V1<->V2 annotation convertions', () => {
         hide: false,
         iconColor: 'yellow',
         name: 'prom-annos',
-        builtIn: false,
         query: {
           kind: 'DataQuery',
           group: 'prometheus',
@@ -193,7 +191,6 @@ describe('V1<->V2 annotation convertions', () => {
         hide: false,
         iconColor: 'red',
         name: 'elastic - annos',
-        builtIn: false,
         query: {
           kind: 'DataQuery',
           group: 'elasticsearch',
@@ -213,6 +210,147 @@ describe('V1<->V2 annotation convertions', () => {
           textField: 'asd',
           timeEndField: 'asdas',
           timeField: 'asd',
+        },
+      },
+    };
+
+    const resultV2: AnnotationQueryKind = transformV1ToV2AnnotationQuery(annotationDefinition, 'elasticsearch', 'uid');
+    expect(resultV2).toEqual(expectedV2);
+
+    const resultV1: AnnotationQuery = transformV2ToV1AnnotationQuery(expectedV2);
+    expect(resultV1).toEqual(annotationDefinition);
+  });
+
+  test('given annotations with mappings', () => {
+    const annotationDefinition: AnnotationQuery = {
+      datasource: {
+        type: 'prometheus',
+        uid: 'uid',
+      },
+      enable: true,
+      hide: false,
+      iconColor: 'red',
+      name: 'prom-annos',
+      target: {
+        // @ts-expect-error
+        expr: '{action="add_client"}',
+        refId: 'Anno',
+      },
+      mappings: {
+        title: {
+          source: AnnotationEventFieldSource.Field,
+          value: 'service',
+        },
+        text: {
+          source: AnnotationEventFieldSource.Text,
+          value: 'constant text',
+        },
+        tags: {
+          source: AnnotationEventFieldSource.Field,
+          value: 'labels',
+          regex: '/(.*)/',
+        },
+      },
+    };
+
+    const expectedV2: AnnotationQueryKind = {
+      kind: 'AnnotationQuery',
+      spec: {
+        enable: true,
+        hide: false,
+        iconColor: 'red',
+        name: 'prom-annos',
+        query: {
+          kind: 'DataQuery',
+          group: 'prometheus',
+          version: 'v0',
+          datasource: {
+            name: 'uid',
+          },
+          spec: {
+            expr: '{action="add_client"}',
+            refId: 'Anno',
+          },
+        },
+        mappings: {
+          title: {
+            source: 'field',
+            value: 'service',
+          },
+          text: {
+            source: 'text',
+            value: 'constant text',
+          },
+          tags: {
+            source: 'field',
+            value: 'labels',
+            regex: '/(.*)/',
+          },
+        },
+      },
+    };
+
+    const resultV2: AnnotationQueryKind = transformV1ToV2AnnotationQuery(annotationDefinition, 'prometheus', 'uid');
+    expect(resultV2).toEqual(expectedV2);
+
+    const resultV1: AnnotationQuery = transformV2ToV1AnnotationQuery(expectedV2);
+    expect(resultV1).toEqual(annotationDefinition);
+  });
+
+  test('given annotations with mappings and legacyOptions', () => {
+    const annotationDefinition: AnnotationQuery = {
+      datasource: {
+        type: 'elasticsearch',
+        uid: 'uid',
+      },
+      enable: true,
+      hide: false,
+      iconColor: 'red',
+      name: 'elastic-annos',
+      target: {
+        // @ts-expect-error
+        query: 'test query',
+        refId: 'Anno',
+      },
+      mappings: {
+        title: {
+          source: AnnotationEventFieldSource.Field,
+          value: 'service',
+        },
+      },
+      // These should go to legacyOptions
+      tagsField: 'asd',
+      textField: 'asd',
+    };
+
+    const expectedV2: AnnotationQueryKind = {
+      kind: 'AnnotationQuery',
+      spec: {
+        enable: true,
+        hide: false,
+        iconColor: 'red',
+        name: 'elastic-annos',
+        query: {
+          kind: 'DataQuery',
+          group: 'elasticsearch',
+          version: 'v0',
+          datasource: {
+            name: 'uid',
+          },
+          spec: {
+            query: 'test query',
+            refId: 'Anno',
+          },
+        },
+        mappings: {
+          title: {
+            source: 'field',
+            value: 'service',
+          },
+        },
+        legacyOptions: {
+          tagsField: 'asd',
+          textField: 'asd',
         },
       },
     };
