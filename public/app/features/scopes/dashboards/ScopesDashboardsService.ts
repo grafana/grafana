@@ -72,19 +72,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public setNavScopePath = async (navScopePath?: string[]) => {
-    console.log('setNavScopePath', navScopePath);
     const navScopePathArray = navScopePath ?? [];
 
     if (!isEqual(navScopePathArray, this.state.navScopePath)) {
       this.updateState({ navScopePath: navScopePathArray });
 
       for (const subScope of navScopePathArray) {
-        console.log('setNavScopePath', subScope);
         // Find the actual path to the folder with this subScopeName
         const folderPath = buildSubScopePath(subScope, this.state.folders);
-        console.log('folderPath', subScope, folderPath);
         if (folderPath && folderPath.length > 0) {
-          console.log('setNavScopePath', folderPath);
           await this.fetchSubScopeItems(folderPath, subScope);
           this.openSubScopeFolder([subScope]); // This will look up the path again
         }
