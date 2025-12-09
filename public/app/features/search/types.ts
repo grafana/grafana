@@ -1,5 +1,6 @@
 import { Action } from 'redux';
 
+import { OwnerReference } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { WithAccessControlMetadata } from '@grafana/data';
 
 import { ManagerKind } from '../apiserver/types';
@@ -83,6 +84,7 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
+  ownerReferences?: OwnerReference[];
 }
 
 export interface SearchAction extends Action {

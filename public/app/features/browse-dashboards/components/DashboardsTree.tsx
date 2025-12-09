@@ -8,7 +8,8 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Avatar, useStyles2 } from '@grafana/ui';
+import { TeamOwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import {
@@ -102,8 +103,27 @@ export function DashboardsTree({
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
+    const ownerReferencesColumn: DashboardsTreeColumn = {
+      id: 'ownerReferences',
+      width: 2,
+      Header: 'Owner',
+      Cell: ({ row: { original: data } }) => {
+        const ownerReferences = data.item.ownerReferences;
+        if (!ownerReferences) {
+          return null;
+        }
+
+        return (
+          <div>
+            {ownerReferences.map((ownerReference) => {
+              return <TeamOwnerReference ownerReference={ownerReference} key={ownerReference.uid} />;
+            })}
+          </div>
+        );
+      },
+    };
     const canSelect = canSelectItems(permissions);
-    const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, ownerReferencesColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, onTagClick, permissions]);

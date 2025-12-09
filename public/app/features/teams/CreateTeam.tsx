@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { Button, Field, Input, FieldSet, Stack } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { Button, Field, Input, FieldSet, Stack, Checkbox, Alert } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
@@ -16,34 +16,42 @@ import { TeamDTO } from 'app/types/teams';
 
 import { useCreateTeam } from './hooks';
 
-const pageNav: NavModelItem = {
-  icon: 'users-alt',
-  id: 'team-new',
-  text: 'New team',
-  subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
-};
+type NewTeamForm = TeamDTO & { createTeamFolder?: boolean };
 
-const CreateTeam = (): JSX.Element => {
+export const CreateTeam = (): JSX.Element => {
+  const pageNav: NavModelItem = {
+    icon: 'users-alt',
+    id: 'team-new',
+    text: t('teams.create-team.page-title', 'New team'),
+    subTitle: t(
+      'teams.create-team.page-subtitle',
+      'Create a new team. Teams let you grant permissions to a group of users.'
+    ),
+  };
+
+  const teamFoldersEnabled = config.featureToggles.teamFolders;
+  const showRolesPicker = contextSrv.licensedAccessControlEnabled();
   const currentOrgId = contextSrv.user.orgId;
 
   const notifyApp = useAppNotification();
-  const [createTeamTrigger] = useCreateTeam();
+  const [createTeamTrigger, createResponse] = useCreateTeam();
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<TeamDTO>();
+  } = useForm<NewTeamForm>();
 
-  const createTeam = async (formModel: TeamDTO) => {
+  const createTeam = async (formModel: NewTeamForm) => {
     try {
       const { data, error } = await createTeamTrigger(
         {
           email: formModel.email || '',
           name: formModel.name,
         },
-        pendingRoles
+        pendingRoles,
+        formModel.createTeamFolder
       );
 
       const errorMessage = error ? extractErrorMessage(error) : undefined;
@@ -73,11 +81,11 @@ const CreateTeam = (): JSX.Element => {
                 label={t('teams.create-team.label-name', 'Name')}
                 required
                 invalid={!!errors.name}
-                error="Team name is required"
+                error={t('teams.create-team.error-name-required', 'Team name is required')}
               >
                 <Input {...register('name', { required: true })} id="team-name" />
               </Field>
-              {contextSrv.licensedAccessControlEnabled() && (
+              {showRolesPicker && (
                 <Field noMargin label={t('teams.create-team.label-role', 'Role')}>
                   <TeamRolePicker
                     teamId={0}
@@ -106,8 +114,37 @@ const CreateTeam = (): JSX.Element => {
                   placeholder="email@test.com"
                 />
               </Field>
+              {teamFoldersEnabled && (
+                <Field
+                  noMargin
+                  label={t('teams.create-team.team-folder', 'Team folder')}
+                  description={t(
+                    'teams.create-team.description-team-folder',
+                    'This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.'
+                  )}
+                >
+                  <Checkbox
+                    {...register('createTeamFolder')}
+                    id="team-folder"
+                    label={t(
+                      'teams.create-team.team-folder-label-autocreate-a-team-folder',
+                      'Auto-create a team folder'
+                    )}
+                  />
+                </Field>
+              )}
             </Stack>
           </FieldSet>
+          {Boolean(createResponse.error) && (
+            <Alert title={t('teams.create-team.error-title', 'Error creating team')} severity="error">
+              <Trans i18nKey="teams.create-team.error-message">
+                We were unable to create your new team. Please try again later or contact support.
+              </Trans>
+              <br />
+              <br />
+              <div>{extractErrorMessage(createResponse.error)}</div>
+            </Alert>
+          )}
           <Button type="submit" variant="primary">
             <Trans i18nKey="teams.create-team.create">Create</Trans>
           </Button>
