@@ -202,7 +202,7 @@ const LogLineComponent = memo(
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
@@ -514,8 +514,6 @@ export const getStyles = (
       gap: theme.spacing(0.5),
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.fontSize,
-      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
@@ -579,6 +577,10 @@ export const getStyles = (
     fontSizeSmall: css({
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
+    fontSizeDefault: css({
+      fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
       background: tinycolor(theme.colors.background.canvas)
