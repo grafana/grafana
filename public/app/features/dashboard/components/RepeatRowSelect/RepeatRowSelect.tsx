@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneObject, sceneGraph } from '@grafana/scenes';
+import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
 import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
@@ -122,21 +122,22 @@ function findRepeatedDescendent(o: SceneObject) {
   let variableName: string | undefined;
 
   o.forEachChild((c) => {
-    if (variableName !== undefined) {
-      return;
+    if (c instanceof VizPanel) {
+      return false;
     }
 
     if (c instanceof DashboardGridItem || c instanceof AutoGridItem) {
       variableName = c.state.variableName;
-      return;
+      return false;
     }
 
     if ((c instanceof RowItem || c instanceof TabItem) && c.state.repeatByVariable) {
       variableName = c.state.repeatByVariable;
-      return;
+      return false;
     }
 
     variableName = findRepeatedDescendent(c);
+    return variableName === undefined; // continue if not found
   });
 
   return variableName;
