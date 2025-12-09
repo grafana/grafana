@@ -2326,8 +2326,8 @@
       "label-tenant-sources": "테넌트 소스"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{totalItems}}개 인스턴스 중 {{visibleItems}}개 표시 중",
-      "button-show-all_other": "모든 {{totalItems}} 경고 인스턴스 표시"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8216,6 +8216,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9216,6 +9222,8 @@
       "actions-confirmation-label": "확인 메시지",
       "actions-confirmation-message": "작업을 확인하거나 취소하기 위한 설명 프롬프트를 제공합니다.",
       "footer-add-annotation": "주석 추가",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "클릭하여 {{actionTitle}} 작업 수행",
       "footer-click-to-navigate": "클릭하여 {{linkTitle}} 열기",
       "footer-filter-for-value": "'{{value}}'으(로) 필터링",
