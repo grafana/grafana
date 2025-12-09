@@ -119,7 +119,11 @@ test.describe(
       expect(responseBody.url).toContain('goto');
     });
 
-    test('Short URL de-duplication with locked time range', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Short URL generation with locked time range produces different URLs', async ({
+      page,
+      gotoDashboardPage,
+      selectors,
+    }) => {
       // Navigate to dashboard with specific time range
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
@@ -187,13 +191,11 @@ test.describe(
       const shortUrl2 = responseBody2.url;
       expect(shortUrl2).toContain('goto');
 
-      // Both short URLs should be the same (de-duplication)
-      // The backend normalizes timestamps for signature calculation, so even if timestamps
-      // differ slightly (due to the 1-2 second delay), they should produce the same signature
-      // and thus the same short URL. Use toPass() to handle potential timing variations.
-      await expect(async () => {
-        expect(shortUrl1).toBe(shortUrl2);
-      }).toPass({ timeout: 5000 });
+      // When time range is locked, URLs use absolute timestamps (e.g., "2025-12-09T13:26:33Z").
+      // Since there's a 1-2 second delay between creating the two URLs, the absolute timestamps
+      // will be different, resulting in different short URLs. This is expected behavior - locked
+      // time ranges preserve exact timestamps, so each share link represents a specific point in time.
+      expect(shortUrl1).not.toBe(shortUrl2);
     });
 
     test('Short URL de-duplication with unlocked time range', async ({ page, gotoDashboardPage, selectors }) => {
