@@ -1,39 +1,18 @@
 package investigations
 
-// This is our Investigation definition, which contains metadata about the kind, and the kind's schema
-investigation: {
+investigationV0alpha1: {
 	kind:       "Investigation"
-	group:      "investigations.grafana.app"
-	apiResource: {
-		groupOverride: "investigations.grafana.app"
-	}
 	pluralName: "Investigations"
-	current:    "v0alpha1"
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				frontend: true
-				backend:  true
-				options: {
-					generateObjectMeta: true
-					generateClient:     true
-					k8sLike:           true
-					package:           "github.com/grafana/grafana/apps/investigations"
-				}
-			}
-			schema: {
-				// spec is the schema of our resource
-				spec: {
-					title:         string
-					createdByProfile: #Person
-					hasCustomName: bool
-					isFavorite:    bool
-					overviewNote:  string
-					overviewNoteUpdatedAt: string
-					collectables: [...#Collectable] // +listType=atomic
-					viewMode:      #ViewMode
-				}
-			}
+	schema: {
+		spec: {
+			title:         string
+			createdByProfile: #Person
+			hasCustomName: bool
+			isFavorite:    bool
+			overviewNote:  string
+			overviewNoteUpdatedAt: string
+			collectables: [...#Collectable] // +listType=atomic
+			viewMode:      #ViewMode
 		}
 	}
 }
