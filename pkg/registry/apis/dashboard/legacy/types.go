@@ -16,6 +16,13 @@ type DashboardQuery struct {
 	UID   string // to select a single dashboard
 	Limit int
 
+	// MaxRows is used internally by the iterator to fetch data in batches
+	// limits the number of rows fetched per SQL query batch.
+	// This
+	// independent of the API request's Limit parameter.
+	// When set, the SQL query will include LIMIT MaxRows.
+	MaxRows int
+
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
 	LastID int64

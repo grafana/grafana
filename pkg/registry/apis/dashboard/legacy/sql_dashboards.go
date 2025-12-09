@@ -712,6 +712,87 @@ func (r *rowsWrapper) Value() []byte {
 	return b
 }
 
+// batchingIterator wraps rowsWrapper to fetch data in batches
+type batchingIterator struct {
+	*rowsWrapper
+	a         *dashboardSqlAccess
+	ctx       context.Context
+	helper    *legacysql.LegacyDatabaseHelper
+	query     *DashboardQuery
+	batchSize int
+	done      bool
+}
+
+var _ resource.ListIterator = (*batchingIterator)(nil)
+
+func newBatchingIterator(ctx context.Context, a *dashboardSqlAccess, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*batchingIterator, error) {
+	iter := &batchingIterator{
+		a:         a,
+		ctx:       ctx,
+		helper:    helper,
+		query:     query,
+		batchSize: query.MaxRows,
+	}
+
+	// Loads the first batch
+	if err := iter.nextBatch(); err != nil {
+		return nil, err
+	}
+	return iter, nil
+}
+
+func (b *batchingIterator) nextBatch() error {
+	if b.rowsWrapper != nil {
+		_ = b.Close()
+	}
+
+	wrapper, err := b.a.getRows(b.ctx, b.helper, b.query)
+	if err != nil {
+		return err
+	}
+	b.rowsWrapper = wrapper
+	return nil
+}
+
+func (b *batchingIterator) Next() bool {
+	if b.done {
+		return false
+	}
+
+	// Try to get next row from current batch
+	if b.rowsWrapper.Next() {
+		return true
+	}
+
+	// Check for errors in current wrapper
+	if b.Error() != nil {
+		return false
+	}
+
+	// Current batch exhausted - check if we got a full batch (might be more data)
+	if b.count < b.batchSize {
+		// Got fewer rows than batch size, so we're done
+		b.done = true
+		return false
+	}
+
+	// Fetch next batch with LastID from last row
+	b.query.LastID = b.row.token.id
+	if err := b.nextBatch(); err != nil {
+		b.done = true
+		return false
+	}
+
+	// Try to get first row from new batch
+	if b.rowsWrapper.Next() {
+		return true
+	}
+
+	// New batch is empty, we're done
+	b.done = true
+	return false
+}
+
 func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 	generatedDashboard := map[string]interface{}{
 		"editable": true,
