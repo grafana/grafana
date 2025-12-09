@@ -2,8 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import * as runtime from '@grafana/runtime';
 
-import { contextSrv } from '../../../../../core/services/context_srv';
-
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
 // Mock UserStorage
