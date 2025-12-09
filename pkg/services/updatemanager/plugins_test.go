@@ -362,7 +362,7 @@ func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
 			svc.checkAndUpdate(ctx)
 
 			if tt.expectUpdate {
-				require.Greater(t, updateCallCount, 0, "updateAll should be called when flag is enabled")
+				require.Equal(t, updateCallCount, 1, "updateAll should be called when flag is enabled")
 			} else {
 				require.Equal(t, 0, updateCallCount, "updateAll should not be called when flag is disabled")
 			}
