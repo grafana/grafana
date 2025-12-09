@@ -6,7 +6,7 @@ import { useAsync, useAsyncFn, useDebounce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput } from '@grafana/ui';
+import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
@@ -275,14 +275,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 );
               })}
             </Grid>
-            <Stack justifyContent="end" gap={2}>
+            <Box display="flex" justifyContent="end" gap={2} paddingRight={1.5}>
               <Button
                 variant="secondary"
                 onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
               >
                 <Trans i18nKey="dashboard-library.browse-grafana-com">Browse Grafana.com</Trans>
               </Button>
-            </Stack>
+            </Box>
           </Stack>
         )}
       </div>
@@ -294,7 +294,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     resultsContainer: css({
       width: '100%',
-      position: 'relative',
       flex: 1,
       overflow: 'auto',
       paddingBottom: theme.spacing(2),
