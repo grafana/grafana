@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Origini tenant"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Mostra {{visibleItems}} di {{totalItems}} istanze",
-      "button-show-all_one": "Mostra tutte le {{totalItems}} istanze di avviso",
-      "button-show-all_other": "Mostra tutte le {{totalItems}} istanze di avviso"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8252,6 +8251,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9252,6 +9257,8 @@
       "actions-confirmation-label": "Messaggio di conferma",
       "actions-confirmation-message": "Fornisci un prompt descrittivo per confermare o annullare l'azione.",
       "footer-add-annotation": "Aggiungi annotazione",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Fai clic per {{actionTitle}}",
       "footer-click-to-navigate": "Fai clic per aprire {{linkTitle}}",
       "footer-filter-for-value": "Filtra per \"{{value}}\"",
