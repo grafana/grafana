@@ -257,11 +257,54 @@ describe('grafana-managed rules', () => {
       expect(backendFilter.health).toEqual([]);
       expect(backendFilter.contactPoint).toBeUndefined();
     });
+
+    it('should not set hasInvalidDataSourceNames flag when no data source names are provided', () => {
+      const { hasInvalidDataSourceNames } = getGrafanaFilter(getFilter({}));
+
+      expect(hasInvalidDataSourceNames).toBe(false);
+    });
   });
 
   describe('backend filtering with alertingUIUseBackendFilters feature toggle', () => {
     describe('when alertingUIUseBackendFilters is enabled', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters'] });
+
+      it('should include datasources in backend filter when valid data source names are provided', () => {
+        const { backendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(
+          getFilter({ dataSourceNames: ['prometheus', 'loki'] })
+        );
+
+        expect(backendFilter.datasources).toEqual(['datasource-uid-1', 'datasource-uid-3']);
+        expect(hasInvalidDataSourceNames).toBe(false);
+      });
+
+      it('should detect invalid data source names and set hasInvalidDataSourceNames flag', () => {
+        const { backendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(
+          getFilter({ dataSourceNames: ['non-existent-datasource'] })
+        );
+
+        expect(backendFilter.datasources).toEqual([]);
+        expect(hasInvalidDataSourceNames).toBe(true);
+      });
+
+      it('should include only valid datasource UIDs when some names are invalid', () => {
+        const { backendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(
+          getFilter({ dataSourceNames: ['prometheus', 'non-existent-datasource'] })
+        );
+
+        expect(backendFilter.datasources).toEqual(['datasource-uid-1']);
+        expect(hasInvalidDataSourceNames).toBe(false); // Not all are invalid
+      });
+
+      it('should skip dataSourceNames filtering on frontend when backend filtering is enabled', () => {
+        const rule = mockGrafanaPromAlertingRule({
+          queriedDatasourceUIDs: ['datasource-uid-1'],
+        });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        // Should return true because dataSourceNames filter is null (handled by backend).
+        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+      });
 
       it('should include title in backend filter when freeFormWords are provided', () => {
         const { backendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu', 'usage'] }));
@@ -556,24 +599,31 @@ describe('grafana-managed rules', () => {
         const { frontendFilter: groupNoMatch } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
         expect(groupNoMatch.groupMatches(group)).toBe(false);
 
-        // Always-frontend filters (labels, dataSourceNames, namespace) should work
+        // Always-frontend filters (labels, namespace) should work.
         const { frontendFilter: labelsMatch } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
         expect(labelsMatch.ruleMatches(alertingRule)).toBe(true);
 
         const { frontendFilter: labelsNoMatch } = getGrafanaFilter(getFilter({ labels: ['severity=warning'] }));
         expect(labelsNoMatch.ruleMatches(alertingRule)).toBe(false);
 
-        const { frontendFilter: dsMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
-        expect(dsMatch.ruleMatches(alertingRule)).toBe(true);
-
-        const { frontendFilter: dsNoMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
-        expect(dsNoMatch.ruleMatches(alertingRule)).toBe(false);
-
         const { frontendFilter: nsMatch } = getGrafanaFilter(getFilter({ namespace: 'production' }));
         expect(nsMatch.groupMatches(group)).toBe(true);
 
         const { frontendFilter: nsNoMatch } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
         expect(nsNoMatch.groupMatches(group)).toBe(false);
+      });
+
+      it('should skip dataSourceNames filtering on frontend (handled by backend)', () => {
+        const alertingRule = mockGrafanaPromAlertingRule({
+          queriedDatasourceUIDs: ['datasource-uid-1'],
+        });
+
+        // DataSourceNames is backend-filtered when feature toggle is enabled.
+        const { frontendFilter: dsMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(dsMatch.ruleMatches(alertingRule)).toBe(true);
+
+        const { frontendFilter: dsNoMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(dsNoMatch.ruleMatches(alertingRule)).toBe(true);
       });
     });
 
@@ -631,11 +681,10 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.groupMatches(group)).toBe(true);
       });
 
-      it('should still apply always-frontend filters (labels, dataSourceNames, namespace)', () => {
+      it('should still apply always-frontend filters (labels, namespace)', () => {
         const rule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
           labels: { severity: 'critical' },
-          queriedDatasourceUIDs: ['datasource-uid-1'],
           alerts: [],
         });
 
@@ -645,13 +694,6 @@ describe('grafana-managed rules', () => {
 
         const { frontendFilter: labelFilter2 } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
         expect(labelFilter2.ruleMatches(rule)).toBe(true);
-
-        // DataSourceNames filter should still work
-        const { frontendFilter: dsFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
-        expect(dsFilter.ruleMatches(rule)).toBe(true);
-
-        const { frontendFilter: dsFilter2 } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
-        expect(dsFilter2.ruleMatches(rule)).toBe(false);
 
         // Namespace filter should still work
         const group: PromRuleGroupDTO = {
@@ -666,6 +708,19 @@ describe('grafana-managed rules', () => {
 
         const { frontendFilter: nsFilter2 } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
         expect(nsFilter2.groupMatches(group)).toBe(false);
+      });
+
+      it('should skip dataSourceNames filtering on frontend (handled by backend)', () => {
+        const rule = mockGrafanaPromAlertingRule({
+          queriedDatasourceUIDs: ['datasource-uid-1'],
+        });
+
+        // DataSourceNames is backend-filtered when both feature toggles are enabled.
+        const { frontendFilter: dsFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(dsFilter.ruleMatches(rule)).toBe(true);
+
+        const { frontendFilter: dsFilter2 } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(dsFilter2.ruleMatches(rule)).toBe(true);
       });
     });
   });
@@ -732,9 +787,12 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
       });
 
+      it('should return false for dataSourceNames (handled by backend when feature toggle is enabled)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
+      });
+
       it('should return true for client-side only filters', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
 
@@ -749,10 +807,11 @@ describe('grafana-managed rules', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseFullyCompatBackendFilters'] });
 
       it('should return correct values for all filter types', () => {
-        // Should return false for: empty, backend-handled (ruleType, dashboardUid), and backend-only filters
+        // Should return false for: empty, backend-handled (ruleType, dashboardUid, dataSourceNames), and backend-only filters
         expect(hasGrafanaClientSideFilters(getFilter({}))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
@@ -762,7 +821,6 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
     });
@@ -782,10 +840,12 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
-        // Should return true for: always-frontend filters only
+        // Should return true for: always-frontend filters only (namespace, labels)
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+
+        // Should return false for: backend-handled dataSourceNames when feature toggles are enabled
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
       });
     });
   });

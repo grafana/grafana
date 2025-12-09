@@ -10,7 +10,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
+import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
@@ -35,7 +35,7 @@ interface VariableEditorFormProps {
 export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
-  const { name, type, label, description, hide } = variable.useState();
+  const { name, type, label, description, hide: display } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -65,7 +65,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
-  const onHideChange = (hide: VariableHide) => variable.setState({ hide });
+  const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
@@ -119,7 +119,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         width={52}
       />
 
-      <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
+      <VariableDisplaySelect onChange={onDisplayChange} display={display || defaultVariableModel.hide!} type={type} />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 

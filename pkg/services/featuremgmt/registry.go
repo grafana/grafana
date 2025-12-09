@@ -608,6 +608,20 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "panelGroupBy",
+			Description:  "Enables a group by action per panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "perPanelFiltering",
+			Description:  "Enables filtering by grouping labels on the panel level through legend or tooltip",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -1878,6 +1892,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "externalVizSuggestions",
+			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -1947,6 +1969,14 @@ var (
 			Owner:        grafanaDataProSquad,
 		},
 		{
+			Name:            "opentsdbBackendMigration",
+			Description:     "Run queries through the data source backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
 			Name:         "ttlPluginInstanceManager",
 			Description:  "Enable TTL plugin instance manager",
 			Stage:        FeatureStageExperimental,
@@ -1976,6 +2006,14 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "useMTPlugins",
+			Description:  "Enables plugins decoupling from bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

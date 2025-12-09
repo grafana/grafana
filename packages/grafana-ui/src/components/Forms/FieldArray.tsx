@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, type JSX } from 'react';
 import { useFieldArray, UseFieldArrayProps } from 'react-hook-form';
 
 import { FieldArrayApi } from '../../types/forms';

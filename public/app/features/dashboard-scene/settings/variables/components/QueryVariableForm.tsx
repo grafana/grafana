@@ -1,4 +1,4 @@
-import { FormEvent } from 'react';
+import { FormEvent, useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
@@ -27,7 +27,7 @@ type VariableQueryType = QueryVariable['state']['query'];
 
 interface QueryVariableEditorFormProps {
   datasource?: DataSourceRef;
-  onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
+  onDataSourceChange: (dsSettings: DataSourceInstanceSettings, preserveQuery?: boolean) => void;
   query: VariableQueryType;
   onQueryChange: (query: VariableQueryType) => void;
   onLegacyQueryChange: (query: VariableQueryType, definition: string) => void;
@@ -89,16 +89,22 @@ export function QueryVariableEditorForm({
       onQueryChange(query);
     }
 
+    // update data source if it is not defined in variable model
     if (!datasourceRef) {
       const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
-
       if (instanceSettings) {
-        onDataSourceChange(instanceSettings);
+        onDataSourceChange(instanceSettings, true);
       }
     }
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
+
+  // adjusting type miss match between DataSourcePicker onChange and onDataSourceChange
+  const datasourceChangeHandler = useCallback(
+    (dsSettings: DataSourceInstanceSettings) => onDataSourceChange(dsSettings),
+    [onDataSourceChange]
+  );
 
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
@@ -111,7 +117,7 @@ export function QueryVariableEditorForm({
         label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
       >
-        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
+        <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
       </Field>
 
       {datasource && VariableQueryEditor && (

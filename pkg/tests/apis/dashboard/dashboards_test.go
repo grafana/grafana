@@ -285,12 +285,12 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 
-	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 }
 
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
