@@ -26,7 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'fixed',
     bottom: 16,
     right: 16,
-    zIndex: 1001,
+    zIndex: theme.zIndex.navbarFixed,
     background: theme.colors.gradients.brandHorizontal,
     borderRadius: theme.shape.radius.circle,
     padding: theme.spacing(1),
