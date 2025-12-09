@@ -13,7 +13,8 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)
-		disco := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		disco, err := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		require.NoError(t, err)
 		require.JSONEq(t, `[
 			{
 				"version": "v0alpha1",
