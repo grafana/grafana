@@ -1,8 +1,7 @@
 package plugins
 
-pluginMetaV0Alpha1: {
-	kind: "PluginMeta"
-	plural: "pluginsmeta"
+metaV0Alpha1: {
+	kind: "Meta"
 	scope: "Namespaced"
 	schema: {
 		spec: {
