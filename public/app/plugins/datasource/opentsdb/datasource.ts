@@ -18,6 +18,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   dateMath,
@@ -78,6 +79,20 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
 
   // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const hasValidTargets = options.targets.some((target) => target.metric && !target.hide);
+      if (!hasValidTargets) {
+        return of({ data: [] });
+      }
+
+      return super.query(options).pipe(
+        map((response) => {
+          this._saveTagKeysFromFrames(response.data);
+          return response;
+        })
+      );
+    }
+
     // migrate annotations
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
@@ -263,6 +278,15 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     });
 
     this.tagKeys[metricData.metric] = tagKeys;
+  }
+
+  _saveTagKeysFromFrames(frames: DataFrame[]) {
+    for (const frame of frames) {
+      const tagKeys = frame.meta?.custom?.tagKeys;
+      if (frame.name && tagKeys) {
+        this.tagKeys[frame.name] = tagKeys;
+      }
+    }
   }
 
   _performSuggestQuery(query: string, type: string) {
