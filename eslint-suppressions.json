@@ -710,11 +710,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/QueryField/QueryField.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
