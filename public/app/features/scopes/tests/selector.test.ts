@@ -1,5 +1,3 @@
-import { screen } from '@testing-library/react';
-
 import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
