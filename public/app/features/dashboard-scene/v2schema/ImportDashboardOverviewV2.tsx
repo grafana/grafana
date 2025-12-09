@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import {
@@ -20,7 +18,6 @@ const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 type FormData = SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string };
 
 export function ImportDashboardOverviewV2() {
-  const [uidReset, setUidReset] = useState(false);
   const dispatch = useDispatch();
 
   // Get state from Redux store
@@ -28,10 +25,6 @@ export function ImportDashboardOverviewV2() {
   const dashboard = useSelector((state: StoreState) => state.importDashboard.dashboard as DashboardV2Spec);
   const inputs = useSelector((state: StoreState) => state.importDashboard.inputs);
   const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
-
-  function onUidReset() {
-    setUidReset(true);
-  }
 
   function onCancel() {
     dispatch(clearLoadedDashboard());
@@ -180,7 +173,7 @@ export function ImportDashboardOverviewV2() {
     <>
       <Form<FormData>
         onSubmit={onSubmit}
-        defaultValues={{ dashboard, k8s: { annotations: { 'grafana.app/folder': folder.uid } } }}
+        defaultValues={{ dashboard, folderUid: folder.uid, k8s: { annotations: { 'grafana.app/folder': folder.uid } } }}
         validateOnMount
         validateOn="onChange"
       >
@@ -191,9 +184,7 @@ export function ImportDashboardOverviewV2() {
             errors={errors}
             control={control}
             getValues={getValues}
-            uidReset={uidReset}
             onCancel={onCancel}
-            onUidReset={onUidReset}
             onSubmit={onSubmit}
             watch={watch}
           />

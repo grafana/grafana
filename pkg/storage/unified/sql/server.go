@@ -70,7 +70,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		SecureValues: opts.SecureValues,
 	}
 	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg})
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
 	}
 	// Support local file blob
 	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
@@ -102,7 +102,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 		backend, err := NewBackend(BackendOptions{
 			DBProvider:           eDB,
-			Tracer:               opts.Tracer,
 			Reg:                  opts.Reg,
 			IsHA:                 isHA,
 			storageMetrics:       opts.StorageMetrics,
