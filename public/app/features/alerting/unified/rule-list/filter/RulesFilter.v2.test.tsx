@@ -83,6 +83,19 @@ jest.mock('../../plugins/useAlertingHomePageExtensions', () => ({
   }),
 }));
 
+jest.mock('./useSavedSearches', () => ({
+  useSavedSearches: jest.fn(() => ({
+    savedSearches: [],
+    isLoading: false,
+    saveSearch: jest.fn(),
+    renameSearch: jest.fn(),
+    deleteSearch: jest.fn(),
+    setDefaultSearch: jest.fn(),
+    getAutoApplySearch: jest.fn(() => null),
+  })),
+  trackSavedSearchApplied: jest.fn(),
+}));
+
 setupPluginsExtensionsHook();
 
 // Helper function to create mock plugin components
