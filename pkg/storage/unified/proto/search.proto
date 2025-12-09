@@ -99,6 +99,9 @@ message ResourceSearchRequest {
   int64 page = 11;
 
   int64 permission = 12;
+
+  // Define which fields to query and their boost values
+  repeated QueryField query_fields = 13;
 }
 
 message ResourceSearchResponse {
