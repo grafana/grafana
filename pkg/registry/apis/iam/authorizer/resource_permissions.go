@@ -219,23 +219,11 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 	}
 }
 
-// func (r *ResourcePermissionsAuthorizer) client(ctx context.Context, namespace string, gr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
-// 	restConfig, err := r.configProvider(ctx, gr.GroupResource())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	client, err := dynamic.NewForConfig(restConfig)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return client.Resource(gr).Namespace(namespace), nil
-// }
-
-type configProviderByGroupResource map[schema.GroupResource]func(ctx context.Context) (*rest.Config, error)
+type ConfigProvider func(ctx context.Context) (*rest.Config, error)
 
 type ApiParentProvider struct {
-	configProviders configProviderByGroupResource
+	configProviders map[schema.GroupResource]ConfigProvider
+	versions        map[schema.GroupResource]string
 }
 
 type DialConfig struct {
@@ -246,16 +234,16 @@ type DialConfig struct {
 }
 
 func NewLocalConfigProvider(
-	configProvider func(ctx context.Context) (*rest.Config, error),
-) configProviderByGroupResource {
-	return configProviderByGroupResource{
+	configProvider ConfigProvider,
+) map[schema.GroupResource]ConfigProvider {
+	return map[schema.GroupResource]ConfigProvider{
 		{Group: "folder.grafana.app", Resource: "folders"}:       configProvider,
 		{Group: "dashboard.grafana.com", Resource: "dashboards"}: configProvider,
 	}
 }
 
-func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeClient authn.TokenExchanger) configProviderByGroupResource {
-	configProviders := make(configProviderByGroupResource, 2)
+func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeClient authn.TokenExchanger) map[schema.GroupResource]ConfigProvider {
+	configProviders := make(map[schema.GroupResource]ConfigProvider, 2)
 	for gr, dialConfig := range cfg {
 		configProviders[gr] = func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
@@ -275,8 +263,14 @@ func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeCl
 	return configProviders
 }
 
-func NewApiParentProvider(configProviders configProviderByGroupResource) *ApiParentProvider {
-	return &ApiParentProvider{configProviders: configProviders}
+func NewApiParentProvider(
+	configProviders map[schema.GroupResource]ConfigProvider,
+	version map[schema.GroupResource]string,
+) *ApiParentProvider {
+	return &ApiParentProvider{
+		configProviders: configProviders,
+		versions:        version,
+	}
 }
 
 func (p *ApiParentProvider) HasParent(gr schema.GroupResource) bool {
@@ -297,10 +291,14 @@ func (p *ApiParentProvider) GetParent(ctx context.Context, gr schema.GroupResour
 	if err != nil {
 		return "", err
 	}
+	version, ok := p.versions[gr]
+	if !ok {
+		return "", fmt.Errorf("no version info for group resource %s", gr.String())
+	}
 	resourceClient := client.Resource(schema.GroupVersionResource{
 		Group:    gr.Group,
-		Version:  "v1alpha1", // TODO: Make dynamic?
 		Resource: gr.Resource,
+		Version:  version,
 	}).Namespace(namespace)
 
 	unstructObj, err := resourceClient.Get(ctx, name, metav1.GetOptions{})
