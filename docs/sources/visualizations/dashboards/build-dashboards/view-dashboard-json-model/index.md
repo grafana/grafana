@@ -293,3 +293,14 @@ tbd
 ## JSON Schema v2
 
 Go to swagger kids
+
+<!-- Aliases from other pages
+- ../../../observability-as-code/schema-v2/ # /docs/grafana/latest/observability-as-code/schema-v2/
+- ../../../observability-as-code/schema-v2/annotations-schema/ # /docs/grafana/next/observability-as-code/schema-v2/annotations-schema/
+- ../../../observability-as-code/schema-v2/layout-schema/ # /docs/grafana/next/observability-as-code/schema-v2/layout-schema/
+- ../../../observability-as-code/schema-v2/librarypanel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/librarypanel-schema/
+- ../../../observability-as-code/schema-v2/links-schema/ # /docs/grafana/next/observability-as-code/schema-v2/links-schema/
+- ../../../observability-as-code/schema-v2/panel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/panel-schema/
+- ../../../observability-as-code/schema-v2/timesettings-schema/ # /docs/grafana/next/observability-as-code/schema-v2/timesettings-schema/
+- ../../../observability-as-code/schema-v2/variables-schema/ # /docs/grafana/next/observability-as-code/schema-v2/variables-schema/
+-->
