@@ -274,3 +274,4 @@ lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
+multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true

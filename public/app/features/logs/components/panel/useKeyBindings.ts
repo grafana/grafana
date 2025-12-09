@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 
 /**
@@ -11,6 +12,7 @@ import { useLogListSearchContext } from './LogListSearchContext';
 
 export const useKeyBindings = () => {
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
+  const { showDetails, detailsMode, closeDetails } = useLogDetailsContext();
 
   useEffect(() => {
     function handleToggleSearch(event: KeyboardEvent) {
@@ -24,10 +26,13 @@ export const useKeyBindings = () => {
       if (event.key === 'Escape' && searchVisible) {
         hideSearch();
       }
+      if (event.key === 'Escape' && showDetails.length > 0 && detailsMode === 'sidebar') {
+        closeDetails();
+      }
     }
     document.addEventListener('keydown', handleToggleSearch);
     return () => {
       document.removeEventListener('keydown', handleToggleSearch);
     };
-  });
+  }, [closeDetails, detailsMode, hideSearch, searchVisible, showDetails.length, showSearch]);
 };
