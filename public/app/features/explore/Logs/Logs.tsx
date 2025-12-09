@@ -695,7 +695,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
-    (option: LogListOptions, value: string | string[] | boolean) => {
+    (option: LogListOptions, value: string | string[] | boolean | number) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
@@ -1165,7 +1165,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   sortOrder={logsSortOrder}
                   timeRange={props.range}
                   timeZone={timeZone}
-                  wrapLogMessage={wrapLogMessage}
                 />
               )}
             </div>

@@ -10054,12 +10054,14 @@
         "show-search": "Search logs"
       },
       "line-wrapping": {
+        "disable": "Disable line wrapping",
+        "disable-no-columns": "Disable line wrapping and columns",
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
-        "hide": "Disable line wrapping",
         "state": {
-          "hide": "Wrap disabled",
           "json": "Wrap JSON",
+          "unwrapped-columns": "Unwrapped columns",
+          "unwrapped-inline": "Unwrapped inline",
           "wrap": "Wrap lines"
         },
         "tooltip": "Set line wrap"
@@ -10113,6 +10115,13 @@
     "name-enable-log-details": "Enable log details",
     "name-enable-logs-highlighting": "Enable logs highlighting",
     "name-font-size": "Font size",
+    "name-list-style": {
+      "name-grid-lines": "Log list style",
+      "unwrapped-columns": "Inline with colums",
+      "unwrapped-no-columns": "Inline without columns",
+      "wrapped": "Wrap lines",
+      "wrapped-json": "Wrap lines and prettify JSON"
+    },
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",

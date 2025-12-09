@@ -1,4 +1,11 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
+import {
+  PanelPlugin,
+  LogsSortOrder,
+  LogsDedupStrategy,
+  LogsDedupDescription,
+  FieldType,
+  LogListStyle,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
@@ -51,22 +58,47 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       });
     }
 
-    builder.addBooleanSwitch({
-      path: 'wrapLogMessage',
-      name: t('logs.name-wrap-lines', 'Wrap lines'),
-      category,
-      description: '',
-      defaultValue: false,
-    });
-
     // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
-    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
-      builder.addBooleanSwitch({
-        path: 'prettifyLogMessage',
-        name: t('logs.name-prettify-json', 'Prettify JSON'),
+    if (!config.featureToggles.newLogsPanel) {
+      builder
+        .addBooleanSwitch({
+          path: 'wrapLogMessage',
+          name: t('logs.name-wrap-lines', 'Wrap lines'),
+          category,
+          description: '',
+          defaultValue: false,
+        })
+        .addBooleanSwitch({
+          path: 'prettifyLogMessage',
+          name: t('logs.name-prettify-json', 'Prettify JSON'),
+          category,
+          description: '',
+          defaultValue: false,
+          showIf: () => Boolean(context.options?.wrapLogMessage),
+        });
+    } else {
+      builder.addRadio({
+        path: 'listStyle',
+        name: t('logs.name-list-style.name-grid-lines', 'Log list style'),
         category,
-        description: '',
-        defaultValue: false,
+        defaultValue: LogListStyle.InlineWithColumns,
+        settings: {
+          options: [
+            {
+              value: LogListStyle.InlineWithColumns,
+              label: t('logs.name-list-style.unwrapped-columns', 'Inline with colums'),
+            },
+            {
+              value: LogListStyle.Inline,
+              label: t('logs.name-list-style.unwrapped-no-columns', 'Inline without columns'),
+            },
+            { value: LogListStyle.Wrapped, label: t('logs.name-list-style.wrapped', 'Wrap lines') },
+            {
+              value: LogListStyle.WrappedWithPrettyJSON,
+              label: t('logs.name-list-style.wrapped-json', 'Wrap lines and prettify JSON'),
+            },
+          ],
+        },
       });
     }
 

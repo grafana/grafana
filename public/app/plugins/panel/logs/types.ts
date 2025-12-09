@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { CoreApp, DataFrame, Field, LinkModel, LogListStyle, ScopedVars } from '@grafana/data';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListOptions } from 'app/features/logs/components/panel/LogList';
 
@@ -12,7 +12,7 @@ type filterLabelActiveType = (key: string, value: string, refId?: string) => Pro
 type onClickShowFieldType = (value: string) => void;
 type onClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
-type onLogOptionsChangeType = (option: LogListOptions, value: string | boolean | string[]) => void;
+type onLogOptionsChangeType = (option: LogListOptions, value: string | boolean | string[] | number) => void;
 type setDisplayedFieldsType = (fields: string[]) => void;
 
 export type GetFieldLinksFn = (
@@ -69,6 +69,11 @@ export function isReactNodeArray(node: unknown): node is ReactNode[] {
 export function isCoreApp(app: unknown): app is CoreApp {
   const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
   return typeof app === 'string' && apps.includes(app);
+}
+
+export function isLogListStyle(listStyle: unknown): listStyle is LogListStyle {
+  const listStyles = Object.values(LogListStyle).map((listStyle) => listStyle.toString());
+  return typeof listStyle === 'string' && listStyles.includes(listStyle);
 }
 
 export function isLogLineMenuCustomItems(items: unknown): items is LogLineMenuCustomItem[] {
