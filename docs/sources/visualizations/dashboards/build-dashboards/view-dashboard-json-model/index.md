@@ -17,6 +17,7 @@ keywords:
   - documentation
   - json
   - model
+  - schema v2
 labels:
   products:
     - cloud
@@ -37,6 +38,12 @@ refs:
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from panels, template variables, panel queries, etc.
 
+## Difference between Resource v1, Resource v2, and Classic
+
+blah blah blah
+
+## View JSON
+
 To view the JSON of a dashboard:
 
 1. Click **Edit** in the top-right corner of the dashboard.
@@ -44,7 +51,7 @@ To view the JSON of a dashboard:
 1. Go to the **JSON Model** tab.
 1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
 
-## JSON fields
+## JSON Classic fields {#json-fields}
 
 When a user creates a new dashboard, a new dashboard JSON object is initialized with the following fields:
 
@@ -278,3 +285,11 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
+
+## JSON Resourve v1 
+
+tbd
+
+## JSON Schema v2
+
+Go to swagger kids
