@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import feedbackImage from '../../../../img/icons/unicons/feedback.svg';
@@ -13,8 +14,10 @@ export function FeedbackButtonNewLayout() {
       target="_blank"
       rel="noreferrer"
       className={styles.button}
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      title="Give feedback on the new layout"
+      title={t(
+        'dashboard-scene.feedback-button-new-layout.title-give-feedback-on-the-new-layout',
+        'Give feedback on the new layout'
+      )}
     >
       <img src={feedbackImage} alt="Feedback button" width="32" height="32" />
     </a>
@@ -30,9 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.gradients.brandHorizontal,
     borderRadius: theme.shape.radius.circle,
     padding: theme.spacing(1),
-    '&': {
-      filter: 'brightness(0.9)',
-    },
+    filter: 'brightness(0.9)',
     '&:hover, &:focus': {
       filter: 'brightness(1)',
     },
