@@ -56,7 +56,7 @@ describe('ScopesService', () => {
         selectorStateSubscription = callback;
         return { unsubscribe: jest.fn() };
       }),
-      changeScopes: jest.fn(),
+      changeScopes: jest.fn().mockResolvedValue(undefined),
       resolvePathToRoot: jest.fn().mockResolvedValue({ path: [], tree: {} }),
     } as unknown as jest.Mocked<ScopesSelectorService>;
 
