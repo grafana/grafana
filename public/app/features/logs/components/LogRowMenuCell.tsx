@@ -185,11 +185,12 @@ export const LogRowMenuCell = memo(
   }
 );
 
-type AddonOnClickListener = (event: MouseEvent, row: LogRowModel) => void | undefined;
+type AddonOnClickListener = (event: MouseEvent<HTMLElement>, row: LogRowModel) => void | undefined;
+type ChildElementProps = Record<string, unknown> & { onClick: AddonOnClickListener };
 function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
   return nodes.map((node, index) => {
-    if (isValidElement(node)) {
-      const onClick: AddonOnClickListener = node.props.onClick;
+    if (isValidElement<ChildElementProps>(node)) {
+      const onClick = node.props.onClick;
       if (!onClick) {
         return node;
       }
