@@ -18,9 +18,6 @@ export function getColumns<K extends object>(
     {
       id: EXPANDER_CELL_ID,
       Cell: ExpanderCell,
-      // ...(showExpandAll && {
-      //   Header: ExpanderHeader,
-      // }),
       Header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
       disableSortBy: true,
       width: 0,
