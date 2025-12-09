@@ -267,8 +267,8 @@ describe('scopesTreeUtils', () => {
 
       const newTree = insertPathNodesIntoTree(tree, path);
 
-      // Root should have childrenLoaded set to true (at the end of insertPathNodesIntoTree)
-      expect(newTree.childrenLoaded).toBe(true);
+      // Since we only handle insertion, it should never be true
+      expect(newTree.childrenLoaded).toBe(false);
 
       // Newly inserted nodes should have childrenLoaded set to false
       expect(newTree.children?.child1.childrenLoaded).toBe(false);
@@ -311,7 +311,7 @@ describe('scopesTreeUtils', () => {
       expect(newTree.children?.newChild).toBeDefined();
       expect(newTree.children?.newChild.childrenLoaded).toBe(false);
 
-      // Root should have childrenLoaded set to true
+      // Since we only handle insertion, it should never be true
       expect(newTree.childrenLoaded).toBe(true);
     });
 
@@ -329,7 +329,7 @@ describe('scopesTreeUtils', () => {
 
       // Tree should remain unchanged except for childrenLoaded
       expect(newTree.scopeNodeId).toBe('root');
-      expect(newTree.childrenLoaded).toBe(true);
+      expect(newTree.childrenLoaded).toBe(false);
     });
   });
 });
