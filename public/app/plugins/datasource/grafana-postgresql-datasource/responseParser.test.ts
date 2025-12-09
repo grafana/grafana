@@ -17,21 +17,17 @@ describe('transformMetricFindResponse function', () => {
 
     const result = transformMetricFindResponse(frame);
 
-    // All values from both fields are added with properties from the same row
-    // 150,000 'a' values from 'name' field + 150,000 '1' values from 'value' field = 300,000 total
-    // After deduplication by text, we get 2 unique items ('a' and '1')
+    // Without __text and __value fields, all values are added as text-only entries
+    // 150,000 'a' values + 150,000 1 values = 300,000 total
+    // After deduplication by text, we get 2 unique items ('a' and 1)
     expect(result).toHaveLength(2);
 
     const textValues = result.map((r) => r.text);
     expect(textValues).toContain('a');
-    expect(textValues).toContain('1'); // Numbers are converted to strings
-
-    // Check that properties are included
-    const aEntry = result.find((r) => r.text === 'a');
-    expect(aEntry?.properties).toBeDefined();
+    expect(textValues).toContain(1);
   });
 
-  it('should add all values from multiple fields with properties from same row', () => {
+  it('should add all values from multiple fields without __text/__value (backwards compatible)', () => {
     const frame: DataFrame = {
       fields: [
         { name: 'id', type: FieldType.string, config: {}, values: ['user1', 'user2', 'user3'] },
@@ -48,25 +44,18 @@ describe('transformMetricFindResponse function', () => {
 
     const result = transformMetricFindResponse(frame);
 
-    // All values from all fields are added (3 rows × 3 fields = 9 entries)
+    // Without __text and __value, all values from all fields are added as text-only entries
     expect(result).toHaveLength(9);
 
-    // Value from row 0 of id field gets properties from row 0 of other fields
+    // Entries should only have text, no value or properties
     const user1Entry = result.find((r) => r.text === 'user1');
-    expect(user1Entry).toBeDefined();
-    expect(user1Entry?.properties).toBeDefined();
-    expect(user1Entry?.properties?.email).toBe('user1@test.com');
-    expect(user1Entry?.properties?.role).toBe('admin');
+    expect(user1Entry).toEqual({ text: 'user1' });
 
-    // Value from row 1 of email field gets properties from row 1 of other fields
-    const user2EmailEntry = result.find((r) => r.text === 'user2@test.com');
-    expect(user2EmailEntry).toBeDefined();
-    expect(user2EmailEntry?.properties).toBeDefined();
-    expect(user2EmailEntry?.properties?.id).toBe('user2');
-    expect(user2EmailEntry?.properties?.role).toBe('user');
+    const emailEntry = result.find((r) => r.text === 'user1@test.com');
+    expect(emailEntry).toEqual({ text: 'user1@test.com' });
   });
 
-  it('should handle single field', () => {
+  it('should handle single field (backwards compatible)', () => {
     const frame: DataFrame = {
       fields: [{ name: 'name', type: FieldType.string, config: {}, values: ['value1', 'value2'] }],
       length: 2,
@@ -75,19 +64,9 @@ describe('transformMetricFindResponse function', () => {
     const result = transformMetricFindResponse(frame);
 
     expect(result).toHaveLength(2);
-    // With single field, properties include the same field
-    expect(result[0]).toEqual({
-      text: 'value1',
-      properties: {
-        name: 'value1',
-      },
-    });
-    expect(result[1]).toEqual({
-      text: 'value2',
-      properties: {
-        name: 'value2',
-      },
-    });
+    // Without __text and __value, values are added as text-only entries
+    expect(result[0]).toEqual({ text: 'value1' });
+    expect(result[1]).toEqual({ text: 'value2' });
   });
 
   it('should still handle __text and __value fields', () => {
@@ -112,10 +91,11 @@ describe('transformMetricFindResponse function', () => {
     });
   });
 
-  it('should skip fields named "text" or "value" in properties', () => {
+  it('should skip fields named "text" or "value" in properties when __text and __value are present', () => {
     const frame: DataFrame = {
       fields: [
-        { name: 'id', type: FieldType.string, config: {}, values: ['item1', 'item2'] },
+        { name: '__text', type: FieldType.string, config: {}, values: ['Display 1', 'Display 2'] },
+        { name: '__value', type: FieldType.string, config: {}, values: ['val1', 'val2'] },
         { name: 'text', type: FieldType.string, config: {}, values: ['Text 1', 'Text 2'] },
         { name: 'value', type: FieldType.string, config: {}, values: ['Value 1', 'Value 2'] },
         { name: 'description', type: FieldType.string, config: {}, values: ['Desc 1', 'Desc 2'] },
@@ -125,15 +105,23 @@ describe('transformMetricFindResponse function', () => {
 
     const result = transformMetricFindResponse(frame);
 
-    // All values from all fields are added (2 values × 4 fields = 8 entries)
-    expect(result).toHaveLength(8);
+    expect(result).toHaveLength(2);
 
-    // Check that 'text' and 'value' fields are not in properties
-    const item1Entry = result.find((r) => r.text === 'item1');
-    expect(item1Entry?.properties).toBeDefined();
-    expect(item1Entry?.properties).not.toHaveProperty('text');
-    expect(item1Entry?.properties).not.toHaveProperty('value');
-    expect(item1Entry?.properties?.description).toBe('Desc 1');
+    // Fields named 'text' and 'value' should not be in properties
+    expect(result[0]).toEqual({
+      text: 'Display 1',
+      value: 'val1',
+      properties: {
+        description: 'Desc 1',
+      },
+    });
+    expect(result[1]).toEqual({
+      text: 'Display 2',
+      value: 'val2',
+      properties: {
+        description: 'Desc 2',
+      },
+    });
   });
 
   it('should add additional fields as properties when __text and __value are present', () => {

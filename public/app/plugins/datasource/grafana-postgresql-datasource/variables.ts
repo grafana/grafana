@@ -15,6 +15,10 @@ export class SQLVariableSupport extends CustomVariableSupport<PostgresDatasource
   editor = VariableQueryEditor;
 
   query(request: DataQueryRequest<SQLQuery>): Observable<{ data: MetricFindValue[] }> {
+    if (!request.targets || request.targets.length === 0) {
+      return from(Promise.resolve([])).pipe(map((data) => ({ data })));
+    }
+
     const queryObj = migrateVariableQuery(request.targets[0]);
     const result = this.datasource.metricFindQuery(queryObj, { scopedVars: request.scopedVars, range: request.range });
 

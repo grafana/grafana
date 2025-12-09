@@ -2,68 +2,31 @@ import { uniqBy } from 'lodash';
 
 import { DataFrame, Field, MetricFindValue } from '@grafana/data';
 
-const RESERVED_PROPERTY_NAMES = ['text', 'value'];
+const RESERVED_PROPERTY_NAMES = ['text', 'value', '__text', '__value'];
 
 export function transformMetricFindResponse(frame: DataFrame): MetricFindValue[] {
+  const values: MetricFindValue[] = [];
   const textField = frame.fields.find((f) => f.name === '__text');
   const valueField = frame.fields.find((f) => f.name === '__value');
 
-  const values =
-    textField && valueField
-      ? buildValuesFromTextValueFields(textField, valueField, frame.fields)
-      : buildValuesFromAllFields(frame.fields);
+  if (textField && valueField) {
+    for (let i = 0; i < textField.values.length; i++) {
+      values.push({ text: '' + textField.values[i], value: '' + valueField.values[i] });
 
-  return uniqBy(values, 'text');
-}
-
-function buildValuesFromTextValueFields(textField: Field, valueField: Field, allFields: Field[]): MetricFindValue[] {
-  const additionalFields = allFields.filter((f) => f.name !== '__text' && f.name !== '__value');
-  const values: MetricFindValue[] = [];
-
-  for (let rowIndex = 0; rowIndex < textField.values.length; rowIndex++) {
-    values.push(
-      createMetricFindValue(
-        '' + textField.values[rowIndex],
-        '' + valueField.values[rowIndex],
-        additionalFields,
-        rowIndex
-      )
-    );
-  }
-
-  return values;
-}
-
-function buildValuesFromAllFields(fields: Field[]): MetricFindValue[] {
-  const values: MetricFindValue[] = [];
-
-  for (const field of fields) {
-    for (let rowIndex = 0; rowIndex < field.values.length; rowIndex++) {
-      values.push(createMetricFindValue(field.values[rowIndex], undefined, fields, rowIndex));
+      const properties = buildProperties(frame.fields, i);
+      if (properties) {
+        values[i].properties = properties;
+      }
+    }
+  } else {
+    for (const field of frame.fields) {
+      for (const value of field.values) {
+        values.push({ text: value });
+      }
     }
   }
 
-  return values;
-}
-
-function createMetricFindValue(
-  text: unknown,
-  value: string | undefined,
-  fields: Field[],
-  rowIndex: number
-): MetricFindValue {
-  const item: MetricFindValue = { text: '' + text };
-
-  if (value !== undefined) {
-    item.value = value;
-  }
-
-  const properties = buildProperties(fields, rowIndex);
-  if (properties) {
-    item.properties = properties;
-  }
-
-  return item;
+  return uniqBy(values, 'text');
 }
 
 function buildProperties(fields: Field[], rowIndex: number): Record<string, string> | undefined {
