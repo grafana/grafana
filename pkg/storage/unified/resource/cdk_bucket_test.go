@@ -196,8 +196,7 @@ func TestInstrumentedBucket(t *testing.T) {
 			t.Run(op.name+" "+tc.name, func(t *testing.T) {
 				fakeBucket := &fakeCDKBucket{}
 				reg := prometheus.NewPedanticRegistry()
-				tracer := otel.Tracer("test")
-				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg, tracer)
+				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg)
 
 				op.setup(fakeBucket, tc.success)
 				err := op.call(instrumentedBucket)

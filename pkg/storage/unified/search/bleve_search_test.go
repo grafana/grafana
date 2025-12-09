@@ -259,7 +259,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-	}, tracing.NewNoopTracerService(), nil)
+	}, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
