@@ -268,7 +268,7 @@ describe('scopesTreeUtils', () => {
       const newTree = insertPathNodesIntoTree(tree, path);
 
       // Since we only handle insertion, it should never be true
-      expect(newTree.childrenLoaded).toBeUndefined();
+      expect(newTree.childrenLoaded).toBe(false);
 
       // Newly inserted nodes should have childrenLoaded set to false
       expect(newTree.children?.child1.childrenLoaded).toBe(false);
