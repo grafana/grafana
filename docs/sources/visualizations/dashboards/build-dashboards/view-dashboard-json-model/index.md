@@ -44,13 +44,17 @@ refs:
 
 # Dashboard JSON model
 
-A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from panels, template variables, panel queries, etc.
+Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
-## Difference between Resource v1, Resource v2, and Classic
+## Differences between Classic V1 Resource, and V2 Resource schemas
 
-You're only gonna see this when exporting the dashboard
+When you export a dashboard as code, there might be multiple options available.
+This is because of the evolution of the dashboard JSON schema.
 
-blah blah blah
+- **V2 Resource**: The current, or v2, JSON schema. This schema is the one used by all dashboards created today. It's also the schema used by any dashboards created in the past using the new editing experience when it was experimental. It uses the Kubernetes resources type structure.
+<!--Runs on our app platform which uses resources, of which there are many; it's a resource schema-->
+- **Classic**: The classic or v1 JSON schema. This schema was used by dashboards created before the dashboards experience released experimentally in Grafana v 12.0.
+- **V1 Resource**: The classic or v1 schema, using the resources structure. The legacy schema is included under the `spec` property of the V1 Resource. This schema is the one used by all dashboards created using the classic schema within the new editing experience.
 
 ## Access and update the JSON model (#view-json)
 
@@ -62,7 +66,63 @@ To access the JSON representation of a dashboard:
 1. Update the JSON structure as needed.
 1. Click **Save changes**.
 
-## JSON Classic fields {#json-fields}
+## JSON Schema v2 (Dashboard JSON schema v2)
+
+{{< admonition type="caution" >}}
+
+Dashboard JSON schema v2 is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
+
+To view the detailed v2 JSON schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
+
+[Observability as Code](https://grafana.com/) works with all versions of the JSON model, and it's fully compatible with version 2.
+
+### Before you begin
+
+Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
+To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
+
+For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
+
+### Notes and limitations
+
+#### Existing dashboards
+
+With schema v2 enabled, you can still open and view your pre-existing dashboards.
+Upon saving, they’ll be updated to the new schema where you can take advantage of the new features and functionalities.
+
+#### Dashboard behavior with disabled feature flags
+
+If you disable the Dynamic dashboards or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
+
+##### Disable Dynamic dashboards
+
+If the Dynamic dashboards feature toggle is disabled, depending on how the dashboard was built, it will behave differently:
+
+- Dashboards built on the new schema through the UI - View only
+- Dashboards built on Schema v1 - View and edit
+- Dashboards built on the new schema by way of Terraform or the CLI - View and edit
+- Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
+
+##### Disable Dynamic dashboards and `kubernetesDashboards`
+
+You’ll be unable to view or edit dashboards created or updated in the new schema.
+
+#### Import and export
+
+From the UI, dashboards created on schema v2 can be exported and imported like other dashboards.
+When you export them to use in another instance, references of data sources are not persisted but data source types are.
+You’ll have the option to select the data source of your choice in the import UI.
+
+## JSON Resourve v1
+
+TBD
+
+## Classic JSON fields {#json-fields}
 
 When a user creates a new dashboard, a new dashboard JSON object is initialized with the following fields:
 
@@ -121,7 +181,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
 | **panels**        | panels array, see below for detail.                                                                               |
 
-## Panels
+### Panels
 
 Panels are the building blocks of a dashboard. It consists of data source queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel. Most of the fields are common for all panels but some fields depend on the panel type. Following is an example of panel JSON of a text panel.
 
@@ -296,61 +356,3 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
-
-## JSON Resourve v1 
-
-tbd
-
-## JSON Schema v2 (Dashboard JSON schema v2)
-
-Go to swagger kids
-
-{{< admonition type="caution" >}}
-
-Dashboard JSON schema v2 is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
-
-**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
-
-{{< /admonition >}}
-
-Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
-
-Observability as Code works with all versions of the JSON model, and it's fully compatible with version 2.
-
-## Before you begin
-
-Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
-To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
-It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
-
-For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
-
-### Notes and limitations
-
-#### Existing dashboards
-
-With schema v2 enabled, you can still open and view your pre-existing dashboards.
-Upon saving, they’ll be updated to the new schema where you can take advantage of the new features and functionalities.
-
-#### Dashboard behavior with disabled feature flags
-
-If you disable the Dynamic dashboards or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
-
-##### Disable Dynamic dashboards
-
-If the Dynamic dashboards feature toggle is disabled, depending on how the dashboard was built, it will behave differently:
-
-- Dashboards built on the new schema through the UI - View only
-- Dashboards built on Schema v1 - View and edit
-- Dashboards built on the new schema by way of Terraform or the CLI - View and edit
-- Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
-
-##### Disable Dynamic dashboards and `kubernetesDashboards`
-
-You’ll be unable to view or edit dashboards created or updated in the new schema.
-
-#### Import and export
-
-From the UI, dashboards created on schema v2 can be exported and imported like other dashboards.
-When you export them to use in another instance, references of data sources are not persisted but data source types are.
-You’ll have the option to select the data source of your choice in the import UI.
