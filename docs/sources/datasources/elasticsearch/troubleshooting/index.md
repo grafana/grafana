@@ -19,7 +19,7 @@ weight: 600
 
 # Troubleshoot issues with the Elasticsearch data source
 
-This page provides troubleshooting information for common errors when using the Elasticsearch data source in Grafana.
+This document provides troubleshooting information for common errors you may encounter when using the Elasticsearch data source in Grafana.
 
 ## Connection errors
 

@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure Elasticsearch
+menuTitle: Configure
 title: Configure the Elasticsearch data source
 weight: 200
 refs:

@@ -34,7 +34,7 @@ refs:
 Elasticsearch is a search and analytics engine used for a variety of use cases.
 You can create many types of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
-The following resources help you get started with Elasticsearch and Grafana:
+The following resources will help you get started with Elasticsearch and Grafana:
 
 - [What is Elasticsearch?](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html)
 - [Configure the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/)
