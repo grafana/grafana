@@ -389,9 +389,9 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
     "re-resizable": "6.11.2",
-    "react": "19.2.0",
+    "react": "19.2.1",
     "react-diff-viewer-continued": "^3.4.0",
-    "react-dom": "19.2.0",
+    "react-dom": "19.2.1",
     "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
@@ -461,7 +461,9 @@
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
-    "pretty-format/react-is": "19.0.0"
+    "pretty-format/react-is": "19.0.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "workspaces": {
     "packages": [
