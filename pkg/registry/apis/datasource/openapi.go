@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -94,6 +95,10 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if err != nil {
 		return nil, err
 	}
+	return applyCustomSchemas(root, ds, oas, custom)
+}
+
+func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom *datasourceV0.DataSourceOpenAPIExtension) (*spec3.OpenAPI, error) {
 	if custom == nil {
 		return oas, nil // nothing special
 	}
@@ -188,5 +193,5 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			oas.Paths.Paths[prefix+k] = v
 		}
 	}
-	return oas, err
+	return oas, nil
 }
