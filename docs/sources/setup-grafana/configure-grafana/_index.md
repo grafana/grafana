@@ -2142,17 +2142,13 @@ Configures settings around the short link feature.
 
 #### `expire_time`
 
-Short links that are never accessed are considered expired or stale and are deleted as cleanup.
+Short links that are never accessed are considered expired or stale and can be deleted as cleanup.
 Set the expiration time in days.
-The default is `7` days.
+The default is `-1` days (never expire).
 The maximum is `365` days.
-A setting above the maximum uses the value `365` instead.
-Setting `0` means the short links are cleaned up approximately every 10 minutes.
-A negative value such as `-1` disables expiry.
 
-{{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
-{{< /admonition >}}
+A setting above the maximum uses the value `365` instead.
+A negative value such as `-1` disables expiry.
 
 <hr>
 
