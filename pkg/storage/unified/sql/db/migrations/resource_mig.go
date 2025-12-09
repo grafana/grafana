@@ -2,8 +2,11 @@ package migrations
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 func initResourceTables(mg *migrator.Migrator) string {
@@ -198,5 +201,124 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}
 	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
 
+	mg.AddMigration("resource_history key_path backfill", &ResourceHistoryKeyPathBackfillMigration{})
+
 	return marker
+}
+
+type ResourceHistoryKeyPathBackfillMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *ResourceHistoryKeyPathBackfillMigration) SQL(_ migrator.Dialect) string {
+	return fmt.Sprint("resource_history key_path backfill code migration")
+}
+
+func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	rows, err := getResourceHistoryRowsWithMissingKeyPath(sess, resourceHistoryRow{})
+	if err != nil {
+		return err
+	}
+
+	for len(rows) > 0 {
+		if err := updateResourceHistoryKeyPath(sess, rows); err != nil {
+			return err
+		}
+
+		rows, err = getResourceHistoryRowsWithMissingKeyPath(sess, rows[len(rows)-1])
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+type rowUpdate struct {
+	guid    string
+	keyPath string
+}
+
+func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow) error {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	updates := []rowUpdate{}
+
+	for _, row := range rows {
+		updates = append(updates, rowUpdate{guid: row.GUID, keyPath: parseKeyPath(row)})
+	}
+
+	guids := ""
+	setCases := "CASE"
+	for _, update := range updates {
+		guids += fmt.Sprintf("\"%s\",", update.guid)
+		setCases += fmt.Sprintf(" WHEN guid = \"%s\" THEN \"%s\"", update.guid, update.keyPath)
+	}
+
+	guids = strings.TrimRight(guids, ",")
+	setCases += " ELSE key_path END "
+
+	sql := fmt.Sprintf(`
+	UPDATE resource_history
+	SET key_path = %s
+	WHERE guid IN (%s)
+	AND key_path = "";
+	`, setCases, guids)
+
+	if _, err := sess.Exec(sql); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func parseKeyPath(row resourceHistoryRow) string {
+	var action string
+	switch row.Action {
+	case 1:
+		action = "created"
+	case 2:
+		action = "updated"
+	case 3:
+		action = "deleted"
+	}
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", row.Group, row.Resource, row.Namespace, row.Name, snowflakeFromRv(row.ResourceVersion), action, row.Folder)
+}
+
+func snowflakeFromRv(rv int64) int64 {
+	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
+}
+
+type resourceHistoryRow struct {
+	GUID            string `xorm:"guid"`
+	Group           string `xorm:"group"`
+	Resource        string `xorm:"resource"`
+	Namespace       string `xorm:"namespace"`
+	Name            string `xorm:"name"`
+	ResourceVersion int64  `xorm:"resource_version"`
+	Action          int64  `xorm:"action"`
+	Folder          string `xorm:"folder"`
+}
+
+func getResourceHistoryRowsWithMissingKeyPath(sess *xorm.Session, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
+	var rows []resourceHistoryRow
+	offsetStatement := ""
+	if continueRow.GUID != "" {
+		offsetStatement = fmt.Sprintf("OR (resource_version = %d AND guid > '%s')", continueRow.ResourceVersion, continueRow.GUID)
+	}
+	sql := fmt.Sprintf(`
+		SELECT rh.guid, rh.group, rh.resource, rh.namespace, rh.name, rh.resource_version, rh.action, rh.folder
+		FROM resource_history AS rh
+		WHERE (resource_version > %d %s)
+		ORDER BY resource_version ASC, guid ASC
+		LIMIT 1000;
+	`, continueRow.ResourceVersion, offsetStatement)
+	if err := sess.SQL(sql).Find(&rows); err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }
