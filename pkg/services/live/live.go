@@ -527,6 +527,12 @@ type DashboardActivityChannel interface {
 	HasGitOpsObserver(orgID int64) bool
 }
 
+// ProvideDashboardActivityChannel extracts the DashboardActivityChannel from GrafanaLive.
+// This is used by wire to inject the channel into the dashboard API service.
+func ProvideDashboardActivityChannel(live *GrafanaLive) DashboardActivityChannel {
+	return live.GrafanaScope.Dashboards
+}
+
 func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (backend.StreamHandler, error) {
 	plugin, exists := g.pluginStore.Plugin(ctx, pluginID)
 	if !exists {

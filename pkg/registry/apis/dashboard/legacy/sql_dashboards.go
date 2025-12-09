@@ -79,6 +79,15 @@ type dashboardRow struct {
 	token *continueToken
 }
 
+// DashboardActivityChannel is a service to advertise dashboard activity via Grafana Live.
+// This interface is duplicated from pkg/services/live to avoid circular imports.
+type DashboardActivityChannel interface {
+	// Called when a dashboard is saved
+	DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error
+	// Called when a dashboard is deleted
+	DashboardDeleted(orgID int64, requester identity.Requester, uid string) error
+}
+
 type dashboardSqlAccess struct {
 	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
@@ -91,6 +100,9 @@ type dashboardSqlAccess struct {
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service // only used for save dashboard
+
+	// For broadcasting save/delete events to Grafana Live (optional, may be nil)
+	dashboardActivityChannel DashboardActivityChannel
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -125,17 +137,19 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
+	dashboardActivityChannel DashboardActivityChannel,
 ) *dashboardSqlAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
-		sql:                    sql,
-		namespacer:             namespacer,
-		dashStore:              dashStore,
-		provisioning:           provisioning,
-		dashboardSearchClient:  *dashboardSearchClient,
-		dashboardPermissionSvc: dashboardPermissionSvc,
-		libraryPanelSvc:        libraryPanelSvc,
-		accessControl:          accessControl,
+		sql:                      sql,
+		namespacer:               namespacer,
+		dashStore:                dashStore,
+		provisioning:             provisioning,
+		dashboardSearchClient:    *dashboardSearchClient,
+		dashboardPermissionSvc:   dashboardPermissionSvc,
+		libraryPanelSvc:          libraryPanelSvc,
+		accessControl:            accessControl,
+		dashboardActivityChannel: dashboardActivityChannel,
 	}
 }
 
@@ -882,6 +896,17 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	if err != nil {
 		return nil, false, err
 	}
+
+	// Broadcast the delete event to Grafana Live
+	if a.dashboardActivityChannel != nil {
+		requester, reqErr := identity.GetRequester(ctx)
+		if reqErr == nil {
+			if broadcastErr := a.dashboardActivityChannel.DashboardDeleted(orgId, requester, uid); broadcastErr != nil {
+				a.log.Warn("Failed to broadcast dashboard delete event", "error", broadcastErr, "dashboard", uid)
+			}
+		}
+	}
+
 	return dash, true, nil
 }
 
@@ -1002,6 +1027,14 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if access != nil {
 		access.DashboardID = finalMeta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
+
+	// Broadcast the save event to Grafana Live
+	if a.dashboardActivityChannel != nil {
+		if broadcastErr := a.dashboardActivityChannel.DashboardSaved(orgId, requester, cmd.Message, out, nil); broadcastErr != nil {
+			a.log.Warn("Failed to broadcast dashboard save event", "error", broadcastErr, "dashboard", out.UID)
+		}
+	}
+
 	return dash, created, err
 }
 

@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -150,6 +151,7 @@ func RegisterAPIService(
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
+	dashboardActivityChannel live.DashboardActivityChannel,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -185,7 +187,7 @@ func RegisterAPIService(
 		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
+			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features, dashboardActivityChannel),
 			DashboardService: dashboardService,
 		},
 	}
