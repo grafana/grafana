@@ -21,19 +21,19 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 				"freshness": "Current",
 				"resources": [
 					{
-						"resource": "pluginmetas",
+						"resource": "metas",
 						"responseKind": {
 							"group": "",
-							"kind": "PluginMeta",
+							"kind": "Meta",
 							"version": ""
 						},
 						"scope": "Namespaced",
-						"singularResource": "pluginmeta",
+						"singularResource": "meta",
 						"subresources": [
 							{
 								"responseKind": {
 									"group": "",
-									"kind": "PluginMeta",
+									"kind": "Meta",
 									"version": ""
 								},
 								"subresource": "status",

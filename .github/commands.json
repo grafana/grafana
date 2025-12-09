@@ -1226,5 +1226,13 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/69"
     }
+  },
+  {
+    "type": "label",
+    "name": "area/suggestions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
   }
 ]
