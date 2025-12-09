@@ -243,13 +243,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           data: field.values.map((nestedFrame: DataFrame | undefined): DataFrame => {
             const result = nestedFrame ?? createDataFrame({ fields: [] });
             result.fields = result.fields.map((newField) => {
-              newField.config = defaults(newField.config || {}, {
-                min: field.config.min,
-                max: field.config.max,
-                fieldMinMax: field.config.fieldMinMax,
-                unit: field.config.unit,
-              });
-
+              newField.config = defaults(newField.config || {}, config);
               return newField;
             });
             return result;
