@@ -61,9 +61,12 @@ type migrator struct {
 
 func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) {
 	initOnce.Do(func() {
-		m.dsIndexProvider = dsIndexProvider
-		m.leIndexProvider = leIndexProvider
-		m.migrations = schemaversion.GetMigrations(dsIndexProvider, leIndexProvider)
+		// Wrap the provider with configurable caching.
+		// This prevents repeated DB queries across multiple conversion calls while allowing
+		// the cache to refresh periodically, making it suitable for long-lived singleton usage.
+		m.dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
+		m.leIndexProvider = schemaversion.WrapLibraryElementProviderWithCache(leIndexProvider)
+		m.migrations = schemaversion.GetMigrations(m.dsIndexProvider, m.leIndexProvider)
 		close(m.ready)
 	})
 }
