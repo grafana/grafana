@@ -268,7 +268,7 @@ describe('scopesTreeUtils', () => {
       const newTree = insertPathNodesIntoTree(tree, path);
 
       // Since we only handle insertion, it should never be true
-      expect(newTree.childrenLoaded).toBe(false);
+      expect(newTree.childrenLoaded).toBeUndefined();
 
       // Newly inserted nodes should have childrenLoaded set to false
       expect(newTree.children?.child1.childrenLoaded).toBe(false);
@@ -280,6 +280,7 @@ describe('scopesTreeUtils', () => {
         expanded: true,
         scopeNodeId: 'root',
         query: '',
+        childrenLoaded: true,
         children: {
           existingChild: {
             expanded: false,
@@ -329,7 +330,27 @@ describe('scopesTreeUtils', () => {
 
       // Tree should remain unchanged except for childrenLoaded
       expect(newTree.scopeNodeId).toBe('root');
-      expect(newTree.childrenLoaded).toBe(false);
+      expect(newTree.childrenLoaded).toBeUndefined();
+    });
+
+    it('should maintain the childrenLoaded value of the root node when inserting path', () => {
+      const tree: TreeNode = {
+        expanded: false,
+        scopeNodeId: 'root',
+        query: '',
+        childrenLoaded: true,
+      };
+
+      const path: ScopeNode[] = [
+        {
+          metadata: { name: 'child1' },
+          spec: { parentName: 'root', nodeType: 'container', title: 'Child 1' },
+        },
+      ];
+
+      const newTree = insertPathNodesIntoTree(tree, path);
+
+      expect(newTree.childrenLoaded).toBe(true);
     });
   });
 });
