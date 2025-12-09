@@ -68,6 +68,22 @@ if (( CHANGES_COUNT > 0 )); then
     TAGS=$(npm dist-tag ls @grafana/e2e-selectors)
     if [[ $TAGS =~ $regex_pattern ]]; then
         echo "$CHANGES_COUNT file(s) in packages/grafana-e2e-selectors were changed. Adding 'modified' tag to @grafana/e2e-selectors@${BASH_REMATCH[1]}"
+        
+        # If using OIDC, fetch the token for dist-tag operation (npm publish handles OIDC internally,
+        # but dist-tag requires explicit authentication)
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+            echo "Fetching OIDC token for dist-tag operation..."
+            OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm" | jq -r '.value')
+            
+            if [ -n "$OIDC_TOKEN" ] && [ "$OIDC_TOKEN" != "null" ]; then
+                echo "Configuring OIDC token in ~/.npmrc"
+                echo "//registry.npmjs.org/:_authToken=${OIDC_TOKEN}" >> ~/.npmrc
+            else
+                echo "Warning: Failed to fetch OIDC token, dist-tag operation may fail"
+            fi
+        fi
+        
         npm dist-tag add @grafana/e2e-selectors@"${BASH_REMATCH[1]}" modified
     fi
 fi
