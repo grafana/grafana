@@ -295,10 +295,11 @@ overrides_reload_period = 5s
 
 To overrides the default quota for a tenant, add the following to the overrides.yaml file:
 ```yaml
-<NAMESPACE>:
-  quotas:
-    <GROUP>.<RESOURCE>:
-      limit: 10
+overrides:
+  <NAMESPACE>:
+    quotas:
+      <GROUP>.<RESOURCE>:
+        limit: 10
 ```
 Unless otherwise set, the NAMESPACE when running locally is `default`.
 
