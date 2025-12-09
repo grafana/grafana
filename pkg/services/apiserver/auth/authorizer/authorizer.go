@@ -42,7 +42,7 @@ func NewGrafanaBuiltInSTAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 
 	// org role is last -- and will return allow for verbs that match expectations
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, newRoleAuthorizer())
+	authorizers = append(authorizers, NewRoleAuthorizer())
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),
