@@ -10,7 +10,8 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { AwsUrl, encodeUrl } from '../aws_url';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchLogsQuery } from '../dataquery.gen';
+import { CloudWatchQuery } from '../types';
 
 type ReplaceFn = (
   target?: string,

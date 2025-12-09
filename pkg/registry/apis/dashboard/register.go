@@ -24,6 +24,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -64,6 +65,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -531,11 +533,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
-	// TODO: merge this into one option
 	if b.isStandalone {
-		// TODO: Sets default root permissions
+		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
-		// Sets default root permissions
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
@@ -647,6 +647,18 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		unified.AfterDelete = b.afterDelete
 		storage[dashboards.StoragePath()] = unified
 
+		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
+			unified,
+			largeObjects,
+			b.unified,
+			b.accessClient,
+			newDTOFunc,
+			nil, // no publicDashboardService in standalone mode
+		)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -675,10 +687,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
 		largeObjects,
-		b.legacy.Access,
 		b.unified,
-		b.accessControl,
-		opts.Scheme,
+		b.accessClient,
 		newDTOFunc,
 		b.publicDashboardService,
 	)
@@ -746,12 +756,138 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	}
 }
 
+var defaultDashboardPermissions = []map[string]any{
+	{
+		"kind": "BasicRole",
+		"name": "Admin",
+		"verb": "admin",
+	},
+	{
+		"kind": "BasicRole",
+		"name": "Editor",
+		"verb": "edit",
+	},
+	{
+		"kind": "BasicRole",
+		"name": "Viewer",
+		"verb": "view",
+	},
+}
+
+func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	if b.resourcePermissionsSvc == nil {
+		return nil
+	}
+
+	if obj.GetFolder() != "" {
+		return nil
+	}
+
+	log := logging.FromContext(ctx)
+	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+
+	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
+
+	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		_, err := client.Update(ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": obj.GetNamespace(),
+				},
+				"spec": map[string]any{
+					"resource": map[string]any{
+						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+						"name":     obj.GetName(),
+					},
+					"permissions": defaultDashboardPermissions,
+				},
+			},
+		}, metav1.UpdateOptions{})
+		if err != nil {
+			log.Error("failed to update dashboard permissions", "error", err)
+			return fmt.Errorf("update dashboard permissions: %w", err)
+		}
+
+		return nil
+	}
+
+	_, err := client.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": obj.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"resource": map[string]any{
+					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					"name":     obj.GetName(),
+				},
+				"permissions": defaultDashboardPermissions,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		log.Error("failed to create dashboard permissions", "error", err)
+		return fmt.Errorf("create dashboard permissions: %w", err)
+	}
+
+	return nil
+}
+
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := dashv0.GetOpenAPIDefinitions(ref)
 		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2alpha1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2beta1.GetOpenAPIDefinitions(ref))
+		md := manifestdata.LocalManifest().ManifestData
+		// Overwrite the OpenAPI generated from kubernetes (sourced from the go types) with the OpenAPI generated by grafana-app-sdk
+		// from the manifest CUE, as it correctly handles the CUE disjunctions in the dashboard spec.
+		// We don't touch any types which were not specified in the manifest CUE (such as custom route types).
+		for _, version := range md.Versions {
+			// We don't need to correct the v0 or v1 openAPI as the spec type is just `any`
+			if len(version.Name) > 1 && (version.Name[1] == '0' || version.Name[1] == '1') {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				pkgPrefix := fmt.Sprintf("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/%s", version.Name)
+				oapi, err := kind.Schema.AsKubeOpenAPI(schema.GroupVersionKind{
+					Group:   md.Group,
+					Version: version.Name,
+					Kind:    kind.Kind,
+				}, ref, pkgPrefix)
+				if err != nil {
+					logging.DefaultLogger.Error("unable to generate openAPI for kind %s: %w", kind.Kind, err)
+					continue
+				}
+				maps.Copy(defs, oapi)
+			}
+		}
+
+		// Fix legacyOptions schema for v2alpha1 and v2beta1 to allow any value type
+		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
+		// This fix must be applied here so structured-merge-diff uses the correct schema
+		// For some reason this issue occurs with both the kubernetes-generated openAPI sourced from go, _and_ the OpenAPI from the AppManifest
+		// TODO: @IfSentient this should really be addressed in the app-sdk's generation, or work out what about this particular CUE value is broken
+		for _, defKey := range []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec",
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec",
+		} {
+			if def, ok := defs[defKey]; ok {
+				if legacyOptions, ok := def.Schema.Properties["legacyOptions"]; ok {
+					// Fix: Use additionalProperties: true to allow any value type (string, number, boolean, array, object, etc.)
+					// instead of restricting to objects only. This must match map[string]interface{} semantics.
+					legacyOptions.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+					def.Schema.Properties["legacyOptions"] = legacyOptions
+					defs[defKey] = def
+				}
+			}
+		}
+
 		return defs
 	}
 }

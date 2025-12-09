@@ -25,8 +25,8 @@ import (
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -42,9 +42,6 @@ import (
 )
 
 const (
-	// tracingPrexfixBleve is the prefix used for tracing spans in the Bleve backend
-	tracingPrexfixBleve = "unified_search.bleve."
-
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
 )
@@ -54,6 +51,8 @@ const (
 	internalRVKey        = "rv"         // Encoded as big-endian int64
 	internalBuildInfoKey = "build_info" // Encoded as JSON of buildInfo struct
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
 
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
@@ -83,9 +82,8 @@ type BleveOptions struct {
 }
 
 type bleveBackend struct {
-	tracer trace.Tracer
-	log    log.Logger
-	opts   BleveOptions
+	log  log.Logger
+	opts BleveOptions
 
 	// set from opts.OwnsIndex, always non-nil
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error)
@@ -99,7 +97,7 @@ type bleveBackend struct {
 	bgTasksWg     sync.WaitGroup
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -138,7 +136,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 
 	be := &bleveBackend{
 		log:          l,
-		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		ownsIndexFn:  ownFn,
@@ -358,7 +355,7 @@ func (b *bleveBackend) BuildIndex(
 	updater resource.UpdateFn,
 	rebuild bool,
 ) (resource.ResourceIndex, error) {
-	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
+	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
 
 	span.SetAttributes(
@@ -713,7 +710,6 @@ type bleveIndex struct {
 
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
-	tracing   trace.Tracer
 	logger    log.Logger
 
 	updaterFn         resource.UpdateFn
@@ -750,7 +746,6 @@ func (b *bleveBackend) newBleveIndex(
 		fields:            fields,
 		allFields:         allFields,
 		standard:          standardSearchFields,
-		tracing:           b.tracer,
 		logger:            logger,
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
@@ -1018,7 +1013,7 @@ func (b *bleveIndex) Search(
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
 ) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key == nil {
@@ -1098,7 +1093,7 @@ func (b *bleveIndex) Search(
 }
 
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"DocCount")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
 
 	if folder == "" {
@@ -1144,7 +1139,7 @@ func (b *bleveIndex) getIndex(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
-	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
+	_, span := tracer.Start(ctx, "search.bleveIndex.getIndex")
 	defer span.End()
 
 	if len(req.Federated) != len(federate) {
@@ -1171,7 +1166,7 @@ func (b *bleveIndex) getIndex(
 }
 
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"toBleveSearchRequest")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest")
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
@@ -1493,7 +1488,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 }
 
 func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
 	defer span.End()
 
 	sinceRV := b.resourceVersion
@@ -1691,7 +1686,7 @@ func filterValue(field string, v string) string {
 }
 
 func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
-	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
+	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
 	defer span.End()
 
 	fields := []*resourcepb.ResourceTableColumnDefinition{}

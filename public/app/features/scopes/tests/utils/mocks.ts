@@ -412,6 +412,12 @@ export const getMock = jest
         return mocksScopes.find((scope) => scope.metadata.name.toLowerCase() === name.toLowerCase()) ?? {};
       }
 
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopenodes/')) {
+        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopenodes/', '');
+
+        return mocksNodes.find((node) => node.metadata.name === name);
+      }
+
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
         return {
           items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>

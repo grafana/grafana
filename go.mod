@@ -87,7 +87,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20251202151018-58fa500f3232 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -97,7 +97,7 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.48.4 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.48.5 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.48.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.3.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // @grafana/partner-datasources
@@ -633,7 +633,6 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251111182119-bc8e575c7b54 // indirect
 	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20250715232539-7130f93afb79 // indirect

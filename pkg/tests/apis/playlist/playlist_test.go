@@ -50,7 +50,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 
 		// The accepted verbs will change when dual write is enabled
-		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		disco, err := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		require.NoError(t, err)
 		// t.Logf("%s", disco)
 		require.JSONEq(t, `[
 			{
