@@ -58,7 +58,7 @@ This is because of the evolution of the dashboard JSON schema.
 
 {{< admonition type="note" >}}
 [Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with all versions of the JSON model, and it's fully compatible with version 2.
-{{ /admonition }}
+{{< /admonition >}}
 
 ## Access and update the JSON model (#view-json)
 
