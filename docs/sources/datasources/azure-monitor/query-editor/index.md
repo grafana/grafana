@@ -45,9 +45,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   troubleshoot-azure-monitor:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshoot/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshoot/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
 ---
 
 # Azure Monitor query editor

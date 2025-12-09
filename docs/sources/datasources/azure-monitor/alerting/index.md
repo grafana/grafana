@@ -51,9 +51,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
   troubleshoot:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshoot/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshoot/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
 ---
 
 # Azure Monitor alerting
@@ -65,7 +65,7 @@ The Azure Monitor data source supports [Grafana Alerting](ref:alerting) and [Gra
 - Ensure you have the appropriate permissions to create alert rules in Grafana.
 - Verify your Azure Monitor data source is configured and working correctly.
 - Familiarize yourself with [Grafana Alerting concepts](ref:alerting-fundamentals).
-- **Important**: Verify your data source uses a supported authentication method (see [Authentication requirements](#authentication-requirements)).
+- **Important**: Verify your data source uses a supported authentication method. Refer to [Authentication requirements](#authentication-requirements).
 
 ## Supported query types for alerting
 
@@ -227,6 +227,8 @@ Always verify your query returns expected data before creating an alert:
 1. Verify the query returns numeric data suitable for threshold evaluation.
 
 ## Troubleshooting
+
+If your Azure Monitor alerts aren't working as expected, use the following sections to diagnose and resolve common issues.
 
 ### Alerts not firing
 

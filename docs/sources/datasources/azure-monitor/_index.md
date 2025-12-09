@@ -102,7 +102,7 @@ The following documents will help you get started with the Azure Monitor data so
 - [Azure Monitor query editor](query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
 - [Template variables](template-variables/) - Create dynamic dashboards with Azure Monitor variables
 - [Alerting](alerting/) - Create alert rules using Azure Monitor data
-- [Troubleshoot](troubleshoot/) - Solve common configuration and query errors
+- [Troubleshooting](troubleshooting/) - Solve common configuration and query errors
 
 ## Additional features
 
