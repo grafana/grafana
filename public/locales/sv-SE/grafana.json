@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Klientkällor"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Visar {{visibleItems}} av {{totalItems}} instanser",
-      "button-show-all_one": "Visa alla {{totalItems}} larminstanser",
-      "button-show-all_other": "Visa alla {{totalItems}} larminstanser"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8252,6 +8251,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9252,6 +9257,8 @@
       "actions-confirmation-label": "Bekräftelsemeddelande",
       "actions-confirmation-message": "Tillhandahåll en beskrivande prompt för att bekräfta eller avbryta åtgärden.",
       "footer-add-annotation": "Lägg till kommentar",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klicka för att {{actionTitle}}",
       "footer-click-to-navigate": "Klicka för att öppna {{linkTitle}}",
       "footer-filter-for-value": "Filtrera för ”{{value}}”",

@@ -2326,8 +2326,8 @@
       "label-tenant-sources": "租户源"
     },
     "rule-details-matching-instances": {
-      "showing-count": "显示 {{visibleItems}} 个实例，共 {{totalItems}} 个",
-      "button-show-all_other": "显示所有 {{totalItems}} 个警报实例"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8216,6 +8216,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9216,6 +9222,8 @@
       "actions-confirmation-label": "确认消息",
       "actions-confirmation-message": "提供描述性提示以确认或取消操作。",
       "footer-add-annotation": "添加注释",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "点击以 {{actionTitle}}",
       "footer-click-to-navigate": "点击打开 {{linkTitle}}",
       "footer-filter-for-value": "筛选“{{value}}”",

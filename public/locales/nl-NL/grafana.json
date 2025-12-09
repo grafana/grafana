@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Tenantbronnen"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{visibleItems}} van {{totalItems}} instanties worden weergegeven",
-      "button-show-all_one": "Alle {{totalItems}} waarschuwingsinstanties weergeven",
-      "button-show-all_other": "Alle {{totalItems}} waarschuwingsinstanties weergeven"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8252,6 +8251,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9252,6 +9257,8 @@
       "actions-confirmation-label": "Bevestigingsbericht",
       "actions-confirmation-message": "Geef een beschrijvende prompt om de actie te bevestigen of te annuleren.",
       "footer-add-annotation": "Annotatie toevoegen",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klik om te {{actionTitle}}",
       "footer-click-to-navigate": "Klik om {{linkTitle}} te openen",
       "footer-filter-for-value": "Filteren op '{{value}}'",

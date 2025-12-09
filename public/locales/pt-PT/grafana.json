@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Origens de inquilinos"
     },
     "rule-details-matching-instances": {
-      "showing-count": "A mostrar {{visibleItems}} de {{totalItems}} instâncias",
-      "button-show-all_one": "Mostrar todas as instâncias de alerta {{totalItems}}",
-      "button-show-all_other": "Mostrar todas as instâncias de alerta {{totalItems}}"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8252,6 +8251,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9252,6 +9257,8 @@
       "actions-confirmation-label": "Mensagem de confirmação",
       "actions-confirmation-message": "Forneça uma mensagem descritiva para confirmar ou cancelar a ação.",
       "footer-add-annotation": "Adicionar anotação",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Clique para {{actionTitle}}",
       "footer-click-to-navigate": "Clique para abrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrar por \"{{value}}\"",
