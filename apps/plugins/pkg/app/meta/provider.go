@@ -14,14 +14,14 @@ var (
 
 // Result contains plugin metadata along with its recommended TTL.
 type Result struct {
-	Meta pluginsv0alpha1.PluginMetaJSONData
+	Meta pluginsv0alpha1.MetaJSONData
 	TTL  time.Duration
 }
 
 // Provider is used for retrieving plugin metadata.
 type Provider interface {
 	// GetMeta retrieves plugin metadata for the given plugin ID and version.
-	// Returns the Result containing the PluginMetaJSONData and its recommended TTL.
+	// Returns the Result containing the MetaJSONData and its recommended TTL.
 	// If the plugin is not found, returns ErrMetaNotFound.
 	GetMeta(ctx context.Context, pluginID, version string) (*Result, error)
 }

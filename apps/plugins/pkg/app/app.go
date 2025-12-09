@@ -42,7 +42,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: pluginsv0alpha1.PluginKind(),
 			},
 			{
-				Kind: pluginsv0alpha1.PluginMetaKind(),
+				Kind: pluginsv0alpha1.MetaKind(),
 			},
 		},
 	}
@@ -133,9 +133,9 @@ func (p *PluginAppInstaller) InstallAPIs(
 		return client, nil
 	}
 
-	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
+	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewPluginMetaStorage(p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
