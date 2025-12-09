@@ -100,45 +100,36 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
  * @returns {PanelPluginVisualizationSuggestion[]} sorted list of suggestions
  */
 export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
-  try {
-    const dataSummary = getPanelDataSummary(data?.series);
-    const list: PanelPluginVisualizationSuggestion[] = [];
-    const plugins = await getPanelsWithSuggestions();
+  const dataSummary = getPanelDataSummary(data?.series);
+  const list: PanelPluginVisualizationSuggestion[] = [];
+  const plugins = await getPanelsWithSuggestions();
 
-    for (const plugin of plugins) {
-      try {
-        const suggestions = plugin.getSuggestions(dataSummary);
-        if (suggestions) {
-          list.push(...suggestions);
-        }
-      } catch (error) {
-        console.warn(`Failed to get visualization suggestions for ${plugin.meta.id}:`, error);
-      }
+  for (const plugin of plugins) {
+    const suggestions = plugin.getSuggestions(dataSummary);
+    if (suggestions) {
+      list.push(...suggestions);
     }
-
-    if (dataSummary.fieldCount === 0) {
-      for (const plugin of Object.values(config.panels)) {
-        if (!plugin.skipDataQuery || plugin.hideFromList) {
-          continue;
-        }
-
-        list.push({
-          name: plugin.name,
-          pluginId: plugin.id,
-          description: plugin.info.description,
-          hash: 'plugin-empty-' + plugin.id,
-          cardOptions: {
-            imgSrc: plugin.info.logos.small,
-          },
-        });
-      }
-    }
-
-    sortSuggestions(list, dataSummary);
-
-    return list;
-  } catch (error) {
-    console.warn('Failed to get visualization suggestions: ', error);
-    return [];
   }
+
+  if (dataSummary.fieldCount === 0) {
+    for (const plugin of Object.values(config.panels)) {
+      if (!plugin.skipDataQuery || plugin.hideFromList) {
+        continue;
+      }
+
+      list.push({
+        name: plugin.name,
+        pluginId: plugin.id,
+        description: plugin.info.description,
+        hash: 'plugin-empty-' + plugin.id,
+        cardOptions: {
+          imgSrc: plugin.info.logos.small,
+        },
+      });
+    }
+  }
+
+  sortSuggestions(list, dataSummary);
+
+  return list;
 }

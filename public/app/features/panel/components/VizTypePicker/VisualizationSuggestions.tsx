@@ -30,7 +30,11 @@ export interface Props {
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions, loading, error } = useAsync(() => getAllSuggestions(data), [data]);
+  const {
+    value: suggestions,
+    loading,
+    error,
+  } = useAsync(hasData(data) ? () => getAllSuggestions(data) : () => Promise.resolve([]), [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
