@@ -47,7 +47,6 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
-import { getIsLazy } from '../layouts-shared/utils';
 import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -565,11 +564,10 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    const isLazy = getIsLazy(getDashboardSceneFor(currentLayout).state.preload)!;
-    return DefaultGridLayoutManager.fromVizPanels(panels, isLazy);
+    return DefaultGridLayoutManager.fromVizPanels(panels);
   }
 
-  public static fromVizPanels(panels: VizPanel[] = [], isLazy?: boolean | undefined): DefaultGridLayoutManager {
+  public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
     const children: DashboardGridItem[] = [];
     const panelHeight = 10;
     const panelWidth = GRID_COLUMN_COUNT / 3;
@@ -607,7 +605,6 @@ export class DefaultGridLayoutManager
         children: children,
         isDraggable: true,
         isResizable: true,
-        isLazy,
       }),
     });
   }
@@ -615,8 +612,7 @@ export class DefaultGridLayoutManager
   public static fromGridItems(
     gridItems: SceneGridItemLike[],
     isDraggable?: boolean,
-    isResizable?: boolean,
-    isLazy?: boolean | undefined
+    isResizable?: boolean
   ): DefaultGridLayoutManager {
     const children = gridItems.reduce<SceneGridItemLike[]>((acc, gridItem) => {
       gridItem.clearParent();
@@ -630,7 +626,6 @@ export class DefaultGridLayoutManager
         children,
         isDraggable,
         isResizable,
-        isLazy,
       }),
     });
   }
