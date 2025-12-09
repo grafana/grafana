@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	iamAuthz "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
@@ -63,7 +63,7 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
-	resourceParentProvider iamAuthz.ParentProvider
+	resourceParentProvider iamauthorizer.ParentProvider
 
 	// Access Control
 	authorizer authorizer.Authorizer
