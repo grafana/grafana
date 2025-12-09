@@ -1,18 +1,20 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import * as runtime from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
 
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
-// Mock UserStorage
+// Mock UserStorage - declare mock functions first, then configure implementation after mock setup
+jest.mock('@grafana/runtime/internal');
+
 const mockGetItem = jest.fn();
 const mockSetItem = jest.fn();
 
-jest.mock('@grafana/runtime/internal', () => ({
-  UserStorage: jest.fn().mockImplementation(() => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-  })),
+// Configure the mock implementation after jest.mock() hoisting
+(UserStorage as jest.Mock).mockImplementation(() => ({
+  getItem: mockGetItem,
+  setItem: mockSetItem,
 }));
 
 jest.mock('@grafana/runtime', () => ({
