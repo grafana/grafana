@@ -21,8 +21,6 @@ type InvestigationIndex struct {
 
 	// Spec is the spec of the InvestigationIndex
 	Spec InvestigationIndexSpec `json:"spec" yaml:"spec"`
-
-	Status InvestigationIndexStatus `json:"status" yaml:"status"`
 }
 
 func (o *InvestigationIndex) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *InvestigationIndex) SetSpec(spec any) error {
 }
 
 func (o *InvestigationIndex) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *InvestigationIndex) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *InvestigationIndex) GetSubresource(name string) (any, bool) {
 
 func (o *InvestigationIndex) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(InvestigationIndexStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type InvestigationIndexStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *InvestigationIndex) DeepCopyInto(dst *InvestigationIndex) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *InvestigationIndexSpec) DeepCopy() *InvestigationIndexSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *InvestigationIndexSpec) DeepCopyInto(dst *InvestigationIndexSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of InvestigationIndexStatus
-func (s *InvestigationIndexStatus) DeepCopy() *InvestigationIndexStatus {
-	cpy := &InvestigationIndexStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies InvestigationIndexStatus into another InvestigationIndexStatus object
-func (s *InvestigationIndexStatus) DeepCopyInto(dst *InvestigationIndexStatus) {
 	resource.CopyObjectInto(dst, s)
 }
