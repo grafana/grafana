@@ -93,6 +93,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/quotas apps/quotas
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
 COPY apps/annotation apps/annotation
