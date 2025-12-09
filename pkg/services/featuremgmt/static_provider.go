@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"strconv"
 )
 
 // inMemoryBulkProvider is a wrapper around memprovider.InMemoryProvider that
@@ -29,8 +30,8 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(confFlags map[string]bool) (openfeature.FeatureProvider, error) {
-	flags := make(map[string]memprovider.InMemoryFlag, len(standardFeatureFlags))
+func newStaticProvider(confFlags map[string]bool, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+	flags := make(map[string]memprovider.InMemoryFlag, len(standardFlags))
 
 	// Add flags from config.ini file
 	for name, value := range confFlags {
@@ -38,11 +39,11 @@ func newStaticProvider(confFlags map[string]bool) (openfeature.FeatureProvider, 
 	}
 
 	// Add standard flags
-	for _, flag := range standardFeatureFlags {
+	for _, flag := range standardFlags {
 		_, exists := flags[flag.Name]
 
 		if exists && flag.Type != Boolean {
-			return nil, fmt.Errorf("flag %s already exists", flag.Name)
+			return nil, fmt.Errorf("flag %s already declared as boolean", flag.Name)
 		}
 
 		inMemFlag, err := createFlag(flag)
@@ -76,17 +77,24 @@ func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
 	defaultVariant := "default"
 
 	var value any
+	var err error
 	switch flag.Type {
 	case Boolean:
 		value = flag.Expression == "true"
 	case String:
 		value = flag.Expression
-	case Number:
-		value = f
+	case Integer:
+		value, err = strconv.Atoi(flag.Expression)
+	case Float:
+		value, err = strconv.ParseFloat(flag.Expression, 64)
 	case Object:
 		value = value
 	default:
 		return memprovider.InMemoryFlag{}, fmt.Errorf("unsupported flag type %s", flag.Type)
+	}
+
+	if err != nil {
+		return memprovider.InMemoryFlag{}, err
 	}
 
 	return memprovider.InMemoryFlag{
@@ -97,5 +105,3 @@ func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
 		},
 	}, nil
 }
-
-func

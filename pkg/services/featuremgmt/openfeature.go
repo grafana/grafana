@@ -100,7 +100,7 @@ func createProvider(
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
-		return newStaticProvider(staticFlags)
+		return newStaticProvider(staticFlags, standardFeatureFlags)
 	}
 
 	if u == nil || u.String() == "" {
