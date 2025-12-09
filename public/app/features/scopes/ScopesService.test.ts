@@ -22,8 +22,8 @@ describe('ScopesService', () => {
     | undefined;
   let dashboardsStateSubscription:
     | ((
-        state: { navigationScope?: string; drawerOpened: boolean },
-        prevState: { navigationScope?: string; drawerOpened: boolean }
+        state: { navigationScope?: string; drawerOpened: boolean; navScopePath?: string[] },
+        prevState: { navigationScope?: string; drawerOpened: boolean; navScopePath?: string[] }
       ) => void)
     | undefined;
 
@@ -71,6 +71,7 @@ describe('ScopesService', () => {
         loading: false,
         searchQuery: '',
         navigationScope: undefined,
+        navScopePath: undefined,
       },
       stateObservable: new BehaviorSubject({
         drawerOpened: false,
@@ -82,6 +83,7 @@ describe('ScopesService', () => {
         loading: false,
         searchQuery: '',
         navigationScope: undefined,
+        navScopePath: undefined,
       }),
       subscribeToState: jest.fn((callback) => {
         dashboardsStateSubscription = callback;
@@ -188,7 +190,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, undefined);
     });
 
     it('should read navigation_scope along with other scope parameters', () => {
@@ -199,7 +201,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, undefined);
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
 
@@ -346,16 +348,22 @@ describe('ScopesService', () => {
         {
           navigationScope: 'navScope1',
           drawerOpened: true,
+          navScopePath: undefined,
         },
         {
           navigationScope: undefined,
           drawerOpened: false,
+          navScopePath: undefined,
         }
       );
 
-      expect(locationService.partial).toHaveBeenCalledWith({
-        navigation_scope: 'navScope1',
-      });
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          navigation_scope: 'navScope1',
+          nav_scope_path: null,
+        },
+        true
+      );
     });
 
     it('should update navigation_scope in URL when navigationScope changes', () => {
@@ -367,16 +375,22 @@ describe('ScopesService', () => {
         {
           navigationScope: 'navScope2',
           drawerOpened: true,
+          navScopePath: undefined,
         },
         {
           navigationScope: 'navScope1',
           drawerOpened: true,
+          navScopePath: undefined,
         }
       );
 
-      expect(locationService.partial).toHaveBeenCalledWith({
-        navigation_scope: 'navScope2',
-      });
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          navigation_scope: 'navScope2',
+          nav_scope_path: null,
+        },
+        true
+      );
     });
 
     it('should not update URL when navigationScope has not changed', () => {
@@ -390,10 +404,12 @@ describe('ScopesService', () => {
         {
           navigationScope: 'navScope1',
           drawerOpened: true,
+          navScopePath: undefined,
         },
         {
           navigationScope: 'navScope1',
           drawerOpened: false,
+          navScopePath: undefined,
         }
       );
 
@@ -409,16 +425,22 @@ describe('ScopesService', () => {
         {
           navigationScope: undefined,
           drawerOpened: false,
+          navScopePath: undefined,
         },
         {
           navigationScope: 'navScope1',
           drawerOpened: true,
+          navScopePath: undefined,
         }
       );
 
-      expect(locationService.partial).toHaveBeenCalledWith({
-        navigation_scope: undefined,
-      });
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          navigation_scope: null,
+          nav_scope_path: null,
+        },
+        true
+      );
     });
   });
 
