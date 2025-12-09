@@ -73,7 +73,7 @@ refs:
 
 # Azure Monitor data source
 
-The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud. 
+The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud.
 
 ## Supported Azure clouds
 
@@ -87,12 +87,12 @@ The Azure Monitor data source supports the following Azure cloud environments:
 
 The Azure Monitor data source supports the following Azure services:
 
-| Service | Description |
-|---------|-------------|
-| **Azure Monitor Metrics** | Collect numeric data from resources in your Azure account. Supports dimensions, aggregations, and time grain configuration. |
-| **Azure Monitor Logs** | Collect log and performance data from your Azure account using the Kusto Query Language (KQL). |
-| **Azure Resource Graph** | Query your Azure resources across subscriptions using KQL. Useful for inventory, compliance, and resource management. |
-| **Application Insights Traces** | Collect distributed trace data and correlate requests across your application components. |
+| Service                         | Description                                                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Azure Monitor Metrics**       | Collect numeric data from resources in your Azure account. Supports dimensions, aggregations, and time grain configuration. |
+| **Azure Monitor Logs**          | Collect log and performance data from your Azure account using the Kusto Query Language (KQL).                              |
+| **Azure Resource Graph**        | Query your Azure resources across subscriptions using KQL. Useful for inventory, compliance, and resource management.       |
+| **Application Insights Traces** | Collect distributed trace data and correlate requests across your application components.                                   |
 
 ## Get started
 

@@ -80,12 +80,12 @@ The Azure Monitor data source can query data from Azure Monitor Metrics and Logs
 
 If you're new to Azure Monitor, here are some key terms used throughout this documentation:
 
-| Term | Description |
-|------|-------------|
+| Term                           | Description                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **KQL (Kusto Query Language)** | The query language used for Azure Monitor Logs and Azure Resource Graph. KQL uses a pipe-based syntax similar to Unix commands and is optimized for read-only data exploration. If you know SQL, the [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet) can help you get started. |
-| **Log Analytics workspace** | An Azure resource that collects and stores log data from your Azure resources, applications, and services. You query this data using KQL. |
-| **Application Insights** | Azure's application performance monitoring (APM) service. It collects telemetry data like requests, exceptions, and traces from your applications. |
-| **Metrics vs. Logs** | **Metrics** are lightweight numeric values collected at regular intervals (e.g., CPU percentage). **Logs** are detailed records of events with varying schemas (e.g., request logs, error messages). Metrics use a visual query builder; Logs require KQL. |
+| **Log Analytics workspace**    | An Azure resource that collects and stores log data from your Azure resources, applications, and services. You query this data using KQL.                                                                                                                                                                                                 |
+| **Application Insights**       | Azure's application performance monitoring (APM) service. It collects telemetry data like requests, exceptions, and traces from your applications.                                                                                                                                                                                        |
+| **Metrics vs. Logs**           | **Metrics** are lightweight numeric values collected at regular intervals (e.g., CPU percentage). **Logs** are detailed records of events with varying schemas (e.g., request logs, error messages). Metrics use a visual query builder; Logs require KQL.                                                                                |
 
 ## Choose a query editor mode
 
@@ -430,23 +430,23 @@ Azure Monitor queries can be used with [Grafana Alerting](ref:alerting) and [Gra
 
 The following Azure Monitor query types support alerting and recording rules:
 
-| Query type | Alerting | Recording rules |
-|------------|----------|-----------------|
-| Metrics | ✓ | ✓ |
-| Logs | ✓ | ✓ |
-| Azure Resource Graph | ✓ | ✓ |
-| Traces | ✓ | ✓ |
+| Query type           | Alerting | Recording rules |
+| -------------------- | -------- | --------------- |
+| Metrics              | ✓        | ✓               |
+| Logs                 | ✓        | ✓               |
+| Azure Resource Graph | ✓        | ✓               |
+| Traces               | ✓        | ✓               |
 
 ### Authentication requirements
 
 Alerting and recording rules run as background processes without a user context. This means they require service-level authentication and don't work with all authentication methods.
 
-| Authentication method | Supported |
-|-----------------------|-----------|
-| App Registration (client secret) | ✓ |
-| Managed Identity | ✓ |
-| Workload Identity | ✓ |
-| Current User | ✗ |
+| Authentication method            | Supported |
+| -------------------------------- | --------- |
+| App Registration (client secret) | ✓         |
+| Managed Identity                 | ✓         |
+| Workload Identity                | ✓         |
+| Current User                     | ✗         |
 
 If you use **Current User** authentication, alerting and recording rules won't function because user credentials aren't available for background operations. To use these features, [configure the data source](ref:configure-azure-monitor) with App Registration, Managed Identity, or Workload Identity authentication.
 

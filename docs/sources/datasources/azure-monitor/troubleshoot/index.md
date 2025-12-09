@@ -55,13 +55,13 @@ These errors typically occur when setting up the data source or when authenticat
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
+| Cause                                              | Solution                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App registration doesn't have required permissions | Assign the `Reader` role to the app registration on the subscription or resource group you want to monitor. Refer to the [Azure documentation for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current). |
-| Incorrect tenant ID, client ID, or client secret | Verify the credentials in the Azure Portal under **App registrations** > your app > **Overview** (for IDs) and **Certificates & secrets** (for secret). |
-| Client secret has expired | Create a new client secret in Azure and update the data source configuration. |
-| Managed Identity not enabled on the Azure resource | For VMs, enable managed identity in the Azure Portal under **Identity**. For App Service, enable it under **Identity** in the app settings. |
-| Managed Identity not assigned the Reader role | Assign the `Reader` role to the managed identity on the target subscription or resources. |
+| Incorrect tenant ID, client ID, or client secret   | Verify the credentials in the Azure Portal under **App registrations** > your app > **Overview** (for IDs) and **Certificates & secrets** (for secret).                                                                                                                     |
+| Client secret has expired                          | Create a new client secret in Azure and update the data source configuration.                                                                                                                                                                                               |
+| Managed Identity not enabled on the Azure resource | For VMs, enable managed identity in the Azure Portal under **Identity**. For App Service, enable it under **Identity** in the app settings.                                                                                                                                 |
+| Managed Identity not assigned the Reader role      | Assign the `Reader` role to the managed identity on the target subscription or resources.                                                                                                                                                                                   |
 
 ### "Invalid client secret" or "Client secret not found"
 
@@ -132,13 +132,13 @@ These errors occur when executing queries against Azure Monitor services.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Time range doesn't contain data | Expand the dashboard time range or verify data exists in Azure Portal. |
-| Wrong resource selected | Verify you've selected the correct subscription, resource group, and resource. |
+| Cause                             | Solution                                                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data   | Expand the dashboard time range or verify data exists in Azure Portal.                                                           |
+| Wrong resource selected           | Verify you've selected the correct subscription, resource group, and resource.                                                   |
 | Metric not available for resource | Not all metrics are available for all resources. Check available metrics in Azure Portal under the resource's **Metrics** blade. |
-| Metric has no values | Some metrics only populate under certain conditions (e.g., error counts when errors occur). |
-| Permissions issue | Verify the identity has read access to the specific resource. |
+| Metric has no values              | Some metrics only populate under certain conditions (e.g., error counts when errors occur).                                      |
+| Permissions issue                 | Verify the identity has read access to the specific resource.                                                                    |
 
 ### "Bad request" or "Invalid query"
 
@@ -316,4 +316,3 @@ If you've tried the solutions above and still encounter issues:
    - Error messages (redact sensitive information)
    - Steps to reproduce
    - Relevant configuration (redact credentials)
-

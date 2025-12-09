@@ -76,18 +76,18 @@ To create a template variable for Azure Monitor:
 
 The Azure Monitor data source provides the following query types for template variables:
 
-| Query type | Description |
-|------------|-------------|
-| **Subscriptions** | Returns a list of Azure subscriptions accessible to the configured credentials. |
-| **Resource Groups** | Returns resource groups for a specified subscription. Supports multi-value selection. |
-| **Namespaces** | Returns metric namespaces for the specified subscription. If a resource group is specified, returns only namespaces within that group. |
-| **Regions** | Returns Azure regions available for the specified subscription. |
-| **Resource Names** | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection. |
-| **Metric Names** | Returns available metric names for a specified resource. |
-| **Workspaces** | Returns Log Analytics workspaces for the specified subscription. |
-| **Logs** | Executes a KQL query and returns the results as variable values. See [Create a Logs variable](#create-a-logs-variable). |
-| **Custom Namespaces** | Returns custom metric namespaces for a specified resource. |
-| **Custom Metric Names** | Returns custom metric names for a specified resource. |
+| Query type              | Description                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Subscriptions**       | Returns a list of Azure subscriptions accessible to the configured credentials.                                                        |
+| **Resource Groups**     | Returns resource groups for a specified subscription. Supports multi-value selection.                                                  |
+| **Namespaces**          | Returns metric namespaces for the specified subscription. If a resource group is specified, returns only namespaces within that group. |
+| **Regions**             | Returns Azure regions available for the specified subscription.                                                                        |
+| **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                    |
+| **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
+| **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
+| **Logs**                | Executes a KQL query and returns the results as variable values. See [Create a Logs variable](#create-a-logs-variable).                |
+| **Custom Namespaces**   | Returns custom metric namespaces for a specified resource.                                                                             |
+| **Custom Metric Names** | Returns custom metric names for a specified resource.                                                                                  |
 
 {{< admonition type="note" >}}
 Custom metrics cannot be emitted against a subscription or resource group. Select specific resources when retrieving custom metric namespaces or custom metric names.
@@ -132,12 +132,12 @@ The **Logs** query type lets you use a KQL query to populate variable values. Th
 
 ### Logs variable query examples
 
-| Query | Returns |
-|-------|---------|
-| `Heartbeat \| distinct Computer` | List of virtual machine names |
-| `Perf \| distinct ObjectName` | List of performance object names |
+| Query                                     | Returns                               |
+| ----------------------------------------- | ------------------------------------- |
+| `Heartbeat \| distinct Computer`          | List of virtual machine names         |
+| `Perf \| distinct ObjectName`             | List of performance object names      |
 | `AzureActivity \| distinct ResourceGroup` | List of resource groups with activity |
-| `AppRequests \| distinct Name` | List of application request names |
+| `AppRequests \| distinct Name`            | List of application request names     |
 
 You can reference other variables in your Logs query:
 
@@ -155,10 +155,10 @@ workspace("$workspace").Perf
 
 Control when your variables refresh by setting the **Refresh** option:
 
-| Option | Behavior |
-|--------|----------|
-| **On dashboard load** | Variables refresh each time the dashboard loads. Best for data that changes infrequently. |
-| **On time range change** | Variables refresh when the dashboard time range changes. Use for time-sensitive queries. |
+| Option                   | Behavior                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| **On dashboard load**    | Variables refresh each time the dashboard loads. Best for data that changes infrequently. |
+| **On time range change** | Variables refresh when the dashboard time range changes. Use for time-sensitive queries.  |
 
 For dashboards with many variables or complex queries, use **On dashboard load** to improve performance.
 

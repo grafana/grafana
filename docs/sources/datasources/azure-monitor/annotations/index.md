@@ -59,11 +59,11 @@ To add an Azure Monitor annotation to a dashboard:
 
 Your KQL query should return columns that Grafana can use to create annotations:
 
-| Column | Required | Description |
-|--------|----------|-------------|
-| `TimeGenerated` | Yes | The timestamp for the annotation. Grafana uses this to position the annotation on the time axis. |
-| `Text` | Recommended | The annotation text displayed when you hover over or click the annotation. |
-| Additional columns | Optional | Any other columns returned become annotation tags. |
+| Column             | Required    | Description                                                                                      |
+| ------------------ | ----------- | ------------------------------------------------------------------------------------------------ |
+| `TimeGenerated`    | Yes         | The timestamp for the annotation. Grafana uses this to position the annotation on the time axis. |
+| `Text`             | Recommended | The annotation text displayed when you hover over or click the annotation.                       |
+| Additional columns | Optional    | Any other columns returned become annotation tags.                                               |
 
 {{< admonition type="note" >}}
 Always include a time filter in your query to limit results to the dashboard's time range. Use the `$__timeFilter()` macro.
@@ -175,11 +175,11 @@ AzureActivity
 
 After creating an annotation query, you can customize its appearance:
 
-| Setting | Description |
-|---------|-------------|
-| **Color** | Choose a color for the annotation markers. Use different colors to distinguish between annotation types. |
-| **Show in** | Select which panels display the annotations. |
-| **Filter by** | Add filters to limit when annotations appear. |
+| Setting       | Description                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| **Color**     | Choose a color for the annotation markers. Use different colors to distinguish between annotation types. |
+| **Show in**   | Select which panels display the annotations.                                                             |
+| **Filter by** | Add filters to limit when annotations appear.                                                            |
 
 ## Best practices
 
@@ -216,4 +216,3 @@ If annotations aren't appearing as expected, try the following solutions.
 
 - Verify the `TimeGenerated` column contains the correct timestamp.
 - Check your dashboard's timezone settings.
-

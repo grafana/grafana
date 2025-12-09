@@ -121,12 +121,12 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 The Azure Monitor data source supports four authentication methods. Choose based on where Grafana is hosted and your security requirements:
 
-| Authentication method | Best for | Requirements |
-|-----------------------|----------|--------------|
-| **App Registration** | Any Grafana deployment | Azure AD app registration with client secret |
-| **Managed Identity** | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource |
-| **Workload Identity** | Grafana in Kubernetes (AKS) | Workload identity federation configured |
-| **Current User** | User-level access control | Azure AD authentication configured for Grafana login |
+| Authentication method | Best for                                   | Requirements                                         |
+| --------------------- | ------------------------------------------ | ---------------------------------------------------- |
+| **App Registration**  | Any Grafana deployment                     | Azure AD app registration with client secret         |
+| **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource       |
+| **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured              |
+| **Current User**      | User-level access control                  | Azure AD authentication configured for Grafana login |
 
 ## Configure authentication
 
@@ -149,14 +149,14 @@ Use an Azure AD app registration (service principal) to authenticate. This metho
 
 #### App Registration UI configuration
 
-| Setting | Description |
-|---------|-------------|
-| **Authentication** | Select **App Registration**. |
-| **Azure Cloud** | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
-| **Directory (tenant) ID** | The GUID that identifies your Azure AD tenant. |
-| **Application (client) ID** | The GUID for the app registration you created. |
-| **Client secret** | The secret key for the app registration. Keep this secure and rotate periodically. |
-| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
+| Setting                     | Description                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Authentication**          | Select **App Registration**.                                                                                                               |
+| **Azure Cloud**             | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
+| **Directory (tenant) ID**   | The GUID that identifies your Azure AD tenant.                                                                                             |
+| **Application (client) ID** | The GUID for the app registration you created.                                                                                             |
+| **Client secret**           | The secret key for the app registration. Keep this secure and rotate periodically.                                                         |
+| **Default Subscription**    | Click **Load Subscriptions** to populate available subscriptions, then select your default.                                                |
 
 #### Provision App Registration with YAML
 
@@ -215,10 +215,10 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) for more det
 
 #### Managed Identity UI configuration
 
-| Setting | Description |
-|---------|-------------|
-| **Authentication** | Select **Managed Identity**. The directory ID, application ID, and client secret fields are hidden. |
-| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
+| Setting                  | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| **Authentication**       | Select **Managed Identity**. The directory ID, application ID, and client secret fields are hidden. |
+| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default.         |
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Managed Identity" >}}
 
@@ -271,10 +271,10 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) and the [Azu
 
 #### Workload Identity UI configuration
 
-| Setting | Description |
-|---------|-------------|
-| **Authentication** | Select **Workload Identity**. The directory ID, application ID, and client secret fields are hidden. |
-| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
+| Setting                  | Description                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Authentication**       | Select **Workload Identity**. The directory ID, application ID, and client secret fields are hidden. |
+| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default.          |
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-workload-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Workload Identity" >}}
 
@@ -368,11 +368,11 @@ Query and resource caching is disabled by default for data sources using Current
 
 #### Current User UI configuration
 
-| Setting | Description |
-|---------|-------------|
-| **Authentication** | Select **Current User**. |
-| **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
-| **Fallback Service Credentials** | Enable and configure credentials for backend features like alerting. |
+| Setting                          | Description                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Authentication**               | Select **Current User**.                                                                    |
+| **Default Subscription**         | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
+| **Fallback Service Credentials** | Enable and configure credentials for backend features like alerting.                        |
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Current User authentication" >}}
 
@@ -403,10 +403,10 @@ These settings apply to all authentication methods.
 
 ### General settings
 
-| Setting | Description |
-|---------|-------------|
-| **Name** | The data source name used in panels and queries. Example: `azure-monitor-prod`. |
-| **Default** | Toggle to make this the default data source for new panels. |
+| Setting     | Description                                                                     |
+| ----------- | ------------------------------------------------------------------------------- |
+| **Name**    | The data source name used in panels and queries. Example: `azure-monitor-prod`. |
+| **Default** | Toggle to make this the default data source for new panels.                     |
 
 ### Enable Basic Logs
 
@@ -429,11 +429,11 @@ For more information, refer to [Private data source connect](ref:private-data-so
 
 When provisioning the data source, use the following `cloudName` values:
 
-| Azure Cloud | `cloudName` value |
-|-------------|-------------------|
-| Microsoft Azure public cloud | `azuremonitor` (default) |
-| Microsoft Chinese national cloud | `chinaazuremonitor` |
-| US Government cloud | `govazuremonitor` |
+| Azure Cloud                      | `cloudName` value        |
+| -------------------------------- | ------------------------ |
+| Microsoft Azure public cloud     | `azuremonitor` (default) |
+| Microsoft Chinese national cloud | `chinaazuremonitor`      |
+| US Government cloud              | `govazuremonitor`        |
 
 {{< admonition type="note" >}}
 For Current User authentication, the cloud names differ: use `AzureCloud` for public cloud, `AzureChinaCloud` for the Chinese national cloud, and `AzureUSGovernment` for the US Government cloud.
@@ -457,12 +457,12 @@ For more information about provisioning, refer to [Provisioning Grafana](ref:pro
 
 ### Provision quick reference
 
-| Authentication method | `azureAuthType` value | Required fields |
-|-----------------------|-----------------------|-----------------|
-| App Registration | `clientsecret` | `tenantId`, `clientId`, `clientSecret` |
-| Managed Identity | `msi` | None (uses VM identity) |
-| Workload Identity | `workloadidentity` | None (uses pod identity) |
-| Current User | `currentuser` | `oauthPassThru: true`, `disableGrafanaCache: true` |
+| Authentication method | `azureAuthType` value | Required fields                                    |
+| --------------------- | --------------------- | -------------------------------------------------- |
+| App Registration      | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`             |
+| Managed Identity      | `msi`                 | None (uses VM identity)                            |
+| Workload Identity     | `workloadidentity`    | None (uses pod identity)                           |
+| Current User          | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true` |
 
 All methods support the optional `subscriptionId` field to set a default subscription.
 
