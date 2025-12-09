@@ -4,13 +4,7 @@ import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from '../interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
@@ -45,9 +39,6 @@ jest.mock('../interactions', () => ({
 const mockFetchCommunityDashboard = fetchCommunityDashboard as jest.MockedFunction<typeof fetchCommunityDashboard>;
 const mockTryAutoMapDatasources = tryAutoMapDatasources as jest.MockedFunction<typeof tryAutoMapDatasources>;
 const mockParseConstantInputs = parseConstantInputs as jest.MockedFunction<typeof parseConstantInputs>;
-const mockCommunityDashboardFiltered = DashboardLibraryInteractions.communityDashboardFiltered as jest.MockedFunction<
-  typeof DashboardLibraryInteractions.communityDashboardFiltered
->;
 
 // Helper functions for creating mock objects
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
@@ -324,12 +315,14 @@ describe('communityDashboardHelpers', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockFetchCommunityDashboard.mockRejectedValue(new Error('API failed'));
 
-      await onUseCommunityDashboard({
-        dashboard: createMockGnetDashboard(),
-        datasourceUid: 'test-ds-uid',
-        datasourceType: 'prometheus',
-        eventLocation: 'empty_dashboard',
-      });
+      await expect(
+        onUseCommunityDashboard({
+          dashboard: createMockGnetDashboard(),
+          datasourceUid: 'test-ds-uid',
+          datasourceType: 'prometheus',
+          eventLocation: 'empty_dashboard',
+        })
+      ).rejects.toThrow('API failed');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
       expect(locationServicePushSpy).not.toHaveBeenCalled();
@@ -347,14 +340,6 @@ describe('communityDashboardHelpers', () => {
       await expect(setup({ dashboardJson })).rejects.toThrow(
         'Community dashboard 123 Test Dashboard contains JavaScript code'
       );
-
-      expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
-        libraryItemId: '123',
-        libraryItemTitle: 'Test Dashboard',
-        panelTypeSlugs: [],
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        eventLocation: EVENT_LOCATIONS.COMMUNITY_DASHBOARD_LOADED,
-      });
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
       expect(locationServicePushSpy).not.toHaveBeenCalled();

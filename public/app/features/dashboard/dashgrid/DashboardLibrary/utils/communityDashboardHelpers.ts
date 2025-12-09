@@ -9,15 +9,7 @@ import { dispatch } from 'app/types/store';
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  ContentKind,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  EVENT_LOCATIONS,
-  EventLocation,
-  SOURCE_ENTRY_POINTS,
-} from '../interactions';
+import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
@@ -221,14 +213,6 @@ export async function onUseCommunityDashboard({
     const dashboardJson = fullDashboard.json;
 
     if (canDashboardContainJS(dashboardJson)) {
-      DashboardLibraryInteractions.communityDashboardFiltered({
-        libraryItemId: String(dashboard.id),
-        libraryItemTitle: dashboard.name,
-        panelTypeSlugs: dashboard.panelTypeSlugs || [],
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        eventLocation: EVENT_LOCATIONS.COMMUNITY_DASHBOARD_LOADED,
-        reason: 'contains_javascript',
-      });
       throw new Error(`Community dashboard ${dashboard.id} ${dashboard.name} contains JavaScript code`);
     }
 

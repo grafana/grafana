@@ -2,7 +2,6 @@ import { BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS } from '../interactions';
 import { GnetDashboard } from '../types';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
@@ -27,9 +26,6 @@ jest.mock('../interactions', () => ({
   },
 }));
 const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackendSrv>;
-const mockCommunityDashboardFiltered = DashboardLibraryInteractions.communityDashboardFiltered as jest.MockedFunction<
-  typeof DashboardLibraryInteractions.communityDashboardFiltered
->;
 
 // Helper to create mock BackendSrv
 const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =>
@@ -87,15 +83,6 @@ describe('dashboardLibraryApi', () => {
 
         const result = await fetchCommunityDashboards(defaultFetchParams);
 
-        expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
-          libraryItemId: '2',
-          libraryItemTitle: 'Test Dashboard',
-          panelTypeSlugs: ['ae3e-plotly-panel'],
-          reason: 'contains_javascript',
-          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        });
-
         expect(result).toEqual({
           page: 1,
           pages: 5,
@@ -114,15 +101,6 @@ describe('dashboardLibraryApi', () => {
         mockGet.mockResolvedValue(mockResponse);
 
         const result = await fetchCommunityDashboards(defaultFetchParams);
-
-        expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
-          libraryItemId: '2',
-          libraryItemTitle: 'Test Dashboard',
-          panelTypeSlugs: [],
-          reason: 'low_downloads',
-          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        });
 
         expect(result).toEqual({
           page: 1,

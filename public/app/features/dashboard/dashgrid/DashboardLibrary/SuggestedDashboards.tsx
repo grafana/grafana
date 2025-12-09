@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
+import { useAsync, useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Grid } from '@grafana/ui';
+import { Button, useStyles2, Grid, Alert } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
@@ -233,35 +233,38 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
-  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
-    if (!datasourceUid) {
-      return;
-    }
+  const [{ error: isPreviewCommunityDashboardError }, onPreviewCommunityDashboard] = useAsyncFn(
+    async (dashboard: GnetDashboard) => {
+      if (!datasourceUid) {
+        return;
+      }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    if (!ds) {
-      return;
-    }
+      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      if (!ds) {
+        return;
+      }
 
-    // Track item click
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-      datasourceTypes: [ds.type],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+      // Track item click
+      DashboardLibraryInteractions.itemClicked({
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        datasourceTypes: [ds.type],
+        libraryItemId: String(dashboard.id),
+        libraryItemTitle: dashboard.name,
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+        discoveryMethod: DISCOVERY_METHODS.BROWSE,
+      });
 
-    onUseCommunityDashboard({
-      dashboard,
-      datasourceUid,
-      datasourceType: ds.type,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      onShowMapping: onShowMapping,
-    });
-  };
+      await onUseCommunityDashboard({
+        dashboard,
+        datasourceUid,
+        datasourceType: ds.type,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+        onShowMapping: onShowMapping,
+      });
+    },
+    [datasourceUid, onShowMapping]
+  );
 
   // Don't render if no dashboards or still loading
   if (!loading && (!result || result.dashboards.length === 0)) {
@@ -297,7 +300,16 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
             </Button>
           )}
         </div>
-
+        {isPreviewCommunityDashboardError && (
+          <div>
+            <Alert
+              title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
+              severity="error"
+            >
+              <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+            </Alert>
+          </div>
+        )}
         <Grid
           gap={4}
           columns={{

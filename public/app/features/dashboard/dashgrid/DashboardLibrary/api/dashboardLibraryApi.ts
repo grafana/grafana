@@ -2,7 +2,6 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS } from '../interactions';
 import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
 
 // panel types that might contain JavaScript code
@@ -132,23 +131,9 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
 // They are already ordered by downloads amount
 const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
   return dashboards.filter((item: GnetDashboard) => {
-    if (
+    return !(
       item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
       item.downloads < MIN_DOWNLOADS_FILTER
-    ) {
-      DashboardLibraryInteractions.communityDashboardFiltered({
-        libraryItemId: String(item.id),
-        libraryItemTitle: item.name,
-        panelTypeSlugs: item.panelTypeSlugs || [],
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        reason: item.downloads < MIN_DOWNLOADS_FILTER ? 'low_downloads' : 'contains_javascript',
-      });
-      console.warn(
-        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavasScript`
-      );
-      return false;
-    }
-    return true;
+    );
   });
 };

@@ -105,16 +105,6 @@ export const DashboardLibraryInteractions = {
   entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
-  communityDashboardFiltered: (properties: {
-    libraryItemId: string;
-    libraryItemTitle: string;
-    panelTypeSlugs: string[];
-    contentKind: ContentKind;
-    eventLocation: EventLocation;
-    reason: 'low_downloads' | 'contains_javascript';
-  }) => {
-    reportDashboardLibraryInteraction('filtered_out', properties);
-  },
 };
 
 const reportDashboardLibraryInteraction = (name: string, properties?: Record<string, unknown>) => {
