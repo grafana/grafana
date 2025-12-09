@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -17,7 +18,7 @@ import (
 func TestUserLegacySearchClient_Search(t *testing.T) {
 	t.Run("should return error if no query fields are provided", func(t *testing.T) {
 		mockUserService := usertest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockUserService)
+		client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -66,7 +67,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockUserService := usertest.NewMockService(t)
-			client := NewUserLegacySearchClient(mockUserService)
+			client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 			req := &resourcepb.ResourceSearchRequest{
 				Limit: 10,
@@ -125,7 +126,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 
 	t.Run("title should have precedence over login and email", func(t *testing.T) {
 		mockUserService := usertest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockUserService)
+		client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{

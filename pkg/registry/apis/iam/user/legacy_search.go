@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math"
 
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,13 +28,15 @@ type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	userService user.Service
 	log         *slog.Logger
+	tracer      trace.Tracer
 }
 
 // NewUserLegacySearchClient creates a new UserLegacySearchClient.
-func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient {
+func NewUserLegacySearchClient(userService user.Service, tracer trace.Tracer) *UserLegacySearchClient {
 	return &UserLegacySearchClient{
 		userService: userService,
 		log:         slog.Default().With("logger", "legacy-user-search-client"),
+		tracer:      tracer,
 	}
 }
 
@@ -41,6 +44,9 @@ func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient
 // It only supports exact matching for title, login, or email.
 // FIXME: This implementation only supports a single field query and will be extended in the future.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "user.Search")
+	defer span.End()
+
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
