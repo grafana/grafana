@@ -57,7 +57,8 @@ v0alpha1: {
 	login: string
 	email: string
 	role: string
-	lastSeenAt: string
+	lastSeenAt: int64
+	lastSeenAtAge: string
 	provisioned: bool
 	score: float64
 }

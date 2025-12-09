@@ -930,7 +930,6 @@
           {
             "name": "query",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "string"
             }
@@ -7798,6 +7797,7 @@
           "email",
           "role",
           "lastSeenAt",
+          "lastSeenAtAge",
           "provisioned",
           "score"
         ],
@@ -7807,6 +7807,11 @@
             "default": ""
           },
           "lastSeenAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastSeenAtAge": {
             "type": "string",
             "default": ""
           },

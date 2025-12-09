@@ -2819,6 +2819,13 @@ func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.O
 					},
 					"lastSeenAt": {
 						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"lastSeenAtAge": {
+						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
@@ -2839,7 +2846,7 @@ func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.O
 						},
 					},
 				},
-				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "provisioned", "score"},
+				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"},
 			},
 		},
 	}

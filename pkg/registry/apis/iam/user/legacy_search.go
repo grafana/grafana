@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"regexp"
 	"sort"
 
 	"google.golang.org/grpc"
@@ -69,7 +70,15 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Page = 1
 	}
 
+	wildcardsMatcher := regexp.MustCompile(`[\*\?\\]`)
+
 	legacySortOptions := convertToSortOptions(req.SortBy)
+
+	// Unified search `query` has wildcards, but legacy search does not support them.
+	// We have to remove them here to make legacy search work as expected with SQL LIKE queries.
+	if req.Query != "" {
+		req.Query = wildcardsMatcher.ReplaceAllString(req.Query, "")
+	}
 
 	query := &org.SearchOrgUsersQuery{
 		OrgID:    signedInUser.GetOrgID(),

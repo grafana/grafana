@@ -4,14 +4,15 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type UserHit struct {
-	Name        string  `json:"name"`
-	Title       string  `json:"title"`
-	Login       string  `json:"login"`
-	Email       string  `json:"email"`
-	Role        string  `json:"role"`
-	LastSeenAt  string  `json:"lastSeenAt"`
-	Provisioned bool    `json:"provisioned"`
-	Score       float64 `json:"score"`
+	Name          string  `json:"name"`
+	Title         string  `json:"title"`
+	Login         string  `json:"login"`
+	Email         string  `json:"email"`
+	Role          string  `json:"role"`
+	LastSeenAt    int64   `json:"lastSeenAt"`
+	LastSeenAtAge string  `json:"lastSeenAtAge"`
+	Provisioned   bool    `json:"provisioned"`
+	Score         float64 `json:"score"`
 }
 
 // NewUserHit creates a new UserHit object.

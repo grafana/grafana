@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/kube-openapi/pkg/common"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -67,7 +70,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:     "query",
 										In:       "query",
-										Required: true,
+										Required: false,
 										Schema:   spec.StringProperty(),
 									},
 								},
@@ -215,6 +218,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	rawQuery := queryParams.Get("query")
+	// Escape characters that are used by bleve wildcard search to be literal strings.
+	rawQuery = strings.ReplaceAll(rawQuery, "\\", "\\\\")
+	rawQuery = strings.ReplaceAll(rawQuery, "*", "\\*")
+	rawQuery = strings.ReplaceAll(rawQuery, "?", "\\?")
+
+	searchQuery := fmt.Sprintf(`*%s*`, rawQuery)
+
 	userGvr := iamv0.UserResourceInfo.GroupResource()
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -224,7 +235,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				Namespace: ident.GetNamespace(),
 			},
 		},
-		Query:  queryParams.Get("query"),
+		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
 		Limit:  limit,
 		Offset: (page - 1) * limit,
@@ -265,14 +276,24 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	if resp.TotalHits > 0 {
 		for _, row := range resp.Results.Rows {
-			hit := iamv0.UserHit{
-				Name:       row.Key.Name,
-				Title:      string(row.Cells[0]),
-				Email:      string(row.Cells[1]),
-				Login:      string(row.Cells[2]),
-				LastSeenAt: string(row.Cells[3]),
-				Role:       string(row.Cells[4]),
+			var lastSeenAt int64
+			var lastSeenAtAge string
+
+			if len(row.Cells[3]) == 8 {
+				lastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[3]))
+				lastSeenAtAge = util.GetAgeString(time.Unix(lastSeenAt, 0))
 			}
+
+			hit := iamv0.UserHit{
+				Name:          row.Key.Name,
+				Title:         string(row.Cells[0]),
+				Email:         string(row.Cells[1]),
+				Login:         string(row.Cells[2]),
+				LastSeenAt:    lastSeenAt,
+				LastSeenAtAge: lastSeenAtAge,
+				Role:          string(row.Cells[4]),
+			}
+			// TODO: Add a check to filter out hidden users if any (cfg.HiddenUsers)
 			result.Hits = append(result.Hits, hit)
 		}
 	}

@@ -270,6 +270,11 @@ var appManifestData = app.ManifestData{
 								},
 								"lastSeenAt": {
 									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"lastSeenAtAge": {
+									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
 								},
@@ -311,6 +316,7 @@ var appManifestData = app.ManifestData{
 								"email",
 								"role",
 								"lastSeenAt",
+								"lastSeenAtAge",
 								"provisioned",
 								"score",
 							},
