@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -81,8 +80,15 @@ func (m *model) readActiveVersion(namespace, name string) *modelSecureValue {
 
 func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	keeper := m.getActiveKeeper(sv.Namespace)
-	sv = deepCopy(sv)
-	modelSv := &modelSecureValue{SecureValue: sv, active: false, created: now}
+	sv = sv.DeepCopy()
+
+	// Preserve the original creation time if this secure value already exists
+	created := now
+	if sv := m.readActiveVersion(sv.Namespace, sv.Name); sv != nil {
+		created = sv.created
+	}
+
+	modelSv := &modelSecureValue{SecureValue: sv, active: false, created: created}
 	modelSv.Status.Version = m.getNewVersionNumber(modelSv.Namespace, modelSv.Name)
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
 	modelSv.Status.Keeper = keeper.name
@@ -126,7 +132,7 @@ func (m *model) createKeeper(keeper *secretv1beta1.Keeper) (*secretv1beta1.Keepe
 
 	m.keepers = append(m.keepers, &modelKeeper{namespace: keeper.Namespace, name: keeper.Name})
 
-	return deepCopy(keeper), nil
+	return keeper.DeepCopy(), nil
 }
 
 func (m *model) setKeeperAsActive(namespace, keeperName string) error {
@@ -196,7 +202,7 @@ func (m *model) decrypt(decrypter, namespace, name string) (map[string]decrypt.D
 			v.active {
 			if slices.ContainsFunc(v.Spec.Decrypters, func(d string) bool { return d == decrypter }) {
 				return map[string]decrypt.DecryptResult{
-					name: decrypt.NewDecryptResultValue(deepCopy(v).Spec.Value),
+					name: decrypt.NewDecryptResultValue(v.DeepCopy().Spec.Value),
 				}, nil
 			}
 
@@ -328,14 +334,14 @@ func TestModel(t *testing.T) {
 		now := time.Now()
 
 		// Create a secure value
-		sv1, err := m.create(now, deepCopy(sv))
+		sv1, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv1.Namespace)
 		require.Equal(t, sv.Name, sv1.Name)
 		require.EqualValues(t, 1, sv1.Status.Version)
 
 		// Create a new version of a secure value
-		sv2, err := m.create(now, deepCopy(sv))
+		sv2, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
@@ -349,25 +355,25 @@ func TestModel(t *testing.T) {
 
 		now := time.Now()
 
-		sv1, err := m.create(now, deepCopy(sv))
+		sv1, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// Create a new version of a secure value by updating it
-		sv2, _, err := m.update(now, deepCopy(sv1))
+		sv2, _, err := m.update(now, sv1.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
 		require.EqualValues(t, 2, sv2.Status.Version)
 
 		// Try updating a secure value that doesn't exist without specifying a value for it
-		sv3 := deepCopy(sv2)
+		sv3 := sv2.DeepCopy()
 		sv3.Name = "i_dont_exist"
 		sv3.Spec.Value = nil
 		_, _, err = m.update(now, sv3)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 
 		// Updating a value that doesn't exist creates a new version
-		sv4 := deepCopy(sv3)
+		sv4 := sv3.DeepCopy()
 		sv4.Name = "i_dont_exist"
 		sv4.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("sv4"))
 		_, _, err = m.update(now, sv4)
@@ -380,7 +386,7 @@ func TestModel(t *testing.T) {
 		m := newModel()
 		now := time.Now()
 
-		sv1, err := m.create(now, deepCopy(sv))
+		sv1, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// Deleting a secure value
@@ -407,7 +413,7 @@ func TestModel(t *testing.T) {
 		require.Equal(t, 0, len(list.Items))
 
 		// Create a secure value
-		sv1, err := m.create(now, deepCopy(sv))
+		sv1, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// 1 secure value exists and it should be returned
@@ -434,7 +440,7 @@ func TestModel(t *testing.T) {
 
 		// Create a secure value
 		secret := "v1"
-		sv1, err := m.create(now, deepCopy(sv))
+		sv1, err := m.create(now, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// Decrypt the just created secure value
@@ -459,8 +465,9 @@ func TestStateMachine(t *testing.T) {
 			"create": func(t *rapid.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), deepCopy(sv))
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(deepCopy(sv)))
+				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), sv.DeepCopy())
+
+				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -471,8 +478,8 @@ func TestStateMachine(t *testing.T) {
 			},
 			"update": func(t *rapid.T) {
 				sv := updateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, _, modelErr := model.update(sut.Clock.Now(), deepCopy(sv))
-				createdSv, err := sut.UpdateSv(t.Context(), deepCopy(sv))
+				modelCreatedSv, _, modelErr := model.update(sut.Clock.Now(), sv.DeepCopy())
+				createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -611,7 +618,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		}, "actor-uid")
 		require.NoError(t, err)
 
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
 
 		value := secretv1beta1.NewExposedSecureValue("v1")
 		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
@@ -636,7 +643,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 			},
 		}, "actor-uid")
 		require.NoError(t, err)
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
 
 		// - Read secure value created with inactive keeper
 		readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv1.Namespace), sv1.Name)
@@ -655,12 +662,4 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.Equal(t, k1.Name, updatedSv.Status.Keeper)
 		require.Equal(t, newSv1.Spec.Description, updatedSv.Spec.Description)
 	})
-}
-
-func deepCopy[T any](sv T) T {
-	copied, err := copystructure.Copy(sv)
-	if err != nil {
-		panic(fmt.Sprintf("failed to copy secure value: %v", err))
-	}
-	return copied.(T)
 }

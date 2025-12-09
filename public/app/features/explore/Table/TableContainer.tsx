@@ -2,11 +2,20 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  SplitOpen,
+  DataFrame,
+  LoadingState,
+  FieldType,
+  DataLinksContext,
+  EventBus,
+  EventBusSrv,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
+import { AdHocFilterItem, PanelChrome, withTheme2, Themeable2, PanelContextProvider } from '@grafana/ui';
 import { config } from 'app/core/config';
 import {
   hasDeprecatedParentRowIndex,
@@ -23,12 +32,13 @@ import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 const MAX_NUMBER_OF_COLUMNS = 20;
 
 interface TableContainerProps extends Themeable2 {
-  ariaLabel?: string;
   exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   splitOpenFn: SplitOpen;
+  eventBus?: EventBus;
+  ariaLabel?: string;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
@@ -79,7 +89,7 @@ export class TableContainer extends PureComponent<Props, State> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, timeZone, theme, eventBus } =
       this.props;
 
     const { showAll } = this.state;
@@ -153,13 +163,28 @@ export class TableContainer extends PureComponent<Props, State> {
                 loadingState={loading ? LoadingState.Loading : undefined}
               >
                 {(innerWidth, innerHeight) => (
-                  <Table
-                    ariaLabel={ariaLabel}
-                    data={data}
-                    width={innerWidth}
-                    height={innerHeight}
-                    onCellFilterAdded={onCellFilterAdded}
-                  />
+                  <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
+                    <PanelContextProvider
+                      value={{
+                        eventsScope: 'explore',
+                        eventBus: eventBus ?? new EventBusSrv(),
+                        onAddAdHocFilter: onCellFilterAdded,
+                      }}
+                    >
+                      <PanelRenderer
+                        data={{
+                          series: [data],
+                          state: loading ? LoadingState.Loading : LoadingState.Done,
+                          timeRange: range,
+                        }}
+                        pluginId={'table'}
+                        title=""
+                        width={innerWidth}
+                        height={innerHeight}
+                        timeZone={timeZone}
+                      />
+                    </PanelContextProvider>
+                  </DataLinksContext.Provider>
                 )}
               </PanelChrome>
             ))}

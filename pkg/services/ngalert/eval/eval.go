@@ -437,6 +437,7 @@ type NumberValueCapture struct {
 	Var              string // RefID
 	IsDatasourceNode bool
 	Labels           data.Labels
+	Type             string // Expression type (reduce, threshold, classic_conditions, etc.)
 
 	Value *float64
 }
@@ -462,17 +463,33 @@ func IsNoData(res backend.DataResponse) bool {
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
+
+	// Build a lookup table for expression types by RefID
+	expressionTypes := make(map[string]string)
+	for _, query := range c.Data {
+		if exprType, err := query.GetExpressionType(); err == nil {
+			expressionTypes[query.RefID] = exprType
+		}
+	}
+
 	captureFn := func(refID string, datasourceType expr.NodeType, labels data.Labels, value *float64) {
 		m := captures[refID]
 		if m == nil {
 			m = make(map[data.Fingerprint]NumberValueCapture)
 		}
 		fp := labels.Fingerprint()
+
+		exprType := expressionTypes[refID]
+		if exprType == "" && datasourceType == expr.TypeDatasourceNode {
+			exprType = "query"
+		}
+
 		m[fp] = NumberValueCapture{
 			Var:              refID,
 			IsDatasourceNode: datasourceType == expr.TypeDatasourceNode,
 			Value:            value,
 			Labels:           labels.Copy(),
+			Type:             exprType,
 		}
 		captures[refID] = m
 	}

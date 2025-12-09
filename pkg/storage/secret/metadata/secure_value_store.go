@@ -85,14 +85,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		latestVersion, err := s.getLatestVersion(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+		latest, err := s.getLatestVersionAndCreatedAt(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 		if err != nil {
 			return fmt.Errorf("fetching latest secure value version: %w", err)
 		}
 
 		version := int64(1)
-		if latestVersion != nil {
-			version = *latestVersion + 1
+		if latest.version > 0 {
+			version = latest.version + 1
 		}
 
 		// Some other concurrent request may have created the version we're trying to create,
@@ -102,7 +102,15 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		for {
 			sv.Status.Version = version
 
-			row, err = toCreateRow(s.clock.Now(), keeper, sv, actorUID)
+			now := s.clock.Now().UTC().Unix()
+
+			createdAt := now
+			if latest.createdAt > 0 {
+				createdAt = latest.createdAt
+			}
+			updatedAt := now
+
+			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, actorUID)
 			if err != nil {
 				return fmt.Errorf("to create row: %w", err)
 			}
@@ -153,44 +161,67 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	return createdSecureValue, nil
 }
 
-func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, namespace xkube.Namespace, name string) (*int64, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersion", trace.WithAttributes(
+type versionAndCreatedAt struct {
+	createdAt int64
+	version   int64
+}
+
+func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreatedAt, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreatedAt", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
 	defer span.End()
 
-	req := getLatestSecureValueVersion{
+	req := getLatestSecureValueVersionAndCreatedAt{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
 	}
 
-	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersion, req)
+	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersion.Name(), err)
+		return versionAndCreatedAt{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
+		return versionAndCreatedAt{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error executing query: %w", err)
+		return versionAndCreatedAt{}, fmt.Errorf("error executing query: %w", err)
 	}
 
 	if !rows.Next() {
-		return nil, nil
+		return versionAndCreatedAt{}, nil
 	}
 
-	var version int64
-	if err := rows.Scan(&version); err != nil {
-		return nil, fmt.Errorf("scanning version from returned rows: %w", err)
+	var (
+		createdAt       int64
+		version         int64
+		active          bool
+		namespaceFromDB string
+		nameFromDB      string
+	)
+	if err := rows.Scan(&createdAt, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
+		return versionAndCreatedAt{}, fmt.Errorf("scanning version from returned rows: %w", err)
 	}
 
-	return &version, nil
+	if namespaceFromDB != namespace.String() || nameFromDB != name {
+		return versionAndCreatedAt{}, fmt.Errorf("bug: expected to find latest version for namespace=%+v name=%+v but got version for namespace=%+v name=%+v",
+			namespace, name, namespaceFromDB, nameFromDB)
+	}
+
+	if !active {
+		createdAt = 0
+	}
+
+	return versionAndCreatedAt{
+		createdAt: createdAt,
+		version:   version,
+	}, nil
 }
 
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
@@ -231,6 +262,11 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	if err := res.Err(); err != nil {
 		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
 	}
+
+	if secureValue.Namespace != namespace.String() || secureValue.Name != name {
+		return secureValueDB{}, fmt.Errorf("bug: expected to read secure value %+v from namespace %+v, but got a different row", name, namespace)
+	}
+
 	return secureValue, nil
 }
 
@@ -338,6 +374,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 		if !row.Active {
 			return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
+		}
+
+		if row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to list secure values from namespace %+v but got one from namespace %+v", namespace.String(), row.Namespace)
 		}
 
 		secureValue, err := row.toKubernetes()
@@ -620,6 +660,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	secureValues := make([]secretv1beta1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
+		var leaseTokenDB string
 
 		err = rows.Scan(&row.GUID,
 			&row.Name, &row.Namespace, &row.Annotations,
@@ -629,10 +670,15 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
 			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
+			&leaseTokenDB,
 		)
 
 		if err != nil {
 			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
+		if leaseTokenDB != leaseToken {
+			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseToken)
 		}
 
 		secureValue, err := row.toKubernetes()

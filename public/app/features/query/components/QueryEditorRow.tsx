@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode, type JSX, createRef } from 'react';
 
 import {
   CoreApp,
@@ -88,7 +88,7 @@ interface State<TQuery extends DataQuery> {
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   dataSourceSrv = getDataSourceSrv();
   id = '';
-  editorRef = React.createRef<HTMLDivElement>();
+  editorRef = createRef<HTMLDivElement>();
 
   state: State<TQuery> = {
     datasource: null,

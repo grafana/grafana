@@ -261,6 +261,10 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes unified storage quotas
+  */
+  kubernetesUnifiedStorageQuotas?: boolean;
+  /**
   * Adds support for Kubernetes logs drilldown
   */
   kubernetesLogsDrilldown?: boolean;
@@ -329,6 +333,10 @@ export interface FeatureToggles {
   */
   alertingUIUseBackendFilters?: boolean;
   /**
+  * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+  */
+  alertingUIUseFullyCompatBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -357,6 +365,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Use the v2 kubernetes API in the frontend for dashboards
+  */
+  kubernetesDashboardsV2?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -364,6 +376,18 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables viewing non-applicable drilldowns on a panel level
+  */
+  perPanelNonApplicableDrilldowns?: boolean;
+  /**
+  * Enables a group by action per panel
+  */
+  panelGroupBy?: boolean;
+  /**
+  * Enables filtering by grouping labels on the panel level through legend or tooltip
+  */
+  perPanelFiltering?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -401,11 +425,6 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
-  /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-  * @default true
-  */
-  onPremToCloudMigrations?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -918,10 +937,6 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
-  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -963,6 +978,10 @@ export interface FeatureToggles {
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
+  /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1088,7 +1107,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1132,6 +1151,11 @@ export interface FeatureToggles {
   */
   newVizSuggestions?: boolean;
   /**
+  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * @default false
+  */
+  externalVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1147,7 +1171,7 @@ export interface FeatureToggles {
   pluginStoreServiceLoading?: boolean;
   /**
   * Increases panel padding globally
-  * @default false
+  * @default true
   */
   newPanelPadding?: boolean;
   /**
@@ -1174,6 +1198,11 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
+  * Run queries through the data source backend
+  * @default false
+  */
+  opentsdbBackendMigration?: boolean;
+  /**
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
@@ -1186,4 +1215,17 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables plugins decoupling from bootdata
+  * @default false
+  */
+  useMTPlugins?: boolean;
+  /**
+  * Enables support for variables whose values can have multiple properties
+  */
+  multiPropsVariables?: boolean;
 }
