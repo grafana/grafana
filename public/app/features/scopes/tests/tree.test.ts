@@ -230,7 +230,7 @@ describe('Tree', () => {
     // Verify all siblings at the Cloud level are visible
     // The test should verify that when Cloud is expanded, we see all its children
     // (This depends on what siblings Dev has - at minimum, we should see Dev itself)
-    expect(screen.getByText('Dev')).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'Dev' })).toBeInTheDocument();
   });
 
   it('Persists a scope', async () => {
