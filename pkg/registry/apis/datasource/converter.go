@@ -61,7 +61,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		obj.Spec.SetJSONData(ds.JsonData.Interface())
 	}
 
-	rv := time.Now().UnixMilli()
+	rv := int64(0)
 	if !ds.Created.IsZero() {
 		obj.CreationTimestamp = metav1.NewTime(ds.Created)
 		rv = ds.Created.UnixMilli()
@@ -78,6 +78,10 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		}
 	}
 
+	if rv > 0 {
+		obj.ResourceVersion = strconv.FormatInt(rv, 10)
+	}
+
 	if ds.APIVersion != "" {
 		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
 	}
@@ -87,7 +91,6 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
 		}
 	}
-	obj.ResourceVersion = strconv.FormatInt(rv, 10)
 	return obj, nil
 }
 
