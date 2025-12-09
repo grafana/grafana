@@ -41,21 +41,31 @@ interface ShowMoreInstancesProps {
   onClick?: React.ComponentProps<typeof LinkButton>['onClick'];
   href?: React.ComponentProps<typeof LinkButton>['href'];
   enableFiltering?: boolean;
+  alertState?: InstanceStateFilter;
 }
 
-function ShowMoreInstances({ stats, onClick, href, enableFiltering }: ShowMoreInstancesProps) {
+function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
   const { visibleItemsCount, totalItemsCount } = stats;
 
   return (
     <div className={styles.footerRow}>
       <div>
-        <Trans
-          i18nKey="alerting.rule-details-matching-instances.showing-count"
-          values={{ visibleItemsCount, totalItemsCount }}
-        >
-          Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
-        </Trans>
+        {enableFiltering && alertState ? (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count-with-state"
+            values={{ visibleItemsCount, state: alertState, totalItemsCount }}
+          >
+            Showing {'{{ visibleItemsCount }}'} {'{{ state }}'} out of {'{{ totalItemsCount }}'} instances
+          </Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count"
+            values={{ visibleItemsCount, totalItemsCount }}
+          >
+            Showing {'{{ visibleItemsCount }}'} out of {'{{ totalItemsCount }}'} instances
+          </Trans>
+        )}
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
         {enableFiltering ? (
@@ -137,6 +147,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
       onClick={enableFiltering ? resetFilter : undefined}
       href={!enableFiltering ? ruleViewPageLink : undefined}
       enableFiltering={enableFiltering}
+      alertState={alertState}
     />
   ) : undefined;
 
