@@ -16,9 +16,18 @@ interface VisualEditorProps extends QueryEditorProps {
   db: DB;
   queryRowFilter: QueryRowFilter;
   onValidate: (isValid: boolean) => void;
+  isVariableQuery?: boolean;
 }
 
-export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, range }: VisualEditorProps) => {
+export const VisualEditor = ({
+  query,
+  db,
+  queryRowFilter,
+  onChange,
+  onValidate,
+  range,
+  isVariableQuery,
+}: VisualEditorProps) => {
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;
@@ -28,7 +37,13 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
     <>
       <EditorRows>
         <EditorRow>
-          <SelectRow columns={state.value || []} query={query} onQueryChange={onChange} db={db} />
+          <SelectRow
+            columns={state.value || []}
+            query={query}
+            onQueryChange={onChange}
+            db={db}
+            isVariableQuery={isVariableQuery}
+          />
         </EditorRow>
         {queryRowFilter.filter && (
           <EditorRow>

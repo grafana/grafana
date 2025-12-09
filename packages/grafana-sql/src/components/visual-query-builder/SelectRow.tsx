@@ -20,18 +20,25 @@ interface SelectRowProps {
   onQueryChange: (sql: SQLQuery) => void;
   db: DB;
   columns: Array<SelectableValue<string>>;
+  isVariableQuery?: boolean;
 }
 
-export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps) {
+export function SelectRow({ query, onQueryChange, db, columns, isVariableQuery }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
-  const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
+  const aliasOpts: Array<SelectableValue<string>> = [];
 
   // Add necessary alias options for time series format
   // when that format has been selected
   if (query.format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
-    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
+    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
+    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
+  }
+
+  // Add variable query alias options for text and value
+  if (isVariableQuery) {
+    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__text', '__text'), value: '__text' });
+    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__value', '__value'), value: '__value' });
   }
 
   const onAggregationChange = useCallback(
@@ -145,7 +152,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
                 value={item.alias ? toOption(item.alias) : null}
                 inputId={`select-alias-${index}-${uniqueId()}`}
                 data-testid={selectors.components.SQLQueryEditor.selectAlias}
-                options={timeSeriesAliasOpts}
+                options={aliasOpts}
                 onChange={onAliasChange(item, index)}
                 isClearable
                 menuShouldPortal

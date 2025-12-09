@@ -15,6 +15,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PostgresDatasource, 
     ...props,
     query: migrateVariableQuery(props.query),
     queryHeaderProps,
+    isVariableQuery: true,
   };
   return <SqlQueryEditorLazy {...newProps} />;
 }
