@@ -78,6 +78,11 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
   if (Array.isArray(structure)) {
     return structure.map(unboxNearMembraneProxies);
   }
+
+  if (isTransferable(structure)) {
+    return structure;
+  }
+
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
@@ -85,4 +90,10 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
     }, {});
   }
   return structure;
+}
+
+function isTransferable(structure: unknown): structure is Transferable {
+  // We should probably add all of the transferable types here.
+  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
+  return structure instanceof ArrayBuffer;
 }
