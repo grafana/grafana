@@ -11,12 +11,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, _ schemaversion.LibraryElementIndexProvider) error {
-	// Wrap the provider once with 10s caching for all conversions.
-	// This prevents repeated DB queries across multiple conversion calls while allowing
-	// the cache to refresh periodically, making it suitable for long-lived singleton usage.
-	dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
-
+func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	// v0 conversions
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
