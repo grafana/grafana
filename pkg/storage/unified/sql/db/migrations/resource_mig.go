@@ -285,7 +285,7 @@ func parseKeyPath(row resourceHistoryRow) string {
 	case 3:
 		action = "deleted"
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", row.Group, row.Resource, row.Namespace, row.Name, snowflakeFromRv(row.ResourceVersion), action, row.Folder)
+	return fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s", row.Group, row.Resource, row.Namespace, row.Name, snowflakeFromRv(row.ResourceVersion), action, row.Folder)
 }
 
 func snowflakeFromRv(rv int64) int64 {
