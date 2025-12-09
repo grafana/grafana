@@ -1,14 +1,14 @@
-import { css, cx } from '@emotion/css';
-import { addMinutes, subDays, subHours } from 'date-fns';
-import { Location } from 'history';
-import { useRef, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { useToggle } from 'react-use';
+import {css, cx} from '@emotion/css';
+import {addMinutes, subDays, subHours} from 'date-fns';
+import {Location} from 'history';
+import {useRef, useState} from 'react';
+import {FormProvider, useForm} from 'react-hook-form';
+import {useToggle} from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { isFetchError, locationService } from '@grafana/runtime';
+import {GrafanaTheme2} from '@grafana/data';
+import {Trans, t} from '@grafana/i18n';
+import {isFetchError, locationService} from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -25,18 +25,20 @@ import {
   useSplitter,
   useStyles2,
 } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
+import {useAppNotification} from 'app/core/copy/appNotification';
+import {contextSrv} from 'app/core/services/context_srv';
+import {
+  ActiveTab as ContactPointsActiveTabs
+} from 'app/features/alerting/unified/components/contact-points/ContactPoints';
+import {TestTemplateAlert} from 'app/plugins/datasource/alertmanager/types';
+import {AccessControlAction} from 'app/types/accessControl';
 
-import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
-import { EditorColumnHeader } from '../EditorColumnHeader';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
-import { Spacer } from '../Spacer';
+import {AITemplateButtonComponent} from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import {GRAFANA_RULES_SOURCE_NAME} from '../../utils/datasource';
+import {makeAMLink, stringifyErrorLike} from '../../utils/misc';
+import {EditorColumnHeader} from '../EditorColumnHeader';
+import {ProvisionedResource, ProvisioningAlert} from '../Provisioning';
+import {Spacer} from '../Spacer';
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
@@ -45,12 +47,12 @@ import {
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
 
-import { PayloadEditor } from './PayloadEditor';
-import { TemplateDataDocs } from './TemplateDataDocs';
-import { GlobalTemplateDataExamples } from './TemplateDataExamples';
-import { TemplateEditor } from './TemplateEditor';
-import { TemplatePreview } from './TemplatePreview';
-import { snippets } from './editor/templateDataSuggestions';
+import {PayloadEditor} from './PayloadEditor';
+import {TemplateDataDocs} from './TemplateDataDocs';
+import {GlobalTemplateDataExamples} from './TemplateDataExamples';
+import {TemplateEditor} from './TemplateEditor';
+import {TemplatePreview} from './TemplatePreview';
+import {snippets} from './editor/templateDataSuggestions';
 
 export interface TemplateFormValues {
   title: string;
@@ -103,7 +105,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // Check if user has permission to test templates
-  const canTestTemplates = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest);
+  const canTestTemplates = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest)  || contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager
