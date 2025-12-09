@@ -88,9 +88,12 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		_, ok := jsonData["apiKeyAuth"].(bool)
-		if ok {
-			httpCliOpts.Header.Add("Authorization", "ApiKey "+jsonData["apiKey"].(string))
+		apiKeyAuth, ok := jsonData["apiKeyAuth"].(bool)
+		if ok && apiKeyAuth {
+			apiKey := settings.DecryptedSecureJSONData["apiKey"]
+			if apiKey != "" {
+				httpCliOpts.Header.Add("Authorization", "ApiKey "+apiKey)
+			}
 		}
 
 		httpCli, err := httpClientProvider.New(httpCliOpts)

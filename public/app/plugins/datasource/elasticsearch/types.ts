@@ -65,6 +65,9 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   oauthPassThru?: boolean;
   defaultQueryMode?: QueryType;
   apiKeyAuth?: boolean;
+}
+
+export interface ElasticsearchSecureJsonData {
   apiKey?: string;
 }
 

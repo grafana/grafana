@@ -14,7 +14,7 @@ import {
 import { config } from '@grafana/runtime';
 import { Alert, SecureSocksProxySettings, Divider, Stack } from '@grafana/ui';
 
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions, ElasticsearchSecureJsonData } from '../types';
 
 import { ApiKeyConfig } from './ApiKeyConfig';
 import { DataLinks } from './DataLinks';
@@ -22,7 +22,7 @@ import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
+export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions, ElasticsearchSecureJsonData>;
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
