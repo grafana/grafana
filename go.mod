@@ -659,7 +659,7 @@ require (
 
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
-require github.com/grafana/grafana/apps/quotas v0.0.0-20251209171149-4b999cd94388 // @grafana/grafana-search-and-storage
+require github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
