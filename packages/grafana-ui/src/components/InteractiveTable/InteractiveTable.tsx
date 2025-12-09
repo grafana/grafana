@@ -377,7 +377,13 @@ function ColumnHeader<T extends object>({
 
   if (canSort) {
     return (
-      <button aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', { columnName: typeof Header === 'string' ? Header : id})} type="button" onClick={onClick}>
+      <button
+        aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', {
+          columnName: typeof Header === 'string' ? Header : id,
+        })}
+        type="button"
+        onClick={onClick}
+      >
         {children}
       </button>
     );
