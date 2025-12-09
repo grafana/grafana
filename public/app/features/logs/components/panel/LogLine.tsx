@@ -470,8 +470,8 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[], displaye
 export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (
   theme: GrafanaTheme2,
-  virtualization: LogLineVirtualization | undefined,
-  displayedFields: string[]
+  virtualization: LogLineVirtualization | undefined = undefined,
+  displayedFields: string[] = []
 ) => {
   const base = tinycolor(theme.colors.background.primary);
 
