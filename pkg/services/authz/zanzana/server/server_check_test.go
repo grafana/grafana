@@ -184,4 +184,32 @@ func testCheck(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
+
+	t.Run("user:17 should be able to view dashboards in folder 4 and all subfolders", func(t *testing.T) {
+		// Check for folders
+		res, err := server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "4"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "5"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "6"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		// Check for dashboards
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "4", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 4")
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "5", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 5")
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 6")
+	})
 }

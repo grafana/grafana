@@ -720,7 +720,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		// Define all pages we want to test
 		pages := []struct {
 			versions []int64
-			token    *resource.ContinueToken
+			token    *ContinueToken
 		}{
 			{
 				versions: []int64{rv51, rv52, rv53, rv54},
@@ -728,7 +728,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 			{
 				versions: []int64{rv55, rv56, rv57, rv58},
-				token: &resource.ContinueToken{
+				token: &ContinueToken{
 					ResourceVersion: rv54,
 					StartOffset:     4,
 					SortAscending:   true,
@@ -736,7 +736,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 			{
 				versions: []int64{rv59, rv60},
-				token: &resource.ContinueToken{
+				token: &ContinueToken{
 					ResourceVersion: rv58,
 					StartOffset:     8,
 					SortAscending:   true,

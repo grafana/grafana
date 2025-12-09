@@ -317,7 +317,7 @@ describe('v2 dashboard API', () => {
   });
 
   describe('version error handling', () => {
-    it('should not throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
+    it('should throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
@@ -332,7 +332,7 @@ describe('v2 dashboard API', () => {
       mockGet.mockResolvedValueOnce(mockDashboardWithError);
 
       const api = new K8sDashboardV2API();
-      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
     it('should throw DashboardVersionError for v0alpha1 conversion error and v1 spec', async () => {
@@ -358,7 +358,7 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should not throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
+    it('should throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
@@ -373,7 +373,7 @@ describe('v2 dashboard API', () => {
       mockGet.mockResolvedValueOnce(mockDashboardWithError);
 
       const api = new K8sDashboardV2API();
-      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
     it('should throw DashboardVersionError for v1beta1 conversion error and v1 spec', async () => {

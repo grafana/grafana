@@ -86,7 +86,7 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
       if (func === 'percentile') {
         const percentileValue = expr.parameters?.[0]?.value;
         const column = expr.parameters?.[1]?.value ?? expr.property?.name ?? '';
-        return column ? `percentile(${percentileValue}, ${column})` : null;
+        return column ? `percentile(${column},${percentileValue})` : null;
       }
 
       const column = expr.property?.name ?? '';
