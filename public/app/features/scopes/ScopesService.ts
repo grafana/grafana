@@ -72,8 +72,6 @@ export class ScopesService implements ScopesContextValue {
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
     const scopeNodeId = queryParams.get('scope_node');
-    // TODO: figure out when to remove this. scope_parent is for backward compatibility only
-    const parentNodeId = queryParams.get('scope_parent');
     const navigationScope = queryParams.get('navigation_scope');
     const navScopePath = queryParams.get('nav_scope_path');
 
@@ -85,15 +83,15 @@ export class ScopesService implements ScopesContextValue {
       );
     }
 
-    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined).then(() => {
+    this.changeScopes(queryParams.getAll('scopes'), undefined, scopeNodeId ?? undefined).then(() => {
       if (navScopePath && !navigationScope) {
         console.log('No navigation scope, setting nav scope path', navScopePath);
         this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
       }
     });
 
-    // Pre-load scope node (which loads parent too) or fallback to parent node for old URLs
-    const nodeToPreload = scopeNodeId ?? parentNodeId;
+    // Pre-load scope node (which loads parent too)
+    const nodeToPreload = scopeNodeId;
     if (nodeToPreload) {
       this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
@@ -111,8 +109,7 @@ export class ScopesService implements ScopesContextValue {
 
         const scopes = queryParams.getAll('scopes');
         const scopeNodeId = queryParams.get('scope_node');
-        // scope_parent is for backward compatibility only
-        const parentNodeId = queryParams.get('scope_parent');
+
         const navigationScope = queryParams.get('navigation_scope');
         const navScopePath = queryParams.get('nav_scope_path');
 
@@ -122,27 +119,32 @@ export class ScopesService implements ScopesContextValue {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
-          this.changeScopes(scopes, parentNodeId ?? undefined, scopeNodeId ?? undefined);
+          this.changeScopes(scopes, undefined, scopeNodeId ?? undefined);
         }
 
         // Handle navigation_scope and nav_scope_path changes from back/forward navigation
         const currentNavigationScope = this.dashboardsService.state.navigationScope;
+        const currentNavScopePath = this.dashboardsService.state.navScopePath;
         const newNavScopePath = navScopePath ? deserializeFolderPath(navScopePath) : undefined;
         const decodedNavigationScope = navigationScope ? decodeURIComponent(navigationScope) : undefined;
 
         const navigationScopeChanged = decodedNavigationScope !== currentNavigationScope;
+        const navScopePathChanged = !isEqual(newNavScopePath, currentNavScopePath);
 
         if (navigationScopeChanged) {
           // Navigation scope changed - do full update
           if (decodedNavigationScope) {
             this.dashboardsService.setNavigationScope(decodedNavigationScope, undefined, newNavScopePath);
           } else if (newNavScopePath?.length) {
-            this.changeScopes(scopes, parentNodeId ?? undefined, scopeNodeId ?? undefined).then(() => {
+            this.changeScopes(scopes, undefined, scopeNodeId ?? undefined).then(() => {
               this.dashboardsService.setNavScopePath(newNavScopePath);
             });
           } else {
             this.dashboardsService.setNavigationScope(undefined);
           }
+        } else if (navScopePathChanged) {
+          // Navigation scope unchanged but path changed
+          this.dashboardsService.setNavScopePath(newNavScopePath);
         }
       })
     );
