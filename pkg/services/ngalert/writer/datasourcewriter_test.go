@@ -141,7 +141,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 	res.DataSourceHeaders["prom-4"] = http.Header{
 		"X-Scope-OrgID":   []string{"test-user"},
 		"X-Test-Header":   []string{"test-value"},
-		"X-Double-Header": []string{"one", "two", "three"},
+		"X-Double-Header": []string{"one", "two"},
 	}
 
 	return res
@@ -231,7 +231,7 @@ func TestDatasourceWriter(t *testing.T) {
 		cHeaders := map[string]string{
 			"X-Custom-Header":  "test-value",
 			"X-Another-Header": "another-value",
-			overwrittenHeader:  "overwritten", // Data source headers should be overwritten by custom headers.
+			overwrittenHeader:  "should-be-overwritten", // Data source headers overwrite custom headers.
 		}
 
 		cfg = DatasourceWriterConfig{
@@ -249,17 +249,20 @@ func TestDatasourceWriter(t *testing.T) {
 		require.Len(t, dsHeaders, 3)
 
 		// We're confirming we have a data source header with the same name but different value.
-		// This one should not be sent in the request.
 		require.NotEmpty(t, dsHeaders[overwrittenHeader])
 		require.NotEqual(t, dsHeaders[overwrittenHeader], cHeaders[overwrittenHeader])
 
-		// All headers (except for the one that was overwritten) should have been used.
+		// All data source headers should have been used.
 		for k, vv := range dsHeaders {
-			if k != overwrittenHeader {
-				assert.Equal(t, vv, testDS.prom4.LastHeaders.Values(k))
-			}
+			assert.Equal(t, vv, testDS.prom4.LastHeaders.Values(k))
 		}
+
+		// All custom headers except for the overwritten one should have been used.
 		for k, v := range cHeaders {
+			if k == overwrittenHeader {
+				assert.NotEqual(t, v, testDS.prom4.LastHeaders.Get(k))
+				continue
+			}
 			assert.Equal(t, v, testDS.prom4.LastHeaders.Get(k))
 		}
 	})
