@@ -352,6 +352,9 @@ export const versionedPages = {
           showInLabel: {
             '11.1.0': 'data-testid show-in-label',
           },
+          annotationControlsDisplay: {
+            '12.4.0': 'data-testid annotation-controls-display-label',
+          },
           previewInDashboard: {
             '10.0.0': 'data-testid annotations-preview',
           },
@@ -445,6 +448,9 @@ export const versionedPages = {
             generalHideSelectV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Hide select',
             },
+            generalDisplaySelect: {
+              '12.4.0': 'data-testid Variable editor Display select',
+            },
             selectionOptionsAllowCustomValueSwitch: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Allow Custom Value switch',
             },
@@ -501,6 +507,9 @@ export const versionedPages = {
             },
             queryOptionsRegExInputV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegEx field',
+            },
+            queryOptionsRegExApplyToSelectV2: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegExApplyTo select',
             },
             queryOptionsSortSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Sort select',
@@ -560,6 +569,9 @@ export const versionedPages = {
             },
             closeButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-close-button',
+            },
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
           },
           IntervalVariable: {

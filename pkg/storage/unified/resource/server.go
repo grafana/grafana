@@ -41,6 +41,7 @@ type ResourceServer interface {
 	resourcepb.ManagedObjectIndexServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
+	resourcepb.QuotasServer
 }
 
 type ListIterator interface {
@@ -313,8 +314,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 			}
 
 			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Tracer: tracer,
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg, tracer),
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
 			})
 			if err != nil {
 				return nil, err
@@ -1084,10 +1084,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				return err
 			}
 
-			item := &resourcepb.ResourceWrapper{
-				ResourceVersion: iter.ResourceVersion(),
-				Value:           iter.Value(),
-			}
 			// Trash is only accessible to admins or the user who deleted the object
 			if req.Source == resourcepb.ListRequest_TRASH {
 				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
@@ -1095,6 +1091,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
+			}
+
+			item := &resourcepb.ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
 			}
 
 			pageBytes += len(item.Value)
@@ -1463,6 +1464,38 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+	return rsp, nil
+}
+
+func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
+	if s.overridesService == nil {
+		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
+			Message: "overrides service not configured on resource server",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+	nsr := NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	}
+	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	limit, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+
+	// handle case where no resources exist yet - very unlikely but possible
+	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
+	if len(usage) <= 0 {
+		rsp.Usage = 0
+	} else {
+		rsp.Usage = usage[0].Count
+	}
+
 	return rsp, nil
 }
 

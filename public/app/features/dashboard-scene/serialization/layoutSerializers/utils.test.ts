@@ -2,46 +2,8 @@ import { defaultDataQueryKind, PanelQueryKind } from '@grafana/schema/dist/esm/s
 
 import { getRuntimePanelDataSource } from './utils';
 
-// Mock the config needed for the function
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    defaultDatasource: 'default-ds-prometheus',
-    datasources: {
-      'default-ds-prometheus': {
-        uid: 'default-prometheus-uid',
-        name: 'Default Prometheus',
-        meta: { id: 'prometheus' },
-        type: 'datasource',
-      },
-      prometheus: {
-        uid: 'prometheus-uid',
-        name: 'Prometheus',
-        meta: { id: 'prometheus' },
-        type: 'datasource',
-      },
-      loki: {
-        uid: 'loki-uid',
-        name: 'Loki',
-        meta: { id: 'loki' },
-        type: 'datasource',
-      },
-      '-- Grafana --': {
-        uid: 'grafana',
-        name: 'Grafana',
-        meta: { id: 'grafana' },
-        type: 'datasource',
-      },
-    },
-    featureToggles: {
-      timeComparison: false,
-    },
-  },
-}));
-
 describe('getRuntimePanelDataSource', () => {
-  it('should return the datasource when it is specified in the query', () => {
+  it('should return uid and type when explicit datasource UID is provided', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -67,7 +29,7 @@ describe('getRuntimePanelDataSource', () => {
     });
   });
 
-  it('should prioritize default datasource when it matches the query kind', () => {
+  it('should return type-only when only group is provided (no explicit UID)', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -85,12 +47,11 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
   });
 
-  it('should fall back to first available datasource when default datasource type does not match query kind', () => {
+  it('should return type-only for different datasource types when no UID provided', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -108,13 +69,11 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'loki-uid',
       type: 'loki',
     });
   });
 
-  it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
-    jest.spyOn(console, 'warn').mockImplementation();
+  it('should return type-only even for unknown datasource types', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -132,16 +91,11 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'default-prometheus-uid',
-      type: 'prometheus',
+      type: 'unknown-type',
     });
-
-    expect(console.warn).toHaveBeenCalledWith(
-      'Could not find datasource for query kind unknown-type, defaulting to prometheus'
-    );
   });
 
-  it('should handle the case when datasource uid is empty string', () => {
+  it('should return type-only when datasource name is empty string', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -162,8 +116,27 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
+  });
+
+  it('should return undefined when neither group nor datasource is provided', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: '',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toBeUndefined();
   });
 });

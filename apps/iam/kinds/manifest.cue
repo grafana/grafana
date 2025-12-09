@@ -25,7 +25,7 @@ v0alpha1: {
 
 	routes: {
 		namespaced: {
-			"/searchUser": {
+			"/searchUsers": {
 				"GET": {
 					response: {
 						offset: int64
@@ -45,6 +45,30 @@ v0alpha1: {
 						typeMeta: false
 						objectMeta: false
 					}
+				}
+			}
+			"/searchTeams": {
+				"GET": {
+					request: {
+						query: { 
+							query?: string
+						}
+					}
+					response: {
+						#TeamHit: {
+							name: string
+							title: string
+							email: string
+							provisioned: bool
+							externalUID: string
+						}
+						offset: int64
+						totalHits: int64
+						hits: [...#TeamHit]
+						queryCost: float64
+						maxScore: float64
+					}
+					responseMetadata: objectMeta: false
 				}
 			}
 		}

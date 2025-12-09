@@ -49,7 +49,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "searchUser",
+				Path: "searchUsers",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -268,7 +268,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := iamv0.NewGetSearchUser()
+	result := iamv0.NewGetSearchUsers()
 	result.TotalHits = resp.TotalHits
 	result.QueryCost = resp.QueryCost
 	result.MaxScore = resp.MaxScore

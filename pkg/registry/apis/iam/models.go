@@ -81,6 +81,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified           resource.ResourceClient
 	userSearchClient  resourcepb.ResourceIndexClient
 	userSearchHandler *user.SearchHandler
+	teamSearch        *TeamSearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 

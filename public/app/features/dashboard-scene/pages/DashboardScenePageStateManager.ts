@@ -441,7 +441,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp, options);
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
