@@ -984,6 +984,11 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
+  * Enables recently viewed dashboards section in the browsing dashboard page
+  * @default false
+  */
+  recentlyViewedDashboards?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
