@@ -1312,6 +1312,9 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 	if spec.Definition != nil {
 		varMap["definition"] = *spec.Definition
 	}
+	if spec.RegexApplyTo != nil {
+		varMap["regexApplyTo"] = string(*spec.RegexApplyTo)
+	}
 	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	// Convert query - handle LEGACY_STRING_VALUE_KEY
