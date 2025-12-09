@@ -20,6 +20,7 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -84,7 +85,8 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 		)
 		if err != nil {
 			return nil, err
@@ -218,6 +220,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		legacyStore := &legacyStorage{
 			datasources:  b.datasources,
 			resourceInfo: &ds,
+			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Name:      "ds_config_handler_requests_duration_seconds",
+				Help:      "Duration of requests handled by datasource configuration handlers",
+			}, []string{"code_path", "handler"}),
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {

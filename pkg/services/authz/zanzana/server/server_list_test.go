@@ -155,4 +155,15 @@ func testList(t *testing.T, server *Server) {
 
 		assert.Contains(t, res.GetItems(), "1")
 	})
+
+	t.Run("user:17 should be able to list all dashboards in folder 4 and all subfolders", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:17", dashboardGroup, dashboardResource, ""))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 3)
+
+		assert.Contains(t, res.GetFolders(), "4")
+		assert.Contains(t, res.GetFolders(), "5")
+		assert.Contains(t, res.GetFolders(), "6")
+	})
 }

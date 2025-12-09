@@ -705,10 +705,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "to": "now",
   },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "browser",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
+  "weekStart": "",
 }
 `;
 

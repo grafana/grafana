@@ -7,7 +7,12 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -42,7 +47,13 @@ type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store                       legacy.LegacyIdentityStore
+	store legacy.LegacyIdentityStore
+
+	userLegacyStore             *user.LegacyStore
+	saLegacyStore               *serviceaccount.LegacyStore
+	legacyTeamStore             *team.LegacyStore
+	teamBindingLegacyStore      *teambinding.LegacyBindingStore
+	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
 	rolesStorage                RoleStorageBackend
 	resourcePermissionsStorage  resource.StorageBackend
@@ -69,6 +80,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
 	userSearchClient resourcepb.ResourceIndexClient
+	teamSearch       *TeamSearchHandler
+
+	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
@@ -78,7 +92,4 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
-
-	// Toggle for enabling dual writer
-	enableDualWriter bool
 }

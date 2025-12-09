@@ -96,6 +96,8 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, backend.DownstreamError(fmt.Errorf("failed to create request: %w", err))
 	}
 
+	addQueryLimitsHeader(query, req)
+
 	if query.SupportingQueryType != SupportingQueryNone {
 		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
 		if value != "" {
@@ -106,6 +108,15 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
+}
+
+func addQueryLimitsHeader(query lokiQuery, req *http.Request) {
+	if len(query.LimitsContext.Expr) > 0 {
+		queryLimitStr, err := json.Marshal(query.LimitsContext)
+		if err == nil {
+			req.Header.Set("X-Loki-Query-Limits-Context", string(queryLimitStr))
+		}
+	}
 }
 
 type lokiResponseError struct {
@@ -199,6 +210,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		res := backend.DataResponse{
 			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
+			Status:      backend.Status(resp.StatusCode),
 		}
 		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Debug("Error received from Loki", lp...)
@@ -214,6 +226,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{})
+	res.Status = backend.Status(resp.StatusCode)
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
@@ -305,7 +318,9 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		}
 		body, err = json.Marshal(lokiResponseErr)
 		if err != nil {
-			return RawLokiResponse{}, err
+			return RawLokiResponse{
+				Status: resp.StatusCode,
+			}, err
 		}
 	}
 

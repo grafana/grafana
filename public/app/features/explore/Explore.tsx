@@ -410,7 +410,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, timeZone } = this.props;
+    const { exploreId, timeZone, eventBus } = this.props;
     return (
       <ContentOutlineItem panelId="Table" title={t('explore.explore.title-table', 'Table')} icon="table">
         <TableContainer
@@ -420,6 +420,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onCellFilterAdded={this.onCellFilterAdded}
           timeZone={timeZone}
           splitOpenFn={this.onSplitOpen('table')}
+          eventBus={eventBus}
         />
       </ContentOutlineItem>
     );
@@ -475,7 +476,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onStopScanning={this.onStopScanning}
           eventBus={this.logsEventBus}
           splitOpenFn={this.splitOpenFnLogs}
-          scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
@@ -641,7 +641,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
-              ref={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+              ref={(scrollElement) => {
+                this.scrollElement = scrollElement || undefined;
+              }}
             >
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
