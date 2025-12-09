@@ -40,7 +40,7 @@ const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =
 
 // Helper functions for creating mock objects
 const createMockGnetDashboardWithDownloads = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => {
-  return createMockGnetDashboard({ ...overrides, downloads: 2000 });
+  return createMockGnetDashboard({ ...overrides, downloads: 10000 });
 };
 
 const defaultFetchParams: FetchCommunityDashboardsParams = {
