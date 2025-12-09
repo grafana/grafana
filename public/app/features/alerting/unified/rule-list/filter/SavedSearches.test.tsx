@@ -68,7 +68,7 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const listItems = screen.getAllByRole('button', { name: /apply search/i });
+      const listItems = screen.getAllByRole('button', { name: /apply this search/i });
       // Default Search should be first (isDefault: true), then alphabetically: Critical Alerts, My Firing Rules
       expect(listItems).toHaveLength(3);
     });
@@ -98,7 +98,7 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      expect(screen.getByRole('button', { name: /save current search/i })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /save current search/i })).toBeInTheDocument();
     });
 
     it('disables save button when currentSearchQuery is empty', async () => {
@@ -106,7 +106,7 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const saveButton = screen.getByRole('button', { name: /save current search/i });
+      const saveButton = await screen.findByRole('button', { name: /save current search/i });
       expect(saveButton).toBeDisabled();
     });
 
@@ -114,9 +114,9 @@ describe('SavedSearches', () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
 
-      expect(screen.getByPlaceholderText(/enter a name/i)).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText(/enter a name/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /save$/i })).toBeInTheDocument();
     });
 
@@ -125,8 +125,8 @@ describe('SavedSearches', () => {
       props.onSave.mockResolvedValue(undefined);
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.type(screen.getByPlaceholderText(/enter a name/i), 'My New Search');
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.type(await screen.findByPlaceholderText(/enter a name/i), 'My New Search');
       await user.click(screen.getByRole('button', { name: /save$/i }));
 
       expect(props.onSave).toHaveBeenCalledWith('My New Search', 'state:pending');
@@ -136,22 +136,20 @@ describe('SavedSearches', () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.click(screen.getByRole('button', { name: /save$/i }));
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.click(await screen.findByRole('button', { name: /save$/i }));
 
-      expect(screen.getByText(/name is required/i)).toBeInTheDocument();
+      expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
     });
 
-    it('shows validation error when name exceeds 64 characters', async () => {
+    it('shows maxLength attribute is set on input to prevent exceeding 64 characters', async () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
-      const longName = 'a'.repeat(65);
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.type(screen.getByPlaceholderText(/enter a name/i), longName);
-      await user.click(screen.getByRole('button', { name: /save$/i }));
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
 
-      expect(screen.getByText(/name must be 64 characters or less/i)).toBeInTheDocument();
+      const input = await screen.findByPlaceholderText(/enter a name/i);
+      expect(input).toHaveAttribute('maxLength', '64');
     });
 
     it('shows validation error from onSave callback (duplicate name)', async () => {
@@ -162,11 +160,11 @@ describe('SavedSearches', () => {
       });
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.type(screen.getByPlaceholderText(/enter a name/i), 'My Firing Rules');
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.type(await screen.findByPlaceholderText(/enter a name/i), 'My Firing Rules');
       await user.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(screen.getByText(/a saved search with this name already exists/i)).toBeInTheDocument();
+      expect(await screen.findByText(/a saved search with this name already exists/i)).toBeInTheDocument();
     });
 
     it('returns to list mode after successful save', async () => {
@@ -174,8 +172,8 @@ describe('SavedSearches', () => {
       props.onSave.mockResolvedValue(undefined);
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.type(screen.getByPlaceholderText(/enter a name/i), 'New Search');
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.type(await screen.findByPlaceholderText(/enter a name/i), 'New Search');
       await user.click(screen.getByRole('button', { name: /save$/i }));
 
       await waitFor(() => {
@@ -187,19 +185,21 @@ describe('SavedSearches', () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.click(await screen.findByRole('button', { name: /cancel/i }));
 
       expect(screen.queryByPlaceholderText(/enter a name/i)).not.toBeInTheDocument();
     });
   });
 
   describe('Apply functionality', () => {
-    it('calls onApply when a search item is clicked', async () => {
+    it('calls onApply when apply button is clicked', async () => {
       const { user, props } = setup();
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByText('My Firing Rules'));
+      // Click the apply button (search icon) for "My Firing Rules"
+      const applyButton = await screen.findByRole('button', { name: /apply search "my firing rules"/i });
+      await user.click(applyButton);
 
       expect(props.onApply).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -214,7 +214,9 @@ describe('SavedSearches', () => {
       const { user } = setup();
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByText('My Firing Rules'));
+      // Click the apply button (search icon) for "My Firing Rules"
+      const applyButton = await screen.findByRole('button', { name: /apply search "my firing rules"/i });
+      await user.click(applyButton);
 
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -228,11 +230,12 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      // Find the first three-dot menu button
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
-      await user.click(menuButtons[0]);
+      // Find the action menu buttons - menuButtons[0] is Default Search (shows "Remove default")
+      // Use menuButtons[1] (a non-default search) to see "Set as default"
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
+      await user.click(menuButtons[1]);
 
-      expect(screen.getByText(/set as default/i)).toBeInTheDocument();
+      expect(await screen.findByText(/set as default/i)).toBeInTheDocument();
       expect(screen.getByText(/rename/i)).toBeInTheDocument();
       expect(screen.getByText(/delete/i)).toBeInTheDocument();
     });
@@ -243,10 +246,10 @@ describe('SavedSearches', () => {
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
       // Find the Default Search item's menu button (it should be the first one after sorting)
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]); // Default Search is first
 
-      expect(screen.getByText(/remove default/i)).toBeInTheDocument();
+      expect(await screen.findByText(/remove default/i)).toBeInTheDocument();
     });
   });
 
@@ -257,10 +260,10 @@ describe('SavedSearches', () => {
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
       // Find a non-default search's menu button
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[1]); // Second item (not default)
 
-      await user.click(screen.getByText(/set as default/i));
+      await user.click(await screen.findByText(/set as default/i));
 
       expect(props.onSetDefault).toHaveBeenCalled();
     });
@@ -271,10 +274,10 @@ describe('SavedSearches', () => {
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
       // Find the Default Search's menu button (first item)
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
 
-      await user.click(screen.getByText(/remove default/i));
+      await user.click(await screen.findByText(/remove default/i));
 
       expect(props.onSetDefault).toHaveBeenCalledWith(null);
     });
@@ -286,11 +289,11 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/rename/i));
+      await user.click(await screen.findByText(/rename/i));
 
-      expect(screen.getByDisplayValue('Default Search')).toBeInTheDocument();
+      expect(await screen.findByDisplayValue('Default Search')).toBeInTheDocument();
     });
 
     it('calls onRename with new name when rename is confirmed', async () => {
@@ -299,11 +302,11 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/rename/i));
+      await user.click(await screen.findByText(/rename/i));
 
-      const input = screen.getByDisplayValue('Default Search');
+      const input = await screen.findByDisplayValue('Default Search');
       await user.clear(input);
       await user.type(input, 'Renamed Search');
 
@@ -322,11 +325,11 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/rename/i));
+      await user.click(await screen.findByText(/rename/i));
 
-      const input = screen.getByDisplayValue('Default Search');
+      const input = await screen.findByDisplayValue('Default Search');
       await user.clear(input);
       await user.type(input, 'My Firing Rules');
       await user.keyboard('{Enter}');
@@ -343,12 +346,12 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/^delete$/i));
+      await user.click(await screen.findByText(/^delete$/i));
 
       // Delete confirmation shows the item name with cancel and confirm buttons
-      expect(screen.getByText('Default Search')).toBeInTheDocument();
+      expect(await screen.findByText('Default Search')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     });
@@ -358,12 +361,12 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/^delete$/i));
+      await user.click(await screen.findByText(/^delete$/i));
 
       // Confirm delete by clicking trash button
-      const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+      const deleteButtons = await screen.findAllByRole('button', { name: /delete/i });
       await user.click(deleteButtons[deleteButtons.length - 1]); // The confirm delete button
 
       expect(props.onDelete).toHaveBeenCalledWith('2');
@@ -374,12 +377,12 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const menuButtons = screen.getAllByRole('button', { name: /actions/i });
+      const menuButtons = await screen.findAllByRole('button', { name: /actions/i });
       await user.click(menuButtons[0]);
-      await user.click(screen.getByText(/^delete$/i));
+      await user.click(await screen.findByText(/^delete$/i));
 
       // Cancel delete
-      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await user.click(await screen.findByRole('button', { name: /cancel/i }));
 
       expect(props.onDelete).not.toHaveBeenCalled();
       // Item should be back in normal display mode
@@ -392,7 +395,7 @@ describe('SavedSearches', () => {
       const { user } = setup();
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
 
@@ -405,13 +408,15 @@ describe('SavedSearches', () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
 
-      expect(screen.getByPlaceholderText(/enter a name/i)).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText(/enter a name/i)).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
 
-      expect(screen.queryByPlaceholderText(/enter a name/i)).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText(/enter a name/i)).not.toBeInTheDocument();
+      });
       // Dropdown should still be open (just back to list mode)
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
@@ -433,7 +438,7 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      expect(screen.getByText('Empty Search')).toBeInTheDocument();
+      expect(await screen.findByText('Empty Search')).toBeInTheDocument();
     });
 
     it('trims whitespace from search name before saving', async () => {
@@ -441,8 +446,8 @@ describe('SavedSearches', () => {
       props.onSave.mockResolvedValue(undefined);
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(screen.getByRole('button', { name: /save current search/i }));
-      await user.type(screen.getByPlaceholderText(/enter a name/i), '  My Search  ');
+      await user.click(await screen.findByRole('button', { name: /save current search/i }));
+      await user.type(await screen.findByPlaceholderText(/enter a name/i), '  My Search  ');
       await user.click(screen.getByRole('button', { name: /save$/i }));
 
       expect(props.onSave).toHaveBeenCalledWith('My Search', 'state:pending');
