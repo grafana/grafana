@@ -659,8 +659,6 @@ require (
 
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
-require github.com/grafana/grafana/apps/quotas v0.0.0-20251209161505-319789209410
-
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
