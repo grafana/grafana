@@ -26,3 +26,18 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
+
+/**
+ * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
+ *
+ * @remarks
+ * This feature toggle needs to be registered in the backend before production use:
+ * 1. Add to `pkg/services/featuremgmt/registry.go` with owner `@grafana/alerting-squad`
+ * 2. Set default to `false` for production rollout
+ * 3. Update this function to use `config.featureToggles.alertingSavedSearches` directly
+ *
+ * Currently defaults to `false` until backend feature toggle is registered.
+ */
+export const shouldUseSavedSearches = () =>
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  (config.featureToggles as Record<string, boolean | undefined>).alertingSavedSearches ?? false;
