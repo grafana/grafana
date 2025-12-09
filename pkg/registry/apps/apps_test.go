@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/history"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,6 +28,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	exampleAppInstaller := &example.ExampleAppInstaller{}
 	advisorAppInstaller := &advisor.AdvisorAppInstaller{}
 	historianAppInstaller := &historian.AlertingHistorianAppInstaller{}
+	historyAppInstaller := &history.AppInstaller{}
 
 	tests := []struct {
 		name           string
@@ -43,7 +45,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller)
+			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, historyAppInstaller, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

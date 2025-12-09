@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/history"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -30,4 +31,5 @@ var WireSet = wire.NewSet(
 	logsdrilldown.RegisterAppInstaller,
 	annotation.RegisterAppInstaller,
 	example.RegisterAppInstaller,
+	history.RegisterAppInstaller,
 )

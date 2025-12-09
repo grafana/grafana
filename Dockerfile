@@ -45,9 +45,9 @@ COPY e2e e2e
 ENV NODE_ENV=${JS_NODE_ENV}
 #
 RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    yarn install; \
+  yarn install; \
   else \
-    yarn install --immutable; \
+  yarn install --immutable; \
   fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
@@ -97,6 +97,7 @@ COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
 COPY apps/annotation apps/annotation
 COPY apps/correlations apps/correlations
+COPY apps/history apps/history
 COPY apps/preferences apps/preferences
 COPY apps/collections apps/collections
 COPY apps/provisioning apps/provisioning

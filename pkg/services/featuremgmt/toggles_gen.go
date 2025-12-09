@@ -183,6 +183,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesHistory
+	// Adds support for Kubernetes query history
+	FlagKubernetesHistory = "kubernetesHistory"
+
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
