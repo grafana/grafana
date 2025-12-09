@@ -1,4 +1,4 @@
-import { isNumber, set, unset, get, cloneDeep, defaults } from 'lodash';
+import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -243,7 +243,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           data: field.values.map((nestedFrame: DataFrame | undefined): DataFrame => {
             const result = nestedFrame ?? createDataFrame({ fields: [] });
             result.fields = result.fields.map((newField) => {
-              newField.config = defaults(newField.config || {}, config);
+              newField.config = defaultsDeep(newField.config || {}, config);
               return newField;
             });
             return result;
