@@ -231,7 +231,6 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
-	github.com/grafana/grafana/apps/quotas v0.0.0-20251209171149-4b999cd94388 // indirect
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
