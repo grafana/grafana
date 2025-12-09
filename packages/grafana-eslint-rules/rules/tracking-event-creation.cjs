@@ -59,7 +59,7 @@ const trackingEventCreation = createRule({
           const callee = node.declaration.declarations[0].init.callee;
           if (callee.type === AST_NODE_TYPES.Identifier && eventFactoryVariables.has(callee.name)) {
             // Check for comments
-           // Check for comments
+            // Check for comments
             const comments = context.sourceCode.getCommentsBefore(node);
 
             if (!comments || comments.length === 0) {
@@ -89,7 +89,9 @@ const trackingEventCreation = createRule({
         if (node.extends && node.extends.length > 0) {
           const interfaceExtends = node.extends;
           extendsTrackingEvent = interfaceExtends.some((extend) => {
-            return extend.expression.type === AST_NODE_TYPES.Identifier && extend.expression.name === 'TrackingEventProps';
+            return (
+              extend.expression.type === AST_NODE_TYPES.Identifier && extend.expression.name === 'TrackingEventProps'
+            );
           });
         }
         if (!node.extends || !extendsTrackingEvent) {
@@ -99,9 +101,9 @@ const trackingEventCreation = createRule({
           });
         }
         //Check if the interface properties has comments
-        if(node.body.type === AST_NODE_TYPES.TSInterfaceBody){
+        if (node.body.type === AST_NODE_TYPES.TSInterfaceBody) {
           const properties = node.body.body;
-          properties.forEach(property => {
+          properties.forEach((property) => {
             const comments = context.sourceCode.getCommentsBefore(property);
             if (!comments || comments.length === 0) {
               return context.report({
@@ -132,7 +134,7 @@ const trackingEventCreation = createRule({
             messageId: 'missingPropertyComment',
           });
         }
-      }
+      },
     };
   },
   name: 'tracking-event-creation',
