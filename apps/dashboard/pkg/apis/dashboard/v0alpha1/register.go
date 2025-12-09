@@ -19,6 +19,7 @@ const (
 	// Resource constants
 	DASHBOARD_RESOURCE     = "dashboards"
 	LIBRARY_PANEL_RESOURCE = "librarypanels"
+	SNAPSHOT_RESOURCE      = "snapshots"
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
@@ -75,6 +76,30 @@ var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var SnapshotResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"snapshots", "snapshot", "Snapshot",
+	func() runtime.Object { return &Snapshot{} },
+	func() runtime.Object { return &SnapshotList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string", Description: "The snapshot name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Snapshot)
+			if ok {
+				return []interface{}{
+					m.Name,
+					m.Spec.Title,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected snapshot")
+		},
+	}, // default table converter
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -94,6 +119,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&DashboardWithAccessInfo{},
 		&LibraryPanel{},
 		&LibraryPanelList{},
+		&Snapshot{},
+		&SnapshotList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 		&metav1.Table{},

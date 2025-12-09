@@ -262,7 +262,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	require.NoError(t, err)
 
 	t.Run("Get stats for ns1", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns1",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 2)
 
@@ -285,7 +288,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for ns2", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns2", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns2",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
@@ -297,7 +303,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats with minimum count", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 1)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns1",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 1)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
@@ -308,7 +317,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for non-existent namespace", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, "non-existent", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: "non-existent",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Empty(t, stats)
 	})
@@ -428,16 +440,14 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
-		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
-		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
+		require.NotEmpty(t, res.NextPageToken)
 
 		res, err = server.List(ctx, &resourcepb.ListRequest{
 			Limit:         3,
-			NextPageToken: continueToken.String(),
+			NextPageToken: res.NextPageToken,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
@@ -448,6 +458,8 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		})
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
+		require.Contains(t, string(res.Items[0].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item6 ADDED")
 		require.Len(t, res.Items, 2)
 		require.Empty(t, res.NextPageToken)
 	})
@@ -492,15 +504,12 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
-
-		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
-		require.Equal(t, rv7, continueToken.ResourceVersion)
+		require.NotEmpty(t, res.NextPageToken)
 
 		res, err = server.List(ctx, &resourcepb.ListRequest{
 			Limit:           3,
 			ResourceVersion: rv7,
-			NextPageToken:   continueToken.String(),
+			NextPageToken:   res.NextPageToken,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
@@ -744,10 +753,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				require.GreaterOrEqual(t, res.ResourceVersion, tc.minExpectedHeadRV)
 
 				// Check continue token
-				continueToken, err := resource.GetContinueToken(res.NextPageToken)
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedContinueRV, continueToken.ResourceVersion)
-				require.Equal(t, tc.expectedSortAsc, continueToken.SortAscending)
+				require.NotEmpty(t, res.NextPageToken)
 			})
 		}
 
@@ -763,10 +769,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			}
 			firstPageRes, err := server.List(ctx, firstRequest)
 			require.NoError(t, err)
-
-			// Get continue token for second page
-			continueToken, err := resource.GetContinueToken(firstPageRes.NextPageToken)
-			require.NoError(t, err)
+			require.NotEmpty(t, firstPageRes.NextPageToken)
 
 			// Get second page
 			secondPageRes, err := server.List(ctx, &resourcepb.ListRequest{
@@ -774,12 +777,13 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				Source:          resourcepb.ListRequest_HISTORY,
 				ResourceVersion: rv1,
 				VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
-				NextPageToken:   continueToken.String(),
+				NextPageToken:   firstPageRes.NextPageToken,
 				Options:         &resourcepb.ListOptions{Key: baseKey},
 			})
 			require.NoError(t, err)
 			require.Nil(t, secondPageRes.Error)
 			require.Len(t, secondPageRes.Items, 3)
+			require.Empty(t, secondPageRes.NextPageToken)
 
 			// Second page should continue in ascending order
 			expectedRVs := []int64{rvHistory3, rvHistory4, rvHistory5}
@@ -817,7 +821,6 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	t.Run("fetch second page of history at revision", func(t *testing.T) {
 		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
-			StartOffset:     2,
 			SortAscending:   false,
 		}
 		res, err := server.List(ctx, &resourcepb.ListRequest{

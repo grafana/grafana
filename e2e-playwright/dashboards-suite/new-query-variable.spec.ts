@@ -5,7 +5,8 @@ const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 
@@ -53,7 +54,13 @@ test.describe(
       await expect(descriptionInput).toHaveAttribute('placeholder', 'Descriptive text');
       await expect(descriptionInput).toHaveValue('');
 
-      await expect(page.locator('label').filter({ hasText: 'Hide' })).toBeVisible();
+      // Display
+      await expect(page.locator('label', { hasText: /^Display$/ })).toBeVisible();
+      const displaySelect = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect
+      );
+      await expect(displaySelect).toBeVisible();
+      await expect(displaySelect).toHaveValue('Above dashboard');
 
       // Check datasource selector
       const datasourceSelect = dashboardPage.getByGrafanaSelector(

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSimplejson(t *testing.T) {
@@ -271,4 +272,46 @@ func TestMustJson(t *testing.T) {
 	assert.PanicsWithValue(t, "could not unmarshal JSON: \"unexpected EOF\"", func() {
 		MustJson([]byte(`{`))
 	})
+}
+
+func TestEmpty(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input any
+		empty bool
+	}{
+		{
+			name:  "empty map (any)",
+			input: map[string]any{},
+			empty: true,
+		}, {
+			name:  "empty map (string)",
+			input: map[string]string{},
+			empty: true,
+		}, {
+			name:  "empty array (any)",
+			input: []any{},
+			empty: true,
+		}, {
+			name:  "empty array (string)",
+			input: []string{},
+			empty: true,
+		}, {
+			name:  "empty string",
+			input: "",
+			empty: true,
+		}, {
+			name:  "non empty string",
+			input: "hello",
+		}, {
+			name:  "key value",
+			input: map[string]any{"key": "value"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			js := NewFromAny(tc.input)
+			require.Equal(t, tc.empty, js.IsEmpty())
+		})
+	}
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Fragment } from 'react';
+import { Fragment, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';

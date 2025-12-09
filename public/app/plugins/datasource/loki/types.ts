@@ -7,8 +7,6 @@ import {
   LokiQueryDirection,
 } from './dataquery.gen';
 
-export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
-
 export enum LokiResultType {
   Stream = 'streams',
   Vector = 'vector',

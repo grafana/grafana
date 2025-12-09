@@ -100,7 +100,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		}
 	}
 
-	if custom.SecureValues != nil {
+	if len(custom.SecureValues) > 0 {
 		example := common.InlineSecureValues{}
 		ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue")
 		secure := &spec.Schema{
@@ -133,6 +133,16 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			SchemaProps: spec.SchemaProps{
 				Ref: spec.MustCreateRef("#/components/schemas/SecureValues"),
 			},
+		}
+	}
+
+	// Add examples to the POST request
+	if len(custom.Examples) > 0 {
+		ds := oas.Paths.Paths[root+"namespaces/{namespace}/datasources"]
+		if ds != nil && ds.Post != nil {
+			for _, c := range ds.Post.RequestBody.Content {
+				c.Examples = custom.Examples
+			}
 		}
 	}
 

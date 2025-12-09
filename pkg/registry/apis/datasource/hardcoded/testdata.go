@@ -19,15 +19,50 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 			// 	Description: "describe bbb",
 			// },
 		},
+
+		Examples: map[string]*spec3.Example{
+			"": {
+				ExampleProps: spec3.ExampleProps{
+					Summary: "Empty testdata",
+					Value: map[string]any{
+						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"kind":       "DataSource",
+						"metadata": map[string]any{
+							"name": "my-testdata-datasource",
+						},
+						"spec": map[string]any{
+							"title": "My TestData Datasource",
+						},
+					},
+				},
+			},
+			"with-url": {
+				ExampleProps: spec3.ExampleProps{
+					Summary: "Testdata with URL (not used)",
+					Value: map[string]any{
+						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"kind":       "DataSource",
+						"metadata": map[string]any{
+							"name": "testdata-with-url",
+						},
+						"spec": map[string]any{
+							"title": "TestData with URL",
+							"url":   "http://example.com",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	// Dummy spec
 	p := &spec.Schema{} //SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
 	p.Description = "Test data does not require any explicit configuration"
-	p.Required = []string{}
+	p.Required = []string{"title"}
 	p.AdditionalProperties = &spec.SchemaOrBool{Allows: false}
 	p.Properties = map[string]spec.Schema{
-		"url": *spec.StringProperty().WithDescription("not used"),
+		"title": *spec.StringProperty().WithDescription("display name"),
+		"url":   *spec.StringProperty().WithDescription("not used"),
 	}
 	p.Example = map[string]any{
 		"url": "http://xxxx",

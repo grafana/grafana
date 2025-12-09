@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +20,7 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -60,15 +60,18 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+	//nolint:staticcheck
+	useQueryTypes := features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes)
 
-	// Requires dev-mode
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+	//nolint:staticcheck
+	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections)
 
-	if !explicitPluginList && !configCrudUseNewApis {
-		return nil, nil // skip registration unless opting into experimental apis
+	//nolint:staticcheck
+	isExperimental := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !configCrudUseNewApis && !isExperimental {
+		return nil, nil
 	}
 
 	var err error
@@ -76,38 +79,24 @@ func RegisterAPIService(
 
 	pluginJSONs, err := getDatasourcePlugins(pluginSources)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	// This client can talk to any plugin
+	// For the ST runner, the client can talk to any plugin
 	client, ok := pluginClient.(PluginClient)
 	if !ok {
 		return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 	}
 
-	ids := []string{
-		"grafana-testdata-datasource",
-		"prometheus",
-		"graphite",
-	}
-
 	for _, pluginJSON := range pluginJSONs {
-		if explicitPluginList && !slices.Contains(ids, pluginJSON.ID) {
-			continue // skip this one
-		}
-
-		if !pluginJSON.Backend && !configCrudUseNewApis {
-			continue // skip frontend only plugins when backend is disabled
-		}
-
-		builder, err = NewDataSourceAPIBuilder(pluginJSON,
+		builder, err = NewDataSourceAPIBuilder(
+			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			configCrudUseNewApis,
+			useQueryTypes,        // Exposes the query type OpenAPI schema
+			configCrudUseNewApis, // Enables the new connections-based datasource config CRUD APIs
 		)
 		if err != nil {
 			return nil, err
@@ -115,7 +104,7 @@ func RegisterAPIService(
 
 		// Hardcoded schemas for testdata
 		// NOTE: this will be driven by the pluginJSON/manifest soon
-		if pluginJSON.ID == "grafana-testdata-datasource" && configCrudUseNewApis {
+		if pluginJSON.ID == "grafana-testdata-datasource" {
 			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
@@ -247,6 +236,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		legacyStore := &legacyStorage{
 			datasources:  b.datasources,
 			resourceInfo: &ds,
+			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Name:      "ds_config_handler_requests_duration_seconds",
+				Help:      "Duration of requests handled by datasource configuration handlers",
+			}, []string{"code_path", "handler"}),
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {

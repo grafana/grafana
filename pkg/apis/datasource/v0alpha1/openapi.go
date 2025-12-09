@@ -14,6 +14,9 @@ type DataSourceOpenAPIExtension struct {
 	// Define which secure values are required
 	SecureValues []SecureValueInfo `json:"secureValues"`
 
+	// Examples added to the POST command
+	Examples map[string]*spec3.Example `json:"examples,omitempty"`
+
 	// Additional Schemas added to the response
 	Schemas map[string]*spec.Schema `json:"schemas,omitempty"`
 

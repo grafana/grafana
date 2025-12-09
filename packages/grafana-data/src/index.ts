@@ -715,9 +715,9 @@ export {
 export {
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestionsBuilder,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/suggestions';
 export {
   type MatcherConfig,

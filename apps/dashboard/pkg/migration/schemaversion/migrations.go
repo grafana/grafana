@@ -3,6 +3,8 @@ package schemaversion
 import (
 	"context"
 	"strconv"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -27,12 +29,28 @@ type DataSourceIndexProvider interface {
 	Index(ctx context.Context) *DatasourceIndex
 }
 
+type LibraryElementInfo struct {
+	UID         string
+	Name        string
+	Kind        int64
+	Type        string
+	Description string
+	FolderUID   string
+	Model       common.Unstructured // JSON model of the library element, used to extract repeat options during migration
+}
+
+type LibraryElementIndexProvider interface {
+
+	// GetLibraryElementInfo returns library element information for use in migrations.
+	GetLibraryElementInfo(ctx context.Context) []LibraryElementInfo
+}
+
 type PanelPluginInfo struct {
 	ID      string
 	Version string
 }
 
-func GetMigrations(dsIndexProvider DataSourceIndexProvider) map[int]SchemaVersionMigrationFunc {
+func GetMigrations(dsIndexProvider DataSourceIndexProvider, _ LibraryElementIndexProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
 		2:  V2,
 		3:  V3,

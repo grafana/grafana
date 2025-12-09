@@ -84,9 +84,9 @@ test.describe(
       refetchItems(dashboardPage, selectors);
     };
 
-    const closeModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
+    const applyAndcloseModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
       await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton)
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
         .click();
     };
 
@@ -149,7 +149,7 @@ test.describe(
       await removeItem(dashboardPage, selectors, 2);
       await checkRows(3);
       await checkPreview(dashboardPage, selectors, ['first value', 'second label', 'fourth value']);
-      await closeModal(dashboardPage, selectors);
+      await applyAndcloseModal(dashboardPage, selectors);
 
       // assert variable is visible and has the correct values
       const variableLabel = dashboardPage.getByGrafanaSelector(
@@ -199,7 +199,7 @@ test.describe(
         .click();
 
       // Open the modal editor in the side pane
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('foo')).click();
       await openModal(dashboardPage, selectors);

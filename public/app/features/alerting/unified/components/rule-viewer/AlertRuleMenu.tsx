@@ -1,5 +1,6 @@
 import { PropsOf } from '@emotion/react';
 
+import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -13,7 +14,9 @@ import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-
 
 import {
   AlertRuleAction,
+  EnrichmentAction,
   skipToken,
+  useEnrichmentAbility,
   useGrafanaPromRuleAbilities,
   useRulerRuleAbilities,
 } from '../../hooks/useAbilities';
@@ -27,6 +30,7 @@ import {
   rulerRuleType,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { AnalyzeRuleButton } from '../assistant/AnalizeRuleButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -112,6 +116,8 @@ const AlertRuleMenu = ({
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
+  const [enrichmentReadSupported, enrichmentReadAllowed] = useEnrichmentAbility(EnrichmentAction.Read);
+
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
@@ -121,6 +127,9 @@ const AlertRuleMenu = ({
     (!isOpenSourceEdition() || isLocalDevEnv()) &&
     prometheusRuleType.alertingRule(promRule) &&
     promRule.state === PromAlertingRuleState.Firing;
+
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
 
   const shareUrl = createShareLink(identifier);
 
@@ -139,7 +148,8 @@ const AlertRuleMenu = ({
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
-    config.featureToggles.alertEnrichment;
+    enrichmentReadSupported &&
+    enrichmentReadAllowed;
 
   const menuItems = (
     <>
@@ -167,6 +177,7 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
+      {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton rule={promRule} />}
       {canDuplicate && (
         <Menu.Item
           label={t('alerting.alert-menu.duplicate', 'Duplicate')}
