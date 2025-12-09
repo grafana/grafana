@@ -2022,6 +2022,13 @@ var (
 			FrontendOnly: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "multiPropsVariables",
+			Description:  "Enables support for variables whose values can have multiple properties",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
 	}
 )
 
