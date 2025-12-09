@@ -3,26 +3,23 @@ package authorizer
 import (
 	"context"
 	"fmt"
-	"net/http"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
 // TODO: Logs, Metrics, Traces?
 
+// ParentProvider interface for fetching parent information of resources
 type ParentProvider interface {
+	// HasParent checks if the given GroupResource has a parent folder
 	HasParent(gr schema.GroupResource) bool
+	// GetParent fetches the parent folder name for the given resource
 	GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error)
 }
 
@@ -217,95 +214,4 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 	default:
 		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)
 	}
-}
-
-type ConfigProvider func(ctx context.Context) (*rest.Config, error)
-
-type ApiParentProvider struct {
-	configProviders map[schema.GroupResource]ConfigProvider
-	versions        map[schema.GroupResource]string
-}
-
-type DialConfig struct {
-	Host     string
-	Insecure bool
-	CAFile   string
-	Audience string
-}
-
-func NewLocalConfigProvider(
-	configProvider ConfigProvider,
-) map[schema.GroupResource]ConfigProvider {
-	return map[schema.GroupResource]ConfigProvider{
-		{Group: "folder.grafana.app", Resource: "folders"}:       configProvider,
-		{Group: "dashboard.grafana.com", Resource: "dashboards"}: configProvider,
-	}
-}
-
-func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeClient authn.TokenExchanger) map[schema.GroupResource]ConfigProvider {
-	configProviders := make(map[schema.GroupResource]ConfigProvider, 2)
-	for gr, dialConfig := range cfg {
-		configProviders[gr] = func(ctx context.Context) (*rest.Config, error) {
-			return &rest.Config{
-				Host: dialConfig.Host,
-				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-					return auth.NewRoundTripper(exchangeClient, rt, dialConfig.Audience)
-				},
-				TLSClientConfig: rest.TLSClientConfig{
-					Insecure: dialConfig.Insecure,
-					CAFile:   dialConfig.CAFile,
-				},
-				QPS:   50,
-				Burst: 100,
-			}, nil
-		}
-	}
-	return configProviders
-}
-
-func NewApiParentProvider(
-	configProviders map[schema.GroupResource]ConfigProvider,
-	version map[schema.GroupResource]string,
-) *ApiParentProvider {
-	return &ApiParentProvider{
-		configProviders: configProviders,
-		versions:        version,
-	}
-}
-
-func (p *ApiParentProvider) HasParent(gr schema.GroupResource) bool {
-	_, ok := p.configProviders[gr]
-	return ok
-}
-
-func (p *ApiParentProvider) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
-	provider, ok := p.configProviders[gr]
-	if !ok {
-		return "", fmt.Errorf("no config provider for group resource %s", gr.String())
-	}
-	restConfig, err := provider(ctx)
-	if err != nil {
-		return "", err
-	}
-	client, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return "", err
-	}
-	version, ok := p.versions[gr]
-	if !ok {
-		return "", fmt.Errorf("no version info for group resource %s", gr.String())
-	}
-	resourceClient := client.Resource(schema.GroupVersionResource{
-		Group:    gr.Group,
-		Resource: gr.Resource,
-		Version:  version,
-	}).Namespace(namespace)
-
-	unstructObj, err := resourceClient.Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-
-	parent, _ := unstructObj.GetAnnotations()[utils.AnnoKeyFolder]
-	return parent, nil
 }
