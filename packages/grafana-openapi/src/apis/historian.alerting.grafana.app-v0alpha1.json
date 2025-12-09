@@ -1,8 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "Grafana folders",
-    "title": "folder.grafana.app/v1beta1"
+    "title": "historian.alerting.grafana.app/v0alpha1"
   },
   "paths": {
     "/": {
@@ -34,11 +33,49 @@
         }
       }
     },
-    "/folders": {
+    "/alertstate/history": {
       "get": {
-        "tags": ["Folder"],
-        "description": "list objects of kind Folder",
-        "operationId": "listFolder",
+        "operationId": "getAlertstatehistory",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAlertstatehistory"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAlertstatehistory"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAlertstatehistory"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAlertstatehistory"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAlertstatehistory"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": []
+    },
+    "/dummys": {
+      "get": {
+        "tags": ["Dummy"],
+        "description": "list or watch objects of kind Dummy",
+        "operationId": "listDummy",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -137,27 +174,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/DummyList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/DummyList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/DummyList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/DummyList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/DummyList"
                 }
               }
             }
@@ -165,15 +202,15 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "post": {
-        "tags": ["Folder"],
-        "description": "create a Folder",
-        "operationId": "createFolder",
+        "tags": ["Dummy"],
+        "description": "create a Dummy",
+        "operationId": "createDummy",
         "parameters": [
           {
             "name": "dryRun",
@@ -207,17 +244,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             }
           },
@@ -229,17 +266,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -249,17 +286,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -269,17 +306,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -287,15 +324,15 @@
         },
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "delete": {
-        "tags": ["Folder"],
-        "description": "delete collection of Folder",
-        "operationId": "deletecollectionFolder",
+        "tags": ["Dummy"],
+        "description": "delete collection of Dummy",
+        "operationId": "deletecollectionDummy",
         "parameters": [
           {
             "name": "continue",
@@ -439,9 +476,9 @@
         },
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "parameters": [
@@ -456,28 +493,28 @@
         }
       ]
     },
-    "/folders/{name}": {
+    "/dummys/{name}": {
       "get": {
-        "tags": ["Folder"],
-        "description": "read the specified Folder",
-        "operationId": "getFolder",
+        "tags": ["Dummy"],
+        "description": "read the specified Dummy",
+        "operationId": "getDummy",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -485,15 +522,15 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "put": {
-        "tags": ["Folder"],
-        "description": "replace the specified Folder",
-        "operationId": "replaceFolder",
+        "tags": ["Dummy"],
+        "description": "replace the specified Dummy",
+        "operationId": "replaceDummy",
         "parameters": [
           {
             "name": "dryRun",
@@ -527,17 +564,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/Dummy"
               }
             }
           },
@@ -549,17 +586,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -569,17 +606,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -587,15 +624,15 @@
         },
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "delete": {
-        "tags": ["Folder"],
-        "description": "delete a Folder",
-        "operationId": "deleteFolder",
+        "tags": ["Dummy"],
+        "description": "delete a Dummy",
+        "operationId": "deleteDummy",
         "parameters": [
           {
             "name": "dryRun",
@@ -687,15 +724,15 @@
         },
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "patch": {
-        "tags": ["Folder"],
-        "description": "partially update the specified Folder",
-        "operationId": "updateFolder",
+        "tags": ["Dummy"],
+        "description": "partially update the specified Dummy",
+        "operationId": "updateDummy",
         "parameters": [
           {
             "name": "dryRun",
@@ -765,17 +802,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -785,17 +822,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
@@ -803,16 +840,16 @@
         },
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Folder",
+          "description": "name of the Dummy",
           "required": true,
           "schema": {
             "type": "string",
@@ -830,36 +867,273 @@
         }
       ]
     },
-    "/folders/{name}/access": {
+    "/dummys/{name}/status": {
       "get": {
-        "tags": ["Folder"],
-        "description": "connect GET requests to access of Folder",
-        "operationId": "getFolderAccess",
+        "tags": ["Dummy"],
+        "description": "read status of the specified Dummy",
+        "operationId": "getDummyStatus",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderAccessInfo"
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
                 }
               }
             }
           }
         },
-        "x-kubernetes-action": "connect",
+        "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "FolderAccessInfo"
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
+        }
+      },
+      "put": {
+        "tags": ["Dummy"],
+        "description": "replace status of the specified Dummy",
+        "operationId": "replaceDummyStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Dummy"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/Dummy"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Dummy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
+        }
+      },
+      "patch": {
+        "tags": ["Dummy"],
+        "description": "partially update status of the specified Dummy",
+        "operationId": "updateDummyStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dummy"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "historian.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Dummy"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the FolderAccessInfo",
+          "description": "name of the Dummy",
           "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -867,155 +1141,141 @@
         }
       ]
     },
-    "/folders/{name}/children": {
-      "get": {
-        "tags": ["Folder"],
-        "description": "connect GET requests to children of Folder",
-        "operationId": "getFolderChildren",
+    "/notification/query": {
+      "post": {
+        "operationId": "createNotificationquery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/CreateNotificationquery"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationquery"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationquery"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationquery"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationquery"
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "FolderList"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the FolderList",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/folders/{name}/counts": {
-      "get": {
-        "tags": ["Folder"],
-        "description": "connect GET requests to counts of Folder",
-        "operationId": "getFolderCounts",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DescendantCounts"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "DescendantCounts"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DescendantCounts",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/folders/{name}/parents": {
-      "get": {
-        "tags": ["Folder"],
-        "description": "connect GET requests to parents of Folder",
-        "operationId": "getFolderParents",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderInfoList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "FolderInfoList"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the FolderInfoList",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
+      "parameters": []
     }
   },
   "components": {
     "schemas": {
-      "DescendantCounts": {
+      "CreateNotificationquery": {
         "type": "object",
-        "required": ["counts"],
+        "required": ["entries"],
         "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "counts": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ResourceStats"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
+          "entries": {
+            "type": "array"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "DescendantCounts",
-            "version": "v1beta1"
-          }
-        ]
+        }
       },
-      "Folder": {
+      "CreateNotificationqueryMatchers": {
+        "type": "array"
+      },
+      "CreateNotificationqueryNotificationOutcome": {
+        "type": "string",
+        "enum": ["success", "error"]
+      },
+      "CreateNotificationqueryNotificationStatus": {
+        "type": "string",
+        "enum": ["firing", "resolved"]
+      },
+      "CreateNotificationqueryRequestBody": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "properties": {
+          "from": {
+            "description": "From is the starting timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "groupLabels": {
+            "description": "GroupLabels optionally filters the entries by matching group labels.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateNotificationqueryMatchers"
+              }
+            ]
+          },
+          "limit": {
+            "description": "Limit is the maximum number of entries to return.",
+            "type": "integer"
+          },
+          "outcome": {
+            "description": "Outcome optionally filters the entries to only either successful or failed attempts.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateNotificationqueryNotificationOutcome"
+              }
+            ]
+          },
+          "receiver": {
+            "description": "Receiver optionally filters the entries by receiver title (contact point).",
+            "type": "string"
+          },
+          "ruleUID": {
+            "description": "RuleUID optionally filters the entries to a specific alert rule.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status optionally filters the entries to only either firing or resolved.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateNotificationqueryNotificationStatus"
+              }
+            ]
+          },
+          "to": {
+            "description": "To is the starting timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Dummy": {
+        "type": "object",
+        "required": ["kind", "apiVersion", "metadata", "spec"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1034,134 +1294,21 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the Folder",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FolderSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/DummySpec"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DummyStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "folder.grafana.app",
-            "kind": "Folder",
-            "version": "v1beta1"
+            "group": "historian.alerting.grafana.app",
+            "kind": "Dummy",
+            "version": "v0alpha1"
           }
         ]
       },
-      "FolderAccessInfo": {
-        "description": "Access control information for the current user",
-        "type": "object",
-        "required": ["canSave", "canEdit", "canAdmin", "canDelete"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "canAdmin": {
-            "type": "boolean",
-            "default": false
-          },
-          "canDelete": {
-            "type": "boolean",
-            "default": false
-          },
-          "canEdit": {
-            "type": "boolean",
-            "default": false
-          },
-          "canSave": {
-            "type": "boolean",
-            "default": false
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderAccessInfo",
-            "version": "v1beta1"
-          }
-        ]
-      },
-      "FolderInfo": {
-        "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
-        "type": "object",
-        "required": ["name", "title"],
-        "properties": {
-          "description": {
-            "description": "The folder description",
-            "type": "string"
-          },
-          "detached": {
-            "description": "This folder does not resolve",
-            "type": "boolean"
-          },
-          "name": {
-            "description": "Name is the k8s name (eg, the unique identifier) for a folder",
-            "type": "string",
-            "default": ""
-          },
-          "parent": {
-            "description": "The parent folder UID",
-            "type": "string"
-          },
-          "title": {
-            "description": "Title is the display value",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "FolderInfoList": {
-        "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
-        "type": "object",
-        "required": ["items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/FolderInfo"
-                }
-              ]
-            },
-            "x-kubernetes-list-map-keys": ["uid"],
-            "x-kubernetes-list-type": "map"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMeta"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderInfoList",
-            "version": "v1beta1"
-          }
-        ]
-      },
-      "FolderList": {
+      "DummyList": {
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {
@@ -1175,7 +1322,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/Dummy"
                 }
               ]
             }
@@ -1195,41 +1342,82 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "folder.grafana.app",
-            "kind": "FolderList",
-            "version": "v1beta1"
+            "group": "historian.alerting.grafana.app",
+            "kind": "DummyList",
+            "version": "v0alpha1"
           }
         ]
       },
-      "FolderSpec": {
+      "DummyOperatorState": {
         "type": "object",
-        "required": ["title"],
+        "required": ["lastEvaluation", "state"],
         "properties": {
-          "description": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
             "type": "string"
           },
-          "title": {
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": ["success", "in_progress", "failed"]
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "ResourceStats": {
+      "DummySpec": {
+        "description": "Spec is the schema of our resource. The spec should include all the user-editable information for the kind.",
         "type": "object",
-        "required": ["group", "resource", "count"],
+        "required": ["dummyField"],
         "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
+          "dummyField": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DummyStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "resource": {
-            "type": "string",
-            "default": ""
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DummyOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAlertstatehistory": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           }
         }
       },
@@ -1724,6 +1912,29 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
+      },
+      "WatchEvent": {
+        "description": "Event represents a single event to a watched resource.",
+        "type": "object",
+        "required": ["type", "object"],
+        "properties": {
+          "object": {
+            "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.runtime.RawExtension"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.runtime.RawExtension": {
+        "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
       }
     }
   }

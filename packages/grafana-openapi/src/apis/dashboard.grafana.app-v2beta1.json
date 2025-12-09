@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Grafana dashboards as resources",
-    "title": "dashboard.grafana.app/v2alpha1"
+    "title": "dashboard.grafana.app/v2beta1"
   },
   "paths": {
     "/": {
@@ -166,7 +166,7 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -288,7 +288,7 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -440,7 +440,7 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -486,7 +486,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -588,7 +588,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -688,7 +688,7 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -804,7 +804,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "Dashboard"
         }
       },
@@ -850,7 +850,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
+          "version": "v2beta1",
           "kind": "DashboardWithAccessInfo"
         }
       },
@@ -941,7 +941,7 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "Dashboard",
-            "version": "v2alpha1"
+            "version": "v2beta1"
           }
         ]
       },
@@ -1096,8 +1096,20 @@
       "DashboardAdhocVariableKind": {
         "description": "Adhoc variable kind",
         "type": "object",
-        "required": ["kind", "spec"],
+        "required": ["kind", "group", "spec"],
         "properties": {
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "group": {
+            "type": "string"
+          },
           "kind": {
             "type": "string"
           },
@@ -1121,9 +1133,6 @@
             "items": {
               "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/DashboardDataSourceRef"
           },
           "defaultKeys": {
             "type": "array",
@@ -1209,16 +1218,17 @@
         },
         "additionalProperties": false
       },
+      "DashboardAnnotationQueryPlacement": {
+        "description": "Annotation Query placement. Defines where the annotation query should be displayed.\n- \"inControlsMenu\" renders the annotation query in the dashboard controls dropdown menu",
+        "type": "string"
+      },
       "DashboardAnnotationQuerySpec": {
         "type": "object",
-        "required": ["enable", "hide", "iconColor", "name"],
+        "required": ["query", "enable", "hide", "iconColor", "name"],
         "properties": {
           "builtIn": {
             "type": "boolean",
             "default": false
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/DashboardDataSourceRef"
           },
           "enable": {
             "type": "boolean"
@@ -1233,7 +1243,7 @@
             "type": "string"
           },
           "legacyOptions": {
-            "description": "Catch-all field for datasource-specific properties",
+            "description": "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
             "type": "object",
             "additionalProperties": true
           },
@@ -1246,6 +1256,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "placement": {
+            "$ref": "#/components/schemas/DashboardAnnotationQueryPlacement"
           },
           "query": {
             "$ref": "#/components/schemas/DashboardDataQueryKind"
@@ -1712,10 +1725,22 @@
       },
       "DashboardDataQueryKind": {
         "type": "object",
-        "required": ["kind", "spec"],
+        "required": ["kind", "group", "version", "spec"],
         "properties": {
+          "datasource": {
+            "description": "New type for datasource reference\nNot creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "group": {
+            "type": "string"
+          },
           "kind": {
-            "description": "The kind of a DataQueryKind is the datasource type",
             "type": "string"
           },
           "spec": {
@@ -1724,20 +1749,10 @@
               "type": "object",
               "additionalProperties": {}
             }
-          }
-        },
-        "additionalProperties": false
-      },
-      "DashboardDataSourceRef": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "The plugin type-id",
-            "type": "string"
           },
-          "uid": {
-            "description": "Specific datasource instance",
-            "type": "string"
+          "version": {
+            "type": "string",
+            "default": "v0"
           }
         },
         "additionalProperties": false
@@ -2176,8 +2191,20 @@
       "DashboardGroupByVariableKind": {
         "description": "Group variable kind",
         "type": "object",
-        "required": ["kind", "spec"],
+        "required": ["kind", "group", "spec"],
         "properties": {
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "group": {
+            "type": "string"
+          },
           "kind": {
             "type": "string"
           },
@@ -2194,9 +2221,6 @@
         "properties": {
           "current": {
             "$ref": "#/components/schemas/DashboardVariableOption"
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/DashboardDataSourceRef"
           },
           "defaultValue": {
             "$ref": "#/components/schemas/DashboardVariableOption"
@@ -2342,7 +2366,7 @@
             "default": ""
           },
           "refresh": {
-            "$ref": "#/components/schemas/DashboardVariableRefresh"
+            "type": "string"
           },
           "skipUrlSync": {
             "type": "boolean",
@@ -2434,7 +2458,7 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardList",
-            "version": "v2alpha1"
+            "version": "v2beta1"
           }
         ]
       },
@@ -2518,9 +2542,6 @@
         "type": "object",
         "required": ["query", "refId", "hidden"],
         "properties": {
-          "datasource": {
-            "$ref": "#/components/schemas/DashboardDataSourceRef"
-          },
           "hidden": {
             "type": "boolean"
           },
@@ -2528,7 +2549,8 @@
             "$ref": "#/components/schemas/DashboardDataQueryKind"
           },
           "refId": {
-            "type": "string"
+            "type": "string",
+            "default": "A"
           }
         },
         "additionalProperties": false
@@ -2617,6 +2639,9 @@
           "queryCachingTTL": {
             "type": "integer"
           },
+          "timeCompare": {
+            "type": "string"
+          },
           "timeFrom": {
             "type": "string"
           },
@@ -2667,9 +2692,6 @@
           },
           "current": {
             "$ref": "#/components/schemas/DashboardVariableOption"
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/DashboardDataSourceRef"
           },
           "definition": {
             "type": "string"
@@ -3058,7 +3080,6 @@
         "additionalProperties": false
       },
       "DashboardSwitchVariableSpec": {
-        "description": "Switch variable specification",
         "type": "object",
         "required": ["name", "current", "enabledValue", "disabledValue", "hide", "skipUrlSync"],
         "properties": {
@@ -3411,9 +3432,9 @@
         "additionalProperties": false
       },
       "DashboardVariableHide": {
-        "description": "Determine if the variable shows on dashboard\nAccepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).",
+        "description": "Determine if the variable shows on dashboard\nAccepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).",
         "type": "string",
-        "enum": ["dontHide", "hideLabel", "hideVariable"]
+        "enum": ["dontHide", "hideLabel", "hideVariable", "inControlsMenu"]
       },
       "DashboardVariableKind": {
         "oneOf": [
@@ -3508,14 +3529,20 @@
       },
       "DashboardVizConfigKind": {
         "type": "object",
-        "required": ["kind", "spec"],
+        "required": ["kind", "group", "version", "spec"],
         "properties": {
+          "group": {
+            "description": "The group is the plugin ID",
+            "type": "string"
+          },
           "kind": {
-            "description": "The kind of a VizConfigKind is the plugin ID",
             "type": "string"
           },
           "spec": {
             "$ref": "#/components/schemas/DashboardVizConfigSpec"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3523,7 +3550,7 @@
       "DashboardVizConfigSpec": {
         "description": "--- Kinds ---",
         "type": "object",
-        "required": ["pluginVersion", "options", "fieldConfig"],
+        "required": ["options", "fieldConfig"],
         "properties": {
           "fieldConfig": {
             "$ref": "#/components/schemas/DashboardFieldConfigSource"
@@ -3534,9 +3561,6 @@
               "type": "object",
               "additionalProperties": {}
             }
-          },
-          "pluginVersion": {
-            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3592,7 +3616,7 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardWithAccessInfo",
-            "version": "v2alpha1"
+            "version": "v2beta1"
           }
         ]
       },

@@ -7457,7 +7457,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -12443,17 +12443,10 @@
       },
       "UpdateTeamCommand": {
         "properties": {
-          "Email": {
+          "email": {
             "type": "string"
           },
-          "ExternalUID": {
-            "type": "string"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Name": {
+          "name": {
             "type": "string"
           }
         },
@@ -14594,7 +14587,7 @@
           }
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
-        "tags": ["ldap_debug", "enterprise"]
+        "tags": ["admin_ldap", "enterprise"]
       }
     },
     "/admin/ldap/reload": {
@@ -14741,7 +14734,7 @@
           }
         },
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
-        "tags": ["access_control_provisioning", "enterprise"]
+        "tags": ["admin_provisioning", "access_control", "enterprise"]
       }
     },
     "/admin/provisioning/dashboards/reload": {
@@ -23920,6 +23913,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           }
         ],
