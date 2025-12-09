@@ -11,8 +11,17 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/authn"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+var (
+	Versions = map[schema.GroupResource]string{
+		{Group: folderv1.GROUP, Resource: folderv1.RESOURCE}:                 folderv1.VERSION,
+		{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}: dashboardv1.VERSION,
+	}
 )
 
 // ConfigProvider is a function that provides a rest.Config for a given context.
@@ -37,8 +46,8 @@ func NewLocalConfigProvider(
 	configProvider ConfigProvider,
 ) map[schema.GroupResource]ConfigProvider {
 	return map[schema.GroupResource]ConfigProvider{
-		{Group: "folder.grafana.app", Resource: "folders"}:       configProvider,
-		{Group: "dashboard.grafana.com", Resource: "dashboards"}: configProvider,
+		{Group: folderv1.GROUP, Resource: folderv1.RESOURCE}:                 configProvider,
+		{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}: configProvider,
 	}
 }
 
