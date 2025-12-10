@@ -165,7 +165,7 @@ func TestV1ConversionConsistency_ErrorsMustBeReturned(t *testing.T) {
 func TestV1ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a valid v1 dashboard
 	validV1 := &dashv1.Dashboard{

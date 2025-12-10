@@ -192,7 +192,7 @@ func TestV2beta1ConversionErrorHandling(t *testing.T) {
 func TestV2ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create valid v2alpha1 dashboard
 	validV2alpha1 := &dashv2alpha1.Dashboard{
@@ -270,7 +270,7 @@ func TestV2ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
 func TestV2ConversionConsistency_ErrorsMustBeReturned(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Note: v2 conversions are harder to make fail since they don't go through schema migration.
 	// These tests verify that IF an error occurs, it is returned (not swallowed).

@@ -1925,7 +1925,7 @@ func TestDataLossDetection_IntegrationWithRealConversions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := testutil.NewDataSourceProvider(testutil.StandardTestConfig)
 	leProvider := testutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()

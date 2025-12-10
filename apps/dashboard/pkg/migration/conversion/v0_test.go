@@ -397,7 +397,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 func TestV0ConversionConsistency_ErrorsMustBeReturned(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a v0 dashboard that will fail conversion (invalid schema version)
 	invalidV0 := &dashv0.Dashboard{
@@ -440,7 +440,7 @@ func TestV0ConversionConsistency_ErrorsMustBeReturned(t *testing.T) {
 func TestV0ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a valid v0 dashboard
 	validV0 := &dashv0.Dashboard{
@@ -492,7 +492,7 @@ func TestV0ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
 func TestV0ConversionConsistency_ObjectMetaMustBeSetOnError(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	invalidV0 := &dashv0.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{
@@ -538,7 +538,7 @@ func TestV0ConversionConsistency_ObjectMetaMustBeSetOnError(t *testing.T) {
 func TestV0ConversionConsistency_LayoutMustBeSetOnError(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	invalidV0 := &dashv0.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{
