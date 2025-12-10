@@ -2507,40 +2507,6 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 	}
 }
 
-// ========== Generic V2 Dashboard Helper ==========
-
-func createV2DashboardWithTabs(numPanels, queriesPerPanel int) *dashv2alpha1.Dashboard {
-	elements := make(map[string]dashv2alpha1.DashboardElement)
-	for i := 1; i <= numPanels; i++ {
-		queries := make([]dashv2alpha1.DashboardPanelQueryKind, queriesPerPanel)
-		for q := 0; q < queriesPerPanel; q++ {
-			queries[q] = dashv2alpha1.DashboardPanelQueryKind{
-				Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: fmt.Sprintf("%c", 'A'+q)},
-			}
-		}
-		elements[fmt.Sprintf("panel%d", i)] = dashv2alpha1.DashboardElement{
-			PanelKind: &dashv2alpha1.DashboardPanelKind{
-				Kind: "Panel",
-				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:    float64(i),
-					Title: fmt.Sprintf("Panel %d", i),
-					VizConfig: dashv2alpha1.DashboardVizConfigKind{
-						Kind: "timeseries",
-					},
-					Data: dashv2alpha1.DashboardQueryGroupKind{
-						Spec: dashv2alpha1.DashboardQueryGroupSpec{Queries: queries},
-					},
-				},
-			},
-		}
-	}
-	return &dashv2alpha1.Dashboard{
-		Spec: dashv2alpha1.DashboardSpec{
-			Elements: elements,
-		},
-	}
-}
-
 func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{} {
 	panels := make([]interface{}, numPanels)
 	for i := 0; i < numPanels; i++ {
@@ -3009,54 +2975,6 @@ func createV2ComplexNestedDashboard() *dashv2alpha1.Dashboard {
 			},
 		},
 	}
-}
-
-func createV0V1MixedRows(numPanels, queriesPerPanel int) map[string]interface{} {
-	// Mix of collapsed and expanded rows
-	panels := make([]interface{}, 0)
-
-	// First row (collapsed) with 2 panels
-	collapsedPanels := make([]interface{}, 2)
-	for i := 0; i < 2; i++ {
-		targets := make([]interface{}, queriesPerPanel)
-		for q := 0; q < queriesPerPanel; q++ {
-			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
-		}
-		collapsedPanels[i] = map[string]interface{}{
-			"id":      float64(i + 1),
-			"title":   fmt.Sprintf("Panel %d (collapsed row)", i+1),
-			"type":    "timeseries",
-			"targets": targets,
-		}
-	}
-	panels = append(panels, map[string]interface{}{
-		"id":        float64(100),
-		"title":     "Row 1 (collapsed)",
-		"type":      "row",
-		"collapsed": true,
-		"panels":    collapsedPanels,
-	})
-
-	// Second row (expanded) followed by panels
-	panels = append(panels, map[string]interface{}{
-		"id":    float64(101),
-		"title": "Row 2 (expanded)",
-		"type":  "row",
-	})
-	for i := 2; i < numPanels; i++ {
-		targets := make([]interface{}, queriesPerPanel)
-		for q := 0; q < queriesPerPanel; q++ {
-			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
-		}
-		panels = append(panels, map[string]interface{}{
-			"id":      float64(i + 1),
-			"title":   fmt.Sprintf("Panel %d (after expanded row)", i+1),
-			"type":    "timeseries",
-			"targets": targets,
-		})
-	}
-
-	return map[string]interface{}{"panels": panels}
 }
 
 // createV0V1MixedAllTypes creates a V0/V1 dashboard with ALL layout types:
