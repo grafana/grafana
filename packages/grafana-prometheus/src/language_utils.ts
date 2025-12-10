@@ -15,7 +15,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { getCacheDurationInMinutes } from './caching';
-import { SUGGESTIONS_LIMIT, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
@@ -30,38 +30,6 @@ export const processHistogramMetrics = (metrics: string[]) => {
   }
   return [...resultSet];
 };
-
-export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
-  // For processing we are going to use sets as they have significantly better performance than arrays
-  // After we process labels, we will convert sets to arrays and return object with label values in arrays
-  const valueSet: { [key: string]: Set<string> } = {};
-  labels.forEach((label) => {
-    const { __name__, ...rest } = label;
-    if (withName) {
-      valueSet['__name__'] = valueSet['__name__'] || new Set();
-      if (!valueSet['__name__'].has(__name__)) {
-        valueSet['__name__'].add(__name__);
-      }
-    }
-
-    Object.keys(rest).forEach((key) => {
-      if (!valueSet[key]) {
-        valueSet[key] = new Set();
-      }
-      if (!valueSet[key].has(rest[key])) {
-        valueSet[key].add(rest[key]);
-      }
-    });
-  });
-
-  // valueArray that we are going to return in the object
-  const valueArray: { [key: string]: string[] } = {};
-  limitSuggestions(Object.keys(valueSet)).forEach((key) => {
-    valueArray[key] = limitSuggestions(Array.from(valueSet[key]));
-  });
-
-  return { values: valueArray, keys: Object.keys(valueArray) };
-}
 
 // This will capture 4 groups. Example label filter => {instance="10.4.11.4:9003"}
 // 1. label:    instance
@@ -274,10 +242,6 @@ function roundSecToMin(seconds: number): number {
 // Returns number of minutes rounded up to the nearest nth minute
 function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
   return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
-}
-
-function limitSuggestions(items: string[]) {
-  return items.slice(0, SUGGESTIONS_LIMIT);
 }
 
 const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
