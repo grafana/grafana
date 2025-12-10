@@ -7906,6 +7906,7 @@
     "title": "Leave page?"
   },
   "gauge": {
+    "category-effects": "Effects",
     "category-gauge": "Gauge",
     "category-radial-bar": "Gauge",
     "description-min-height": "Minimum row height (horizontal orientation)",
@@ -12434,11 +12435,12 @@
       "gradient": "Gradient",
       "gradient-auto": "Auto",
       "gradient-none": "None",
+      "other-effects": "Other effects",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
-      "shape": "Shape",
+      "shape": "Style",
       "shape-circle": "Circle",
-      "shape-gauge": "Gauge",
+      "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
