@@ -4762,6 +4762,8 @@
       "remove": "移除{{typeName}}",
       "row-title": "",
       "switch-layout": "切换布局",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5866,6 +5868,17 @@
       "label-value": "值",
       "placeholder-your-metric-prefix": "您的指标前缀"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "自定义选项",
       "name-values-separated-comma": "以逗号分隔的值",
@@ -6236,12 +6249,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "可选，如果您想要提取序列名称或指标节点段的一部分。",
+      "description-regex-apply-to": "",
       "label-data-source": "数据源",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "静态选项排序",
       "label-target-data-source": "目标数据源",
       "label-use-static-options": "使用静态选项",
       "name-regex": "正则表达式",
       "query-options": "查询选项",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "选择内容选项",
       "static-options-legend": "静态选项"
     },
