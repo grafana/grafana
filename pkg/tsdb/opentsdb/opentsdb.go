@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 var logger = backend.NewLoggerWith("tsdb.opentsdb")
@@ -149,18 +150,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger := logger.FromContext(ctx)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/suggest", s.HandleSuggestQuery)
 
-	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return err
-	}
-
-	if req.Path == "api/suggest" {
-		return HandleSuggestQuery(ctx, logger, dsInfo, req, sender)
-	}
-
-	return fmt.Errorf("unknown resource path: %s", req.Path)
+	handler := httpadapter.New(mux)
+	return handler.CallResource(ctx, req, sender)
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
