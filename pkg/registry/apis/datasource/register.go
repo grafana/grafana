@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,17 +39,14 @@ var (
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
 
-	pluginJSON                      plugins.JSONData
-	client                          PluginClient // will only ever be called with the same plugin id!
-	datasources                     PluginDatasourceProvider
-	contextProvider                 PluginContextWrapper
-	accessControl                   accesscontrol.AccessControl
-	queryTypes                      *queryV0.QueryTypeDefinitionList
-	configCrudUseNewApis            bool
-	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	pluginJSON           plugins.JSONData
+	client               PluginClient // will only ever be called with the same plugin id!
+	datasources          PluginDatasourceProvider
+	contextProvider      PluginContextWrapper
+	accessControl        accesscontrol.AccessControl
+	queryTypes           *queryV0.QueryTypeDefinitionList
+	configCrudUseNewApis bool
 }
-
-var dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
@@ -66,15 +62,6 @@ func RegisterAPIService(
 	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil
 	}
-
-	sync.OnceFunc(func() {
-		dsConfigHandlerRequestsDuration = metricutil.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "ds_config_handler_k8s_requests_duration_seconds",
-			Help:      "Duration of requests handled by datasource configuration handlers",
-		}, []string{"code_path", "handler"})
-		reg.MustRegister(dsConfigHandlerRequestsDuration)
-	})()
 
 	var err error
 	var builder *DataSourceAPIBuilder
@@ -100,7 +87,6 @@ func RegisterAPIService(
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
-			dsConfigHandlerRequestsDuration,
 		)
 		if err != nil {
 			return nil, err
@@ -128,7 +114,6 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
 	configCrudUseNewApis bool,
-	dsConfigHandlerRequestsDuration *prometheus.HistogramVec,
 ) (*DataSourceAPIBuilder, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
@@ -136,14 +121,13 @@ func NewDataSourceAPIBuilder(
 	}
 
 	builder := &DataSourceAPIBuilder{
-		datasourceResourceInfo:          datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
-		pluginJSON:                      plugin,
-		client:                          client,
-		datasources:                     datasources,
-		contextProvider:                 contextProvider,
-		accessControl:                   accessControl,
-		configCrudUseNewApis:            configCrudUseNewApis,
-		dsConfigHandlerRequestsDuration: dsConfigHandlerRequestsDuration,
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		pluginJSON:             plugin,
+		client:                 client,
+		datasources:            datasources,
+		contextProvider:        contextProvider,
+		accessControl:          accessControl,
+		configCrudUseNewApis:   configCrudUseNewApis,
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
@@ -234,11 +218,14 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	if b.configCrudUseNewApis {
 		legacyStore := &legacyStorage{
-			datasources:                     b.datasources,
-			resourceInfo:                    &ds,
-			dsConfigHandlerRequestsDuration: b.dsConfigHandlerRequestsDuration,
+			datasources:  b.datasources,
+			resourceInfo: &ds,
+			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Name:      "ds_config_handler_requests_duration_seconds",
+				Help:      "Duration of requests handled by datasource configuration handlers",
+			}, []string{"code_path", "handler"}),
 		}
-
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
 			return err

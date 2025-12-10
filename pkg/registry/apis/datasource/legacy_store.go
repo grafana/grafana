@@ -57,11 +57,6 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	start := time.Now()
-	defer func() {
-		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "List"), time.Since(start).Seconds())
-	}()
-
 	return s.datasources.ListDataSources(ctx)
 }
 
