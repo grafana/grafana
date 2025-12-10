@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -179,13 +180,30 @@ func RegisterAPIService(
 		datasourceService: datasourceService,
 	}, &libraryElementIndexProvider{
 		libraryElementService: libraryPanels,
-	})
+	}, cfg.DashboardSchemaMigrationCacheTTL)
+
+	// For single-tenant deployments (indicated by StackID), preload the cache in the background
+	if cfg.StackID != "" {
+		// Single namespace for cloud stack
+		stackID, err := strconv.ParseInt(cfg.StackID, 10, 64)
+		if err == nil {
+			var nsInfo authlib.NamespaceInfo
+			nsInfo, err = authlib.ParseNamespace(authlib.CloudNamespaceFormatter(stackID))
+			if err == nil {
+				migration.PreloadCacheInBackground([]authlib.NamespaceInfo{nsInfo})
+			}
+		}
+		if err != nil {
+			logging.DefaultLogger.Error("failed to parse namespace for cache preloading", "stackId", cfg.StackID, "err", err)
+		}
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
-	migration.Initialize(datasourceProvider, libraryElementProvider)
+	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
