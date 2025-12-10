@@ -156,7 +156,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 						}
 					}
 				}
-				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+				connectLogger.Debug("responder sending status code", "statusCode", *statusCode, "caller", getCaller(ctx))
 			},
 
 			func(err error) {
