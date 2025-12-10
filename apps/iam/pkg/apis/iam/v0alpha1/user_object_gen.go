@@ -32,12 +32,6 @@ func NewUser() *User {
 	}
 }
 
-func NewUser() *User {
-	return &User{
-		Spec: *NewUserSpec(),
-	}
-}
-
 func (o *User) GetSpec() any {
 	return o.Spec
 }
