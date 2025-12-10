@@ -3,7 +3,7 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
@@ -16,7 +16,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
+	logsdrilldownv1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/generated/logsdrilldown/v1alpha1"
+	logsdrilldowndefaultcolumnsv1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/generated/logsdrilldowndefaultcolumns/v1alpha1"
+	logsdrilldowndefaultsv1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/generated/logsdrilldowndefaults/v1alpha1"
 )
 
 var (
@@ -82,9 +84,9 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"LogsDrilldown/v1alpha1":               v1alpha1.LogsDrilldownKind(),
-	"LogsDrilldownDefaults/v1alpha1":       v1alpha1.LogsDrilldownDefaultsKind(),
-	"LogsDrilldownDefaultColumns/v1alpha1": v1alpha1.LogsDrilldownDefaultColumnsKind(),
+	"LogsDrilldown/v1alpha1":               logsdrilldownv1alpha1.Kind(),
+	"LogsDrilldownDefaults/v1alpha1":       logsdrilldowndefaultsv1alpha1.Kind(),
+	"LogsDrilldownDefaultColumns/v1alpha1": logsdrilldowndefaultcolumnsv1alpha1.Kind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

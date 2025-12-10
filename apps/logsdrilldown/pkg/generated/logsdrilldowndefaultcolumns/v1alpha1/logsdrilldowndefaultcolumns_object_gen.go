@@ -15,29 +15,22 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type LogsDrilldown struct {
+type LogsDrilldownDefaultColumns struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the LogsDrilldown
-	Spec LogsDrilldownSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the LogsDrilldownDefaultColumns
+	Spec Spec `json:"spec" yaml:"spec"`
 
-	Status LogsDrilldownStatus `json:"status" yaml:"status"`
+	Status Status `json:"status" yaml:"status"`
 }
 
-func NewLogsDrilldown() *LogsDrilldown {
-	return &LogsDrilldown{
-		Spec:   *NewLogsDrilldownSpec(),
-		Status: *NewLogsDrilldownStatus(),
-	}
-}
-
-func (o *LogsDrilldown) GetSpec() any {
+func (o *LogsDrilldownDefaultColumns) GetSpec() any {
 	return o.Spec
 }
 
-func (o *LogsDrilldown) SetSpec(spec any) error {
-	cast, ok := spec.(LogsDrilldownSpec)
+func (o *LogsDrilldownDefaultColumns) SetSpec(spec any) error {
+	cast, ok := spec.(Spec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -45,13 +38,13 @@ func (o *LogsDrilldown) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *LogsDrilldown) GetSubresources() map[string]any {
+func (o *LogsDrilldownDefaultColumns) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *LogsDrilldown) GetSubresource(name string) (any, bool) {
+func (o *LogsDrilldownDefaultColumns) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -60,12 +53,12 @@ func (o *LogsDrilldown) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *LogsDrilldown) SetSubresource(name string, value any) error {
+func (o *LogsDrilldownDefaultColumns) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(LogsDrilldownStatus)
+		cast, ok := value.(Status)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type LogsDrilldownStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type Status", value)
 		}
 		o.Status = cast
 		return nil
@@ -74,7 +67,7 @@ func (o *LogsDrilldown) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *LogsDrilldown) GetStaticMetadata() resource.StaticMetadata {
+func (o *LogsDrilldownDefaultColumns) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -85,7 +78,7 @@ func (o *LogsDrilldown) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *LogsDrilldown) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *LogsDrilldownDefaultColumns) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -95,7 +88,7 @@ func (o *LogsDrilldown) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *LogsDrilldown) GetCommonMetadata() resource.CommonMetadata {
+func (o *LogsDrilldownDefaultColumns) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -127,7 +120,7 @@ func (o *LogsDrilldown) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *LogsDrilldown) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *LogsDrilldownDefaultColumns) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -172,7 +165,7 @@ func (o *LogsDrilldown) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *LogsDrilldown) GetCreatedBy() string {
+func (o *LogsDrilldownDefaultColumns) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -180,7 +173,7 @@ func (o *LogsDrilldown) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *LogsDrilldown) SetCreatedBy(createdBy string) {
+func (o *LogsDrilldownDefaultColumns) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -188,7 +181,7 @@ func (o *LogsDrilldown) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *LogsDrilldown) GetUpdateTimestamp() time.Time {
+func (o *LogsDrilldownDefaultColumns) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -197,7 +190,7 @@ func (o *LogsDrilldown) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *LogsDrilldown) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *LogsDrilldownDefaultColumns) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -205,7 +198,7 @@ func (o *LogsDrilldown) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *LogsDrilldown) GetUpdatedBy() string {
+func (o *LogsDrilldownDefaultColumns) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -213,7 +206,7 @@ func (o *LogsDrilldown) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *LogsDrilldown) SetUpdatedBy(updatedBy string) {
+func (o *LogsDrilldownDefaultColumns) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -221,21 +214,21 @@ func (o *LogsDrilldown) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *LogsDrilldown) Copy() resource.Object {
+func (o *LogsDrilldownDefaultColumns) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *LogsDrilldown) DeepCopyObject() runtime.Object {
+func (o *LogsDrilldownDefaultColumns) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *LogsDrilldown) DeepCopy() *LogsDrilldown {
-	cpy := &LogsDrilldown{}
+func (o *LogsDrilldownDefaultColumns) DeepCopy() *LogsDrilldownDefaultColumns {
+	cpy := &LogsDrilldownDefaultColumns{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *LogsDrilldown) DeepCopyInto(dst *LogsDrilldown) {
+func (o *LogsDrilldownDefaultColumns) DeepCopyInto(dst *LogsDrilldownDefaultColumns) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -244,34 +237,34 @@ func (o *LogsDrilldown) DeepCopyInto(dst *LogsDrilldown) {
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &LogsDrilldown{}
+var _ resource.Object = &LogsDrilldownDefaultColumns{}
 
 // +k8s:openapi-gen=true
-type LogsDrilldownList struct {
+type LogsDrilldownDefaultColumnsList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []LogsDrilldown `json:"items" yaml:"items"`
+	Items           []LogsDrilldownDefaultColumns `json:"items" yaml:"items"`
 }
 
-func (o *LogsDrilldownList) DeepCopyObject() runtime.Object {
+func (o *LogsDrilldownDefaultColumnsList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *LogsDrilldownList) Copy() resource.ListObject {
-	cpy := &LogsDrilldownList{
+func (o *LogsDrilldownDefaultColumnsList) Copy() resource.ListObject {
+	cpy := &LogsDrilldownDefaultColumnsList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]LogsDrilldown, len(o.Items)),
+		Items:    make([]LogsDrilldownDefaultColumns, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*LogsDrilldown); ok {
+		if item, ok := o.Items[i].Copy().(*LogsDrilldownDefaultColumns); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *LogsDrilldownList) GetItems() []resource.Object {
+func (o *LogsDrilldownDefaultColumnsList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -279,48 +272,48 @@ func (o *LogsDrilldownList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *LogsDrilldownList) SetItems(items []resource.Object) {
-	o.Items = make([]LogsDrilldown, len(items))
+func (o *LogsDrilldownDefaultColumnsList) SetItems(items []resource.Object) {
+	o.Items = make([]LogsDrilldownDefaultColumns, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*LogsDrilldown)
+		o.Items[i] = *items[i].(*LogsDrilldownDefaultColumns)
 	}
 }
 
-func (o *LogsDrilldownList) DeepCopy() *LogsDrilldownList {
-	cpy := &LogsDrilldownList{}
+func (o *LogsDrilldownDefaultColumnsList) DeepCopy() *LogsDrilldownDefaultColumnsList {
+	cpy := &LogsDrilldownDefaultColumnsList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *LogsDrilldownList) DeepCopyInto(dst *LogsDrilldownList) {
+func (o *LogsDrilldownDefaultColumnsList) DeepCopyInto(dst *LogsDrilldownDefaultColumnsList) {
 	resource.CopyObjectInto(dst, o)
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &LogsDrilldownList{}
+var _ resource.ListObject = &LogsDrilldownDefaultColumnsList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *LogsDrilldownSpec) DeepCopy() *LogsDrilldownSpec {
-	cpy := &LogsDrilldownSpec{}
+func (s *Spec) DeepCopy() *Spec {
+	cpy := &Spec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *LogsDrilldownSpec) DeepCopyInto(dst *LogsDrilldownSpec) {
+func (s *Spec) DeepCopyInto(dst *Spec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of LogsDrilldownStatus
-func (s *LogsDrilldownStatus) DeepCopy() *LogsDrilldownStatus {
-	cpy := &LogsDrilldownStatus{}
+// DeepCopy creates a full deep copy of Status
+func (s *Status) DeepCopy() *Status {
+	cpy := &Status{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies LogsDrilldownStatus into another LogsDrilldownStatus object
-func (s *LogsDrilldownStatus) DeepCopyInto(dst *LogsDrilldownStatus) {
+// DeepCopyInto deep copies Status into another Status object
+func (s *Status) DeepCopyInto(dst *Status) {
 	resource.CopyObjectInto(dst, s)
 }

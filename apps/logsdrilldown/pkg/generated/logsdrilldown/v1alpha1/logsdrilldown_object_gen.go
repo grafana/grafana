@@ -20,16 +20,9 @@ type LogsDrilldown struct {
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
 	// Spec is the spec of the LogsDrilldown
-	Spec LogsDrilldownSpec `json:"spec" yaml:"spec"`
+	Spec Spec `json:"spec" yaml:"spec"`
 
-	Status LogsDrilldownStatus `json:"status" yaml:"status"`
-}
-
-func NewLogsDrilldown() *LogsDrilldown {
-	return &LogsDrilldown{
-		Spec:   *NewLogsDrilldownSpec(),
-		Status: *NewLogsDrilldownStatus(),
-	}
+	Status Status `json:"status" yaml:"status"`
 }
 
 func (o *LogsDrilldown) GetSpec() any {
@@ -37,7 +30,7 @@ func (o *LogsDrilldown) GetSpec() any {
 }
 
 func (o *LogsDrilldown) SetSpec(spec any) error {
-	cast, ok := spec.(LogsDrilldownSpec)
+	cast, ok := spec.(Spec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -63,9 +56,9 @@ func (o *LogsDrilldown) GetSubresource(name string) (any, bool) {
 func (o *LogsDrilldown) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(LogsDrilldownStatus)
+		cast, ok := value.(Status)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type LogsDrilldownStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type Status", value)
 		}
 		o.Status = cast
 		return nil
@@ -302,25 +295,25 @@ var _ resource.ListObject = &LogsDrilldownList{}
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *LogsDrilldownSpec) DeepCopy() *LogsDrilldownSpec {
-	cpy := &LogsDrilldownSpec{}
+func (s *Spec) DeepCopy() *Spec {
+	cpy := &Spec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *LogsDrilldownSpec) DeepCopyInto(dst *LogsDrilldownSpec) {
+func (s *Spec) DeepCopyInto(dst *Spec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of LogsDrilldownStatus
-func (s *LogsDrilldownStatus) DeepCopy() *LogsDrilldownStatus {
-	cpy := &LogsDrilldownStatus{}
+// DeepCopy creates a full deep copy of Status
+func (s *Status) DeepCopy() *Status {
+	cpy := &Status{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies LogsDrilldownStatus into another LogsDrilldownStatus object
-func (s *LogsDrilldownStatus) DeepCopyInto(dst *LogsDrilldownStatus) {
+// DeepCopyInto deep copies Status into another Status object
+func (s *Status) DeepCopyInto(dst *Status) {
 	resource.CopyObjectInto(dst, s)
 }
