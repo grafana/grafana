@@ -380,13 +380,6 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}
 
-	if hs.Live != nil {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.GetOrgID(), c.SignedInUser, dash.UID)
-		if err != nil {
-			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.UID, "error", err)
-		}
-	}
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
@@ -482,31 +475,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	dashboard, saveErr := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
-
-	if hs.Live != nil {
-		// Tell everyone listening that the dashboard changed
-		if dashboard == nil {
-			dashboard = dash // the original request
-		}
-
-		// This will broadcast all save requests only if a `gitops` observer exists.
-		// gitops is useful when trying to save dashboards in an environment where the user can not save
-		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(c.GetOrgID(), c.SignedInUser, cmd.Message, dashboard, saveErr)
-
-		// When an error exists, but the value broadcast to a gitops listener return 202
-		if liveerr == nil && saveErr != nil && channel.HasGitOpsObserver(c.GetOrgID()) {
-			return response.JSON(http.StatusAccepted, util.DynMap{
-				"status":  "pending",
-				"message": "changes were broadcast to the gitops listener",
-			})
-		}
-
-		if liveerr != nil {
-			hs.log.Warn("Unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
-		}
-	}
-
 	if saveErr != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
