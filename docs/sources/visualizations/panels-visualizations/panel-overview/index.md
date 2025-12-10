@@ -192,7 +192,7 @@ This feature is supported for the following visualizations:
 
 Click and drag on the panel to zoom in on a particular time range.
 
-The following screen recordings show this interaction in the time series and Candlestick visualizations:
+The following screen recordings show this interaction in the time series and candlestick visualizations:
 
 Time series
 
