@@ -7,10 +7,13 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
+	lru "github.com/hashicorp/golang-lru/v2"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
+
+const defaultCacheSize = 1000
 
 // CacheProvider is a generic cache interface for schema version providers.
 type CacheProvider[T any] interface {
@@ -33,8 +36,7 @@ type cacheEntry[T any] struct {
 // cachedProvider is a thread-safe TTL cache that wraps any fetch function.
 type cachedProvider[T any] struct {
 	fetch    func(context.Context) T
-	mu       sync.RWMutex
-	entries  map[string]*cacheEntry[T] // namespace to cache entry
+	entries  *lru.Cache[string, *cacheEntry[T]] // LRU cache: namespace to cache entry
 	cacheTTL time.Duration
 	inFlight sync.Map // map[string]*sync.Mutex - per-namespace fetch locks
 	logger   log.Logger
@@ -43,19 +45,24 @@ type cachedProvider[T any] struct {
 // newCachedProvider creates a new cachedProvider.
 // The fetch function should be able to handle context with different namespaces.
 // If cacheTTL is 0 or negative, Get() will call fetch() directly without caching.
-func newCachedProvider[T any](fetch func(context.Context) T, cacheTTL time.Duration, logger log.Logger) *cachedProvider[T] {
-	return &cachedProvider[T]{
+func newCachedProvider[T any](fetch func(context.Context) T, size int, cacheTTL time.Duration, logger log.Logger) (*cachedProvider[T], error) {
+	cacheProvider := &cachedProvider[T]{
 		fetch:    fetch,
-		entries:  make(map[string]*cacheEntry[T]),
 		cacheTTL: cacheTTL,
 		logger:   logger,
 	}
+	// Create LRU cache with a maximum of 1000 namespace entries
+	var err error
+	cacheProvider.entries, err = lru.NewWithEvict[string, *cacheEntry[T]](size, func(key string, value *cacheEntry[T]) {
+		cacheProvider.inFlight.Delete(key)
+	})
+	return cacheProvider, err
 }
 
 // Get returns the cached value if it's still valid, otherwise calls fetch and caches the result.
 func (p *cachedProvider[T]) Get(ctx context.Context) T {
-	// If caching is disabled, call fetch directly
-	if p.cacheTTL <= 0 {
+	// If caching is disabled or cache was not initialized, call fetch directly
+	if p.cacheTTL <= 0 || p.entries == nil {
 		return p.fetch(ctx)
 	}
 
@@ -69,14 +76,11 @@ func (p *cachedProvider[T]) Get(ctx context.Context) T {
 
 	namespace := nsInfo.Value
 
-	// Fast path: check if cache is still valid using read lock
-	p.mu.RLock()
-	if entry, ok := p.entries[namespace]; ok && time.Since(entry.cachedAt) < p.cacheTTL {
+	// Fast path: check if cache is still valid
+	if entry, ok := p.entries.Get(namespace); ok && time.Since(entry.cachedAt) < p.cacheTTL {
 		value := entry.value
-		p.mu.RUnlock()
 		return value
 	}
-	p.mu.RUnlock()
 
 	// Get or create a per-namespace lock for this fetch operation
 	// This ensures only one fetch happens per namespace at a time
@@ -88,45 +92,37 @@ func (p *cachedProvider[T]) Get(ctx context.Context) T {
 	defer nsMutex.Unlock()
 
 	// Double-check: another goroutine might have already fetched while we waited
-	p.mu.RLock()
-	if entry, ok := p.entries[namespace]; ok && time.Since(entry.cachedAt) < p.cacheTTL {
+	if entry, ok := p.entries.Get(namespace); ok && time.Since(entry.cachedAt) < p.cacheTTL {
 		value := entry.value
-		p.mu.RUnlock()
 		return value
 	}
-	p.mu.RUnlock()
 
 	// Fetch outside the main lock - only this namespace is blocked
 	p.logger.Debug("cache miss or expired, fetching new value", "namespace", namespace)
 	value := p.fetch(ctx)
 
 	// Update the cache for this namespace
-	p.mu.Lock()
-	p.entries[namespace] = &cacheEntry[T]{
+	p.entries.Add(namespace, &cacheEntry[T]{
 		value:    value,
 		cachedAt: time.Now(),
-	}
-	p.mu.Unlock()
+	})
 
 	return value
 }
 
 // Preload loads data into the cache for the given namespaces.
 func (p *cachedProvider[T]) Preload(ctx context.Context, nsInfos []types.NamespaceInfo) {
-	if p.cacheTTL <= 0 {
+	if p.cacheTTL <= 0 || p.entries == nil {
 		return // Caching disabled, nothing to preload
 	}
-
-	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	// Build the cache using a context with the namespace
 	p.logger.Info("preloading cache entries", "nsInfos", len(nsInfos))
 	for _, nsInfo := range nsInfos {
 		value := p.fetch(k8srequest.WithNamespace(ctx, nsInfo.Value))
-		p.entries[nsInfo.Value] = &cacheEntry[T]{
+		p.entries.Add(nsInfo.Value, &cacheEntry[T]{
 			value:    value,
 			cachedAt: time.Now(),
-		}
+		})
 	}
 }
