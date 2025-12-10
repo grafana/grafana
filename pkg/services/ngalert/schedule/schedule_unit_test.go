@@ -1107,7 +1107,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			rule := models.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
 
 			sch.deleteAlertRule(ctx, key)
 
@@ -1126,7 +1126,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			rule := models.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
 
 			_, err := sch.updateSchedulableAlertRules(ctx)
 			require.NoError(t, err)
@@ -1149,7 +1149,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			rule := models.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
 
 			_, err := sch.updateSchedulableAlertRules(ctx)
 			require.NoError(t, err)
@@ -1172,7 +1172,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
 
 			_, err := sch.updateSchedulableAlertRules(ctx)
 			require.NoError(t, err)
