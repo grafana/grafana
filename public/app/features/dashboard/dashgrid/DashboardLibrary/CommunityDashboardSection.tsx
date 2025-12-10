@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync, useAsyncFn, useDebounce } from 'react-use';
+import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -42,7 +42,6 @@ const INCLUDE_SCREENSHOTS = true;
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
 
@@ -55,18 +54,12 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     [searchQuery]
   );
 
-  // Reset to page 1 when debounced search query changes
-  useEffect(() => {
-    if (debouncedSearchQuery) {
-      setCurrentPage(1);
-    }
-  }, [debouncedSearchQuery]);
-
   const {
     value: response,
     loading,
     error,
-  } = useAsync(async () => {
+    retry,
+  } = useAsyncRetry(async () => {
     if (!datasourceUid) {
       return null;
     }
@@ -80,7 +73,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       const apiResponse = await fetchCommunityDashboards({
         orderBy: DEFAULT_SORT_ORDER,
         direction: DEFAULT_SORT_DIRECTION,
-        page: currentPage,
+        page: 1,
         pageSize: COMMUNITY_PAGE_SIZE,
         includeLogo: INCLUDE_LOGO,
         includeScreenshots: INCLUDE_SCREENSHOTS,
@@ -108,7 +101,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       console.error('Error loading community dashboards', err);
       throw err;
     }
-  }, [datasourceUid, currentPage, debouncedSearchQuery]);
+  }, [datasourceUid, debouncedSearchQuery]);
 
   // Track analytics only once on first successful load
   useEffect(() => {
@@ -209,7 +202,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
-            <Button variant="secondary" onClick={() => setCurrentPage(1)}>
+            <Button variant="secondary" onClick={retry}>
               <Trans i18nKey="dashboard-library.retry">Retry</Trans>
             </Button>
           </Stack>

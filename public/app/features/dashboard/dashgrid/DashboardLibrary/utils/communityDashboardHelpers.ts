@@ -203,7 +203,7 @@ export async function onUseCommunityDashboard({
     const dashboardJson = fullDashboard.json;
 
     if (canDashboardContainJS(dashboardJson)) {
-      throw new Error(`Community dashboard ${dashboard.id} ${dashboard.name} contains JavaScript code`);
+      throw new Error(`Community dashboard ${dashboard.id} ${dashboard.name} might contain JavaScript code`);
     }
 
     // Parse datasource requirements from __inputs

@@ -131,9 +131,15 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
 // They are already ordered by downloads amount
 const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
   return dashboards.filter((item: GnetDashboard) => {
-    return !(
+    if (
       item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
       item.downloads < MIN_DOWNLOADS_FILTER
-    );
+    ) {
+      console.warn(
+        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavasScript`
+      );
+      return false;
+    }
+    return true;
   });
 };

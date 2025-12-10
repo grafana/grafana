@@ -91,7 +91,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
           orderBy: DEFAULT_SORT_ORDER,
           direction: DEFAULT_SORT_DIRECTION,
           page: 1,
-          pageSize: SUGGESTED_COMMUNITY_PAGE_SIZE,
+          pageSize: 50,
           includeScreenshots: INCLUDE_SCREENSHOTS,
           dataSourceSlugIn: ds.type,
           includeLogo: INCLUDE_LOGO,
