@@ -125,7 +125,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		},
 		// --- Kubernetes status errors ---
 		{
-			name: "kubernetes status error",
+			name: "kubernetes status error with message",
 			input: &k8sErrors.StatusError{
 				ErrStatus: metav1.Status{
 					Code:    412,
@@ -136,6 +136,66 @@ func TestToFolderErrorResponse(t *testing.T) {
 				ErrStatus: metav1.Status{
 					Code:    412,
 					Message: "the folder has been changed by someone else",
+				},
+			}),
+		},
+		{
+			name: "kubernetes status error with empty message - 403 forbidden",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusForbidden,
+					Message: "",
+				},
+			},
+			want: response.Error(http.StatusForbidden, "Access denied", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusForbidden,
+					Message: "",
+				},
+			}),
+		},
+		{
+			name: "kubernetes status error with empty message - 404 not found",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusNotFound,
+					Message: "",
+				},
+			},
+			want: response.Error(http.StatusNotFound, "Folder not found", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusNotFound,
+					Message: "",
+				},
+			}),
+		},
+		{
+			name: "kubernetes status error with empty message - 400 bad request",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusBadRequest,
+					Message: "",
+				},
+			},
+			want: response.Error(http.StatusBadRequest, "Invalid request", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusBadRequest,
+					Message: "",
+				},
+			}),
+		},
+		{
+			name: "kubernetes status error with empty message - default fallback",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusInternalServerError,
+					Message: "",
+				},
+			},
+			want: response.Error(http.StatusInternalServerError, "Folder API error", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusInternalServerError,
+					Message: "",
 				},
 			}),
 		},
