@@ -73,6 +73,7 @@ describe('QueryVariableEditor', () => {
       },
       query: 'my-query',
       regex: '.*',
+      regexApplyTo: 'value',
       sort: VariableSort.alphabeticalAsc,
       refresh: VariableRefresh.onDashboardLoad,
       isMulti: true,

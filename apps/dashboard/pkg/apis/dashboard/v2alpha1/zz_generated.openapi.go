@@ -3646,6 +3646,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"regexApplyTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"sort": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
