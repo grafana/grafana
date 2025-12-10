@@ -353,7 +353,7 @@ func TestIntegrationListPagination(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, rsp.Items, totalDashboards, "should return all %d dashboards", totalDashboards)
 
-			// Test 3: List with small limit (3) - should paginate
+			// Test 3: List with small limit (2) - should paginate
 			const pageSize = 2
 			allNames := make(map[string]bool)
 			continueToken := ""

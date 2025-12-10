@@ -714,7 +714,7 @@ func (r *rowsWrapper) Value() []byte {
 
 // batchingIterator wraps rowsWrapper to fetch data in batches
 type batchingIterator struct {
-	*rowsWrapper
+	wrapper   *rowsWrapper
 	a         *dashboardSqlAccess
 	ctx       context.Context
 	helper    *legacysql.LegacyDatabaseHelper
@@ -724,6 +724,38 @@ type batchingIterator struct {
 }
 
 var _ resource.ListIterator = (*batchingIterator)(nil)
+
+func (b *batchingIterator) Error() error {
+	return b.wrapper.Error()
+}
+
+func (b *batchingIterator) ContinueToken() string {
+	return b.wrapper.ContinueToken()
+}
+
+func (b *batchingIterator) ResourceVersion() int64 {
+	return b.wrapper.ResourceVersion()
+}
+
+func (b *batchingIterator) Namespace() string {
+	return b.wrapper.Namespace()
+}
+
+func (b *batchingIterator) Name() string {
+	return b.wrapper.Name()
+}
+
+func (b *batchingIterator) Folder() string {
+	return b.wrapper.Folder()
+}
+
+func (b *batchingIterator) Value() []byte {
+	return b.wrapper.Value()
+}
+
+func (b *batchingIterator) Close() error {
+	return b.wrapper.Close()
+}
 
 func newBatchingIterator(ctx context.Context, a *dashboardSqlAccess, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*batchingIterator, error) {
 	iter := &batchingIterator{
@@ -735,22 +767,22 @@ func newBatchingIterator(ctx context.Context, a *dashboardSqlAccess, helper *leg
 	}
 
 	// Loads the first batch
-	if err := iter.nextBatch(); err != nil {
+	if err := iter.nextBatch(query.LastID); err != nil {
 		return nil, err
 	}
 	return iter, nil
 }
 
-func (b *batchingIterator) nextBatch() error {
-	if b.rowsWrapper != nil {
-		_ = b.Close()
+func (b *batchingIterator) nextBatch(lastID int64) error {
+	if b.wrapper != nil {
+		_ = b.wrapper.Close()
 	}
-
+	b.query.LastID = lastID
 	wrapper, err := b.a.getRows(b.ctx, b.helper, b.query)
 	if err != nil {
 		return err
 	}
-	b.rowsWrapper = wrapper
+	b.wrapper = wrapper
 	return nil
 }
 
@@ -760,7 +792,7 @@ func (b *batchingIterator) Next() bool {
 	}
 
 	// Try to get next row from current batch
-	if b.rowsWrapper.Next() {
+	if b.wrapper.Next() {
 		return true
 	}
 
@@ -770,21 +802,21 @@ func (b *batchingIterator) Next() bool {
 	}
 
 	// Current batch exhausted - check if we got a full batch (might be more data)
-	if b.count < b.batchSize {
+	if b.wrapper.count < b.batchSize {
 		// Got fewer rows than batch size, so we're done
 		b.done = true
 		return false
 	}
 
 	// Fetch next batch with LastID from last row
-	b.query.LastID = b.row.token.id
-	if err := b.nextBatch(); err != nil {
+	if err := b.nextBatch(b.wrapper.row.token.id); err != nil {
+		b.wrapper.err = err
 		b.done = true
 		return false
 	}
 
 	// Try to get first row from new batch
-	if b.rowsWrapper.Next() {
+	if b.wrapper.Next() {
 		return true
 	}
 
