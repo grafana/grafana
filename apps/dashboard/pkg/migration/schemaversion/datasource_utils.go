@@ -35,14 +35,8 @@ func WrapIndexProviderWithCache(provider DataSourceIndexProvider, cacheTTL time.
 	if provider == nil || cacheTTL <= 0 {
 		return provider
 	}
-	logger := log.New("schemaversion.dsindexprovider")
-	cache, err := newCachedProvider(provider.Index, defaultCacheSize, cacheTTL, logger)
-	if err != nil {
-		logger.Error("error creating cache provider, falling back to non-cached provider", "error", err)
-		return provider
-	}
 	return &cachedIndexProvider{
-		cache,
+		newCachedProvider[*DatasourceIndex](provider.Index, defaultCacheSize, cacheTTL, log.New("schemaversion.dsindexprovider")),
 	}
 }
 
@@ -51,14 +45,8 @@ func WrapLibraryElementProviderWithCache(provider LibraryElementIndexProvider, c
 	if provider == nil || cacheTTL <= 0 {
 		return provider
 	}
-	logger := log.New("schemaversion.leindexprovider")
-	cache, err := newCachedProvider(provider.GetLibraryElementInfo, defaultCacheSize, cacheTTL, logger)
-	if err != nil { // shouldn't happen
-		logger.Error("error creating cache provider, falling back to non-cached provider", "error", err)
-		return provider
-	}
 	return &cachedLibraryElementProvider{
-		cache,
+		newCachedProvider[[]LibraryElementInfo](provider.GetLibraryElementInfo, defaultCacheSize, cacheTTL, log.New("schemaversion.leindexprovider")),
 	}
 }
 

@@ -44,8 +44,7 @@ func TestCachedProvider_CacheHit(t *testing.T) {
 
 	underlying := newTestProvider(datasources)
 	// Test newCachedProvider directly instead of the wrapper
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Use "default" namespace (org 1) - this is the standard Grafana namespace format
 	ctx := request.WithNamespace(context.Background(), "default")
@@ -70,8 +69,7 @@ func TestCachedProvider_NamespaceIsolation(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Use "default" (org 1) and "org-2" (org 2) - standard Grafana namespace formats
 	ctx1 := request.WithNamespace(context.Background(), "default")
@@ -104,8 +102,7 @@ func TestCachedProvider_NoNamespaceFallback(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Context without namespace - should fall back to direct provider call
 	ctx := context.Background()
@@ -126,8 +123,7 @@ func TestCachedProvider_ConcurrentAccess(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Use "default" namespace (org 1)
 	ctx := request.WithNamespace(context.Background(), "default")
@@ -159,8 +155,7 @@ func TestCachedProvider_ConcurrentNamespaces(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	var wg sync.WaitGroup
 	numOrgs := 10
@@ -203,8 +198,7 @@ func TestCachedProvider_CorrectDataPerNamespace(t *testing.T) {
 			"org-2":   {{UID: "org2-ds", Type: "loki", Name: "Org2 DS", Default: true}},
 		},
 	}
-	cached, err := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Use valid namespace formats
 	ctx1 := request.WithNamespace(context.Background(), "default")
@@ -234,8 +228,7 @@ func TestCachedProvider_PreloadMultipleNamespaces(t *testing.T) {
 			"org-3":   {{UID: "org3-ds", Type: "tempo", Name: "Org3 DS", Default: true}},
 		},
 	}
-	cached, err := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
 
 	// Preload multiple namespaces
 	nsInfos := []authlib.NamespaceInfo{
@@ -353,8 +346,7 @@ func TestCachedProvider_TTLExpiration(t *testing.T) {
 	underlying := newTestProvider(datasources)
 	// Use a very short TTL for testing
 	shortTTL := 50 * time.Millisecond
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, shortTTL, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(underlying.get, defaultCacheSize, shortTTL, log.New("test"))
 
 	ctx := request.WithNamespace(context.Background(), "default")
 
@@ -378,30 +370,6 @@ func TestCachedProvider_TTLExpiration(t *testing.T) {
 		"after TTL expiration, underlying provider should be called again")
 }
 
-// TestCachedProvider_CacheDisabled verifies that TTL=0 disables caching
-func TestCachedProvider_CacheDisabled(t *testing.T) {
-	datasources := []DataSourceInfo{
-		{UID: "ds1", Type: "prometheus", Name: "Prometheus", Default: true},
-	}
-
-	underlying := newTestProvider(datasources)
-	// TTL of 0 should disable caching - cachedProvider should call fetch on every get()
-	cached, err := newCachedProvider(underlying.get, defaultCacheSize, 0, log.New("test"))
-	require.NoError(t, err)
-
-	ctx := request.WithNamespace(context.Background(), "default")
-
-	// First call
-	idx1 := cached.Get(ctx)
-	require.NotNil(t, idx1)
-	assert.Equal(t, int64(1), underlying.getCallCount())
-
-	// Second call - should also invoke underlying since caching is disabled
-	idx2 := cached.Get(ctx)
-	require.NotNil(t, idx2)
-	assert.Equal(t, int64(2), underlying.getCallCount(), "TTL=0 should disable caching")
-}
-
 // TestCachedProvider_ParallelNamespacesFetch verifies that different namespaces can fetch in parallel
 func TestCachedProvider_ParallelNamespacesFetch(t *testing.T) {
 	// Create a blocking provider that tracks concurrent executions
@@ -411,8 +379,7 @@ func TestCachedProvider_ParallelNamespacesFetch(t *testing.T) {
 			{UID: "ds1", Type: "prometheus", Name: "Prometheus", Default: true},
 		},
 	}
-	cached, err := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	numNamespaces := 5
 	var wg sync.WaitGroup
@@ -454,8 +421,7 @@ func TestCachedProvider_SameNamespaceSerialFetch(t *testing.T) {
 			{UID: "ds1", Type: "prometheus", Name: "Prometheus", Default: true},
 		},
 	}
-	cached, err := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
-	require.NoError(t, err)
+	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
 
 	numGoroutines := 10
 	var wg sync.WaitGroup
@@ -509,13 +475,4 @@ func (p *blockingProvider) get(_ context.Context) any {
 
 	p.currentActive.Add(-1)
 	return p.datasources
-}
-
-// TestCachedProvider_ErrorNonPositiveSize verifies that non-positive size returns an error
-func TestCachedProvider_ErrorNonPositiveSize(t *testing.T) {
-	underlying := newTestProvider("test data")
-	_, err := newCachedProvider(underlying.get, 0, time.Minute, log.New("test"))
-	require.Error(t, err)
-	_, err = newCachedProvider(underlying.get, -1, time.Minute, log.New("test"))
-	require.Error(t, err)
 }
