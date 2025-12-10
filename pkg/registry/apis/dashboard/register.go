@@ -201,12 +201,16 @@ func RegisterAPIService(
 	// For single-tenant deployments (indicated by StackID), preload the cache in the background
 	if cfg.StackID != "" {
 		// Single namespace for cloud stack
-		stackId, err := strconv.ParseInt(cfg.StackID, 10, 64)
+		stackID, err := strconv.ParseInt(cfg.StackID, 10, 64)
 		if err == nil {
-			nsInfo, err := authlib.ParseNamespace(authlib.CloudNamespaceFormatter(stackId))
+			var nsInfo authlib.NamespaceInfo
+			nsInfo, err = authlib.ParseNamespace(authlib.CloudNamespaceFormatter(stackID))
 			if err == nil {
 				migration.PreloadCacheInBackground([]authlib.NamespaceInfo{nsInfo})
 			}
+		}
+		if err != nil {
+			logging.DefaultLogger.Error("failed to parse namespace for cache preloading", "stackId", cfg.StackID, "err", err)
 		}
 	}
 

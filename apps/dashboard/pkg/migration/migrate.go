@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
@@ -61,7 +62,14 @@ func PreloadCache(ctx context.Context, nsInfos []types.NamespaceInfo) {
 
 // PreloadCacheInBackground starts a goroutine that preloads the caches for the given namespaces.
 func PreloadCacheInBackground(nsInfos []types.NamespaceInfo) {
-	go PreloadCache(context.Background(), nsInfos)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logging.DefaultLogger.Error("panic during cache preloading", "error", r)
+			}
+		}()
+		PreloadCache(context.Background(), nsInfos)
+	}()
 }
 
 // Migrate migrates the given dashboard to the target version.

@@ -23,7 +23,7 @@ type CacheProvider[T any] interface {
 
 // PreloadableCache is an interface for providers that support preloading the cache.
 type PreloadableCache interface {
-	// Preload loads the library elements into the cache for the given namespaces.
+	// Preload loads data into the cache for the given namespaces.
 	Preload(ctx context.Context, nsInfos []types.NamespaceInfo)
 }
 
@@ -117,7 +117,11 @@ func (p *cachedProvider[T]) Preload(ctx context.Context, nsInfos []types.Namespa
 	}
 
 	// Build the cache using a context with the namespace
-	p.logger.Info("preloading cache entries", "nsInfos", len(nsInfos))
+	p.logger.Info("preloading cache", "nsInfos", len(nsInfos))
+	startedAt := time.Now()
+	defer func() {
+		p.logger.Info("finished preloading cache", "nsInfos", len(nsInfos), "elapsed", time.Since(startedAt))
+	}()
 	for _, nsInfo := range nsInfos {
 		value := p.fetch(k8srequest.WithNamespace(ctx, nsInfo.Value))
 		p.entries.Add(nsInfo.Value, &cacheEntry[T]{
