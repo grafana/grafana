@@ -15,19 +15,33 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
+import { DrilldownControls, shouldUseDrilldownLayout } from './DrilldownControls';
 import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const styles = useStyles2(getStyles);
 
+  const useDrilldownLayout = shouldUseDrilldownLayout(variables);
+
+  // Get visible variables for drilldown layout
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
+  const [firstVar, secondVar, ...restVariables] = visibleVariables;
+
+  // Variables to render after the drilldown row (or all variables if not using drilldown layout)
+  const variablesToRender = useDrilldownLayout
+    ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
+    : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+
   return (
     <>
-      {variables
-        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-        .map((variable) => (
+      {useDrilldownLayout && <DrilldownControls adHocVar={firstVar} groupByVar={secondVar} />}
+
+      {variablesToRender.length > 0 &&
+        variablesToRender.map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
+
       {config.featureToggles.dashboardNewLayouts ? (
         <div className={styles.addButton}>
           <AddVariableButton dashboard={dashboard} />
@@ -105,7 +119,8 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       className={cx(
         styles.container,
         isSelected && 'dashboard-selected-element',
-        isSelectable && !isSelected && 'dashboard-selectable-element'
+        isSelectable && !isSelected && 'dashboard-selectable-element',
+        config.featureToggles.newDashboardWithFiltersAndGroupBy && styles.allowShrinkForDrilldownInputs
       )}
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
@@ -195,5 +210,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     verticalAlign: 'middle',
     marginBottom: theme.spacing(1),
     marginRight: theme.spacing(1),
+  }),
+  allowShrinkForDrilldownInputs: css({
+    minWidth: 0,
+    maxWidth: '100%',
   }),
 });
