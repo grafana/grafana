@@ -1054,7 +1054,7 @@
               "type": "integer",
               "format": "int64"
             },
-            "example": 10
+            "example": 30
           },
           {
             "name": "page",

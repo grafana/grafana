@@ -27,19 +27,20 @@ v0alpha1: {
 		namespaced: {
 			"/searchUsers": {
 				"GET": {
+					request: {
+						query: {
+							query: string
+							limit?:  int64 | 10
+							offset?: int64 | 0
+							page?:   int64 | 1
+						}
+					}
 					response: {
 						offset: int64
 						totalHits: int64
 						hits: [...#UserHit]
 						queryCost: float64
 						maxScore: float64
-					}
-					request: {
-						query: {
-							query: string
-							limit?:  int64 | 10
-							offset?: int64 | 1
-						}
 					}
 					responseMetadata: {
 						typeMeta: false
