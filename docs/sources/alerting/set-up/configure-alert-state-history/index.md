@@ -64,7 +64,7 @@ The following steps describe a basic configuration:
    loki_remote_url = http://localhost:3100
 
    [feature_toggles]
-   enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStateHistoryLokiOnly
+   enable = alertingCentralAlertHistory
    ```
 
 1. **Configure the Loki data source in Grafana**
