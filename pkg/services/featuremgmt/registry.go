@@ -415,6 +415,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesUnifiedStorageQuotas",
+			Description:     "Adds support for Kubernetes unified storage quotas",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
@@ -2014,6 +2021,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "multiPropsVariables",
+			Description:  "Enables support for variables whose values can have multiple properties",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )

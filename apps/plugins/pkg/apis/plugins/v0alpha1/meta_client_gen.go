@@ -7,33 +7,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type PluginMetaClient struct {
-	client *resource.TypedClient[*PluginMeta, *PluginMetaList]
+type MetaClient struct {
+	client *resource.TypedClient[*Meta, *MetaList]
 }
 
-func NewPluginMetaClient(client resource.Client) *PluginMetaClient {
-	return &PluginMetaClient{
-		client: resource.NewTypedClient[*PluginMeta, *PluginMetaList](client, PluginMetaKind()),
+func NewMetaClient(client resource.Client) *MetaClient {
+	return &MetaClient{
+		client: resource.NewTypedClient[*Meta, *MetaList](client, MetaKind()),
 	}
 }
 
-func NewPluginMetaClientFromGenerator(generator resource.ClientGenerator) (*PluginMetaClient, error) {
-	c, err := generator.ClientFor(PluginMetaKind())
+func NewMetaClientFromGenerator(generator resource.ClientGenerator) (*MetaClient, error) {
+	c, err := generator.ClientFor(MetaKind())
 	if err != nil {
 		return nil, err
 	}
-	return NewPluginMetaClient(c), nil
+	return NewMetaClient(c), nil
 }
 
-func (c *PluginMetaClient) Get(ctx context.Context, identifier resource.Identifier) (*PluginMeta, error) {
+func (c *MetaClient) Get(ctx context.Context, identifier resource.Identifier) (*Meta, error) {
 	return c.client.Get(ctx, identifier)
 }
 
-func (c *PluginMetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
+func (c *MetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
 	return c.client.List(ctx, namespace, opts)
 }
 
-func (c *PluginMetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
+func (c *MetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
 	resp, err := c.client.List(ctx, namespace, resource.ListOptions{
 		ResourceVersion: opts.ResourceVersion,
 		Limit:           opts.Limit,
@@ -61,25 +61,25 @@ func (c *PluginMetaClient) ListAll(ctx context.Context, namespace string, opts r
 	return resp, nil
 }
 
-func (c *PluginMetaClient) Create(ctx context.Context, obj *PluginMeta, opts resource.CreateOptions) (*PluginMeta, error) {
+func (c *MetaClient) Create(ctx context.Context, obj *Meta, opts resource.CreateOptions) (*Meta, error) {
 	// Make sure apiVersion and kind are set
 	obj.APIVersion = GroupVersion.Identifier()
-	obj.Kind = PluginMetaKind().Kind()
+	obj.Kind = MetaKind().Kind()
 	return c.client.Create(ctx, obj, opts)
 }
 
-func (c *PluginMetaClient) Update(ctx context.Context, obj *PluginMeta, opts resource.UpdateOptions) (*PluginMeta, error) {
+func (c *MetaClient) Update(ctx context.Context, obj *Meta, opts resource.UpdateOptions) (*Meta, error) {
 	return c.client.Update(ctx, obj, opts)
 }
 
-func (c *PluginMetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*PluginMeta, error) {
+func (c *MetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Meta, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginMetaStatus, opts resource.UpdateOptions) (*PluginMeta, error) {
-	return c.client.Update(ctx, &PluginMeta{
+func (c *MetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus MetaStatus, opts resource.UpdateOptions) (*Meta, error) {
+	return c.client.Update(ctx, &Meta{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       PluginMetaKind().Kind(),
+			Kind:       MetaKind().Kind(),
 			APIVersion: GroupVersion.Identifier(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -94,6 +94,6 @@ func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource
 	})
 }
 
-func (c *PluginMetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+func (c *MetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
 }
