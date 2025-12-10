@@ -247,7 +247,7 @@ func TestConversionCaching_V0_to_V2alpha1(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
@@ -256,9 +256,6 @@ func TestConversionCaching_V0_to_V2alpha1(t *testing.T) {
 	// The test dashboard has datasources without type that require lookup
 	assert.Equal(t, int64(1), underlyingDS.getCallCount(),
 		"datasource provider should be called only once for %d conversions in same namespace", numDashboards)
-	// Library element provider should also be called only once per namespace due to caching
-	assert.Equal(t, int64(1), underlyingLE.getCallCount(),
-		"library element provider should be called only once for %d conversions in same namespace", numDashboards)
 }
 
 // TestConversionCaching_V0_to_V2beta1 verifies caching works when converting V0 to V2beta1
@@ -287,15 +284,13 @@ func TestConversionCaching_V0_to_V2beta1(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V0_to_V2beta1(source, target, nil, cachedDS)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
 	assert.Equal(t, int64(1), underlyingDS.getCallCount(),
 		"datasource provider should be called only once for %d conversions in same namespace", numDashboards)
-	assert.Equal(t, int64(1), underlyingLE.getCallCount(),
-		"library element provider should be called only once for %d conversions in same namespace", numDashboards)
 }
 
 // TestConversionCaching_V1beta1_to_V2alpha1 verifies caching works when converting V1beta1 to V2alpha1
@@ -324,15 +319,13 @@ func TestConversionCaching_V1beta1_to_V2alpha1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V1beta1_to_V2alpha1(source, target, nil, cachedDS)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
 	assert.Equal(t, int64(1), underlyingDS.getCallCount(),
 		"datasource provider should be called only once for %d conversions in same namespace", numDashboards)
-	assert.Equal(t, int64(1), underlyingLE.getCallCount(),
-		"library element provider should be called only once for %d conversions in same namespace", numDashboards)
 }
 
 // TestConversionCaching_V1beta1_to_V2beta1 verifies caching works when converting V1beta1 to V2beta1
@@ -361,15 +354,13 @@ func TestConversionCaching_V1beta1_to_V2beta1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2beta1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V1beta1_to_V2beta1(source, target, nil, cachedDS)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
 	assert.Equal(t, int64(1), underlyingDS.getCallCount(),
 		"datasource provider should be called only once for %d conversions in same namespace", numDashboards)
-	assert.Equal(t, int64(1), underlyingLE.getCallCount(),
-		"library element provider should be called only once for %d conversions in same namespace", numDashboards)
 }
 
 // TestConversionCaching_MultipleNamespaces verifies that different namespaces get separate cache entries
@@ -399,7 +390,7 @@ func TestConversionCaching_MultipleNamespaces(t *testing.T) {
 			source := createTestV0Dashboard(ns, "Dashboard "+string(rune('A'+i)))
 			target := &dashv2alpha1.Dashboard{}
 
-			err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
+			err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS)
 			require.NoError(t, err, "conversion for namespace %s should succeed", ns)
 		}
 	}
@@ -408,8 +399,6 @@ func TestConversionCaching_MultipleNamespaces(t *testing.T) {
 	expectedCalls := int64(len(namespaces))
 	assert.Equal(t, expectedCalls, underlyingDS.getCallCount(),
 		"datasource provider should be called once per namespace (%d namespaces)", len(namespaces))
-	assert.Equal(t, expectedCalls, underlyingLE.getCallCount(),
-		"library element provider should be called once per namespace (%d namespaces)", len(namespaces))
 }
 
 // TestConversionCaching_CacheDisabled verifies that TTL=0 disables caching
@@ -439,7 +428,7 @@ func TestConversionCaching_CacheDisabled(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS)
 		require.NoError(t, err, "conversion %d should succeed", i)
 	}
 
@@ -448,7 +437,4 @@ func TestConversionCaching_CacheDisabled(t *testing.T) {
 	// The key check is that the count is GREATER than 1 per conversion (no caching benefit)
 	assert.Greater(t, underlyingDS.getCallCount(), int64(numDashboards),
 		"with cache disabled, conversions should call datasource provider multiple times")
-	// Library element provider is also called for each conversion without caching
-	assert.GreaterOrEqual(t, underlyingLE.getCallCount(), int64(numDashboards),
-		"with cache disabled, conversions should call library element provider multiple times")
 }
