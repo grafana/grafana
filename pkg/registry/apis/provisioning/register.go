@@ -732,10 +732,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportWorker,
 				syncWorker,
 			)
-			migrationWorker := migrate.NewMigrationWorker(
-				unifiedStorageMigrator,
-				b.storageStatus,
-			)
+			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)

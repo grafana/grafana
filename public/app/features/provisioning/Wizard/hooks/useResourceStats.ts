@@ -121,7 +121,7 @@ export function useResourceStats(repoName?: string, syncTarget?: RepositoryView[
     };
   }, [resourceStatsQuery.data]);
 
-  const requiresMigration = resourceCount > 0;
+  const requiresMigration = resourceCount > 0 && syncTarget === 'instance';
   const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
