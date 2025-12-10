@@ -7906,7 +7906,6 @@
     "title": "Leave page?"
   },
   "gauge": {
-    "category-effects": "Effects",
     "category-gauge": "Gauge",
     "category-radial-bar": "Gauge",
     "description-min-height": "Minimum row height (horizontal orientation)",
