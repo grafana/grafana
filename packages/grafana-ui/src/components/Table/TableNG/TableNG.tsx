@@ -156,11 +156,11 @@ export function TableNG(props: TableNGProps) {
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const nestedFramesFieldName = useMemo(() => {
     if (!hasNestedFrames) {
-      return undefined;
+      return;
     }
     const firstNestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
     if (!firstNestedField) {
-      return undefined;
+      return;
     }
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
