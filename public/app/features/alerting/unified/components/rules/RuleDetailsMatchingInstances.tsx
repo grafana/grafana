@@ -54,16 +54,16 @@ function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }
         {enableFiltering && alertState ? (
           <Trans
             i18nKey="alerting.rule-details-matching-instances.showing-count-with-state"
-            values={{ visibleItemsCount, state: alertState, totalItemsCount }}
+            values={{ visibleItemsCount, alertState, totalItemsCount }}
           >
-            Showing {'{{ visibleItemsCount }}'} {'{{ state }}'} out of {'{{ totalItemsCount }}'} instances
+            Showing {{ visibleItemsCount }} {{ alertState }} out of {{ totalItemsCount }} instances
           </Trans>
         ) : (
           <Trans
             i18nKey="alerting.rule-details-matching-instances.showing-count"
             values={{ visibleItemsCount, totalItemsCount }}
           >
-            Showing {'{{ visibleItemsCount }}'} out of {'{{ totalItemsCount }}'} instances
+            Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
           </Trans>
         )}
       </div>
