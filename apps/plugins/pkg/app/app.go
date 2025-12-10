@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -16,7 +18,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	authlib "github.com/grafana/authlib/types"
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
@@ -106,12 +107,15 @@ type PluginAppInstaller struct {
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
 	ready      chan struct{}
+	readyOnce  sync.Once
 }
 
 func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
 	if p.restConfig == nil {
 		p.restConfig = &restConfig
-		close(p.ready)
+		p.readyOnce.Do(func() {
+			close(p.ready)
+		})
 	}
 	return p.AppInstaller.InitializeApp(restConfig)
 }
