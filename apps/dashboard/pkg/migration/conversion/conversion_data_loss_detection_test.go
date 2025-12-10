@@ -829,7 +829,6 @@ func TestWithConversionValidation_DataLoss(t *testing.T) {
 // for data loss on such a dashboard would produce false positives.
 func TestDataLossCheckOnlyRunsWhenNoConversionError(t *testing.T) {
 	conversionError := errors.New("conversion failed")
-	dataLossCheckCalled := false
 
 	// Create a mock conversion function that fails
 	mockFailingConversion := func(a, b interface{}, scope conversion.Scope) error {
@@ -860,9 +859,8 @@ func TestDataLossCheckOnlyRunsWhenNoConversionError(t *testing.T) {
 	// Should return the conversion error, NOT a data loss error
 	require.Error(t, err)
 	assert.Equal(t, conversionError, err, "Should return the original conversion error")
-	assert.False(t, dataLossCheckCalled, "Data loss check should not be called when conversion fails")
 
-	// Verify it's NOT a ConversionDataLossError
+	// Verify it's NOT a ConversionDataLossError (proves data loss check wasn't run)
 	var dataLossErr *ConversionDataLossError
 	assert.False(t, errors.As(err, &dataLossErr), "Error should not be a ConversionDataLossError")
 }
