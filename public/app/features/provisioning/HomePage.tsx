@@ -2,9 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
-import {
-  useDeletecollectionRepositoryMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted/GettingStarted';

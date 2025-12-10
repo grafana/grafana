@@ -19,10 +19,7 @@ export interface SynchronizeStepProps {
   isCancelling?: boolean;
 }
 
-export const SynchronizeStep = memo(function SynchronizeStep({
-  onCancel,
-  isCancelling,
-}: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
   const { watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', migrateExistingResources] = watch(['repositoryName', 'migrate.migrateExistingResources']);

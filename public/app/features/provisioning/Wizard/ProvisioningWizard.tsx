@@ -415,10 +415,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep
-                  onCancel={handleRepositoryDeletion}
-                  isCancelling={isCancelling}
-                />
+                <SynchronizeStep onCancel={handleRepositoryDeletion} isCancelling={isCancelling} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
