@@ -215,7 +215,7 @@ func (m *ResourceHistoryKeyPathBackfillMigration) SQL(_ migrator.Dialect) string
 }
 
 func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	rows, err := getResourceHistoryRowsWithMissingKeyPath(sess, resourceHistoryRow{})
+	rows, err := getResourceHistoryRowsWithMissingKeyPath(sess, mg, resourceHistoryRow{})
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *m
 			return err
 		}
 
-		rows, err = getResourceHistoryRowsWithMissingKeyPath(sess, rows[len(rows)-1])
+		rows, err = getResourceHistoryRowsWithMissingKeyPath(sess, mg, rows[len(rows)-1])
 		if err != nil {
 			return err
 		}
@@ -254,8 +254,8 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	guids := ""
 	setCases := "CASE"
 	for _, update := range updates {
-		guids += fmt.Sprintf("\"%s\",", update.guid)
-		setCases += fmt.Sprintf(" WHEN guid = \"%s\" THEN \"%s\"", update.guid, update.keyPath)
+		guids += fmt.Sprintf("'%s',", update.guid)
+		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", update.guid, update.keyPath)
 	}
 
 	guids = strings.TrimRight(guids, ",")
@@ -265,7 +265,7 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	UPDATE resource_history
 	SET key_path = %s
 	WHERE guid IN (%s)
-	AND key_path = "";
+	AND key_path = '';
 	`, setCases, guids)
 
 	if _, err := sess.Exec(sql); err != nil {
@@ -303,19 +303,29 @@ type resourceHistoryRow struct {
 	Folder          string `xorm:"folder"`
 }
 
-func getResourceHistoryRowsWithMissingKeyPath(sess *xorm.Session, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
+func getResourceHistoryRowsWithMissingKeyPath(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
 	var rows []resourceHistoryRow
 	offsetStatement := ""
 	if continueRow.GUID != "" {
 		offsetStatement = fmt.Sprintf("OR (resource_version = %d AND guid > '%s')", continueRow.ResourceVersion, continueRow.GUID)
 	}
+	cols := fmt.Sprintf(
+		"%s, %s, %s, %s, %s, %s, %s, %s",
+		mg.Dialect.Quote("guid"),
+		mg.Dialect.Quote("group"),
+		mg.Dialect.Quote("resource"),
+		mg.Dialect.Quote("namespace"),
+		mg.Dialect.Quote("name"),
+		mg.Dialect.Quote("resource_version"),
+		mg.Dialect.Quote("action"),
+		mg.Dialect.Quote("folder"))
 	sql := fmt.Sprintf(`
-		SELECT rh.guid, rh.group, rh.resource, rh.namespace, rh.name, rh.resource_version, rh.action, rh.folder
-		FROM resource_history AS rh
+		SELECT %s
+		FROM resource_history
 		WHERE (resource_version > %d %s)
 		ORDER BY resource_version ASC, guid ASC
 		LIMIT 1000;
-	`, continueRow.ResourceVersion, offsetStatement)
+	`, cols, continueRow.ResourceVersion, offsetStatement)
 	if err := sess.SQL(sql).Find(&rows); err != nil {
 		return nil, err
 	}
