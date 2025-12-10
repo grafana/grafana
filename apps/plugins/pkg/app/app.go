@@ -70,6 +70,7 @@ type PluginAppConfig struct {
 }
 
 func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
@@ -88,21 +89,17 @@ func ProvideAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
 		metaManager:  metaProviderManager,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
 }
 
-func (p *PluginAppInstaller) WithAccessChecker(access authlib.AccessChecker) *PluginAppInstaller {
-	p.access = access
-	return p
-}
-
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	metaManager *meta.ProviderManager
-	access      authlib.AccessChecker
+	authorizer  authorizer.Authorizer
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -153,34 +150,5 @@ func (p *PluginAppInstaller) InstallAPIs(
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	if p.access == nil {
-		return nil
-	}
-
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
-			info, ok := authlib.AuthInfoFrom(ctx)
-			if !ok {
-				return authorizer.DecisionDeny, "failed to get auth info", nil
-			}
-
-			res, err := p.access.Check(ctx, info, authlib.CheckRequest{
-				Verb:        a.GetVerb(),
-				Group:       a.GetAPIGroup(),
-				Resource:    a.GetResource(),
-				Name:        a.GetName(),
-				Namespace:   a.GetNamespace(),
-				Subresource: a.GetSubresource(),
-				Path:        a.GetPath(),
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to perform authorization", err
-			}
-
-			if !res.Allowed {
-				return authorizer.DecisionDeny, "permission denied", nil
-			}
-
-			return authorizer.DecisionAllow, "", nil
-		})
+	return p.authorizer
 }
