@@ -410,158 +410,167 @@ func TestCountPanelsV2(t *testing.T) {
 }
 
 func TestDetectConversionDataLoss(t *testing.T) {
-	tests := []struct {
-		name        string
-		sourceStats dashboardStats
-		targetStats dashboardStats
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name: "perfect match - no data loss",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-				variableCount:   2,
+	// Tests that expect NO error (no data loss)
+	t.Run("success cases", func(t *testing.T) {
+		successTests := []struct {
+			name        string
+			sourceStats dashboardStats
+			targetStats dashboardStats
+		}{
+			{
+				name: "perfect match - no data loss",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+					variableCount:   2,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+					variableCount:   2,
+				},
 			},
-			targetStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-				variableCount:   2,
+			{
+				name: "panel count increased (allowed)",
+				sourceStats: dashboardStats{
+					panelCount:      2,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3, // Added a panel (OK)
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
 			},
-			expectError: false,
-		},
-		{
-			name: "panel count decreased (data loss)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
+			{
+				name: "annotation count increased (allowed - default annotations)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 0,
+					linkCount:       1,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 1, // Added default annotation (OK)
+					linkCount:       1,
+				},
 			},
-			targetStats: dashboardStats{
-				panelCount:      2, // Lost a panel!
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			expectError: true,
-			errorMsg:    "panel count decreased",
-		},
-		{
-			name: "panel count increased (allowed)",
-			sourceStats: dashboardStats{
-				panelCount:      2,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			targetStats: dashboardStats{
-				panelCount:      3, // Added a panel (OK)
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			expectError: false,
-		},
-		{
-			name: "query count decreased (data loss)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			targetStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      3, // Lost queries!
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			expectError: true,
-			errorMsg:    "query count decreased",
-		},
-		{
-			name: "annotation count decreased (data loss)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-			},
-			targetStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 1, // Lost annotation!
-				linkCount:       1,
-			},
-			expectError: true,
-			errorMsg:    "annotation count decreased",
-		},
-		{
-			name: "annotation count increased (allowed - default annotations)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 0,
-				linkCount:       1,
-			},
-			targetStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 1, // Added default annotation (OK)
-				linkCount:       1,
-			},
-			expectError: false,
-		},
-		{
-			name: "variable count decreased (data loss)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-				variableCount:   3,
-			},
-			targetStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-				variableCount:   1, // Lost variables!
-			},
-			expectError: true,
-			errorMsg:    "variable count decreased",
-		},
-		{
-			name: "multiple decreases (data loss)",
-			sourceStats: dashboardStats{
-				panelCount:      3,
-				queryCount:      5,
-				annotationCount: 2,
-				linkCount:       1,
-				variableCount:   2,
-			},
-			targetStats: dashboardStats{
-				panelCount:      2, // Lost panel
-				queryCount:      3, // Lost queries
-				annotationCount: 2,
-				linkCount:       0, // Lost link
-				variableCount:   2,
-			},
-			expectError: true,
-			errorMsg:    "panel count decreased",
-		},
-	}
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := detectConversionDataLoss(tt.sourceStats, tt.targetStats, "TestSource", "TestTarget")
-			if tt.expectError {
+		for _, tt := range successTests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := detectConversionDataLoss(tt.sourceStats, tt.targetStats, "TestSource", "TestTarget")
+				assert.NoError(t, err)
+			})
+		}
+	})
+
+	// Tests that expect an error (data loss detected)
+	t.Run("data loss cases", func(t *testing.T) {
+		errorTests := []struct {
+			name        string
+			sourceStats dashboardStats
+			targetStats dashboardStats
+			errorMsg    string
+		}{
+			{
+				name: "panel count decreased (data loss)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				targetStats: dashboardStats{
+					panelCount:      2, // Lost a panel!
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				errorMsg: "panel count decreased",
+			},
+			{
+				name: "query count decreased (data loss)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      3, // Lost queries!
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				errorMsg: "query count decreased",
+			},
+			{
+				name: "annotation count decreased (data loss)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 1, // Lost annotation!
+					linkCount:       1,
+				},
+				errorMsg: "annotation count decreased",
+			},
+			{
+				name: "variable count decreased (data loss)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+					variableCount:   3,
+				},
+				targetStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+					variableCount:   1, // Lost variables!
+				},
+				errorMsg: "variable count decreased",
+			},
+			{
+				name: "multiple decreases (data loss)",
+				sourceStats: dashboardStats{
+					panelCount:      3,
+					queryCount:      5,
+					annotationCount: 2,
+					linkCount:       1,
+					variableCount:   2,
+				},
+				targetStats: dashboardStats{
+					panelCount:      2, // Lost panel
+					queryCount:      3, // Lost queries
+					annotationCount: 2,
+					linkCount:       0, // Lost link
+					variableCount:   2,
+				},
+				errorMsg: "panel count decreased",
+			},
+		}
+
+		for _, tt := range errorTests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := detectConversionDataLoss(tt.sourceStats, tt.targetStats, "TestSource", "TestTarget")
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errorMsg)
 
@@ -569,11 +578,9 @@ func TestDetectConversionDataLoss(t *testing.T) {
 				var detectConversionDataLossErr *ConversionDataLossError
 				require.ErrorAs(t, err, &detectConversionDataLossErr)
 				assert.Equal(t, "TestSource_to_TestTarget", detectConversionDataLossErr.GetFunctionName())
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+			})
+		}
+	})
 }
 
 func TestCollectStatsV0V1(t *testing.T) {
