@@ -14,12 +14,6 @@ type Migrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
 }
 
-// MigrationWorker is deprecated, as it's not safe to use today due to the lack of support for alerts and library
-// panels.
-// IMPORTANT: This worker is not registered anywhere and is not used in production.
-// We keep it around for now as a reference implementation of how a migration job could be implemented.
-// https://github.com/grafana/git-ui-sync-project/issues/604
-// https://github.com/grafana/git-ui-sync-project/issues/606
 type MigrationWorker struct {
 	unifiedMigrator Migrator
 }

@@ -712,12 +712,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 			)
 
-			// MigrationWorker is deprecated, as it's not safe to use today due to the lack of support for alerts and library
-			// panels.
-			// IMPORTANT: This worker is not registered anywhere and is not used in production.
-			// We keep it around for now as a reference implementation of how a migration job could be implemented.
-			// https://github.com/grafana/git-ui-sync-project/issues/604
-			// https://github.com/grafana/git-ui-sync-project/issues/606
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 				cleaner,
