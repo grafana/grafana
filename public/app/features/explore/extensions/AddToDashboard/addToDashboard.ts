@@ -39,9 +39,7 @@ function getLogsTableTransformations(
 
     // Map constant field names to actual field names from the data frame
     // Find the first logs frame to get the actual field names
-    const logsFrame = options.queryResponse.logsFrames.find(
-      (frame) => frame.refId === options.panelState?.logs?.refId || !options.panelState?.logs?.refId
-    );
+    const logsFrame = options.queryResponse.logsFrames.find((frame) => frame.refId === options.panelState?.logs?.refId);
     const parsedLogsFrame = logsFrame ? parseLogsFrame(logsFrame) : null;
 
     // Map displayedFields from constant names to actual field names
