@@ -234,32 +234,42 @@ func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *m
 	return nil
 }
 
-type rowUpdate struct {
-	guid    string
-	keyPath string
-}
-
 func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow) error {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	updates := []rowUpdate{}
+	updates := []resourceHistoryRow{}
 
 	for _, row := range rows {
-		updates = append(updates, rowUpdate{guid: row.GUID, keyPath: parseKeyPath(row)})
+		if row.KeyPath == "" {
+			row.KeyPath = parseKeyPath(row)
+			updates = append(updates, row)
+		}
+	}
+
+	if len(updates) == 0 {
+		return nil
 	}
 
 	guids := ""
 	setCases := "CASE"
-	for _, update := range updates {
-		guids += fmt.Sprintf("'%s',", update.guid)
-		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", update.guid, update.keyPath)
+	for _, row := range updates {
+		guids += fmt.Sprintf("'%s',", row.GUID)
+		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", row.GUID, row.KeyPath)
 	}
 
 	guids = strings.TrimRight(guids, ",")
 	setCases += " ELSE key_path END "
 
+	// the query will look like this
+	// UPDATE resource_history
+	// SET key_path = CASE
+	//   WHEN guid = '1402de51-669b-4206-8a6c-005a00eee6e3' then 'unified/data/folder.grafana.app/folders/default/cf6lylpvls000c/1998492888241012800~created~'
+	//   WHEN guid = '8842cc56-f22b-45e1-82b1-99759cd443b3' then 'unified/data/dashboard.grafana.app/dashboards/default/adzvfhp/1998492902577144677~created~cf6lylpvls000c'
+	//   ELSE key_path END
+	// WHERE guid IN ('1402de51-669b-4206-8a6c-005a00eee6e3', '8842cc56-f22b-45e1-82b1-99759cd443b3')
+	// AND key_path = '';
 	sql := fmt.Sprintf(`
 	UPDATE resource_history
 	SET key_path = %s
@@ -300,16 +310,13 @@ type resourceHistoryRow struct {
 	ResourceVersion int64  `xorm:"resource_version"`
 	Action          int64  `xorm:"action"`
 	Folder          string `xorm:"folder"`
+	KeyPath		    string `xorm:"key_path"`
 }
 
 func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
 	var rows []resourceHistoryRow
-	offsetStatement := ""
-	if continueRow.GUID != "" {
-		offsetStatement = fmt.Sprintf("OR (resource_version = %d AND guid > '%s')", continueRow.ResourceVersion, continueRow.GUID)
-	}
 	cols := fmt.Sprintf(
-		"%s, %s, %s, %s, %s, %s, %s, %s",
+		"%s, %s, %s, %s, %s, %s, %s, %s, %s",
 		mg.Dialect.Quote("guid"),
 		mg.Dialect.Quote("group"),
 		mg.Dialect.Quote("resource"),
@@ -317,14 +324,15 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 		mg.Dialect.Quote("name"),
 		mg.Dialect.Quote("resource_version"),
 		mg.Dialect.Quote("action"),
-		mg.Dialect.Quote("folder"))
+		mg.Dialect.Quote("folder"),
+		mg.Dialect.Quote("key_path"))
 	sql := fmt.Sprintf(`
 		SELECT %s
 		FROM resource_history
-		WHERE (resource_version > %d %s)
+		WHERE (resource_version > %d OR (resource_version = %d AND guid > '%s'))
 		ORDER BY resource_version ASC, guid ASC
 		LIMIT 1000;
-	`, cols, continueRow.ResourceVersion, offsetStatement)
+	`, cols, continueRow.ResourceVersion, continueRow.ResourceVersion, continueRow.GUID)
 	if err := sess.SQL(sql).Find(&rows); err != nil {
 		return nil, err
 	}
