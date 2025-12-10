@@ -1,5 +1,4 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.ts
-import { once } from 'lodash';
 import Prism from 'prismjs';
 
 import {
@@ -8,7 +7,6 @@ import {
   AbstractQuery,
   AdHocVariableFilter,
   getDefaultTimeRange,
-  LanguageProvider,
   Scope,
   scopeFilterOperatorMap,
   ScopeSpecFilter,
@@ -17,34 +15,12 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
-import {
-  extractLabelMatchers,
-  fixSummariesMetadata,
-  processHistogramMetrics,
-  processLabels,
-  removeQuotesIfExist,
-  toPromLikeQuery,
-} from './language_utils';
+import { extractLabelMatchers, fixSummariesMetadata, toPromLikeQuery } from './language_utils';
 import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
-import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
-
-const DEFAULT_KEYS = ['job', 'instance'];
-
-/**
- * Prometheus API endpoints for fetching resources
- */
-const API_V1 = {
-  METADATA: '/api/v1/metadata',
-  SERIES: '/api/v1/series',
-  LABELS: '/api/v1/labels',
-  LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
-};
 
 interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
@@ -53,7 +29,7 @@ interface PrometheusBaseLanguageProvider {
    * When no timeRange provided, we will use the default time range (now/now-6h)
    * @param timeRange
    */
-  start: (timeRange?: TimeRange) => Promise<any[]>;
+  start: (timeRange?: TimeRange) => Promise<unknown[]>;
 
   request: (url: string, params?: any, options?: Partial<BackendSrvRequest>) => Promise<any>;
 
@@ -66,455 +42,6 @@ interface PrometheusBaseLanguageProvider {
     limit?: number,
     requestId?: string
   ) => Promise<string[]>;
-}
-
-/**
- * @deprecated This interface is deprecated and will be removed.
- */
-interface PrometheusLegacyLanguageProvider {
-  /**
-   * @deprecated Use retrieveHistogramMetrics() method instead
-   */
-  histogramMetrics: string[];
-  /**
-   * @deprecated Use retrieveMetrics() method instead
-   */
-  metrics: string[];
-  /**
-   * @deprecated Use retrieveMetricsMetadata() method instead
-   */
-  metricsMetadata?: PromMetricsMetadata;
-  /**
-   * @deprecated Use retrieveLabelKeys() method instead
-   */
-  labelKeys: string[];
-
-  /**
-   * @deprecated Use queryMetricsMetadata() method instead.
-   */
-  loadMetricsMetadata: () => void;
-  /**
-   * @deprecated Use retrieveMetricsMetadata() method instead
-   */
-  getLabelKeys: () => string[];
-  /**
-   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
-   */
-  getSeries: (timeRange: TimeRange, selector: string, withName?: boolean) => Promise<Record<string, string[]>>;
-  /**
-   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
-   */
-  fetchLabelValues: (range: TimeRange, key: string, limit?: string | number) => Promise<string[]>;
-  /**
-   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
-   */
-  getLabelValues: (range: TimeRange, key: string) => Promise<string[]>;
-  /**
-   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
-   */
-  fetchLabels: (timeRange: TimeRange, queries?: PromQuery[], limit?: string) => Promise<string[]>;
-  /**
-   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
-   */
-  getSeriesValues: (timeRange: TimeRange, labelName: string, selector: string) => Promise<string[]>;
-  /**
-   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
-   */
-  fetchSeriesValuesWithMatch: (
-    timeRange: TimeRange,
-    name: string,
-    match?: string,
-    requestId?: string,
-    withLimit?: string | number
-  ) => Promise<string[]>;
-  /**
-   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
-   */
-  getSeriesLabels: (timeRange: TimeRange, selector: string, otherLabels: Label[]) => Promise<string[]>;
-  /**
-   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
-   */
-  fetchLabelsWithMatch: (
-    timeRange: TimeRange,
-    name: string,
-    withName?: boolean,
-    withLimit?: string | number
-  ) => Promise<Record<string, string[]>>;
-  /**
-   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
-   */
-  fetchSeriesLabels: (
-    timeRange: TimeRange,
-    name: string,
-    withName?: boolean,
-    withLimit?: string | number
-  ) => Promise<Record<string, string[]>>;
-  /**
-   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
-   */
-  fetchSeriesLabelsMatch: (
-    timeRange: TimeRange,
-    name: string,
-    withLimit?: string | number
-  ) => Promise<Record<string, string[]>>;
-  /**
-   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
-   */
-  fetchSeries: (timeRange: TimeRange, match: string) => Promise<Array<Record<string, string>>>;
-  /**
-   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
-   */
-  fetchDefaultSeries: (timeRange: TimeRange) => Promise<{}>;
-}
-
-/**
- * Old implementation of prometheus language provider.
- * @deprecated Use PrometheusLanguageProviderInterface and PrometheusLanguageProvider class instead.
- */
-export default class PromQlLanguageProvider extends LanguageProvider implements PrometheusLegacyLanguageProvider {
-  declare startTask: Promise<any>;
-  declare labelFetchTs: number;
-
-  datasource: PrometheusDatasource;
-
-  histogramMetrics: string[];
-  metrics: string[];
-  metricsMetadata?: PromMetricsMetadata;
-  labelKeys: string[] = [];
-
-  constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
-    super();
-
-    this.datasource = datasource;
-    this.histogramMetrics = [];
-    this.metrics = [];
-
-    Object.assign(this, initialValues);
-  }
-
-  request = async (url: string, params = {}, options?: Partial<BackendSrvRequest>) => {
-    try {
-      const res = await this.datasource.metadataRequest(url, params, options);
-      return res.data.data;
-    } catch (error) {
-      if (!isCancelledError(error)) {
-        console.error(error);
-      }
-    }
-
-    return undefined;
-  };
-
-  /**
-   * Overridden by PrometheusLanguageProvider
-   */
-  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
-    if (this.datasource.lookupsDisabled) {
-      return [];
-    }
-
-    this.metrics = (await this.fetchLabelValues(timeRange, '__name__')) || [];
-    this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
-    return Promise.all([this.loadMetricsMetadata(), this.fetchLabels(timeRange)]);
-  };
-
-  async loadMetricsMetadata() {
-    const secondsInDay = 86400;
-    const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
-    this.metricsMetadata = fixSummariesMetadata(
-      await this.request(
-        API_V1.METADATA,
-        {},
-        {
-          showErrorAlert: false,
-          ...headers,
-        }
-      )
-    );
-  }
-
-  getLabelKeys(): string[] {
-    return this.labelKeys;
-  }
-
-  async getSeries(timeRange: TimeRange, selector: string, withName?: boolean): Promise<Record<string, string[]>> {
-    if (this.datasource.lookupsDisabled) {
-      return {};
-    }
-    try {
-      if (selector === EMPTY_SELECTOR) {
-        return await this.fetchDefaultSeries(timeRange);
-      } else {
-        return await this.fetchSeriesLabels(timeRange, selector, withName, REMOVE_SERIES_LIMIT);
-      }
-    } catch (error) {
-      // TODO: better error handling
-      console.error(error);
-      return {};
-    }
-  }
-
-  fetchLabelValues = async (range: TimeRange, key: string, limit?: string | number): Promise<string[]> => {
-    const params = { ...this.datasource.getAdjustedInterval(range), ...(limit ? { limit } : {}) };
-    const interpolatedName = this.datasource.interpolateString(key);
-    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
-    const value = await this.request(
-      API_V1.LABELS_VALUES(interpolatedAndEscapedName),
-      params,
-      getDefaultCacheHeaders(this.datasource.cacheLevel)
-    );
-    return value ?? [];
-  };
-
-  async getLabelValues(range: TimeRange, key: string): Promise<string[]> {
-    return await this.fetchLabelValues(range, key);
-  }
-
-  /**
-   * Fetches all label keys
-   */
-  fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[], limit?: string): Promise<string[]> => {
-    let url = API_V1.LABELS;
-    const timeParams = this.datasource.getAdjustedInterval(timeRange);
-    this.labelFetchTs = Date.now().valueOf();
-
-    const searchParams = new URLSearchParams({ ...timeParams, ...(limit ? { limit } : {}) });
-    queries?.forEach((q) => {
-      const visualQuery = buildVisualQueryFromString(q.expr);
-      if (visualQuery.query.metric !== '') {
-        const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
-        searchParams.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
-        if (visualQuery.query.binaryQueries) {
-          visualQuery.query.binaryQueries.forEach((bq) => {
-            searchParams.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
-          });
-        }
-      }
-    });
-
-    if (this.datasource.httpMethod === 'GET') {
-      url += `?${searchParams.toString()}`;
-    }
-
-    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    if (Array.isArray(res)) {
-      this.labelKeys = res.slice().sort();
-      return [...this.labelKeys];
-    }
-
-    return [];
-  };
-
-  /**
-   * Gets series values
-   * Function to replace old getSeries calls in a way that will provide faster endpoints
-   * for new prometheus instances, while maintaining backward compatability
-   */
-  getSeriesValues = async (timeRange: TimeRange, labelName: string, selector: string): Promise<string[]> => {
-    if (!this.datasource.hasLabelsMatchAPISupport()) {
-      const data = await this.getSeries(timeRange, selector);
-      return data[removeQuotesIfExist(labelName)] ?? [];
-    }
-    return await this.fetchSeriesValuesWithMatch(timeRange, labelName, selector);
-  };
-
-  /**
-   * Fetches all values for a label, with optional match[]
-   */
-  fetchSeriesValuesWithMatch = async (
-    timeRange: TimeRange,
-    name: string,
-    match?: string,
-    requestId?: string,
-    withLimit?: string | number
-  ): Promise<string[]> => {
-    const interpolatedName = name ? this.datasource.interpolateString(name) : null;
-    const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
-    const range = this.datasource.getAdjustedInterval(timeRange);
-    const urlParams = {
-      ...range,
-      ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
-      ...(withLimit ? { limit: withLimit } : {}),
-    };
-    let requestOptions: Partial<BackendSrvRequest> | undefined = {
-      ...getDefaultCacheHeaders(this.datasource.cacheLevel),
-      ...(requestId && { requestId }),
-    };
-
-    if (!Object.keys(requestOptions).length) {
-      requestOptions = undefined;
-    }
-
-    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName ?? ''));
-
-    const value = await this.request(API_V1.LABELS_VALUES(interpolatedAndEscapedName), urlParams, requestOptions);
-    return value ?? [];
-  };
-
-  /**
-   * Gets series labels
-   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
-   * while maintaining backward compatability. The old API call got the labels and the values in a single query,
-   * but with the new query we need two calls, one to get the labels, and another to get the values.
-   */
-  getSeriesLabels = async (timeRange: TimeRange, selector: string, otherLabels: Label[]): Promise<string[]> => {
-    let possibleLabelNames, data: Record<string, string[]>;
-
-    if (!this.datasource.hasLabelsMatchAPISupport()) {
-      data = await this.getSeries(timeRange, selector);
-      possibleLabelNames = Object.keys(data); // all names from prometheus
-    } else {
-      // Exclude __name__ from output
-      otherLabels.push({ name: '__name__', value: '', op: '!=' });
-      data = await this.fetchSeriesLabelsMatch(timeRange, selector);
-      possibleLabelNames = Object.keys(data);
-    }
-
-    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
-  };
-
-  /**
-   * Fetch labels using the best endpoint that datasource supports.
-   * This is cached by its args but also by the global timeRange currently selected as they can change over requested time.
-   */
-  fetchLabelsWithMatch = async (
-    timeRange: TimeRange,
-    name: string,
-    withName?: boolean,
-    withLimit?: string | number
-  ): Promise<Record<string, string[]>> => {
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      return this.fetchSeriesLabelsMatch(timeRange, name, withLimit);
-    } else {
-      return this.fetchSeriesLabels(timeRange, name, withName, REMOVE_SERIES_LIMIT);
-    }
-  };
-
-  /**
-   * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
-   * they can change over requested time.
-   */
-  fetchSeriesLabels = async (
-    timeRange: TimeRange,
-    name: string,
-    withName?: boolean,
-    withLimit?: string | number
-  ): Promise<Record<string, string[]>> => {
-    const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval(timeRange);
-    let urlParams = {
-      ...range,
-      'match[]': interpolatedName,
-      ...(withLimit !== 'none' ? { limit: withLimit ?? DEFAULT_SERIES_LIMIT } : {}),
-    };
-
-    const data = await this.request(API_V1.SERIES, urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    const { values } = processLabels(data, withName);
-    return values;
-  };
-
-  /**
-   * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
-   * they can change over requested time.
-   */
-  fetchSeriesLabelsMatch = async (
-    timeRange: TimeRange,
-    name: string,
-    withLimit?: string | number
-  ): Promise<Record<string, string[]>> => {
-    const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval(timeRange);
-    const urlParams = {
-      ...range,
-      'match[]': interpolatedName,
-      ...(withLimit ? { limit: withLimit } : {}),
-    };
-
-    const data: string[] = await this.request(
-      API_V1.LABELS,
-      urlParams,
-      getDefaultCacheHeaders(this.datasource.cacheLevel)
-    );
-    // Convert string array to Record<string , []>
-    return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
-  };
-
-  /**
-   * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.
-   */
-  fetchSeries = async (timeRange: TimeRange, match: string): Promise<Array<Record<string, string>>> => {
-    const range = this.datasource.getTimeRangeParams(timeRange);
-    const params = { ...range, 'match[]': match };
-    return await this.request(API_V1.SERIES, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
-  };
-
-  /**
-   * Fetch this only one as we assume this won't change over time. This is cached differently from fetchSeriesLabels
-   * because we can cache more aggressively here and also we do not want to invalidate this cache the same way as in
-   * fetchSeriesLabels.
-   */
-  fetchDefaultSeries = once(async (timeRange: TimeRange) => {
-    const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(timeRange, key)));
-    return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
-  });
-
-  /**
-   * Fetch labels or values for a label based on the queries, scopes, filters and time range
-   */
-  fetchSuggestions = async (
-    timeRange?: TimeRange,
-    queries?: PromQuery[],
-    scopes?: Scope[],
-    adhocFilters?: AdHocVariableFilter[],
-    labelName?: string,
-    limit?: number,
-    requestId?: string
-  ): Promise<string[]> => {
-    if (!timeRange) {
-      timeRange = getDefaultTimeRange();
-    }
-
-    const url = '/suggestions';
-    const timeParams = this.datasource.getAdjustedInterval(timeRange);
-    const value = await this.request(
-      url,
-      {
-        labelName,
-        queries: queries?.map((q) =>
-          this.datasource.interpolateString(q.expr, {
-            ...this.datasource.getIntervalVars(),
-            ...this.datasource.getRangeScopedVars(timeRange),
-          })
-        ),
-        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
-          if (scope.spec.filters) {
-            acc.push(...scope.spec.filters);
-          }
-
-          return acc;
-        }, []),
-        adhocFilters: adhocFilters?.map((filter) => ({
-          key: filter.key,
-          operator: scopeFilterOperatorMap[filter.operator],
-          value: filter.value,
-          values: filter.values,
-        })),
-        limit,
-        ...timeParams,
-      },
-      {
-        ...(requestId && { requestId }),
-        headers: {
-          ...getDefaultCacheHeaders(this.datasource.cacheLevel)?.headers,
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      }
-    );
-
-    return value ?? [];
-  };
 }
 
 /**
@@ -531,9 +58,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
  * @see LabelsApiClient For modern Prometheus versions using the labels API
  * @see SeriesApiClient For legacy Prometheus versions using the series API
  */
-export interface PrometheusLanguageProviderInterface
-  extends PrometheusBaseLanguageProvider,
-    PrometheusLegacyLanguageProvider {
+export interface PrometheusLanguageProviderInterface extends PrometheusBaseLanguageProvider {
   /**
    * Initializes the language provider by fetching metrics, label keys, and metrics metadata using Resource Clients.
    * All calls use the limit parameter from datasource configuration (default: 40,000 if not set).
@@ -541,7 +66,7 @@ export interface PrometheusLanguageProviderInterface
    * For backward compatibility, it calls _backwardCompatibleStart.
    * Some places still rely on deprecated fields. Until we replace them, we need _backwardCompatibleStart method.
    */
-  start: (timeRange?: TimeRange) => Promise<any[]>;
+  start: (timeRange?: TimeRange) => Promise<unknown[]>;
 
   /**
    * Returns already cached metrics metadata including type and help information.
@@ -591,13 +116,28 @@ export interface PrometheusLanguageProviderInterface
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
 }
 
-export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
+export class PrometheusLanguageProvider implements PrometheusLanguageProviderInterface {
+  public datasource: PrometheusDatasource;
+
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient?: ResourceApiClient;
 
   constructor(datasource: PrometheusDatasource) {
-    super(datasource);
+    this.datasource = datasource;
   }
+
+  request = async (url: string, params = {}, options?: Partial<BackendSrvRequest>) => {
+    try {
+      const res = await this.datasource.metadataRequest(url, params, options);
+      return res.data.data;
+    } catch (error) {
+      if (!isCancelledError(error)) {
+        console.error(error);
+      }
+    }
+
+    return undefined;
+  };
 
   /**
    * Lazily initializes and returns the appropriate resource client based on Prometheus version.
@@ -624,24 +164,14 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
    * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
    */
-  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
+  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<unknown[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);
-    return this._backwardCompatibleStart();
-  };
-
-  /**
-   * This private method exists to make sure the old class will be functional until we remove it.
-   * When we remove old class (PromQlLanguageProvider) we should remove this method too.
-   */
-  private _backwardCompatibleStart = async () => {
-    this.metricsMetadata = this.retrieveMetricsMetadata();
-    this.metrics = this.retrieveMetrics();
-    this.histogramMetrics = this.retrieveHistogramMetrics();
-    this.labelKeys = this.retrieveLabelKeys();
-    return [];
+    return await Promise.all([
+      this.resourceClient.start(timeRange),
+      this.queryMetricsMetadata(this.datasource.seriesLimit),
+    ]);
   };
 
   /**
@@ -654,7 +184,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
-      API_V1.METADATA,
+      `/api/v1/metadata`,
       { limit: limit ?? this.datasource.seriesLimit },
       {
         showErrorAlert: false,
@@ -775,6 +305,63 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
       interpolatedMatch,
       limit
     );
+  };
+
+  /**
+   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   */
+  fetchSuggestions = async (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ): Promise<string[]> => {
+    if (!timeRange) {
+      timeRange = getDefaultTimeRange();
+    }
+
+    const url = '/suggestions';
+    const timeParams = this.datasource.getAdjustedInterval(timeRange);
+    const value = await this.request(
+      url,
+      {
+        labelName,
+        queries: queries?.map((q) =>
+          this.datasource.interpolateString(q.expr, {
+            ...this.datasource.getIntervalVars(),
+            ...this.datasource.getRangeScopedVars(timeRange),
+          })
+        ),
+        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          if (scope.spec.filters) {
+            acc.push(...scope.spec.filters);
+          }
+
+          return acc;
+        }, []),
+        adhocFilters: adhocFilters?.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        limit,
+        ...timeParams,
+      },
+      {
+        ...(requestId && { requestId }),
+        headers: {
+          ...getDefaultCacheHeaders(this.datasource.cacheLevel)?.headers,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+
+    return value ?? [];
   };
 }
 
