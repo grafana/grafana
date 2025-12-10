@@ -391,3 +391,177 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 	})
 }
+
+// TestV0ConversionConsistency_ErrorsMustBeReturned ensures v0 conversion functions
+// return errors instead of swallowing them. This prevents metrics and logs from being silently dropped.
+func TestV0ConversionConsistency_ErrorsMustBeReturned(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
+
+	// Create a v0 dashboard that will fail conversion (invalid schema version)
+	invalidV0 := &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "org-1",
+			Name:      "test-dashboard",
+		},
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"title":         "test dashboard",
+				"schemaVersion": 0, // Invalid schema version causes migration to fail
+			},
+		},
+	}
+
+	t.Run("Convert_V0_to_V1beta1 must return error on failure", func(t *testing.T) {
+		target := &dashv1.Dashboard{}
+		err := Convert_V0_to_V1beta1(invalidV0, target, nil)
+		require.Error(t, err, "Convert_V0_to_V1beta1 must return error, not swallow it")
+		require.True(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be true")
+	})
+
+	t.Run("Convert_V0_to_V2alpha1 must return error on failure", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{}
+		err := Convert_V0_to_V2alpha1(invalidV0, target, nil, dsProvider, leProvider)
+		require.Error(t, err, "Convert_V0_to_V2alpha1 must return error, not swallow it")
+		require.True(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be true")
+	})
+
+	t.Run("Convert_V0_to_V2beta1 must return error on failure", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{}
+		err := Convert_V0_to_V2beta1(invalidV0, target, nil, dsProvider, leProvider)
+		require.Error(t, err, "Convert_V0_to_V2beta1 must return error, not swallow it")
+		require.True(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be true")
+	})
+}
+
+// TestV0ConversionConsistency_SuccessStatusMustBeSet ensures v0 conversion functions
+// set Status.Conversion with Failed=false on successful conversion.
+func TestV0ConversionConsistency_SuccessStatusMustBeSet(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
+
+	// Create a valid v0 dashboard
+	validV0 := &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "test-dashboard",
+		},
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"title":         "test dashboard",
+				"schemaVersion": 42,
+			},
+		},
+	}
+
+	t.Run("Convert_V0_to_V1beta1 must set success status", func(t *testing.T) {
+		target := &dashv1.Dashboard{}
+		err := Convert_V0_to_V1beta1(validV0, target, nil)
+		require.NoError(t, err)
+		require.NotNil(t, target.Status.Conversion, "Status.Conversion must be set on success")
+		require.False(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be false on success")
+		require.NotNil(t, target.Status.Conversion.StoredVersion, "StoredVersion must be set")
+		require.Equal(t, dashv0.VERSION, *target.Status.Conversion.StoredVersion)
+	})
+
+	t.Run("Convert_V0_to_V2alpha1 must set success status", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{}
+		err := Convert_V0_to_V2alpha1(validV0, target, nil, dsProvider, leProvider)
+		require.NoError(t, err)
+		require.NotNil(t, target.Status.Conversion, "Status.Conversion must be set on success")
+		require.False(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be false on success")
+		require.NotNil(t, target.Status.Conversion.StoredVersion, "StoredVersion must be set")
+		require.Equal(t, dashv0.VERSION, *target.Status.Conversion.StoredVersion)
+	})
+
+	t.Run("Convert_V0_to_V2beta1 must set success status", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{}
+		err := Convert_V0_to_V2beta1(validV0, target, nil, dsProvider, leProvider)
+		require.NoError(t, err)
+		require.NotNil(t, target.Status.Conversion, "Status.Conversion must be set on success")
+		require.False(t, target.Status.Conversion.Failed, "Status.Conversion.Failed must be false on success")
+		require.NotNil(t, target.Status.Conversion.StoredVersion, "StoredVersion must be set")
+		require.Equal(t, dashv0.VERSION, *target.Status.Conversion.StoredVersion)
+	})
+}
+
+// TestV0ConversionConsistency_ObjectMetaMustBeSetOnError ensures v0 conversion functions
+// set ObjectMeta, APIVersion, and Kind on the target even when conversion fails.
+func TestV0ConversionConsistency_ObjectMetaMustBeSetOnError(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
+
+	invalidV0 := &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "org-1",
+			Name:      "test-dashboard",
+			UID:       "test-uid",
+		},
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"title":         "test dashboard",
+				"schemaVersion": 0,
+			},
+		},
+	}
+
+	t.Run("Convert_V0_to_V1beta1 must set ObjectMeta on error", func(t *testing.T) {
+		target := &dashv1.Dashboard{}
+		_ = Convert_V0_to_V1beta1(invalidV0, target, nil)
+		require.Equal(t, invalidV0.Name, target.Name, "Name must be set on error")
+		require.Equal(t, invalidV0.Namespace, target.Namespace, "Namespace must be set on error")
+		require.Equal(t, dashv1.APIVERSION, target.APIVersion, "APIVersion must be set on error")
+	})
+
+	t.Run("Convert_V0_to_V2alpha1 must set ObjectMeta on error", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{}
+		_ = Convert_V0_to_V2alpha1(invalidV0, target, nil, dsProvider, leProvider)
+		require.Equal(t, invalidV0.Name, target.Name, "Name must be set on error")
+		require.Equal(t, invalidV0.Namespace, target.Namespace, "Namespace must be set on error")
+		require.Equal(t, dashv2alpha1.APIVERSION, target.APIVersion, "APIVersion must be set on error")
+	})
+
+	t.Run("Convert_V0_to_V2beta1 must set ObjectMeta on error", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{}
+		_ = Convert_V0_to_V2beta1(invalidV0, target, nil, dsProvider, leProvider)
+		require.Equal(t, invalidV0.Name, target.Name, "Name must be set on error")
+		require.Equal(t, invalidV0.Namespace, target.Namespace, "Namespace must be set on error")
+		require.Equal(t, dashv2beta1.APIVERSION, target.APIVersion, "APIVersion must be set on error")
+	})
+}
+
+// TestV0ConversionConsistency_LayoutMustBeSetOnError ensures v2alpha1 and v2beta1 targets
+// have a default layout set even when conversion fails to prevent JSON marshaling errors.
+func TestV0ConversionConsistency_LayoutMustBeSetOnError(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
+
+	invalidV0 := &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "org-1",
+			Name:      "test-dashboard",
+		},
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"title":         "test dashboard",
+				"schemaVersion": 0,
+			},
+		},
+	}
+
+	t.Run("Convert_V0_to_V2alpha1 must set default layout on error", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{}
+		_ = Convert_V0_to_V2alpha1(invalidV0, target, nil, dsProvider, leProvider)
+		require.NotNil(t, target.Spec.Layout.GridLayoutKind, "GridLayoutKind must be set on error to prevent JSON marshaling issues")
+	})
+
+	t.Run("Convert_V0_to_V2beta1 must set default layout on error", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{}
+		_ = Convert_V0_to_V2beta1(invalidV0, target, nil, dsProvider, leProvider)
+		require.NotNil(t, target.Spec.Layout.GridLayoutKind, "GridLayoutKind must be set on error to prevent JSON marshaling issues")
+	})
+}

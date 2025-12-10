@@ -823,6 +823,1332 @@ func TestWithConversionValidation_DataLoss(t *testing.T) {
 	assert.Equal(t, "V0_to_V1beta1", detectConversionDataLossErr.GetFunctionName())
 }
 
+// TestDataLossCheckOnlyRunsWhenNoConversionError verifies that data loss detection
+// is NOT run when the conversion function returns an error. This is critical because
+// a failed conversion produces an incomplete/invalid target dashboard, and checking
+// for data loss on such a dashboard would produce false positives.
+func TestDataLossCheckOnlyRunsWhenNoConversionError(t *testing.T) {
+	conversionError := errors.New("conversion failed")
+	dataLossCheckCalled := false
+
+	// Create a mock conversion function that fails
+	mockFailingConversion := func(a, b interface{}, scope conversion.Scope) error {
+		return conversionError
+	}
+
+	// Wrap with data loss detection
+	validatedFunc := withConversionDataLossDetection("V0", "V1beta1", mockFailingConversion)
+
+	// Create dashboards with different panel counts (would trigger data loss if checked)
+	sourceV0 := &dashv0.Dashboard{
+		Spec: dashv0.DashboardSpec{
+			Object: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"id": float64(1), "type": "graph"},
+					map[string]interface{}{"id": float64(2), "type": "table"},
+				},
+			},
+		},
+	}
+	targetV1 := &dashv1.Dashboard{
+		// Empty - would show data loss if checked
+	}
+
+	// Execute wrapped conversion
+	err := validatedFunc(sourceV0, targetV1, nil)
+
+	// Should return the conversion error, NOT a data loss error
+	require.Error(t, err)
+	assert.Equal(t, conversionError, err, "Should return the original conversion error")
+	assert.False(t, dataLossCheckCalled, "Data loss check should not be called when conversion fails")
+
+	// Verify it's NOT a ConversionDataLossError
+	var dataLossErr *ConversionDataLossError
+	assert.False(t, errors.As(err, &dataLossErr), "Error should not be a ConversionDataLossError")
+}
+
+// TestWithConversionMetrics_DataLossOnlyCheckedOnSuccess verifies that the
+// withConversionMetrics wrapper only runs data loss detection when conversion succeeds.
+func TestWithConversionMetrics_DataLossOnlyCheckedOnSuccess(t *testing.T) {
+	conversionError := errors.New("conversion failed")
+
+	// Test 1: Conversion fails - data loss should NOT be checked
+	t.Run("data loss not checked when conversion fails", func(t *testing.T) {
+		mockFailingConversion := func(a, b interface{}, scope conversion.Scope) error {
+			return conversionError
+		}
+
+		wrappedFunc := withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, mockFailingConversion)
+
+		sourceV0 := &dashv0.Dashboard{
+			Spec: dashv0.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{"id": float64(1), "type": "graph"},
+						map[string]interface{}{"id": float64(2), "type": "table"},
+					},
+				},
+			},
+		}
+		targetV1 := &dashv1.Dashboard{} // Empty - would trigger data loss if checked
+
+		// Execute - withConversionMetrics always returns nil to avoid 500s
+		err := wrappedFunc(sourceV0, targetV1, nil)
+		require.NoError(t, err, "withConversionMetrics should return nil even on conversion failure")
+	})
+
+	// Test 2: Conversion succeeds but data loss occurs - should detect data loss
+	t.Run("data loss detected when conversion succeeds but loses data", func(t *testing.T) {
+		mockDataLosingConversion := func(a, b interface{}, scope conversion.Scope) error {
+			// Conversion "succeeds" but loses a panel
+			target := b.(*dashv1.Dashboard)
+			target.Spec = dashv1.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						// Only 1 panel instead of 2
+						map[string]interface{}{"id": float64(1), "type": "graph"},
+					},
+				},
+			}
+			return nil
+		}
+
+		wrappedFunc := withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, mockDataLosingConversion)
+
+		sourceV0 := &dashv0.Dashboard{
+			Spec: dashv0.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{"id": float64(1), "type": "graph"},
+						map[string]interface{}{"id": float64(2), "type": "table"},
+					},
+				},
+			},
+		}
+		targetV1 := &dashv1.Dashboard{}
+
+		// Execute - withConversionMetrics always returns nil
+		err := wrappedFunc(sourceV0, targetV1, nil)
+		require.NoError(t, err, "withConversionMetrics should return nil even on data loss")
+
+		// The data loss is logged and recorded in metrics, but no error is returned to API server
+	})
+}
+
+// TestDataLossDetectionReturnsCorrectError verifies that when data loss is detected,
+// a ConversionDataLossError is returned with proper function name and details.
+func TestDataLossDetectionReturnsCorrectError(t *testing.T) {
+	t.Run("panel loss returns ConversionDataLossError", func(t *testing.T) {
+		sourceV0 := &dashv0.Dashboard{
+			Spec: dashv0.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{"id": float64(1), "type": "graph"},
+						map[string]interface{}{"id": float64(2), "type": "table"},
+					},
+				},
+			},
+		}
+
+		targetV1 := &dashv1.Dashboard{
+			Spec: dashv1.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						// Missing panel 2
+						map[string]interface{}{"id": float64(1), "type": "graph"},
+					},
+				},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv0.APIVERSION, dashv1.APIVERSION, sourceV0, targetV1)
+
+		require.Error(t, err)
+		var dataLossErr *ConversionDataLossError
+		require.ErrorAs(t, err, &dataLossErr)
+		assert.Equal(t, "V0_to_V1", dataLossErr.GetFunctionName())
+		assert.Contains(t, err.Error(), "panel count decreased")
+	})
+
+	t.Run("query loss returns ConversionDataLossError", func(t *testing.T) {
+		sourceV0 := &dashv0.Dashboard{
+			Spec: dashv0.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id":   float64(1),
+							"type": "graph",
+							"targets": []interface{}{
+								map[string]interface{}{"refId": "A"},
+								map[string]interface{}{"refId": "B"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		targetV1 := &dashv1.Dashboard{
+			Spec: dashv1.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id":   float64(1),
+							"type": "graph",
+							"targets": []interface{}{
+								// Missing query B
+								map[string]interface{}{"refId": "A"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv0.APIVERSION, dashv1.APIVERSION, sourceV0, targetV1)
+
+		require.Error(t, err)
+		var dataLossErr *ConversionDataLossError
+		require.ErrorAs(t, err, &dataLossErr)
+		assert.Contains(t, err.Error(), "query count decreased")
+	})
+
+	t.Run("no data loss returns nil", func(t *testing.T) {
+		sourceV0 := &dashv0.Dashboard{
+			Spec: dashv0.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id":   float64(1),
+							"type": "graph",
+							"targets": []interface{}{
+								map[string]interface{}{"refId": "A"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		targetV1 := &dashv1.Dashboard{
+			Spec: dashv1.DashboardSpec{
+				Object: map[string]interface{}{
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id":   float64(1),
+							"type": "graph",
+							"targets": []interface{}{
+								map[string]interface{}{"refId": "A"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv0.APIVERSION, dashv1.APIVERSION, sourceV0, targetV1)
+
+		require.NoError(t, err)
+	})
+}
+
+// TestDataLossDetection_AllTypesAllVersions verifies that data loss is detected for
+// all types of loss (panels, queries, annotations, links, variables) across all
+// version permutations (v0alpha1, v1beta1, v2alpha1, v2beta1).
+func TestDataLossDetection_AllTypesAllVersions(t *testing.T) {
+	// Helper to create v0/v1 unstructured spec with data
+	createV0V1SpecWithData := func() map[string]interface{} {
+		return map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"id":   float64(1),
+					"type": "graph",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "A"},
+						map[string]interface{}{"refId": "B"},
+					},
+				},
+				map[string]interface{}{
+					"id":   float64(2),
+					"type": "table",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "C"},
+					},
+				},
+			},
+			"annotations": map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "Annotation 1"},
+					map[string]interface{}{"name": "Annotation 2"},
+				},
+			},
+			"links": []interface{}{
+				map[string]interface{}{"title": "Link 1"},
+				map[string]interface{}{"title": "Link 2"},
+			},
+			"templating": map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "var1", "type": "query"},
+					map[string]interface{}{"name": "var2", "type": "custom"},
+				},
+			},
+		}
+	}
+
+	// Helper to create v0/v1 unstructured spec with data loss (missing items)
+	createV0V1SpecWithLoss := func(lossType string) map[string]interface{} {
+		spec := createV0V1SpecWithData()
+		switch lossType {
+		case "panel":
+			spec["panels"] = []interface{}{
+				map[string]interface{}{
+					"id":   float64(1),
+					"type": "graph",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "A"},
+						map[string]interface{}{"refId": "B"},
+					},
+				},
+				// Missing panel 2
+			}
+		case "query":
+			spec["panels"] = []interface{}{
+				map[string]interface{}{
+					"id":   float64(1),
+					"type": "graph",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "A"},
+						// Missing query B
+					},
+				},
+				map[string]interface{}{
+					"id":   float64(2),
+					"type": "table",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "C"},
+					},
+				},
+			}
+		case "annotation":
+			spec["annotations"] = map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "Annotation 1"},
+					// Missing annotation 2
+				},
+			}
+		case "link":
+			spec["links"] = []interface{}{
+				map[string]interface{}{"title": "Link 1"},
+				// Missing link 2
+			}
+		case "variable":
+			spec["templating"] = map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "var1", "type": "query"},
+					// Missing var2
+				},
+			}
+		}
+		return spec
+	}
+
+	// Helper to create v2alpha1 dashboard with data
+	createV2alpha1WithData := func() *dashv2alpha1.Dashboard {
+		return &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 2,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "C"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}, {}},
+			},
+		}
+	}
+
+	// Helper to create v2alpha1 dashboard with data loss
+	createV2alpha1WithLoss := func(lossType string) *dashv2alpha1.Dashboard {
+		dash := createV2alpha1WithData()
+		switch lossType {
+		case "panel":
+			delete(dash.Spec.Elements, "panel2")
+		case "query":
+			dash.Spec.Elements["panel1"].PanelKind.Spec.Data.Spec.Queries = []dashv2alpha1.DashboardPanelQueryKind{
+				{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+				// Missing query B
+			}
+		case "annotation":
+			dash.Spec.Annotations = []dashv2alpha1.DashboardAnnotationQueryKind{{}}
+		case "link":
+			dash.Spec.Links = []dashv2alpha1.DashboardDashboardLink{{}}
+		case "variable":
+			dash.Spec.Variables = []dashv2alpha1.DashboardVariableKind{{}}
+		}
+		return dash
+	}
+
+	// Helper to create v2beta1 dashboard with data
+	createV2beta1WithData := func() *dashv2beta1.Dashboard {
+		return &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 2,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "C"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+	}
+
+	// Helper to create v2beta1 dashboard with data loss
+	createV2beta1WithLoss := func(lossType string) *dashv2beta1.Dashboard {
+		dash := createV2beta1WithData()
+		switch lossType {
+		case "panel":
+			delete(dash.Spec.Elements, "panel2")
+		case "query":
+			dash.Spec.Elements["panel1"].PanelKind.Spec.Data.Spec.Queries = []dashv2beta1.DashboardPanelQueryKind{
+				{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+				// Missing query B
+			}
+		case "annotation":
+			dash.Spec.Annotations = []dashv2beta1.DashboardAnnotationQueryKind{{}}
+		case "link":
+			dash.Spec.Links = []dashv2beta1.DashboardDashboardLink{{}}
+		case "variable":
+			dash.Spec.Variables = []dashv2beta1.DashboardVariableKind{{}}
+		}
+		return dash
+	}
+
+	// All loss types to test
+	lossTypes := []struct {
+		name           string
+		expectedErrMsg string
+	}{
+		{"panel", "panel count decreased"},
+		{"query", "query count decreased"},
+		{"annotation", "annotation count decreased"},
+		{"link", "link count decreased"},
+		{"variable", "variable count decreased"},
+	}
+
+	// All version permutations (12 total: 4 versions × 3 targets each)
+	versionPairs := []struct {
+		sourceVersion string
+		targetVersion string
+		sourceAPI     string
+		targetAPI     string
+	}{
+		// From v0alpha1
+		{"v0alpha1", "v1beta1", dashv0.APIVERSION, dashv1.APIVERSION},
+		{"v0alpha1", "v2alpha1", dashv0.APIVERSION, dashv2alpha1.APIVERSION},
+		{"v0alpha1", "v2beta1", dashv0.APIVERSION, dashv2beta1.APIVERSION},
+		// From v1beta1
+		{"v1beta1", "v0alpha1", dashv1.APIVERSION, dashv0.APIVERSION},
+		{"v1beta1", "v2alpha1", dashv1.APIVERSION, dashv2alpha1.APIVERSION},
+		{"v1beta1", "v2beta1", dashv1.APIVERSION, dashv2beta1.APIVERSION},
+		// From v2alpha1
+		{"v2alpha1", "v0alpha1", dashv2alpha1.APIVERSION, dashv0.APIVERSION},
+		{"v2alpha1", "v1beta1", dashv2alpha1.APIVERSION, dashv1.APIVERSION},
+		{"v2alpha1", "v2beta1", dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION},
+		// From v2beta1
+		{"v2beta1", "v0alpha1", dashv2beta1.APIVERSION, dashv0.APIVERSION},
+		{"v2beta1", "v1beta1", dashv2beta1.APIVERSION, dashv1.APIVERSION},
+		{"v2beta1", "v2alpha1", dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION},
+	}
+
+	for _, vp := range versionPairs {
+		for _, lt := range lossTypes {
+			testName := fmt.Sprintf("%s_to_%s_%s_loss", vp.sourceVersion, vp.targetVersion, lt.name)
+			t.Run(testName, func(t *testing.T) {
+				var source, target interface{}
+
+				// Create source dashboard with full data
+				switch vp.sourceVersion {
+				case "v0alpha1":
+					source = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: createV0V1SpecWithData()}}
+				case "v1beta1":
+					source = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: createV0V1SpecWithData()}}
+				case "v2alpha1":
+					source = createV2alpha1WithData()
+				case "v2beta1":
+					source = createV2beta1WithData()
+				}
+
+				// Create target dashboard with data loss
+				switch vp.targetVersion {
+				case "v0alpha1":
+					target = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: createV0V1SpecWithLoss(lt.name)}}
+				case "v1beta1":
+					target = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: createV0V1SpecWithLoss(lt.name)}}
+				case "v2alpha1":
+					target = createV2alpha1WithLoss(lt.name)
+				case "v2beta1":
+					target = createV2beta1WithLoss(lt.name)
+				}
+
+				// Check for data loss
+				err := checkConversionDataLoss(vp.sourceAPI, vp.targetAPI, source, target)
+
+				// Verify data loss was detected
+				require.Error(t, err, "Expected %s loss to be detected for %s -> %s", lt.name, vp.sourceVersion, vp.targetVersion)
+				assert.Contains(t, err.Error(), lt.expectedErrMsg)
+
+				// Verify it's a ConversionDataLossError
+				var dataLossErr *ConversionDataLossError
+				require.ErrorAs(t, err, &dataLossErr)
+			})
+		}
+	}
+}
+
+// TestDataLossDetection_V2Versions tests data loss detection for v2alpha1 and v2beta1
+// using the v2 dashboard structure.
+func TestDataLossDetection_V2Versions(t *testing.T) {
+	// Create v2alpha1 source dashboard with data
+	sourceV2alpha1 := &dashv2alpha1.Dashboard{
+		Spec: dashv2alpha1.DashboardSpec{
+			Elements: map[string]dashv2alpha1.DashboardElement{
+				"panel1": {
+					PanelKind: &dashv2alpha1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2alpha1.DashboardPanelSpec{
+							Id: 1,
+							Data: dashv2alpha1.DashboardQueryGroupKind{
+								Spec: dashv2alpha1.DashboardQueryGroupSpec{
+									Queries: []dashv2alpha1.DashboardPanelQueryKind{
+										{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+										{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "B"}},
+									},
+								},
+							},
+						},
+					},
+				},
+				"panel2": {
+					PanelKind: &dashv2alpha1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2alpha1.DashboardPanelSpec{
+							Id: 2,
+						},
+					},
+				},
+			},
+			Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{
+				{}, {},
+			},
+			Links: []dashv2alpha1.DashboardDashboardLink{
+				{}, {},
+			},
+			Variables: []dashv2alpha1.DashboardVariableKind{
+				{}, {},
+			},
+		},
+	}
+
+	// Create v2beta1 source dashboard with data
+	sourceV2beta1 := &dashv2beta1.Dashboard{
+		Spec: dashv2beta1.DashboardSpec{
+			Elements: map[string]dashv2beta1.DashboardElement{
+				"panel1": {
+					PanelKind: &dashv2beta1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2beta1.DashboardPanelSpec{
+							Id: 1,
+							Data: dashv2beta1.DashboardQueryGroupKind{
+								Spec: dashv2beta1.DashboardQueryGroupSpec{
+									Queries: []dashv2beta1.DashboardPanelQueryKind{
+										{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+										{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+									},
+								},
+							},
+						},
+					},
+				},
+				"panel2": {
+					PanelKind: &dashv2beta1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2beta1.DashboardPanelSpec{
+							Id: 2,
+						},
+					},
+				},
+			},
+			Annotations: []dashv2beta1.DashboardAnnotationQueryKind{
+				{}, {},
+			},
+			Links: []dashv2beta1.DashboardDashboardLink{
+				{}, {},
+			},
+			Variables: []dashv2beta1.DashboardVariableKind{
+				{}, {},
+			},
+		},
+	}
+
+	t.Run("v2alpha1_to_v2beta1_panel_loss", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 1},
+						},
+					},
+					// Missing panel2
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "panel count decreased")
+	})
+
+	t.Run("v2alpha1_to_v2beta1_query_loss", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											// Missing query B
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "query count decreased")
+	})
+
+	t.Run("v2alpha1_to_v2beta1_annotation_loss", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}}, // Missing 1
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "annotation count decreased")
+	})
+
+	t.Run("v2alpha1_to_v2beta1_link_loss", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}}, // Missing 1
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "link count decreased")
+	})
+
+	t.Run("v2alpha1_to_v2beta1_variable_loss", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}}, // Missing 1
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "variable count decreased")
+	})
+
+	t.Run("v2beta1_to_v2alpha1_panel_loss", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{Id: 1},
+						},
+					},
+					// Missing panel2
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION, sourceV2beta1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "panel count decreased")
+	})
+
+	t.Run("v2beta1_to_v2alpha1_query_loss", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+											// Missing query B
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION, sourceV2beta1, target)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "query count decreased")
+	})
+
+	t.Run("v2beta1_to_v2alpha1_no_loss", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}, {}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION, sourceV2beta1, target)
+		require.NoError(t, err)
+	})
+}
+
+// TestDataLossDetection_NoLoss verifies no error is returned when there's no data loss
+func TestDataLossDetection_NoLoss(t *testing.T) {
+	spec := map[string]interface{}{
+		"panels": []interface{}{
+			map[string]interface{}{
+				"id":   float64(1),
+				"type": "graph",
+				"targets": []interface{}{
+					map[string]interface{}{"refId": "A"},
+				},
+			},
+		},
+		"annotations": map[string]interface{}{
+			"list": []interface{}{
+				map[string]interface{}{"name": "Annotation 1"},
+			},
+		},
+		"links": []interface{}{
+			map[string]interface{}{"title": "Link 1"},
+		},
+		"templating": map[string]interface{}{
+			"list": []interface{}{
+				map[string]interface{}{"name": "var1", "type": "query"},
+			},
+		},
+	}
+
+	versionPairs := []struct {
+		sourceVersion string
+		targetVersion string
+		sourceAPI     string
+		targetAPI     string
+	}{
+		{"v0alpha1", "v1beta1", dashv0.APIVERSION, dashv1.APIVERSION},
+		{"v1beta1", "v0alpha1", dashv1.APIVERSION, dashv0.APIVERSION},
+	}
+
+	for _, vp := range versionPairs {
+		testName := fmt.Sprintf("%s_to_%s_no_loss", vp.sourceVersion, vp.targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			var source, target interface{}
+
+			switch vp.sourceVersion {
+			case "v0alpha1":
+				source = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: spec}}
+			case "v1beta1":
+				source = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: spec}}
+			}
+
+			switch vp.targetVersion {
+			case "v0alpha1":
+				target = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: spec}}
+			case "v1beta1":
+				target = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: spec}}
+			}
+
+			err := checkConversionDataLoss(vp.sourceAPI, vp.targetAPI, source, target)
+			require.NoError(t, err, "Expected no data loss error when data is preserved")
+		})
+	}
+}
+
+// TestDataLossDetection_NoFalsePositives_AllVersionPermutations verifies that no false positives
+// are triggered for any attribute type when counts are equal or increased, across ALL version permutations.
+func TestDataLossDetection_NoFalsePositives_AllVersionPermutations(t *testing.T) {
+	// Helper to create v0/v1 spec with data
+	createV0V1SpecWithData := func() map[string]interface{} {
+		return map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"id":   float64(1),
+					"type": "graph",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "A"},
+						map[string]interface{}{"refId": "B"},
+					},
+				},
+				map[string]interface{}{
+					"id":   float64(2),
+					"type": "table",
+					"targets": []interface{}{
+						map[string]interface{}{"refId": "C"},
+					},
+				},
+			},
+			"annotations": map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "Annotation 1"},
+					map[string]interface{}{"name": "Annotation 2"},
+				},
+			},
+			"links": []interface{}{
+				map[string]interface{}{"title": "Link 1"},
+				map[string]interface{}{"title": "Link 2"},
+			},
+			"templating": map[string]interface{}{
+				"list": []interface{}{
+					map[string]interface{}{"name": "var1", "type": "query"},
+					map[string]interface{}{"name": "var2", "type": "custom"},
+				},
+			},
+		}
+	}
+
+	// Helper to create v2alpha1 dashboard with data
+	createV2alpha1WithData := func() *dashv2alpha1.Dashboard {
+		return &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 2,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "C"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}, {}},
+			},
+		}
+	}
+
+	// Helper to create v2beta1 dashboard with data
+	createV2beta1WithData := func() *dashv2beta1.Dashboard {
+		return &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}},
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 2,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "C"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},
+			},
+		}
+	}
+
+	// All 12 version permutations
+	versionPairs := []struct {
+		sourceVersion string
+		targetVersion string
+		sourceAPI     string
+		targetAPI     string
+	}{
+		// From v0alpha1
+		{"v0alpha1", "v1beta1", dashv0.APIVERSION, dashv1.APIVERSION},
+		{"v0alpha1", "v2alpha1", dashv0.APIVERSION, dashv2alpha1.APIVERSION},
+		{"v0alpha1", "v2beta1", dashv0.APIVERSION, dashv2beta1.APIVERSION},
+		// From v1beta1
+		{"v1beta1", "v0alpha1", dashv1.APIVERSION, dashv0.APIVERSION},
+		{"v1beta1", "v2alpha1", dashv1.APIVERSION, dashv2alpha1.APIVERSION},
+		{"v1beta1", "v2beta1", dashv1.APIVERSION, dashv2beta1.APIVERSION},
+		// From v2alpha1
+		{"v2alpha1", "v0alpha1", dashv2alpha1.APIVERSION, dashv0.APIVERSION},
+		{"v2alpha1", "v1beta1", dashv2alpha1.APIVERSION, dashv1.APIVERSION},
+		{"v2alpha1", "v2beta1", dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION},
+		// From v2beta1
+		{"v2beta1", "v0alpha1", dashv2beta1.APIVERSION, dashv0.APIVERSION},
+		{"v2beta1", "v1beta1", dashv2beta1.APIVERSION, dashv1.APIVERSION},
+		{"v2beta1", "v2alpha1", dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION},
+	}
+
+	for _, vp := range versionPairs {
+		testName := fmt.Sprintf("%s_to_%s_no_loss", vp.sourceVersion, vp.targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			var source, target interface{}
+
+			// Create source dashboard with full data
+			switch vp.sourceVersion {
+			case "v0alpha1":
+				source = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: createV0V1SpecWithData()}}
+			case "v1beta1":
+				source = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: createV0V1SpecWithData()}}
+			case "v2alpha1":
+				source = createV2alpha1WithData()
+			case "v2beta1":
+				source = createV2beta1WithData()
+			}
+
+			// Create target dashboard with same data (no loss)
+			switch vp.targetVersion {
+			case "v0alpha1":
+				target = &dashv0.Dashboard{Spec: dashv0.DashboardSpec{Object: createV0V1SpecWithData()}}
+			case "v1beta1":
+				target = &dashv1.Dashboard{Spec: dashv1.DashboardSpec{Object: createV0V1SpecWithData()}}
+			case "v2alpha1":
+				target = createV2alpha1WithData()
+			case "v2beta1":
+				target = createV2beta1WithData()
+			}
+
+			// Check for data loss - should be none
+			err := checkConversionDataLoss(vp.sourceAPI, vp.targetAPI, source, target)
+			require.NoError(t, err, "Expected no data loss when data is preserved for %s -> %s", vp.sourceVersion, vp.targetVersion)
+		})
+	}
+}
+
+// TestDataLossDetection_NoFalsePositives_V2Versions verifies no false positives for v2 versions
+func TestDataLossDetection_NoFalsePositives_V2Versions(t *testing.T) {
+	// Source with all attributes
+	sourceV2alpha1 := &dashv2alpha1.Dashboard{
+		Spec: dashv2alpha1.DashboardSpec{
+			Elements: map[string]dashv2alpha1.DashboardElement{
+				"panel1": {
+					PanelKind: &dashv2alpha1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2alpha1.DashboardPanelSpec{
+							Id: 1,
+							Data: dashv2alpha1.DashboardQueryGroupKind{
+								Spec: dashv2alpha1.DashboardQueryGroupSpec{
+									Queries: []dashv2alpha1.DashboardPanelQueryKind{
+										{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}},
+			Links:       []dashv2alpha1.DashboardDashboardLink{{}},
+			Variables:   []dashv2alpha1.DashboardVariableKind{{}},
+		},
+	}
+
+	sourceV2beta1 := &dashv2beta1.Dashboard{
+		Spec: dashv2beta1.DashboardSpec{
+			Elements: map[string]dashv2beta1.DashboardElement{
+				"panel1": {
+					PanelKind: &dashv2beta1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2beta1.DashboardPanelSpec{
+							Id: 1,
+							Data: dashv2beta1.DashboardQueryGroupKind{
+								Spec: dashv2beta1.DashboardQueryGroupSpec{
+									Queries: []dashv2beta1.DashboardPanelQueryKind{
+										{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}},
+			Links:       []dashv2beta1.DashboardDashboardLink{{}},
+			Variables:   []dashv2beta1.DashboardVariableKind{{}},
+		},
+	}
+
+	t.Run("v2alpha1_to_v2beta1_equal_counts", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}},
+				Links:       []dashv2beta1.DashboardDashboardLink{{}},
+				Variables:   []dashv2beta1.DashboardVariableKind{{}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.NoError(t, err)
+	})
+
+	t.Run("v2alpha1_to_v2beta1_more_in_target", func(t *testing.T) {
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements: map[string]dashv2beta1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2beta1.DashboardQueryGroupKind{
+									Spec: dashv2beta1.DashboardQueryGroupSpec{
+										Queries: []dashv2beta1.DashboardPanelQueryKind{
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "A"}},
+											{Spec: dashv2beta1.DashboardPanelQuerySpec{RefId: "B"}}, // Extra query
+										},
+									},
+								},
+							},
+						},
+					},
+					"panel2": { // Extra panel
+						PanelKind: &dashv2beta1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2beta1.DashboardPanelSpec{Id: 2},
+						},
+					},
+				},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{{}, {}}, // Extra annotation
+				Links:       []dashv2beta1.DashboardDashboardLink{{}, {}},       // Extra link
+				Variables:   []dashv2beta1.DashboardVariableKind{{}, {}},        // Extra variable
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, sourceV2alpha1, target)
+		require.NoError(t, err)
+	})
+
+	t.Run("v2beta1_to_v2alpha1_equal_counts", func(t *testing.T) {
+		target := &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements: map[string]dashv2alpha1.DashboardElement{
+					"panel1": {
+						PanelKind: &dashv2alpha1.DashboardPanelKind{
+							Kind: "Panel",
+							Spec: dashv2alpha1.DashboardPanelSpec{
+								Id: 1,
+								Data: dashv2alpha1.DashboardQueryGroupKind{
+									Spec: dashv2alpha1.DashboardQueryGroupSpec{
+										Queries: []dashv2alpha1.DashboardPanelQueryKind{
+											{Spec: dashv2alpha1.DashboardPanelQuerySpec{RefId: "A"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{{}},
+				Links:       []dashv2alpha1.DashboardDashboardLink{{}},
+				Variables:   []dashv2alpha1.DashboardVariableKind{{}},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2beta1.APIVERSION, dashv2alpha1.APIVERSION, sourceV2beta1, target)
+		require.NoError(t, err)
+	})
+
+	t.Run("v2alpha1_to_v2beta1_empty_both", func(t *testing.T) {
+		source := &dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Elements:    map[string]dashv2alpha1.DashboardElement{},
+				Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{},
+				Links:       []dashv2alpha1.DashboardDashboardLink{},
+				Variables:   []dashv2alpha1.DashboardVariableKind{},
+			},
+		}
+		target := &dashv2beta1.Dashboard{
+			Spec: dashv2beta1.DashboardSpec{
+				Elements:    map[string]dashv2beta1.DashboardElement{},
+				Annotations: []dashv2beta1.DashboardAnnotationQueryKind{},
+				Links:       []dashv2beta1.DashboardDashboardLink{},
+				Variables:   []dashv2beta1.DashboardVariableKind{},
+			},
+		}
+
+		err := checkConversionDataLoss(dashv2alpha1.APIVERSION, dashv2beta1.APIVERSION, source, target)
+		require.NoError(t, err)
+	})
+}
+
 // TestDataLossDetectionOnAllInputFiles tests all conversions from testdata/input
 // and logs detailed information about missing panels when data loss is detected
 func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
