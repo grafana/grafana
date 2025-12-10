@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -63,9 +62,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 			Title: "test-repo",
 		},
 	})
-	fakeDualwrite := dualwrite.NewMockService(t)
-	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
+	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }

@@ -103,13 +103,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
-						},
-					},
-				})
+				// No Config() call needed anymore
 			},
 		},
 		{
@@ -126,13 +120,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
+				// No Config() call needed anymore
 			},
 			expectedError: "",
 		},
