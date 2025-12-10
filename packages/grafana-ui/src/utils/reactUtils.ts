@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import * as React from 'react';
 
 /** Returns the ID value of the first, and only, child element  */
-export function getChildId(children: ReactElement): string | undefined {
+export function getChildId(children: ReactElement<Record<string, unknown>>): string | undefined {
   let inputId: unknown;
 
   // Get the first, and only, child to retrieve form input's id

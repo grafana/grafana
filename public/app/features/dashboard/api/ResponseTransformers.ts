@@ -1,7 +1,6 @@
-import { MetricFindValue, TypedVariableModel } from '@grafana/data';
+import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  AnnotationQuery,
   DataQuery,
   DataSourceRef,
   Panel,
@@ -216,6 +215,7 @@ export function ensureV2Response(
       keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
       includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
       targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+      ...(link.placement !== undefined && { placement: link.placement }),
     })),
     annotations,
     variables,
@@ -499,7 +499,11 @@ export function getDefaultDatasource(): DataSourceRef {
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
-    const ds = t.datasource || panelDatasource;
+    // Check if target datasource is empty object {} (no keys), treat it as missing
+    // and fall through to use panel datasource (matches backend behavior)
+    const targetDs = t.datasource;
+    const isEmptyDatasourceObject = targetDs && typeof targetDs === 'object' && Object.keys(targetDs).length === 0;
+    const ds = isEmptyDatasourceObject ? panelDatasource : targetDs || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -525,7 +529,8 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+  const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
 
@@ -541,10 +546,13 @@ export function buildPanelKind(p: Panel): PanelKind {
   }
 
   // match backend conversion behavior
+  // Only set first threshold step value to null if it's explicitly null or undefined
+  // Preserve 0 values (0 is falsy but should be kept as 0, not converted to null)
   if (
     fieldConfig.defaults.thresholds?.steps &&
     fieldConfig.defaults.thresholds.steps.length > 0 &&
-    !fieldConfig.defaults.thresholds.steps[0]?.value
+    (fieldConfig.defaults.thresholds.steps[0]?.value === null ||
+      fieldConfig.defaults.thresholds.steps[0]?.value === undefined)
   ) {
     fieldConfig.defaults.thresholds.steps[0]!.value = null;
   }
@@ -646,6 +654,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
+            ...(v.regexApplyTo && { regexApplyTo: v.regexApplyTo }),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
@@ -844,7 +853,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
     // Extract properties that are explicitly handled
-    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, mappings, ...legacyOptions } = a;
 
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
@@ -854,6 +863,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         hide: Boolean(hide),
         iconColor: iconColor,
         builtIn: Boolean(builtIn),
+        ...(mappings && { mappings: transformAnnotationMappingsV1ToV2(mappings) }),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
@@ -910,6 +920,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
+          regexApplyTo: v.spec.regexApplyTo,
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
@@ -1347,4 +1358,26 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
     panels,
     templating: { list: variables },
   };
+}
+
+export function transformAnnotationMappingsV1ToV2(
+  mappings: AnnotationQuery['mappings']
+): AnnotationQueryKind['spec']['mappings'] {
+  if (!mappings) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(mappings).map(([key, value]) => {
+      if (typeof value === 'string') {
+        return [key, { source: 'field', value }];
+      }
+
+      if (typeof value === 'object') {
+        return [key, value.source ? value : { source: 'field', ...value }];
+      }
+
+      return [key, value];
+    })
+  );
 }

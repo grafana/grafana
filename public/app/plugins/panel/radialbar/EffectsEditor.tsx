@@ -1,6 +1,6 @@
 import { StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Switch, Label } from '@grafana/ui';
+import { Stack, Switch, Label, Tooltip } from '@grafana/ui';
 
 import { GaugePanelEffects } from './panelcfg.gen';
 
@@ -36,15 +36,18 @@ export function EffectsEditor(props: StandardEditorProps<GaugePanelEffects>) {
         />
         <Label htmlFor="radialbar-center-glow">{t('radialbar.config.effects.center-glow', 'Center glow')}</Label>
       </Stack>
-      <Stack>
-        <Switch
-          id="radialbar-spotlight"
-          label={t('radialbar.config.effects.spotlight', 'Spotlight')}
-          value={!!props.value?.spotlight}
-          onChange={(e) => props.onChange({ ...props.value, spotlight: e.currentTarget.checked })}
-        />
-        <Label htmlFor="radialbar-spotlight">{t('radialbar.config.effects.spotlight', 'Spotlight')}</Label>
-      </Stack>
+      <Tooltip content={t('radialbar.config.effects.spotlight-tooltip', 'Only visible in dark themes')}>
+        <Stack>
+          <Switch
+            id="radialbar-spotlight"
+            label={t('radialbar.config.effects.spotlight', 'Spotlight')}
+            value={!!props.value?.spotlight}
+            onChange={(e) => props.onChange({ ...props.value, spotlight: e.currentTarget.checked })}
+          />
+
+          <Label htmlFor="radialbar-spotlight">{t('radialbar.config.effects.spotlight', 'Spotlight')}</Label>
+        </Stack>
+      </Tooltip>
     </Stack>
   );
 }

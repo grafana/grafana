@@ -20,6 +20,8 @@ export interface AnnotationQuerySpec {
 	filter?: AnnotationPanelFilter;
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
 	placement?: "inControlsMenu";
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	legacyOptions?: Record<string, any>;
 }
@@ -68,6 +70,20 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // Annotation Query placement. Defines where the annotation query should be displayed.
 // - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
 export const AnnotationQueryPlacement = "inControlsMenu";
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
+});
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
@@ -1095,6 +1111,7 @@ export interface QueryVariableSpec {
 	description?: string;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1115,6 +1132,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1150,6 +1168,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:

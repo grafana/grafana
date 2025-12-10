@@ -95,3 +95,7 @@ func (d *directResourceClient) BulkProcess(ctx context.Context, opts ...grpc.Cal
 func (b *directResourceClient) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+func (b *directResourceClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
