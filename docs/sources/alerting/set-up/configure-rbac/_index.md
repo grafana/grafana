@@ -139,12 +139,12 @@ Permissions for managing mute time intervals.
 
 Permissions for managing notification templates.
 
-| Action                                 | Applicable scope | Description                              |
-| -------------------------------------- | ---------------- | ---------------------------------------- |
-| `alert.notifications.templates:read`   | n/a              | Read templates.                          |
-| `alert.notifications.templates:write`  | n/a              | Create new or update existing templates. |
-| `alert.notifications.templates:delete` | n/a              | Delete existing templates.               |
-| `alert.notifications.templates.test:write`   | n/a                                    | Test templates with custom payloads (preview and payload editor functionality).                                                                                                                                                                   |
+| Action                                     | Applicable scope | Description                                                                     |
+| ------------------------------------------ | ---------------- | ------------------------------------------------------------------------------- |
+| `alert.notifications.templates:read`       | n/a              | Read templates.                                                                 |
+| `alert.notifications.templates:write`      | n/a              | Create new or update existing templates.                                        |
+| `alert.notifications.templates:delete`     | n/a              | Delete existing templates.                                                      |
+| `alert.notifications.templates.test:write` | n/a              | Test templates with custom payloads (preview and payload editor functionality). |
 
 ### General notifications
 
