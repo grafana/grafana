@@ -415,6 +415,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesUnifiedStorageQuotas",
+			Description:     "Adds support for Kubernetes unified storage quotas",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
@@ -1625,6 +1632,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "recentlyViewedDashboards",
+			Description:  "Enables recently viewed dashboards section in the browsing dashboard page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -2014,6 +2029,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "multiPropsVariables",
+			Description:  "Enables support for variables whose values can have multiple properties",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )
