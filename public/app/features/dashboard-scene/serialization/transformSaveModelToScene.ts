@@ -29,10 +29,11 @@ import {
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
+import { DashboardDTO, DashboardDataDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { LoadDashboardOptions, shouldForceV2API } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -45,6 +46,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -74,11 +76,11 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+export function transformSaveModelToScene(rsp: DashboardDTO, options?: LoadDashboardOptions): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const apiVersion = config.featureToggles.kubernetesDashboards
@@ -253,12 +255,17 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  options?: LoadDashboardOptions
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const isReport = options?.route === DashboardRoutes.Report;
+  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -346,7 +353,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
 
   let body: DashboardLayoutManager;
 
-  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
+  if (serializerVersion === 'v2' && oldModel.panels.some((p) => p.type === 'row')) {
     body = createRowsFromPanels(oldModel.panels);
   } else {
     body = new DefaultGridLayoutManager({
@@ -441,6 +448,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
     }),

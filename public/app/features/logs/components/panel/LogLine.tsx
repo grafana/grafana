@@ -202,7 +202,7 @@ const LogLineComponent = memo(
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
@@ -334,14 +334,14 @@ const Log = memo(
       <>
         {showTime && (
           <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}{' '}
           </span>
         )}
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {(log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -395,7 +395,7 @@ const DisplayedFields = ({
     if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
         <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
+          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
         </span>
       );
     }
@@ -410,7 +410,7 @@ const DisplayedFields = ({
           />
         ) : (
           log.getDisplayedFieldValue(field)
-        )}
+        )}{' '}
       </span>
     );
   });
@@ -433,8 +433,8 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
 
   if (log.hasAnsi) {
     return (
-      <span className="field no-highlighting">
-        <LogMessageAnsi value={log.body} highlight={highlight} />
+      <span className="field no-highlighting log-line-body">
+        <LogMessageAnsi value={log.body} highlight={highlight} />{' '}
       </span>
     );
   }
@@ -448,13 +448,13 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body}</span>
+      <span className="field no-highlighting log-line-body">{log.body} </span>
     );
   }
 
   return (
-    <span className="field log-syntax-highlight">
-      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />
+    <span className="field log-syntax-highlight log-line-body">
+      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
 };
@@ -468,7 +468,30 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[], displaye
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
-export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtualization) => {
+export const getStyles = (
+  theme: GrafanaTheme2,
+  virtualization: LogLineVirtualization | undefined = undefined,
+  displayedFields: string[] = []
+) => {
+  const base = tinycolor(theme.colors.background.primary);
+
+  let maxContrast = theme.isDark
+    ? tinycolor(theme.colors.text.maxContrast).darken(10).toRgbString()
+    : tinycolor(theme.colors.text.maxContrast).lighten(10).toRgbString();
+  let colorDefault = theme.isDark
+    ? theme.colors.text.primary
+    : tinycolor(theme.colors.text.maxContrast).lighten(30).toRgbString();
+  const contrast1 = tinycolor.readability(base, maxContrast);
+  const contrast2 = tinycolor.readability(base, colorDefault);
+
+  if (!displayedFields.length || (displayedFields.length === 1 && displayedFields.includes(LOG_LINE_BODY_FIELD_NAME))) {
+    colorDefault = theme.colors.text.primary;
+    maxContrast = theme.colors.text.primary;
+  } else if (contrast1 < contrast2) {
+    colorDefault = maxContrast;
+    maxContrast = theme.colors.text.primary;
+  }
+
   const colors = {
     critical: '#B877D9',
     error: theme.colors.error.text,
@@ -477,8 +500,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     trace: '#6ed0e0',
     info: '#6CCF8E',
     metadata: theme.colors.text.secondary,
-    default: theme.colors.text.primary,
+    default: colorDefault,
     parsedField: theme.colors.text.secondary,
+    logLineBody: maxContrast,
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
@@ -490,8 +514,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gap: theme.spacing(0.5),
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.fontSize,
-      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
@@ -509,7 +531,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: colors.default,
+          color: colors.logLineBody,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
@@ -540,6 +562,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
           color: theme.components.textHighlight.text,
           backgroundColor: theme.components.textHighlight.background,
         },
+        '&.log-line-body': {
+          color: colors.logLineBody,
+        },
       },
       '& .no-highlighting': {
         color: theme.colors.text.primary,
@@ -552,6 +577,10 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     fontSizeSmall: css({
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
+    fontSizeDefault: css({
+      fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
       background: tinycolor(theme.colors.background.canvas)

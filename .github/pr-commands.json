@@ -469,5 +469,15 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
     }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/features/panel/suggestions/**/*",
+      "public/app/plugins/panel/**/suggestions.ts",
+      "packages/grafana-data/src/types/suggestions*"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/suggestions"
   }
 ]

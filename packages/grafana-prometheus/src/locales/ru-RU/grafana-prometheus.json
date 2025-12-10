@@ -175,7 +175,7 @@
         "label-scrape-interval": "Интервал опроса",
         "label-series-limit": "Лимит рядов",
         "label-use-series-endpoint": "Использовать конечную точку ряда",
-        "more-info": "",
+        "more-info": "Более подробную информацию о настройке типа и версии Prometheus в источниках данных см. в <2>документации по подготовке</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Пример: {{example}}",
         "title-interval-behaviour": "Поведение интервалов",
         "title-other": "Прочее",

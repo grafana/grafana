@@ -205,9 +205,23 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
+	// We need to add the writer headers (valid for any data source) and any data-source-specific headers.
 	headers := make(http.Header)
 	for k, v := range w.cfg.CustomHeaders {
 		headers.Add(k, v)
+	}
+
+	dsHeaders, err := w.datasources.CustomHeaders(ctx, ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get headers for data source: %w", err)
+	}
+
+	for k, values := range dsHeaders {
+		// Clear out any custom writer headers before adding the data souce ones.
+		headers.Del(k)
+		for _, v := range values {
+			headers.Add(k, v)
+		}
 	}
 
 	var backend backendType
