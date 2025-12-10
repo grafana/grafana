@@ -12428,14 +12428,12 @@
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects",
         "rounded-bars": "Rounded bars",
         "spotlight": "Spotlight",
         "spotlight-tooltip": "Only visible in dark themes"
       },
-      "gradient": "Gradient",
-      "gradient-auto": "Auto",
-      "gradient-none": "None",
-      "other-effects": "Other effects",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
