@@ -35,7 +35,7 @@ export function RadialBarPanel({
         width={width}
         height={height}
         barWidthFactor={options.barWidthFactor}
-        gradient={options.gradient}
+        gradient={options.effects?.gradient ? 'auto' : 'none'}
         spotlight={options.effects?.spotlight}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
