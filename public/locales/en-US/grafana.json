@@ -9024,6 +9024,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Collapse all rows",
       "aria-label-expand-all": "Expand all rows",
+      "aria-label-sort-column": "Sort column {{columnName}}",
+      "expand-row-header": "Row expander",
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
