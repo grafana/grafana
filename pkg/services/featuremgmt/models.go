@@ -130,10 +130,10 @@ type FeatureFlagType int
 
 const (
 	Boolean FeatureFlagType = iota
+	String
 	Integer
 	Float
-	Object
-	String
+	Structure
 )
 
 func (t FeatureFlagType) String() string {
@@ -144,7 +144,7 @@ func (t FeatureFlagType) String() string {
 		return "number"
 	case Float:
 		return "float"
-	case Object:
+	case Structure:
 		return "object"
 	case String:
 		return "string"
@@ -176,7 +176,7 @@ func (t *FeatureFlagType) UnmarshalJSON(b []byte) error {
 	case "float":
 		*t = Float
 	case "object":
-		*t = Object
+		*t = Structure
 	case "string":
 		*t = String
 	}
@@ -192,6 +192,8 @@ type FeatureFlag struct {
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`
+	// Type of the feature flag (boolean, number, string, structure),
+	Type FeatureFlagType `json:"type,omitempty"`
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
@@ -200,8 +202,6 @@ type FeatureFlag struct {
 
 	// The server must be initialized with the value
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
-
-	Type FeatureFlagType `json:"type,omitempty"`
 }
 
 type FeatureToggleWebhookPayload struct {
