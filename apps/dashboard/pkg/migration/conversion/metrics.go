@@ -139,7 +139,6 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			} else if errors.As(err, &dataLossErr) {
 				errorType = "conversion_data_loss_error"
 			}
-			// ConversionError uses the default "conversion_error" type
 
 			// Record failure metrics
 			sourceSchemaStr := ""
