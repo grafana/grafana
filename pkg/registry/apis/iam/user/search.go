@@ -17,10 +17,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -33,19 +34,21 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+	cfg      *setting.Cfg
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg) *SearchHandler {
 	return &SearchHandler{
 		client:   searchClient,
 		log:      slog.Default().With("logger", "grafana-apiserver.user.search"),
 		tracer:   tracer,
 		features: features,
+		cfg:      cfg,
 	}
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUser"].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -196,9 +199,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ident, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		errhttp.Write(ctx, fmt.Errorf("no identity found for request"), w)
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, fmt.Errorf("no identity found for request: %w", err), w)
 		return
 	}
 
@@ -232,7 +235,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			Key: &resourcepb.ResourceKey{
 				Group:     userGvr.Group,
 				Resource:  userGvr.Resource,
-				Namespace: ident.GetNamespace(),
+				Namespace: requester.GetNamespace(),
 			},
 		},
 		Query:  searchQuery,
@@ -276,6 +279,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	if resp.TotalHits > 0 {
 		for _, row := range resp.Results.Rows {
+			login := string(row.Cells[2])
+
+			// FIXME: Refactor to use the new config service
+			if s.IsHiddenUser(login, requester) {
+				continue
+			}
+
 			var lastSeenAt int64
 			var lastSeenAtAge string
 
@@ -288,12 +298,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				Name:          row.Key.Name,
 				Title:         string(row.Cells[0]),
 				Email:         string(row.Cells[1]),
-				Login:         string(row.Cells[2]),
+				Login:         login,
 				LastSeenAt:    lastSeenAt,
 				LastSeenAtAge: lastSeenAtAge,
 				Role:          string(row.Cells[4]),
 			}
-			// TODO: Add a check to filter out hidden users if any (cfg.HiddenUsers)
 			result.Hits = append(result.Hits, hit)
 		}
 	}
@@ -303,4 +312,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
+}
+
+func (s *SearchHandler) IsHiddenUser(login string, signedInUser identity.Requester) bool {
+	if login == "" || signedInUser.GetIsGrafanaAdmin() || login == signedInUser.GetUsername() {
+		return false
+	}
+
+	if _, hidden := s.cfg.HiddenUsers[login]; hidden {
+		return true
+	}
+
+	return false
 }

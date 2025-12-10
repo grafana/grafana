@@ -121,7 +121,7 @@ func RegisterAPIService(
 			unified, user.NewUserLegacySearchClient(orgService, tracing), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features)
+	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features, cfg)
 
 	apiregistration.RegisterAPI(builder)
 

@@ -316,11 +316,11 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	time.Sleep(2 * time.Second)
 }
 
-func searchUsers(t *testing.T, helper *apis.K8sTestHelper, query string) *iamv0.GetSearchUser {
+func searchUsers(t *testing.T, helper *apis.K8sTestHelper, query string) *iamv0.GetSearchUsers {
 	return searchUsersWithSort(t, helper, query, "")
 }
 
-func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) *iamv0.GetSearchUser {
+func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) *iamv0.GetSearchUsers {
 	q := url.Values{}
 	q.Set("query", query)
 	if sort != "" {
@@ -328,9 +328,9 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 	}
 	q.Set("limit", "100")
 
-	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUser?%s", q.Encode())
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
-	res := &iamv0.GetSearchUser{}
+	res := &iamv0.GetSearchUsers{}
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
