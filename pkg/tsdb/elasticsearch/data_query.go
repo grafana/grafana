@@ -20,11 +20,12 @@ const (
 )
 
 type elasticsearchDataQuery struct {
-	client               es.Client
-	dataQueries          []backend.DataQuery
-	logger               log.Logger
-	ctx                  context.Context
-	keepLabelsInResponse bool
+	client                       es.Client
+	dataQueries                  []backend.DataQuery
+	logger                       log.Logger
+	ctx                          context.Context
+	keepLabelsInResponse         bool
+	aggregationParserDSLRawQuery AggregationParser
 }
 
 var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger) *elasticsearchDataQuery {
@@ -39,6 +40,8 @@ var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req 
 		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
 		// Historically, these labels have been used in alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
+
+		aggregationParserDSLRawQuery: NewAggregationParser(),
 	}
 }
 

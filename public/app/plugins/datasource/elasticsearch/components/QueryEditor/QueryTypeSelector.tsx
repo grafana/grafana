@@ -9,7 +9,7 @@ import { useQuery } from './ElasticsearchQueryContext';
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 
-const OPTIONS: Array<SelectableValue<QueryType>> = [
+const BASE_OPTIONS: Array<SelectableValue<QueryType>> = [
   { value: 'metrics', label: 'Metrics' },
   { value: 'logs', label: 'Logs' },
   { value: 'raw_data', label: 'Raw Data' },
@@ -47,5 +47,5 @@ export const QueryTypeSelector = () => {
     dispatch(changeMetricType({ id: firstMetric.id, type: queryTypeToMetricType(newQueryType) }));
   };
 
-  return <RadioButtonGroup<QueryType> fullWidth={false} options={OPTIONS} value={queryType} onChange={onChange} />;
+  return <RadioButtonGroup<QueryType> fullWidth={false} options={BASE_OPTIONS} value={queryType} onChange={onChange} />;
 };
