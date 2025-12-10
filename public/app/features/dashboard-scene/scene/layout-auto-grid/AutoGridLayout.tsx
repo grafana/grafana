@@ -1,6 +1,6 @@
 import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
@@ -65,6 +65,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     top: number;
     left: number;
   } | null = null;
+  private _lastDropTargetGridItemKey: string | null = null;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({
@@ -110,7 +111,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
   public getDragHooks() {
     return {
-      onDragStart: this._onDragStart,
+      onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
+        const gridItem = panel.parent;
+        if (gridItem instanceof AutoGridItem) {
+          this._onDragStart(evt, gridItem);
+        }
+      },
     };
   }
 
@@ -127,7 +133,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   // Start inside dragging
-  private _onDragStart(evt: ReactPointerEvent, panel: VizPanel) {
+  private _onDragStart(evt: ReactPointerEvent, gridItem: SceneGridItemLike) {
     if (!this._canDrag(evt)) {
       return;
     }
@@ -135,11 +141,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     evt.preventDefault();
     evt.stopPropagation();
 
-    if (!(panel.parent instanceof AutoGridItem)) {
+    if (!(gridItem instanceof AutoGridItem)) {
       throw new Error('Dragging wrong item');
     }
 
-    this._draggedGridItem = panel.parent;
+    this._draggedGridItem = gridItem;
+    this._lastDropTargetGridItemKey = gridItem.state.key!;
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
@@ -152,7 +159,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     document.body.addEventListener('pointerup', this._onDragEnd);
     document.body.classList.add('dashboard-draggable-transparent-selection');
 
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel);
+    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem);
   }
 
   // Stop inside dragging
@@ -161,6 +168,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
+    this._lastDropTargetGridItemKey = null;
     this._resetPanelPositionAndSize();
 
     this.setState({ draggingKey: undefined });
@@ -191,7 +199,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       })
       ?.getAttribute('data-auto-grid-item-drop-target');
 
-    if (dropTargetGridItemKey) {
+    if (dropTargetGridItemKey && dropTargetGridItemKey !== this._lastDropTargetGridItemKey) {
       this._onDragOverItem(dropTargetGridItemKey);
     }
   }
@@ -202,12 +210,14 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     const draggedIdx = children.findIndex((child) => child === this._draggedGridItem);
     const draggedOverIdx = children.findIndex((child) => child.state.key === key);
 
-    if (draggedIdx === -1 || draggedOverIdx === -1) {
+    if (draggedIdx === -1 || draggedOverIdx === -1 || draggedIdx === draggedOverIdx) {
+      this._lastDropTargetGridItemKey = key;
       return;
     }
 
     children.splice(draggedIdx, 1);
     children.splice(draggedOverIdx, 0, this._draggedGridItem!);
+    this._lastDropTargetGridItemKey = this._draggedGridItem!.state.key!;
 
     this.setState({ children });
   }

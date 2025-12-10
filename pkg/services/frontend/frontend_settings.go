@@ -1,6 +1,9 @@
 package frontend
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 // This is a copy of dtos.FrontendSettingsDTO with only the fields that the frontend-service
 // sends, to prevent default values from overriding what comes from the /bootdata call.
@@ -20,6 +23,8 @@ type FSFrontendSettings struct {
 	PasswordHint       string `json:"passwordHint,omitempty"`
 	AnonymousEnabled   bool   `json:"anonymousEnabled,omitempty"`
 
+	BuildInfo dtos.FrontendSettingsBuildInfoDTO `json:"buildInfo"`
+
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId,omitempty"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id,omitempty"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews,omitempty"`
@@ -33,8 +38,9 @@ type FSFrontendSettings struct {
 	AnalyticsConsoleReporting bool                           `json:"analyticsConsoleReporting,omitempty"`
 	GrafanaJavascriptAgent    setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
 
-	ApplicationInsightsConnectionString string `json:"applicationInsightsConnectionString,omitempty"`
-	ApplicationInsightsEndpointUrl      string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsConnectionString  string `json:"applicationInsightsConnectionString,omitempty"`
+	ApplicationInsightsEndpointUrl       string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsAutoRouteTracking bool   `json:"applicationInsightsAutoRouteTracking,omitempty"`
 
 	TrustedTypesDefaultPolicyEnabled bool              `json:"trustedTypesDefaultPolicyEnabled,omitempty"`
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`

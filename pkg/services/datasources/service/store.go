@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -24,6 +25,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetDataSourceInNamespace(context.Context, string, string, string) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -84,6 +86,41 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		return nil, err
 	} else if !has {
 		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
+		return nil, datasources.ErrDataSourceNotFound
+	}
+
+	return datasource, nil
+}
+
+func (ss *SqlStore) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	var (
+		dataSource *datasources.DataSource
+		err        error
+	)
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		dataSource, err = ss.getDataSourceInGroup(ctx, ns.OrgID, name, group, sess)
+		return err
+	})
+}
+
+func (ss *SqlStore) getDataSourceInGroup(_ context.Context, orgID int64, name, group string, sess *db.Session) (*datasources.DataSource, error) {
+	datasource := &datasources.DataSource{
+		OrgID: orgID,
+		Type:  group,
+		UID:   name,
+	}
+	has, err := sess.Get(datasource)
+
+	if err != nil {
+		ss.logger.Error("Failed getting data source", "err", err, "name", name, "orgId", orgID, "group", group)
+		return nil, err
+	} else if !has {
+		ss.logger.Debug("Data source not found", "name", name, "orgId", orgID, "group", group)
 		return nil, datasources.ErrDataSourceNotFound
 	}
 

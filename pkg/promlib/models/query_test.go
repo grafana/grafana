@@ -1307,6 +1307,40 @@ func TestParseComplexScenariosWithFilters(t *testing.T) {
 	})
 }
 
+func TestParseNumericFormatError(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	timeRange := backend.TimeRange{
+		From: now,
+		To:   now.Add(12 * time.Hour),
+	}
+
+	// Test case where format is sent as a number instead of string
+	queryJson := `{
+		"expr": "up",
+		"format": 0,
+		"refId": "A"
+	}`
+
+	q := backend.DataQuery{
+		JSON:      []byte(queryJson),
+		TimeRange: timeRange,
+		RefID:     "A",
+	}
+
+	res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	require.True(t, backend.IsDownstreamError(err))
+
+	// Error message should indicate unmarshaling issue
+	require.Contains(t, err.Error(), "error unmarshaling query")
+	require.Contains(t, err.Error(), "cannot unmarshal number")
+}
+
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := schemabuilder.NewSchemaBuilder(
 		schemabuilder.BuilderOptions{

@@ -35,6 +35,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	jobsvalidation "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -57,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -85,7 +88,8 @@ type APIBuilder struct {
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
-	onlyApiServer bool
+	onlyApiServer                       bool
+	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
@@ -105,7 +109,7 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	legacyMigrator   legacy.LegacyMigrator
+	dashboardAccess  legacy.MigrationDashboardAccessor
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
@@ -131,7 +135,7 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
@@ -145,6 +149,7 @@ func NewAPIBuilder(
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	useExclusivelyAccessCheckerForAuthz bool,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -153,29 +158,31 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 	parsers := resources.NewParserFactory(clients)
+	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
-		onlyApiServer:       onlyApiServer,
-		tracer:              tracer,
-		usageStats:          usageStats,
-		features:            features,
-		repoFactory:         repoFactory,
-		clients:             clients,
-		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
-		resourceLister:      resourceLister,
-		legacyMigrator:      legacyMigrator,
-		storageStatus:       storageStatus,
-		unified:             unified,
-		access:              access,
-		jobHistoryConfig:    jobHistoryConfig,
-		extraWorkers:        extraWorkers,
-		restConfigGetter:    restConfigGetter,
-		allowedTargets:      allowedTargets,
-		allowImageRendering: allowImageRendering,
-		registry:            registry,
-		validator:           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		onlyApiServer:                       onlyApiServer,
+		tracer:                              tracer,
+		usageStats:                          usageStats,
+		features:                            features,
+		repoFactory:                         repoFactory,
+		clients:                             clients,
+		parsers:                             parsers,
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
+		resourceLister:                      resourceLister,
+		dashboardAccess:                     dashboardAccess,
+		storageStatus:                       storageStatus,
+		unified:                             unified,
+		access:                              access,
+		jobHistoryConfig:                    jobHistoryConfig,
+		extraWorkers:                        extraWorkers,
+		restConfigGetter:                    restConfigGetter,
+		allowedTargets:                      allowedTargets,
+		allowImageRendering:                 allowImageRendering,
+		registry:                            registry,
+		validator:                           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
 	for _, builder := range extraBuilders {
@@ -228,7 +235,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
@@ -236,6 +243,7 @@ func RegisterAPIService(
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
@@ -251,7 +259,7 @@ func RegisterAPIService(
 		features,
 		client,
 		configProvider,
-		legacyMigrator, storageStatus,
+		dashboardAccess, storageStatus,
 		usageStats,
 		access,
 		tracer,
@@ -264,6 +272,7 @@ func RegisterAPIService(
 		cfg.ProvisioningMinSyncInterval,
 		reg,
 		nil,
+		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -279,8 +288,20 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 
+			// Check if any extra authorizer has a decision.
+			// Since the move to access checker when useExclusivelyAccessCheckerForAuthz=true, extra authorizers
+			// need to run first because access checker is not aware of the extras logic
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			info, ok := authlib.AuthInfoFrom(ctx)
-			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
+			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
+			// so we allow it to use the access checker if there is any auth info available
+			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.useExclusivelyAccessCheckerForAuthz) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
 					Verb:        a.GetVerb(),
 					Group:       a.GetAPIGroup(),
@@ -288,6 +309,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
+					Path:        a.GetPath(),
 				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
@@ -299,6 +321,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 				return authorizer.DecisionAllow, "", nil
 			}
+
+			id, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "failed to find requester", err
+			}
+
 			// Different routes may need different permissions.
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
@@ -310,19 +338,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Migrating a repository requires administrator privileges.
 			// * Testing a repository configuration requires administrator privileges.
 			// * Viewing a repository's history requires editor privileges.
-
-			id, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to find requester", err
-			}
-
-			// Check if any extra authorizer has a decision.
-			for _, extra := range b.extras {
-				decision, reason, err := extra.Authorize(ctx, a)
-				if decision != authorizer.DecisionNoOpinion {
-					return decision, reason, err
-				}
-			}
 
 			switch a.GetResource() {
 			case provisioning.RepositoryResourceInfo.GetName():
@@ -566,10 +581,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	// FIXME: Do nothing for Jobs for now
-	_, ok = obj.(*provisioning.Job)
+	// Validate Jobs
+	job, ok := obj.(*provisioning.Job)
 	if ok {
-		return nil
+		return jobsvalidation.ValidateJob(job)
 	}
 
 	if b.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
@@ -650,11 +665,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
@@ -671,6 +681,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
@@ -698,7 +712,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -707,6 +721,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 				metrics,
 				b.tracer,
+				10,
 			)
 
 			// MigrationWorker is deprecated, as it's not safe to use today due to the lack of support for alerts and library
@@ -715,24 +730,23 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// We keep it around for now as a reference implementation of how a migration job could be implemented.
 			// https://github.com/grafana/git-ui-sync-project/issues/604
 			// https://github.com/grafana/git-ui-sync-project/issues/606
-			// cleaner := migrate.NewNamespaceCleaner(b.clients)
-			// unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-			// 	cleaner,
-			// 	exportWorker,
-			// 	syncWorker,
-			// )
-			// migrationWorker := migrate.NewMigrationWorker(
-			// 	legacyMigrator,
-			// 	unifiedStorageMigrator,
-			// 	b.storageStatus,
-			// )
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				cleaner,
+				exportWorker,
+				syncWorker,
+			)
+			migrationWorker := migrate.NewMigrationWorker(
+				unifiedStorageMigrator,
+				b.storageStatus,
+			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
-				// migrationWorker,
+				migrationWorker,
 				moveWorker,
 				syncWorker,
 			}
@@ -754,13 +768,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
+
+			// Create job cleanup controller
+			jobExpiry := 30 * time.Second
+			jobCleanupController := jobs.NewJobCleanupController(
+				b.jobs,
+				jobHistoryWriter,
+				jobExpiry,
+			)
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
-				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
-				30*time.Second, // Lease renewal interval
+				jobExpiry,      // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
@@ -776,6 +798,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			go func() {
+				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
+				}
+			}()
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -788,6 +816,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.statusPatcher,
 				b.registry,
 				b.tracer,
+				10,
 			)
 			if err != nil {
 				return err
@@ -799,7 +828,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
-				historyJobExpiration := 30 * time.Second
+				historyJobExpiration := 10 * time.Minute
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
@@ -1206,8 +1235,9 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		return nil
 	}
 
-	// Count how many things exist
-	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+	// Count how many things exist - create a migrator on-demand for this
+	legacyMigrator := migrations.ProvideUnifiedMigrator(b.dashboardAccess, b.unified)
+	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
 		Resources: []schema.GroupResource{{
 			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,

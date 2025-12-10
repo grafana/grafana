@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { Permissions } from 'app/core/components/AccessControl';
-import { appEvents } from 'app/core/core';
+import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
@@ -126,12 +126,14 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   };
 
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
-  const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move');
-  const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete');
+  const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
+  const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
   const menu = (
     <Menu>
-      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
+      {canViewPermissions && !isProvisionedFolder && (
+        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
+      )}
       {canMoveFolder && !isReadOnlyRepo && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
@@ -180,7 +182,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       )}
       {showDeleteProvisionedFolderDrawer && (
         <Drawer
-          title={t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
+            </Text>
+          }
           subtitle={folder.title}
           onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
         >
@@ -192,7 +198,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       )}
       {showMoveProvisionedFolderDrawer && (
         <Drawer
-          title={t('browse-dashboards.action.move-provisioned-folder', 'Move provisioned folder')}
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.move-provisioned-folder', 'Move provisioned folder')}
+            </Text>
+          }
           subtitle={folder.title}
           onClose={() => setShowMoveProvisionedFolderDrawer(false)}
         >

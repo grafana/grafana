@@ -2,25 +2,26 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
-  ResourceClient,
-  ResourceForCreate,
-  AnnoKeyMessage,
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
-  Resource,
-  DeprecatedInternalId,
-  AnnoKeyManagerKind,
-  AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
-  ManagerKind,
+  AnnoKeyManagerKind,
+  AnnoKeyMessage,
+  AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
+  DeprecatedInternalId,
+  ManagerKind,
+  Resource,
+  ResourceClient,
+  ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -137,6 +138,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           k8s: dash.metadata,
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
+          publicDashboardEnabled: dash.access.isPublic,
+          conversionStatus: dash.status?.conversion
+            ? {
+                storedVersion: dash.status.conversion.storedVersion,
+                failed: dash.status.conversion.failed,
+                error: dash.status.conversion.error,
+              }
+            : undefined,
         },
         dashboard: {
           ...dash.spec,
@@ -159,13 +168,20 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
       }
 
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
+        result.dashboard.links = [sourceLink, ...linksWithoutSource];
+      }
+
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
       }
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;

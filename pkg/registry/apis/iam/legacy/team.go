@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -129,18 +130,18 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sqlConn, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newListTeams(sql, &query)
+	req := newListTeams(sqlConn, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamsTemplate, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -155,9 +156,19 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	var lastID int64
 	for rows.Next() {
 		t := team.Team{}
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.ExternalUID, &t.IsProvisioned, &t.Created, &t.Updated)
+		var externalUID sql.NullString
+		var isProvisioned sql.NullBool
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
+		}
+
+		if externalUID.Valid {
+			t.ExternalUID = externalUID.String
+		}
+
+		if isProvisioned.Valid {
+			t.IsProvisioned = isProvisioned.Bool
 		}
 
 		lastID = t.ID
@@ -170,7 +181,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	if query.UID == "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
+		res.RV, err = sqlConn.GetResourceVersion(ctx, "team", "updated")
 	}
 
 	return res, err
@@ -180,8 +191,8 @@ type CreateTeamCommand struct {
 	UID           string
 	Name          string
 	OrgID         int64
-	Created       DBTime
-	Updated       DBTime
+	Created       legacysql.DBTime
+	Updated       legacysql.DBTime
 	Email         string
 	ExternalID    string
 	IsProvisioned bool
@@ -215,8 +226,8 @@ func (r createTeamQuery) Validate() error {
 func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error) {
 	now := time.Now().UTC()
 
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.OrgID = ns.OrgID
 
 	if cmd.OrgID == 0 {
@@ -267,7 +278,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 type UpdateTeamCommand struct {
 	UID           string
 	Name          string
-	Updated       DBTime
+	Updated       legacysql.DBTime
 	Email         string
 	ExternalID    string
 	IsProvisioned bool
@@ -301,7 +312,7 @@ func (r updateTeamQuery) Validate() error {
 func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
 	now := time.Now().UTC()
 
-	cmd.Updated = NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 
 	sql, err := s.sql(ctx)
 	if err != nil {

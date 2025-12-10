@@ -278,7 +278,7 @@ func flamegraphResponse() *connect.Response[v1alpha1.QueryResponse] {
 		builderFlat.Append(columns.flat[i])
 	}
 
-	record := array.NewRecord(
+	record := array.NewRecordBatch(
 		arrow.NewSchema(fields, nil),
 		[]arrow.Array{
 			builderLocationAddress.NewArray(),

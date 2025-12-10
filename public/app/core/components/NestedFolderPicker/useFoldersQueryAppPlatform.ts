@@ -13,7 +13,9 @@ import { getPaginationPlaceholders } from '../../../features/browse-dashboards/s
 import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
+type GetFolderChildrenQuery = ReturnType<
+  ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
+>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
@@ -27,14 +29,14 @@ const collator = new Intl.Collator();
  * does not have pagination at the moment.
  */
 
-type Props = Omit<UseFoldersQueryProps, 'permission'>;
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID,
   rootFolderItem,
-}: Props) {
+  permission,
+}: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
@@ -44,9 +46,9 @@ export function useFoldersQueryAppPlatform({
   const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
 
   // Keep a list of selectors for dynamic state selection
-  const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
-    []
-  );
+  const [selectors, setSelectors] = useState<
+    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>>
+  >([]);
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
   // tree and returns the whole tree that was loaded so far.
@@ -89,19 +91,19 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' } as const;
+      const args = { folder: finalParentUid, type: 'folder', permission } as const;
 
       // Make a request
-      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = dashboardAPIv0alpha1.endpoints.getSearch.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch]
+    [state, dispatch, permission]
   );
 
   // Unsubscribe from all requests when the component is unmounted

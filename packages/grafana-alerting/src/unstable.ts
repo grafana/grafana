@@ -8,24 +8,6 @@ export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/use
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
 
-// Notification Policies
-export {
-  useMatchInstancesToRouteTrees,
-  matchInstancesToRouteTrees,
-  type RouteMatch,
-  type InstanceMatchResult,
-} from './grafana/notificationPolicies/hooks/useMatchPolicies';
-export {
-  type TreeMatch,
-  type RouteMatchResult,
-  matchInstancesToRoute,
-  findMatchingRoutes,
-  getInheritedProperties,
-  computeInheritedTree,
-} from './grafana/notificationPolicies/utils';
-export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
-export * from './grafana/notificationPolicies/types';
-
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';

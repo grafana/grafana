@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
@@ -34,15 +34,17 @@ export function RepositoryTypeCards() {
                 className={isLegacyStorage ? styles.disabledCard : styles.card}
                 noMargin
               >
-                <Stack gap={2} alignItems="center">
-                  <RepoIcon type={config.type} />
-                  <Trans
-                    i18nKey="provisioning.repository-type-cards.configure-with-provider"
-                    values={{ provider: config.label }}
-                  >
-                    Configure with {'{{ provider }}'}
-                  </Trans>
-                </Stack>
+                <Card.Heading>
+                  <Stack gap={2} alignItems="center">
+                    <RepoIcon type={config.type} />
+                    <Trans
+                      i18nKey="provisioning.repository-type-cards.configure-with-provider"
+                      values={{ provider: config.label }}
+                    >
+                      Configure with {'{{ provider }}'}
+                    </Trans>
+                  </Stack>
+                </Card.Heading>
               </Card>
             ))}
           </Stack>
@@ -65,21 +67,23 @@ export function RepositoryTypeCards() {
                 className={isLegacyStorage ? styles.disabledCard : styles.card}
                 noMargin
               >
-                <Stack gap={2} alignItems="center">
-                  <RepoIcon type={config.type} />
-                  {config.type === 'local' ? (
-                    <Trans i18nKey="provisioning.repository-type-cards.configure-file">
-                      Configure file provisioning
-                    </Trans>
-                  ) : (
-                    <Trans
-                      i18nKey="provisioning.repository-type-cards.configure-with-provider"
-                      values={{ provider: config.label }}
-                    >
-                      Configure with {'{{ provider }}'}
-                    </Trans>
-                  )}
-                </Stack>
+                <Card.Heading>
+                  <Stack gap={2} alignItems="center">
+                    <RepoIcon type={config.type} />
+                    {config.type === 'local' ? (
+                      <Trans i18nKey="provisioning.repository-type-cards.configure-file">
+                        Configure file provisioning
+                      </Trans>
+                    ) : (
+                      <Trans
+                        i18nKey="provisioning.repository-type-cards.configure-with-provider"
+                        values={{ provider: config.label }}
+                      >
+                        Configure with {'{{ provider }}'}
+                      </Trans>
+                    )}
+                  </Stack>
+                </Card.Heading>
               </Card>
             ))}
           </Stack>

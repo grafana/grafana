@@ -10,3 +10,9 @@
 Gauge => new gauge migration notes
 
 Old gauge "Show threshold markers" does nothing when color scheme != From thresholds 
+
+Decide what to do with 
+
+sizing: manual & minVizHeight & minVizWidth (do not think this panel should scroll, and minWidth is broken/does not scroll)
+neutral value
+

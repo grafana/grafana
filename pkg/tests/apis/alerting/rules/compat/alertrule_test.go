@@ -13,15 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -145,9 +144,7 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -287,9 +284,7 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)

@@ -23,6 +23,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
+import { useLogDetailsContext } from './LogDetailsContext';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
@@ -113,10 +114,7 @@ const LogLineComponent = memo(
     wrapLogMessage,
   }: LogLineComponentProps) => {
     const {
-      detailsDisplayed,
-      detailsMode,
       dedupStrategy,
-      enableLogDetails,
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
@@ -124,6 +122,7 @@ const LogLineComponent = memo(
       timestampResolution,
       onLogLineHover,
     } = useLogListContext();
+    const { currentLog, detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
@@ -195,6 +194,7 @@ const LogLineComponent = memo(
       [log, onClick]
     );
 
+    const isLogDetailsFocused = currentLog?.uid === log.uid;
     const detailsShown = detailsDisplayed(log);
 
     return (
@@ -202,13 +202,13 @@ const LogLineComponent = memo(
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
           onClick={handleClick}
         >
-          <LogLineMenu styles={styles} log={log} />
+          <LogLineMenu styles={styles} log={log} active={isLogDetailsFocused} />
           {dedupStrategy !== LogsDedupStrategy.none && (
             <div className={`${styles.duplicates}`}>
               {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
@@ -249,7 +249,7 @@ const LogLineComponent = memo(
             </div>
           )}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
@@ -334,14 +334,14 @@ const Log = memo(
       <>
         {showTime && (
           <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}{' '}
           </span>
         )}
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {(log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -395,7 +395,7 @@ const DisplayedFields = ({
     if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
         <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
+          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
         </span>
       );
     }
@@ -410,7 +410,7 @@ const DisplayedFields = ({
           />
         ) : (
           log.getDisplayedFieldValue(field)
-        )}
+        )}{' '}
       </span>
     );
   });
@@ -434,7 +434,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   if (log.hasAnsi) {
     return (
       <span className="field no-highlighting">
-        <LogMessageAnsi value={log.body} highlight={highlight} />
+        <LogMessageAnsi value={log.body} highlight={highlight} />{' '}
       </span>
     );
   }
@@ -448,13 +448,13 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body}</span>
+      <span className="field no-highlighting">{log.body} </span>
     );
   }
 
   return (
     <span className="field log-syntax-highlight">
-      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />
+      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
 };
@@ -481,7 +481,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     parsedField: theme.colors.text.secondary,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
 
   return {
     logLine: css({
@@ -554,7 +554,13 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas).darken(2).toRgbString(),
+      background: tinycolor(theme.colors.background.canvas)
+        .darken(theme.isDark ? 2 : 5)
+        .toRgbString(),
+    }),
+    currentLog: css({
+      background: hoverColor,
+      fontWeight: theme.typography.fontWeightBold,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -31,7 +32,7 @@ const DatasourceID = -1
 
 // DatasourceUID is the fake datasource uid used in requests to identify it as a
 // Grafana DS command.
-const DatasourceUID = "grafana"
+const DatasourceUID = dashboard.GrafanaDatasourceUID
 
 // Make sure Service implements required interfaces.
 // This is important to do since otherwise we will only get a
@@ -169,12 +170,24 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
-	model, err := testdatasource.GetJSONModel(json.RawMessage{})
+	model, err := testdatasource.GetJSONModel(query.JSON)
 	if err != nil {
 		response.Error = err
 		return response
 	}
-	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
+
+	// Default to 1 series if not specified
+	seriesCount := model.SeriesCount
+	if seriesCount == 0 {
+		seriesCount = 1
+	}
+
+	// Generate the requested number of series
+	frames := make([]*data.Frame, 0, seriesCount)
+	for i := 0; i < seriesCount; i++ {
+		frames = append(frames, testdatasource.RandomWalk(query, model, i))
+	}
+	response.Frames = frames
 
 	return response
 }

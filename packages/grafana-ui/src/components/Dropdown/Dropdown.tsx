@@ -24,13 +24,18 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
 }
 
+/**
+ * Hook up a menu or other overlay to any trigger.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-dropdown--docs
+ */
 export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);

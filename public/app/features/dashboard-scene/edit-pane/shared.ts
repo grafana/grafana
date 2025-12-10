@@ -14,9 +14,9 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
+import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
@@ -59,6 +59,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof VariableAdd) {
+    return new VariableAddEditableElement(sceneObj);
   }
 
   return undefined;
@@ -202,7 +206,7 @@ export const dashboardEditActions = {
   }),
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const varsBeforeAddition = [...source.state.variables];
+    const varsBeforeAddition = [...(source.state.variables ?? [])];
 
     dashboardEditActions.addElement({
       source,
@@ -293,8 +297,4 @@ function makeEditAction<Source extends SceneObject, T extends keyof Source['stat
       },
     });
   };
-}
-
-export function undoRedoWasClicked(e: React.FocusEvent) {
-  return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
 }

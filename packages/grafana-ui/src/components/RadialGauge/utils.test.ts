@@ -13,7 +13,8 @@ describe('RadialGauge utils', () => {
       overrides.roundedBars ?? false,
       overrides.barWidthFactor ?? 0.4,
       overrides.barIndex ?? 0,
-      overrides.thresholdsBar ?? false
+      overrides.thresholdsBar ?? false,
+      overrides.showScaleLabels ?? false
     );
   }
 
@@ -99,6 +100,14 @@ describe('RadialGauge utils', () => {
       expect(gauge.radius).toBeCloseTo(93.33, 1);
       expect(gauge.centerY).toBeCloseTo(132.89, 1); // centerY can be much lower when shape is a semi circle
     });
+
+    it('should give space for scale labels', () => {
+      const gauge = calc({ width: 200, height: 200, shape: 'gauge', showScaleLabels: true, thresholdsBar: true });
+
+      expect(gauge.radius).toBeCloseTo(72, 1);
+      expect(gauge.thresholdsBarRadius).toBeCloseTo(82.66, 1);
+      expect(gauge.scaleLabelsFontSize).toBeCloseTo(10, 1);
+    });
   });
 
   describe('toRad', () => {
@@ -168,6 +177,21 @@ describe('RadialGauge utils', () => {
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
 
       expect(result.angle).toBe(360);
+    });
+
+    it('should handle values lower than min', () => {
+      const fieldDisplay = createFieldDisplay(-50, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 240, 120);
+
+      expect(result.angle).toBe(0);
+    });
+
+    it('should handle values higher than max', () => {
+      const fieldDisplay = createFieldDisplay(200, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 240, 120);
+
+      // Expect the angle to be clamped to the maximum range
+      expect(result.angle).toBe(240);
     });
   });
 });

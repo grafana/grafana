@@ -19,6 +19,7 @@ import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/co
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 
+import { LogsVisualisationType } from './Logs';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
@@ -41,6 +42,7 @@ export type Props = {
   logRows: LogRowModel[];
   clearDisplayedFields: () => void;
   defaultDisplayedFields: string[];
+  visualisationType: LogsVisualisationType;
 };
 
 export const LogsMetaRow = memo(
@@ -52,6 +54,7 @@ export const LogsMetaRow = memo(
     clearDisplayedFields,
     logRows,
     defaultDisplayedFields,
+    visualisationType,
   }: Props) => {
     const style = useStyles2(getStyles);
 
@@ -67,7 +70,11 @@ export const LogsMetaRow = memo(
     }
 
     // Add detected fields info
-    if (displayedFields?.length > 0 && shallowCompare(displayedFields, defaultDisplayedFields) === false) {
+    if (
+      visualisationType === 'logs' &&
+      displayedFields?.length > 0 &&
+      shallowCompare(displayedFields, defaultDisplayedFields) === false
+    ) {
       logsMetaItem.push(
         {
           label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),

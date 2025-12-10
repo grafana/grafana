@@ -1,0 +1,11 @@
+{
+    "metadata": {
+        "name": "user-with-login-and-email",
+        "namespace": "default"
+    },
+    "spec": {
+        "login": "user.one",
+        "email": "user.one@test.com",
+        "role": "Viewer"
+    }
+}

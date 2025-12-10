@@ -121,8 +121,8 @@ type CreateServiceAccountCommand struct {
 	Role       string
 	IsDisabled bool
 	OrgID      int64
-	Created    DBTime
-	Updated    DBTime
+	Created    legacysql.DBTime
+	Updated    legacysql.DBTime
 	LastSeenAt time.Time
 }
 
@@ -335,8 +335,8 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	now := time.Now().UTC()
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.LastSeenAt = lastSeenAt
 
 	if ns.OrgID == 0 {

@@ -190,6 +190,45 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).not.toBe(entry);
     });
 
+    test('Prettifies and escapes wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "other\\nValue"}';
+      const logListModel = createLogLine(
+        { entry, hasUnescapedContent: true },
+        {
+          escape: true, // escape
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(`{
+  "key": "value",
+  "otherKey": "other
+Value"
+}`);
+    });
+
+    test('Prettifies JSON without escaping', () => {
+      const entry = '{"key": "value", "otherKey": "other\\nValue"}';
+      const logListModel = createLogLine(
+        { entry, hasUnescapedContent: true },
+        {
+          escape: false, // escape = false
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(`{
+  "key": "value",
+  "otherKey": "other\\nValue"
+}`);
+    });
+
     test('Uses lossless parsing', () => {
       const entry = '{"number": 90071992547409911}';
       const logListModel = createLogLine(
@@ -385,6 +424,57 @@ describe('preProcessLogs', () => {
     );
     expect(processedLogs[2].highlightedBodyTokens).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+  });
+
+  test('Highlights search strings within JSON logs', () => {
+    const jsonLogWithSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+      logLevel: LogLevel.error,
+      // Search words
+      searchWords: ['ven'],
+    });
+    const jsonLogWithoutSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+    });
+
+    const [processedLogWithSearch, processedLogWithoutSearch] = preProcessLogs(
+      [jsonLogWithSearch, jsonLogWithoutSearch],
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
+
+    // Current search
+    processedLogWithSearch.setCurrentSearch('alu');
+
+    // Search matches
+    expect(processedLogWithSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: 'ven' }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: 'alu' }),
+      ])
+    );
+
+    // Original JSON highlight
+    expect(processedLogWithoutSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: ['"Event"'] }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: ['"value"'] }),
+      ])
     );
   });
 

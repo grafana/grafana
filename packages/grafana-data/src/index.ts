@@ -435,6 +435,7 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
+export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
@@ -520,6 +521,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
+  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
@@ -650,13 +652,7 @@ export {
   type PanelMenuItem,
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
-  type VisualizationSuggestion,
-  type PanelDataSummary,
-  type VisualizationSuggestionsSupplier,
   VizOrientation,
-  VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/panel';
 export {
   type DataSourcePluginOptionsEditorProps,
@@ -717,6 +713,13 @@ export {
   type ApplyFieldOverrideOptions,
   FieldConfigProperty,
 } from './types/fieldOverrides';
+export {
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestionsBuilder,
+  VisualizationSuggestionScore,
+} from './types/suggestions';
 export {
   type MatcherConfig,
   type DataTransformContext,

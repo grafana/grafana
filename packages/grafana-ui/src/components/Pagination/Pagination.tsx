@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -21,6 +21,11 @@ export interface Props {
   className?: string;
 }
 
+/**
+ * Component used for rendering a page selector below paginated content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-pagination--docs
+ */
 export const Pagination = ({
   currentPage,
   numberOfPages,

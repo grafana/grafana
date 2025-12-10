@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpr';
+import { SqlExpr } from './components/SqlExpressions/SqlExpr';
 import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
@@ -22,21 +22,33 @@ const labelWidth = 15;
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
 
-// Help text for each expression type - can be expanded with more detailed content
-const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | string => {
+/**
+ * Get the configuration for an expression type (helper text and feature state).
+ * @param type - The expression type.
+ * @returns The configuration for the expression type.
+ */
+const getExpressionTypeConfig = (
+  type: ExpressionQueryType
+): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
     case ExpressionQueryType.sql:
-      return (
-        <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
-          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
-          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
-          data source.
-        </Trans>
-      );
+      return {
+        helperText: (
+          <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
+            Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie
+            &quot;A&quot;, &quot;B&quot;) are available as tables and referenced by query-name. Fields are available as
+            columns, as returned from the data source.
+          </Trans>
+        ),
+        featureState: FeatureState.preview,
+      };
     default:
-      return description ?? '';
+      return {
+        helperText: description ?? '',
+        featureState: undefined,
+      };
   }
 };
 
@@ -131,7 +143,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
     }
   };
 
-  const helperText = getExpressionHelpText(query.type);
+  const { helperText, featureState } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
@@ -146,7 +158,10 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
             </Button>
           </ExpressionTypeDropdown>
         </InlineField>
-        {helperText && <IconButton className={styles.infoIcon} name="info-circle" tooltip={helperText} />}
+        <div className={styles.fieldContainer}>
+          {featureState && <FeatureBadge featureState={featureState} />}
+          {helperText && <IconButton name="info-circle" tooltip={helperText} />}
+        </div>
       </div>
       {renderExpressionType()}
     </div>
@@ -159,7 +174,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
   }),
-  infoIcon: css({
+  fieldContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
     marginBottom: theme.spacing(0.5), // Align with the select field
   }),
 });

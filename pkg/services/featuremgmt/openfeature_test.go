@@ -6,16 +6,16 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/clientauth/middleware"
-	"github.com/grafana/grafana/pkg/setting"
-
-	authlib "github.com/grafana/authlib/authn"
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/clientauth/middleware"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestCreateProvider(t *testing.T) {
@@ -124,7 +124,7 @@ func testGoFFProvider(t *testing.T, failSigning bool) {
 
 	// Test that the flag evaluation can be attempted (though it will fail due to non-existent service)
 	// The important thing is that the authentication middleware is properly integrated
-	_, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+	_, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 
 	// Error related to the token exchange should be returned if signing fails
 	// otherwise, it should return a connection refused error since the goff URL is not set

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -97,12 +96,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		return rsp
 	}
 
-	// v2 is not supported in /api
-	if strings.HasPrefix(dash.APIVersion, "v2") {
-		url := fmt.Sprintf("/apis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", dash.APIVersion, hs.namespacer(c.GetOrgID()), dash.UID)
-		return response.Error(http.StatusNotAcceptable, "dashboard api version not supported, use "+url+" instead", nil)
-	}
-
 	var (
 		publicDashboardEnabled = false
 		err                    error
@@ -166,6 +159,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dashboardsV1.AnnotationPermission{}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	} else {
@@ -438,7 +432,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	ctx = c.Req.Context()
-	var err error
 
 	var userID int64
 	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
@@ -516,12 +509,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	if saveErr != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
-	}
-
-	// connect library panels for this dashboard after the dashboard is stored and has an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
@@ -833,102 +820,6 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, dashVersionMeta)
-}
-
-// swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
-//
-// Perform diff on two dashboards.
-//
-// Produces:
-// - application/json
-// - text/html
-//
-// Responses:
-// 200: calculateDashboardDiffResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.CalculateDashboardDiff")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	apiOptions := dtos.CalculateDiffOptions{}
-	if err := web.Bind(c.Req, &apiOptions); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.Base.DashboardId, 10)))
-	if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-		return dashboardGuardianResponse(err)
-	}
-
-	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.New.DashboardId, 10)))
-		if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
-	options := dashdiffs.Options{
-		OrgId:    c.GetOrgID(),
-		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
-		Base: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.Base.DashboardId,
-			Version:          apiOptions.Base.Version,
-			UnsavedDashboard: apiOptions.Base.UnsavedDashboard,
-		},
-		New: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.New.DashboardId,
-			Version:          apiOptions.New.Version,
-			UnsavedDashboard: apiOptions.New.UnsavedDashboard,
-		},
-	}
-
-	baseVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.Base.DashboardId,
-		Version:     options.Base.Version,
-		OrgID:       options.OrgId,
-	}
-
-	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	newVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.New.DashboardId,
-		Version:     options.New.Version,
-		OrgID:       options.OrgId,
-	}
-
-	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	baseData := baseVersionRes.Data
-	newData := newVersionRes.Data
-
-	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "application/json")
-	}
-
-	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
@@ -1262,7 +1153,7 @@ type GetHomeDashboardResponseBody struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []dashver.DashboardVersionMeta `json:"body"`
+	Body *dashver.DashboardVersionResponseMeta `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse

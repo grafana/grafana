@@ -15,8 +15,7 @@ import (
 )
 
 type ListTeamBindingsQuery struct {
-	TeamID     int64
-	UserID     int64
+	UID        string
 	OrgID      int64
 	Pagination common.Pagination
 }
@@ -29,6 +28,7 @@ type ListTeamBindingsResult struct {
 
 type TeamMember struct {
 	ID         int64
+	UID        string
 	TeamID     int64
 	TeamUID    string
 	UserID     int64
@@ -109,7 +109,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
+		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
 		if err != nil {
 			return res, err
 		}
@@ -127,13 +127,14 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 }
 
 type CreateTeamMemberCommand struct {
+	UID        string
 	TeamID     int64
 	TeamUID    string
 	UserID     int64
 	UserUID    string
 	OrgID      int64
-	Created    DBTime
-	Updated    DBTime
+	Created    legacysql.DBTime
+	Updated    legacysql.DBTime
 	External   bool
 	Permission team.PermissionType
 }
@@ -164,8 +165,8 @@ func (r createTeamMemberQuery) Validate() error {
 
 func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
 	now := time.Now().UTC()
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.OrgID = ns.OrgID
 
 	if cmd.OrgID == 0 {
@@ -193,6 +194,7 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 
 		createdTeamMember = TeamMember{
 			ID:         teamMemberID,
+			UID:        cmd.UID,
 			TeamID:     cmd.TeamID,
 			TeamUID:    cmd.TeamUID,
 			UserID:     cmd.UserID,
@@ -299,8 +301,130 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 	return res, err
 }
 
+type UpdateTeamMemberCommand struct {
+	UID        string
+	Permission team.PermissionType
+	Updated    legacysql.DBTime
+}
+
+type UpdateTeamMemberResult struct {
+	UID        string
+	Permission team.PermissionType
+	Updated    legacysql.DBTime
+}
+
+var sqlUpdateTeamMemberQuery = mustTemplate("update_team_member_query.sql")
+
+func newUpdateTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateTeamMemberCommand) updateTeamMemberQuery {
+	return updateTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type updateTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *UpdateTeamMemberCommand
+}
+
+func (r updateTeamMemberQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamMemberCommand) (*UpdateTeamMemberResult, error) {
+	now := time.Now().UTC()
+	cmd.Updated = legacysql.NewDBTime(now)
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateTeamMember(sql, &cmd)
+
+	var result UpdateTeamMemberResult
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamMemberQuery, err := sqltemplate.Execute(sqlUpdateTeamMemberQuery, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team member template %q: %w", sqlUpdateTeamMemberQuery.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, teamMemberQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update team member: %w", err)
+		}
+
+		result = UpdateTeamMemberResult(cmd)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+type DeleteTeamMemberCommand struct {
+	UID string
+}
+
+var sqlDeleteTeamMemberQuery = mustTemplate("delete_team_member_query.sql")
+
+func newDeleteTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMemberCommand) deleteTeamMemberQuery {
+	return deleteTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type deleteTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *DeleteTeamMemberCommand
+}
+
+func (r deleteTeamMemberQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamMemberCommand) error {
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+	req := newDeleteTeamMember(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return err
+	}
+
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamMemberQuery, err := sqltemplate.Execute(sqlDeleteTeamMemberQuery, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team member template %q: %w", sqlDeleteTeamMemberQuery.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, teamMemberQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to delete team member: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func scanMember(rows *sql.Rows) (TeamMember, error) {
 	m := TeamMember{}
-	err := rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
 	return m, err
 }

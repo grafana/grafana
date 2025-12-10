@@ -1,5 +1,6 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -13,6 +14,8 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
     theme: undefined,
     duration,
     isScene: true,
+    hasEditPermissions: dashboard.canEditDashboard(),
+    hasSavePermissions: Boolean(dashboard.state.meta.canSave),
     ...(dashboard.getTrackingInformation() ?? {}),
     ...(dynamicDashboardsTrackingInformation
       ? {
@@ -43,7 +46,7 @@ export const trackDeleteDashboardElement = (element: EditableDashboardElementInf
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
-    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true),
+    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
     dashboardUid,
   });
 };
@@ -51,32 +54,41 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string }
+  initialProperties: { name: string; url: string; expression_types?: string[] }
 ) {
   // url values for dashboard library experiment
   const urlParams = new URLSearchParams(window.location.search);
-  const pluginId = urlParams.get('pluginId') || undefined;
   const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
-  const libraryItemId = urlParams.get('libraryItemId') || undefined;
+  // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
+  const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
   const creationOrigin = urlParams.get('creationOrigin') || undefined;
 
+  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
+  const datasourceTypes = getDatasourceTypes(dashboard);
+
+  const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
-  const dashboardLibraryProperties = config.featureToggles.dashboardLibrary
-    ? {
-        datasourceTypes: [pluginId],
-        sourceEntryPoint,
-        libraryItemId,
-        creationOrigin,
-      }
-    : {};
+  const dashboardLibraryProperties =
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards
+      ? {
+          datasourceTypes,
+          sourceEntryPoint,
+          libraryItemId,
+          creationOrigin,
+        }
+      : {};
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
     ...(dynamicDashboardsTrackingInformation
       ? {
-          uid: dashboard.state.uid,
+          uid: dashboard.state.uid || '',
           numPanels: dynamicDashboardsTrackingInformation.panelCount,
+          numTabs: dynamicDashboardsTrackingInformation.tabCount,
+          numRows: dynamicDashboardsTrackingInformation.rowCount,
           conditionalRenderRules: dynamicDashboardsTrackingInformation.conditionalRenderRulesCount,
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
@@ -84,6 +96,9 @@ export function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }
       : {
+          uid: dashboard.state.uid || '',
+          numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
+          numRows: sceneDashboardTrackingInfo?.rowCount || 0,
           ...dashboardLibraryProperties,
         }),
   });

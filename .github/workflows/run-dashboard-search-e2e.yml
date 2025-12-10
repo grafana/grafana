@@ -29,12 +29,12 @@ jobs:
         with:
           persist-credentials: false
       - name: Pin Go version to mod file
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: 'go.mod'
           cache: true
       - run: go version
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'

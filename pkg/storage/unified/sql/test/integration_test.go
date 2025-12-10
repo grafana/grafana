@@ -53,6 +53,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 		DBProvider:              eDB,
 		IsHA:                    isHA,
 		SimulatedNetworkLatency: simulatedNetworkLatency,
+		LastImportTimeMaxAge:    24 * time.Hour,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -103,7 +104,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          t.TempDir(),
-	}, tracing.NewNoopTracerService(), nil)
+	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
 	t.Cleanup(search.Stop)

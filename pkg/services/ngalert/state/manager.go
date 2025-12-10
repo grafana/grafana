@@ -184,8 +184,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
-			// nil safety.
-			annotations := ruleForEntry.Annotations
+			// Use persisted annotations if available, otherwise fall back to rule annotations
+			annotations := entry.Annotations
+			if len(annotations) == 0 {
+				annotations = ruleForEntry.Annotations
+			}
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}
@@ -532,7 +535,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	missingTransitions := []StateTransition{}
 	var staleStatesCount int64 = 0
 
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	toDelete := func(s *State) bool {
 		// We need only states that are not present in the current evaluation, so
 		// skip the state if it was just evaluated.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
@@ -584,6 +587,20 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		missingTransitions = append(missingTransitions, record)
 
 		return isStale
+	}
+
+	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+
+	toDeleteStates := map[data.Fingerprint]struct{}{}
+	for _, s := range states {
+		if toDelete(s) {
+			toDeleteStates[s.CacheID] = struct{}{}
+		}
+	}
+
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		_, ok := toDeleteStates[s.CacheID]
+		return ok
 	})
 
 	return missingTransitions, staleStatesCount

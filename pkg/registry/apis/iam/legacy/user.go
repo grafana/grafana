@@ -303,9 +303,9 @@ type CreateUserCommand struct {
 	IsProvisioned bool
 	Salt          string
 	Rands         string
-	Created       DBTime
-	Updated       DBTime
-	LastSeenAt    DBTime
+	Created       legacysql.DBTime
+	Updated       legacysql.DBTime
+	LastSeenAt    legacysql.DBTime
 	Role          string
 }
 
@@ -317,15 +317,15 @@ type CreateOrgUserCommand struct {
 	OrgID   int64
 	UserID  int64
 	Role    string
-	Created DBTime
-	Updated DBTime
+	Created legacysql.DBTime
+	Updated legacysql.DBTime
 }
 
 type UpdateOrgUserCommand struct {
 	OrgID   int64
 	UserID  int64
 	Role    string
-	Updated DBTime
+	Updated legacysql.DBTime
 }
 
 type DeleteUserCommand struct {
@@ -395,9 +395,9 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	cmd.Salt = salt
 	cmd.Rands = rands
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
-	cmd.LastSeenAt = NewDBTime(lastSeenAt)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
+	cmd.LastSeenAt = legacysql.NewDBTime(lastSeenAt)
 
 	sql, err := s.sql(ctx)
 	if err != nil {
@@ -616,7 +616,7 @@ type UpdateUserCommand struct {
 	IsDisabled    bool
 	EmailVerified bool
 	Role          string
-	Updated       DBTime
+	Updated       legacysql.DBTime
 }
 
 type UpdateUserResult struct {
@@ -662,7 +662,7 @@ func (r updateOrgUserQuery) Validate() error {
 // UpdateUser implements LegacyIdentityStore.
 func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserCommand) (*UpdateUserResult, error) {
 	now := time.Now().UTC()
-	cmd.Updated = NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 
 	sql, err := s.sql(ctx)
 	if err != nil {

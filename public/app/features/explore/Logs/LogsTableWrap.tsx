@@ -1,30 +1,36 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import { useCallback, useEffect, useState } from 'react';
-import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   DataFrame,
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
+  store,
   TimeRange,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { InlineField, Select, Themeable2 } from '@grafana/ui';
+import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
+import {
+  getSidebarWidth,
+  LogsTableFieldSelector,
+  MIN_WIDTH,
+} from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
-import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
-import { LogsTableMultiSelect } from './LogsTableMultiSelect';
-import { fuzzySearch } from './utils/uFuzzy';
+import { SETTING_KEY_ROOT } from './utils/logs';
 
-interface Props extends Themeable2 {
+interface Props {
   logsFrames: DataFrame[];
   width: number;
   timeZone: string;
@@ -36,6 +42,10 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -56,17 +66,17 @@ type GenericMeta = {
 export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 
 type FieldName = string;
-type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
+export type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
   const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
+  const dragStyles = useStyles2(getDragStyles);
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
-  const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getLogsTableHeight();
   const panelStateRefId = props?.panelState?.refId;
@@ -91,7 +101,8 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-  const logsFrame = parseLogsFrame(currentDataFrame);
+
+  const logsFrame = useMemo(() => parseLogsFrame(currentDataFrame), [currentDataFrame]);
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -268,8 +279,29 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
+
+  const styles = useStyles2(getStyles, height, sidebarWidth);
+
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        // Defer the Redux dispatch to avoid updating ExploreActions during Table's render cycle
+        // Even though this is called from an event handler, the synchronous Redux dispatch
+        // can cause ExploreActions (which subscribes to panes state) to re-render while
+        // Table is still rendering, triggering the React warning
+        setTimeout(() => {
+          updatePanelState({
+            tableSortBy: sortBy[0].displayName,
+            tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+          });
+        }, 0);
+      }
+    },
+    [updatePanelState]
+  );
 
   if (!columnsWithMeta) {
     return null;
@@ -288,46 +320,27 @@ export function LogsTableWrap(props: Props) {
     }
   }
 
-  function searchFilterEvent(searchResultCount: number) {
-    reportInteraction('grafana_explore_logs_table_text_search_result_count', {
-      resultCount: searchResultCount,
-      datasourceType: props.datasourceType ?? 'unknown',
-    });
-  }
-
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
-    let index = 0;
     Object.keys(pendingLabelState).forEach((key) => {
       const isDefaultField = !!pendingLabelState[key].type;
       // after reset the only active fields are the special time and body fields
-      pendingLabelState[key].active = isDefaultField;
+      pendingLabelState[key].active = isDefaultField ? true : false;
       // reset the index
-      pendingLabelState[key].index = isDefaultField ? index++ : undefined;
+      if (pendingLabelState[key].type === 'TIME_FIELD') {
+        pendingLabelState[key].index = 0;
+      } else {
+        pendingLabelState[key].index = pendingLabelState[key].type === 'BODY_FIELD' ? 1 : undefined;
+      }
     });
     setColumnsWithMeta(pendingLabelState);
   };
 
-  const reorderColumn = (sourceIndex: number, destinationIndex: number) => {
-    if (sourceIndex === destinationIndex) {
-      return;
-    }
-
+  const reorderColumn = (newColumns: string[]) => {
     const pendingLabelState = { ...columnsWithMeta };
 
-    const keys = Object.keys(pendingLabelState)
-      .filter((key) => pendingLabelState[key].active)
-      .map((key) => ({
-        fieldName: key,
-        index: pendingLabelState[key].index ?? 0,
-      }))
-      .sort((a, b) => a.index - b.index);
-
-    const [source] = keys.splice(sourceIndex, 1);
-    keys.splice(destinationIndex, 0, source);
-
-    keys.forEach((key, index) => {
-      pendingLabelState[key.fieldName].index = index;
+    newColumns.forEach((key, index) => {
+      pendingLabelState[key].index = index;
     });
 
     // Set local state
@@ -438,38 +451,6 @@ export function LogsTableWrap(props: Props) {
     updateExploreState(pendingLabelState);
   };
 
-  // uFuzzy search dispatcher, adds any matches to the local state
-  const dispatcher = (data: string[][]) => {
-    const matches = data[0];
-    let newColumnsWithMeta: FieldNameMetaStore = {};
-    let numberOfResults = 0;
-    matches.forEach((match) => {
-      if (match in columnsWithMeta) {
-        newColumnsWithMeta[match] = columnsWithMeta[match];
-        numberOfResults++;
-      }
-    });
-    setFilteredColumnsWithMeta(newColumnsWithMeta);
-    searchFilterEvent(numberOfResults);
-  };
-
-  // uFuzzy search
-  const search = (needle: string) => {
-    fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
-  };
-
-  // onChange handler for search input
-  const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget?.value;
-    setSearchValue(value);
-    if (value) {
-      search(value);
-    } else {
-      // If the search input is empty, reset the local search state.
-      setFilteredColumnsWithMeta(undefined);
-    }
-  };
-
   const onFrameSelectorChange = (value: SelectableValue<string>) => {
     const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
     if (matchingDataFrame) {
@@ -478,12 +459,14 @@ export function LogsTableWrap(props: Props) {
     props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
-  const styles = getStyles(props.theme, height, sidebarWidth);
-
   const getOnResize: ResizeCallback = (event, direction, ref) => {
     const newSidebarWidth = Number(ref.style.width.slice(0, -2));
     if (!isNaN(newSidebarWidth)) {
       setSidebarWidth(newSidebarWidth);
+      store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, newSidebarWidth);
+      reportInteractionOnce('logs_field_selector_resized', {
+        mode: 'table',
+      });
     }
   };
 
@@ -522,33 +505,48 @@ export function LogsTableWrap(props: Props) {
           enable={{
             right: true,
           }}
-          handleClasses={{ right: styles.rzHandle }}
+          handleClasses={{ right: dragStyles.dragHandleVertical }}
+          size={{ width: sidebarWidth, height: getLogsTableHeight() }}
+          defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
+          minWidth={MIN_WIDTH}
+          maxWidth={props.width * 0.8}
           onResize={getOnResize}
         >
-          <section className={styles.sidebar}>
-            <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
-            <LogsTableMultiSelect
-              reorderColumn={reorderColumn}
-              toggleColumn={toggleColumn}
-              filteredColumnsWithMeta={filteredColumnsWithMeta}
-              columnsWithMeta={columnsWithMeta}
-              clear={clearSelection}
-            />
-          </section>
+          <LogsTableFieldSelector
+            clear={clearSelection}
+            columnsWithMeta={columnsWithMeta}
+            dataFrames={[currentDataFrame]}
+            logs={[]}
+            reorder={reorderColumn}
+            setSidebarWidth={setSidebarWidth}
+            sidebarWidth={sidebarWidth}
+            toggle={toggleColumn}
+          />
         </Resizable>
-        <LogsTable
-          logsFrame={logsFrame}
-          onClickFilterLabel={props.onClickFilterLabel}
-          onClickFilterOutLabel={props.onClickFilterOutLabel}
-          logsSortOrder={props.logsSortOrder}
-          range={props.range}
-          splitOpen={props.splitOpen}
-          timeZone={props.timeZone}
-          width={tableWidth}
-          dataFrame={currentDataFrame}
-          columnsWithMeta={columnsWithMeta}
-          height={height}
-        />
+        <div className={styles.tableContainer}>
+          <div className={styles.tableWrapper}>
+            <LogsTable
+              logsFrame={logsFrame}
+              onClickFilterLabel={props.onClickFilterLabel}
+              onClickFilterOutLabel={props.onClickFilterOutLabel}
+              logsSortOrder={props.logsSortOrder}
+              range={props.range}
+              splitOpen={props.splitOpen}
+              timeZone={props.timeZone}
+              width={tableWidth}
+              dataFrame={currentDataFrame}
+              columnsWithMeta={columnsWithMeta}
+              height={height}
+              tableSortBy={panelState?.tableSortBy}
+              tableSortDir={panelState?.tableSortDir}
+              onSortByChange={onSortByChange}
+              displayedFields={props.displayedFields}
+              exploreId={props.exploreId}
+              absoluteRange={props.absoluteRange}
+              logRows={props.logRows}
+            />
+          </div>
+        </div>
       </div>
     </>
   );
@@ -570,21 +568,15 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       width: width,
       paddingRight: theme.spacing(3),
     }),
-    rzHandle: css({
-      background: theme.colors.secondary.main,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: '0.3s background ease-in-out',
-      },
+    tableContainer: css({
       position: 'relative',
-      height: '50% !important',
-      width: `${theme.spacing(1)} !important`,
-      top: '25% !important',
-      right: `${theme.spacing(1)} !important`,
-      cursor: 'grab',
-      borderRadius: theme.shape.radius.pill,
-      ['&:hover']: {
-        background: theme.colors.secondary.shade,
-      },
+      overflow: 'hidden',
+      flex: 1,
+    }),
+    tableWrapper: css({
+      position: 'absolute',
+      left: 0,
+      top: 0,
     }),
   };
 }

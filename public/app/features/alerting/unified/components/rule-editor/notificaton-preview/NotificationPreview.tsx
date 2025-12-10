@@ -4,8 +4,10 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 
 import { Folder, KBObjectArray } from '../../../types/rule-form';
@@ -36,7 +38,8 @@ export const NotificationPreview = ({
   alertUid,
 }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
-  const disabled = !condition || !folder;
+
+  const previewRoutingDisabled = !condition || !folder;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = preview.useMutation();
 
@@ -51,7 +54,7 @@ export const NotificationPreview = ({
   }, []);
 
   const onPreview = () => {
-    if (!folder || !condition) {
+    if (previewRoutingDisabled) {
       return;
     }
 
@@ -73,6 +76,22 @@ export const NotificationPreview = ({
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
   const singleAlertManagerConfigured = alertManagerDataSources.length === 1;
+
+  const getTooltipContent = () => {
+    if (!condition) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.no-condition-tooltip">
+          Select a query condition to preview routing
+        </Trans>
+      );
+    }
+    if (!folder) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">Select a folder to preview routing</Trans>
+      );
+    }
+    return '';
+  };
 
   return (
     <Stack direction="column">
@@ -102,9 +121,11 @@ export const NotificationPreview = ({
             </Text>
           )}
         </Stack>
-        <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
-          <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
-        </Button>
+        <Tooltip content={getTooltipContent()}>
+          <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={previewRoutingDisabled}>
+            <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
+          </Button>
+        </Tooltip>
       </Stack>
       {potentialInstances.length > 0 && (
         <Suspense
@@ -119,17 +140,19 @@ export const NotificationPreview = ({
                   <div className={styles.firstAlertManagerLine} />
                   <div className={styles.alertManagerName}>
                     <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
-                    <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
+                    <img src={alertManagerSource.imgUrl || undefined} alt="" className={styles.img} />
                     {alertManagerSource.name}
                   </div>
                   <div className={styles.secondAlertManagerLine} />
                 </Stack>
               )}
               {alertManagerSource.name === 'grafana' ? (
-                <NotificationPreviewForGrafanaManaged
-                  alertManagerSource={alertManagerSource}
-                  instances={potentialInstances}
-                />
+                <NotificationPreviewGrafanaPermissionCheck>
+                  <NotificationPreviewForGrafanaManaged
+                    alertManagerSource={alertManagerSource}
+                    instances={potentialInstances}
+                  />
+                </NotificationPreviewGrafanaPermissionCheck>
               ) : (
                 <NotificationPreviewByAlertManager
                   alertManagerSource={alertManagerSource}
@@ -143,6 +166,32 @@ export const NotificationPreview = ({
     </Stack>
   );
 };
+
+/**
+ * Permission check for Grafana notification preview.
+ * This is a workaround because useGetAlertManagerDataSourcesByPermissionAndConfig
+ * doesn't properly filter by the new K8s-style RBAC permissions.
+ *
+ * We check for either:
+ * - alert.notifications:read (legacy permission)
+ * - alert.notifications.routes:read (new granular permission)
+ */
+function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
+  const hasLegacyNotificationPermission = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+  const hasNotificationPolicyTreePermission = contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+
+  if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Alert severity="warning" title={t('alerting.notification-preview.permission-warning', 'Preview not available')}>
+      <Trans i18nKey="alerting.notification-preview.permission-warning-message">
+        You don&apos;t have permission to view notification policies. Preview is not available.
+      </Trans>
+    </Alert>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   firstAlertManagerLine: css({

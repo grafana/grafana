@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
@@ -119,7 +119,7 @@ export class AppChromeService {
   };
 
   private getUpdatedHistory(newState: AppChromeState): HistoryEntry[] {
-    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
+    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' });
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
     let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);

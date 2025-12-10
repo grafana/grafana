@@ -15,7 +15,7 @@ labels:
     - cloud
 menuTitle: Service accounts
 title: Service accounts
-weight: 800
+weight: 4200
 refs:
   service-accounts:
     - pattern: /docs/grafana/
@@ -243,7 +243,7 @@ Authorize your request with the token whose permissions you want to check.
 {{< /admonition >}}
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq
+curl -H "Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697" -X GET '<grafana_url>/api/access-control/user/permissions' | jq
 ```
 
 The output lists the token's permissions:
@@ -268,7 +268,7 @@ To list which dashboards a token can view, you can filter the `/api/access-contr
 #### Example
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq '."dashboards:read"'
+curl -H "Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697" -X GET '<grafana_url>/api/access-control/user/permissions' | jq '."dashboards:read"'
 ```
 
 The output lists the dashboards a token can view and the folders a token can view dashboards from,

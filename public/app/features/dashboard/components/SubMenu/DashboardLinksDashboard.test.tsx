@@ -1,12 +1,11 @@
 import { ComponentProps } from 'react';
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { DashboardLink } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { resetGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -58,7 +57,7 @@ describe.each([
   // Legacy APIs
   false,
 ])('with unifiedStorageSearchUI: %s', (featureTogglesEnabled) => {
-  testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
+  testWithFeatureToggles({ enable: featureTogglesEnabled ? ['unifiedStorageSearchUI'] : [] });
 
   describe('DashboardLinksDashboard', () => {
     it('renders a dropdown', async () => {

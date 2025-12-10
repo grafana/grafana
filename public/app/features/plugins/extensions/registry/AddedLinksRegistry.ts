@@ -21,6 +21,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
   category?: string;
+  openInNewTab?: boolean;
 };
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
@@ -40,13 +41,14 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      const { path, title, description, configure, onClick, targets } = config;
+      const { path, title, description, configure, onClick, targets, openInNewTab } = config;
       const configLog = this.logger.child({
         path: path ?? '',
         description: description ?? '',
         title,
         pluginId,
         onClick: typeof onClick,
+        openInNewTab: openInNewTab ? 'true' : 'false',
       });
 
       if (!title) {
@@ -74,13 +76,12 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         const pointIdLog = configLog.child({ extensionPointId });
         const { targets, ...registryItem } = config;
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [];
-        }
-
         pointIdLog.debug('Added link extension successfully registered');
 
-        registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
+        // Creating a new array instead of pushing to get a new references
+        const slice = registry[extensionPointId] ?? [];
+        const result = { ...registryItem, pluginId, extensionPointId };
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 
