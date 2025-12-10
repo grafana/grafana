@@ -56,10 +56,6 @@ func (p *countingLibraryElementProvider) GetLibraryElementInfo(_ context.Context
 	return p.elements
 }
 
-func (p *countingLibraryElementProvider) getCallCount() int64 {
-	return p.callCount.Load()
-}
-
 // createTestV0Dashboard creates a minimal v0 dashboard for testing
 // The dashboard has a datasource with UID only (no type) to force provider lookup
 // and includes library panels to test library element provider caching
