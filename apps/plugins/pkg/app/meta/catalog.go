@@ -15,29 +15,29 @@ import (
 )
 
 const (
-	defaultCloudTTL = 1 * time.Hour
+	defaultCatalogTTL = 1 * time.Hour
 )
 
-// CloudProvider retrieves plugin metadata from the grafana.com API.
-type CloudProvider struct {
+// CatalogProvider retrieves plugin metadata from the grafana.com API.
+type CatalogProvider struct {
 	httpClient       *http.Client
 	grafanaComAPIURL string
 	log              logging.Logger
 	ttl              time.Duration
 }
 
-// NewCloudProvider creates a new CloudProvider that fetches metadata from grafana.com.
-func NewCloudProvider(grafanaComAPIURL string) *CloudProvider {
-	return NewCloudProviderWithTTL(grafanaComAPIURL, defaultCloudTTL)
+// NewCatalogProvider creates a new CatalogProvider that fetches metadata from grafana.com.
+func NewCatalogProvider(grafanaComAPIURL string) *CatalogProvider {
+	return NewCatalogProviderWithTTL(grafanaComAPIURL, defaultCatalogTTL)
 }
 
-// NewCloudProviderWithTTL creates a new CloudProvider with a custom TTL.
-func NewCloudProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *CloudProvider {
+// NewCatalogProviderWithTTL creates a new CatalogProvider with a custom TTL.
+func NewCatalogProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *CatalogProvider {
 	if grafanaComAPIURL == "" {
 		grafanaComAPIURL = "https://grafana.com/api/plugins"
 	}
 
-	return &CloudProvider{
+	return &CatalogProvider{
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -49,7 +49,7 @@ func NewCloudProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *CloudP
 
 // GetMeta fetches plugin metadata from grafana.com API endpoint:
 // GET /api/plugins/{pluginId}/versions/{version}
-func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
+func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
 	u, err := url.Parse(p.grafanaComAPIURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid grafana.com API URL: %w", err)
@@ -96,24 +96,24 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
 // grafanaComPluginVersionMeta represents the response from grafana.com API
 // GET /api/plugins/{pluginId}/versions/{version}
 type grafanaComPluginVersionMeta struct {
-	PluginID        string                             `json:"pluginSlug"`
-	Version         string                             `json:"version"`
-	URL             string                             `json:"url"`
-	Commit          string                             `json:"commit"`
-	Description     string                             `json:"description"`
-	Keywords        []string                           `json:"keywords"`
-	CreatedAt       time.Time                          `json:"createdAt"`
-	UpdatedAt       time.Time                          `json:"updatedAt"`
-	JSON            pluginsv0alpha1.PluginMetaJSONData `json:"json"`
-	Readme          string                             `json:"readme"`
-	Downloads       int                                `json:"downloads"`
-	Verified        bool                               `json:"verified"`
-	Status          string                             `json:"status"`
-	StatusContext   string                             `json:"statusContext"`
-	DownloadSlug    string                             `json:"downloadSlug"`
-	SignatureType   string                             `json:"signatureType"`
-	SignedByOrg     string                             `json:"signedByOrg"`
-	SignedByOrgName string                             `json:"signedByOrgName"`
+	PluginID        string                       `json:"pluginSlug"`
+	Version         string                       `json:"version"`
+	URL             string                       `json:"url"`
+	Commit          string                       `json:"commit"`
+	Description     string                       `json:"description"`
+	Keywords        []string                     `json:"keywords"`
+	CreatedAt       time.Time                    `json:"createdAt"`
+	UpdatedAt       time.Time                    `json:"updatedAt"`
+	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+	Readme          string                       `json:"readme"`
+	Downloads       int                          `json:"downloads"`
+	Verified        bool                         `json:"verified"`
+	Status          string                       `json:"status"`
+	StatusContext   string                       `json:"statusContext"`
+	DownloadSlug    string                       `json:"downloadSlug"`
+	SignatureType   string                       `json:"signatureType"`
+	SignedByOrg     string                       `json:"signedByOrg"`
+	SignedByOrgName string                       `json:"signedByOrgName"`
 	Packages        struct {
 		Any struct {
 			Md5         string `json:"md5"`

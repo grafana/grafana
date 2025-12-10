@@ -15,22 +15,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type PluginMeta struct {
+type Meta struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the PluginMeta
-	Spec PluginMetaSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the Meta
+	Spec MetaSpec `json:"spec" yaml:"spec"`
 
-	Status PluginMetaStatus `json:"status" yaml:"status"`
+	Status MetaStatus `json:"status" yaml:"status"`
 }
 
-func (o *PluginMeta) GetSpec() any {
+func NewMeta() *Meta {
+	return &Meta{
+		Spec:   *NewMetaSpec(),
+		Status: *NewMetaStatus(),
+	}
+}
+
+func (o *Meta) GetSpec() any {
 	return o.Spec
 }
 
-func (o *PluginMeta) SetSpec(spec any) error {
-	cast, ok := spec.(PluginMetaSpec)
+func (o *Meta) SetSpec(spec any) error {
+	cast, ok := spec.(MetaSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -38,13 +45,13 @@ func (o *PluginMeta) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *PluginMeta) GetSubresources() map[string]any {
+func (o *Meta) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *PluginMeta) GetSubresource(name string) (any, bool) {
+func (o *Meta) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -53,12 +60,12 @@ func (o *PluginMeta) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *PluginMeta) SetSubresource(name string, value any) error {
+func (o *Meta) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(PluginMetaStatus)
+		cast, ok := value.(MetaStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type PluginMetaStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type MetaStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -67,7 +74,7 @@ func (o *PluginMeta) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *PluginMeta) GetStaticMetadata() resource.StaticMetadata {
+func (o *Meta) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -78,7 +85,7 @@ func (o *PluginMeta) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *PluginMeta) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Meta) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -88,7 +95,7 @@ func (o *PluginMeta) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *PluginMeta) GetCommonMetadata() resource.CommonMetadata {
+func (o *Meta) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -120,7 +127,7 @@ func (o *PluginMeta) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *PluginMeta) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Meta) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -165,7 +172,7 @@ func (o *PluginMeta) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *PluginMeta) GetCreatedBy() string {
+func (o *Meta) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -173,7 +180,7 @@ func (o *PluginMeta) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *PluginMeta) SetCreatedBy(createdBy string) {
+func (o *Meta) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -181,7 +188,7 @@ func (o *PluginMeta) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *PluginMeta) GetUpdateTimestamp() time.Time {
+func (o *Meta) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -190,7 +197,7 @@ func (o *PluginMeta) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *PluginMeta) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Meta) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -198,7 +205,7 @@ func (o *PluginMeta) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *PluginMeta) GetUpdatedBy() string {
+func (o *Meta) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -206,7 +213,7 @@ func (o *PluginMeta) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *PluginMeta) SetUpdatedBy(updatedBy string) {
+func (o *Meta) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -214,21 +221,21 @@ func (o *PluginMeta) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *PluginMeta) Copy() resource.Object {
+func (o *Meta) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *PluginMeta) DeepCopyObject() runtime.Object {
+func (o *Meta) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *PluginMeta) DeepCopy() *PluginMeta {
-	cpy := &PluginMeta{}
+func (o *Meta) DeepCopy() *Meta {
+	cpy := &Meta{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *PluginMeta) DeepCopyInto(dst *PluginMeta) {
+func (o *Meta) DeepCopyInto(dst *Meta) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -237,34 +244,34 @@ func (o *PluginMeta) DeepCopyInto(dst *PluginMeta) {
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &PluginMeta{}
+var _ resource.Object = &Meta{}
 
 // +k8s:openapi-gen=true
-type PluginMetaList struct {
+type MetaList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []PluginMeta `json:"items" yaml:"items"`
+	Items           []Meta `json:"items" yaml:"items"`
 }
 
-func (o *PluginMetaList) DeepCopyObject() runtime.Object {
+func (o *MetaList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *PluginMetaList) Copy() resource.ListObject {
-	cpy := &PluginMetaList{
+func (o *MetaList) Copy() resource.ListObject {
+	cpy := &MetaList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]PluginMeta, len(o.Items)),
+		Items:    make([]Meta, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*PluginMeta); ok {
+		if item, ok := o.Items[i].Copy().(*Meta); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *PluginMetaList) GetItems() []resource.Object {
+func (o *MetaList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -272,48 +279,48 @@ func (o *PluginMetaList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *PluginMetaList) SetItems(items []resource.Object) {
-	o.Items = make([]PluginMeta, len(items))
+func (o *MetaList) SetItems(items []resource.Object) {
+	o.Items = make([]Meta, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*PluginMeta)
+		o.Items[i] = *items[i].(*Meta)
 	}
 }
 
-func (o *PluginMetaList) DeepCopy() *PluginMetaList {
-	cpy := &PluginMetaList{}
+func (o *MetaList) DeepCopy() *MetaList {
+	cpy := &MetaList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *PluginMetaList) DeepCopyInto(dst *PluginMetaList) {
+func (o *MetaList) DeepCopyInto(dst *MetaList) {
 	resource.CopyObjectInto(dst, o)
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &PluginMetaList{}
+var _ resource.ListObject = &MetaList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *PluginMetaSpec) DeepCopy() *PluginMetaSpec {
-	cpy := &PluginMetaSpec{}
+func (s *MetaSpec) DeepCopy() *MetaSpec {
+	cpy := &MetaSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *PluginMetaSpec) DeepCopyInto(dst *PluginMetaSpec) {
+func (s *MetaSpec) DeepCopyInto(dst *MetaSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of PluginMetaStatus
-func (s *PluginMetaStatus) DeepCopy() *PluginMetaStatus {
-	cpy := &PluginMetaStatus{}
+// DeepCopy creates a full deep copy of MetaStatus
+func (s *MetaStatus) DeepCopy() *MetaStatus {
+	cpy := &MetaStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies PluginMetaStatus into another PluginMetaStatus object
-func (s *PluginMetaStatus) DeepCopyInto(dst *PluginMetaStatus) {
+// DeepCopyInto deep copies MetaStatus into another MetaStatus object
+func (s *MetaStatus) DeepCopyInto(dst *MetaStatus) {
 	resource.CopyObjectInto(dst, s)
 }
