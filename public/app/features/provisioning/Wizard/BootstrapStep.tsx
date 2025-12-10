@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { memo, useEffect } from 'react';
+import React, { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Checkbox, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
@@ -116,30 +116,56 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
         {/* Only show title field if folder sync */}
         {selectedTarget === 'folder' && (
-          <Field
-            label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
-            description={t(
-              'provisioning.bootstrap-step.description-clear-repository-connection',
-              'Add a clear name for this repository connection'
-            )}
-            error={errors.repository?.title?.message}
-            invalid={!!errors.repository?.title}
-            required
-            noMargin
-          >
-            <Input
-              id="repository-title"
-              {...register('repository.title', {
-                required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
-              })}
-              placeholder={t(
-                'provisioning.bootstrap-step.placeholder-my-repository-connection',
-                'My repository connection'
+          <>
+            <Field
+              label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
+              description={t(
+                'provisioning.bootstrap-step.description-clear-repository-connection',
+                'Add a clear name for this repository connection'
               )}
-              // Autofocus the title field if it's the only available option
-              autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
+              error={errors.repository?.title?.message}
+              invalid={!!errors.repository?.title}
+              required
+              noMargin
+            >
+              <Input
+                id="repository-title"
+                {...register('repository.title', {
+                  required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
+                })}
+                placeholder={t(
+                  'provisioning.bootstrap-step.placeholder-my-repository-connection',
+                  'My repository connection'
+                )}
+                // Autofocus the title field if it's the only available option
+                autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
+              />
+            </Field>
+            <Controller
+              name="migrate.migrateExistingResources"
+              control={control}
+              render={({ field: { onChange, value, ...field } }) => (
+                <Field
+                  description={t(
+                    'provisioning.bootstrap-step.description-migrate-existing-resources',
+                    'Migrate all existing resources into the repository and pull everything from there.'
+                  )}
+                  noMargin
+                >
+                  <Checkbox
+                    id="migrate-existing-resources"
+                    {...field}
+                    value={value || false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+                    label={t(
+                      'provisioning.bootstrap-step.label-migrate-existing-resources',
+                      'Migrate all existing resources into this folder'
+                    )}
+                  />
+                </Field>
+              )}
             />
-          </Field>
+          </>
         )}
 
         {disabledOptions?.length > 0 && (
