@@ -774,9 +774,6 @@ func newBatchingIterator(ctx context.Context, a *dashboardSqlAccess, helper *leg
 }
 
 func (b *batchingIterator) nextBatch(lastID int64) error {
-	if b.wrapper != nil {
-		_ = b.wrapper.Close()
-	}
 	b.query.LastID = lastID
 	wrapper, err := b.a.getRows(b.ctx, b.helper, b.query)
 	if err != nil {
@@ -809,6 +806,7 @@ func (b *batchingIterator) Next() bool {
 	}
 
 	// Fetch next batch with LastID from last row
+	_ = b.wrapper.Close()
 	if err := b.nextBatch(b.wrapper.row.token.id); err != nil {
 		b.wrapper.err = err
 		b.done = true
