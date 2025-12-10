@@ -3,7 +3,6 @@ import { Range } from 'uplot';
 import {
   applyNullInsertThreshold,
   DataFrame,
-  Field,
   FieldConfig,
   FieldSparkline,
   FieldType,
