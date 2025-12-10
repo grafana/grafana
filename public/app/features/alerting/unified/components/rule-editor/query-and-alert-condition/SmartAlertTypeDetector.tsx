@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -21,12 +22,18 @@ export function SmartAlertTypeDetector({ editingExistingRule, queries, onClickSw
   const [ruleFormType] = getValues(['type']);
   const canSwitch = useGetCanSwitch({ queries, ruleFormType });
 
+  const dmAlertsDisabled = config.featureToggles.alertingDisableDMAlerts === true;
+
   const options = [
     { label: t('alerting.smart-alert-type-detector.grafana-managed', 'Grafana-managed'), value: RuleFormType.grafana },
-    {
-      label: t('alerting.smart-alert-type-detector.data-source-managed', 'Data source-managed'),
-      value: RuleFormType.cloudAlerting,
-    },
+    ...(!dmAlertsDisabled
+      ? [
+          {
+            label: t('alerting.smart-alert-type-detector.data-source-managed', 'Data source-managed'),
+            value: RuleFormType.cloudAlerting,
+          },
+        ]
+      : []),
   ];
 
   // if we can't switch to data-source managed, disable it
