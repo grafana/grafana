@@ -3,7 +3,6 @@ import { Range } from 'uplot';
 import {
   applyNullInsertThreshold,
   DataFrame,
-  Field,
   FieldConfig,
   FieldSparkline,
   FieldType,
@@ -11,6 +10,7 @@ import {
   GrafanaTheme2,
   isLikelyAscendingVector,
   nullToValue,
+  roundDecimals,
   sortDataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -68,35 +68,49 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
 /**
  * apply configuration defaults and ensure that the range is never two equal values.
  */
-export function getYRange(field: Field, alignedFrame: DataFrame): Range.MinMax {
-  let { min, max } = alignedFrame.fields[1].state?.range!;
+export function getYRange(alignedFrame: DataFrame): Range.MinMax {
+  const field = alignedFrame.fields[1];
+  let { min, max } = field.state?.range!;
 
-  // enure that the min/max from the field config are respected
-  min = Math.max(min!, field.config.min ?? -Infinity);
-  max = Math.min(max!, field.config.max ?? Infinity);
+  // enure that the min/max from the field config are respected.
+  min = Math.min(min!, field.config.min ?? Infinity);
+  max = Math.max(max!, field.config.max ?? -Infinity);
+
+  // console.log({ min, max });
 
   // if noValue is set, ensure that it is included in the range as well
-  const noValue = +alignedFrame.fields[1].config?.noValue!;
+  const noValue = +field.config?.noValue!;
   if (!Number.isNaN(noValue)) {
     min = Math.min(min, noValue);
     max = Math.max(max, noValue);
   }
 
-  // if min and max are equal after all of that, create a range
-  // that allows the sparkline to be visible in the center of the viz
-  if (min === max) {
-    if (min === 0) {
-      max = 100;
-    } else if (min < 0) {
-      max = 0;
-      min *= 2;
-    } else {
-      min = 0;
-      max *= 2;
-    }
+  // call roundDecimals to mirror what is going to eventually happen in uplot
+  let roundedMin = roundDecimals(min, field.config.decimals ?? 0);
+  let roundedMax = roundDecimals(max, field.config.decimals ?? 0);
+
+  // if the rounded min and max are different,
+  // we can return the real min and max.
+  if (roundedMin !== roundedMax) {
+    return [min, max];
   }
 
-  return [min, max];
+  // we are forced to tweak the min and max since they
+  // will be treated as equal after rounding by uPlot.
+  if (roundedMin === 0) {
+    // both are zero
+    roundedMax = 1;
+  } else if (roundedMin < 0) {
+    // both are negative
+    // max = 0;
+    roundedMin *= 2;
+  } else {
+    // both are positive
+    // min = 0;
+    roundedMax *= 2;
+  }
+
+  return [roundedMin, roundedMax];
 }
 
 // TODO: #112977 enable highlight index
@@ -182,7 +196,7 @@ export const prepareConfig = (
       scaleKey,
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
-      range: () => getYRange(field, dataFrame),
+      range: () => getYRange(dataFrame),
     });
 
     builder.addAxis({
