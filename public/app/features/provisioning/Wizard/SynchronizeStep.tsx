@@ -15,25 +15,21 @@ import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  isLegacyStorage?: boolean;
   onCancel?: (repoName: string) => void;
   isCancelling?: boolean;
 }
 
 export const SynchronizeStep = memo(function SynchronizeStep({
-  isLegacyStorage,
   onCancel,
   isCancelling,
 }: SynchronizeStepProps) {
-  const { getValues, register, watch } = useFormContext<WizardFormData>();
+  const { watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
-  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
-  const { requiresMigration } = useResourceStats(repoName, isLegacyStorage);
-  const { createSyncJob, supportsHistory } = useCreateSyncJob({
+  const [repoName = ''] = watch(['repositoryName']);
+  const { requiresMigration } = useResourceStats(repoName);
+  const { createSyncJob } = useCreateSyncJob({
     repoName,
     requiresMigration,
-    repoType,
-    isLegacyStorage,
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
@@ -70,8 +66,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
-    const [history] = getValues(['migrate.history']);
-    const response = await createSyncJob({ history });
+    const response = await createSyncJob();
     if (response) {
       setJob(response);
     }
@@ -151,26 +146,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </ul>
         </Alert>
       )}
-      {supportsHistory && (
-        <>
-          <Text element="h3">
-            <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>
-          </Text>
-          <Field noMargin>
-            <Checkbox
-              {...register('migrate.history')}
-              id="migrate-history"
-              label={t('provisioning.wizard.sync-option-history', 'History')}
-              description={
-                <Trans i18nKey="provisioning.synchronize-step.synchronization-description">
-                  Include commits for each historical value
-                </Trans>
-              }
-            />
-          </Field>
-        </>
-      )}
-
       {healthStatusNotReady ? (
         <>
           <Stack>

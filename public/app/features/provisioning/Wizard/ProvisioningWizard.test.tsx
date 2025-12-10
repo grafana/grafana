@@ -121,7 +121,6 @@ describe('ProvisioningWizard', () => {
     mockUseGetFrontendSettingsQuery.mockReturnValue({
       data: {
         items: [],
-        legacyStorage: false,
         allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },

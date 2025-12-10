@@ -128,7 +128,6 @@ export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
     refetchOnMountOrArgChange: true,
   });
-  const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
@@ -136,21 +135,6 @@ export default function GettingStarted({ items }: Props) {
 
   return (
     <>
-      {legacyStorage && (
-        <Alert
-          severity="info"
-          title={t(
-            'provisioning.getting-started.title-incompatible-data-format',
-            'Resources stored in an incompatible data format'
-          )}
-        >
-          <Trans i18nKey="provisioning.getting-started.alert-incompatible-data-format">
-            Your instance uses a data format for resources that's not supported by this version, so you can't use the
-            Git Sync feature. Migration isn't available yet. To try the Git Sync feature, use a fresh instance or sign
-            up for the Private Preview in Grafana Cloud.
-          </Trans>
-        </Alert>
-      )}
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>

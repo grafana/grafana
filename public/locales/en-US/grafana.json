@@ -11823,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-incompatible-data-format": "Your instance uses a data format for resources that's not supported by this version, so you can't use the Git Sync feature. Migration isn't available yet. To try the Git Sync feature, use a fresh instance or sign up for the Private Preview in Grafana Cloud.",
       "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
       "modal-description-required-features": "Enable required Grafana features for provisioning",
       "modal-title-set-up-public-access": "Set up public access",
@@ -11835,8 +11834,7 @@
       "step-title-copy-url": "Copy your public URL",
       "step-title-enable-feature-toggles": "Enable Required Feature Toggles",
       "step-title-start-ngrok": "Start ngrok for temporary public access",
-      "step-title-update-grafana-config": "Update your Grafana configuration",
-      "title-incompatible-data-format": "Resources stored in an incompatible data format"
+      "step-title-update-grafana-config": "Update your Grafana configuration"
     },
     "getting-started-page": {
       "header": "Provisioning",
@@ -11908,16 +11906,13 @@
       "button-delete-repositories": "Delete repositories",
       "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
       "error-delete-all-repositories": "Failed to delete all repositories",
-      "incompatible-data-format-detected": "Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format. We recommend you to remove all configured repositories and start over with a fresh instance.",
-      "remove-all-configured-repositories": "Remove all configured repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "title-delete-all-configured-repositories": "Delete all configured repositories",
-      "title-incompatible-data-format": "Incompatible data format detected"
+      "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
     "http-utils": {
       "access-denied": "Access denied. Please check your token permissions.",
@@ -11957,7 +11952,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
-        "legacy-storage": "Legacy storage mode only supports syncing the entire Grafana instance.",
         "not-allowed": "Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.",
         "not-supported": "This option is not supported yet."
       },
@@ -12037,7 +12031,6 @@
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "incompatible-data-format-message": "Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format. Remove the repository and start over with a fresh instance.",
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
@@ -12046,7 +12039,6 @@
       "tab-resources": "Resources",
       "tab-resources-title": "Repository files and resources",
       "title": "Repository Status",
-      "title-incompatible-data-format": "Incompatible data format detected",
       "title-queued-for-deletion": "Queued for deletion"
     },
     "repository-type-cards": {
@@ -12142,9 +12134,7 @@
     "synchronize-step": {
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
-      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
-      "synchronization-description": "Include commits for each historical value",
-      "synchronization-options": "Synchronization options"
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
     },
     "token-permissions-info": {
       "and-click": "and click",
@@ -12183,7 +12173,6 @@
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
-      "sync-option-history": "History",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",

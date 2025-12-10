@@ -89,7 +89,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
-  const isLegacyStorage = Boolean(settingsData?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
@@ -122,12 +121,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     shouldSkipSync,
     requiresMigration,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
+  } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
-    repoType,
-    isLegacyStorage,
     setStepStatusInfo,
   });
 
@@ -413,7 +410,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
                 <SynchronizeStep
-                  isLegacyStorage={isLegacyStorage}
                   onCancel={handleRepositoryDeletion}
                   isCancelling={isCancelling}
                 />
