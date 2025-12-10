@@ -865,9 +865,9 @@
                   "barGlow": false,
                   "centerGlow": false,
                   "rounded": false,
-                  "spotlight": false
+                  "spotlight": false,
+                  "gradient": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [

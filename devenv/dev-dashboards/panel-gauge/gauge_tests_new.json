@@ -307,9 +307,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -384,9 +384,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -461,9 +461,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": false,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -538,9 +538,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": false,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -628,9 +628,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -705,9 +705,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -782,9 +782,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -859,9 +859,9 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": false
         },
-        "gradient": "none",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1607,7 +1607,8 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -1690,10 +1691,10 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
-        "gradient": "scheme",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1788,10 +1789,10 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
-        "gradient": "scheme",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1873,11 +1874,10 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "sparkline": false,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
-        "gradient": "scheme",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1958,10 +1958,10 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
-        "gradient": "hue",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -2042,10 +2042,10 @@
           "barGlow": true,
           "centerGlow": true,
           "rounded": true,
-          "spotlight": true
+          "spotlight": true,
+          "gradient": true
         },
         "glow": "both",
-        "gradient": "hue",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
