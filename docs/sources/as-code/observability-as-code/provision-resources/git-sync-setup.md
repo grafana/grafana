@@ -66,7 +66,7 @@ When Git Sync is enabled, the database load might increase, especially for insta
 
 Git Sync is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
 
-## Set up Git Sync (recommended)
+## Set up Git Sync using Grafana UI 
 
 To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
