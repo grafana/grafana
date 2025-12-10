@@ -46,8 +46,15 @@ func (stars *StarsSpec) Normalize() {
 	resources := make([]StarsResource, 0, len(stars.Resource))
 	for _, r := range stars.Resource {
 		if len(r.Names) > 0 {
-			slices.Sort(r.Names)
-			r.Names = slices.Compact(r.Names) // removes any duplicates
+			unique := make([]string, 0, len(r.Names))
+			found := make(map[string]bool, len(r.Names))
+			for _, name := range r.Names {
+				if !found[name] {
+					unique = append(unique, name)
+					found[name] = true
+				}
+			}
+			r.Names = unique
 			resources = append(resources, r)
 		}
 	}
