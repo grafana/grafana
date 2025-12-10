@@ -15,6 +15,7 @@ export const pluginVersion = "12.4.0-pre";
 export interface GaugePanelEffects {
   barGlow?: boolean;
   centerGlow?: boolean;
+  gradient?: boolean;
   rounded?: boolean;
   spotlight?: boolean;
 }
@@ -22,6 +23,7 @@ export interface GaugePanelEffects {
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
   centerGlow: false,
+  gradient: true,
   rounded: false,
   spotlight: false,
 };
@@ -29,7 +31,6 @@ export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
 export interface Options extends common.SingleStatBaseOptions {
   barWidthFactor: number;
   effects: GaugePanelEffects;
-  gradient: ('none' | 'auto');
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
@@ -41,7 +42,6 @@ export interface Options extends common.SingleStatBaseOptions {
 export const defaultOptions: Partial<Options> = {
   barWidthFactor: 0.5,
   effects: {},
-  gradient: 'auto',
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
