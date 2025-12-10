@@ -14,7 +14,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
-    const effectsCategory = [t('gauge.category-effects', 'Effects')];
 
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
