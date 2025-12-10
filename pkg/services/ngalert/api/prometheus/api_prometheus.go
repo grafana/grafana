@@ -30,6 +30,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type RuleStoreReader interface {
@@ -429,6 +430,179 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 	}
 }
 
+// paginationContext holds limits and filters for filter-aware pagination
+type paginationContext struct {
+	opts              RuleGroupStatusesOptions
+	provenanceRecords map[string]ngmodels.Provenance
+	ruleStatusMutator RuleStatusMutator
+	alertStateMutator RuleAlertStateMutator
+
+	// Query parameters
+	namespaceUIDs   []string
+	ruleUIDs        []string
+	dashboardUID    string
+	panelID         int64
+	ruleGroups      []string
+	receiverName    string
+	dataSourceUIDs  []string
+	title           string
+	searchRuleGroup string
+	ruleType        ngmodels.RuleTypeFilter
+	ruleNamesSet    map[string]struct{}
+
+	// Filters
+	stateFilterSet     map[eval.State]struct{}
+	healthFilterSet    map[string]struct{}
+	matchers           labels.Matchers
+	labelOptions       []ngmodels.LabelOption
+	limitAlertsPerRule int64
+	limitRulesPerGroup int64
+}
+
+// pageResult is the result of fetching and filtering of one page
+type pageResult struct {
+	groups      []apimodels.RuleGroup
+	totalsDelta map[string]int64
+	nextToken   string
+	hasMore     bool
+}
+
+func accumulateTotals(dest, source map[string]int64) {
+	for k, v := range source {
+		dest[k] += v
+	}
+}
+
+// fetchAndFilterPage fetches one page from the store and applies filters
+func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
+		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+			OrgID:           ctx.opts.OrgID,
+			NamespaceUIDs:   ctx.namespaceUIDs,
+			RuleUIDs:        ctx.ruleUIDs,
+			DashboardUID:    ctx.dashboardUID,
+			PanelID:         ctx.panelID,
+			RuleGroups:      ctx.ruleGroups,
+			ReceiverName:    ctx.receiverName,
+			DataSourceUIDs:  ctx.dataSourceUIDs,
+			SearchTitle:     ctx.title,
+			SearchRuleGroup: ctx.searchRuleGroup,
+		},
+		RuleType:      ctx.ruleType,
+		Limit:         remainingGroups,
+		RuleLimit:     remainingRules,
+		ContinueToken: token,
+	}
+
+	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
+	if err != nil {
+		return pageResult{}, err
+	}
+
+	span.SetAttributes(
+		attribute.Int("store_rule_list_len", len(ruleList)),
+		attribute.Bool("store_continue_token_set", newToken != ""),
+	)
+	span.AddEvent("Alert rules retrieved from store")
+
+	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
+
+	result := pageResult{
+		groups:      make([]apimodels.RuleGroup, 0, len(groupedRules)),
+		totalsDelta: make(map[string]int64),
+		nextToken:   newToken,
+		hasMore:     newToken != "",
+	}
+
+	for _, rg := range groupedRules {
+		ruleGroup, totals := toRuleGroup(
+			log, rg.GroupKey, rg.Folder, rg.Rules,
+			ctx.provenanceRecords, ctx.limitAlertsPerRule,
+			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
+			ctx.ruleStatusMutator, ctx.alertStateMutator,
+		)
+		ruleGroup.Totals = totals
+		accumulateTotals(result.totalsDelta, totals)
+
+		if len(ctx.stateFilterSet) > 0 {
+			filterRulesByState(ruleGroup, ctx.stateFilterSet)
+		}
+
+		if len(ctx.healthFilterSet) > 0 {
+			filterRulesByHealth(ruleGroup, ctx.healthFilterSet)
+		}
+
+		if ctx.limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > ctx.limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:ctx.limitRulesPerGroup]
+		}
+
+		if len(ruleGroup.Rules) > 0 {
+			result.groups = append(result.groups, *ruleGroup)
+		}
+	}
+
+	return result, nil
+}
+
+// paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
+func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
+	allGroups := []apimodels.RuleGroup{}
+	rulesTotals := make(map[string]int64)
+
+	continueToken := startToken
+	groupsReturned := int64(0)
+	rulesReturned := int64(0)
+
+	for {
+		remainingGroups := maxGroups
+		if maxGroups > 0 {
+			remainingGroups = maxGroups - groupsReturned
+			if remainingGroups <= 0 {
+				break
+			}
+		}
+		remainingRules := maxRules
+		if maxRules > 0 {
+			remainingRules = maxRules - rulesReturned
+			if remainingRules <= 0 {
+				break
+			}
+		}
+
+		page, err := ctx.fetchAndFilterPage(log, store, span, continueToken, remainingGroups, remainingRules)
+		if err != nil {
+			return nil, nil, "", err
+		}
+
+		accumulateTotals(rulesTotals, page.totalsDelta)
+
+		// Add groups and check limits
+		for _, group := range page.groups {
+			allGroups = append(allGroups, group)
+			groupsReturned++
+			rulesReturned += int64(len(group.Rules))
+
+			// Check if we've hit limits
+			if (maxGroups > 0 && groupsReturned == maxGroups) || (maxRules > 0 && rulesReturned >= maxRules) {
+				return allGroups, rulesTotals, page.nextToken, nil
+			}
+		}
+
+		if !page.hasMore {
+			return allGroups, rulesTotals, "", nil
+		}
+
+		if page.nextToken == continueToken {
+			log.Warn("Pagination loop detected same token, stopping", "token", page.nextToken)
+			return allGroups, rulesTotals, page.nextToken, nil
+		}
+
+		continueToken = page.nextToken
+	}
+
+	return allGroups, rulesTotals, continueToken, nil
+}
+
 func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
@@ -517,9 +691,20 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	namespaceUIDs := make([]string, 0, len(opts.AllowedNamespaces))
 
 	folderUID := opts.Query.Get("folder_uid")
+	searchFolder := opts.Query.Get("search.folder")
+
 	_, exists := opts.AllowedNamespaces[folderUID]
 	if folderUID != "" && exists {
+		// Exact folder UID match
 		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else if searchFolder != "" {
+		// Search folders by full path
+		matcher := NewTextMatcher(searchFolder)
+		for uid, fullpath := range opts.AllowedNamespaces {
+			if matcher.Match(fullpath) {
+				namespaceUIDs = append(namespaceUIDs, uid)
+			}
+		}
 	} else {
 		for k := range opts.AllowedNamespaces {
 			namespaceUIDs = append(namespaceUIDs, k)
@@ -528,8 +713,14 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	span.SetAttributes(
 		attribute.Bool("folder_uid_set", folderUID != ""),
+		attribute.Bool("search_folder_set", searchFolder != ""),
 		attribute.Int("namespace_count", len(namespaceUIDs)),
 	)
+
+	if searchFolder != "" && len(namespaceUIDs) == 0 {
+		log.Debug("No folders matched search.folder, returning empty response")
+		return ruleResponse
+	}
 
 	ruleGroups := opts.Query["rule_group"]
 	ruleUIDs := opts.Query["rule_uid"]
@@ -547,6 +738,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 	span.SetAttributes(attribute.Bool("search_rule_group_set", searchRuleGroup != ""))
+
+	dataSourceUIDs := opts.Query["datasource_uid"]
+	span.SetAttributes(attribute.Bool("datasource_uid_set", len(dataSourceUIDs) > 0))
 
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
@@ -591,62 +785,39 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	}
 	span.SetAttributes(attribute.Int("rule_name_count", len(ruleNamesSet)))
 
-	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
-		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:           opts.OrgID,
-			NamespaceUIDs:   namespaceUIDs,
-			RuleUIDs:        ruleUIDs,
-			DashboardUID:    dashboardUID,
-			PanelID:         panelID,
-			RuleGroups:      ruleGroups,
-			ReceiverName:    receiverName,
-			SearchTitle:     title,
-			SearchRuleGroup: searchRuleGroup,
-		},
-		RuleType:      ruleType,
-		Limit:         maxGroups,
-		RuleLimit:     maxRules,
-		ContinueToken: nextToken,
+	pagCtx := &paginationContext{
+		opts:               opts,
+		provenanceRecords:  provenanceRecords,
+		ruleStatusMutator:  ruleStatusMutator,
+		alertStateMutator:  alertStateMutator,
+		namespaceUIDs:      namespaceUIDs,
+		ruleUIDs:           ruleUIDs,
+		dashboardUID:       dashboardUID,
+		panelID:            panelID,
+		ruleGroups:         ruleGroups,
+		receiverName:       receiverName,
+		title:              title,
+		dataSourceUIDs:     dataSourceUIDs,
+		searchRuleGroup:    searchRuleGroup,
+		ruleType:           ruleType,
+		ruleNamesSet:       ruleNamesSet,
+		stateFilterSet:     stateFilterSet,
+		healthFilterSet:    healthFilterSet,
+		matchers:           matchers,
+		labelOptions:       labelOptions,
+		limitAlertsPerRule: limitAlertsPerRule,
+		limitRulesPerGroup: limitRulesPerGroup,
 	}
-	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
+
+	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
 		return ruleResponse
 	}
-	span.SetAttributes(
-		attribute.Int("store_rule_list_len", len(ruleList)),
-		attribute.Bool("store_continue_token_set", continueToken != ""),
-	)
-	span.AddEvent("Alert rules retrieved from store")
 
-	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
-	rulesTotals := make(map[string]int64, len(groupedRules))
-	for _, rg := range groupedRules {
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
-		ruleGroup.Totals = totals
-		for k, v := range totals {
-			rulesTotals[k] += v
-		}
-
-		if len(stateFilterSet) > 0 {
-			filterRulesByState(ruleGroup, stateFilterSet)
-		}
-
-		if len(healthFilterSet) > 0 {
-			filterRulesByHealth(ruleGroup, healthFilterSet)
-		}
-
-		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
-		}
-
-		if len(ruleGroup.Rules) > 0 {
-			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
-		}
-	}
-
+	ruleResponse.Data.RuleGroups = groups
 	ruleResponse.Data.NextToken = continueToken
 
 	// Only return Totals if there is no pagination
@@ -734,6 +905,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	dataSourceUIDs := opts.Query["datasource_uid"]
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
@@ -746,6 +918,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ReceiverName:    receiverName,
 		SearchTitle:     title,
 		SearchRuleGroup: searchRuleGroup,
+		DataSourceUIDs:  dataSourceUIDs,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -981,6 +1154,7 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 
 		// mutate rule for alert states
 		totals, totalsFiltered := ruleAlertStateMutator(rule, &alertingRule, stateFilterSet, matchers, labelOptions)
+
 		if alertingRule.State != "" {
 			rulesTotals[alertingRule.State] += 1
 		}

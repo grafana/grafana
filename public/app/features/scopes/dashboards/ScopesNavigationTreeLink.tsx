@@ -2,24 +2,68 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
+import { GrafanaTheme2, IconName, locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
+
+import { useScopesServices } from '../ScopesContextProvider';
 
 import { isCurrentPath, normalizePath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
+  subScope?: string;
   to: string;
   title: string;
   id: string;
 }
 
-export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
-
+  const services = useScopesServices();
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (subScope) {
+      e.preventDefault(); // Prevent default Link navigation
+
+      // Set current scope to navigation scope and subScope to scope
+      const currentScope = services?.scopesSelectorService?.state.appliedScopes[0]?.scopeId;
+      const currentNavigationScope = services?.scopesDashboardsService?.state.navigationScope;
+
+      // Parse the URL to extract path and existing query params
+      const url = new URL(to, window.location.origin);
+      const pathname = url.pathname;
+      const searchParams = new URLSearchParams(url.search);
+      if (!currentNavigationScope && currentScope) {
+        searchParams.set('navigation_scope', currentScope);
+        services?.scopesDashboardsService?.setNavigationScope(currentScope);
+      }
+
+      // Update query params with the new subScope
+      searchParams.set('scopes', subScope);
+      // Remove scope_node and scope_parent since we're changing to a subScope
+      searchParams.delete('scope_node');
+      searchParams.delete('scope_parent');
+
+      // Convert URLSearchParams to query map object for urlUtil.renderUrl
+      const queryMap: UrlQueryMap = {};
+      searchParams.forEach((value, key) => {
+        queryMap[key] = value;
+      });
+
+      // Build the new URL safely using urlUtil.renderUrl
+      const newUrl = urlUtil.renderUrl(pathname, queryMap);
+
+      // Change scopes first (this updates the state)
+      services?.scopesSelectorService?.changeScopes([subScope], undefined, undefined, false);
+
+      // Then navigate to the URL with updated query params
+      locationService.push(newUrl);
+    }
+  };
 
   return (
     <Link
@@ -27,6 +71,7 @@ export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTree
       aria-current={isCurrent ? 'page' : undefined}
       className={cx(styles.container, isCurrent && styles.current)}
       data-testid={`scopes-dashboards-${id}`}
+      onClick={handleClick}
       role="treeitem"
       key={id}
     >

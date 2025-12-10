@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-var migratedUnifiedResources = []string{
-	//"playlists.playlist.grafana.app",
+var MigratedUnifiedResources = []string{
+	"playlists.playlist.grafana.app",
 	"folders.folder.grafana.app",
 	"dashboards.dashboard.grafana.app",
 }
@@ -58,14 +58,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
-	// TODO: Re-enable once migrations are ready and disabled on cloud
-	//cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.DisableDataMigrations = true
+	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
-		cfg.enforceMigrationToUnifiedConfigs()
+		// Helper log to find instances running migrations in the future
+		cfg.Logger.Info("Unified migration configs not yet enforced")
+		// cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
 	} else {
-		cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+		// Helper log to find instances disabling migration
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
+	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
@@ -94,10 +96,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
 	cfg.ResourceServerJoinRingTimeout = section.Key("resource_server_join_ring_timeout").MustDuration(10 * time.Second)
 
+	// quotas/limits config
+	cfg.OverridesFilePath = section.Key("overrides_path").String()
+	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
+
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }
 
+// nolint:unused
 // enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5
 // All migrated resources in MigratedUnifiedResources are set to mode 5 and unified search is enabled
 func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
@@ -108,7 +115,7 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		section.Key("enable_search").SetValue("true")
 		cfg.EnableSearch = true
 	}
-	for _, resource := range migratedUnifiedResources {
+	for _, resource := range MigratedUnifiedResources {
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		if oldCfg, ok := cfg.UnifiedStorage[resource]; ok {
 			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", oldCfg)

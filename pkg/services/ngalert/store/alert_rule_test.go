@@ -38,6 +38,17 @@ import (
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func toInsertRules(rules []models.AlertRule) []models.InsertRule {
+	result := make([]models.InsertRule, len(rules))
+	for i := range rules {
+		result[i] = models.InsertRule{
+			AlertRule: rules[i],
+			Message:   "",
+		}
+	}
+	return result
+}
+
 func TestIntegrationUpdateAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -567,7 +578,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
-		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
 			uids = append(uids, rule.UID)
@@ -634,7 +645,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
-		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
 			uids = append(uids, rule.UID)
@@ -687,7 +698,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
-		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
 		for _, rule := range result {
 			uids = append(uids, rule.UID)
@@ -754,7 +765,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	rules := append(gen.GenerateMany(5), recordingRulesGen.GenerateMany(5)...)
 
-	ids, err := store.InsertAlertRules(context.Background(), &usr, rules)
+	ids, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(rules))
 	require.NoError(t, err)
 	require.Len(t, ids, len(rules))
 
@@ -819,7 +830,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 			invalidMetric := "my_metric\x80"
 			invalidRule := recordingRulesGen.Generate()
 			invalidRule.Record.Metric = invalidMetric
-			_, err := store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{invalidRule})
+			_, err := store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: invalidRule}})
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 			require.ErrorContains(t, err, "metric name for recording rule must be a valid utf8 string")
 		})
@@ -827,7 +838,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("clears fields that should not exist on recording rules", func(t *testing.T) {
 		rule := recordingRulesGen.Generate()
-		rules, err := store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rule})
+		rules, err := store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
 		require.NoError(t, err)
 		require.Len(t, rules, 1)
 		ruleUID := rules[0].UID
@@ -844,19 +855,19 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	})
 
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
-		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rules[0]})
+		_, err = store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rules[0]}})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
 	t.Run("should not fail insert rules with the same title in a folder", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
-		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
+		_, err = store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: *cp}})
 		require.NoError(t, err)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.Title = "unique-test-title"
-		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
+		_, err = store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: *cp}})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
@@ -877,7 +888,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 			return nil
 		}
 
-		rules, err := store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rule})
+		rules, err := store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
 		require.NoError(t, err)
 		require.Len(t, rules, 1)
 		require.True(t, called)
@@ -885,7 +896,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("nil identity should be handled correctly", func(t *testing.T) {
 		rule := gen.Generate()
-		ids, err = store.InsertAlertRules(context.Background(), nil, []models.AlertRule{rule})
+		ids, err = store.InsertAlertRules(context.Background(), nil, []models.InsertRule{{AlertRule: rule}})
 		require.NoError(t, err)
 		insertedRule, err := store.GetRuleByID(context.Background(), models.GetAlertRuleByIDQuery{
 			ID:    ids[0].ID,
@@ -942,7 +953,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, p))
 	}
 
-	_, err := store.InsertAlertRules(context.Background(), &usr, deref)
+	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
 	require.NoError(t, err)
 
 	t.Run("should find rules by receiver name", func(t *testing.T) {
@@ -1220,7 +1231,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	orgRules := append(rulesWithNotificationsAndReceiver, rulesWithNotificationsAndTimeInterval...)
 
-	_, err := store.InsertAlertRules(context.Background(), &usr, deref)
+	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
 	require.NoError(t, err)
 
 	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
@@ -1319,7 +1330,7 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 
 	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1), models.RuleMuts.WithRandomRecordingRules()).GenerateMany(5)
-	_, err := store.InsertAlertRules(context.Background(), &usr, rules)
+	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(rules))
 	require.NoError(t, err)
 
 	uids := make([]string, 0, len(rules))
@@ -1381,7 +1392,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	group2 := gen.With(gen.WithGroupKey(groupKey2)).GenerateMany(1, 3)
 	group3 := gen.With(gen.WithGroupKey(groupKey3)).GenerateMany(1, 3)
 
-	_, err := store.InsertAlertRules(context.Background(), &usr, append(append(append(misc, group1...), group2...), group3...))
+	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(append(append(append(misc, group1...), group2...), group3...)))
 	require.NoError(t, err)
 
 	t.Run("GetAlertRulesGroupByRuleUID", func(t *testing.T) {
@@ -1497,7 +1508,7 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 	// Insert all rules
 	allRules := append(append(groupUpper, groupMixed...), groupLower...)
-	_, err := store.InsertAlertRules(context.Background(), &usr, allRules)
+	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(allRules))
 	require.NoError(t, err)
 
 	t.Run("should order groups case-sensitively", func(t *testing.T) {
@@ -1516,11 +1527,9 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		}
 
 		// Verify case-sensitive alphabetical ordering
-		// different databases may sort uppercase before lowercase or vice versa depending on character set, the important part is that the order is consistent and case-sensitive
-		expectedOrder := []string{"test", "Test", "TEST"}
-		alternateExpectedOrder := []string{"TEST", "Test", "test"}
-		if !slices.Equal(groupOrder, expectedOrder) && !slices.Equal(groupOrder, alternateExpectedOrder) {
-			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", groupOrder, expectedOrder, alternateExpectedOrder)
+		expectedOrder := []string{"TEST", "Test", "test"}
+		if !slices.Equal(groupOrder, expectedOrder) {
+			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v", groupOrder, expectedOrder)
 		}
 
 		// Verify each group contains the correct rules
@@ -1663,7 +1672,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
 
-	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
 	require.NoError(t, err)
 	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
 	require.NoError(t, err)
@@ -1954,6 +1963,94 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			require.Equal(t, expected, actual, "rules should be ordered by group name")
 		}
 	})
+
+	t.Run("SearchTitle filter should be applied across all pages", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		searchTitle := "str"
+
+		// Create rules across multiple groups with some having "str" in title
+		// Group 1: 2 rules, one with "str", one without
+		// Group 2: 2 rules, none with "str"
+		// Group 3: 2 rules, one with "str", one without
+		ruleGen := models.RuleGen.With(
+			models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+			models.RuleMuts.WithOrgID(orgID),
+		)
+
+		ns := "test-ns"
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-1 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-2"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-3"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-4"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-5 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-6"),
+		))
+
+		// First page: get 1 group with SearchTitle filter
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit: 1,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, continueToken, "should have more pages")
+
+		// Verify first page only has rules with "str" in title
+		require.Len(t, result, 1)
+		for _, rule := range result {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-1", rule.RuleGroup)
+		}
+
+		// Second page
+		result2, continueToken2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit:         1,
+			ContinueToken: continueToken,
+		})
+		require.NoError(t, err)
+
+		// Verify second page also only has rules with "str" in title
+		require.Len(t, result2, 1)
+		for _, rule := range result2 {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-3", rule.RuleGroup)
+		}
+
+		// After all pages, token should be empty
+		require.Empty(t, continueToken2, "should be no more pages")
+	})
 }
 
 func Benchmark_ListAlertRules(b *testing.B) {
@@ -2069,6 +2166,84 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
 				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
+
+	t.Run("filter by DataSourceUIDs", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		// Create rules with different data sources.
+		const (
+			uid1     = "uid-1"
+			uid2     = "uid-2"
+			uid3     = "uid-3"
+			rule1UID = "rule-1"
+			rule2UID = "rule-2"
+			rule3UID = "rule-3"
+			rule4UID = "rule-4"
+			rule5UID = "rule-5"
+			rule6UID = "rule-6"
+		)
+
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule1UID), models.RuleGen.WithDataSourceUID(uid1)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule2UID), models.RuleMuts.WithDataSourceUID(uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule3UID), models.RuleMuts.WithDataSourceUID(uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule4UID), models.RuleGen.WithDataSourceUID(uid1, uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule5UID), models.RuleMuts.WithDataSourceUID(uid2, uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule6UID), models.RuleMuts.WithDataSourceUID(uid1, uid2, uid3)))
+
+		tc := []struct {
+			name         string
+			dsUIDs       []string
+			expectedUIDs []string
+		}{
+			{
+				name:         "searching for uid-1 returns rules using it",
+				dsUIDs:       []string{uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "searching for uid-1 and uid-2 returns rules using them",
+				dsUIDs:       []string{uid1, uid2},
+				expectedUIDs: []string{rule1UID, rule2UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:         "searching for uid-1, uid-2, and uid-3 returns all rules",
+				dsUIDs:       []string{uid1, uid2, uid3},
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:   "searching for a non-existing UID returns no rules",
+				dsUIDs: []string{"non-existing"},
+			},
+			{
+				name:         "searching for uid-1 and a non-existing UID returns the rules using uid-1",
+				dsUIDs:       []string{"non-existing", uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "no data source filter should return all rules",
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:          orgID,
+					DataSourceUIDs: tt.dsUIDs,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+
+				got := make([]string, 0, len(result))
+				for _, r := range result {
+					got = append(got, r.UID)
+				}
+				require.ElementsMatch(t, tt.expectedUIDs, got)
 			})
 		}
 	})
@@ -2379,7 +2554,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
 
-	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate(), gen.Generate()})
+	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}, {AlertRule: gen.Generate()}})
 	require.NoError(t, err)
 	rule1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
@@ -2467,7 +2642,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 
 	gen = gen.With(gen.WithOrgID(orgID))
 
-	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 	uids := make([]string, 0, len(result))
 	for _, rule := range result {
 		uids = append(uids, rule.UID)

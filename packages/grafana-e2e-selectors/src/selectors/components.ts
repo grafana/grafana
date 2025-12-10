@@ -57,6 +57,14 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  Sidebar: {
+    closePane: {
+      '12.4.0': 'data-testid Sidebar close pane',
+    },
+    dockToggle: {
+      '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -69,9 +77,6 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
-    },
-    backButton: {
-      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {
@@ -441,6 +446,9 @@ export const versionedComponents = {
       PanelDataErrorMessage: {
         '10.4.0': 'data-testid Panel data error message',
       },
+      PanelGroupByHeaderAction: {
+        '12.4.0': 'data-testid Panel group by header action',
+      },
     },
     Visualization: {
       Graph: {
@@ -574,6 +582,9 @@ export const versionedComponents = {
       content: {
         '11.1.0': 'data-testid Panel editor option pane content',
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane content',
+      },
+      header: {
+        '12.4.0': 'data-testid Panel editor OptionsPane header',
       },
       select: {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
@@ -1476,6 +1487,16 @@ export const versionedComponents = {
         message: {
           ['12.1.0']: 'data-testid export-image-error-message',
         },
+      },
+    },
+  },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
       },
     },
   },

@@ -104,7 +104,7 @@ func New(cfg *setting.Cfg,
 		actionSetSvc: actionSetService,
 	}
 
-	s.api = newApi(cfg, ac, router, s)
+	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
