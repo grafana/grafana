@@ -29,7 +29,32 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
-Git Sync lets you manage Grafana dashboards as code by storing dashboard JSON files and folders in a remote GitHub repository.
+## Before you begin
+
+### Known limitations
+
+{{< admonition type="caution" >}}
+
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
+
+{{< /admonition >}}
+
+The following applies:
+
+- Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
+- Full instance sync is not available in Grafana Cloud.
+- In Grafana OSS/Enterprise:
+  - If you try to perform a full instance sync with resources that contain alerts or panels, Git Sync will block the connection.
+  - You won't be able to create new alerts or library panels after the setup is completed.
+  - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the synced repository and connect again with folder sync.
+
+### Performance impacts of enabling Git Sync
+
+When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
+
+Git Sync is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
+
+## Set up Git Sync (recommended)
 
 To set up Git Sync and synchronize with a GitHub repository follow these steps:
 
@@ -51,20 +76,6 @@ Alternatively, you can configure a local file system instead of using GitHub. Re
 
 {{< /admonition >}}
 
-## Performance impacts of enabling Git Sync
-
-Git Sync is an experimental feature and is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
-
-When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
-
-## Before you begin
-
-{{< admonition type="caution" >}}
-
-Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
-
-{{< /admonition >}}
-
 ### Requirements
 
 To set up Git Sync, you need:
@@ -77,7 +88,7 @@ To set up Git Sync, you need:
 - Optional: A public Grafana instance.
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs.
 
-## Enable required feature toggles
+### Enable required feature toggles
 
 To activate Git Sync in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles.
 For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
@@ -95,7 +106,7 @@ To enable the required feature toggles, add them to your Grafana configuration f
 
 1. Save the changes to the file and restart Grafana.
 
-## Create a GitHub access token
+### Create a GitHub access token
 
 Whenever you connect to a GitHub repository, you need to create a GitHub access token with specific repository permissions.
 This token needs to be added to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
@@ -114,7 +125,7 @@ This token needs to be added to your Git Sync configuration to enable read and w
 
 GitHub Apps are not currently supported.
 
-## Set up the connection to GitHub
+### Set up the connection to GitHub
 
 Use **Provisioning** to guide you through setting up Git Sync to use a GitHub repository.
 
@@ -122,7 +133,7 @@ Use **Provisioning** to guide you through setting up Git Sync to use a GitHub re
 1. Select **Administration** in the left-side menu and then **Provisioning**.
 1. Select **Configure Git Sync**.
 
-### Connect to external storage
+#### Connect to external storage
 
 To connect your GitHub repository, follow these steps:
 
@@ -138,24 +149,6 @@ In this step you can decide which elements to synchronize. Keep in mind the avai
 
 - If the instance contains resources in an incompatible data format, you'll have to migrate all the data using instance sync. Folder sync won't be supported.
 - If there is already another connection using folder sync, instance sync won't be offered.
-
-#### Synchronization limitations
-
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
-
-{{< admonition type="caution" >}}
-
-Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
-
-{{< /admonition >}}
-
-Full instance sync is not available in Grafana Cloud.
-
-In Grafana OSS/Enterprise:
-
-- If you try to perform a full instance sync with resources that contain alerts or panels, Git Sync will block the connection.
-- You won't be able to create new alerts or library panels after the setup is completed.
-- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the synced repository and connect again with folder sync.
 
 #### Set up synchronization
 
@@ -174,6 +167,130 @@ Finally, you can set up how often your configured storage is polled for updates.
 1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
 1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering is not available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 1. Select **Finish** to proceed.
+
+## Set up Git Sync using Grafana CLI
+
+Alternatively, you can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana.
+
+This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
+
+### Prerequisites
+
+- **grafanactl CLI** - Install from https://grafana.github.io/grafanactl/
+- **GitHub repository** containing your dashboards
+- **GitHub Personal Access Token** with scopes: `repo`, `pull_requests`, `webhooks`
+- **Grafana instance** with external access (public URL or webhook endpoint)
+
+### Create Repository CRD
+
+Create a `repository.yaml` file defining your Git Sync configuration:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: <REPOSITORY_NAME>
+spec:
+  title: <REPOSITORY_TITLE>
+  type: github
+  github:
+    url: <GITHUB_REPO_URL>
+    branch: <BRANCH>
+    path: grafana/
+    generateDashboardPreviews: true
+  sync:
+    enabled: true
+    intervalSeconds: 60
+    target: folder
+  workflows:
+    - write
+    - branch
+secure:
+  token:
+    create: <GITHUB_PAT>
+```
+
+**Note:** Only `target: folder` is currently supported for Git Sync.
+
+#### Configuration Parameters
+
+| Field | Description |
+|-------|-------------|
+| `metadata.name` | Unique identifier for this repository resource |
+| `spec.title` | Human-readable name displayed in Grafana UI |
+| `spec.type` | Repository type (`github`) |
+| `spec.github.url` | GitHub repository URL |
+| `spec.github.branch` | Branch to sync |
+| `spec.github.path` | Directory path containing dashboards |
+| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) |
+| `spec.sync.enabled` | Enable synchronization (true/false) |
+| `spec.sync.intervalSeconds` | Sync interval in seconds |
+| `spec.sync.target` | Where to place synced dashboards (`folder`) |
+| `spec.workflows` | Enabled workflows: `write` (direct commits), `branch` (PRs) |
+| `secure.token.create` | GitHub Personal Access Token |
+
+### Push Repository CRD to Grafana
+
+Before pushing resources, configure `grafanactl` with your Grafana instance details. Refer to the [grafanactl configuration documentation](https://grafana.github.io/grafanactl/) for setup instructions.
+
+Push the repository configuration:
+
+```bash
+grafanactl resources push --path <DIRECTORY>
+```
+
+The `--path` parameter should point to the directory containing your `repository.yaml` file.
+
+After pushing, Grafana will:
+1. Create the repository resource
+2. Connect to your GitHub repository
+3. Pull dashboards from the specified path
+4. Begin syncing at the configured interval
+
+### Managing Repository Resources
+
+#### List Repositories
+
+```bash
+grafanactl resources get repositories
+```
+
+#### Get Repository Details
+
+```bash
+grafanactl resources get repository/<REPOSITORY_NAME>
+grafanactl resources get repository/<REPOSITORY_NAME> -o json
+grafanactl resources get repository/<REPOSITORY_NAME> -o yaml
+```
+
+#### Update Repository
+
+```bash
+grafanactl resources edit repository/<REPOSITORY_NAME>
+```
+
+#### Delete Repository
+
+```bash
+grafanactl resources delete repository/<REPOSITORY_NAME>
+```
+
+### Verify Setup
+
+Check that Git Sync is working:
+
+```bash
+# List repositories
+grafanactl resources get repositories
+
+# Check Grafana UI
+# Navigate to: Administration → Provisioning → Git Sync
+```
+### Additional Resources
+
+- [grafanactl Documentation](https://grafana.github.io/grafanactl/)
+- [Repository CRD Reference](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/)
+- [Dashboard CRD Format](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
 
 ## Verify your dashboards in Grafana
 
@@ -217,7 +334,7 @@ Set up image rendering to add visual previews of dashboard updates directly in p
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-## Modify configurations after set up is complete
+## Modify your configuration after set up is complete
 
 To update your repository configuration after you've completed set up:
 
