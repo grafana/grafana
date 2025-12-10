@@ -669,7 +669,7 @@
   },
   "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts": {
@@ -883,11 +883,6 @@
   },
   "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
     "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
