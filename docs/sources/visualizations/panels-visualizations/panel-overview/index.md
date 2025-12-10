@@ -177,7 +177,7 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 ## Pan and zoom panel time range
 
-You can pan the panel time range left and right zoom it and in and out.
+You can pan the panel time range left and right, and zoom it and in and out.
 This, in turn, changes the dashboard time range.
 
 This feature is supported for the following visualizations:

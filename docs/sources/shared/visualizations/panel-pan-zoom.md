@@ -4,7 +4,7 @@ comments: |
   This file is used in the following visualizations: candlestick, heatmap, state timeline, status history, time series.
 ---
 
-You can pan the panel time range left and right zoom it and in and out.
+You can pan the panel time range left and right, and zoom it and in and out.
 This, in turn, changes the dashboard time range.
 
 **Zoom in** - Click and drag on the panel to zoom in on a particular time range.
