@@ -191,12 +191,11 @@ export function SaveProvisionedDashboardForm({
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
     const body = dashboard.getSaveResource({
-      // we want to specifically set isNew to false when saving as copy to avoid DashboardScene always copy tags
       isNew,
       title,
       description,
       copyTags,
-      saveAsCopy: saveAsCopy,
+      saveAsCopy,
     });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {

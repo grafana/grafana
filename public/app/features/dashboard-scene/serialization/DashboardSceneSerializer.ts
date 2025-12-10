@@ -178,7 +178,7 @@ export class V1DashboardSerializer
       uid: '',
       title: options.title || '',
       description: options.description || undefined,
-      tags: options.saveAsCopy && options.copyTags === false ? [] : saveModel.tags,
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 
@@ -390,7 +390,7 @@ export class V2DashboardSerializer
       ...saveModel,
       title: options.title || '',
       description: options.description || '',
-      tags: options.saveAsCopy && options.copyTags === false ? [] : saveModel.tags,
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 
