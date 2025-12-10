@@ -11,3 +11,5 @@
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
 export const unstable = {};
+
+export { getAppPluginMetas, getAppPluginMeta, type AppPluginMetas } from './services/plugins';

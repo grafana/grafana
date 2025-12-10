@@ -1,7 +1,7 @@
 import { pick } from 'lodash';
 
 import { llm } from '@grafana/llm';
-import { getAppPluginMeta } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 import { Panel } from '@grafana/schema';
 
 import { DashboardModel } from '../../state/DashboardModel';

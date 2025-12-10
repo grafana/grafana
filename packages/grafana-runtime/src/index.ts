@@ -69,4 +69,3 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
-export { getAppPluginMetas, getAppPluginMeta, type AppPluginMetas } from './services/plugins';

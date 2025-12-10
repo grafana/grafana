@@ -2,8 +2,8 @@ import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
-import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime/unstable';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';

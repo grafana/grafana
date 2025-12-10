@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { config, getAppPluginMetas } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getAppPluginMetas } from '@grafana/runtime/unstable';
 
 import { SupportedPlugin } from '../types/pluginBridges';
 

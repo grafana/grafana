@@ -16,7 +16,8 @@ import {
   PluginExtensionPoints,
   ExtensionInfo,
 } from '@grafana/data';
-import { reportInteraction, config, AppPluginConfig, getAppPluginMetas, getAppPluginMeta } from '@grafana/runtime';
+import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
+import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';

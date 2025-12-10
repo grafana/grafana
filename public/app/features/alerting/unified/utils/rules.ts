@@ -1,7 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
-import { getAppPluginMeta } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 import {
   Alert,
   AlertingRule,

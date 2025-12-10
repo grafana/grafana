@@ -10,7 +10,8 @@ import {
   PluginExtensionPointPatterns,
 } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
-import { getAppPluginMeta, isPluginExtensionLink } from '@grafana/runtime';
+import { isPluginExtensionLink } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 
 import * as errors from './errors';
 import { ExtensionsLog } from './logs/log';

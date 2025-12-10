@@ -1,7 +1,7 @@
 import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { getAppPluginMetas } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/unstable';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {

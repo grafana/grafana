@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getAppPluginMeta } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 

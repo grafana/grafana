@@ -7,8 +7,8 @@ import {
   PluginLoadingStrategy,
   PluginType,
 } from '@grafana/data';
-import { getAppPluginMetas } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/unstable';
 
 import { createLogMock } from './logs/testUtils';
 import {

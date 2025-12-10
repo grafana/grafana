@@ -8,8 +8,8 @@ import {
   PluginMeta,
   PluginType,
 } from '@grafana/data';
-import { getAppPluginMeta } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';

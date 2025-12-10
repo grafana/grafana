@@ -2,8 +2,9 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import type { JSX } from 'react';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
-import { config, getAppPluginMetas } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/unstable';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
