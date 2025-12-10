@@ -30,9 +30,7 @@ export function useCreateSyncJob({
 
       const jobSpec = requiresMigration
         ? {
-            migrate: {
-              history: false,
-            },
+            migrate: {},
           }
         : {
             pull: {
