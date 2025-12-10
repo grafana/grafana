@@ -102,7 +102,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     }
 
     if (isProvisionedNG) {
-      return <SaveProvisionedDashboard dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      return (
+        <SaveProvisionedDashboard
+          dashboard={dashboard}
+          changeInfo={changeInfo}
+          drawer={model}
+          saveAsCopy={saveAsCopy}
+        />
+      );
     }
 
     if (saveAsCopy || changeInfo.isNew) {

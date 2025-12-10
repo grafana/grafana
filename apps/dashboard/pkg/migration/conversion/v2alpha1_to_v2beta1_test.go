@@ -18,7 +18,7 @@ func TestV2alpha1ToV2beta1(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
