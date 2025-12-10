@@ -85,7 +85,6 @@ export class ScopesService implements ScopesContextValue {
 
     this.changeScopes(queryParams.getAll('scopes'), undefined, scopeNodeId ?? undefined).then(() => {
       if (navScopePath && !navigationScope) {
-        console.log('No navigation scope, setting nav scope path', navScopePath);
         this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
       }
     });

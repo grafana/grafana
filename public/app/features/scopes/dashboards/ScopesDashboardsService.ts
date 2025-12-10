@@ -8,7 +8,12 @@ import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
-import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
+import {
+  ScopeNavigation,
+  SuggestedNavigationsFolder,
+  SuggestedNavigationsFoldersMap,
+  SuggestedNavigationsMap,
+} from './types';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
@@ -64,7 +69,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     const subScope = subScopePath[subScopePath.length - 1];
     const path = buildSubScopePath(subScope, this.state.folders);
 
-    console.log('openSubScopeFolder', subScopePath, path);
     // Get path to the folder - path can now be undefined
     if (path && path.length > 0) {
       this.updateFolder(path, true);
@@ -82,7 +86,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         const folderPath = buildSubScopePath(subScope, this.state.folders);
         if (folderPath && folderPath.length > 0) {
           await this.fetchSubScopeItems(folderPath, subScope);
-          this.openSubScopeFolder([subScope]); // This will look up the path again
+          this.openSubScopeFolder([subScope]);
         }
       }
     }
@@ -184,6 +188,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   private fetchSubScopeItems = async (path: string[], subScopeName: string) => {
+    // Check if folder already has content - skip fetching to preserve existing state
+    const targetFolder = this.getFolder(path);
+    if (
+      targetFolder &&
+      (Object.keys(targetFolder.folders).length > 0 || Object.keys(targetFolder.suggestedNavigations).length > 0)
+    ) {
+      return;
+    }
+
     let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
 
     try {
@@ -242,6 +255,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     this.updateState({ folders, filteredFolders });
+  };
+
+  // Helper to get a folder at a given path
+  private getFolder = (path: string[]): SuggestedNavigationsFolder | undefined => {
+    let folder: SuggestedNavigationsFoldersMap = this.state.folders;
+    for (let i = 0; i < path.length - 1; i++) {
+      folder = folder[path[i]]?.folders ?? {};
+    }
+    return folder[path[path.length - 1]];
   };
 
   public changeSearchQuery = (searchQuery: string) => {
