@@ -89,11 +89,25 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
       return acc;
     }, {});
   }
+
   return structure;
 }
 
 function isTransferable(structure: unknown): structure is Transferable {
   // We should probably add all of the transferable types here.
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
-  return structure instanceof ArrayBuffer;
+  return (
+    structure instanceof ArrayBuffer ||
+    structure instanceof OffscreenCanvas ||
+    structure instanceof ImageBitmap ||
+    structure instanceof MessagePort ||
+    structure instanceof MediaSourceHandle ||
+    structure instanceof ReadableStream ||
+    structure instanceof WritableStream ||
+    structure instanceof TransformStream ||
+    structure instanceof AudioData ||
+    structure instanceof VideoFrame ||
+    structure instanceof RTCDataChannel ||
+    structure instanceof ArrayBuffer
+  );
 }
