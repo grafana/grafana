@@ -824,5 +824,10 @@
     "title": "Panel Tests - Table - Sparklines",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

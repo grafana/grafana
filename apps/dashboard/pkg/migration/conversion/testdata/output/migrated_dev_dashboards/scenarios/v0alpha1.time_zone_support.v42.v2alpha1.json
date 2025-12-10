@@ -532,5 +532,10 @@
     "title": "Panel Tests - Time zone support",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

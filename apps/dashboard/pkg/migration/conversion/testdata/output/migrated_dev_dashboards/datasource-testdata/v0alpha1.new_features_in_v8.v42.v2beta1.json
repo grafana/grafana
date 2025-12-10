@@ -4072,5 +4072,10 @@
     "title": "New Features in v8.0",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

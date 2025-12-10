@@ -1137,5 +1137,10 @@
     "title": "Panel Tests - With \u0026 Without title",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

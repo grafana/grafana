@@ -839,5 +839,10 @@
     "title": "Panel Tests - shared tooltips cursor positioning",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

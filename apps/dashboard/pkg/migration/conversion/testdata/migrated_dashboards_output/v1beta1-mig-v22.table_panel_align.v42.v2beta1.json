@@ -126,5 +126,10 @@
     "title": "V22 Table Panel Styles Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

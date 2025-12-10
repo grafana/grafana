@@ -1133,5 +1133,10 @@
     "title": "Heatmap calculate (log)",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

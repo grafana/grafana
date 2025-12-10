@@ -21,9 +21,8 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 	leProvider := migrationtestutil.NewLibraryElementProvider()
 	migration.Initialize(dsProvider, leProvider)
 
-	t.Run("Convert_V1beta1_to_V2alpha1 sets status on conversion error", func(t *testing.T) {
-		// Create a dashboard that will cause conversion to fail
-		// We can use an invalid dashboard structure
+	t.Run("Convert_V1beta1_to_V2alpha1 sets status on successful conversion", func(t *testing.T) {
+		// Create a simple dashboard that will convert successfully
 		source := &dashv1.Dashboard{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-1",
@@ -31,7 +30,6 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 			Spec: common.Unstructured{
 				Object: map[string]interface{}{
 					"title": "test dashboard",
-					// Missing required fields that might cause conversion to fail
 				},
 			},
 		}
@@ -39,15 +37,14 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 
 		err := Convert_V1beta1_to_V2alpha1(source, target, nil, dsProvider, leProvider)
 
-		// Convert_V1beta1_to_V2alpha1 doesn't return error, just sets status
-		require.NoError(t, err, "Convert_V1beta1_to_V2alpha1 doesn't return error")
+		// Conversion should succeed
+		require.NoError(t, err)
 		// Layout should always be set
 		require.NotNil(t, target.Spec.Layout.GridLayoutKind)
-		// If conversion failed, status should be set
-		if target.Status.Conversion != nil {
-			require.True(t, target.Status.Conversion.Failed)
-			require.NotNil(t, target.Status.Conversion.Error)
-		}
+		// Status should be set with success
+		require.NotNil(t, target.Status.Conversion)
+		require.False(t, target.Status.Conversion.Failed)
+		require.Equal(t, dashv1.VERSION, *target.Status.Conversion.StoredVersion)
 	})
 
 	t.Run("Convert_V1beta1_to_V2beta1 returns error on first step failure", func(t *testing.T) {

@@ -705,5 +705,10 @@
     "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

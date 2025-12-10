@@ -805,5 +805,10 @@
     "title": "Panel Tests - TimeSeries - bars high density (stroke + fill)",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

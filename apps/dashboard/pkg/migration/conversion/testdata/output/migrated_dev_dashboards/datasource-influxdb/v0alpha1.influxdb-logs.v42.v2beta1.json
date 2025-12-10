@@ -245,5 +245,10 @@
     "title": "Datasource tests - InfluxDB Logs",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

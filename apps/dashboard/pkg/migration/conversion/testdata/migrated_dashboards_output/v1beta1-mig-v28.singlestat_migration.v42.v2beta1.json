@@ -642,5 +642,10 @@
     "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

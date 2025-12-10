@@ -2896,5 +2896,10 @@
     "title": "Panel tests - Gauge (new)",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }
