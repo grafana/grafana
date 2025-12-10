@@ -1,5 +1,5 @@
 import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataQuery,
   DataSourceRef,
@@ -529,8 +529,9 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
+  const ds = getDataSourceSrv().getInstanceSettings(p.datasource);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-  const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
+  const queries = getPanelQueries((p.targets as any) || [], ds ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
 
