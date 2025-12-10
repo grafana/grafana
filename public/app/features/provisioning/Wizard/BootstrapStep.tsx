@@ -37,7 +37,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const repositoryType = watch('repository.type');
   const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
-  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName);
+  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, selectedTarget);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {

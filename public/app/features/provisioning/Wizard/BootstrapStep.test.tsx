@@ -207,7 +207,7 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
     });
 
     it('should use useResourceStats hook with legacy storage flag', async () => {
@@ -220,7 +220,7 @@ describe('BootstrapStep', () => {
       });
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
     });
   });
 
