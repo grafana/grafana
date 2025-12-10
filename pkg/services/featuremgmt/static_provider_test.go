@@ -111,7 +111,6 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 		flags         FeatureFlag
 		defaultValue  any
 		expectedValue any
-		test          int
 	}{
 		{
 			flags: FeatureFlag{
@@ -121,7 +120,6 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 			},
 			defaultValue:  false,
 			expectedValue: true,
-			test:          0,
 		},
 		{
 			flags: FeatureFlag{
@@ -131,7 +129,6 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 			},
 			defaultValue:  0.0,
 			expectedValue: 1.0,
-			test:          1,
 		},
 		{
 			flags: FeatureFlag{
@@ -141,7 +138,6 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 			},
 			defaultValue:  "red",
 			expectedValue: "blue",
-			test:          2,
 		},
 		{
 			flags: FeatureFlag{
@@ -151,7 +147,15 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 			},
 			defaultValue:  int64(0),
 			expectedValue: int64(1),
-			test:          3,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: `{ "foo": "bar" }`,
+				Type:       Structure,
+			},
+			defaultValue:  nil,
+			expectedValue: map[string]any{"foo": "bar"},
 		},
 	}
 
@@ -160,17 +164,17 @@ func Test_StaticProvider_DifferentType(t *testing.T) {
 		assert.NoError(t, err)
 
 		var result any
-		switch tt.test {
-		case 0:
+		switch tt.flags.Type {
+		case Boolean:
 			result = provider.BooleanEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(bool), openfeature.FlattenedContext{}).Value
-		case 1:
+		case Float:
 			result = provider.FloatEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(float64), openfeature.FlattenedContext{}).Value
-		case 2:
+		case String:
 			result = provider.StringEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(string), openfeature.FlattenedContext{}).Value
-		case 3:
+		case Integer:
 			result = provider.IntEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(int64), openfeature.FlattenedContext{}).Value
-		case 4:
-			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(map[string]any), openfeature.FlattenedContext{}).Value
+		case Structure:
+			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue, openfeature.FlattenedContext{}).Value
 		}
 
 		assert.Equal(t, tt.expectedValue, result)

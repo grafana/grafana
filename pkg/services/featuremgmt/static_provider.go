@@ -1,6 +1,7 @@
 package featuremgmt
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -87,8 +88,8 @@ func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
 		value, err = strconv.Atoi(flag.Expression)
 	case Float:
 		value, err = strconv.ParseFloat(flag.Expression, 64)
-	case Object:
-		value = value
+	case Structure:
+		err = json.Unmarshal([]byte(flag.Expression), &value)
 	default:
 		return memprovider.InMemoryFlag{}, fmt.Errorf("unsupported flag type %s", flag.Type)
 	}
