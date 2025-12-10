@@ -40,7 +40,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
 
     return await getAllSuggestions(data);
-  });
+  }, [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
