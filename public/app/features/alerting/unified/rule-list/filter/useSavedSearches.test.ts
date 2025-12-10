@@ -481,6 +481,7 @@ describe('useSavedSearches', () => {
 
   describe('Error handling', () => {
     it('should show error notification on save failure', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const instance = getMockUserStorageInstance();
       instance.getItem.mockResolvedValue(null);
       instance.setItem.mockRejectedValue(new Error('Storage error'));
