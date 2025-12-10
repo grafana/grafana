@@ -94,7 +94,7 @@ ABCD = true
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }
 
-func Test_StaticProvider_DifferentTypeFlagsNoSilentIgnore(t *testing.T) {
+func Test_StaticProvider_FailfastOnMismatchedType(t *testing.T) {
 	staticFlags := map[string]bool{"oldBooleanFlag": true}
 
 	flag := FeatureFlag{
@@ -106,7 +106,7 @@ func Test_StaticProvider_DifferentTypeFlagsNoSilentIgnore(t *testing.T) {
 	assert.EqualError(t, err, "flag oldBooleanFlag already declared as boolean")
 }
 
-func Test_StaticProvider_DifferentType(t *testing.T) {
+func Test_StaticProvider_TypedFlags(t *testing.T) {
 	tests := []struct {
 		flags         FeatureFlag
 		defaultValue  any
