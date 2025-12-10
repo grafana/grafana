@@ -84,7 +84,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "limit",
 										In:          "query",
 										Description: "number of results to return",
-										Example:     10,
+										Example:     30,
 										Required:    false,
 										Schema:      spec.Int64Property(),
 									},

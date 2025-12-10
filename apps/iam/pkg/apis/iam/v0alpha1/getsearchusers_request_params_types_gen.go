@@ -6,6 +6,7 @@ type GetSearchUsersRequestParams struct {
 	Query  string `json:"query"`
 	Limit  int64  `json:"limit,omitempty"`
 	Offset int64  `json:"offset,omitempty"`
+	Page   int64  `json:"page,omitempty"`
 }
 
 // NewGetSearchUsersRequestParams creates a new GetSearchUsersRequestParams object.
