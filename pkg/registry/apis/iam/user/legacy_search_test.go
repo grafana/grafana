@@ -12,28 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestUserLegacySearchClient_Search(t *testing.T) {
-	t.Run("should return error if no query fields are provided", func(t *testing.T) {
-		// mockUserService := usertest.NewMockService(t)
-		mockOrgService := orgtest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
-		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{Namespace: "default"},
-			},
-		}
-
-		_, err := client.Search(ctx, req)
-
-		require.Error(t, err)
-		require.Equal(t, "at least one of title, login, or email must be provided for the query", err.Error())
-	})
-
 	testCases := []struct {
 		name          string
 		fieldKey      string
@@ -69,7 +53,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockOrgService := orgtest.NewMockService(t)
-			client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService())
+			client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 			req := &resourcepb.ResourceSearchRequest{
 				Limit: 10,
@@ -128,7 +112,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 
 	t.Run("title should have precedence over login and email", func(t *testing.T) {
 		mockOrgService := orgtest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService())
+		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -147,5 +131,41 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 
 		_, err := client.Search(ctx, req)
 		require.NoError(t, err)
+	})
+
+	t.Run("should filter out hidden users", func(t *testing.T) {
+		mockOrgService := orgtest.NewMockService(t)
+		cfg := &setting.Cfg{
+			HiddenUsers: map[string]struct{}{
+				"hidden_user": {},
+			},
+		}
+		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), cfg)
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Login: "admin"})
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: "default"},
+			},
+			Query: "user",
+		}
+
+		mockUsers := []*org.OrgUserDTO{
+			{UID: "uid1", Name: "Visible User", Email: "visible@example.com", Login: "visible_user"},
+			{UID: "uid2", Name: "Hidden User", Email: "hidden@example.com", Login: "hidden_user"},
+		}
+
+		mockOrgService.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
+			return q.Query == "user"
+		})).Return(&org.SearchOrgUsersQueryResult{
+			OrgUsers:   mockUsers,
+			TotalCount: 2,
+		}, nil)
+
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(1), resp.TotalHits)
+		require.Len(t, resp.Results.Rows, 1)
+		require.Equal(t, "uid1", resp.Results.Rows[0].Key.Name)
 	})
 }

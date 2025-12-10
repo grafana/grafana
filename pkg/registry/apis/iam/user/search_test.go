@@ -2,12 +2,9 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -69,70 +66,6 @@ func TestSearchFallback(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSearch_ExcludeHiddenUsers(t *testing.T) {
-	mockClient := &MockClient{
-		MockResponses: []*resourcepb.ResourceSearchResponse{
-			{
-				TotalHits: 2,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key: &resourcepb.ResourceKey{Name: "user1"},
-							Cells: [][]byte{
-								[]byte("User 1"),
-								[]byte("user1@example.com"),
-								[]byte("user1"), // login
-								[]byte(""),
-								[]byte("Viewer"),
-							},
-						},
-						{
-							Key: &resourcepb.ResourceKey{Name: "hidden"},
-							Cells: [][]byte{
-								[]byte("Hidden User"),
-								[]byte("hidden@example.com"),
-								[]byte("hidden"),
-								[]byte(""),
-								[]byte("Viewer"),
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	cfg := &setting.Cfg{
-		HiddenUsers: map[string]struct{}{
-			"hidden": {},
-		},
-		UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-			"users.iam.grafana.app": {DualWriterMode: rest.Mode4},
-		},
-	}
-	dual := dualwrite.ProvideStaticServiceForTests(cfg)
-
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, &MockClient{}, featuremgmt.WithFeatures())
-	searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg)
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/searchUsers", nil)
-	req.Header.Add("content-type", "application/json")
-	req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "test"}))
-
-	searchHandler.DoSearch(rr, req)
-
-	resp := rr.Result()
-	defer resp.Body.Close()
-
-	var result iamv0.GetSearchUsers
-	err := json.NewDecoder(resp.Body).Decode(&result)
-	require.NoError(t, err)
-
-	assert.Len(t, result.Hits, 1)
-	assert.Equal(t, "user1", result.Hits[0].Login)
 }
 
 // MockClient implements the ResourceIndexClient interface for testing

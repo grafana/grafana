@@ -118,7 +118,7 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(orgService, tracing), features),
+			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features, cfg)

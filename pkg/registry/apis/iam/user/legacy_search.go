@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -40,14 +41,16 @@ type UserLegacySearchClient struct {
 	orgService org.Service
 	log        *slog.Logger
 	tracer     trace.Tracer
+	cfg        *setting.Cfg
 }
 
 // NewUserLegacySearchClient creates a new UserLegacySearchClient.
-func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer) *UserLegacySearchClient {
+func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg *setting.Cfg) *UserLegacySearchClient {
 	return &UserLegacySearchClient{
 		orgService: orgService,
 		log:        slog.Default().With("logger", "legacy-user-search-client"),
 		tracer:     tracer,
+		cfg:        cfg,
 	}
 }
 
@@ -66,7 +69,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Limit = 100
 	}
 	if req.Limit <= 0 {
-		req.Limit = 10
+		req.Limit = 30
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {
@@ -113,10 +116,6 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		}
 	}
 
-	if req.Query == "" && title == "" && login == "" && email == "" {
-		return nil, fmt.Errorf("at least one of title, login, or email must be provided for the query")
-	}
-
 	// The user store's Search method combines these into an OR.
 	// For legacy search we can only supply one.
 	if title != "" {
@@ -149,6 +148,10 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	}
 
 	for _, u := range res.OrgUsers {
+		if c.isHiddenUser(u.Login, signedInUser) {
+			continue
+		}
+
 		cells := createCells(u, req.Fields)
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(u, req.Options.Key.Namespace),
@@ -156,8 +159,20 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		})
 	}
 
-	list.TotalHits = res.TotalCount
+	list.TotalHits = int64(len(list.Results.Rows))
 	return list, nil
+}
+
+func (c *UserLegacySearchClient) isHiddenUser(login string, signedInUser identity.Requester) bool {
+	if login == "" || signedInUser.GetIsGrafanaAdmin() || login == signedInUser.GetUsername() {
+		return false
+	}
+
+	if _, hidden := c.cfg.HiddenUsers[login]; hidden {
+		return true
+	}
+
+	return false
 }
 
 func getResourceKey(item *org.OrgUserDTO, namespace string) *resourcepb.ResourceKey {

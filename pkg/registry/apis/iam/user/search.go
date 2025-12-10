@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -215,7 +216,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limitStr := queryParams.Get("limit")
-	limit := int64(10)
+	limit := int64(30)
 	if limitStr != "" {
 		if l, err := strconv.ParseInt(limitStr, 10, 64); err == nil && l > 0 {
 			limit = l
@@ -242,7 +243,25 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
 		Limit:  limit,
+		Page:   page,
 		Offset: (page - 1) * limit,
+	}
+
+	if !requester.GetIsGrafanaAdmin() {
+		// FIXME: Use the new config service instead of the legacy one
+		hiddenUsers := []string{}
+		for user := range s.cfg.HiddenUsers {
+			if user != requester.GetUsername() {
+				hiddenUsers = append(hiddenUsers, user)
+			}
+		}
+		if len(hiddenUsers) > 0 {
+			request.Options.Fields = append(request.Options.Fields, &resourcepb.Requirement{
+				Key:      fieldLogin,
+				Operator: string(selection.NotIn),
+				Values:   hiddenUsers,
+			})
+		}
 	}
 
 	if queryParams.Has("sort") {
@@ -272,40 +291,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := iamv0.NewGetSearchUsers()
-	result.TotalHits = resp.TotalHits
-	result.QueryCost = resp.QueryCost
-	result.MaxScore = resp.MaxScore
-	result.Hits = make([]iamv0.UserHit, 0, len(resp.Results.Rows))
-
-	if resp.TotalHits > 0 {
-		for _, row := range resp.Results.Rows {
-			login := string(row.Cells[2])
-
-			// FIXME: Refactor to use the new config service
-			if s.IsHiddenUser(login, requester) {
-				continue
-			}
-
-			var lastSeenAt int64
-			var lastSeenAtAge string
-
-			if len(row.Cells[3]) == 8 {
-				lastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[3]))
-				lastSeenAtAge = util.GetAgeString(time.Unix(lastSeenAt, 0))
-			}
-
-			hit := iamv0.UserHit{
-				Name:          row.Key.Name,
-				Title:         string(row.Cells[0]),
-				Email:         string(row.Cells[1]),
-				Login:         login,
-				LastSeenAt:    lastSeenAt,
-				LastSeenAtAge: lastSeenAtAge,
-				Role:          string(row.Cells[4]),
-			}
-			result.Hits = append(result.Hits, hit)
-		}
+	result, err := ParseResults(resp)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
 	s.write(w, result)
 }
@@ -317,14 +306,78 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	}
 }
 
-func (s *SearchHandler) IsHiddenUser(login string, signedInUser identity.Requester) bool {
-	if login == "" || signedInUser.GetIsGrafanaAdmin() || login == signedInUser.GetUsername() {
-		return false
+func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsers, error) {
+	if result == nil {
+		return iamv0.NewGetSearchUsers(), nil
+	} else if result.Error != nil {
+		return iamv0.NewGetSearchUsers(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+	} else if result.Results == nil {
+		return iamv0.NewGetSearchUsers(), nil
 	}
 
-	if _, hidden := s.cfg.HiddenUsers[login]; hidden {
-		return true
+	titleIDX := -1
+	emailIDX := -1
+	loginIDX := -1
+	lastSeenAtIDX := -1
+	roleIDX := -1
+
+	for i, v := range result.Results.Columns {
+		switch v.Name {
+		case resource.SEARCH_FIELD_TITLE:
+			titleIDX = i
+		case builders.USER_EMAIL:
+			emailIDX = i
+		case builders.USER_LOGIN:
+			loginIDX = i
+		case builders.USER_LAST_SEEN_AT:
+			lastSeenAtIDX = i
+		case builders.USER_ROLE:
+			roleIDX = i
+		}
 	}
 
-	return false
+	sr := iamv0.NewGetSearchUsers()
+	sr.TotalHits = result.TotalHits
+	sr.QueryCost = result.QueryCost
+	sr.MaxScore = result.MaxScore
+	sr.Hits = make([]iamv0.UserHit, 0, len(result.Results.Rows))
+
+	for _, row := range result.Results.Rows {
+		if len(row.Cells) != len(result.Results.Columns) {
+			return iamv0.NewGetSearchUsers(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
+		}
+
+		var login string
+		if loginIDX >= 0 && row.Cells[loginIDX] != nil {
+			login = string(row.Cells[loginIDX])
+		}
+
+		hit := iamv0.UserHit{
+			Name:  row.Key.Name,
+			Login: login,
+		}
+
+		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
+			hit.Title = string(row.Cells[titleIDX])
+		}
+
+		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
+			hit.Email = string(row.Cells[emailIDX])
+		}
+
+		if roleIDX >= 0 && row.Cells[roleIDX] != nil {
+			hit.Role = string(row.Cells[roleIDX])
+		}
+
+		if lastSeenAtIDX >= 0 && row.Cells[lastSeenAtIDX] != nil {
+			if len(row.Cells[lastSeenAtIDX]) == 8 {
+				hit.LastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[lastSeenAtIDX]))
+				hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+			}
+		}
+
+		sr.Hits = append(sr.Hits, hit)
+	}
+
+	return sr, nil
 }
