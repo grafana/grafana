@@ -47,7 +47,7 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 			}
 			mgmt.warnings[key] = "unknown flag in config"
 		}
-		mgmt.startup[key] = val
+		mgmt.startup[key] = val.Value == true
 	}
 
 	// update the values
