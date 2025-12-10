@@ -244,7 +244,7 @@ func RegisterAPIService(
 	}
 
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(context.Background(), storageStatus) {
-		return nil, fmt.Errorf("resources are stored in an incompatible data format. Please, re-enable unified storage migration in settings and restart")
+		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please, re-enable unified storage migration in settings or disable provisioning")
 	}
 
 	allowedTargets := []provisioning.SyncTargetType{}
