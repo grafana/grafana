@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,20 +26,50 @@ interface SelectRowProps {
 export function SelectRow({ query, onQueryChange, db, columns, isVariableQuery }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
-  const aliasOpts: Array<SelectableValue<string>> = [];
 
-  // Add necessary alias options for time series format
-  // when that format has been selected
-  if (query.format === QueryFormat.Timeseries) {
-    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
-    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
-  }
+  // Get currently used aliases from all columns
+  const usedAliases = useMemo(() => {
+    const aliases = new Set<string>();
+    query.sql?.columns?.forEach((col) => {
+      if (col.alias) {
+        // Remove quotes from alias
+        const cleanAlias = col.alias.replace(/"/g, '');
+        aliases.add(cleanAlias);
+      }
+    });
+    return aliases;
+  }, [query.sql?.columns]);
 
-  // Add variable query alias options for text and value
-  if (isVariableQuery) {
-    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__text', '__text'), value: '__text' });
-    aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__value', '__value'), value: '__value' });
-  }
+  // Function to get available alias options for a specific column
+  const getAliasOptions = useCallback(
+    (currentAlias?: string): Array<SelectableValue<string>> => {
+      const aliasOpts: Array<SelectableValue<string>> = [];
+      const cleanCurrentAlias = currentAlias?.replace(/"/g, '');
+
+      // Add necessary alias options for time series format
+      if (query.format === QueryFormat.Timeseries) {
+        if (!usedAliases.has('time') || cleanCurrentAlias === 'time') {
+          aliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
+        }
+        if (!usedAliases.has('value') || cleanCurrentAlias === 'value') {
+          aliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
+        }
+      }
+
+      // Add variable query alias options for __text and __value
+      if (isVariableQuery) {
+        if (!usedAliases.has('__text') || cleanCurrentAlias === '__text') {
+          aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__text', '__text'), value: '__text' });
+        }
+        if (!usedAliases.has('__value') || cleanCurrentAlias === '__value') {
+          aliasOpts.push({ label: t('grafana-sql.components.select-row.label.__value', '__value'), value: '__value' });
+        }
+      }
+
+      return aliasOpts;
+    },
+    [query.format, isVariableQuery, usedAliases]
+  );
 
   const onAggregationChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (aggregation: SelectableValue<string>) => {
@@ -152,7 +182,7 @@ export function SelectRow({ query, onQueryChange, db, columns, isVariableQuery }
                 value={item.alias ? toOption(item.alias) : null}
                 inputId={`select-alias-${index}-${uniqueId()}`}
                 data-testid={selectors.components.SQLQueryEditor.selectAlias}
-                options={aliasOpts}
+                options={getAliasOptions(item.alias)}
                 onChange={onAliasChange(item, index)}
                 isClearable
                 menuShouldPortal
