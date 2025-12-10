@@ -23,6 +23,12 @@ type User struct {
 	Spec UserSpec `json:"spec" yaml:"spec"`
 }
 
+func NewUser() *User {
+	return &User{
+		Spec: *NewUserSpec(),
+	}
+}
+
 func (o *User) GetSpec() any {
 	return o.Spec
 }
