@@ -275,6 +275,8 @@ func (s *service) start(ctx context.Context) error {
 				auth := a.GetAuthorizer()
 				if auth != nil {
 					s.authorizer.Register(gv, auth)
+				} else {
+					panic("authorizer can not be nil for api group=" + gv.String())
 				}
 			}
 		}
