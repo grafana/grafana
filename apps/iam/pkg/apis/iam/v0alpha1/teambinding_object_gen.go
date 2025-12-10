@@ -23,6 +23,12 @@ type TeamBinding struct {
 	Spec TeamBindingSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTeamBinding() *TeamBinding {
+	return &TeamBinding{
+		Spec: *NewTeamBindingSpec(),
+	}
+}
+
 func (o *TeamBinding) GetSpec() any {
 	return o.Spec
 }

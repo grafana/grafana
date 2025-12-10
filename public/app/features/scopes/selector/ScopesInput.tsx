@@ -32,12 +32,12 @@ export function ScopesInput({
   onRemoveAllClick,
 }: ScopesInputProps) {
   const scopeNodeId = appliedScopes[0]?.scopeNodeId;
-  const parentNodeIdFromUrl = appliedScopes[0]?.parentNodeId;
   const styles = useStyles2(getStyles);
+  const parentNodeIdFromRecentScopes = appliedScopes[0]?.parentNodeId; // This is only set from recent scopes TODO: remove after recent scopes refactor
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
 
-  // Get parent from scope node if available, otherwise use parentNodeId from URL (for backward compatibility)
-  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromUrl;
+  // Get parent from scope node if available, otherwise fallback to parent
+  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title

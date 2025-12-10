@@ -2001,11 +2001,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableTextAreaField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2061,9 +2056,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    },
-    "no-restricted-syntax": {
       "count": 3
     }
   },
