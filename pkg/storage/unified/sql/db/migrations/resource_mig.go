@@ -310,7 +310,7 @@ type resourceHistoryRow struct {
 	ResourceVersion int64  `xorm:"resource_version"`
 	Action          int64  `xorm:"action"`
 	Folder          string `xorm:"folder"`
-	KeyPath		    string `xorm:"key_path"`
+	KeyPath         string `xorm:"key_path"`
 }
 
 func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
