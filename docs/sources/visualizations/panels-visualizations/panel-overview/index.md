@@ -175,9 +175,10 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `pl`: Hide or show legend
 - `pr`: Remove Panel
 
-## Zoom panel time range
+## Pan and zoom panel time range
 
-You can zoom the panel time range in and out, which in turn, changes the dashboard time range.
+You can pan the panel time range left and right zoom it and in and out.
+This, in turn, changes the dashboard time range.
 
 This feature is supported for the following visualizations:
 
@@ -191,7 +192,7 @@ This feature is supported for the following visualizations:
 
 Click and drag on the panel to zoom in on a particular time range.
 
-The following screen recordings show this interaction in the time series and Candlestick visualizations:
+The following screen recordings show this interaction in the time series and candlestick visualizations:
 
 Time series
 
@@ -220,18 +221,6 @@ Time series
 Heatmap
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/recording-heatmap-panel-time-zoom-out-mouse.mp4" >}}
-
-## Pan panel time range
-
-You can pan the panel time range left and right, which in turn, changes the dashboard time range.
-
-This feature is supported for the following visualizations:
-
-- Candlestick
-- Heatmap
-- State timeline
-- Status history
-- Time series
 
 ### Pan
 
