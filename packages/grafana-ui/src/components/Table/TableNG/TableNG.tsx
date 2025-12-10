@@ -153,8 +153,18 @@ export function TableNG(props: TableNGProps) {
 
   const resizeHandler = useColumnResize(onColumnResize);
 
-  const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const nestedFramesFieldName = useMemo(() => {
+    if (!hasNestedFrames) {
+      return undefined;
+    }
+    const firstNestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
+    if (!firstNestedField) {
+      return undefined;
+    }
+    return getDisplayName(firstNestedField);
+  }, [data, hasNestedFrames]);
+  const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
@@ -373,7 +383,11 @@ export function TableNG(props: TableNGProps) {
           return null;
         }
 
-        const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        const expandedRecords = applySort(
+          frameToRecords(nestedData, nestedFramesFieldName),
+          nestedData.fields,
+          sortColumns
+        );
         if (!expandedRecords.length) {
           return (
             <div className={styles.noDataNested}>
@@ -397,7 +411,7 @@ export function TableNG(props: TableNGProps) {
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     }),
-    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles]
+    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles, nestedFramesFieldName]
   );
 
   const fromFields = useCallback(

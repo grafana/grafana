@@ -911,7 +911,7 @@ const traceSubFrame = (
     subFrame.add(transformSpanToTraceData(span, spanSet, trace));
   });
 
-  return subFrame;
+  return toDataFrame(subFrame);
 };
 
 interface TraceTableData {
