@@ -1663,6 +1663,13 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
 	k8sCliMock.AssertExpectations(t)
+
+	// 0 should return error
+	_, err = service.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{
+		ID: 0,
+	})
+	require.Error(t, err)
+	require.Equal(t, dashboards.ErrDashboardNotFound, err)
 }
 
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
