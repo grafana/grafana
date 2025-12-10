@@ -1023,6 +1023,9 @@
     },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchUsers": {
       "get": {
+        "tags": [
+          "Search"
+        ],
         "description": "User search",
         "operationId": "getSearchUser",
         "parameters": [
@@ -1114,7 +1117,44 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "offset",
+                    "totalHits",
+                    "hits",
+                    "queryCost",
+                    "maxScore"
+                  ],
+                  "properties": {
+                    "hits": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "maxScore": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "offset": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    },
+                    "queryCost": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "totalHits": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    }
+                  }
+                }
               }
             }
           }

@@ -57,6 +57,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Description: "User search",
+							Tags:        []string{"Search"},
 							OperationId: "getSearchUser",
 							Parameters: []*spec3.Parameter{
 								{

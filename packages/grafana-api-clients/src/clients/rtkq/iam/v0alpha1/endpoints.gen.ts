@@ -165,6 +165,18 @@ const injectedRtkApi = api
         }),
         providesTags: ['Search'],
       }),
+      getSearchUser: build.query<GetSearchUserApiResponse, GetSearchUserApiArg>({
+        query: (queryArg) => ({
+          url: `/searchUsers`,
+          params: {
+            query: queryArg.query,
+            limit: queryArg.limit,
+            page: queryArg.page,
+            sort: queryArg.sort,
+          },
+        }),
+        providesTags: ['Search'],
+      }),
       listServiceAccount: build.query<ListServiceAccountApiResponse, ListServiceAccountApiArg>({
         query: (queryArg) => ({
           url: `/serviceaccounts`,
@@ -895,6 +907,16 @@ export type GetSearchTeamsApiArg = {
   offset?: number;
   /** page number to start from */
   page?: number;
+};
+export type GetSearchUserApiResponse = unknown;
+export type GetSearchUserApiArg = {
+  query?: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** sortable field */
+  sort?: string;
 };
 export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
@@ -2067,6 +2089,9 @@ export type UserSpec = {
   role: string;
   title: string;
 };
+export type UserStatus = {
+  lastSeenAt: number;
+};
 export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2075,6 +2100,7 @@ export type User = {
   metadata: ObjectMeta;
   /** Spec is the spec of the User */
   spec: UserSpec;
+  status: UserStatus;
 };
 export type UserList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2120,6 +2146,8 @@ export const {
   useUpdateExternalGroupMappingMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
+  useGetSearchUserQuery,
+  useLazyGetSearchUserQuery,
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,
