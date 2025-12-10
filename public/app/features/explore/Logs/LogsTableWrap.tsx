@@ -218,7 +218,7 @@ export function LogsTableWrap(props: Props) {
               // Check displayedFields first, then fall back to current value
               const isActiveInDisplayedFields = displayedFields.includes(label);
               const currentMeta = columnsWithMetaRef.current?.[label];
-              const shouldBeActive = isActiveInDisplayedFields || currentMeta?.active || value.active || false;
+              const shouldBeActive = isActiveInDisplayedFields || currentMeta?.active || value.active;
               const index = isActiveInDisplayedFields
                 ? displayedFields.indexOf(label)
                 : (currentMeta?.index ?? value.index);
