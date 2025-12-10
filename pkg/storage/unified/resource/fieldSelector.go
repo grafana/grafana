@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -47,10 +46,6 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 					rsp.ResourceVersion = found.ResourceVersion
 				}
 			}
-		}
-
-		if rsp.ResourceVersion < 1 {
-			rsp.ResourceVersion = time.Now().UnixMilli()
 		}
 		return rsp
 	}
