@@ -14,10 +14,13 @@ jest.mock('@grafana/runtime/internal', () => ({
   })),
 }));
 
-// Helper to get the UserStorage mock instance (created when useSavedSearches module loads)
+// Capture reference to the mock instance at module load time
+// (before beforeEach can call clearAllMocks and wipe mock.results)
+const mockUserStorageInstance = (UserStorage as jest.Mock).mock.results[0]?.value;
+
+// Helper to get the UserStorage mock instance
 function getMockUserStorageInstance() {
-  const mockUserStorage = UserStorage as jest.Mock;
-  return mockUserStorage.mock.results[0]?.value;
+  return mockUserStorageInstance;
 }
 
 jest.mock('@grafana/runtime', () => ({
