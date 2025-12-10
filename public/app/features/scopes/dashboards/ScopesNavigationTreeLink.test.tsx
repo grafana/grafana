@@ -209,7 +209,7 @@ describe('ScopesNavigationTreeLink', () => {
       const link = screen.getByTestId('scopes-dashboards-test-id');
       await userEvent.click(link);
 
-      expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith('currentScope');
+      expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith('currentScope', undefined, undefined);
     });
 
     it('should not set navigation scope when already set', async () => {
