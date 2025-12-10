@@ -171,7 +171,7 @@ This example alerts when the number of running virtual machines drops below a th
      | where properties.extended.instanceView.powerState.displayStatus == "VM running"
      | summarize RunningVMs = count()
      ```
-     
+
 1. Add expressions:
    - **Reduce**: Last
    - **Threshold**: Is below 3
