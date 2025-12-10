@@ -53,7 +53,7 @@ The following limitations apply:
 Before you begin, ensure you have the following:
 
 - Administration rights in your Grafana organization
-- A GitHub access token. The Grafana UI will prompt you during setup. 
+- A GitHub access token. The Grafana UI will prompt you during setup.
   - If you're using the [Grafana CLI to set up Git Sync](#set-up-git-sync-using-grafana-cli), your token needs the scopes `repo`, `pull_requests`, and `webhooks`
 - A GitHub repository to store your dashboards in
 - Optional: A public Grafana instance
@@ -77,8 +77,8 @@ To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
 Optionally, you can [extend Git Sync](#configure-webhooks-and-image-rendering) by enabling pull request notifications and image previews of dashboard changes.
 
-| Capability                                            | Benefit                                                                         | Requires                               |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------- |
+| Capability                                            | Benefit                                                                        | Requires                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
 | Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub                       | Webhooks configured                    |
 | Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana | Image renderer and webhooks configured |
 
@@ -181,7 +181,7 @@ To set up Git Sync with Grafana CLI, follow these steps:
 1. [Manage repository resources](#manage-repository-resources)
 1. [Verify setup](#verify-setup)
 
-For more information, refer to the following documents: 
+For more information, refer to the following documents:
 
 - [grafanactl Documentation](https://grafana.github.io/grafanactl/)
 - [Repository CRD Reference](/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/)
@@ -234,20 +234,20 @@ Only `target: folder` is currently supported for Git Sync.
 
 The following configuration parameters are available:
 
-| Field | Description |
-|-------|-------------|
-| `metadata.name` | Unique identifier for this repository resource |
-| `spec.title` | Human-readable name displayed in Grafana UI |
-| `spec.type` | Repository type (`github`) |
-| `spec.github.url` | GitHub repository URL |
-| `spec.github.branch` | Branch to sync |
-| `spec.github.path` | Directory path containing dashboards |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) |
-| `spec.sync.enabled` | Enable synchronization (true/false) |
-| `spec.sync.intervalSeconds` | Sync interval in seconds |
-| `spec.sync.target` | Where to place synced dashboards (`folder`) |
-| `spec.workflows` | Enabled workflows: `write` (direct commits), `branch` (PRs) |
-| `secure.token.create` | GitHub Personal Access Token |
+| Field                                   | Description                                                 |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `metadata.name`                         | Unique identifier for this repository resource              |
+| `spec.title`                            | Human-readable name displayed in Grafana UI                 |
+| `spec.type`                             | Repository type (`github`)                                  |
+| `spec.github.url`                       | GitHub repository URL                                       |
+| `spec.github.branch`                    | Branch to sync                                              |
+| `spec.github.path`                      | Directory path containing dashboards                        |
+| `spec.github.generateDashboardPreviews` | Generate preview images (true/false)                        |
+| `spec.sync.enabled`                     | Enable synchronization (true/false)                         |
+| `spec.sync.intervalSeconds`             | Sync interval in seconds                                    |
+| `spec.sync.target`                      | Where to place synced dashboards (`folder`)                 |
+| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs) |
+| `secure.token.create`                   | GitHub Personal Access Token                                |
 
 ### Push the repository CRD to Grafana
 
