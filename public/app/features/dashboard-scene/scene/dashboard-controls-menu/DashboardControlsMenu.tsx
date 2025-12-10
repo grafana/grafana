@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
@@ -17,8 +17,6 @@ interface DashboardControlsMenuProps {
 }
 
 export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
-  const styles = useStyles2(getStyles);
-
   return (
     <Box
       minWidth={32}
