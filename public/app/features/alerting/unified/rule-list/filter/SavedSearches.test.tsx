@@ -106,8 +106,11 @@ describe('SavedSearches', () => {
 
       await user.click(screen.getByRole('button', { name: /saved searches/i }));
 
-      const saveButton = await screen.findByRole('button', { name: /save current search/i });
-      // Check for native disabled attribute (Button component may set aria-disabled inconsistently)
+      // Use findByText + closest because findByRole fails to find disabled Grafana Button
+      // (due to aria-disabled="false" + disabled="" attribute mismatch in Grafana UI)
+      const saveButtonText = await screen.findByText(/save current search/i);
+      // eslint-disable-next-line testing-library/no-node-access
+      const saveButton = saveButtonText.closest('button');
       expect(saveButton).toBeDisabled();
     });
 
