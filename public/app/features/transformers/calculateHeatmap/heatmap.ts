@@ -73,6 +73,28 @@ function parseNumeric(v?: string | null) {
   return v === '+Inf' ? Infinity : v === '-Inf' ? -Infinity : +(v ?? 0);
 }
 
+/**
+ * Calculate the expansion factor from adjacent bucket values.
+ * This is used to estimate the size/bound of the next bucket based on the spacing of existing buckets.
+ *
+ * @param bucketValues - Array of bucket boundary values
+ * @param defaultFactor - Factor to use if ratio cannot be determined (default: 1.5 for 50% expansion)
+ * @returns The calculated or default expansion factor
+ */
+export function calculateBucketFactor(bucketValues: number[], defaultFactor = 1.5): number {
+  if (bucketValues.length >= 2) {
+    const last = bucketValues.at(-1)!;
+    const prev = bucketValues.at(-2)!;
+
+    // Calculate ratio if values are positive and result is reasonable
+    if (prev !== 0 && !Number.isNaN(last / prev) && last / prev > 0) {
+      return last / prev;
+    }
+  }
+
+  return defaultFactor;
+}
+
 export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
@@ -180,16 +202,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     bucketBoundsMax = bucketBounds.slice();
     bucketBoundsMax.shift();
 
-    // Calculate the factor from adjacent buckets if possible
-    let factor = 1.07; // default factor
-    if (bucketBounds.length >= 2) {
-      const last = bucketBounds.at(-1)!;
-      const prev = bucketBounds.at(-2)!;
-      if (prev !== 0 && !Number.isNaN(last / prev) && last / prev > 0) {
-        factor = last / prev;
-      }
-    }
-
+    // Calculate the factor from adjacent buckets to estimate the upper bound of the last bucket
+    const factor = calculateBucketFactor(bucketBounds);
     bucketBoundsMax.push(bucketBounds.at(-1)! * factor);
     custom.yMatchWithLabel = undefined;
   } else {
