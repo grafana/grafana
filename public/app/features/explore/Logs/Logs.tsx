@@ -51,7 +51,6 @@ import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
-import { LOG_LINE_BODY_FIELD_NAME, TABLE_LINE_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
@@ -84,6 +83,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+import { migrateLegacyColumns } from './utils/columnMigration';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getExploreBaseUrl } from './utils/url';
 
@@ -352,117 +352,33 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // Parse URL to check for legacy columns
     const urlParams = location.getSearchObject();
     const [urlState] = parseURL(urlParams);
-    const urlPane = urlState.panes[exploreId];
+
+    // Find the pane - exploreId might not match the URL pane key directly
+    const urlPane = urlState.panes[exploreId] ?? Object.values(urlState.panes)[0];
 
     if (!urlPane?.panelsState?.logs) {
       return;
     }
 
-    // Check for legacy columns in URL panelsState
-    const logsState = urlPane.panelsState.logs;
-    const hasColumns = 'columns' in logsState;
-    if (!hasColumns) {
+    // Get current displayedFields to use as defaults for merge
+    const currentDisplayedFields = displayedFields;
+
+    // Use migration utility to parse and transform legacy columns
+    const mergedFields = migrateLegacyColumns(urlPane.panelsState.logs, currentDisplayedFields);
+    if (!mergedFields) {
       return;
     }
 
-    // Use Object.getOwnPropertyDescriptor to safely access the property
-    const columnsDescriptor = Object.getOwnPropertyDescriptor(logsState, 'columns');
-    const columnsValue = columnsDescriptor?.value;
-
-    // Type guard to validate columns format
-    let legacyColumns: Record<string, string> | string[] | undefined = undefined;
-    if (Array.isArray(columnsValue)) {
-      legacyColumns = columnsValue;
-    } else if (typeof columnsValue === 'object' && columnsValue !== null && !Array.isArray(columnsValue)) {
-      const values = Object.values(columnsValue);
-      if (values.length > 0 && values.every((v) => typeof v === 'string')) {
-        // Create a new object to avoid type assertion
-        const record: Record<string, string> = {};
-        for (const [key, value] of Object.entries(columnsValue)) {
-          if (typeof value === 'string') {
-            record[key] = value;
-          }
-        }
-        legacyColumns = record;
-      }
-    }
-
-    if (!legacyColumns) {
-      return;
-    }
-
-    // Convert columns to array format
-    let columnsArray: string[] = [];
-    if (Array.isArray(legacyColumns)) {
-      columnsArray = legacyColumns;
-    } else if (typeof legacyColumns === 'object' && legacyColumns !== null) {
-      // Handle object format like {0: 'Time', 1: 'Line'}
-      columnsArray = Object.values(legacyColumns);
-    }
-
-    // Map legacy field names to new field names
-    const mappedColumns = columnsArray.map((column) => {
-      // Map 'Line' to LOG_LINE_BODY_FIELD_NAME
-      if (column === TABLE_LINE_FIELD_NAME) {
-        return LOG_LINE_BODY_FIELD_NAME;
-      }
-      // Other fields like 'Time' stay the same
-      return column;
-    });
-
-    // Merge with defaultDisplayedFields: defaults first, then migrated columns (avoid duplicates)
-    const mergedFields: string[] = [...defaultDisplayedFields];
-    mappedColumns.forEach((column) => {
-      if (!mergedFields.includes(column)) {
-        mergedFields.push(column);
-      }
-    });
-
-    // Update displayedFields in state
-    const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
-    if (state?.panelsState?.logs) {
-      // Create new logs state without columns property
-      // Explicitly exclude 'columns' by copying only the properties we want
-      const logsState = state.panelsState.logs;
-      const newLogsState: ExploreLogsPanelState = {
-        visualisationType: logsState.visualisationType,
+    // Update displayedFields in Redux state - URL sync will handle URL update
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined, // Remove columns from URL
         displayedFields: mergedFields,
-        ...(logsState.labelFieldName && { labelFieldName: logsState.labelFieldName }),
-        ...(logsState.refId && { refId: logsState.refId }),
-        ...(logsState.id && { id: logsState.id }),
-      };
-
-      dispatch(changePanelState(exploreId, 'logs', newLogsState));
-
-      // Remove columns from URL by re-serializing all panes
-      // Use the updated state we just created (without columns) instead of reading from Redux
-      const allPanes = getState().explore.panes;
-      const panesObj = Object.entries(allPanes).reduce((acc, [id, paneState]) => {
-        if (!paneState) {
-          return acc;
-        }
-        // For the current exploreId, use the updated state without columns
-        let stateToSerialize = paneState;
-        if (id === exploreId) {
-          // Create updated pane state with the new logs state (without columns)
-          stateToSerialize = {
-            ...paneState,
-            panelsState: {
-              ...paneState.panelsState,
-              logs: newLogsState,
-            },
-          };
-        }
-        return {
-          ...acc,
-          [id]: getUrlStateFromPaneState(stateToSerialize),
-        };
-      }, {});
-
-      // Update URL - columns will be excluded since it's not in the type definition
-      location.partial({ panes: JSON.stringify(panesObj) }, false);
-    }
-  }, [exploreId, displayedFields, defaultDisplayedFields, dispatch, location]);
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   // actions
   const onLogRowHover = useCallback(
