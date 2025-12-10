@@ -6,7 +6,6 @@ import { Align, VariableSizeList } from 'react-window';
 
 import {
   CoreApp,
-  CustomHighlight,
   DataFrame,
   EventBus,
   EventBusSrv,
@@ -34,7 +33,6 @@ import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
-import { LogListHighlightContextProvider, useLogListHighlightContext } from './LogListHighlightContext';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
 import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
@@ -158,8 +156,6 @@ export const LogList = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
-  panelState,
-  onPanelStateChange,
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
@@ -177,21 +173,6 @@ export const LogList = ({
   timeZone,
   wrapLogMessage,
 }: Props) => {
-  const customHighlights = (panelState?.customHighlights ?? []).map((h, index) => ({
-    ...h,
-    colorIndex: h.colorIndex ?? index % 8,
-  }));
-
-  const handleHighlightsChange = useCallback(
-    (highlights: CustomHighlight[]) => {
-      onPanelStateChange?.({
-        ...panelState,
-        customHighlights: highlights.length > 0 ? highlights : undefined,
-      });
-    },
-    [panelState, onPanelStateChange]
-  );
-
   return (
     <LogListContextProvider
       app={app}
@@ -243,27 +224,22 @@ export const LogList = ({
         showControls={showControls}
       >
         <LogListSearchContextProvider>
-          <LogListHighlightContextProvider
-            customHighlights={customHighlights}
-            onHighlightsChange={handleHighlightsChange}
-          >
-            <LogListComponent
-              containerElement={containerElement}
-              dataFrames={dataFrames}
-              eventBus={eventBus}
-              getFieldLinks={getFieldLinks}
-              grammar={grammar}
-              initialScrollPosition={initialScrollPosition}
-              infiniteScrollMode={infiniteScrollMode}
-              loading={loading}
-              loadMore={loadMore}
-              logs={logs}
-              showControls={showControls}
-              showFieldSelector={showFieldSelector}
-              timeRange={timeRange}
-              timeZone={timeZone}
-            />
-          </LogListHighlightContextProvider>
+          <LogListComponent
+            containerElement={containerElement}
+            dataFrames={dataFrames}
+            eventBus={eventBus}
+            getFieldLinks={getFieldLinks}
+            grammar={grammar}
+            initialScrollPosition={initialScrollPosition}
+            infiniteScrollMode={infiniteScrollMode}
+            loading={loading}
+            loadMore={loadMore}
+            logs={logs}
+            showControls={showControls}
+            showFieldSelector={showFieldSelector}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         </LogListSearchContextProvider>
       </LogDetailsContextProvider>
     </LogListContextProvider>
@@ -306,7 +282,6 @@ const LogListComponent = ({
     wrapLogMessage,
   } = useLogListContext();
   const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
-  const { customHighlights, addHighlight } = useLogListHighlightContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
@@ -382,7 +357,6 @@ const LogListComponent = ({
       preProcessLogs(
         logs,
         {
-          customHighlights,
           getFieldLinks,
           escape: forceEscape ?? false,
           prettifyJSON,
@@ -396,18 +370,7 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [
-    customHighlights,
-    forceEscape,
-    getFieldLinks,
-    grammar,
-    logs,
-    prettifyJSON,
-    sortOrder,
-    timeZone,
-    virtualization,
-    wrapLogMessage,
-  ]);
+  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -509,7 +472,7 @@ const LogListComponent = ({
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
-            onClickHighlightText={addHighlight}
+            onClickHighlightText={() => console.log('todo')}
             onDisable={onDisablePopoverMenu}
           />
         )}

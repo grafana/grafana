@@ -435,13 +435,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [sortOrderChanged]
   );
 
-  const onPanelStateChange = useCallback(
-    (newState: ExploreLogsPanelState) => {
-      dispatch(changePanelState(exploreId, 'logs', newState));
-    },
-    [dispatch, exploreId]
-  );
-
   const onChangeVisualisation = useCallback(
     (visualisation: LogsVisualisationType) => {
       setVisualisationType(visualisation);
@@ -1162,8 +1155,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
                   onUnpinLine={onPinToContentOutlineClick}
-                  panelState={panelState?.logs}
-                  onPanelStateChange={onPanelStateChange}
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}

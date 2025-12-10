@@ -76,11 +76,6 @@ export interface ExploreTracePanelState {
   spanFilters?: TraceSearchProps;
 }
 
-export interface CustomHighlight {
-  text: string;
-  colorIndex: number;
-}
-
 export interface ExploreLogsPanelState {
   id?: string;
   columns?: Record<number, string>;
@@ -93,7 +88,6 @@ export interface ExploreLogsPanelState {
   // Column sort state for table view. Persists between query changes.
   tableSortBy?: string;
   tableSortDir?: 'asc' | 'desc';
-  customHighlights?: CustomHighlight[];
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
