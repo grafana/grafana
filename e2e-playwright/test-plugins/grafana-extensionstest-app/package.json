@@ -6,7 +6,8 @@
     "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
     "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx ."
+    "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx .",
+    "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -19,18 +20,20 @@
     "@types/react-dom": "18.3.5",
     "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",
-    "glob": "10.4.1",
+    "glob": "10.5.0",
+    "i18next-cli": "^1.24.22",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
     "webpack": "5.95.0",
     "webpack-merge": "5.10.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">= 22 <25"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
+    "@grafana/i18n": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -42,5 +45,6 @@
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
-  }
+  },
+  "packageManager": "yarn@4.11.0"
 }

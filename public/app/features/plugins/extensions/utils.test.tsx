@@ -785,7 +785,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
 
       expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
@@ -818,7 +817,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
 
       expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
@@ -965,7 +963,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
     });
 
@@ -995,7 +992,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
     });
   });

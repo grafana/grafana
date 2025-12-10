@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "如果您使用的是 2008 和 2008R2 等旧版本的 Microsoft SQL Server，可能需要禁用加密才能连接。",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "按时间间隔划分的自动分组下限。如果数据每分钟写入一次，建议设置为写入频率，例如<1>{{exampleInterval}}</1>。",
       "description-tls-cert": "包含签署 SQL Server 证书的 CA 的公钥证书的文件路径。服务器证书为自签名时需要。",
       "label-auth-settings": "Azure 身份验证设置",
       "label-auth-type": "身份验证类型",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "指明是否应使用 DNS `SRV`记录来定位领域的 KDC 和其他服务器。默认值为 <1>{{default}}</1>。",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "<2>MIT krb5 软件包</2>配置文件的路径。默认值为 <4>{{default}}</4>。",
       "description-udp-preference-limit": "默认值为 <1>{{default}}</1>，表示始终使用 TCP，为可选项。",
       "label-dns-lookup-kdc": "DNS 查询 KDC",
       "label-krb5-config-file-path": "krb5 配置文件路径",

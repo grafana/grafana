@@ -74,6 +74,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  configure-grafana-azure-auth:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
+  configure-grafana-azure:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
+  configure-grafana-azure-auth-scopes:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
 ---
 
 # Configure the Microsoft SQL Server data source
@@ -138,14 +153,15 @@ If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, y
 
 **Authentication:**
 
-| Authentication Type                                 | Description                                                                                                                     | Credentials / Fields                                                                                  |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **SQL Server Authentication**                       | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                  | - **Username**: SQL Server username<br>- **Password**: SQL Server password                            |
-| **Windows Authentication**<br>(Integrated Security) | Uses the logged-in Windows user's credentials via single sign-on. Available only when SQL Server allows Windows Authentication. | No input required; uses the logged-in Windows user's credentials                                      |
-| **Windows AD**<br>(Username/Password)               | Authenticates a domain user with their Active Directory username and password.                                                  | - **Username**: `user@example.com`<br>- **Password**: Active Directory password                       |
-| **Windows AD**<br>(Keytab)                          | Authenticates a domain user using a keytab file.                                                                                | - **Username**: `user@example.com`<br>- **Keytab file path**: Path to your keytab file                |
-| **Windows AD**<br>(Credential Cache)                | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                 | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                  |
-| **Windows AD**<br>(Credential Cache File)           | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json` |
+| Authentication Type                                   | Description                                                                                                                     | Credentials / Fields                                                                                                                                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SQL Server Authentication**                         | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                  | - **Username**: SQL Server username<br>- **Password**: SQL Server password                                                                                                                |
+| **Windows Authentication**<br>(Integrated Security)   | Uses the logged-in Windows user's credentials via single sign-on. Available only when SQL Server allows Windows Authentication. | No input required; uses the logged-in Windows user's credentials                                                                                                                          |
+| **Windows AD**<br>(Username/Password)                 | Authenticates a domain user with their Active Directory username and password.                                                  | - **Username**: `user@example.com`<br>- **Password**: Active Directory password                                                                                                           |
+| **Windows AD**<br>(Keytab)                            | Authenticates a domain user using a keytab file.                                                                                | - **Username**: `user@example.com`<br>- **Keytab file path**: Path to your keytab file                                                                                                    |
+| **Windows AD**<br>(Credential Cache)                  | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                 | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                                                                                                      |
+| **Windows AD**<br>(Credential Cache File)             | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json`                                                                                     |
+| **Azure Entra ID (formerly Azure AD) Authentication** | Authenticates the data source using Azure authentication methods.                                                               | Details on the supported authentication methods and how to configure them can be found in the [Azure authentication section](./index.md#azure-entra-id-formerly-azure-ad-authentication). |
 
 **Additional settings:**
 
@@ -184,6 +200,123 @@ Click **Manage private data source connect** to open your PDC connection page an
 After configuring your MSSQL data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
 **Database Connection OK**
+
+### Azure Entra ID (formerly Azure AD) Authentication
+
+The following Azure authentication methods are supported:
+
+- Current User authentication
+- App Registration
+- Managed Identity
+- Azure Entra Password
+
+The Azure SQL Server that you are connecting to should support Azure Entra authentication to support adding the App Registration as a user in the database. For configuration details, refer to the [Azure SQL documentation](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?view=azuresql&tabs=azure-portal).
+
+#### Current User authentication
+
+This is the recommended authentication mechanism when working with SQL Server instances that are hosted in Azure. It allows users to be authenticated to and query the database using their own credentials rather than long-lived credentials.
+
+This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](ref:configure-grafana-azure-auth).
+
+{{< admonition type="note" >}}
+Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
+
+The App Registration must be configured to issue both **Access Tokens** and **ID Tokens**.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+2. Select **Authentication** in the side menu.
+3. Under **Implicit grant and hybrid flows** check both the **Access tokens** and **ID tokens** boxes.
+4. Save the changes to ensure the App Registration is updated.
+
+The App Registration must also be configured with additional **API Permissions** to provide authenticated users with access to the APIs utilised by the data source.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+1. Select **API Permissions** in the side menu.
+1. Ensure the `openid`, `profile`, `email`, and `offline_access` permissions are present under the **Microsoft Graph** section. If not, they must be added.
+1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
+   - Select **APIs my organization uses** > Search for **Azure SQL** and select it > **Delegated permissions** > `user_impersonation` > **Add permissions**
+
+After all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. After updated the scopes value should equal: `.default openid email profile`.
+{{< /admonition >}}
+
+This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope. Affected functionality includes alerting, reporting, and recorded queries. Also, note that query and resource caching is disabled by default for data sources using current user authentication.
+
+**To enable current user authentication for Grafana:**
+
+1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+
+   ```ini
+   [azure]
+   user_identity_enabled = true
+   ```
+
+2. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Current User**.
+
+### App Registration
+
+You must create an app registration and service principal in Azure Entra to authenticate the data source.
+For configuration details, refer to the [Azure documentation for service principals](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
+
+After the app registration has been created, make note of the tenant ID, client ID, and client secret. Take the following steps to add the app registration as a SQL user:
+
+1. Connect to your Azure SQL database as a user with administrative permissions (the user used here must have the ability to read your Azure Entra directory e.g. by possessing the `Directory Readers` role).
+2. Run `CREATE USER [$IDENTITY_NAME] FROM EXTERNAL PROVIDER;`, substituting `IDENTITY_NAME` with the app registration name.
+3. Grant the created user the appropriate level of permissions for your use-case. It is recommended that users configured for data sources only have reader permissions.
+
+After the appropriate permissions have been granted, configure the SQL Server data source to use the app registration:
+
+1. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **App Registration**.
+2. Set the **Azure Cloud** value to the correct value. If you are using the Azure public cloud this will be **Azure**.
+3. Set the **Directory (tenant) ID**, **Application (client) ID**, and **Client Secret** values to those for your app registration.
+
+### Managed Identity
+
+{{< admonition type="note" >}}
+Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or Grafana OSS/Enterprise when deployed in Azure. It is not available in Grafana Cloud.
+{{< /admonition >}}
+
+You can use managed identity to configure SQL Server in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM.
+This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.
+For details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
+
+**To enable managed identity for Grafana:**
+
+1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+
+   ```ini
+   [azure]
+   managed_identity_enabled = true
+   ```
+
+2. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Managed Identity**.
+
+   This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to SQL Server.
+
+3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure) to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
+
+Ensure that the managed identity used is added to your Azure SQL instance as a user.
+
+### Azure Entra Password
+
+{{< admonition type="warning" >}}
+Azure Entra Password is not a recommended authentication mechanism as it requires configuration using a single users password. Consider an alternative authentication method such as current user authentication or app registration.
+{{< /admonition >}}
+
+You can connect to an Azure SQL database using the username and password of a user that has permissions in the desired database. This also requires an app registration to be configured with access to the database.
+
+**To enable Azure Entra password for Grafana:**
+
+1. Set the `azure_entra_password_credentials_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+
+   ```ini
+   [azure]
+   azure_entra_password_credentials_enabled = true
+   ```
+
+2. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Azure Entra Password**.
+3. Set the **User ID** value to the username of the user in the Azure SQL database.
+4. Set the **Application Client ID** to the client ID of the app registration that has been added to the Azure SQL database
+5. Set the **Password** value to the password of the user in the Azure SQL database.
 
 ### Min time interval
 

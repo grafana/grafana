@@ -7,13 +7,14 @@ import (
 )
 
 type FakeService struct {
-	ExpectedTeam        team.Team
-	ExpectedIsMember    bool
-	ExpectedIsAdmin     bool
-	ExpectedTeamDTO     *team.TeamDTO
-	ExpectedTeamsByUser []*team.TeamDTO
-	ExpectedMembers     []*team.TeamMemberDTO
-	ExpectedError       error
+	ExpectedTeam              team.Team
+	ExpectedIsMember          bool
+	ExpectedIsAdmin           bool
+	ExpectedTeamDTO           *team.TeamDTO
+	ExpectedTeamsByUser       []*team.TeamDTO
+	ExpectedMembers           []*team.TeamMemberDTO
+	ExpectedSearchTeamsResult team.SearchTeamQueryResult
+	ExpectedError             error
 }
 
 func NewFakeService() *FakeService {
@@ -39,7 +40,7 @@ func (s *FakeService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamComman
 }
 
 func (s *FakeService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	return team.SearchTeamQueryResult{}, s.ExpectedError
+	return s.ExpectedSearchTeamsResult, s.ExpectedError
 }
 
 func (s *FakeService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {

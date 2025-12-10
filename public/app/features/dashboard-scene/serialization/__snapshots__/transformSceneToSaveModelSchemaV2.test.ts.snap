@@ -6,7 +6,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
-        "builtIn": false,
         "enable": true,
         "hide": false,
         "iconColor": "red",
@@ -25,7 +24,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
-        "builtIn": false,
         "enable": true,
         "hide": true,
         "iconColor": "blue",
@@ -175,6 +173,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "refresh": "onDashboardLoad",
         "regex": "regex1",
+        "regexApplyTo": "value",
         "skipUrlSync": false,
         "sort": "alphabeticalDesc",
       },
@@ -194,18 +193,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "label": "Custom Variable",
         "multi": true,
         "name": "customVar",
-        "options": [
-          {
-            "selected": true,
-            "text": "option1",
-            "value": "option1",
-          },
-          {
-            "selected": false,
-            "text": "option2",
-            "value": "option2",
-          },
-        ],
+        "options": [],
         "query": "option1, option2",
         "skipUrlSync": false,
       },

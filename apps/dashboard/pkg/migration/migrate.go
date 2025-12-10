@@ -9,8 +9,8 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider) {
-	migratorInstance.init(dsIndexProvider)
+func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) {
+	migratorInstance.init(dsIndexProvider, leIndexProvider)
 }
 
 // GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
@@ -20,12 +20,20 @@ func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
 	return migratorInstance.dsIndexProvider
 }
 
+// GetLibraryElementIndexProvider returns the library element index provider instance that was initialized.
+func GetLibraryElementIndexProvider() schemaversion.LibraryElementIndexProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.leIndexProvider
+}
+
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
 		migrations:      map[int]schemaversion.SchemaVersionMigrationFunc{},
 		ready:           make(chan struct{}),
 		dsIndexProvider: nil,
+		leIndexProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -48,12 +56,18 @@ type migrator struct {
 	ready           chan struct{}
 	migrations      map[int]schemaversion.SchemaVersionMigrationFunc
 	dsIndexProvider schemaversion.DataSourceIndexProvider
+	leIndexProvider schemaversion.LibraryElementIndexProvider
 }
 
-func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider) {
+func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) {
 	initOnce.Do(func() {
-		m.dsIndexProvider = dsIndexProvider
-		m.migrations = schemaversion.GetMigrations(dsIndexProvider)
+		// Wrap the provider once with 10s caching for all conversions.
+		// This prevents repeated DB queries across multiple conversion calls while allowing
+		// the cache to refresh periodically, making it suitable for long-lived singleton usage.
+		m.dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
+		// Wrap library element provider with caching as well
+		m.leIndexProvider = schemaversion.WrapLibraryElementProviderWithCache(leIndexProvider)
+		m.migrations = schemaversion.GetMigrations(m.dsIndexProvider, m.leIndexProvider)
 		close(m.ready)
 	})
 }

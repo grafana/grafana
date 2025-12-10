@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -286,12 +285,12 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 
-	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 }
 
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
@@ -307,20 +306,15 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 	t.Run(fmt.Sprintf("search types with dual writer mode %d", mode), func(t *testing.T) {
 		ctx := context.Background()
 
-		flags := []string{}
-		if mode >= rest.Mode3 {
-			flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
-		}
-
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
-			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
+			UnifiedStorageEnableSearch: mode >= rest.Mode3,
 		})
 		defer helper.Shutdown()
 

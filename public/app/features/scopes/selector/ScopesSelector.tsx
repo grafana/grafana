@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -17,10 +16,7 @@ import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
-  const { chrome } = useGrafana();
-  const chromeState = chrome.useState();
-  const menuDockedAndOpen = !chromeState.chromeless && chromeState.megaMenuDocked && chromeState.megaMenuOpen;
-  const styles = useStyles2(getStyles, menuDockedAndOpen);
+  const styles = useStyles2(getStyles);
   const scopes = useScopes();
 
   const services = useScopesServices();
@@ -81,7 +77,7 @@ export const ScopesSelector = () => {
       : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
-    <div className={styles.container}>
+    <>
       <IconButton
         name="web-section-alt"
         className={styles.dashboards}
@@ -136,8 +132,8 @@ export const ScopesSelector = () => {
                           selectScope={selectScope}
                           deselectScope={deselectScope}
                           toggleExpandedNode={toggleExpandedNode}
-                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
-                            scopesSelectorService.changeScopes(scopeIds, parentNodeId);
+                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => {
+                            scopesSelectorService.changeScopes(scopeIds, parentNodeId, scopeNodeId);
                             scopesSelectorService.closeAndReset();
                           }}
                         />
@@ -160,20 +156,14 @@ export const ScopesSelector = () => {
           </ErrorBoundary>
         </Drawer>
       )}
-    </div>
+    </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'row',
-      paddingLeft: menuDockedAndOpen ? theme.spacing(2) : 'unset',
-    }),
     dashboards: css({
       color: theme.colors.text.secondary,
-      marginRight: theme.spacing(2),
 
       '&:hover': css({
         color: theme.colors.text.primary,

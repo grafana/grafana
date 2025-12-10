@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
 )
 
 var logger = log.New("datasource")
@@ -71,7 +70,7 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 	var err error
 	switch strings.ToLower(typeName) {
 	case "mssql":
-		u, err = mssql.ParseURL(urlStr, logger)
+		u, err = parseURL(urlStr, logger)
 	default:
 		logger.Debug("Applying default URL parsing for this data source type", "type", typeName, "url", urlStr)
 
@@ -89,4 +88,29 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 	}
 
 	return u, nil
+}
+
+type DebugOnlyLogger interface {
+	Debug(msg string, args ...interface{})
+}
+
+// ParseURL tries to parse an URL string into a URL object.
+func parseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
+	logger.Debug("Parsing URL", "url", u)
+
+	// Recognize ODBC connection strings like host\instance:1234
+	reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?(?:;.+)?$`)
+	var host string
+	switch {
+	case reODBC.MatchString(u):
+		logger.Debug("Recognized as ODBC URL format", "url", u)
+		host = u
+	default:
+		logger.Debug("Couldn't recognize as valid MSSQL URL", "url", u)
+		return nil, fmt.Errorf("unrecognized URL format: %q", u)
+	}
+	return &url.URL{
+		Scheme: "sqlserver",
+		Host:   host,
+	}, nil
 }

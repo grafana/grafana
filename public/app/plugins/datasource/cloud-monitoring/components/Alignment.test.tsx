@@ -4,10 +4,10 @@ import { openMenu } from 'react-select-event';
 
 import { CustomVariableModel } from '@grafana/data';
 
+import { MetricKind, ValueTypes } from '../dataquery.gen';
 import { createMockDatasource } from '../mocks/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../mocks/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../mocks/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../types/query';
 
 import { Alignment } from './Alignment';
 

@@ -1,14 +1,16 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
+import { DataQueryError, DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiQuery } from './types';
 
 jest.mock('./tracking');
 jest.mock('uuid', () => ({
@@ -16,6 +18,7 @@ jest.mock('uuid', () => ({
 }));
 
 const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
+const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
 const originalErr = console.error;
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -26,22 +29,23 @@ beforeAll(() => {
     callback();
   });
   config.featureToggles.lokiShardSplitting = false;
+  config.featureToggles.lokiQueryLimitsContext = true;
 });
 afterAll(() => {
   jest.mocked(global.setTimeout).mockReset();
   config.featureToggles.lokiShardSplitting = originalShardingFlagState;
+  config.featureToggles.lokiQueryLimitsContext = originalLokiQueryLimitsContextState;
   console.error = originalErr;
 });
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
+  const from = dateTime('2023-02-08T05:00:00.000Z');
+  const to = dateTime('2023-02-10T06:00:00.000Z');
   const range = {
-    from: dateTime('2023-02-08T05:00:00.000Z'),
-    to: dateTime('2023-02-10T06:00:00.000Z'),
-    raw: {
-      from: dateTime('2023-02-08T05:00:00.000Z'),
-      to: dateTime('2023-02-10T06:00:00.000Z'),
-    },
+    from,
+    to,
+    raw: { from, to },
   };
 
   const createRequest = (targets: LokiQuery[], overrides?: Partial<DataQueryRequest<LokiQuery>>) => {
@@ -94,20 +98,59 @@ describe('runSplitQuery()', () => {
     });
   });
 
-  test('Retries retriable failed requests', async () => {
+  test('Retries retriable failed requests (timeout)', async () => {
     jest
       .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      // 3 days, 3 chunks, 1 retry, 4 requests.
+      .mockReturnValueOnce(
+        of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
+      );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Done);
+      // 3 days, 3 chunks, 1 retry = 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  test('Does not retry max bytes errors (error on initial)', async () => {
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
+        data: [],
+      })
+    );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Error);
+      // Stop immediately
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('Does not retry max bytes errors (error on subsequent)', async () => {
+    const { logFrameA } = getMockFrames();
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }))
+      .mockReturnValueOnce(
+        of({
+          state: LoadingState.Error,
+          errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
+          data: [],
+        })
+      );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Error);
+      // Stop immediately after error
+      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
     });
   });
 
   test('Does not retry failed queries as an option', async () => {
     jest
       .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+      .mockReturnValueOnce(
+        of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
+      );
     await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
       // No retries
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
@@ -165,6 +208,19 @@ describe('runSplitQuery()', () => {
               _i: 1676008800000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: {
+                expr: 'count_over_time({a="b"}[1m])',
+                from: from.valueOf(),
+                to: to.valueOf(),
+              },
+            },
+          ],
         })
       );
 
@@ -183,6 +239,15 @@ describe('runSplitQuery()', () => {
               _i: 1676005140000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: undefined,
+            },
+          ],
         })
       );
 
@@ -201,6 +266,15 @@ describe('runSplitQuery()', () => {
               _i: 1675918740000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: undefined,
+            },
+          ],
         })
       );
     });
@@ -225,6 +299,19 @@ describe('runSplitQuery()', () => {
               _i: 1676008800000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: {
+                expr: 'count_over_time({a="b"}[1m])',
+                from: from.valueOf(),
+                to: to.valueOf(),
+              },
+            },
+          ],
         })
       );
 
@@ -243,6 +330,15 @@ describe('runSplitQuery()', () => {
               _i: 1676005190000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: undefined,
+            },
+          ],
         })
       );
 
@@ -261,21 +357,87 @@ describe('runSplitQuery()', () => {
               _i: 1675918790000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: undefined,
+            },
+          ],
         })
       );
     });
   });
 
-  test('Handles and reports errors', async () => {
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
+  test('Handles and reports 5xx error too many bytes', async () => {
+    const error: DataQueryError = {
+      message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...`,
+      status: 500,
+    };
+    const response: DataQueryResponse = {
+      state: LoadingState.Error,
+      data: [],
+      errors: [error],
+    };
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
-        expect.objectContaining({ error: { refId: 'A', message: 'Error' }, state: LoadingState.Streaming })
+        expect.objectContaining({
+          errors: [error],
+          state: LoadingState.Error,
+        })
       );
     });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+  });
+  test('Handles and reports 4xx errors', async () => {
+    const error: DataQueryError = {
+      message: 'BAD REQUEST',
+      status: 418,
+    };
+    const response: DataQueryResponse = {
+      state: LoadingState.Error,
+      data: [],
+      errors: [error],
+    };
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({
+          errors: [error],
+          state: LoadingState.Error,
+        })
+      );
+    });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+  });
+
+  test('Handles and reports errors (deprecated error)', async () => {
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(
+      of({
+        state: LoadingState.Error,
+        error: { refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...` },
+        data: [],
+        key: 'uuid',
+      })
+    );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({
+          error: { refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...` },
+          state: LoadingState.Error,
+        })
+      );
+    });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
   });
 
   describe('Hidden and empty queries', () => {

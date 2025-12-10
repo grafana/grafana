@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { AzureCredentials } from '@grafana/azure-sdk';
 import { SQLOptions } from '@grafana/sql';
 import { HttpSettingsBaseProps } from '@grafana/ui/internal';
@@ -37,6 +39,5 @@ export interface MssqlSecureOptions {
 }
 
 export type AzureAuthConfigType = {
-  azureAuthIsSupported: boolean;
   azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
 };

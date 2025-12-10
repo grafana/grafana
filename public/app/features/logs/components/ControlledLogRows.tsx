@@ -8,12 +8,12 @@ import {
   EventBusSrv,
   ExploreLogsPanelState,
   LogLevel,
+  LogRowModel,
   LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogsVisualisationType } from '../../explore/Logs/Logs';
 
@@ -42,6 +42,10 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   datasourceType?: string;
   width?: number;
   logsTableFrames?: DataFrame[];
+  displayedFields?: string[];
+  exploreId?: string;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export type LogRowsComponentProps = Omit<
@@ -150,7 +154,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       if (ref) {
         return styles.forwardedScrollableLogRows;
       }
-      return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
+      return styles.scrollableLogRows;
     }, [ref]);
 
     const scrollIntoView = useCallback(
