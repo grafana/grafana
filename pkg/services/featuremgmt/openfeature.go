@@ -26,7 +26,7 @@ type OpenFeatureConfig struct {
 	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF provider)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]bool
+	StaticFlags map[string]setting.FeatureToggle
 	// TargetingKey is used for evaluation context
 	TargetingKey string
 	// ContextAttrs are additional attributes for evaluation context
@@ -93,12 +93,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	})
 }
 
-func createProvider(
-	providerType string,
-	u *url.URL,
-	staticFlags map[string]bool,
-	httpClient *http.Client,
-) (openfeature.FeatureProvider, error) {
+func createProvider(providerType string, u *url.URL, staticFlags map[string]setting.FeatureToggle, httpClient *http.Client) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
 		return newStaticProvider(staticFlags, standardFeatureFlags)
 	}
