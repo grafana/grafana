@@ -735,7 +735,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.Template:
           const dashboardLibrary = await loadDashboardLibrary();
           rsp = ensureV2Response(dashboardLibrary);
-          console.log('rsp', rsp);
           break;
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
