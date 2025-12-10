@@ -211,11 +211,11 @@ type ResourceHistoryKeyPathBackfillMigration struct {
 }
 
 func (m *ResourceHistoryKeyPathBackfillMigration) SQL(_ migrator.Dialect) string {
-	return fmt.Sprint("resource_history key_path backfill code migration")
+	return "resource_history key_path backfill code migration"
 }
 
 func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	rows, err := getResourceHistoryRowsWithMissingKeyPath(sess, mg, resourceHistoryRow{})
+	rows, err := getResourceHistoryRows(sess, mg, resourceHistoryRow{})
 	if err != nil {
 		return err
 	}
@@ -225,11 +225,10 @@ func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *m
 			return err
 		}
 
-		rows, err = getResourceHistoryRowsWithMissingKeyPath(sess, mg, rows[len(rows)-1])
+		rows, err = getResourceHistoryRows(sess, mg, rows[len(rows)-1])
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
@@ -303,7 +302,7 @@ type resourceHistoryRow struct {
 	Folder          string `xorm:"folder"`
 }
 
-func getResourceHistoryRowsWithMissingKeyPath(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
+func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
 	var rows []resourceHistoryRow
 	offsetStatement := ""
 	if continueRow.GUID != "" {
