@@ -1238,7 +1238,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
-	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Second * 10)
+	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

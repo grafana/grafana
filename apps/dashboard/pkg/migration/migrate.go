@@ -11,7 +11,7 @@ import (
 )
 
 // DefaultCacheTTL is the default TTL for the datasource and library element caches.
-const DefaultCacheTTL = time.Second * 10
+const DefaultCacheTTL = time.Minute
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
 func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider, cacheTTL time.Duration) {
