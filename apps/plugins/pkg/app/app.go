@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
