@@ -23,6 +23,12 @@ type ExternalGroupMapping struct {
 	Spec ExternalGroupMappingSpec `json:"spec" yaml:"spec"`
 }
 
+func NewExternalGroupMapping() *ExternalGroupMapping {
+	return &ExternalGroupMapping{
+		Spec: *NewExternalGroupMappingSpec(),
+	}
+}
+
 func (o *ExternalGroupMapping) GetSpec() any {
 	return o.Spec
 }
