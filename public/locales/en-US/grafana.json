@@ -8827,6 +8827,13 @@
       "aria-label-default": "Pick a color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": "Sparkline requires at least two values to render."
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Delete",
       "cancel": "Cancel",
