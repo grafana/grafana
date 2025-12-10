@@ -798,6 +798,9 @@ func (b *batchingIterator) Next() bool {
 		return false
 	}
 
+	// No more rows in current batch - close it
+	_ = b.wrapper.Close()
+
 	// Current batch exhausted - check if we got a full batch (might be more data)
 	if b.wrapper.count < b.batchSize {
 		// Got fewer rows than batch size, so we're done
@@ -806,7 +809,6 @@ func (b *batchingIterator) Next() bool {
 	}
 
 	// Fetch next batch with LastID from last row
-	_ = b.wrapper.Close()
 	if err := b.nextBatch(b.wrapper.row.token.id); err != nil {
 		b.wrapper.err = err
 		b.done = true
