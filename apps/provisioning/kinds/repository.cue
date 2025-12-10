@@ -80,7 +80,7 @@ repository: {
 					// Enabled must be saved as true before any sync job will run
 					enabled: bool
 					// Where values should be saved
-					target: "unified" | "legacy"
+					target: "instance" | "folder"
 					// When non-zero, the sync will run periodically
 					intervalSeconds?: int
 				}

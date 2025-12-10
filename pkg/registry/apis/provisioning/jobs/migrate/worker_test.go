@@ -67,12 +67,11 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 
 func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupMocks     func(*MockMigrator, *jobs.MockJobProgressRecorder)
-		setupRepo      func(*repository.MockRepository)
-		job            provisioning.Job
-		expectedError  string
-		isLegacyActive bool
+		name          string
+		setupMocks    func(*MockMigrator, *jobs.MockJobProgressRecorder)
+		setupRepo     func(*repository.MockRepository)
+		job           provisioning.Job
+		expectedError string
 	}{
 		{
 			name: "should fail when migrate settings are missing",
@@ -97,7 +96,6 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			isLegacyActive: false,
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -114,7 +112,6 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			isLegacyActive: false,
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
