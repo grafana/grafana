@@ -35,7 +35,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -68,7 +67,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -130,7 +128,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -189,7 +186,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -226,7 +222,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -283,7 +278,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
@@ -342,7 +336,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
       await switchToAutoGrid(page, dashboardPage);
 
