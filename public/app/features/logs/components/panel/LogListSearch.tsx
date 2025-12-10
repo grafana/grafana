@@ -18,17 +18,9 @@ interface Props {
 
 export const LOG_LIST_SEARCH_HEIGHT = 48;
 export const LogListSearch = ({ listRef, logs }: Props) => {
-  const {
-    hideSearch,
-    filterLogs,
-    matchingUids,
-    setMatchingUids,
-    setSearch: setContextSearch,
-    searchVisible,
-    toggleFilterLogs,
-  } = useLogListSearchContext();
+  const { hideSearch, filterLogs, matchingUids, search, setMatchingUids, setSearch, searchVisible, toggleFilterLogs } =
+    useLogListSearchContext();
   const { displayedFields, noInteractions } = useLogListContext();
-  const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const inputRef = useRef('');
   const searchUsedRef = useRef(false);
@@ -52,7 +44,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         searchUsedRef.current = true;
       }
     },
-    [noInteractions]
+    [noInteractions, setSearch]
   );
 
   const prevResult = useCallback(() => {
@@ -86,11 +78,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
   useEffect(() => {
     if (!searchVisible) {
-      setSearch('');
-      setContextSearch(undefined);
+      setSearch(undefined);
       setMatchingUids(null);
     }
-  }, [searchVisible, setContextSearch, setMatchingUids]);
+  }, [searchVisible, setMatchingUids, setSearch]);
 
   useEffect(() => {
     const newMatchingUids = matches.map((log) => log.uid);
@@ -104,13 +95,12 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         .forEach((log) => log.setCurrentSearch(undefined));
     }
 
-    setContextSearch(search ? search : undefined);
     if (!sameLogs) {
       setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
     } else if (!matches.length) {
       setMatchingUids(null);
     }
-  }, [logs, matches, matchingUids, search, setContextSearch, setMatchingUids]);
+  }, [logs, matches, matchingUids, search, setMatchingUids]);
 
   if (!searchVisible) {
     return null;
