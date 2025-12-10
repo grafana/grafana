@@ -47,6 +47,14 @@ jest.mock('../../../../../core/services/context_srv', () => ({
   },
 }));
 
+// Mock crypto.randomUUID for test environment
+Object.defineProperty(global, 'crypto', {
+  value: {
+    ...global.crypto,
+    randomUUID: jest.fn(() => 'test-uuid-1234'),
+  },
+});
+
 const mockSavedSearches = [
   {
     id: '1',
@@ -102,6 +110,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should show error notification on load failure', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const instance = getMockUserStorageInstance();
       instance.getItem.mockRejectedValue(new Error('Storage error'));
 
@@ -115,6 +124,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should filter out invalid saved search entries', async () => {
+      jest.spyOn(console, 'warn').mockImplementation();
       const mixedData = [
         mockSavedSearches[0], // Valid
         { id: '3', name: 'Invalid', query: 123, isDefault: false }, // Invalid query type
@@ -137,6 +147,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should handle malformed JSON gracefully', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const instance = getMockUserStorageInstance();
       instance.getItem.mockResolvedValue('not valid json');
 
