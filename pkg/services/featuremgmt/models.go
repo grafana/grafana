@@ -130,9 +130,9 @@ type FeatureFlagType int
 
 const (
 	Boolean FeatureFlagType = iota
-	String
 	Integer
 	Float
+	String
 	Structure
 )
 
@@ -141,13 +141,13 @@ func (t FeatureFlagType) String() string {
 	case Boolean:
 		return "boolean"
 	case Integer:
-		return "number"
+		return "integer"
 	case Float:
 		return "float"
-	case Structure:
-		return "object"
 	case String:
 		return "string"
+	case Structure:
+		return "structure"
 	}
 
 	return "unknown"
@@ -171,14 +171,14 @@ func (t *FeatureFlagType) UnmarshalJSON(b []byte) error {
 	switch j {
 	case "boolean":
 		*t = Boolean
-	case "number":
+	case "integer":
 		*t = Integer
 	case "float":
 		*t = Float
-	case "object":
-		*t = Structure
 	case "string":
 		*t = String
+	case "structure":
+		*t = Structure
 	}
 	return nil
 }

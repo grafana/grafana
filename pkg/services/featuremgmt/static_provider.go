@@ -43,11 +43,17 @@ func newStaticProvider(confFlags map[string]bool, standardFlags []FeatureFlag) (
 	for _, flag := range standardFlags {
 		_, exists := flags[flag.Name]
 
+		// Fail fast if a flag is declared with a mismatched type
 		if exists && flag.Type != Boolean {
 			return nil, fmt.Errorf("flag %s already declared as boolean", flag.Name)
 		}
 
-		inMemFlag, err := createFlag(flag)
+		// config.ini take precedence over code
+		if exists {
+			continue
+		}
+
+		inMemFlag, err := createTypedFlag(flag)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +80,7 @@ func createInMemoryFlag(name string, enabled bool) memprovider.InMemoryFlag {
 	}
 }
 
-func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
+func createTypedFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
 	defaultVariant := "default"
 
 	var value any
@@ -82,12 +88,12 @@ func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
 	switch flag.Type {
 	case Boolean:
 		value = flag.Expression == "true"
-	case String:
-		value = flag.Expression
 	case Integer:
 		value, err = strconv.Atoi(flag.Expression)
 	case Float:
 		value, err = strconv.ParseFloat(flag.Expression, 64)
+	case String:
+		value = flag.Expression
 	case Structure:
 		err = json.Unmarshal([]byte(flag.Expression), &value)
 	default:
