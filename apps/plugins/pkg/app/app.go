@@ -3,19 +3,26 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
+	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
 func New(cfg app.Config) (app.App, error) {
-	cfg.KubeConfig.APIPath = "apis"
-
 	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
@@ -36,7 +43,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: pluginsv0alpha1.PluginKind(),
 			},
 			{
-				Kind: pluginsv0alpha1.PluginMetaKind(),
+				Kind: pluginsv0alpha1.MetaKind(),
 			},
 		},
 	}
@@ -59,4 +66,88 @@ func New(cfg app.Config) (app.App, error) {
 
 type PluginAppConfig struct {
 	MetaProviderManager *meta.ProviderManager
+}
+
+func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
+	metaProviderManager *meta.ProviderManager,
+) (*PluginAppInstaller, error) {
+	specificConfig := &PluginAppConfig{
+		MetaProviderManager: metaProviderManager,
+	}
+	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *pluginsappapis.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
+	}
+	defaultInstaller, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
+	if err != nil {
+		return nil, err
+	}
+
+	appInstaller := &PluginAppInstaller{
+		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
+		metaManager:  metaProviderManager,
+		ready:        make(chan struct{}),
+	}
+	return appInstaller, nil
+}
+
+type PluginAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	metaManager *meta.ProviderManager
+	authorizer  authorizer.Authorizer
+
+	// restConfig is set during InitializeApp and used by the client factory
+	restConfig *restclient.Config
+	ready      chan struct{}
+	readyOnce  sync.Once
+}
+
+func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
+	if p.restConfig == nil {
+		p.restConfig = &restConfig
+		p.readyOnce.Do(func() {
+			close(p.ready)
+		})
+	}
+	return p.AppInstaller.InitializeApp(restConfig)
+}
+
+func (p *PluginAppInstaller) InstallAPIs(
+	server appsdkapiserver.GenericAPIServer,
+	restOptsGetter generic.RESTOptionsGetter,
+) error {
+	// Create a client factory function that will be called lazily when the client is needed.
+	// This uses the rest config from the app, which is set during InitializeApp.
+	clientFactory := func(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		<-p.ready
+		if p.restConfig == nil {
+			return nil, fmt.Errorf("rest config not yet initialized, app must be initialized before client can be created")
+		}
+
+		clientGenerator := k8s.NewClientRegistry(*p.restConfig, k8s.DefaultClientConfig())
+		client, err := pluginsv0alpha1.NewPluginClientFromGenerator(clientGenerator)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create plugin client: %w", err)
+		}
+
+		return client, nil
+	}
+
+	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
+		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
+	}
+	wrappedServer := &customStorageWrapper{
+		wrapped: server,
+		replace: replacedStorage,
+	}
+	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
+}
+
+func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return p.authorizer
 }

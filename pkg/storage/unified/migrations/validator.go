@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -57,6 +58,7 @@ type CountValidator struct {
 	resource    schema.GroupResource
 	table       string
 	whereClause string
+	driverName  string
 }
 
 func NewCountValidator(
@@ -64,6 +66,7 @@ func NewCountValidator(
 	resource schema.GroupResource,
 	table string,
 	whereClause string,
+	driverName string,
 ) Validator {
 	return &CountValidator{
 		name:        "CountValidator",
@@ -71,6 +74,7 @@ func NewCountValidator(
 		resource:    resource,
 		table:       table,
 		whereClause: whereClause,
+		driverName:  driverName,
 	}
 }
 
@@ -120,22 +124,32 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 		return fmt.Errorf("failed to count %s: %w", v.table, err)
 	}
 
-	// Get unified storage count using GetStats API
-	statsResp, err := v.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-		Namespace: summary.Namespace,
-		Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
-			summary.Group, summary.Resource, summary.Namespace, err)
-	}
-
-	// Find the count for this specific resource type
 	var unifiedCount int64
-	for _, stat := range statsResp.Stats {
-		if stat.Group == summary.Group && stat.Resource == summary.Resource {
-			unifiedCount = stat.Count
-			break
+	if v.driverName == migrator.SQLite {
+		unifiedCount, err = sess.Table("resource").
+			Where("namespace = ? AND `group` = ? AND resource = ?",
+				summary.Namespace, summary.Group, summary.Resource).
+			Count()
+		if err != nil {
+			return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
+				summary.Group, summary.Resource, summary.Namespace, err)
+		}
+	} else {
+		// Get unified storage count using GetStats API
+		statsResp, err := v.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: summary.Namespace,
+			Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
+				summary.Group, summary.Resource, summary.Namespace, err)
+		}
+		// Find the count for this specific resource type
+		for _, stat := range statsResp.Stats {
+			if stat.Group == summary.Group && stat.Resource == summary.Resource {
+				unifiedCount = stat.Count
+				break
+			}
 		}
 	}
 
@@ -162,19 +176,22 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 }
 
 type FolderTreeValidator struct {
-	name     string
-	client   resourcepb.ResourceIndexClient
-	resource schema.GroupResource
+	name       string
+	client     resourcepb.ResourceIndexClient
+	resource   schema.GroupResource
+	driverName string
 }
 
 func NewFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
+	driverName string,
 ) Validator {
 	return &FolderTreeValidator{
-		name:     "FolderTreeValidator",
-		client:   client,
-		resource: resource,
+		name:       "FolderTreeValidator",
+		client:     client,
+		resource:   resource,
+		driverName: driverName,
 	}
 }
 
@@ -183,6 +200,12 @@ type legacyFolder struct {
 	UID       string `xorm:"uid"`
 	FolderUID string `xorm:"folder_uid"`
 	Title     string `xorm:"title"`
+}
+
+type unifiedFolder struct {
+	GUID   string `xorm:"guid"`
+	Name   string `xorm:"name"`
+	Folder string `xorm:"folder"`
 }
 
 func (v *FolderTreeValidator) Name() string {
@@ -218,7 +241,12 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	}
 
 	// Build unified storage folder parent map
-	unifiedParentMap, err := v.buildUnifiedFolderParentMap(ctx, summary.Namespace, log)
+	var unifiedParentMap map[string]string
+	if v.driverName == migrator.SQLite {
+		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(sess, summary.Namespace, log)
+	} else {
+		unifiedParentMap, err = v.buildUnifiedFolderParentMap(ctx, summary.Namespace, log)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to build unified folder parent map: %w", err)
 	}
@@ -340,6 +368,33 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 		}
 
 		parentMap[folderUID] = parentUID
+	}
+
+	log.Debug("Built unified folder parent map",
+		"folder_count", len(parentMap),
+		"namespace", namespace)
+
+	return parentMap, nil
+}
+
+func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
+	var folders []unifiedFolder
+	err := sess.Table("resource").
+		Cols("guid", "name", "folder").
+		Where("namespace = ? AND resource = ?", namespace, "folder").
+		Find(&folders)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query unified folders: %w", err)
+	}
+
+	parentMap := make(map[string]string)
+	for _, folder := range folders {
+		parentMap[folder.Name] = folder.Folder
+	}
+
+	if len(parentMap) == 0 {
+		log.Debug("No unified folders found for namespace", "namespace", namespace)
+		return make(map[string]string), nil
 	}
 
 	log.Debug("Built unified folder parent map",

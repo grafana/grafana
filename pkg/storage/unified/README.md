@@ -202,30 +202,58 @@ then run:
 kubectl --kubeconfig=./grafana.kubeconfig create -f folder-generate.yaml
 ```
 
-### Run as a GRPC service
+### Run as a separate GRPC service
 
-#### Start GRPC storage-server
+It is recommended to use a separate config file for the storage-server. Create a file `conf/storage-server.ini` with the following content:
 
-Make sure you have the gRPC address in the `[grafana-apiserver]` section of your config file:
 ```ini
+app_mode = development
+
+target = storage-server
+
+[database]
+type = mysql
+host = 127.0.0.1:3306
+name = unified-storage
+user = root
+password = rootpass
+skip_migrations = true
+ensure_default_org_and_user = false
+
+[grpc_server]
+network = "tcp"
+address = "127.0.0.1:10000"
+
 [grafana-apiserver]
-; your gRPC server address
-address = localhost:10000
-```
+storage_type = unified
 
-You also need the `[grpc_server_authentication]` section to authenticate incoming requests:
-```ini
 [grpc_server_authentication]
-; http url to Grafana's signing keys to validate incoming id tokens
-signing_keys_url = http://localhost:3000/api/signing-keys/keys
+signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
+
+[feature_toggles]
+kubernetesDashboards = true
+kubernetesFolders = true
+unifiedStorage = true
+unifiedStorageHistoryPruner = true
+unifiedStorageSearch = true
+unifiedStorageSearchPermissionFiltering = false
+unifiedStorageSearchSprinkles = false
+
+[unified_storage]
+enable_search = true
+https_skip_verify = true
 ```
 
-This currently only works with a separate database configuration (see previous section).
+You should also have a MySQL database running. You can create one with our docker blocks by running:
+```bash
+make devenv sources=mysql
+```
+The database credentials in the example above will work with the default mysql docker block. You'll also need to create a database named `unified-storage`.
 
 Start the storage-server with:
 ```sh
-GF_DEFAULT_TARGET=storage-server ./bin/grafana server target
+./bin/grafana server target --config conf/storage-server.ini
 ```
 
 The GRPC service will listen on port 10000
@@ -251,6 +279,35 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 - make changes in `.proto` file
 - to compile all protobuf files in the repository run `make protobuf` at its top level
+
+## Enable Quotas/Overrides
+Quotas will make unified storage impose resource limits on a namespace. By default, the limit is 1000, but it can be overridden. To enable, create an empty overrides.yaml file in the grafana root directory.
+
+Then add the following to your grafana ini:
+```ini
+[feature_toggles]
+kubernetesUnifiedStorageQuotas = true
+
+[unified_storage]
+overrides_path = overrides.yaml
+overrides_reload_period = 5s
+```
+
+To overrides the default quota for a tenant, add the following to the overrides.yaml file:
+```yaml
+overrides:
+  <NAMESPACE>:
+    quotas:
+      <GROUP>.<RESOURCE>:
+        limit: 10
+```
+Unless otherwise set, the NAMESPACE when running locally is `default`.
+
+To access quotas, use the following API endpoint:
+```
+GET /apis/quotas.grafana.app/v0alpha1/namespaces/<NAMESPACE>/usage?group=<GROUP>&resource=<RESOURCE>
+```
+
 
 ## Setting up search
 To enable it, add the following to your `custom.ini` under the `[feature_toggles]` and `[unified_storage]` sections:

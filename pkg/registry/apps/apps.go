@@ -3,6 +3,8 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -11,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
@@ -42,11 +45,17 @@ func ProvideAppInstallers(
 	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
 	advisorAppInstaller *advisor.AdvisorAppInstaller,
+	alertingHistorianAppInstaller *historian.AlertingHistorianAppInstaller,
+	quotasAppInstaller *quotas.QuotasAppInstaller,
 ) []appsdkapiserver.AppInstaller {
+	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsApplInstaller,
 		exampleAppInstaller,
+	}
+	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
+		installers = append(installers, quotasAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
@@ -74,6 +83,10 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		installers = append(installers, advisorAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingHistorian) && alertingHistorianAppInstaller != nil {
+		installers = append(installers, alertingHistorianAppInstaller)
 	}
 
 	return installers

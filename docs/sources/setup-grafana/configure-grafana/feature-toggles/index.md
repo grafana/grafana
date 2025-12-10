@@ -66,7 +66,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
+| `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
+| `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
 
@@ -95,9 +97,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
+| `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles
