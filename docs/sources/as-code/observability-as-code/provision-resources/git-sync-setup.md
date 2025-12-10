@@ -170,18 +170,31 @@ Finally, you can set up how often your configured storage is polled for updates.
 
 ## Set up Git Sync using Grafana CLI
 
-Alternatively, you can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana.
+Alternatively, you can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
-This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
+For more information, refer to the following documents: 
 
-### Prerequisites
+- [grafanactl Documentation](https://grafana.github.io/grafanactl/)
+- [Repository CRD Reference](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/)
+- [Dashboard CRD Format](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
 
-- **grafanactl CLI** - Install from https://grafana.github.io/grafanactl/
-- **GitHub repository** containing your dashboards
-- **GitHub Personal Access Token** with scopes: `repo`, `pull_requests`, `webhooks`
-- **Grafana instance** with external access (public URL or webhook endpoint)
+To set up Git Sync with Grafana CLI follow these steps:
 
-### Create Repository CRD
+1. [Create the repository CRD](#create-the-repository-crd).
+1. [Push the repository CRD to Grafana](#push-the-repository-crd-to-grafana).
+1. [Manage repository resources](#manage-repository-resources).
+1. [Verify set-up](#verify-set-up).
+
+### Requirements
+
+To set up Git Sync, you need:
+
+- The Grafana CLI. You can install it from https://grafana.github.io/grafanactl/.
+- A GitHub repository containing your dashboards.
+- A GitHub Personal Access Token with the scopes: `repo`, `pull_requests`, and `webhooks`.
+- A Grafana instance with external access, either a public URL or a webhook endpoint.
+
+### Create the repository CRD
 
 Create a `repository.yaml` file defining your Git Sync configuration:
 
@@ -212,7 +225,9 @@ secure:
 
 **Note:** Only `target: folder` is currently supported for Git Sync.
 
-#### Configuration Parameters
+#### Configuration parameters
+
+The following configuration parameters are available:
 
 | Field | Description |
 |-------|-------------|
@@ -229,9 +244,9 @@ secure:
 | `spec.workflows` | Enabled workflows: `write` (direct commits), `branch` (PRs) |
 | `secure.token.create` | GitHub Personal Access Token |
 
-### Push Repository CRD to Grafana
+### Push the repository CRD to Grafana
 
-Before pushing resources, configure `grafanactl` with your Grafana instance details. Refer to the [grafanactl configuration documentation](https://grafana.github.io/grafanactl/) for setup instructions.
+Before pushing any resources, configure `grafanactl` with your Grafana instance details. Refer to the [grafanactl configuration documentation](https://grafana.github.io/grafanactl/) for set-up instructions.
 
 Push the repository configuration:
 
@@ -239,15 +254,16 @@ Push the repository configuration:
 grafanactl resources push --path <DIRECTORY>
 ```
 
-The `--path` parameter should point to the directory containing your `repository.yaml` file.
+The `--path` parameter has to point to the directory containing your `repository.yaml` file.
 
 After pushing, Grafana will:
-1. Create the repository resource
-2. Connect to your GitHub repository
-3. Pull dashboards from the specified path
-4. Begin syncing at the configured interval
 
-### Managing Repository Resources
+1. Create the repository resource.
+2. Connect to your GitHub repository.
+3. Pull dashboards from the specified path.
+4. Begin syncing at the configured interval.
+
+### Manage repository resources
 
 #### List Repositories
 
@@ -255,7 +271,7 @@ After pushing, Grafana will:
 grafanactl resources get repositories
 ```
 
-#### Get Repository Details
+#### Get repository details
 
 ```bash
 grafanactl resources get repository/<REPOSITORY_NAME>
@@ -263,19 +279,19 @@ grafanactl resources get repository/<REPOSITORY_NAME> -o json
 grafanactl resources get repository/<REPOSITORY_NAME> -o yaml
 ```
 
-#### Update Repository
+#### Update the repository
 
 ```bash
 grafanactl resources edit repository/<REPOSITORY_NAME>
 ```
 
-#### Delete Repository
+#### Delete the repository
 
 ```bash
 grafanactl resources delete repository/<REPOSITORY_NAME>
 ```
 
-### Verify Setup
+### Verify set-up
 
 Check that Git Sync is working:
 
@@ -286,12 +302,6 @@ grafanactl resources get repositories
 # Check Grafana UI
 # Navigate to: Administration → Provisioning → Git Sync
 ```
-### Additional Resources
-
-- [grafanactl Documentation](https://grafana.github.io/grafanactl/)
-- [Repository CRD Reference](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/)
-- [Dashboard CRD Format](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
-
 ## Verify your dashboards in Grafana
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
