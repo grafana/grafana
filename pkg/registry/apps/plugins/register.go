@@ -34,7 +34,7 @@ func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClien
 	}
 
 	coreProvider := meta.NewCoreProvider()
-	cloudProvider := meta.NewCloudProvider(grafanaComAPIURL)
+	cloudProvider := meta.NewCatalogProvider(grafanaComAPIURL)
 	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
 
 	i, err := pluginsapp.ProvideAppInstaller(metaProviderManager)

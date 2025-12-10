@@ -15,7 +15,7 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
 
-func TestCloudProvider_GetMeta(t *testing.T) {
+func TestCatalogProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successfully fetches plugin metadata", func(t *testing.T) {
@@ -44,13 +44,13 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCloudProvider(server.URL + "/api/plugins")
+		provider := NewCatalogProvider(server.URL + "/api/plugins")
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		assert.Equal(t, expectedMeta, result.Meta)
-		assert.Equal(t, defaultCloudTTL, result.TTL)
+		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 
 	t.Run("returns ErrMetaNotFound for 404 status", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCloudProvider(server.URL + "/api/plugins")
+		provider := NewCatalogProvider(server.URL + "/api/plugins")
 		result, err := provider.GetMeta(ctx, "nonexistent-plugin", "1.0.0")
 
 		assert.Error(t, err)
@@ -73,7 +73,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCloudProvider(server.URL + "/api/plugins")
+		provider := NewCatalogProvider(server.URL + "/api/plugins")
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		assert.Error(t, err)
@@ -89,7 +89,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCloudProvider(server.URL + "/api/plugins")
+		provider := NewCatalogProvider(server.URL + "/api/plugins")
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		assert.Error(t, err)
@@ -98,7 +98,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid API URL", func(t *testing.T) {
-		provider := NewCloudProvider("://invalid-url")
+		provider := NewCatalogProvider("://invalid-url")
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		assert.Error(t, err)
@@ -127,7 +127,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCloudProviderWithTTL(server.URL+"/api/plugins", customTTL)
+		provider := NewCatalogProviderWithTTL(server.URL+"/api/plugins", customTTL)
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		require.NoError(t, err)
@@ -145,7 +145,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		provider := NewCloudProvider(server.URL + "/api/plugins")
+		provider := NewCatalogProvider(server.URL + "/api/plugins")
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		assert.Error(t, err)
@@ -153,34 +153,34 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 	})
 }
 
-func TestNewCloudProvider(t *testing.T) {
+func TestNewCatalogProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCloudProvider("https://grafana.com/api/plugins")
-		assert.Equal(t, defaultCloudTTL, provider.ttl)
+		provider := NewCatalogProvider("https://grafana.com/api/plugins")
+		assert.Equal(t, defaultCatalogTTL, provider.ttl)
 		assert.NotNil(t, provider.httpClient)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCloudProvider("")
+		provider := NewCatalogProvider("")
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }
 
-func TestNewCloudProviderWithTTL(t *testing.T) {
+func TestNewCatalogProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCloudProviderWithTTL("https://grafana.com/api/plugins", customTTL)
+		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", customTTL)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCloudProviderWithTTL("https://grafana.com/api/plugins", 0)
+		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", 0)
 		assert.Equal(t, time.Duration(0), provider.ttl)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCloudProviderWithTTL("", defaultCloudTTL)
+		provider := NewCatalogProviderWithTTL("", defaultCatalogTTL)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }
