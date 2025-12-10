@@ -174,6 +174,8 @@ You can also override this setting in a dashboard panel under its data source op
 Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
 {{< /admonition >}}
 
+- **Default query mode** - Specifies which query mode the data source uses by default. Options are `Metrics`, `Logs`, `Raw data`, and `Raw document`. The default is `Metrics`.
+
 ### Logs
 
 In this section you can configure which fields the data source uses for log messages and log levels.
