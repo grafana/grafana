@@ -1,7 +1,7 @@
 package setting
 
 import (
-	"strconv"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,16 +13,16 @@ func TestFeatureToggles(t *testing.T) {
 		name            string
 		conf            map[string]string
 		err             error
-		expectedToggles map[string]bool
+		expectedToggles map[string]FeatureToggle
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
 			conf: map[string]string{
 				"enable": "feature1,feature2",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": true,
+			expectedToggles: map[string]FeatureToggle{
+				"feature1": {Name: "feature1", Type: Boolean, Value: true},
+				"feature2": {Name: "feature2", Type: Boolean, Value: true},
 			},
 		},
 		{
@@ -31,10 +31,10 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature3": "true",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": true,
-				"feature3": true,
+			expectedToggles: map[string]FeatureToggle{
+				"feature1": {Name: "feature1", Type: Boolean, Value: true},
+				"feature2": {Name: "feature2", Type: Boolean, Value: true},
+				"feature3": {Name: "feature3", Type: Boolean, Value: true},
 			},
 		},
 		{
@@ -43,9 +43,9 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature2": "false",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": false,
+			expectedToggles: map[string]FeatureToggle{
+				"feature1": {Name: "feature1", Type: Boolean, Value: true},
+				"feature2": {Name: "feature2", Type: Boolean, Value: false},
 			},
 		},
 		{
@@ -54,8 +54,8 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature2": "invalid",
 			},
-			expectedToggles: map[string]bool{},
-			err:             strconv.ErrSyntax,
+			expectedToggles: map[string]FeatureToggle{},
+			err:             errors.New("type mismatch during flag declaration 'feature2': boolean, string"),
 		},
 	}
 
@@ -69,11 +69,14 @@ func TestFeatureToggles(t *testing.T) {
 		}
 
 		featureToggles, err := ReadFeatureTogglesFromInitFile(toggles)
-		require.ErrorIs(t, err, tc.err)
+		if tc.err != nil {
+			require.EqualError(t, err, tc.err.Error())
+		}
 
 		if err == nil {
 			for k, v := range featureToggles {
-				require.Equal(t, tc.expectedToggles[k], v, tc.name)
+				toggle, _ := tc.expectedToggles[k]
+				require.Equal(t, toggle, v, tc.name)
 			}
 		}
 	}
