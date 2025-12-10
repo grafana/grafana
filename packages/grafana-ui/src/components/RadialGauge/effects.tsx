@@ -8,7 +8,7 @@ export interface GlowGradientProps {
 }
 
 export function GlowGradient({ id, radius }: GlowGradientProps) {
-  const glowSize = 0.03 * radius;
+  const glowSize = 0.02 * radius;
 
   return (
     <filter id={id} filterUnits="userSpaceOnUse">

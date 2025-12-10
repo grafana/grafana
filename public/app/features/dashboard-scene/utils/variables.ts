@@ -189,12 +189,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
       query: variable.query ?? {},
       datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
+      ...(variable.regexApplyTo && { regexApplyTo: variable.regexApplyTo }),
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),

@@ -261,6 +261,10 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes unified storage quotas
+  */
+  kubernetesUnifiedStorageQuotas?: boolean;
+  /**
   * Adds support for Kubernetes logs drilldown
   */
   kubernetesLogsDrilldown?: boolean;
@@ -377,9 +381,13 @@ export interface FeatureToggles {
   */
   perPanelNonApplicableDrilldowns?: boolean;
   /**
-  * Enabled a group by action per panel
+  * Enables a group by action per panel
   */
   panelGroupBy?: boolean;
+  /**
+  * Enables filtering by grouping labels on the panel level through legend or tooltip
+  */
+  perPanelFiltering?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -980,6 +988,11 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
+  * Enables recently viewed dashboards section in the browsing dashboard page
+  * @default false
+  */
+  recentlyViewedDashboards?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1216,4 +1229,8 @@ export interface FeatureToggles {
   * @default false
   */
   useMTPlugins?: boolean;
+  /**
+  * Enables support for variables whose values can have multiple properties
+  */
+  multiPropsVariables?: boolean;
 }
