@@ -721,11 +721,15 @@ type batchingIterator struct {
 	query     *DashboardQuery
 	batchSize int
 	done      bool
+	err       error
 }
 
 var _ resource.ListIterator = (*batchingIterator)(nil)
 
 func (b *batchingIterator) Error() error {
+	if b.err != nil {
+		return b.err
+	}
 	return b.wrapper.Error()
 }
 
@@ -799,7 +803,12 @@ func (b *batchingIterator) Next() bool {
 	}
 
 	// No more rows in current batch - close it
-	_ = b.wrapper.Close()
+	if err := b.wrapper.Close(); err != nil {
+		// Should not happen, but handle it
+		b.err = err
+		b.done = true
+		return false
+	}
 
 	// Current batch exhausted - check if we got a full batch (might be more data)
 	if b.wrapper.count < b.batchSize {
@@ -810,7 +819,7 @@ func (b *batchingIterator) Next() bool {
 
 	// Fetch next batch with LastID from last row
 	if err := b.nextBatch(b.wrapper.row.token.id); err != nil {
-		b.wrapper.err = err
+		b.err = err
 		b.done = true
 		return false
 	}
