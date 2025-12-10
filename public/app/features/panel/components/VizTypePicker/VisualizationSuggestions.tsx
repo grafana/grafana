@@ -30,7 +30,17 @@ export interface Props {
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions, loading, error } = useAsync(() => getAllSuggestions(data), [data]);
+  const {
+    value: suggestions,
+    loading,
+    error,
+  } = useAsync(async () => {
+    if (!hasData(data)) {
+      return [];
+    }
+
+    return await getAllSuggestions(data);
+  }, [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
@@ -89,7 +99,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className={styles.loadingContainer}>
         <Spinner size="xxl" />
@@ -118,10 +128,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         </Text>
       </div>
     );
-  }
-
-  if (!data) {
-    return null;
   }
 
   return (
