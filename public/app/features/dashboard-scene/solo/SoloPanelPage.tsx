@@ -1,6 +1,6 @@
 // Libraries
-import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { css, cx } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -64,6 +65,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
   const soloPanelContext = useDefineSoloPanelContext(panelId)!;
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const dashDeactivate = dashboard.activate();
@@ -76,11 +78,16 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   }, [dashboard, refreshPicker]);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <div className={cx(styles.logoContainer, isHovered && styles.logoHidden)}>
+        <img src={grafanaIconSvg} alt="Grafana" className={styles.logo} />
+      </div>
       {renderHiddenVariables(dashboard)}
-      <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
-        <body.Component model={body} />
-      </SoloPanelContextProvider>
+      <div className={styles.panelWrapper}>
+        <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
+          <body.Component model={body} />
+        </SoloPanelContextProvider>
+      </div>
     </div>
   );
 }
@@ -107,15 +114,56 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    position: 'fixed',
-    bottom: 0,
-    right: 0,
-    margin: 0,
-    left: 0,
-    top: 0,
+const getStyles = (theme: GrafanaTheme2) => {
+  const logoContainer = css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+    padding: theme.spacing(1, 1.5),
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
+    opacity: 0.9,
+    pointerEvents: 'none',
+    zIndex: 1000,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: theme.shadows.z3,
+    border: `1px solid ${theme.colors.border.weak}`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.2s ease-in-out',
+    },
+  });
+
+  const logoHidden = css({
+    opacity: 0,
+  });
+
+  const logo = css({
+    width: theme.spacing(4),
+    height: theme.spacing(4),
+    display: 'block',
+  });
+
+  const panelWrapper = css({
     width: '100%',
     height: '100%',
-  }),
-});
+  });
+
+  return {
+    container: css({
+      position: 'fixed',
+      bottom: 0,
+      right: 0,
+      margin: 0,
+      left: 0,
+      top: 0,
+      width: '100%',
+      height: '100%',
+    }),
+    panelWrapper,
+    logoContainer,
+    logoHidden,
+    logo,
+  };
+};
