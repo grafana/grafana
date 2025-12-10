@@ -1059,7 +1059,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 
 	// Convert queries (targets)
-	targets := make([]map[string]interface{}, 0, len(spec.Data.Spec.Queries))
+	// Use []interface{} for consistency with JSON unmarshaling and other code paths
+	targets := make([]interface{}, 0, len(spec.Data.Spec.Queries))
 	for _, query := range spec.Data.Spec.Queries {
 		target := convertPanelQueryToV1(&query)
 		targets = append(targets, target)
