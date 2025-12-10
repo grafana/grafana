@@ -77,7 +77,6 @@ func TestSyncWorker_Process(t *testing.T) {
 		{
 			name: "failed initial status patching",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
-
 				// Setup repository config with existing LastRef
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
