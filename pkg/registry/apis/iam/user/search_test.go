@@ -63,7 +63,6 @@ func TestSearchFallback(t *testing.T) {
 					t.Fatalf("expected Unified Search to be called, but it was not")
 				}
 			} else {
-
 				if mockLegacyClient.LastSearchRequest == nil {
 					t.Fatalf("expected Legacy Search to be called, but it was not")
 				}

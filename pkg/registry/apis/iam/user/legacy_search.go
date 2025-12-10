@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"log/slog"
 	"math"
@@ -199,7 +200,9 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 		case fieldLogin:
 			cells = append(cells, []byte(u.Login))
 		case fieldLastSeenAt:
-			cells = append(cells, []byte(fmt.Sprintf("%d", u.LastSeenAt.Unix())))
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, uint64(u.LastSeenAt.Unix()))
+			cells = append(cells, b)
 		case fieldRole:
 			cells = append(cells, []byte(u.Role))
 		}

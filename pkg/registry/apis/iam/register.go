@@ -528,10 +528,6 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
-	// routes := b.teamSearch.GetAPIRoutes(defs)
-	// routes.Namespace = append(routes.Namespace, b.display.GetAPIRoutes(defs).Namespace...)
-
-	// return routes
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {

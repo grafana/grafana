@@ -276,7 +276,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	result.TotalHits = resp.TotalHits
 	result.QueryCost = resp.QueryCost
 	result.MaxScore = resp.MaxScore
-	result.Hits = make([]iamv0.UserHit, 0, resp.TotalHits)
+	result.Hits = make([]iamv0.UserHit, 0, len(resp.Results.Rows))
 
 	if resp.TotalHits > 0 {
 		for _, row := range resp.Results.Rows {
@@ -312,7 +312,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(obj)
+	if err := json.NewEncoder(w).Encode(obj); err != nil {
+		s.log.Error("failed to encode JSON response", "error", err)
+	}
 }
 
 func (s *SearchHandler) IsHiddenUser(login string, signedInUser identity.Requester) bool {
