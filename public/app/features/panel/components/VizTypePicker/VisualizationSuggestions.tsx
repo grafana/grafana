@@ -34,7 +34,13 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     value: suggestions,
     loading,
     error,
-  } = useAsync(hasData(data) ? () => getAllSuggestions(data) : () => Promise.resolve([]), [data]);
+  } = useAsync(async () => {
+    if (!hasData(data)) {
+      return [];
+    }
+
+    return await getAllSuggestions(data);
+  });
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
