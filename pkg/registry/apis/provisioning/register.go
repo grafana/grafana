@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -108,7 +107,6 @@ type APIBuilder struct {
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
 	dashboardAccess  legacy.MigrationDashboardAccessor
-	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
@@ -155,9 +153,9 @@ func NewAPIBuilder(
 	} else {
 		clients = resources.NewClientFactory(configProvider)
 	}
+
 	parsers := resources.NewParserFactory(clients)
-	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
-	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
@@ -170,7 +168,6 @@ func NewAPIBuilder(
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
-		storageStatus:                       storageStatus,
 		unified:                             unified,
 		access:                              access,
 		jobHistoryConfig:                    jobHistoryConfig,
@@ -589,10 +586,6 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return jobsvalidation.ValidateJob(job)
 	}
 
-	if b.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
-		return fmt.Errorf("resources are stored in an incompatible data format")
-	}
-
 	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
 	if err != nil {
 		return err
@@ -712,7 +705,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
-				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
 				metrics,
@@ -804,7 +796,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.clients,
 				b.jobs,
-				b.storageStatus,
 				b.GetHealthChecker(),
 				b.statusPatcher,
 				b.registry,

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -28,9 +27,6 @@ type SyncWorker struct {
 
 	// ResourceClients for the repository
 	repositoryResources resources.RepositoryResourcesFactory
-
-	// Check if the system is using unified storage
-	storageStatus dualwrite.Service
 
 	// Patch status for the repository
 	patchStatus RepositoryPatchFn
@@ -48,7 +44,6 @@ type SyncWorker struct {
 func NewSyncWorker(
 	clients resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
-	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
 	metrics jobs.JobMetrics,
@@ -59,7 +54,6 @@ func NewSyncWorker(
 		clients:             clients,
 		repositoryResources: repositoryResources,
 		patchStatus:         patchStatus,
-		storageStatus:       storageStatus,
 		syncer:              syncer,
 		metrics:             metrics,
 		tracer:              tracer,
@@ -95,13 +89,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			attribute.Int("changes_made", totalChangesMade),
 		)
 	}()
-
-	// Check if we are onboarding from legacy storage
-	// HACK -- this should be handled outside of this worker
-	if r.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
-		err := fmt.Errorf("sync not supported until storage has migrated")
-		return tracing.Error(span, err)
-	}
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
