@@ -304,14 +304,15 @@ These errors indicate problems with network connectivity between Grafana and Azu
 2. Verify corporate proxy isn't intercepting HTTPS traffic.
 3. Check that required CA certificates are installed on the Grafana server.
 
-## Get help
+## Get additional help
 
 If you've tried the solutions above and still encounter issues:
 
 1. Check the [Grafana community forums](https://community.grafana.com/) for similar issues.
-2. Review the [Azure Monitor data source GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
-3. Enable debug logging in Grafana to capture detailed error information.
-4. When reporting issues, include:
+1. Review the [Azure Monitor data source GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
+1. Enable debug logging in Grafana to capture detailed error information.
+1. Contact Grafana Support if you're an Enterprise, Cloud Pro or Cloud Contracted user.
+1. When reporting issues, include:
    - Grafana version
    - Error messages (redact sensitive information)
    - Steps to reproduce
