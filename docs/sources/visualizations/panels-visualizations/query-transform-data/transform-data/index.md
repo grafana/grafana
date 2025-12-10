@@ -12,12 +12,13 @@ comments: |
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
   Refer to ./docs/README.md "Content guidelines" for more information about editing and building these docs.
+
 aliases:
   - ../../../panels/transform-data/ # /docs/grafana/next/panels/transform-data/
   - ../../../panels/transform-data/about-transformation/ # /docs/grafana/next/panels/transform-data/about-transformation/
