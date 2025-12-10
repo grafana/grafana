@@ -8,9 +8,8 @@ import (
 func (stars *StarsSpec) Add(group, kind, name string) {
 	for i, r := range stars.Resource {
 		if r.Group == group && r.Kind == kind {
-			r.Names = append(r.Names, name)
-			slices.Sort(r.Names)
-			stars.Resource[i].Names = slices.Compact(r.Names)
+			stars.Resource[i].Names = append(r.Names, name)
+			stars.Normalize()
 			return
 		}
 	}
