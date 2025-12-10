@@ -99,7 +99,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className={styles.loadingContainer}>
         <Spinner size="xxl" />
@@ -128,10 +128,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         </Text>
       </div>
     );
-  }
-
-  if (!data) {
-    return null;
   }
 
   return (
