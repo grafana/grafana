@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -115,7 +114,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		}
 		folderUIDs := make([]string, 0, len(folders))
 		for _, f := range folders {
-			access, err := service.authz.HasAccessInFolder(ctx, user, models.Namespace(*f.ToFolderReference()))
+			access, err := service.authz.HasAccessInFolder(ctx, user, models.NewNamespace(f))
 			if err != nil {
 				return nil, nil, "", err
 			}
@@ -1051,7 +1050,7 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 		UID:          &namespaceUID,
 		SignedInUser: user,
 	})
-	if err != nil {
+	if err != nil || f == nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return fmt.Errorf("%w: folder does not exist", models.ErrAlertRuleFailedValidation)
 		}
@@ -1059,8 +1058,8 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	}
 
 	// check if the folder is managed by a manager
-	if f != nil && f.ManagedBy != utils.ManagerKindUnknown {
-		return fmt.Errorf("%w: folder is managed by %s", models.ErrAlertRuleFailedValidation, f.ManagedBy)
+	if err := models.NewNamespace(f).ValidateForRuleStorage(); err != nil {
+		return fmt.Errorf("%w: %s", models.ErrAlertRuleFailedValidation, err)
 	}
 
 	return nil

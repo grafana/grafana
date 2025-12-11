@@ -1290,7 +1290,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		require.Empty(t, updatedRules)
 	})
 
-	t.Run("should reject update when folder is managed by a manager", func(t *testing.T) {
+	t.Run("should reject update when folder is managed by ManagerKindRepo", func(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		provisioningStore := fakes.NewFakeProvisioningStore()
 
@@ -1316,7 +1316,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		}, managedFolder.UID)
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "folder is managed by")
+		require.Contains(t, string(response.Body()), "cannot store rules in folder")
 
 		// Verify no rules were updated
 		updatedRules := getRecordedUpdatedRules(ruleStore)
@@ -1325,7 +1325,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 }
 
 func TestRoutePostNameRulesConfig(t *testing.T) {
-	t.Run("should reject creation when folder is managed by a manager", func(t *testing.T) {
+	t.Run("should reject creation when folder is managed by ManagerKindRepo", func(t *testing.T) {
 		orgID := rand.Int63()
 		ruleStore := fakes.NewRuleStore(t)
 
@@ -1347,6 +1347,6 @@ func TestRoutePostNameRulesConfig(t *testing.T) {
 		}, managedFolder.UID)
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "folder is managed by")
+		require.Contains(t, string(response.Body()), "cannot store rules in folder")
 	})
 }

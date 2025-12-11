@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -413,14 +412,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		deletePermanently = true
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	// Check if the folder is managed by a manager
-	if namespace.ManagedBy != utils.ManagerKindUnknown {
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: folder is managed by %s", ngmodels.ErrAlertRuleFailedValidation, namespace.ManagedBy), "")
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
@@ -847,14 +846,13 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 		return ErrResp(http.StatusBadRequest, errors.New("missing request body"), "")
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
-
-	// Check if the folder is managed by a manager
-	if namespace.ManagedBy != utils.ManagerKindUnknown {
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: folder is managed by %s", ngmodels.ErrAlertRuleFailedValidation, namespace.ManagedBy), "")
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	ruleGroups, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
