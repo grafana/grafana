@@ -141,6 +141,8 @@ const HeatmapPanelViz = ({
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
+    const activeScaleConfig = options.rowsFrame?.yBucketScale ?? scaleConfig;
+
     return prepConfig({
       dataRef,
       theme,
@@ -151,7 +153,12 @@ const HeatmapPanelViz = ({
       hideGE: options.filterValues?.ge,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
-      ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
+      ySizeDivisor:
+        activeScaleConfig?.type === ScaleDistribution.Log || activeScaleConfig?.type === ScaleDistribution.Symlog
+          ? options.rowsFrame?.yBucketScale
+            ? 1
+            : +(options.calculation?.yBuckets?.value || 1)
+          : 1,
       selectionMode: options.selectionMode,
       xAxisConfig: getXAxisConfig(annotationsLength),
       rowsFrame: options.rowsFrame,
