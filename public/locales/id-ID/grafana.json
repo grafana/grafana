@@ -4762,6 +4762,8 @@
       "remove": "Hapus {{typeName}}",
       "row-title": "",
       "switch-layout": "Ganti tata letak",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5866,6 +5868,17 @@
       "label-value": "Nilai",
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
@@ -6236,12 +6249,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
+      "description-regex-apply-to": "",
       "label-data-source": "Sumber data",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Urutan opsi statis",
       "label-target-data-source": "Sumber data target",
       "label-use-static-options": "Gunakan opsi statis",
       "name-regex": "Regex",
       "query-options": "Opsi kueri",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opsi pemilihan",
       "static-options-legend": "Opsi statis"
     },
@@ -8771,6 +8792,13 @@
       "aria-label-default": "Pilih warna",
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Hapus",
       "cancel": "Batalkan",
@@ -8968,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ciutkan semua baris",
       "aria-label-expand-all": "Perluas semua baris",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
@@ -12352,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

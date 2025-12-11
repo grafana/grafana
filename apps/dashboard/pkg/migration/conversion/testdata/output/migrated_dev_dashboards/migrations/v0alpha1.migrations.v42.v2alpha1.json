@@ -1469,5 +1469,10 @@
     "title": "Devenv - Panel migrations",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

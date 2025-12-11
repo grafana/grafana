@@ -1111,6 +1111,7 @@ export interface QueryVariableSpec {
 	description?: string;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1131,6 +1132,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1166,6 +1168,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:

@@ -42,7 +42,7 @@
           "regex": "",
           "skipUrlSync": false,
           "refresh": 1
-        },
+      },
         {
           "name": "query_var",
           "type": "query",
@@ -81,6 +81,7 @@
           "allValue": ".*",
           "multi": true,
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "skipUrlSync": false,
           "refresh": 2,
           "sort": 1,
@@ -107,7 +108,7 @@
             },
             {
               "selected": false,
-              "text": "staging", 
+              "text": "staging",
               "value": "staging"
             },
             {
@@ -335,6 +336,7 @@
           "allValue": "*",
           "multi": true,
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "skipUrlSync": false,
           "refresh": 1,
           "sort": 2,
@@ -354,4 +356,4 @@
     },
     "links": []
   }
-} 
+}

@@ -4781,6 +4781,8 @@
       "remove": "Remover {{typeName}}",
       "row-title": "",
       "switch-layout": "Alternar layout",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5887,6 +5889,17 @@
       "label-value": "Valor",
       "placeholder-your-metric-prefix": "Seu prefixo de métrica"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opções personalizadas",
       "name-values-separated-comma": "Valores separados por vírgula",
@@ -6258,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opcional, se você quiser extrair parte de um nome de série ou segmento de node de métrica.",
+      "description-regex-apply-to": "",
       "label-data-source": "Fonte de dados",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Classificação de opções estáticas",
       "label-target-data-source": "Fonte de dados de destino",
       "label-use-static-options": "Usar opções estáticas",
       "name-regex": "Regex",
       "query-options": "Opções de consulta",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opções de seleção",
       "static-options-legend": "Opções estáticas"
     },
@@ -8806,6 +8827,13 @@
       "aria-label-default": "Escolha uma cor",
       "aria-label-selected-color": "cor {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Excluir",
       "cancel": "Cancelar",
@@ -9003,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Recolher todas as linhas",
       "aria-label-expand-all": "Expandir todas as linhas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
@@ -12404,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

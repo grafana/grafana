@@ -4762,6 +4762,8 @@
       "remove": "移除 {{typeName}}",
       "row-title": "",
       "switch-layout": "切換版面配置",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5866,6 +5868,17 @@
       "label-value": "數值",
       "placeholder-your-metric-prefix": "您的指標前綴"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "自訂選項",
       "name-values-separated-comma": "以逗號分隔的值",
@@ -6236,12 +6249,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "若想擷取系列名稱或指標節點區段的一部分，則為可選。",
+      "description-regex-apply-to": "",
       "label-data-source": "資料來源",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "靜態選項排序",
       "label-target-data-source": "目標資料來源",
       "label-use-static-options": "使用靜態選項",
       "name-regex": "Regex",
       "query-options": "查詢選項",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "選擇選項",
       "static-options-legend": "靜態選項"
     },
@@ -8771,6 +8792,13 @@
       "aria-label-default": "挑選顏色",
       "aria-label-selected-color": "{{colorLabel}} 顏色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "刪除",
       "cancel": "取消",
@@ -8968,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "收闔所有列",
       "aria-label-expand-all": "展開所有列",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "切換列展開",
       "tooltip-collapse-all": "收闔所有列",
       "tooltip-expand-all": "展開所有列"
@@ -12352,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

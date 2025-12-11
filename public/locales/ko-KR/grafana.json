@@ -4762,6 +4762,8 @@
       "remove": "{{typeName}} 제거",
       "row-title": "",
       "switch-layout": "레이아웃 전환",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5866,6 +5868,17 @@
       "label-value": "값",
       "placeholder-your-metric-prefix": "메트릭 접두사"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "사용자 지정 옵션",
       "name-values-separated-comma": "쉼표로 구분된 값",
@@ -6236,12 +6249,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "선택 사항, 시리즈 이름 또는 메트릭 노드 세그먼트의 일부를 추출하려는 경우.",
+      "description-regex-apply-to": "",
       "label-data-source": "데이터 소스",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "정적 옵션 정렬",
       "label-target-data-source": "대상 데이터 소스",
       "label-use-static-options": "정적 옵션 사용",
       "name-regex": "정규식",
       "query-options": "쿼리 옵션",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "선택 옵션",
       "static-options-legend": "정적 옵션"
     },
@@ -8771,6 +8792,13 @@
       "aria-label-default": "색상 선택",
       "aria-label-selected-color": "{{colorLabel}} 색상"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "삭제",
       "cancel": "취소",
@@ -8968,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "모든 행 접기",
       "aria-label-expand-all": "모든 행 펼치기",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "토글하여 펼쳐진 행으로 전환",
       "tooltip-collapse-all": "모든 행 접기",
       "tooltip-expand-all": "모든 행 펼치기"
@@ -12352,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

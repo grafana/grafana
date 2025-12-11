@@ -4781,6 +4781,8 @@
       "remove": "{{typeName}} verwijderen",
       "row-title": "",
       "switch-layout": "Indeling wisselen",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5887,6 +5889,17 @@
       "label-value": "Waarde",
       "placeholder-your-metric-prefix": "Je metrisch voorvoegsel"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Aangepaste opties",
       "name-values-separated-comma": "Waarden gescheiden door komma",
@@ -6258,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Optioneel, als je een deel van een serienaam of metrisch knooppuntsegment wilt extraheren.",
+      "description-regex-apply-to": "",
       "label-data-source": "Gegevensbron",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statische opties sorteren",
       "label-target-data-source": "Doelgegevensbron",
       "label-use-static-options": "Statische opties gebruiken",
       "name-regex": "Regex",
       "query-options": "Opties voor query's",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Selectiemogelijkheden",
       "static-options-legend": "Statische opties"
     },
@@ -8806,6 +8827,13 @@
       "aria-label-default": "Kies een kleur",
       "aria-label-selected-color": "Kleur {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Verwijderen",
       "cancel": "Annuleren",
@@ -9003,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Alle rijen samenvouwen",
       "aria-label-expand-all": "Alle rijen uitvouwen",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
@@ -12404,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

@@ -23,6 +23,7 @@ use (
 	./apps/plugins
 	./apps/preferences
 	./apps/provisioning
+	./apps/quotas
 	./apps/scope
 	./apps/secret
 	./apps/shorturl

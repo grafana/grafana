@@ -117,7 +117,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 	// Set metrics
 	for key, count := range buckets {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup)).Set(float64(count))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup), key.ruleGroup.NamespaceUID).Set(float64(count))
 	}
 	for orgID, numRulesNfSettings := range orgsNfSettings {
 		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))

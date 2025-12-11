@@ -457,7 +457,7 @@ describe('LogList', () => {
 
       // Default displayed fields
       expect(screen.getByText('Log line')).toBeInTheDocument();
-      expect(screen.getByText('OTel attributes')).toBeInTheDocument();
+      expect(screen.getByText('Log attributes')).toBeInTheDocument();
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();
