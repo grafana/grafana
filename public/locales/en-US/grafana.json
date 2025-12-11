@@ -5942,6 +5942,17 @@
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "Cancel",
+        "discard": "Discard",
+        "save": "Save",
+        "text": {
+          "save-changes-question": "Do you want to save your changes?"
+        },
+        "title": {
+          "unsaved-changes": "Unsaved changes"
+        }
+      },
       "text": {
         "edit-panel": "Edit panel",
         "view-panel": "View panel"
@@ -5949,8 +5960,7 @@
       "title": {
         "dashboard": "Dashboard",
         "discard-changes-to-dashboard": "Discard changes to dashboard?",
-        "save-changes-question": "Do you want to save your changes?",
-        "unsaved-changes": "Unsaved changes"
+        "unsaved-changes-question": "You have unsaved changes to this dashboard. Are you sure you want to discard them?"
       }
     },
     "dashboard-scene-page-state-manager": {
