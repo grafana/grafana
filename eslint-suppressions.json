@@ -397,7 +397,7 @@
   },
   "packages/grafana-prometheus/src/language_provider.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/language_utils.ts": {
