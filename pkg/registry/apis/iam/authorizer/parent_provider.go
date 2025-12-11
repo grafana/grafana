@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/grafana/authlib/authn"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +41,12 @@ type ParentProviderImpl struct {
 	configProviders      map[schema.GroupResource]ConfigProvider
 	versions             map[schema.GroupResource]string
 	dynamicClientFactory DynamicClientFactory
+
+	// Cache of dynamic clients for each group resource
+	// This is used to avoid creating a new dynamic client for each request
+	// and to reuse the same client for the same group resource.
+	clients   map[schema.GroupResource]dynamic.Interface
+	clientsMu sync.Mutex
 }
 
 // DialConfig holds the configuration for dialing a remote API server.
@@ -93,6 +100,7 @@ func NewApiParentProvider(
 		dynamicClientFactory: func(config *rest.Config) (dynamic.Interface, error) {
 			return dynamic.NewForConfig(config)
 		},
+		clients: make(map[schema.GroupResource]dynamic.Interface),
 	}
 }
 
@@ -101,20 +109,42 @@ func (p *ParentProviderImpl) HasParent(gr schema.GroupResource) bool {
 	return ok
 }
 
-func (p *ParentProviderImpl) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+func (p *ParentProviderImpl) getClient(ctx context.Context, gr schema.GroupResource) (dynamic.Interface, error) {
+	p.clientsMu.Lock()
+	client, ok := p.clients[gr]
+	p.clientsMu.Unlock()
+
+	if ok {
+		return client, nil
+	}
+
 	provider, ok := p.configProviders[gr]
 	if !ok {
-		return "", fmt.Errorf("%w: %s", ErrNoConfigProvider, gr.String())
+		return nil, fmt.Errorf("%w: %s", ErrNoConfigProvider, gr.String())
 	}
 	restConfig, err := provider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err = p.dynamicClientFactory(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	p.clientsMu.Lock()
+	p.clients[gr] = client
+	p.clientsMu.Unlock()
+
+	return client, nil
+}
+
+func (p *ParentProviderImpl) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+	client, err := p.getClient(ctx, gr)
 	if err != nil {
 		return "", err
 	}
 
-	client, err := p.dynamicClientFactory(restConfig)
-	if err != nil {
-		return "", err
-	}
 	version, ok := p.versions[gr]
 	if !ok {
 		return "", fmt.Errorf("%w: %s", ErrNoVersionInfo, gr.String())
