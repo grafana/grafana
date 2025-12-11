@@ -67,10 +67,12 @@ type ScopeFilterConfig struct {
 type TreeNode struct {
 	Title              string              `yaml:"title"`
 	SubTitle           string              `yaml:"subTitle,omitempty"`
+	Description        string              `yaml:"description,omitempty"`
 	NodeType           string              `yaml:"nodeType"`
 	LinkID             string              `yaml:"linkId,omitempty"`
 	LinkType           string              `yaml:"linkType,omitempty"`
 	DisableMultiSelect bool                `yaml:"disableMultiSelect,omitempty"`
+	RedirectPath       string              `yaml:"redirectPath,omitempty"`
 	Children           map[string]TreeNode `yaml:"children,omitempty"`
 }
 
@@ -259,6 +261,7 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 	spec := v0alpha1.ScopeNodeSpec{
 		Title:              node.Title,
 		SubTitle:           node.SubTitle,
+		Description:        node.Description,
 		NodeType:           nodeType,
 		DisableMultiSelect: node.DisableMultiSelect,
 	}
@@ -270,6 +273,10 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 	if prefixedLinkID != "" {
 		spec.LinkID = prefixedLinkID
 		spec.LinkType = linkType
+	}
+
+	if node.RedirectPath != "" {
+		spec.RedirectPath = node.RedirectPath
 	}
 
 	resource := v0alpha1.ScopeNode{
