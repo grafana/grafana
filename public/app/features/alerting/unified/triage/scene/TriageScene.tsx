@@ -58,6 +58,8 @@ export const triageScene = new EmbeddedSceneWithContext({
         baseFilters: [],
         layout: 'combobox',
         expressionBuilder: prometheusExpressionBuilder,
+        // Filter out __name__ from options as this is the metric name not a filterable label
+        tagKeyRegexFilter: /^(?!__name__$).*/,
       }),
     ],
   }),
