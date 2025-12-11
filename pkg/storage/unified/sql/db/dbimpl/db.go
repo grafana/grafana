@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	// Connection retry settings for transient errors (e.g., Cloud SQL proxy pod churn)
 	defaultConnAttemptTimeout = 3 * time.Second
 	defaultConnMaxRetries     = 3
 	defaultConnRetryBackoff   = 1 * time.Second
