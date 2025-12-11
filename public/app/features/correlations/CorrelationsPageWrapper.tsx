@@ -22,12 +22,9 @@ function CorrelationsPageLegacy() {
 }
 
 function CorrelationsPageAppPlatform() {
-  // todo remove fake limit
-
   const [page, setPage] = useState(1);
   let totalItems = useRef(0);
-
-  const limit = 10;
+  const limit = 100;
   const { currentData, isLoading, error, remainingItems } = useCorrelationsK8s(limit, page);
   const [deleteCorrelation] = useDeleteCorrelationMutation();
   if (page === 1) {

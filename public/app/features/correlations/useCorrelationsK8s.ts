@@ -48,7 +48,7 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
 };
 
 // we're faking traditional pagination here, realistically folks shouldnt have enough correlations to see a performance impact but if they do we can change the ui
-export const useCorrelationsK8s = (limit: number, page: number) => {
+export const useCorrelationsK8s = (limit = 100, page: number) => {
   let pagedLimit = limit;
   if (page > 1) {
     pagedLimit = limit * page;

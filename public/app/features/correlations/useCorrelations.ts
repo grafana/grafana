@@ -3,7 +3,6 @@ import { lastValueFrom } from 'rxjs';
 
 import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-//import { dispatch } from 'app/store/store';
 
 import {
   Correlation,
@@ -95,7 +94,7 @@ export const useCorrelations = () => {
       return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
-          params: { page: params.page, limit: 10 }, // todo this is to force pagination for testing, remove
+          params: { page: params.page },
           method: 'GET',
           showErrorAlert: false,
         })
@@ -119,7 +118,6 @@ export const useCorrelations = () => {
             throw new Error('invalid sourceUID');
           }
         });
-      // }
     },
     [backend]
   );
