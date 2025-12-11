@@ -130,6 +130,5 @@ func (p *ParentProviderImpl) GetParent(ctx context.Context, gr schema.GroupResou
 		return "", err
 	}
 
-	parent, _ := unstructObj.GetAnnotations()[utils.AnnoKeyFolder]
-	return parent, nil
+	return unstructObj.GetAnnotations()[utils.AnnoKeyFolder], nil
 }
