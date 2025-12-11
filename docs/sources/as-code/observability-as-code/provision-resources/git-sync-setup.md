@@ -149,7 +149,7 @@ Next, enter a **Display name** for the repository connection. Resources stored i
 
 Alternatively, you can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
-To set up Git Sync with Grafana CLI, follow these steps:
+To set up Git Sync with `grafanactl`, follow these steps:
 
 1. [Create the repository CRD](#create-the-repository-crd)
 1. [Push the repository CRD to Grafana](#push-the-repository-crd-to-grafana)
