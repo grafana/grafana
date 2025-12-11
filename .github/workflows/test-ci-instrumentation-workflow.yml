@@ -1,4 +1,4 @@
-name: test-ci-instrumentation-workflow.yml
+name: test-ci-instrumentation-workflow
 on:
   push:
     branches:
