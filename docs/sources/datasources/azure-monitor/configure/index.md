@@ -93,7 +93,7 @@ Before configuring the Azure Monitor data source, ensure you have the following:
 
 - **Azure prerequisites:** Depending on your chosen authentication method, you may need:
   - An Azure AD app registration with a service principal (for App Registration authentication)
-  - A managed identity enabled on your Azure VM or App Service (for Managed Identity authentication)
+  - A Managed Identity enabled on your Azure VM or App Service (for Managed Identity authentication)
   - Workload identity configured in your Kubernetes cluster (for Workload Identity authentication)
   - Azure AD authentication configured for Grafana login (for Current User authentication)
 
