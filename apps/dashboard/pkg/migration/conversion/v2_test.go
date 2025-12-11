@@ -18,7 +18,7 @@ func TestV2alpha1ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	t.Run("Convert_V2alpha1_to_V1beta1 sets status on conversion", func(t *testing.T) {
 		// Create a dashboard for conversion
@@ -39,7 +39,7 @@ func TestV2alpha1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2alpha1_to_V1beta1(source, target, nil, dsProvider)
+		err := Convert_V2alpha1_to_V1beta1(source, target, nil)
 
 		// Convert_V2alpha1_to_V1beta1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V2alpha1_to_V1beta1 doesn't return error")
@@ -90,7 +90,7 @@ func TestV2beta1ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	t.Run("Convert_V2beta1_to_V1beta1 sets status on first step failure", func(t *testing.T) {
 		// Create a dashboard that might cause conversion to fail on first step (v2beta1 -> v2alpha1)

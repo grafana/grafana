@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -613,4 +616,72 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+}
+
+func TestGetQuotaUsage(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
+		s := &server{
+			overridesService: nil,
+			log:              log.NewNopLogger(),
+		}
+
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-123",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		assert.Equal(t, int32(http.StatusNotImplemented), resp.Error.Code)
+		assert.Equal(t, "overrides service not configured on resource server", resp.Error.Message)
+	})
+
+	t.Run("returns usage and limit successfully", func(t *testing.T) {
+		// Create a temporary overrides config file
+		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		content := `overrides:
+  "123":
+    quotas:
+      dashboard.grafana.app/dashboards:
+        limit: 500
+`
+		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+
+		// Create a real OverridesService with the temp file
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
+			FilePath: tmpFile,
+		})
+		require.NoError(t, err)
+		require.NoError(t, overridesService.init(ctx))
+		defer func() {
+			_ = overridesService.stop(ctx)
+		}()
+
+		// Create a mock backend that returns resource stats (reusing mockStorageBackend from search_test.go)
+		mockBackend := &mockStorageBackend{
+			resourceStats: []ResourceStats{{Count: 42}},
+		}
+
+		s := &server{
+			backend:          mockBackend,
+			overridesService: overridesService,
+			log:              log.NewNopLogger(),
+		}
+
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-123",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		assert.Equal(t, int64(42), resp.Usage)
+		assert.Equal(t, int64(500), resp.Limit)
+	})
 }
