@@ -438,7 +438,7 @@ function getInitialFieldWidth(field: Field): number | undefined {
   }
   // Set constrained width for detected_level
   if (field.name === TABLE_DETECTED_LEVEL_FIELD_NAME) {
-    return 150;
+    return 190;
   }
   // All other fields (including body field) will auto-expand
   return undefined;
