@@ -9,6 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+const (
+	// This constant can be used as a key in resource tags
+	GrafanaSecretsManagerName = "grafana-secrets-manager"
+)
+
 var (
 	// The name used to refer to the system keeper
 	SystemKeeperName = "system"
@@ -102,8 +107,8 @@ func (s ExternalID) String() string {
 // Keeper is the interface for secret keepers.
 type Keeper interface {
 	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
-	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error
 	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
+	Reference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error)
 	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error
 }
 

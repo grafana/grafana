@@ -145,6 +145,14 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to get keeper for config: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
+	if sv.Spec.Ref != nil {
+		exposedValue, err := keeper.Reference(ctx, keeperConfig, *sv.Spec.Ref)
+		if err != nil {
+			return "", fmt.Errorf("failed to expose secret using reference: %v (%w)", err, contracts.ErrDecryptFailed)
+		}
+		return exposedValue, nil
+	}
+
 	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace, name, sv.Status.Version)
 	if err != nil {
 		return "", fmt.Errorf("failed to expose secret: %v (%w)", err, contracts.ErrDecryptFailed)

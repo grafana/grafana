@@ -1,6 +1,7 @@
 package metadata_test
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"testing"
@@ -26,19 +27,21 @@ type modelSecureValue struct {
 }
 
 type modelKeeper struct {
-	namespace string
-	name      string
-	active    bool
+	namespace  string
+	name       string
+	active     bool
+	keeperType secretv1beta1.KeeperType
 }
 
 // A simplified model of the grafana secrets manager
 type model struct {
-	secureValues []*modelSecureValue
-	keepers      []*modelKeeper
+	secureValues        []*modelSecureValue
+	keepers             []*modelKeeper
+	modelSecretsManager *testutils.ModelSecretsManager
 }
 
-func newModel() *model {
-	return &model{}
+func newModel(modelSecretsManager *testutils.ModelSecretsManager) *model {
+	return &model{modelSecretsManager: modelSecretsManager}
 }
 
 func (m *model) getNewVersionNumber(namespace, name string) int64 {
@@ -80,6 +83,11 @@ func (m *model) readActiveVersion(namespace, name string) *modelSecureValue {
 
 func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	keeper := m.getActiveKeeper(sv.Namespace)
+
+	if sv.Spec.Ref != nil && keeper.keeperType == secretv1beta1.SystemKeeperType {
+		return nil, contracts.ErrReferenceWithSystemKeeper
+	}
+
 	sv = sv.DeepCopy()
 
 	// Preserve the original creation time if this secure value already exists
@@ -105,7 +113,12 @@ func (m *model) getActiveKeeper(namespace string) *modelKeeper {
 	}
 
 	// Default to the system keeper when there are no active keepers in the namespace
-	return &modelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true}
+	return &modelKeeper{
+		namespace:  namespace,
+		name:       contracts.SystemKeeperName,
+		active:     true,
+		keeperType: secretv1beta1.SystemKeeperType,
+	}
 }
 
 func (m *model) keeperExists(namespace, name string) bool {
@@ -115,7 +128,7 @@ func (m *model) keeperExists(namespace, name string) bool {
 func (m *model) findKeeper(namespace, name string) *modelKeeper {
 	// The system keeper is not in the list of keepers
 	if name == contracts.SystemKeeperName {
-		return &modelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true}
+		return &modelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true, keeperType: secretv1beta1.SystemKeeperType}
 	}
 	for _, k := range m.keepers {
 		if k.namespace == namespace && k.name == name {
@@ -130,23 +143,30 @@ func (m *model) createKeeper(keeper *secretv1beta1.Keeper) (*secretv1beta1.Keepe
 		return nil, contracts.ErrKeeperAlreadyExists
 	}
 
-	m.keepers = append(m.keepers, &modelKeeper{namespace: keeper.Namespace, name: keeper.Name})
+	var keeperType secretv1beta1.KeeperType
+	switch {
+	case keeper.Spec.Aws != nil:
+		keeperType = secretv1beta1.AWSKeeperType
+	case keeper.Spec.Gcp != nil:
+		keeperType = secretv1beta1.GCPKeeperType
+	case keeper.Spec.Azure != nil:
+		keeperType = secretv1beta1.AzureKeeperType
+	case keeper.Spec.HashiCorpVault != nil:
+		keeperType = secretv1beta1.HashiCorpKeeperType
+	default:
+		keeperType = secretv1beta1.SystemKeeperType
+	}
+
+	m.keepers = append(m.keepers, &modelKeeper{namespace: keeper.Namespace, name: keeper.Name, keeperType: keeperType})
 
 	return keeper.DeepCopy(), nil
 }
 
 func (m *model) setKeeperAsActive(namespace, keeperName string) error {
-	keeper := m.findKeeper(namespace, keeperName)
-	if keeper == nil {
-		return contracts.ErrKeeperNotFound
-	}
-	// Set the keeper as active
-	keeper.active = true
-
 	// Set every other keeper in the namespace as inactive
 	for _, k := range m.keepers {
-		if k.namespace == namespace && k.name != keeperName {
-			k.active = false
+		if k.namespace == namespace {
+			k.active = k.name == keeperName
 		}
 	}
 
@@ -164,8 +184,12 @@ func (m *model) update(now time.Time, newSecureValue *secretv1beta1.SecureValue)
 		return nil, false, contracts.ErrKeeperNotFound
 	}
 
-	// If the payload doesn't contain a value, get the value from current version
-	if newSecureValue.Spec.Value == nil {
+	// If the payload doesn't contain a value and it's not using a reference, get the value from current version
+	if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
+		// Tried to update a secure value without providing a new value or a ref
+		if sv.Spec.Value == nil {
+			return nil, false, contracts.ErrSecureValueMissingSecretAndRef
+		}
 		newSecureValue.Spec.Value = sv.Spec.Value
 	}
 
@@ -195,15 +219,45 @@ func (m *model) list(namespace string) (*secretv1beta1.SecureValueList, error) {
 	return &secretv1beta1.SecureValueList{Items: out}, nil
 }
 
-func (m *model) decrypt(decrypter, namespace, name string) (map[string]decrypt.DecryptResult, error) {
+func (m *model) decrypt(ctx context.Context, decrypter, namespace, name string) (map[string]decrypt.DecryptResult, error) {
 	for _, v := range m.secureValues {
 		if v.Namespace == namespace &&
 			v.Name == name &&
 			v.active {
 			if slices.ContainsFunc(v.Spec.Decrypters, func(d string) bool { return d == decrypter }) {
-				return map[string]decrypt.DecryptResult{
-					name: decrypt.NewDecryptResultValue(v.DeepCopy().Spec.Value),
-				}, nil
+				switch {
+				// It's a secure value that specifies the secret
+				case v.Spec.Value != nil:
+					return map[string]decrypt.DecryptResult{
+						name: decrypt.NewDecryptResultValue(v.DeepCopy().Spec.Value),
+					}, nil
+
+				// It's a secure value that references a secret on a 3rd party store
+				case v.Spec.Ref != nil:
+					keeper := m.findKeeper(v.Namespace, v.Status.Keeper)
+					switch keeper.keeperType {
+					case secretv1beta1.AWSKeeperType:
+						exposedValue, err := m.modelSecretsManager.Reference(ctx, nil, *v.Spec.Ref)
+						if err != nil {
+							return map[string]decrypt.DecryptResult{
+								name: decrypt.NewDecryptResultErr(fmt.Errorf("%w: %w", contracts.ErrDecryptFailed, err)),
+							}, nil
+						}
+						return map[string]decrypt.DecryptResult{
+							name: decrypt.NewDecryptResultValue(&exposedValue),
+						}, nil
+
+					// Other keepers are not implemented so we default to the system keeper
+					default:
+						// The system keeper doesn't implement Reference so decryption always fails
+						return map[string]decrypt.DecryptResult{
+							name: decrypt.NewDecryptResultErr(contracts.ErrDecryptFailed),
+						}, nil
+					}
+
+				default:
+					panic("bug: secure value where Spec.Value and Spec.Ref are nil")
+				}
 			}
 
 			return map[string]decrypt.DecryptResult{
@@ -245,7 +299,9 @@ var (
 	secureValueNameGen = rapid.SampledFrom([]string{"n1", "n2", "n3", "n4", "n5"})
 	keeperNameGen      = rapid.SampledFrom([]string{"k1", "k2", "k3", "k4", "k5"})
 	namespaceGen       = rapid.SampledFrom([]string{"ns1", "ns2", "ns3", "ns4", "ns5"})
-	anySecureValueGen  = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
+	secretsToRefGen    = rapid.SampledFrom([]string{"ref1", "ref2", "ref3", "ref4", "ref5"})
+	// Generator for secure values that specify a secret value
+	anySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
 		return &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secureValueNameGen.Draw(t, "name"),
@@ -259,6 +315,21 @@ var (
 			Status: secretv1beta1.SecureValueStatus{},
 		}
 	})
+	// Generator for secure values that reference values from 3rd party stores
+	anySecureValueWithRefGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
+		return &secretv1beta1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secureValueNameGen.Draw(t, "name"),
+				Namespace: namespaceGen.Draw(t, "ns"),
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
+				Ref:         ptr.To(secretsToRefGen.Draw(t, "ref")),
+				Decrypters:  rapid.SliceOfDistinct(decryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
+			},
+			Status: secretv1beta1.SecureValueStatus{},
+		}
+	})
 	updateSecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
 		sv := anySecureValueGen.Draw(t, "sv")
 		// Maybe update the secret value, maybe not
@@ -267,9 +338,7 @@ var (
 		}
 		return sv
 	})
-	// Any secure value will do
-	deleteSecureValueGen = anySecureValueGen
-	decryptGen           = rapid.Custom(func(t *rapid.T) decryptInput {
+	decryptGen = rapid.Custom(func(t *rapid.T) decryptInput {
 		return decryptInput{
 			namespace: namespaceGen.Draw(t, "ns"),
 			name:      secureValueNameGen.Draw(t, "name"),
@@ -330,7 +399,7 @@ func TestModel(t *testing.T) {
 	t.Run("creating secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := newModel()
+		m := newModel(nil)
 		now := time.Now()
 
 		// Create a secure value
@@ -351,7 +420,7 @@ func TestModel(t *testing.T) {
 	t.Run("updating secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := newModel()
+		m := newModel(nil)
 
 		now := time.Now()
 
@@ -383,7 +452,7 @@ func TestModel(t *testing.T) {
 	t.Run("deleting a secure value", func(t *testing.T) {
 		t.Parallel()
 
-		m := newModel()
+		m := newModel(nil)
 		now := time.Now()
 
 		sv1, err := m.create(now, sv.DeepCopy())
@@ -404,7 +473,7 @@ func TestModel(t *testing.T) {
 	t.Run("listing secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := newModel()
+		m := newModel(nil)
 		now := time.Now()
 
 		// No secure values exist yet
@@ -428,11 +497,11 @@ func TestModel(t *testing.T) {
 	t.Run("decrypting secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := newModel()
+		m := newModel(nil)
 		now := time.Now()
 
 		// Decrypting a secure value that does not exist
-		result, err := m.decrypt("decrypter", "namespace", "name")
+		result, err := m.decrypt(t.Context(), "decrypter", "namespace", "name")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))
 		require.Nil(t, result["name"].Value())
@@ -444,11 +513,57 @@ func TestModel(t *testing.T) {
 		require.NoError(t, err)
 
 		// Decrypt the just created secure value
-		result, err = m.decrypt(sv1.Spec.Decrypters[0], sv1.Namespace, sv1.Name)
+		result, err = m.decrypt(t.Context(), sv1.Spec.Decrypters[0], sv1.Namespace, sv1.Name)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))
 		require.Nil(t, result[sv1.Name].Error())
 		require.Equal(t, secret, result[sv1.Name].Value().DangerouslyExposeAndConsumeValue())
+	})
+
+	t.Run("decrypting with reference", func(t *testing.T) {
+		t.Parallel()
+
+		secretsManager := testutils.NewModelSecretsManager()
+		m := newModel(secretsManager)
+		now := time.Now()
+
+		keeper, err := m.createKeeper(&secretv1beta1.Keeper{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns1",
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		})
+		require.NoError(t, err)
+		require.NoError(t, m.setKeeperAsActive(keeper.Namespace, keeper.Name))
+
+		// Store the secret on the 3rd party secrets store
+		secret := "v1"
+		secretsManager.Create("ref1", secret)
+
+		// Create a secure value that references the secret on the 3rd party secret store
+		sv, err := m.create(now, &secretv1beta1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sv1",
+				Namespace: "ns1",
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "desc1",
+				Ref:         ptr.To("ref1"),
+				Decrypters:  []string{"decrypter1"},
+			},
+			Status: secretv1beta1.SecureValueStatus{},
+		})
+		require.NoError(t, err)
+
+		// Decrypt the just created secure value
+		result, err := m.decrypt(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(result))
+		require.Nil(t, result[sv.Name].Error())
+		require.Equal(t, secret, result[sv.Name].Value().DangerouslyExposeAndConsumeValue())
 	})
 }
 
@@ -459,14 +574,13 @@ func TestStateMachine(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := newModel()
+		model := newModel(sut.ModelSecretsManager)
 
 		t.Repeat(map[string]func(*rapid.T){
-			"create": func(t *rapid.T) {
+			"createSecureValueWithSecretValue": func(t *rapid.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
 
 				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), sv.DeepCopy())
-
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -475,6 +589,24 @@ func TestStateMachine(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
 				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+			},
+			"createSecureValueWithRef": func(t *rapid.T) {
+				sv := anySecureValueWithRefGen.Draw(t, "sv")
+
+				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), sv.DeepCopy())
+				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
+				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
+				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+			},
+			"createSecretOn3rdPartyKeeper": func(t *rapid.T) {
+				name := secretsToRefGen.Draw(t, "name")
+				value := rapid.String().Draw(t, "value")
+				sut.ModelSecretsManager.Create(name, value)
 			},
 			"update": func(t *rapid.T) {
 				sv := updateSecureValueGen.Draw(t, "sv")
@@ -489,9 +621,10 @@ func TestStateMachine(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
 			},
 			"delete": func(t *rapid.T) {
-				sv := deleteSecureValueGen.Draw(t, "sv")
-				modelSv, modelErr := model.delete(sv.Namespace, sv.Name)
-				deletedSv, err := sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+				ns := namespaceGen.Draw(t, "ns")
+				name := secureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.delete(ns, name)
+				deletedSv, err := sut.DeleteSv(t.Context(), ns, name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -501,12 +634,12 @@ func TestStateMachine(t *testing.T) {
 				require.Equal(t, modelSv.Status.Version, deletedSv.Status.Version)
 			},
 			"list": func(t *rapid.T) {
-				sv := anySecureValueGen.Draw(t, "sv")
-				authCtx := testutils.CreateUserAuthContext(t.Context(), sv.Namespace, map[string][]string{
+				ns := namespaceGen.Draw(t, "ns")
+				authCtx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
 					"securevalues:read": {"securevalues:uid:*"},
 				})
-				modelList, modelErr := model.list(sv.Namespace)
-				list, err := sut.SecureValueService.List(authCtx, xkube.Namespace(sv.Namespace))
+				modelList, modelErr := model.list(ns)
+				list, err := sut.SecureValueService.List(authCtx, xkube.Namespace(ns))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -525,9 +658,10 @@ func TestStateMachine(t *testing.T) {
 				}
 			},
 			"get": func(t *rapid.T) {
-				sv := anySecureValueGen.Draw(t, "sv")
-				modelSv, modelErr := model.read(sv.Namespace, sv.Name)
-				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name)
+				ns := namespaceGen.Draw(t, "ns")
+				name := secureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.read(ns, name)
+				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -538,7 +672,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := decryptGen.Draw(t, "decryptInput")
-				modelResult, modelErr := model.decrypt(input.decrypter, input.namespace, input.name)
+				modelResult, modelErr := model.decrypt(t.Context(), input.decrypter, input.namespace, input.name)
 				result, err := sut.DecryptService.Decrypt(t.Context(), input.decrypter, input.namespace, input.name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -547,7 +681,7 @@ func TestStateMachine(t *testing.T) {
 
 				require.Equal(t, len(modelResult), len(result))
 				for name := range modelResult {
-					require.Equal(t, modelResult[name].Error(), result[name].Error())
+					require.ErrorIs(t, modelResult[name].Error(), result[name].Error())
 					require.Equal(t, modelResult[name].Value(), result[name].Value())
 				}
 			},
@@ -563,7 +697,12 @@ func TestStateMachine(t *testing.T) {
 			},
 			"setKeeperAsActive": func(t *rapid.T) {
 				namespace := namespaceGen.Draw(t, "namespace")
-				keeper := keeperNameGen.Draw(t, "keeper")
+				var keeper string
+				if rapid.Bool().Draw(t, "systemKeeper") {
+					keeper = contracts.SystemKeeperName
+				} else {
+					keeper = keeperNameGen.Draw(t, "keeper")
+				}
 				modelErr := model.setKeeperAsActive(namespace, keeper)
 				err := sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
 				if err != nil || modelErr != nil {

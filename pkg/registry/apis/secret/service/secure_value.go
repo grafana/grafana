@@ -144,7 +144,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
 	}
 
-	if newSecureValue.Spec.Value == nil {
+	if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
 		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
 		if err != nil {
 			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Status.Keeper, err)
@@ -153,7 +153,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 		secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
 		if err != nil {
-			return nil, false, fmt.Errorf("reading secret value from keeper: %w", err)
+			return nil, false, fmt.Errorf("reading secret value from keeper: %w %w", contracts.ErrSecureValueMissingSecretAndRef, err)
 		}
 
 		newSecureValue.Spec.Value = &secret
@@ -177,6 +177,10 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, contracts.NewErrValidateSecureValue(errorList)
 	}
 
+	if sv.Spec.Ref != nil && keeperCfg.Type() == secretv1beta1.SystemKeeperType {
+		return nil, contracts.ErrReferenceWithSystemKeeper
+	}
+
 	createdSv, err := s.secureValueMetadataStorage.Create(ctx, keeperName, sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value: %w", err)
@@ -192,18 +196,28 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", createdSv.Namespace, keeperName, err)
 	}
 	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", createdSv.Namespace, "type", keeperCfg.Type())
-
 	// TODO: can we stop using external id?
 	// TODO: store uses only the namespace and returns and id. It could be a kv instead.
 	// TODO: check that the encrypted store works with multiple versions
-	externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
-	if err != nil {
-		return nil, fmt.Errorf("storing secure value in keeper: %w", err)
-	}
-	createdSv.Status.ExternalID = string(externalID)
+	switch {
+	case sv.Spec.Value != nil:
+		externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
+		if err != nil {
+			return nil, fmt.Errorf("storing secure value in keeper: %w", err)
+		}
+		createdSv.Status.ExternalID = string(externalID)
 
-	if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
-		return nil, fmt.Errorf("setting secure value external id: %w", err)
+		if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
+			return nil, fmt.Errorf("setting secure value external id: %w", err)
+		}
+
+	case sv.Spec.Ref != nil:
+		// No-op, there's nothing to store in the keeper since the
+		// secret is already stored in the 3rd party secret store
+		// and it's being referenced.
+
+	default:
+		return nil, fmt.Errorf("secure value doesn't specify either a secret value or a reference")
 	}
 
 	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version); err != nil {
@@ -371,6 +385,16 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 }
 
 func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
+	// The system keeper is not in the database, so skip checking it exists.
+	// TODO: should the system keeper be in the database?
+	if name != contracts.SystemKeeperName {
+		// Check keeper exists. No need to worry about time of check to time of use
+		// since trying to activate a just deleted keeper will result in all
+		// keepers being inactive and defaulting to the system keeper.
+		if _, err := s.keeperMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{}); err != nil {
+			return fmt.Errorf("reading keeper before setting as active: %w", err)
+		}
+	}
 	if err := s.keeperMetadataStorage.SetAsActive(ctx, namespace, name); err != nil {
 		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
 	}

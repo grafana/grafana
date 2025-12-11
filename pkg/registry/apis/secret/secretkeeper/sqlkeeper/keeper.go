@@ -107,6 +107,10 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return exposedValue, nil
 }
 
+func (s *SQLKeeper) Reference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+	return "", fmt.Errorf("Reference is not implemented by the SQLKeeper")
+}
+
 func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -122,30 +126,6 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	}
 
 	s.metrics.DeleteDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
-
-	return nil
-}
-
-func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error {
-	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
-		attribute.String("namespace", namespace.String()),
-		attribute.String("name", name),
-		attribute.Int64("version", version),
-	))
-	defer span.End()
-
-	start := time.Now()
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
-	if err != nil {
-		return fmt.Errorf("unable to encrypt value: %w", err)
-	}
-
-	err = s.store.Update(ctx, namespace, name, version, encryptedData)
-	if err != nil {
-		return fmt.Errorf("failed to update encrypted value: %w", err)
-	}
-
-	s.metrics.UpdateDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
 
 	return nil
 }

@@ -26,7 +26,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	plaintext1 := "very secret string in namespace 1"
 	plaintext2 := "very secret string in namespace 2"
 
-	keeperCfg := &secretv1beta1.SystemKeeperConfig{}
+	keeperCfg := secretv1beta1.NewNamedKeeperConfig("k1", &secretv1beta1.SystemKeeperConfig{})
 
 	t.Run("storing an encrypted value returns no error", func(t *testing.T) {
 		sut := testutils.Setup(t)
@@ -121,31 +121,6 @@ func Test_SQLKeeperSetup(t *testing.T) {
 
 		err := sut.SQLKeeper.Delete(t.Context(), keeperCfg, namespace1, "non_existing_name", version1)
 		require.NoError(t, err)
-	})
-
-	t.Run("updating an existent encrypted value returns no error", func(t *testing.T) {
-		sut := testutils.Setup(t)
-
-		_, err := sut.SQLKeeper.Store(t.Context(), keeperCfg, namespace1, name1, version1, plaintext1)
-		require.NoError(t, err)
-
-		err = sut.SQLKeeper.Update(t.Context(), keeperCfg, namespace1, name1, version1, plaintext2)
-		require.NoError(t, err)
-
-		exposedVal, err := sut.SQLKeeper.Expose(t.Context(), keeperCfg, namespace1, name1, version1)
-		require.NoError(t, err)
-		assert.NotNil(t, exposedVal)
-		assert.Equal(t, plaintext2, exposedVal.DangerouslyExposeAndConsumeValue())
-	})
-
-	t.Run("updating a non existent encrypted value returns error", func(t *testing.T) {
-		sut := testutils.Setup(t)
-
-		_, err := sut.SQLKeeper.Store(t.Context(), keeperCfg, namespace1, name1, version1, plaintext1)
-		require.NoError(t, err)
-
-		err = sut.SQLKeeper.Update(t.Context(), nil, namespace1, "non_existing_name", version1, plaintext2)
-		require.Error(t, err)
 	})
 
 	t.Run("data key migration only runs if both secrets db migrations are enabled", func(t *testing.T) {
