@@ -110,14 +110,23 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.Mode = "embedded"
 	}
 
-	zc.Token = clientSec.Key("token").MustString("")
-	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
 
-	// TODO: read Token and TokenExchangeURL from grpc_client_authentication section
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	zc.Token = grpcClientAuthSection.Key("token").MustString("")
+	zc.TokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
 	zc.TokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
+
+	// TODO: remove old settings when migrated
+	token := clientSec.Key("token").MustString("")
+	tokenExchangeURL := clientSec.Key("token_exchange_url").MustString("")
+	if token != "" {
+		zc.Token = token
+	}
+	if tokenExchangeURL != "" {
+		zc.TokenExchangeURL = tokenExchangeURL
+	}
 
 	cfg.ZanzanaClient = zc
 
