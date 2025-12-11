@@ -150,7 +150,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -216,7 +216,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
       await saveDashboard(dashboardPage, page, selectors);
 
       // loading directly into panel editor
@@ -321,7 +321,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -384,7 +384,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -412,7 +412,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
