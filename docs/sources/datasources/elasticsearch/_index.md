@@ -17,16 +17,6 @@ menuTitle: Elasticsearch
 title: Elasticsearch data source
 weight: 325
 refs:
-  configuration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
-  provisioning-grafana:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
@@ -44,100 +34,61 @@ refs:
 Elasticsearch is a search and analytics engine used for a variety of use cases.
 You can create many types of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
-The following will help you get started working with Elasticsearch and Grafana:
+The following resources will help you get started with Elasticsearch and Grafana:
 
 - [What is Elasticsearch?](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html)
-- [Configure the Elasticsearch data source](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/)
-- [Elasticsearch query editor](query-editor/)
-- [Elasticsearch template variables](template-variables/)
+- [Configure the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/)
+- [Elasticsearch query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/query-editor/)
+- [Elasticsearch template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/)
+- [Elasticsearch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/annotations/)
+- [Elasticsearch alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/alerting/)
+- [Troubleshooting issues with the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
+
+## Key capabilities
+
+The Elasticsearch data source supports:
+
+- **Metrics queries:** Aggregate and visualize numeric data using bucket and metric aggregations.
+- **Log queries:** Search, filter, and explore log data with Lucene query syntax.
+- **Annotations:** Overlay Elasticsearch events on your dashboard graphs.
+- **Alerting:** Create alerts based on Elasticsearch query results.
+
+## Before you begin
+
+Before you configure the Elasticsearch data source, you need:
+
+- An Elasticsearch instance (v7.17+, v8.x, or v9.x)
+- Network access from Grafana to your Elasticsearch server
+- Appropriate user credentials or API keys with read access
+
+{{< admonition type="note" >}}
+If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Service), use the [OpenSearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) instead.
+{{< /admonition >}}
 
 ## Supported Elasticsearch versions
 
-This data source supports these versions of Elasticsearch:
-
-- v7.17+
-- v8.x
-
-Our maintenance policy for Elasticsearch data source is aligned with the [Elastic Product End of Life Dates](https://www.elastic.co/support/eol) and we ensure proper functionality for supported versions. If you are using an Elasticsearch with version that is past its end-of-life (EOL), you can still execute queries, but you will receive a notification in the query builder indicating that the version of Elasticsearch you are using is no longer supported. It's important to note that in such cases, we do not guarantee the correctness of the functionality, and we will not be addressing any related issues.
-
-## Provision the data source
-
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-grafana).
-
-{{< admonition type="note" >}}
-The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
-You should now use the `index` field in `jsonData` to store the index name.
-Please see the examples below.
+{{< admonition type="warning" >}}
+The Elasticsearch data source plugin currently does not support Elastic Cloud Serverless, or any other serverless variant of Elasticsearch.
 {{< /admonition >}}
 
-### Provisioning examples
+This data source supports these versions of Elasticsearch:
 
-**Basic provisioning**
+- ≥ v7.17
+- v8.x
+- v9.x
 
-```yaml
-apiVersion: 1
+The Grafana maintenance policy for the Elasticsearch data source aligns with [Elastic Product End of Life Dates](https://www.elastic.co/support/eol). Grafana ensures proper functionality for supported versions only. If you use an EOL version of Elasticsearch, you can still run queries, but the query builder displays a warning. Grafana doesn't guarantee functionality or provide fixes for EOL versions.
 
-datasources:
-  - name: Elastic
-    type: elasticsearch
-    access: proxy
-    url: http://localhost:9200
-    jsonData:
-      index: '[metrics-]YYYY.MM.DD'
-      interval: Daily
-      timeField: '@timestamp'
-```
+## Additional resources
 
-**Provision for logs**
+Once you have configured the Elasticsearch data source, you can:
 
-```yaml
-apiVersion: 1
+- Use [Explore](ref:explore) to run ad-hoc queries against your Elasticsearch data.
+- Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/) for dynamic dashboards.
+- Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
+- [Build dashboards](ref:build-dashboards) to visualize your Elasticsearch data.
 
-datasources:
-  - name: elasticsearch-v7-filebeat
-    type: elasticsearch
-    access: proxy
-    url: http://localhost:9200
-    jsonData:
-      index: '[filebeat-]YYYY.MM.DD'
-      interval: Daily
-      timeField: '@timestamp'
-      logMessageField: message
-      logLevelField: fields.level
-      dataLinks:
-        - datasourceUid: my_jaeger_uid # Target UID needs to be known
-          field: traceID
-          url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
-```
+## Related data sources
 
-## Configure Amazon Elasticsearch Service
-
-If you use Amazon Elasticsearch Service, you can use Grafana's Elasticsearch data source to visualize data from it.
-
-If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
-
-For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
-
-### AWS Signature Version 4 authentication
-
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](ref:configuration).
-
-Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
-For more information about AWS authentication options, refer to [AWS authentication](../aws-cloudwatch/aws-authentication/).
-
-{{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
-
-## Query the data source
-
-You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
-
-For details, see the [query editor documentation](query-editor/).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/).
+- [OpenSearch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) - For Amazon OpenSearch Service.
+- [Loki](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) - Grafana's log aggregation system.
