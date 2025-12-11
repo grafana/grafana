@@ -104,6 +104,16 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "number of results to skip",
+										Example:     0,
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
@@ -210,24 +220,20 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageStr := queryParams.Get("page")
-	page := int64(1)
-	if pageStr != "" {
-		if p, err := strconv.ParseInt(pageStr, 10, 64); err == nil && p > 0 {
-			page = p
-		}
+	limit := 30
+	offset := 0
+	page := 1
+	if queryParams.Has("limit") {
+		limit, _ = strconv.Atoi(queryParams.Get("limit"))
 	}
-
-	limitStr := queryParams.Get("limit")
-	limit := int64(30)
-	if limitStr != "" {
-		if l, err := strconv.ParseInt(limitStr, 10, 64); err == nil && l > 0 {
-			if l > maxLimit {
-				limit = maxLimit
-			} else {
-				limit = l
-			}
+	if queryParams.Has("offset") {
+		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+		if offset > 0 && limit > 0 {
+			page = (offset / limit) + 1
 		}
+	} else if queryParams.Has("page") {
+		page, _ = strconv.Atoi(queryParams.Get("page"))
+		offset = (page - 1) * limit
 	}
 
 	// Escape characters that are used by bleve wildcard search to be literal strings.
@@ -246,9 +252,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		},
 		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
-		Limit:  limit,
-		Page:   page,
-		Offset: (page - 1) * limit,
+		Limit:  int64(limit),
+		Page:   int64(page),
+		Offset: int64(offset),
 	}
 
 	if !requester.GetIsGrafanaAdmin() {

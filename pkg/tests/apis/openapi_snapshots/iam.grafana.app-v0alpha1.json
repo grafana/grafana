@@ -1027,7 +1027,7 @@
           "Search"
         ],
         "description": "User search",
-        "operationId": "getSearchUser",
+        "operationId": "getSearchUsers",
         "parameters": [
           {
             "name": "namespace",
@@ -1065,6 +1065,16 @@
               "format": "int64"
             },
             "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
           },
           {
             "name": "sort",

@@ -238,6 +238,106 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 	}
 }
 
+func TestIntegrationUserSearch_Paging(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesAuthnMutation,
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			setupUsers(t, helper)
+
+			t.Run("paging with page and limit", func(t *testing.T) {
+				// There are 5 users matching "TestUser"
+				query := "TestUser"
+
+				// Page 1, Limit 2
+				res1 := searchUsersWithPaging(t, helper, query, 1, 2)
+				require.Equal(t, int64(5), res1.TotalHits)
+				require.Len(t, res1.Hits, 2)
+
+				// Page 2, Limit 2
+				res2 := searchUsersWithPaging(t, helper, query, 2, 2)
+				require.Equal(t, int64(5), res2.TotalHits)
+				require.Len(t, res2.Hits, 2)
+
+				// Page 3, Limit 2
+				res3 := searchUsersWithPaging(t, helper, query, 3, 2)
+				require.Equal(t, int64(5), res3.TotalHits)
+				require.Len(t, res3.Hits, 1)
+
+				seen := make(map[string]bool)
+				for _, h := range res1.Hits {
+					seen[h.Login] = true
+				}
+				for _, h := range res2.Hits {
+					require.False(t, seen[h.Login], "User %s seen in page 1 and 2", h.Login)
+					seen[h.Login] = true
+				}
+				for _, h := range res3.Hits {
+					require.False(t, seen[h.Login], "User %s seen in previous pages", h.Login)
+					seen[h.Login] = true
+				}
+				require.Len(t, seen, 5)
+			})
+
+			t.Run("paging with offset and limit", func(t *testing.T) {
+				// There are 5 users matching "TestUser"
+				query := "TestUser"
+
+				// Offset 0, Limit 2 (equivalent to Page 1)
+				res1 := searchUsersWithOffset(t, helper, query, 0, 2)
+				require.Equal(t, int64(5), res1.TotalHits)
+				require.Len(t, res1.Hits, 2)
+
+				// Offset 2, Limit 2 (equivalent to Page 2)
+				res2 := searchUsersWithOffset(t, helper, query, 2, 2)
+				require.Equal(t, int64(5), res2.TotalHits)
+				require.Len(t, res2.Hits, 2)
+
+				// Offset 4, Limit 2 (equivalent to Page 3)
+				res3 := searchUsersWithOffset(t, helper, query, 4, 2)
+				require.Equal(t, int64(5), res3.TotalHits)
+				require.Len(t, res3.Hits, 1)
+
+				// Verify uniqueness
+				seen := make(map[string]bool)
+				for _, h := range res1.Hits {
+					seen[h.Login] = true
+				}
+				for _, h := range res2.Hits {
+					require.False(t, seen[h.Login], "User %s seen in offset 0 and 2", h.Login)
+					seen[h.Login] = true
+				}
+				for _, h := range res3.Hits {
+					require.False(t, seen[h.Login], "User %s seen in previous offsets", h.Login)
+					seen[h.Login] = true
+				}
+				require.Len(t, seen, 5)
+			})
+		})
+	}
+}
+
 func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	ctx := context.Background()
 	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -326,6 +426,48 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 		q.Set("sort", sort)
 	}
 	q.Set("limit", "100")
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
+
+	res := &iamv0.GetSearchUsers{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "GET",
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
+}
+
+func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query string, page, limit int) *iamv0.GetSearchUsers {
+	q := url.Values{}
+	q.Set("query", query)
+	q.Set("page", fmt.Sprintf("%d", page))
+	q.Set("limit", fmt.Sprintf("%d", limit))
+	// Sort by login to ensure deterministic paging
+	q.Set("sort", "login")
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
+
+	res := &iamv0.GetSearchUsers{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "GET",
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
+}
+
+func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query string, offset, limit int) *iamv0.GetSearchUsers {
+	q := url.Values{}
+	q.Set("query", query)
+	q.Set("offset", fmt.Sprintf("%d", offset))
+	q.Set("limit", fmt.Sprintf("%d", limit))
+	// Sort by login to ensure deterministic paging
+	q.Set("sort", "login")
 
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
