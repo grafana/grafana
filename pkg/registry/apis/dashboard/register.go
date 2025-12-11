@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -122,6 +123,7 @@ type DashboardsAPIBuilder struct {
 	snapshotService              dashboardsnapshots.Service
 	snapshotOptions              dashv0.SnapshotSharingOptions
 	namespacer                   request.NamespaceMapper
+	dashboardActivityChannel     live.DashboardActivityChannel
 	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
 
@@ -151,6 +153,7 @@ func RegisterAPIService(
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
+	dashboardActivityChannel live.DashboardActivityChannel,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -185,6 +188,7 @@ func RegisterAPIService(
 		snapshotService:              snapshotService,
 		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
+		dashboardActivityChannel:     dashboardActivityChannel,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -696,9 +700,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
-	storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
-		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
 		Storage:                 dw,
+		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		live:                    b.dashboardActivityChannel,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
@@ -775,11 +780,6 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 }
 
 var defaultDashboardPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
 	{
 		"kind": "BasicRole",
 		"name": "Editor",

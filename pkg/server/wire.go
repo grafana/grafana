@@ -280,6 +280,7 @@ var wireBasicSet = wire.NewSet(
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
+	live.ProvideDashboardActivityChannel,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
