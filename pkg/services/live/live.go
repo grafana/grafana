@@ -471,7 +471,7 @@ type GrafanaLive struct {
 	pluginClient          plugins.Client
 	orgService            org.Service
 
-	keyPrefix string
+	keyPrefix string // HA prefix for grafana cloud (since the org is always 1)
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
