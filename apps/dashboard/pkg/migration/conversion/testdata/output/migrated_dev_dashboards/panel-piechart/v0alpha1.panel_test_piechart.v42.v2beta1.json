@@ -786,5 +786,10 @@
     "title": "Panel Tests - Pie chart",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }
