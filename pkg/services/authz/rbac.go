@@ -152,7 +152,7 @@ func ProvideStandaloneAuthZClient(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 
-	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features)
+	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features, reg)
 	if err != nil {
 		return nil, err
 	}

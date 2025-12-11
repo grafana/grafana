@@ -47,10 +47,10 @@ type Rule interface {
 	Identifier() ngmodels.AlertRuleKeyWithGroup
 }
 
-type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
+type ruleFactoryFunc func(context.Context, ruleWithFolder) Rule
 
-func (f ruleFactoryFunc) new(ctx context.Context, rule *ngmodels.AlertRule) Rule {
-	return f(ctx, rule)
+func (f ruleFactoryFunc) new(ctx context.Context, rf ruleWithFolder) Rule {
+	return f(ctx, rf)
 }
 
 func newRuleFactory(
@@ -70,11 +70,11 @@ func newRuleFactory(
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
-	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
-		if rule.Type() == ngmodels.RuleTypeRecording {
+	return func(ctx context.Context, rf ruleWithFolder) Rule {
+		if rf.rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
-				rule.GetKeyWithGroup(),
+				rf.rule.GetKeyWithGroup(),
 				retryConfig,
 				clock,
 				evalFactory,
@@ -89,7 +89,7 @@ func newRuleFactory(
 		}
 		return newAlertRule(
 			ctx,
-			rule.GetKeyWithGroup(),
+			rf,
 			appURL,
 			disableGrafanaFolder,
 			retryConfig,
@@ -111,7 +111,8 @@ type evalAppliedFunc = func(ngmodels.AlertRuleKey, time.Time)
 type stopAppliedFunc = func(ngmodels.AlertRuleKey)
 
 type alertRule struct {
-	key ngmodels.AlertRuleKeyWithGroup
+	key                ngmodels.AlertRuleKeyWithGroup
+	currentFingerprint fingerprint
 
 	evalCh   chan *Evaluation
 	updateCh chan *Evaluation
@@ -139,7 +140,7 @@ type alertRule struct {
 
 func newAlertRule(
 	parent context.Context,
-	key ngmodels.AlertRuleKeyWithGroup,
+	rf ruleWithFolder,
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	retryConfig RetryConfig,
@@ -154,10 +155,13 @@ func newAlertRule(
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
 ) *alertRule {
+	key := rf.rule.GetKeyWithGroup()
+	initialFingerprint := rf.Fingerprint()
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 
-	return &alertRule{
+	a := &alertRule{
 		key:                  key,
+		currentFingerprint:   initialFingerprint,
 		evalCh:               make(chan *Evaluation),
 		updateCh:             make(chan *Evaluation),
 		ctx:                  ctx,
@@ -176,6 +180,8 @@ func newAlertRule(
 		tracer:               tracer,
 		featureToggles:       featureToggles,
 	}
+
+	return a
 }
 
 func (a *alertRule) Identifier() ngmodels.AlertRuleKeyWithGroup {
@@ -246,22 +252,23 @@ func (a *alertRule) Run() error {
 	grafanaCtx := a.ctx
 	a.logger.Debug("Alert rule routine started")
 
-	var currentFingerprint fingerprint
+	firstEvalDone := false
+
 	defer a.stopApplied()
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
 		case ctx := <-a.updateCh:
 			fp := ctx.Fingerprint()
-			if currentFingerprint == fp {
-				a.logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
+			if a.currentFingerprint == fp {
+				a.logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", a.currentFingerprint)
 				continue
 			}
 
 			a.logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.rule.IsPaused, "fingerprint", fp)
 			// clear the state. So the next evaluation will start from the scratch.
 			a.resetState(grafanaCtx, ctx.rule, ctx.rule.IsPaused)
-			currentFingerprint = fp
+			a.currentFingerprint = fp
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
 			if !ok {
@@ -295,20 +302,21 @@ func (a *alertRule) Run() error {
 				for {
 					isPaused := ctx.rule.IsPaused
 
-					// Do not clean up state if the eval loop has just started.
 					var needReset bool
-					if currentFingerprint != 0 && currentFingerprint != f {
-						logger.Debug("Got a new version of alert rule. Clear up the state", "current_fingerprint", currentFingerprint, "fingerprint", f)
+					if a.currentFingerprint != f {
+						logger.Debug("Got a new version of alert rule. Clear up the state", "current_fingerprint", a.currentFingerprint, "fingerprint", f)
 						needReset = true
 					}
 					// We need to reset state if the loop has started and the alert is already paused. It can happen,
 					// if we have an alert with state and we do file provision with stateful Grafana, that state
 					// lingers in DB and won't be cleaned up until next alert rule update.
-					needReset = needReset || (currentFingerprint == 0 && isPaused)
+					needReset = needReset || (!firstEvalDone && isPaused)
 					if needReset {
 						a.resetState(grafanaCtx, ctx.rule, isPaused)
 					}
-					currentFingerprint = f
+
+					firstEvalDone = true
+					a.currentFingerprint = f
 					if isPaused {
 						logger.Debug("Skip rule evaluation because it is paused")
 						return
@@ -319,7 +327,7 @@ func (a *alertRule) Run() error {
 						evalTotal.Inc()
 					}
 
-					fpStr := currentFingerprint.String()
+					fpStr := a.currentFingerprint.String()
 					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
 					tracingCtx, span := a.tracer.Start(grafanaCtx, "alert rule execution", trace.WithAttributes(
 						attribute.String("rule_uid", ctx.rule.UID),

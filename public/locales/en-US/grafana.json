@@ -5463,6 +5463,12 @@
         "label": "Edit",
         "tooltip": "Enter edit mode"
       },
+      "edit-button": {
+        "enter": "Edit",
+        "enter-tooltip": "Enter edit mode",
+        "exit": "Exit edit",
+        "exit-tooltip": "Exit edit mode"
+      },
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -5483,14 +5489,6 @@
         "discard-panel-new": "Discard panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit dashboard v2 schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Enter edit mode"
-          },
-          "exit": {
-            "label": "Exit edit mode"
-          }
         },
         "enter-edit-mode": {
           "label": "Make editable",
@@ -8826,6 +8824,13 @@
     "color-swatch": {
       "aria-label-default": "Pick a color",
       "aria-label-selected-color": "{{colorLabel}} color"
+    },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": "Sparkline requires at least two values to render."
+        }
+      }
     },
     "confirm-button": {
       "aria-label-delete": "Delete",
@@ -12427,18 +12432,17 @@
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects",
         "rounded-bars": "Rounded bars",
         "spotlight": "Spotlight",
         "spotlight-tooltip": "Only visible in dark themes"
       },
-      "gradient": "Gradient",
-      "gradient-auto": "Auto",
-      "gradient-none": "None",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
-      "shape": "Shape",
+      "shape": "Style",
       "shape-circle": "Circle",
-      "shape-gauge": "Gauge",
+      "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
