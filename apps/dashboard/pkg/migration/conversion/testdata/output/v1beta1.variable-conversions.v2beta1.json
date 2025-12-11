@@ -111,6 +111,7 @@
             }
           },
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "sort": "alphabeticalAsc",
           "definition": "label_values(up, instance)",
           "options": [
@@ -404,6 +405,7 @@
             }
           },
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "sort": "alphabeticalDesc",
           "definition": "terms field:@host size:100",
           "options": [],
@@ -415,5 +417,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

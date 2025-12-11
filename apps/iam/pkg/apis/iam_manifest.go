@@ -109,6 +109,13 @@ var appManifestData = app.ManifestData{
 																			"items": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"array"},
+																					Items: &spec.SchemaOrArray{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{
+
+																								Ref: spec.MustCreateRef("#/components/schemas/getGroupsExternalGroupMapping"),
+																							}},
+																					},
 																				},
 																			},
 																			"kind": {
@@ -200,6 +207,13 @@ var appManifestData = app.ManifestData{
 																		"hits": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchTeamsTeamHit"),
+																						}},
+																				},
 																			},
 																		},
 																		"kind": {

@@ -388,7 +388,7 @@ func (x *ResourceSearchResponse) GetFacet() map[string]*ResourceSearchResponse_F
 
 type RebuildIndexesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Namespace (tenant)
+	// Namespace (tenant) must be the same as all keys' namespace
 	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// List of ResourceKeys (Namespace + Group + Resource)
 	Keys          []*ResourceKey `protobuf:"bytes,2,rep,name=keys,proto3" json:"keys,omitempty"`

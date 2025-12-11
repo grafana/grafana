@@ -4819,6 +4819,8 @@
       "remove": "Odebrat {{typeName}}",
       "row-title": "",
       "switch-layout": "Přepnout rozvržení",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5929,6 +5931,17 @@
       "label-value": "Hodnota",
       "placeholder-your-metric-prefix": "Předpona metriky"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Vlastní možnosti",
       "name-values-separated-comma": "Hodnoty oddělené čárkou",
@@ -6302,12 +6315,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
+      "description-regex-apply-to": "",
       "label-data-source": "Zdroj dat",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statické možnosti třídění",
       "label-target-data-source": "Cílový zdroj dat",
       "label-use-static-options": "Použít statické možnosti",
       "name-regex": "Regulární výraz",
       "query-options": "Možnosti dotazu",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Možnosti výběru",
       "static-options-legend": "Statické možnosti"
     },

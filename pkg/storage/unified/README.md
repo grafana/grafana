@@ -280,6 +280,35 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 - make changes in `.proto` file
 - to compile all protobuf files in the repository run `make protobuf` at its top level
 
+## Enable Quotas/Overrides
+Quotas will make unified storage impose resource limits on a namespace. By default, the limit is 1000, but it can be overridden. To enable, create an empty overrides.yaml file in the grafana root directory.
+
+Then add the following to your grafana ini:
+```ini
+[feature_toggles]
+kubernetesUnifiedStorageQuotas = true
+
+[unified_storage]
+overrides_path = overrides.yaml
+overrides_reload_period = 5s
+```
+
+To overrides the default quota for a tenant, add the following to the overrides.yaml file:
+```yaml
+overrides:
+  <NAMESPACE>:
+    quotas:
+      <GROUP>.<RESOURCE>:
+        limit: 10
+```
+Unless otherwise set, the NAMESPACE when running locally is `default`.
+
+To access quotas, use the following API endpoint:
+```
+GET /apis/quotas.grafana.app/v0alpha1/namespaces/<NAMESPACE>/usage?group=<GROUP>&resource=<RESOURCE>
+```
+
+
 ## Setting up search
 To enable it, add the following to your `custom.ini` under the `[feature_toggles]` and `[unified_storage]` sections:
 ```ini
