@@ -84,7 +84,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
-    <td style="vertical-align: top">grafanactl</td>
+    <td style="vertical-align: top">`grafanactl`</td>
     <td>
       A command-line tool that enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana's REST API. 
   </tr>
