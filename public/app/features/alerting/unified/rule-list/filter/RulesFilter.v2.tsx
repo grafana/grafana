@@ -45,7 +45,8 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
-import { SavedSearch, SavedSearches } from './SavedSearches';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './SavedSearches.types';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
@@ -144,7 +145,11 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
 
     const defaultSearch = getAutoApplySearch();
     if (defaultSearch) {
-      handleApplySearch(defaultSearch);
+      try {
+        handleApplySearch(defaultSearch);
+      } catch (error) {
+        console.error('Failed to auto-apply default search:', error);
+      }
     }
   }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, handleApplySearch]);
 

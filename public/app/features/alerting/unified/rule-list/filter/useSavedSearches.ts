@@ -7,7 +7,7 @@ import { UserStorage } from '@grafana/runtime/internal';
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { contextSrv } from '../../../../../core/services/context_srv';
 
-import { SavedSearch, ValidationError } from './SavedSearches';
+import { SavedSearch, ValidationError } from './SavedSearches.types';
 
 /**
  * Storage key for saved searches in UserStorage.
