@@ -1,6 +1,12 @@
 import { css } from '@emotion/css';
 
-import { DisplayValue, DisplayValueAlignmentFactors, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import {
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+  FieldSparkline,
+  formattedValueToString,
+  GrafanaTheme2,
+} from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { calculateFontSize } from '../../utils/measureText';
@@ -8,21 +14,13 @@ import { calculateFontSize } from '../../utils/measureText';
 import { RadialShape, RadialTextMode } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
-// function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-//   let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-//   return {
-//     x: centerX + radius * Math.cos(radian),
-//     y: centerY + radius * Math.sin(radian),
-//   };
-// }
-
 interface RadialTextProps {
   displayValue: DisplayValue;
   theme: GrafanaTheme2;
   dimensions: GaugeDimensions;
-  textMode: RadialTextMode;
-  vizCount: number;
+  textMode: Exclude<RadialTextMode, 'auto'>;
   shape: RadialShape;
+  sparkline?: FieldSparkline;
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueManualFontSize?: number;
   nameManualFontSize?: number;
@@ -33,8 +31,8 @@ export function RadialText({
   theme,
   dimensions,
   textMode,
-  vizCount,
   shape,
+  sparkline,
   alignmentFactors,
   valueManualFontSize,
   nameManualFontSize,
@@ -46,10 +44,6 @@ export function RadialText({
     return null;
   }
 
-  if (textMode === 'auto') {
-    textMode = vizCount === 1 ? 'value' : 'value_and_name';
-  }
-
   const nameToAlignTo = (alignmentFactors ? alignmentFactors.title : displayValue.title) ?? '';
   const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : displayValue);
 
@@ -59,7 +53,7 @@ export function RadialText({
 
   // Not sure where this comes from but svg text is not using body line-height
   const lineHeight = 1.21;
-  const valueWidthToRadiusFactor = 0.85;
+  const valueWidthToRadiusFactor = 0.82;
   const nameToHeightFactor = 0.45;
   const largeRadiusScalingDecay = 0.86;
 
@@ -104,12 +98,22 @@ export function RadialText({
   const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 
-  // For gauge shape we shift text up a bit
-  const valueDy = shape === 'gauge' ? -valueFontSize * 0.3 : 0;
-  const nameDy = shape === 'gauge' ? -nameFontSize * 0.7 : 0;
+  // adjust the text up on gauges and when sparklines are present
+  let dy = 0;
+  if (shape === 'gauge') {
+    if (showName) {
+      dy -= nameFontSize * 0.2;
+    }
+    if (showValue) {
+      dy -= valueFontSize * 0.3;
+    }
+  }
+  if (sparkline) {
+    dy -= 8;
+  }
 
   return (
-    <g>
+    <g transform={`translate(0, ${dy})`}>
       {showValue && (
         <text
           x={centerX}
@@ -119,7 +123,6 @@ export function RadialText({
           className={styles.text}
           textAnchor="middle"
           dominantBaseline="middle"
-          dy={valueDy}
         >
           <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
           <tspan>{displayValue.text}</tspan>
@@ -133,7 +136,6 @@ export function RadialText({
           fontSize={nameFontSize}
           x={centerX}
           y={nameY}
-          dy={nameDy}
           textAnchor="middle"
           dominantBaseline="middle"
           fill={nameColor}

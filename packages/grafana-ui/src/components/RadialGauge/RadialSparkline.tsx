@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { FieldDisplay, GrafanaTheme2, FieldConfig } from '@grafana/data';
 import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { RadialShape } from './RadialGauge';
+import { RadialShape, RadialTextMode } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
 interface RadialSparklineProps {
@@ -14,18 +15,28 @@ interface RadialSparklineProps {
   theme: GrafanaTheme2;
   color?: string;
   shape?: RadialShape;
+  textMode: Exclude<RadialTextMode, 'auto'>;
 }
-export function RadialSparkline({ sparkline, dimensions, theme, color, shape }: RadialSparklineProps) {
+export function RadialSparkline({ sparkline, dimensions, theme, color, shape, textMode }: RadialSparklineProps) {
+  const { radius, barWidth } = dimensions;
+
+  const showName = textMode === 'name' || textMode === 'value_and_name';
+  const height = showName ? radius / 4 : radius / 3;
+  const widthFactor = shape === 'gauge' ? 1.6 : 1.4;
+  const width = radius * widthFactor - barWidth;
+  const topPos = useMemo(() => {
+    if (!sparkline) {
+      return '';
+    }
+    if (shape === 'gauge') {
+      return `${dimensions.gaugeBottomY - height}px`;
+    }
+    return `calc(50% + ${radius / 3.3}px)`;
+  }, [sparkline, dimensions.gaugeBottomY, height, radius, shape]);
+
   if (!sparkline) {
     return null;
   }
-
-  const { radius, barWidth } = dimensions;
-
-  const height = radius / 4;
-  const widthFactor = shape === 'gauge' ? 1.6 : 1.4;
-  const width = radius * widthFactor - barWidth;
-  const topPos = shape === 'gauge' ? `${dimensions.gaugeBottomY - height}px` : `calc(50% + ${radius / 2.8}px)`;
 
   const styles = css({
     position: 'absolute',
