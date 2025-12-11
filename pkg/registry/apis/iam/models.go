@@ -77,10 +77,11 @@ type IdentityAccessManagementAPIBuilder struct {
 	reg    prometheus.Registerer
 	logger log.Logger
 
-	dual             dualwrite.Service
-	unified          resource.ResourceClient
-	userSearchClient resourcepb.ResourceIndexClient
-	teamSearch       *TeamSearchHandler
+	dual              dualwrite.Service
+	unified           resource.ResourceClient
+	userSearchClient  resourcepb.ResourceIndexClient
+	userSearchHandler *user.SearchHandler
+	teamSearch        *TeamSearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
