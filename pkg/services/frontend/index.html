@@ -274,8 +274,8 @@
           let path = '/bootdata';
           // call a special bootdata url with the public access token
           // this is needed to set the access token and correct org for public dashboards on the ST backend
-          if ([[.Settings.PublicDashboardAccessToken]]) {
-            path += `/${[[.Settings.PublicDashboardAccessToken]]}`;
+          if ([[.PublicDashboardAccessToken]]) {
+            path += `/${[[.PublicDashboardAccessToken]]}`;
           }
           // pass the search params through to the bootdata request
           // this allows for overriding the theme/language etc

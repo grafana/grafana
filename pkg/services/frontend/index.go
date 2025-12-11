@@ -45,6 +45,8 @@ type IndexViewData struct {
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
+
+	PublicDashboardAccessToken string
 }
 
 // Templates setup.
@@ -143,7 +145,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	// TODO -- restructure so the static stuff is under one variable and the rest is dynamic
 	data := p.data // copy everything
 	data.Nonce = nonce
-	data.Settings.PublicDashboardAccessToken = reqCtx.PublicDashboardAccessToken
+	data.PublicDashboardAccessToken = reqCtx.PublicDashboardAccessToken
 
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
