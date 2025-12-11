@@ -3,7 +3,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -48,26 +47,16 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
-func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
-	if os.Getenv("GRAFANA_TEST_DB") != "" {
-		return nil
-	}
-
+func (p *UnifiedStorageMigrationServiceImpl) Run(_ context.Context) error {
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
-	} else {
-		metrics.MUnifiedStorageMigrationStatus.Set(2)
-		logger.Info("Data migrations not yet enforced, skipping")
 	}
-
-	// TODO: Re-enable once migrations are ready
-	// TODO: add guarantee that this only runs once
-	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
-	return nil
+	logger.Info("Running migrations for unified storage")
+	metrics.MUnifiedStorageMigrationStatus.Set(3)
+	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
 }
 
 func RegisterMigrations(
