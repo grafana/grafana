@@ -3,10 +3,12 @@ import type { JSX } from 'react';
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
+  FieldType,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 import { config } from 'app/core/config';
@@ -14,6 +16,7 @@ import { config } from 'app/core/config';
 import { Options } from './panelcfg.gen';
 
 export function RadialBarPanel({
+  id,
   height,
   width,
   data,
@@ -87,6 +90,10 @@ export function RadialBarPanel({
 
   const minVizHeight = 60;
   const minVizWidth = 60;
+
+  if (getValues()[0]?.display?.text === 'No data') {
+    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} needsNumberField />;
+  }
 
   return (
     <Stack direction="row" justifyContent="center" alignItems="center" height={'100%'}>
