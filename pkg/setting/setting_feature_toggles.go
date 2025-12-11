@@ -81,11 +81,8 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 }
 
 func ParseFlag(name, value string) (FeatureToggle, error) {
-	var structure any
+	var structure map[string]any
 
-	if boolean, err := strconv.ParseBool(value); err == nil {
-		return FeatureToggle{Type: Boolean, Name: name, Value: boolean}, nil
-	}
 	if integer, err := strconv.Atoi(value); err == nil {
 		return FeatureToggle{Type: Integer, Name: name, Value: integer}, nil
 	}
@@ -95,5 +92,9 @@ func ParseFlag(name, value string) (FeatureToggle, error) {
 	if err := json.Unmarshal([]byte(value), &structure); err == nil {
 		return FeatureToggle{Type: Structure, Name: name, Value: structure}, nil
 	}
+	if boolean, err := strconv.ParseBool(value); err == nil {
+		return FeatureToggle{Type: Boolean, Name: name, Value: boolean}, nil
+	}
+
 	return FeatureToggle{Type: String, Name: name, Value: value}, nil
 }
