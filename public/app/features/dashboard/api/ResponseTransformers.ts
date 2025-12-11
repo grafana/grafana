@@ -688,8 +688,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             current: {
-              value: v.current.value,
-              text: v.current.text,
+              value: v.current?.value,
+              text: v.current?.text,
             },
             options: v.options ?? [],
             refresh: transformVariableRefreshToEnum(v.refresh),
@@ -707,8 +707,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             query: v.query,
             current: {
-              value: v.current.value,
-              text: v.current.text,
+              value: v.current?.value,
+              text: v.current?.text,
             },
             options: v.options ?? [],
             multi: v.multi ?? false,
@@ -751,9 +751,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           spec: {
             ...commonProperties,
             current: {
-              value: v.current.value,
+              value: v.current?.value,
               // Constant variable doesn't use text state
-              text: v.current.value,
+              text: v.current?.value,
             },
             query: v.query,
           },
@@ -766,9 +766,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           spec: {
             ...commonProperties,
             current: {
-              value: v.current.value,
+              value: v.current?.value,
               // Interval variable doesn't use text state
-              text: v.current.value,
+              text: v.current?.value,
             },
             query: v.query,
             refresh: 'onTimeRangeChanged',
@@ -786,9 +786,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           spec: {
             ...commonProperties,
             current: {
-              value: v.current.value,
+              value: v.current?.value,
               // Text variable doesn't use text state
-              text: v.current.value,
+              text: v.current?.value,
             },
             query: v.query,
           },
@@ -811,8 +811,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             options: v.options,
             current: {
-              value: v.current.value,
-              text: v.current.text,
+              value: v.current?.value,
+              text: v.current?.text,
             },
             multi: v.multi,
           },
