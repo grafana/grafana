@@ -1,0 +1,47 @@
+name: Socket.dev
+
+on:
+  push:
+    branches:
+      - main
+      # TODO: Release branches later?
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  socketdev:
+    name: Analyze
+    runs-on: ubuntu-latest
+    # only for Grafana employees
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.author_association == 'MEMBER' ||
+      github.event.pull_request.author_association == 'OWNER'
+    permissions:
+      contents: read # clone repository
+      id-token: write # required for Vault access
+      # The docs also ask for write for pull-requests and issues, but I don't think they are necessary, nor is the reason documented...
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          # For PRs, fetch one additional commit for proper diff analysis
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+      - uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a # v7
+        with:
+          enable-cache: false
+      - name: Get SOCKET_SECURITY_API_KEY
+        id: get-socket-security-api-key
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        with:
+          repo_secrets: |
+            SOCKET_SECURITY_API_KEY=socketsecurity:api-key
+      - env:
+          GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || 0 }}
+        run: uvx --from socketsecurity socketcli --target-path "$(pwd)" --scm github --pr-number "$PR_NUMBER"
