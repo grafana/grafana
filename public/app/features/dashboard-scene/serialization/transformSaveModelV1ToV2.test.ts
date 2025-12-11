@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { normalizeBackendOutputForFrontendComparison } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -229,8 +230,17 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       expect(frontendOutput).toBeDefined();
       expect(backendOutputAfterLoadedByScene).toBeDefined();
 
+      // Normalize backend output to account for differences in library panel repeat handling
+      // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
+      // For migrated dashboards, panels are in the root level, not in spec.panels
+      const inputPanels = jsonInput.panels || jsonInput.spec?.panels || [];
+      const normalizedBackendOutput = normalizeBackendOutputForFrontendComparison(
+        backendOutputAfterLoadedByScene,
+        inputPanels
+      );
+
       // Compare only the spec structures - this is the core transformation
-      expect(backendOutputAfterLoadedByScene).toEqual(frontendOutput);
+      expect(normalizedBackendOutput).toEqual(frontendOutput);
     });
   });
 
@@ -292,8 +302,17 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       expect(frontendOutput).toBeDefined();
       expect(backendOutputAfterLoadedByScene).toBeDefined();
 
+      // Normalize backend output to account for differences in library panel repeat handling
+      // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
+      // For migrated dashboards, panels are in the root level, not in spec.panels
+      const inputPanels = jsonInput.panels || jsonInput.spec?.panels || [];
+      const normalizedBackendOutput = normalizeBackendOutputForFrontendComparison(
+        backendOutputAfterLoadedByScene,
+        inputPanels
+      );
+
       // Compare only the spec structures - this is the core transformation
-      expect(backendOutputAfterLoadedByScene).toEqual(frontendOutput);
+      expect(normalizedBackendOutput).toEqual(frontendOutput);
     });
   });
 });

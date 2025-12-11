@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 
-import { CloudWatchMetricsQuery } from '../types';
+import { CloudWatchMetricsQuery } from '../dataquery.gen';
 
 import { migrateCloudWatchQuery } from './dashboardMigrations';
 

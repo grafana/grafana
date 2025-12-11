@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider from 'rc-slider';
+import Slider from '@rc-component/slider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';

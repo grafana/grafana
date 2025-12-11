@@ -9,8 +9,8 @@ import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
-  AnnoKeyMessage,
   AnnoKeyGrantPermissions,
+  AnnoKeyMessage,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -18,12 +18,13 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
-import { isDashboardV2Spec } from './utils';
+import { isV0V1StoredVersion } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -43,16 +44,10 @@ export class K8sDashboardV2API
   async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
-
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
-      if (
-        !isDashboardV2Spec(dashboard.spec) &&
-        dashboard.status?.conversion?.failed &&
-        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
-          dashboard.status.conversion.storedVersion === 'v1beta1' ||
-          dashboard.status.conversion.storedVersion === 'v0alpha1')
-      ) {
+      // This could come as conversion error from v0 or v2 to V1.
+      if (dashboard.status?.conversion?.failed && isV0V1StoredVersion(dashboard.status.conversion.storedVersion)) {
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
 
@@ -73,6 +68,13 @@ export class K8sDashboardV2API
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
+        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
       }
 
       return dashboard;

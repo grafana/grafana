@@ -17,7 +17,7 @@
       "label-subscription": "サブスクリプション",
       "placeholder-resource-name": "名前",
       "tooltip-region": "リソースのコード領域。単一のリソースの場合はオプションですが、複数のリソースを選択する場合は必須です。",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "<2>リソースURI</2>を手動で編集します。複数のテンプレート変数の使用をサポートしています（例：/subscriptions/$subId/resourceGroups/$rg）"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "集計関数",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "基本ログ",
-      "description-basic-logs": "",
+      "description-basic-logs": "この機能を有効にすると、<2>基本ログ</2>用に設定されたテーブルをクエリするダッシュボードパネルで、Azure Monitorのクエリごとのコストが発生します。",
       "label-enable-basic-logs": "基本ログを有効にする"
     },
     "config-editor": {

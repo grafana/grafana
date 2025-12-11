@@ -985,6 +985,10 @@ type ListAlertRulesQuery struct {
 
 	ReceiverName     string
 	TimeIntervalName string
+
+	// DataSourceUIDs allows searching for alert rules using data sources
+	// that match any of the given UIDs exactly (case sensitive).
+	DataSourceUIDs []string
 	// SearchTitle allows searching for alert rules that contain
 	// the given string in their title (case insensitive)
 	SearchTitle string
@@ -1036,9 +1040,15 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type InsertRule struct {
+	AlertRule
+	Message string
+}
+
 type UpdateRule struct {
 	Existing *AlertRule
 	New      AlertRule
+	Message  string
 }
 
 // Condition contains backend expressions and queries and the RefID

@@ -84,6 +84,7 @@ type sqlResourceRequest struct {
 	WriteEvent resource.WriteEvent
 	Generation int64
 	Folder     string
+	KeyPath    string
 
 	// Useful when batch writing
 	ResourceVersion int64
@@ -368,11 +369,28 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
-	GUIDToRV map[string]int64
+	GUIDToRV          map[string]int64
+	GUIDToSnowflakeRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r sqlResourceUpdateRVRequest) SlashFunc() string {
+	if r.DialectName() == "postgres" {
+		return "CHR(47)"
+	}
+
+	return "CHAR(47)"
+}
+
+func (r sqlResourceUpdateRVRequest) TildeFunc() string {
+	if r.DialectName() == "postgres" {
+		return "CHR(126)"
+	}
+
+	return "CHAR(126)"
 }
 
 // resource_version table requests.

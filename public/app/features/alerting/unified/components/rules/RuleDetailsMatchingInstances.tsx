@@ -44,20 +44,21 @@ interface ShowMoreInstancesProps {
 
 function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
+  const { visibleItemsCount, totalItemsCount } = stats;
 
   return (
     <div className={styles.footerRow}>
       <div>
         <Trans
           i18nKey="alerting.rule-details-matching-instances.showing-count"
-          values={{ visibleItems: stats.visibleItemsCount, totalItems: stats.totalItemsCount }}
+          values={{ visibleItemsCount, totalItemsCount }}
         >
-          Showing {'{{visibleItems}}'} out of {'{{totalItems}}'} instances
+          Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
         </Trans>
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
-        <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all" count={stats.totalItemsCount}>
-          Show all {'{{totalItems}}'} alert instances
+        <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all" values={{ totalItemsCount }}>
+          Show all {{ totalItemsCount }} alert instances
         </Trans>
       </LinkButton>
     </div>

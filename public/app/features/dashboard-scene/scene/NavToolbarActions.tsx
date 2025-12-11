@@ -153,9 +153,7 @@ export function ToolbarActions({ dashboard }: Props) {
   toolbarActions.push({
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
-    ),
+    render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -353,7 +351,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
-          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+          dashboard.setState({ meta: { ...meta, canEdit: true, canSave: true } });
         }}
         tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
         key="edit"

@@ -4,6 +4,13 @@ import { toArray } from 'rxjs/operators';
 import { CoreApp, Field } from '@grafana/data';
 
 import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  LogsQueryLanguage,
+  MetricEditorMode,
+  MetricQueryType,
+} from './dataquery.gen';
+import {
   CloudWatchSettings,
   fieldsVariable,
   logGroupNamesVariable,
@@ -13,16 +20,7 @@ import {
 import { setupForLogs } from './mocks/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
 import { TimeRangeMock } from './mocks/timeRange';
-import {
-  CloudWatchDefaultQuery,
-  CloudWatchLogsQuery,
-  CloudWatchLogsRequest,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  LogsQueryLanguage,
-  MetricEditorMode,
-  MetricQueryType,
-} from './types';
+import { CloudWatchQuery, CloudWatchLogsRequest, CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
 describe('datasource', () => {

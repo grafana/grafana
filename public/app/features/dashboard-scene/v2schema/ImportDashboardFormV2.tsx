@@ -17,10 +17,8 @@ interface Props
     'register' | 'control' | 'getValues' | 'watch'
   > {
   inputs: DashboardInputs;
-  uidReset: boolean;
   errors: FieldErrors<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
   onCancel: () => void;
-  onUidReset: () => void;
   onSubmit: FormsOnSubmit<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
 }
 
@@ -30,8 +28,6 @@ export const ImportDashboardFormV2 = ({
   control,
   inputs,
   getValues,
-  uidReset,
-  onUidReset,
   onCancel,
   onSubmit,
   watch,
@@ -56,12 +52,12 @@ export const ImportDashboardFormV2 = ({
   }, [errors, getValues, isSubmitted, onSubmit]);
 
   return (
-    <>
-      <Trans i18nKey="manage-dashboards.import-dashboard-form.options">Options</Trans>
+    <Stack direction="column" gap={2}>
       <Field
         label={t('manage-dashboards.import-dashboard-form.label-name', 'Name')}
         invalid={!!errors.dashboard?.title}
         error={errors.dashboard?.title && errors.dashboard?.title.message}
+        noMargin
       >
         <Input
           {...(register as any)('dashboard.title', {
@@ -72,7 +68,8 @@ export const ImportDashboardFormV2 = ({
           data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
-      <Field label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')}>
+
+      <Field label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')} noMargin>
         <Controller<any>
           render={({ field: { ref, value, onChange, ...field } }) => (
             <FolderPicker
@@ -87,6 +84,7 @@ export const ImportDashboardFormV2 = ({
           control={control}
         />
       </Field>
+
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput) => {
           if (input.pluginId === ExpressionDatasourceRef.type) {
@@ -102,6 +100,7 @@ export const ImportDashboardFormV2 = ({
               key={input.pluginId}
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
+              noMargin
             >
               <Controller<any>
                 name={dataSourceOption}
@@ -133,7 +132,7 @@ export const ImportDashboardFormV2 = ({
           );
         })}
 
-      <Stack>
+      <Stack direction="row" gap={2}>
         <Button
           type="submit"
           data-testid={selectors.components.ImportDashboardForm.submit}
@@ -148,7 +147,7 @@ export const ImportDashboardFormV2 = ({
           <Trans i18nKey="dashboard-scene.import-dashboard-form-v2.cancel">Cancel</Trans>
         </Button>
       </Stack>
-    </>
+    </Stack>
   );
 };
 

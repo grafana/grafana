@@ -6,7 +6,8 @@ test.use({
   featureToggles: {
     scenes: true,
     sharingDashboardImage: true, // Enable the export image feature
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

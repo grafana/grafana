@@ -211,6 +211,11 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 	return client.Search(ctx, in, opts...)
 }
 
+func (s *searchWrapper) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest,
+	opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return s.unifiedClient.RebuildIndexes(ctx, in, opts...)
+}
+
 // compareSearchResults compares legacy and unified search results and logs/metrics the outcome
 func (s *searchWrapper) compareSearchResults(legacyResponse, unifiedResponse *resourcepb.ResourceSearchResponse, requestKey *resourcepb.ResourceKey) {
 	if legacyResponse == nil || unifiedResponse == nil {

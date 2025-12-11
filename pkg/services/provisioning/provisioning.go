@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -64,6 +65,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	dual dualwrite.Service,
 	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
+	serverLockService *serverlock.ServerLockService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -92,6 +94,7 @@ func ProvideService(
 		tracer:                       tracer,
 		migratePrometheusType:        promTypeMigrationProvider.Run,
 		dual:                         dual,
+		serverLock:                   serverLockService,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -166,7 +169,7 @@ func (ps *ProvisioningServiceImpl) running(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService, ps.dual)
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.Cfg, ps.orgService, ps.dashboardService, ps.folderService, ps.dual, ps.serverLock)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -242,6 +245,7 @@ type ProvisioningServiceImpl struct {
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
+	serverLock                   *serverlock.ServerLockService
 	migratePrometheusType        func(context.Context) error
 }
 

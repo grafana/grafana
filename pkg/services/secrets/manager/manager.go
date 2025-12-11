@@ -122,6 +122,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
@@ -167,6 +168,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	defer span.End()
 
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
 	}
@@ -343,6 +345,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 	// If encrypted with envelope encryption, the feature is disabled and
 	// no provider is initialized, then we throw an error.
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.encryptedWithEnvelopeEncryption(payload) &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) &&
 		!s.providersInitialized() {
@@ -480,6 +483,7 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	s.log.Info("Data keys re-encryption triggered")
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 		s.log.Info("Envelope encryption is not enabled but trying to init providers anyway...")
 

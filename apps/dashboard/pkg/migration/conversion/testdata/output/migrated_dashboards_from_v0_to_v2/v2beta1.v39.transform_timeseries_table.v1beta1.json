@@ -1,0 +1,298 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "v39.transform_timeseries_table.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable Transformation - Single Stat",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": {
+              "A": {
+                "stat": "mean"
+              }
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable Transformation - Multiple Stats",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": {
+              "A": {
+                "stat": "mean"
+              },
+              "B": {
+                "stat": "max"
+              },
+              "C": {
+                "stat": "min"
+              },
+              "D": {
+                "stat": "sum"
+              }
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 3,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable Transformation - Mixed with Other Transforms",
+        "transformations": [
+          {
+            "id": "reduce",
+            "options": {
+              "reducers": [
+                "mean"
+              ]
+            }
+          },
+          {
+            "id": "timeSeriesTable",
+            "options": {
+              "A": {
+                "stat": "last"
+              },
+              "B": {
+                "stat": "first"
+              }
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {}
+            }
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 4,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with Non-TimeSeriesTable Transformation (Should Remain Unchanged)",
+        "transformations": [
+          {
+            "id": "reduce",
+            "options": {
+              "reducers": [
+                "mean",
+                "max"
+              ]
+            }
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 5,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable - Empty RefIdToStat",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": {}
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 6,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable - No Options (Should Skip)",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": null
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 7,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with TimeSeriesTable - Invalid Options (Should Skip)",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": {
+              "someOtherOption": "value"
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 8,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with No Transformations (Should Remain Unchanged)",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3
+        },
+        "id": -1,
+        "title": "Row with Nested Panels Having TimeSeriesTable Transformations",
+        "type": "row"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 3
+        },
+        "id": 10,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Nested Panel with TimeSeriesTable",
+        "transformations": [
+          {
+            "id": "timeSeriesTable",
+            "options": {
+              "NestedA": {
+                "stat": "median"
+              },
+              "NestedB": {
+                "stat": "stdDev"
+              }
+            }
+          }
+        ],
+        "type": "table"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "V39 TimeSeriesTable Transformation Migration Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
+    }
+  }
+}

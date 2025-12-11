@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import type { JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';

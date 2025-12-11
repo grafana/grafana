@@ -93,7 +93,18 @@ type K8sTestHelper struct {
 	userSvc user.Service
 }
 
+type K8sTestHelperOpts struct {
+	testinfra.GrafanaOpts
+	// If provided, these users will be used instead of creating new ones
+	Org1Users *OrgUsers
+	OrgBUsers *OrgUsers
+}
+
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{GrafanaOpts: opts})
+}
+
+func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
 
 	// Use GRPC server when not configured
@@ -111,9 +122,12 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 		path = opts.DirPath
 	)
 	if opts.Dir == "" && opts.DirPath == "" {
-		dir, path = testinfra.CreateGrafDir(t, opts)
+		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
 	}
-	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
+	}
 
 	c := &K8sTestHelper{
 		env:             *env,
@@ -143,8 +157,24 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	_ = c.CreateOrg(Org1)
 	_ = c.CreateOrg(Org2)
 
-	c.Org1 = c.createTestUsers(Org1)
-	c.OrgB = c.createTestUsers(Org2)
+	if opts.Org1Users != nil {
+		c.Org1 = *opts.Org1Users
+		c.Org1.Admin.baseURL = listenerAddress
+		c.Org1.Editor.baseURL = listenerAddress
+		c.Org1.Viewer.baseURL = listenerAddress
+		c.Org1.None.baseURL = listenerAddress
+	} else {
+		c.Org1 = c.createTestUsers(Org1)
+	}
+	if opts.OrgBUsers != nil {
+		c.OrgB = *opts.OrgBUsers
+		c.OrgB.Admin.baseURL = listenerAddress
+		c.OrgB.Editor.baseURL = listenerAddress
+		c.OrgB.Viewer.baseURL = listenerAddress
+		c.OrgB.None.baseURL = listenerAddress
+	} else {
+		c.OrgB = c.createTestUsers(Org2)
+	}
 
 	c.loadAPIGroups()
 
@@ -762,7 +792,7 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	return client
 }
 
-func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) (string, error) {
 	c.t.Helper()
 
 	disco := c.NewDiscoveryClient()
@@ -793,12 +823,11 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
 			require.NoError(c.t, err)
-			return string(v)
+			return string(v), nil
 		}
 	}
 
-	require.Failf(c.t, "could not find discovery info for: %s", group)
-	return ""
+	return "", goerrors.New("could not find discovery info for: " + group)
 }
 
 func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {

@@ -97,6 +97,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
                   itemKind: item.kind,
                   parent: item.parentUID ? 'folder' : 'root',
                   source: 'browseDashboardsPage_BrowseView',
+                  uid: item.uid,
                 });
               }}
               href={item.url}

@@ -175,7 +175,7 @@
         "label-scrape-interval": "Odstęp czasowy pobierania danych",
         "label-series-limit": "Limit szeregu",
         "label-use-series-endpoint": "Użyj punktu końcowego szeregu",
-        "more-info": "",
+        "more-info": "Więcej informacji na temat konfigurowania typu i wersji systemu Prometheus w źródłach danych można znaleźć w <2>dokumentach dotyczących aprowizacji</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Przykład: {{example}}",
         "title-interval-behaviour": "Sposób działania odstępu czasu",
         "title-other": "Inne",

@@ -30,19 +30,20 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
-	Backend        resource.StorageBackend
-	DB             infraDB.DB
-	Cfg            *setting.Cfg
-	Tracer         trace.Tracer
-	Reg            prometheus.Registerer
-	AccessClient   types.AccessClient
-	SearchOptions  resource.SearchOptions
-	StorageMetrics *resource.StorageMetrics
-	IndexMetrics   *resource.BleveIndexMetrics
-	Features       featuremgmt.FeatureToggles
-	QOSQueue       QOSEnqueueDequeuer
-	SecureValues   secrets.InlineSecureValueSupport
-	OwnsIndexFn    func(key resource.NamespacedResource) (bool, error)
+	Backend          resource.StorageBackend
+	OverridesService *resource.OverridesService
+	DB               infraDB.DB
+	Cfg              *setting.Cfg
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
@@ -69,7 +70,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		SecureValues: opts.SecureValues,
 	}
 	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg})
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
 	}
 	// Support local file blob
 	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
@@ -101,7 +102,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 		backend, err := NewBackend(BackendOptions{
 			DBProvider:           eDB,
-			Tracer:               opts.Tracer,
 			Reg:                  opts.Reg,
 			IsHA:                 isHA,
 			storageMetrics:       opts.StorageMetrics,
@@ -119,6 +119,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.OverridesService = opts.OverridesService
 
 	return resource.NewResourceServer(serverOptions)
 }

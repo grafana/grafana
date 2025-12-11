@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -85,7 +87,8 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
-	resourceStats []ResourceStats
+	resourceStats   []ResourceStats
+	lastImportTimes []ResourceLastImportTime
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -127,7 +130,11 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 
 func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, errors.New("not implemented"))
+		for _, ti := range m.lastImportTimes {
+			if !yield(ti, nil) {
+				return
+			}
+		}
 	}
 }
 
@@ -605,14 +612,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, now)
+	support.findIndexesToRebuild(importTimes, nil, now)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, now5m)
+	support.findIndexesToRebuild(importTimes, nil, now5m)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
@@ -621,7 +628,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	minBuildTimeDashboard := now5m.Add(-1 * time.Hour)
 
 	vals := support.rebuildQueue.Elements()
-	require.ElementsMatch(t, vals, []rebuildRequest{
+	expected := []rebuildRequest{
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
@@ -631,7 +638,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 
 		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
-	})
+	}
+	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
+		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestRebuildIndexes(t *testing.T) {
@@ -747,4 +757,82 @@ func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest,
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+func TestRebuildIndexesForResource(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+		lastImportTimes: []ResourceLastImportTime{{
+			NamespacedResource: key,
+			LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
+		}},
+	}
+
+	search := &mockSearchBackend{}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	err = support.init(t.Context())
+	require.NoError(t, err)
+
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	// invalid request
+	rebuildReq := &resourcepb.RebuildIndexesRequest{
+		Namespace: "some-other-namespace",
+		Keys: []*resourcepb.ResourceKey{{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}}}
+	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, "key namespace does not match request namespace", rsp.Error.Message)
+
+	rebuildReq.Namespace = key.Namespace
+
+	// cached index info
+	search.cache[key] = &MockResourceIndex{
+		buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0"), BuildTime: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)},
+	}
+
+	// old import time will not be rebuilt
+	storage.lastImportTimes = []ResourceLastImportTime{{
+		NamespacedResource: key,
+		LastImportTime:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+	}}
+	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), rsp.RebuildCount)
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	// recent import time gets added to rebuild queue and processed
+	storage.lastImportTimes = []ResourceLastImportTime{{
+		NamespacedResource: key,
+		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
+	}}
+
+	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rsp.RebuildCount)
+
+	// rebuild waited for rebuild queue to process
+	require.Equal(t, 0, support.rebuildQueue.Len())
 }

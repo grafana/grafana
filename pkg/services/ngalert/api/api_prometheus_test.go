@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"testing"
 	"time"
@@ -23,6 +24,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -327,6 +329,7 @@ func withLabels(labels data.Labels) forEachState {
 	}
 }
 
+//nolint:gocyclo
 func TestRouteGetRuleStatuses(t *testing.T) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -2218,6 +2221,670 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 		require.True(t, foundNoProv, "should find rule without provenance")
 		require.True(t, foundWithProv, "should find rule with provenance")
+	})
+
+	t.Run("filter-aware pagination", func(t *testing.T) {
+		createRulesWithState := func(t *testing.T, store *fakes.RuleStore, aim *fakeAlertInstanceManager,
+			orgID int64, numGroups int, rulesPerGroup int,
+			stateFunc func(groupIdx int) eval.State,
+			healthFunc func(groupIdx int) error,
+			stateMutators ...func(groupIdx int, s *state.State) *state.State) {
+			t.Helper()
+
+			// create folders
+			for i := 1; i <= numGroups; i++ {
+				store.Folders[orgID] = append(store.Folders[orgID], &folder.Folder{
+					ID:       int64(i),
+					UID:      fmt.Sprintf("ns-%d", i),
+					Title:    fmt.Sprintf("Namespace %d", i),
+					Fullpath: fmt.Sprintf("/namespace-%d", i),
+				})
+			}
+
+			for i := 0; i < numGroups; i++ {
+				for j := 0; j < rulesPerGroup; j++ {
+					rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+						r.NamespaceUID = fmt.Sprintf("ns-%d", i+1)
+						r.RuleGroup = fmt.Sprintf("group-%d", i+1)
+						r.UID = fmt.Sprintf("rule-%d-%d", i+1, j+1)
+					}, withClassicConditionSingleQuery()).GenerateRef()
+
+					alertState := stateFunc(i)
+					healthErr := healthFunc(i)
+
+					aim.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+						s.State = alertState
+						s.Error = healthErr
+						s.Labels = data.Labels{"test": "label"}
+
+						for _, mutator := range stateMutators {
+							s = mutator(i, s)
+						}
+						return s
+					})
+					store.PutRule(context.Background(), rule)
+				}
+			}
+		}
+
+		t.Run("state filter fetches multiple pages to fill group_limit", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 10 groups (2 rules each = 20 rules total): groups 1,3,5,7,9 firing, groups 2,4,6,8,10 normal
+			// Request group_limit=3 with state=firing should fetch pages until 3 firing groups collected
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 10, 2,
+				func(i int) eval.State {
+					if i%2 == 0 {
+						return eval.Alerting
+					}
+					return eval.Normal
+				},
+				func(i int) error { return nil })
+
+			// Request 3 groups with state=firing filter
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=3", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 3 firing groups
+			require.Len(t, res.Data.RuleGroups, 3)
+			require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+			require.Equal(t, "group-3", res.Data.RuleGroups[1].Name)
+			require.Equal(t, "group-5", res.Data.RuleGroups[2].Name)
+
+			// Verify all have firing alerts
+			for _, rg := range res.Data.RuleGroups {
+				hasFiring := false
+				for _, rule := range rg.Rules {
+					for _, alert := range rule.Alerts {
+						if alert.State == eval.Alerting.String() {
+							hasFiring = true
+						}
+					}
+				}
+				require.True(t, hasFiring)
+			}
+		})
+
+		t.Run("state filter continues when first page has no matches", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 8 groups (2 rules each = 16 rules total): first 4 normal, last 4 firing
+			// Request state=firing with group_limit=2 should skip first 4 and return groups 5,6
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 8, 2,
+				func(i int) eval.State {
+					if i < 4 {
+						return eval.Normal // groups 1-4 normal
+					}
+					return eval.Alerting // groups 5-8 firing
+				},
+				func(i int) error { return nil })
+
+			// Request 2 firing groups - should skip past the first page of normal rules
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=2", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 2 firing groups
+			require.Len(t, res.Data.RuleGroups, 2)
+			require.Equal(t, "group-5", res.Data.RuleGroups[0].Name)
+			require.Equal(t, "group-6", res.Data.RuleGroups[1].Name)
+		})
+
+		t.Run("health filter fetches multiple pages", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 8 groups (2 rules each = 16 rules total): groups 1,3,5,7 with error health, groups 2,4,6,8 with ok health
+			// Request health=error with group_limit=3 should fetch pages until 3 error groups collected
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 8, 2,
+				func(i int) eval.State { return eval.Normal },
+				func(i int) error {
+					if i%2 == 0 {
+						return fmt.Errorf("evaluation error")
+					}
+					return nil
+				})
+
+			// Request 3 groups with health=error filter
+			req, err := http.NewRequest("GET", "/api/v1/rules?health=error&group_limit=3", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 3 error groups
+			require.Len(t, res.Data.RuleGroups, 3)
+			require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+			require.Equal(t, "group-3", res.Data.RuleGroups[1].Name)
+			require.Equal(t, "group-5", res.Data.RuleGroups[2].Name)
+
+			// Verify all have error health
+			for _, rg := range res.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "error", rule.Health)
+				}
+			}
+		})
+
+		t.Run("combined state and health filters", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 10 groups (2 rules each = 20 rules total)
+			// Groups 1-5: firing, groups 6-10: normal
+			// Groups 1,3,5,7,9: ok health, groups 2,4,6,8,10: error health
+			// Groups matching both filters (firing + ok): 1,3,5
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 10, 2,
+				func(i int) eval.State {
+					if i < 5 {
+						return eval.Alerting
+					}
+					return eval.Normal
+				},
+				func(i int) error {
+					if i%2 == 1 {
+						return fmt.Errorf("evaluation error")
+					}
+					return nil
+				})
+
+			// Request 3 groups with state=firing AND health=ok
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&health=ok&group_limit=3", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 3 groups matching both filters
+			require.Len(t, res.Data.RuleGroups, 3)
+			require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+			require.Equal(t, "group-3", res.Data.RuleGroups[1].Name)
+			require.Equal(t, "group-5", res.Data.RuleGroups[2].Name)
+
+			// Verify all match both criteria
+			for _, rg := range res.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "ok", rule.Health)
+					hasFiring := false
+					for _, alert := range rule.Alerts {
+						if alert.State == eval.Alerting.String() {
+							hasFiring = true
+						}
+					}
+					require.True(t, hasFiring)
+				}
+			}
+		})
+
+		t.Run("rule_limit hit before group_limit", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 5 groups (3 rules each = 15 rules total)
+			// Request: group_limit=10, rule_limit=8
+			// Expected: Should return groups 1-3 (9 rules total, exceeds limit but complete group included)
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 5, 3,
+				func(i int) eval.State { return eval.Alerting }, // all firing
+				func(i int) error { return nil })                // all healthy
+
+			// Request group_limit=10, rule_limit=8 - rule limit should hit first
+			req, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10&rule_limit=8", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Expected behavior with rule_limit=8:
+			// Group 1: 3 rules (total: 3, under 8, continue)
+			// Group 2: 3 rules (total: 6, under 8, continue)
+			// Group 3: 3 rules (total: 9, exceeds 8 but we include complete group)
+			// Result: 3 groups, 9 rules total
+			totalRules := 0
+			for _, rg := range res.Data.RuleGroups {
+				t.Logf("Group %s has %d rules", rg.Name, len(rg.Rules))
+				totalRules += len(rg.Rules)
+			}
+			t.Logf("Total: %d rules, %d groups", totalRules, len(res.Data.RuleGroups))
+			require.Equal(t, 9, totalRules)
+			require.Equal(t, 3, len(res.Data.RuleGroups))
+		})
+
+		t.Run("rule_limit without group_limit", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 10 groups (2 rules each = 20 rules total)
+			// Request rule_limit=7 should stop after 4 groups (8 rules total)
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 10, 2,
+				func(i int) eval.State { return eval.Alerting },
+				func(i int) error { return nil })
+
+			// Request rule_limit=7 only (group_limit unlimited)
+			req, err := http.NewRequest("GET", "/api/v1/rules?rule_limit=7", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 4 groups (8 rules total, stops after exceeding 7)
+			totalRules := 0
+			for _, rg := range res.Data.RuleGroups {
+				totalRules += len(rg.Rules)
+			}
+			require.Equal(t, 8, totalRules)
+			require.Equal(t, 4, len(res.Data.RuleGroups))
+			require.NotEmpty(t, res.Data.NextToken)
+		})
+
+		t.Run("empty page in middle of pagination", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 15 groups (2 rules each = 30 rules total): groups 1-3 firing, 4-8 normal, 9-13 firing, 14-15 normal
+			// Request state=firing with group_limit=5 should skip over normal groups
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 15, 2,
+				func(i int) eval.State {
+					groupNum := i + 1
+					if groupNum <= 3 || (groupNum >= 9 && groupNum <= 13) {
+						return eval.Alerting
+					}
+					return eval.Normal
+				},
+				func(i int) error { return nil })
+
+			// Request state=firing, group_limit=5
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=5", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 5 firing groups from pages 1 and 3 (skipping empty page 2)
+			require.Len(t, res.Data.RuleGroups, 5)
+
+			// Verify all are firing
+			for _, rg := range res.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					for _, alert := range rule.Alerts {
+						require.Equal(t, eval.Alerting.String(), alert.State)
+					}
+				}
+			}
+		})
+
+		t.Run("group_limit=0 returns empty response", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 1 group (2 rules) to verify group_limit=0 returns empty
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 1, 2,
+				func(i int) eval.State { return eval.Alerting },
+				func(i int) error { return nil })
+
+			// Request group_limit=0
+			req, err := http.NewRequest("GET", "/api/v1/rules?group_limit=0", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 0)
+			require.Empty(t, res.Data.NextToken)
+		})
+
+		t.Run("resume with token and filters active", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 10 groups (2 rules each = 20 rules total): odd groups firing, even groups normal
+			// Test pagination continuation with state filter: first page returns groups 1,3 then second page returns groups 5,7
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 10, 2,
+				func(i int) eval.State {
+					if i%2 == 0 {
+						return eval.Alerting
+					}
+					return eval.Normal
+				},
+				func(i int) error { return nil })
+
+			// First request: state=firing, group_limit=2
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=2", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res1 apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res1))
+
+			// Should return 2 firing groups (1, 3)
+			require.Len(t, res1.Data.RuleGroups, 2)
+			require.NotEmpty(t, res1.Data.NextToken)
+
+			// Verify both are firing
+			for _, rg := range res1.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "firing", rule.State)
+				}
+			}
+
+			// Second request: resume with token AND filter still active
+			req2, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?state=firing&group_limit=2&group_next_token=%s", res1.Data.NextToken), nil)
+			require.NoError(t, err)
+			c2 := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req2},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp2 := api.RouteGetRuleStatuses(c2)
+			require.Equal(t, http.StatusOK, resp2.Status())
+
+			var res2 apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp2.Body(), &res2))
+
+			// Should return next 2 firing groups (5, 7)
+			require.Len(t, res2.Data.RuleGroups, 2)
+			require.NotEmpty(t, res2.Data.NextToken)
+
+			// Verify both are firing
+			for _, rg := range res2.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "firing", rule.State)
+				}
+			}
+
+			// Verify we got different groups than first request
+			firstGroupNames := make(map[string]bool)
+			for _, rg := range res1.Data.RuleGroups {
+				firstGroupNames[rg.Name] = true
+			}
+			for _, rg := range res2.Data.RuleGroups {
+				require.False(t, firstGroupNames[rg.Name])
+			}
+		})
+
+		t.Run("rule_limit with state filter", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 10 groups (2 rules each = 20 rules total), alternating firing/normal
+			// Firing groups: 1,3,5,7,9 (5 groups × 2 rules = 10 firing rules)
+			// Request state=firing with rule_limit=7 should return groups 1,3,5,7 (8 rules)
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 10, 2,
+				func(i int) eval.State {
+					if i%2 == 0 {
+						return eval.Alerting
+					}
+					return eval.Normal
+				},
+				func(i int) error { return nil })
+
+			// Request state=firing, rule_limit=7
+			// Should fetch multiple pages to accumulate 7+ firing rules
+			// Groups 1, 3, 5 = 6 rules (under limit)
+			// Group 7 = +2 rules = 8 total (exceeds 7, but we include full group)
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&rule_limit=7", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Count total firing rules returned
+			totalRules := 0
+			for _, rg := range res.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "firing", rule.State)
+					totalRules++
+				}
+			}
+
+			// Should return 4 firing groups (1,3,5,7) with 8 rules total
+			require.Equal(t, 8, totalRules)
+			require.Equal(t, 4, len(res.Data.RuleGroups))
+			require.NotEmpty(t, res.Data.NextToken)
+		})
+
+		t.Run("rule_limit with health filter", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+
+			// Create 8 groups (3 rules each = 24 rules total), alternating ok/error health
+			// Error groups: 1,3,5,7 (4 groups × 3 rules = 12 error rules)
+			// Request health=error with rule_limit=8 should return groups 1,3,5 (9 rules)
+			createRulesWithState(t, fakeStore, fakeAIM, orgID, 8, 3,
+				func(i int) eval.State { return eval.Normal },
+				func(i int) error {
+					if i%2 == 0 {
+						return fmt.Errorf("evaluation error")
+					}
+					return nil
+				})
+
+			// Request health=error, rule_limit=8
+			// Should fetch multiple pages to accumulate 8+ error rules
+			// Groups 1, 3 = 6 rules (under limit)
+			// Group 5 = +3 rules = 9 total (exceeds 8, but we include full group)
+			req, err := http.NewRequest("GET", "/api/v1/rules?health=error&rule_limit=8", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Count total error rules returned
+			totalRules := 0
+			for _, rg := range res.Data.RuleGroups {
+				for _, rule := range rg.Rules {
+					require.Equal(t, "error", rule.Health)
+					totalRules++
+				}
+			}
+
+			// Should return 3 error groups (1,3,5) with 9 rules total
+			require.Equal(t, 9, totalRules)
+			require.Equal(t, 3, len(res.Data.RuleGroups))
+			require.NotEmpty(t, res.Data.NextToken)
+		})
+	})
+
+	t.Run("with search.folder filter", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		// Create folders with different paths
+		folder1 := &folder.Folder{UID: "prod-uid", Title: "Production", Fullpath: "Production", OrgID: orgID}
+		folder2 := &folder.Folder{UID: "prod-alerts-uid", Title: "Alerts", Fullpath: "Production/Alerts", OrgID: orgID}
+		folder3 := &folder.Folder{UID: "dev-uid", Title: "Monitoring", Fullpath: "Development/Monitoring", OrgID: orgID}
+		folder4 := &folder.Folder{UID: "prod-crit-uid", Title: "Critical", Fullpath: "Production/Critical", OrgID: orgID}
+		fakeStore.Folders[orgID] = []*folder.Folder{folder1, folder2, folder3, folder4}
+
+		// Create rules in different folders
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-uid"), gen.WithUID("rule1"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-alerts-uid"), gen.WithUID("rule2"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("dev-uid"), gen.WithUID("rule3"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-crit-uid"), gen.WithUID("rule4"), gen.WithNoNotificationSettings())
+
+		testCases := []struct {
+			name         string
+			searchFolder string
+			expectedUIDs []string
+		}{
+			{
+				name:         "search 'production' matches Production folders",
+				searchFolder: "production",
+				expectedUIDs: []string{"rule1", "rule2", "rule4"},
+			},
+			{
+				name:         "search 'prod alerts' matches Production/Alerts",
+				searchFolder: "prod alerts",
+				expectedUIDs: []string{"rule2"},
+			},
+			{
+				name:         "search 'dev' matches Development",
+				searchFolder: "dev",
+				expectedUIDs: []string{"rule3"},
+			},
+			{
+				name:         "search 'critical' matches Critical folder",
+				searchFolder: "critical",
+				expectedUIDs: []string{"rule4"},
+			},
+			{
+				name:         "case insensitive search",
+				searchFolder: "PRODUCTION",
+				expectedUIDs: []string{"rule1", "rule2", "rule4"},
+			},
+			{
+				name:         "empty search returns all rules",
+				searchFolder: "",
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4"},
+			},
+			{
+				name:         "non-matching search returns no rules",
+				searchFolder: "nonexistent",
+				expectedUIDs: []string{},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				reqURL := "/api/v1/rules"
+				if tc.searchFolder != "" {
+					reqURL += "?search.folder=" + url.QueryEscape(tc.searchFolder)
+				}
+				req, err := http.NewRequest("GET", reqURL, nil)
+				require.NoError(t, err)
+				ctx := &contextmodel.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions},
+				}
+
+				resp := api.RouteGetRuleStatuses(ctx)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				var res apimodels.RuleResponse
+				require.NoError(t, json.Unmarshal(resp.Body(), &res))
+				require.Equal(t, "success", res.Status)
+
+				// Collect rule UIDs from response
+				actualUIDs := []string{}
+				for _, group := range res.Data.RuleGroups {
+					for _, rule := range group.Rules {
+						actualUIDs = append(actualUIDs, rule.UID)
+					}
+				}
+
+				require.ElementsMatch(t, tc.expectedUIDs, actualUIDs)
+			})
+		}
 	})
 }
 

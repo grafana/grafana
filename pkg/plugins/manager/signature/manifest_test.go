@@ -345,7 +345,7 @@ func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFile
 	}, nil
 }
 
-func (f fsPathSeparatorFiles) Type() string {
+func (f fsPathSeparatorFiles) Type() plugins.FSType {
 	return f.FS.Type()
 }
 

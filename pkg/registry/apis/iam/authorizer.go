@@ -22,6 +22,19 @@ type iamAuthorizer struct {
 func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient authlib.AccessClient) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
+	// Authorizer that allows any authenticated user
+	// To be used when authorization is handled at the storage layer
+	allowAuthorizer := authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Any authenticated user can access the API
+		return authorizer.DecisionAllow, "", nil
+	})
+
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = legacyAuthorizer
@@ -31,12 +44,15 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+
+	serviceAuthorizer := gfauthorizer.NewServiceAuthorizer()
+	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
@@ -59,6 +75,13 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 		ac,
 		accesscontrol.ResourceAuthorizerOptions{
 			Resource: "display",
+			Unchecked: map[string]bool{
+				utils.VerbGet:  true,
+				utils.VerbList: true,
+			},
+		},
+		accesscontrol.ResourceAuthorizerOptions{
+			Resource: "searchTeams",
 			Unchecked: map[string]bool{
 				utils.VerbGet:  true,
 				utils.VerbList: true,

@@ -57,7 +57,7 @@ jobs:
   lint-go:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     steps:
       - uses: actions/checkout@v5
         with:

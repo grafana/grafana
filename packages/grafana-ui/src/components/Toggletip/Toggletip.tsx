@@ -11,7 +11,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
-import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
+import { memo, cloneElement, isValidElement, useRef, useState, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';

@@ -104,6 +104,7 @@ describe('when creating variables objects', () => {
       type: 'custom',
       value: 'a',
       hide: 0,
+      valuesFormat: 'csv',
     });
   });
 
@@ -184,6 +185,7 @@ describe('when creating variables objects', () => {
       query: 'SHOW TAG VALUES  WITH KEY = "datacenter" ',
       refresh: 1,
       regex: '',
+      regexApplyTo: 'value',
       skipUrlSync: false,
       sort: 0,
       text: 'America',

@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
 	"sync"
@@ -23,6 +22,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/debouncer"
@@ -129,7 +129,7 @@ type SearchBackend interface {
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	log          *slog.Logger
+	log          log.Logger
 	storage      StorageBackend
 	search       SearchBackend
 	indexMetrics *BleveIndexMetrics
@@ -184,7 +184,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		access:         access,
 		storage:        storage,
 		search:         opts.Backend,
-		log:            slog.Default().With("logger", "resource-search"),
+		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
 		rebuildWorkers: opts.IndexRebuildWorkers,
 		initMinSize:    opts.InitMinCount,
@@ -233,6 +233,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
 		ret.lastImportTime = b.lastImportTime
 	}
+
+	// Combine complete channels
+	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
 	return ret, true
 }
@@ -295,14 +298,6 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	return rsp, nil
 }
 
-func (s *searchSupport) logWithTraceID(ctx context.Context) *slog.Logger {
-	l := s.log
-	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		l = l.With("traceID", traceID)
-	}
-	return l
-}
-
 func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
@@ -319,7 +314,7 @@ func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span t
 	}
 	args = append(args, params...)
 
-	s.logWithTraceID(ctx).Debug("Search stats", args...)
+	s.log.FromContext(ctx).Debug("Search stats", args...)
 
 	if span != nil {
 		attrs := make([]attribute.KeyValue, 0, len(args)/2)
@@ -520,6 +515,52 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
+func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.RebuildIndexes")
+	defer span.End()
+
+	filterKeys := make([]NamespacedResource, len(req.Keys))
+	for _, key := range req.Keys {
+		if req.Namespace != key.Namespace {
+			return &resourcepb.RebuildIndexesResponse{
+				Error: NewBadRequestError("key namespace does not match request namespace"),
+			}, nil
+		}
+		filterKeys = append(filterKeys, NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		})
+	}
+
+	importTimes, err := s.getLastImportTimes(ctx)
+	if err != nil {
+		return &resourcepb.RebuildIndexesResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+
+	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now())
+	rebuildCount := len(completeChs)
+	for _, ch := range completeChs {
+		select {
+		case <-ch:
+			continue
+		case <-ctx.Done(): // request was done before all indexes rebuilt
+			return &resourcepb.RebuildIndexesResponse{
+				RebuildCount: int64(rebuildCount),
+				Details:      fmt.Sprintf("returning before all index rebuilds completed for %d indexes", rebuildCount),
+			}, nil
+		}
+	}
+
+	// All rebuilds completed successfully
+	return &resourcepb.RebuildIndexesResponse{
+		RebuildCount: int64(rebuildCount),
+		Details:      fmt.Sprintf("completed %d index rebuilds", rebuildCount),
+	}, nil
+}
+
 func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
@@ -610,16 +651,23 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, time.Now())
+			s.findIndexesToRebuild(importTimes, nil, time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, now time.Time) {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
-	keys := s.search.GetOpenIndexes()
+	var keys []NamespacedResource
+	if filterKeys != nil {
+		keys = filterKeys
+	} else {
+		keys = s.search.GetOpenIndexes()
+	}
+
+	var completeChs []chan struct{}
 	for _, key := range keys {
 		idx := s.search.GetIndex(key)
 		if idx == nil {
@@ -646,18 +694,17 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 		}
 
 		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
-			s.rebuildQueue.Add(rebuildRequest{
-				NamespacedResource: key,
-				minBuildTime:       minBuildTime,
-				minBuildVersion:    s.minBuildVersion,
-				lastImportTime:     lastImportTime,
-			})
+			completeCh := make(chan struct{})
+			completeChs = append(completeChs, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
+			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
 				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 			}
 		}
 	}
+	return completeChs
 }
 
 func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
@@ -696,7 +743,13 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchSupport.rebuildIndex")
 	defer span.End()
 
-	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
+	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
+
+	defer func() {
+		for _, ch := range req.completeChannels {
+			close(ch)
+		}
+	}()
 
 	idx := s.search.GetIndex(req.NamespacedResource)
 	if idx == nil {
@@ -752,7 +805,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger *slog.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -790,6 +843,22 @@ type rebuildRequest struct {
 	minBuildTime    time.Time       // if not zero, rebuild index if it has been built before this timestamp
 	lastImportTime  time.Time       // if not zero, rebuild index if it has been built before this timestamp.
 	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
+
+	completeChannels []chan<- struct{} // signal rebuild index is complete
+}
+
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, completeCh chan<- struct{}) rebuildRequest {
+	var completeChannels []chan<- struct{} // setup a list as requests can be combined
+	if completeCh != nil {
+		completeChannels = []chan<- struct{}{completeCh}
+	}
+	return rebuildRequest{
+		NamespacedResource: key,
+		minBuildTime:       minBuildTime,
+		minBuildVersion:    minBuildVersion,
+		lastImportTime:     lastImportTime,
+		completeChannels:   completeChannels,
+	}
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats, key NamespacedResource, reason string) (ResourceIndex, error) {
@@ -873,7 +942,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats
 	if s.indexMetrics != nil {
 		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	}
-	s.logWithTraceID(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
+	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
 	return idx, nil
@@ -890,7 +959,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		attribute.Int64("size", size),
 	)
 
-	logger := s.logWithTraceID(ctx).With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	logger := s.log.New("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {

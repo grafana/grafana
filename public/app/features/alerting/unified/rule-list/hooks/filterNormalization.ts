@@ -32,12 +32,14 @@ export function buildTitleSearch(filterState: RulesFilter): string | undefined {
  * Normalize filter state for case-insensitive matching
  * Lowercase free form words, rule name, group name and namespace
  */
-export function normalizeFilterState(filterState: RulesFilter): RulesFilter {
+export function normalizeFilterState(filterState: Partial<RulesFilter>): RulesFilter {
   return {
     ...filterState,
-    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
+    freeFormWords: filterState.freeFormWords?.map((word) => word.toLowerCase()) ?? [],
     ruleName: filterState.ruleName?.toLowerCase(),
     groupName: filterState.groupName?.toLowerCase(),
     namespace: filterState.namespace?.toLowerCase(),
+    dataSourceNames: filterState.dataSourceNames ?? [],
+    labels: filterState.labels ?? [],
   };
 }

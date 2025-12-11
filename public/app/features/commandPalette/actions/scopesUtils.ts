@@ -14,7 +14,7 @@ export function useScopeServicesState() {
   const services = useScopesServices();
   if (!services) {
     return {
-      updateNode: () => {},
+      filterNode: () => Promise.resolve(),
       selectScope: () => {},
       resetSelection: () => {},
       searchAllNodes: () => Promise.resolve([]),
@@ -32,7 +32,7 @@ export function useScopeServicesState() {
       },
     };
   }
-  const { updateNode, filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
+  const { filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
     services.scopesSelectorService;
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services.scopesSelectorService.stateObservable ?? new Observable(),
@@ -42,7 +42,6 @@ export function useScopeServicesState() {
   return {
     getScopeNodes,
     filterNode,
-    updateNode,
     selectScope,
     resetSelection,
     searchAllNodes,

@@ -182,7 +182,7 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Boolean
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return types.Timestamp
-	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
 		return types.JSON
 	default:
 		fmt.Printf("------- Unsupported field type: %v", fieldType)

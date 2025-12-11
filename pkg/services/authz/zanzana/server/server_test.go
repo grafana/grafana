@@ -57,6 +57,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "1"),
 		common.NewFolderTuple("user:6", common.RelationGet, "1"),
 		common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource, ""),
+		// folder-4 -> folder-5 -> folder-6
 		common.NewFolderParentTuple("5", "4"),
 		common.NewFolderParentTuple("6", "5"),
 		common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
@@ -69,6 +70,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewTypedResourceTuple("user:14", common.RelationGet, common.TypeTeam, teamGroup, teamResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:15", common.RelationGet, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:16", common.RelationGet, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
+		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -135,6 +137,18 @@ func TestIntegrationServer(t *testing.T) {
 
 	t.Run("test query folders", func(t *testing.T) {
 		testQueryFolders(t, srv)
+	})
+
+	t.Run("test mutate role bindings", func(t *testing.T) {
+		testMutateRoleBindings(t, srv)
+	})
+
+	t.Run("test mutate team bindings", func(t *testing.T) {
+		testMutateTeamBindings(t, srv)
+	})
+
+	t.Run("test mutate roles", func(t *testing.T) {
+		testMutateRoles(t, srv)
 	})
 }
 

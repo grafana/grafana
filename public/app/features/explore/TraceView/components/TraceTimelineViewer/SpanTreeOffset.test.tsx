@@ -47,11 +47,12 @@ describe('SpanTreeOffset', () => {
   });
 
   describe('.SpanTreeOffset--indentGuide', () => {
-    it('renders no indentGuide if span has no ancestors and no children', () => {
+    it('renders only the trace-level indentGuide if span has no ancestors and no children', () => {
       jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
       render(<SpanTreeOffset {...props} />);
       const indentGuides = screen.queryAllByTestId('SpanTreeOffset--indentGuide');
-      expect(indentGuides.length).toBe(0);
+      expect(indentGuides.length).toBe(1);
+      expect(indentGuides[0]).toHaveAttribute('data-ancestor-id', specialRootID);
     });
 
     it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors but has children', () => {
@@ -66,9 +67,10 @@ describe('SpanTreeOffset', () => {
     it('renders one SpanTreeOffset--indentGuide per ancestor span when span has no children', () => {
       render(<SpanTreeOffset {...props} />);
       const indentGuides = screen.getAllByTestId('SpanTreeOffset--indentGuide');
-      expect(indentGuides.length).toBe(2);
+      expect(indentGuides.length).toBe(3);
       expect(indentGuides[0]).toHaveAttribute('data-ancestor-id', specialRootID);
       expect(indentGuides[1]).toHaveAttribute('data-ancestor-id', rootSpanID);
+      expect(indentGuides[2]).toHaveAttribute('data-ancestor-id', parentSpanID);
     });
 
     it('renders one SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace when span has children', () => {
@@ -112,16 +114,20 @@ describe('SpanTreeOffset', () => {
       props = { ...props, span: { ...props.span, hasChildren: true } };
     });
 
-    it('does not render icon if props.span.hasChildren is false', () => {
+    it('renders placeholder content when props.span.hasChildren is false', () => {
       props.span.hasChildren = false;
       render(<SpanTreeOffset {...props} />);
-      expect(screen.queryByTestId('icon-wrapper')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-right')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-down')).not.toBeInTheDocument();
+      expect(screen.getByTestId('icon-wrapper')).toHaveTextContent('-');
     });
 
-    it('does not render icon if props.span.hasChildren is true and showChildrenIcon is false', () => {
+    it('renders placeholder content when props.span.hasChildren is true but showChildrenIcon is false', () => {
       props.showChildrenIcon = false;
       render(<SpanTreeOffset {...props} />);
-      expect(screen.queryByTestId('icon-wrapper')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-right')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-down')).not.toBeInTheDocument();
+      expect(screen.getByTestId('icon-wrapper')).toHaveTextContent('-');
     });
 
     it('renders arrow-right if props.span.hasChildren is true and props.childrenVisible is false', () => {

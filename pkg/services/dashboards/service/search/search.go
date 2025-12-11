@@ -40,6 +40,9 @@ var (
 		resource.SEARCH_FIELD_SOURCE_PATH,
 		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 		resource.SEARCH_FIELD_SOURCE_TIME,
+		// below is needed to determine whether a provisioned dashboard exists or not
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
 )
 

@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -11,6 +13,8 @@ import (
 )
 
 var _ authlib.AccessClient = (*ShadowClient)(nil)
+
+const zanzanaTimeout = 30 * time.Second
 
 type ShadowClient struct {
 	logger        log.Logger
@@ -39,9 +43,12 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 			return
 		}
 
-		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
 		zanzanaCtx := context.WithoutCancel(ctx)
-		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
+		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
+		res, err := c.zanzanaClient.Check(zanzanaCtxTimeout, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
@@ -71,14 +78,21 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 
 func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	zanzanaItemCheckerChan := make(chan authlib.ItemChecker, 1)
+	var zanzanaItemChecker authlib.ItemChecker
+	var once sync.Once
+
 	go func() {
 		if c.zanzanaClient == nil {
 			zanzanaItemCheckerChan <- nil
 			return
 		}
 
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, _, err := c.zanzanaClient.Compile(ctx, id, req)
+		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtxTimeout, id, req)
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
@@ -93,19 +107,26 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		return nil, authlib.NoopZookie{}, err
 	}
 
-	zanzanaItemChecker := <-zanzanaItemCheckerChan
-
 	shadowItemChecker := func(name, folder string) bool {
 		rbacRes := rbacItemChecker(name, folder)
-		if zanzanaItemChecker != nil {
-			zanzanaRes := zanzanaItemChecker(name, folder)
-			if zanzanaRes != rbacRes {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-				c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
-			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+
+		go func() {
+			// Wait for zanzana result to be ready and then use it to compare against RBAC
+			once.Do(func() {
+				zanzanaItemChecker = <-zanzanaItemCheckerChan
+			})
+
+			if zanzanaItemChecker != nil {
+				zanzanaRes := zanzanaItemChecker(name, folder)
+				if zanzanaRes != rbacRes {
+					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
+				} else {
+					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				}
 			}
-		}
+		}()
+
 		return rbacRes
 	}
 

@@ -72,7 +72,6 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
           )}
           <ColorInput
             {...inputProps}
-            theme={theme}
             color={currentColor}
             onChange={setColor}
             buttonAriaLabel="Open color picker"

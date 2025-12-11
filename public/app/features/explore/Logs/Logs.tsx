@@ -83,6 +83,7 @@ import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -119,11 +120,8 @@ interface Props extends Themeable2 {
   ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: GetFieldLinksFn;
-  addResultsToCache: () => void;
-  clearCache: () => void;
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
-  scrollElement?: HTMLDivElement;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
@@ -183,8 +181,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getFieldLinks,
     theme,
     logsQueries,
-    clearCache,
-    addResultsToCache,
     exploreId,
     getRowContext,
     getLogRowContextUi,
@@ -193,7 +189,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState,
     eventBus,
     onPinLineCallback,
-    scrollElement,
   } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
@@ -203,7 +198,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
-    store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
+    panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
@@ -276,6 +271,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
+    // Initialize URL sort order
+    if (!panelState?.logs?.sortOrder) {
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+          sortOrder: logsSortOrder,
+        })
+      );
+    }
+  }, [dispatch, exploreId, logsSortOrder, panelState]);
+
+  useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
     setVisualisationType(visualisationType);
 
@@ -293,23 +300,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (
-      panelState?.logs?.columns ||
-      panelState?.logs?.refId ||
-      panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
-    ) {
-      dispatch(
-        changePanelState(exploreId, 'logs', {
-          ...panelState?.logs,
-          columns: undefined,
-          visualisationType: visualisationType,
-          labelFieldName: undefined,
-          refId: undefined,
-          displayedFields: undefined,
-        })
-      );
-    }
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined,
+        visualisationType: visualisationType,
+        labelFieldName: undefined,
+        refId: undefined,
+        displayedFields: undefined,
+        sortOrder: undefined,
+        tableSortBy: undefined,
+        tableSortDir: undefined,
+      })
+    );
   });
 
   const updatePanelState = useCallback(
@@ -324,6 +327,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -334,6 +339,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );
@@ -365,29 +372,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.eventBus]
   );
 
-  const scrollIntoView = useCallback(
-    (element: HTMLElement) => {
-      if (config.featureToggles.logsInfiniteScrolling) {
-        if (logsContainerRef.current) {
-          topLogsRef.current?.scrollIntoView();
-          logsContainerRef.current.scroll({
-            behavior: 'smooth',
-            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-          });
-        }
+  const scrollIntoView = useCallback((element: HTMLElement) => {
+    if (logsContainerRef.current) {
+      topLogsRef.current?.scrollIntoView?.();
+      logsContainerRef.current.scroll({
+        behavior: 'smooth',
+        top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
 
-        return;
-      }
-
-      if (scrollElement) {
-        scrollElement.scroll({
-          behavior: 'smooth',
-          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-        });
-      }
-    },
-    [scrollElement]
-  );
+    return;
+  }, []);
 
   const sortOrderChanged = useCallback(
     (newSortOrder: LogsSortOrder) => {
@@ -416,8 +411,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(changeQueries({ exploreId, queries: newQueries }));
         dispatch(runQueries({ exploreId }));
       }
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState?.logs,
+          sortOrder: newSortOrder,
+        })
+      );
     },
-    [dispatch, exploreId, logsQueries]
+    [dispatch, exploreId, logsQueries, panelState?.logs]
   );
 
   const onChangeLogsSortOrder = useCallback(
@@ -606,13 +607,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
       urlState.panelsState = {
         ...panelState,
-        logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
+        logs: {
+          id: row.uid,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
       };
       urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
-      const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+      const baseUrl = getExploreBaseUrl();
       const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
       await createAndCopyShortLink(url);
 
@@ -622,17 +628,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         logRowLevel: row.logLevel,
       });
     },
-    [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
+    [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainerRef.current) {
-        logsContainerRef.current.scroll({
-          behavior: 'auto',
-          top: 0,
-        });
-      }
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scroll({
+        behavior: 'auto',
+        top: 0,
+      });
     }
     topLogsRef.current?.scrollIntoView();
   }, []);
@@ -684,7 +688,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
-  const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
@@ -795,6 +798,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         <PanelChrome
           title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
           collapsible
+          loadingState={logsVolumeData?.state}
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={onToggleLogsVolumeCollapse}
         >
@@ -811,6 +815,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               onDisplayedSeriesChanged={onDisplayedSeriesChanged}
               eventBus={logsVolumeEventBus}
               onClose={() => onToggleLogsVolumeCollapse(true)}
+              logs={logRows}
             />
           )}
         </PanelChrome>
@@ -998,6 +1003,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 panelState={panelState?.logs}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
@@ -1052,6 +1061,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
                   timeRange={props.range}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
                 />
               </div>
             )}
@@ -1060,11 +1071,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             visualisationType === 'logs' &&
             hasData && (
               <>
-                <div
-                  className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-                  data-testid="logRows"
-                  ref={logsContainerRef}
-                >
+                <div className={styles.scrollableLogRows} data-testid="logRows" ref={logsContainerRef}>
                   <InfiniteScroll
                     loading={loading}
                     loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
@@ -1113,18 +1120,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     />
                   </InfiniteScroll>
                 </div>
-                <LogsNavigation
-                  logsSortOrder={logsSortOrder}
-                  visibleRange={navigationRange ?? absoluteRange}
-                  absoluteRange={absoluteRange}
-                  timeZone={timeZone}
-                  onChangeTime={onChangeTime}
-                  loading={loading}
-                  queries={logsQueries ?? []}
-                  scrollToTopLogs={scrollToTopLogs}
-                  addResultsToCache={addResultsToCache}
-                  clearCache={clearCache}
-                />
+                <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
               </>
             )}
           {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
@@ -1270,14 +1266,14 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     visualisationType: css({
       display: 'flex',
       flex: '1',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
     }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),
     stickyNavigation: css({
       overflow: 'visible',
-      ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+      marginBottom: '0px',
     }),
     logsVolumePanel: css({
       marginBottom: theme.spacing(1.5),
@@ -1289,18 +1285,4 @@ const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => 
   const dedupedRows = dedupLogRows(logRows, dedupStrategy);
   const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
   return { dedupedRows, dedupCount };
-};
-
-const createNavigationRange = (logRows: LogRowModel[]): { from: number; to: number } | undefined => {
-  if (!logRows || logRows.length === 0) {
-    return undefined;
-  }
-  const firstTimeStamp = logRows[0].timeEpochMs;
-  const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
-
-  if (lastTimeStamp < firstTimeStamp) {
-    return { from: lastTimeStamp, to: firstTimeStamp };
-  }
-
-  return { from: firstTimeStamp, to: lastTimeStamp };
 };

@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 )
 
@@ -66,6 +65,9 @@ func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorLis
 }
 
 func formatErrorPath(path []string) string {
+	if len(path) <= 4 {
+		return strings.Join(path, ".")
+	}
 	// omitting the "lineage.schemas[0].schema.spec" prefix here.
 	return strings.Join(path[4:], ".")
 }
@@ -80,11 +82,13 @@ var schemaSource string
 
 func getValidator() *cuevalidator.Validator {
 	getSchemaOnce.Do(func() {
-		cueCtx := cuecontext.New()
-		compiledSchema := cueCtx.CompileString(schemaSource).LookupPath(
+		// The validator uses periodic context recreation to prevent memory leaks.
+		// The context is reused for up to 100 validations, then recreated to allow
+		// garbage collection of cached values while maintaining good performance.
+		validator = cuevalidator.NewValidatorFromSource(
+			schemaSource,
 			cue.ParsePath("lineage.schemas[0].schema.spec"),
 		)
-		validator = cuevalidator.NewValidator(compiledSchema)
 	})
 
 	return validator

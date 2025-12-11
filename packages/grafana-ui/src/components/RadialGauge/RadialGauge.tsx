@@ -2,7 +2,13 @@ import { css, cx } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValueAlignmentFactors, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import {
+  DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -66,6 +72,7 @@ export interface RadialGaugeProps {
   showScaleLabels?: boolean;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
+  timeRange?: TimeRange;
 }
 
 export type RadialGradientMode = 'none' | 'auto';
@@ -135,7 +142,7 @@ export function RadialGauge(props: RadialGaugeProps) {
       displayProcessor,
     });
 
-    if (spotlight) {
+    if (spotlight && theme.isDark) {
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}

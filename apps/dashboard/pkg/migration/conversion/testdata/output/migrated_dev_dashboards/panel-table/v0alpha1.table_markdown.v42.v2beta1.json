@@ -1,0 +1,185 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.table_markdown.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Markdown Table",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "gdev-testdata"
+                      },
+                      "spec": {
+                        "csvContent": "id,markdown\n1,\"\u003cdl\u003e\n  \u003cdt\u003eDefinition list\u003c/dt\u003e\n  \u003cdd\u003eIs something people use sometimes.\u003c/dd\u003e\n  \u003cdt\u003eMarkdown in HTML\u003c/dt\u003e\n  \u003cdd\u003eDoes *not* work **very** well. Use HTML \u003cem onclick=\"\"alert('hi');\"\"\u003etags\u003c/em\u003e.\u003c/dd\u003e\n\u003c/dl\u003e\"\n2,\"Three or more...\n\n---\n\nHyphens\n\n***\n\nAsterisks\n\n___\n\nUnderscores\"\n3,\"Here's a line for us to start with.\n\nThis line is separated from the one above by two newlines, so it will be a *separate paragraph*.\n\nThis line is also a separate paragraph, but...\nThis line is only separated by a single newline, so it's a separate line in the *same paragraph*.\"\n4,\"\u003cspan style='color:red'\u003ered\u003c/span\u003e, \u003cspan style='color:green'\u003egreen\u003c/span\u003e, \u003cspan style='color:blue'\u003eblue\u003c/span\u003e\"\n5,\"\u003cimg src='https://grafana.com/media/golden-grot/graphic-golden-grot-awards-hero-image.png'\u003e\"\n6,\"[Link](https://grafana.com), or \u003ca href=\"\"https://grafana.com\"\" target=\"\"_blank\"\" ref=\"\"noopener noreferrer\"\"\u003eHTML link\u003c/a\u003e\"\n7,\"1. foo\n1. bar\n    - baz\n    * bim\n3. bip\"\n8,\"# heading 1\n## heading 2\n### heading 3\n#### heading 4\n##### heading 5\n###### heading 6\"\n9,\"Emphasis, aka italics, with *asterisks* or _underscores_.\n\nStrong emphasis, aka bold, with **asterisks** or __underscores__.\n\nCombined emphasis with **asterisks and _underscores_**.\n\nStrikethrough uses two tildes. ~~Scratch this.~~\n\n\u003cu\u003eunderline does require an HTML element tho.\u003c/u\u003e\"\n10,\"```javascript\nvar s = 'JavaScript syntax highlighting';\nalert(s);\n```\"\n11,\"\u003cstyle\u003ethead { border-bottom: 1px solid lightgray; }  td, th { padding: 6px; }\u003c/style\u003e\n| Month     | Savings |\n| --------  | ------- |\n| I heard   | $250    |\n| you like  | $80     |\n| tables    | $365    |\"\n",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "12.1.0-pre",
+            "spec": {
+              "options": {
+                "cellHeight": "lg",
+                "footer": {
+                  "countRows": false,
+                  "enablePagination": true,
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "markdown"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "dynamicHeight": true,
+                          "type": "markdown"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 18,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Table - Markdown",
+    "variables": []
+  },
+  "status": {}
+}

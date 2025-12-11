@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
+import { CloudWatchMetricsQuery } from '../dataquery.gen';
 import { DEFAULT_METRICS_QUERY } from '../defaultQueries';
-import { CloudWatchMetricsQuery } from '../types';
 
 import { migrateAliasPatterns } from './metricQueryMigrations';
 import useMigratedMetricsQuery from './useMigratedMetricsQuery';

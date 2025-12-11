@@ -20,7 +20,7 @@ export function GoToSnapshotOriginButton(props: { originalURL: string }) {
   );
 }
 
-const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
+export const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
   const relativeURL = originalUrl ?? '';
   const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
   try {

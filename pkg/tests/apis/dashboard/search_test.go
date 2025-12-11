@@ -126,7 +126,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 
 		// 2. Viewer searching with permission=View should find it
 		{
-			res := callSearch(helper.Org1.Viewer, "permission=View")
+			res := callSearch(helper.Org1.Viewer, "permission=view")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -134,12 +134,12 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Viewer should find folder with permission=View")
+			require.True(t, found, "Viewer should find folder with permission=view")
 		}
 
 		// 3. Viewer searching with permission=Edit should NOT find it
 		{
-			res := callSearch(helper.Org1.Viewer, "permission=Edit")
+			res := callSearch(helper.Org1.Viewer, "permission=edit")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -147,12 +147,12 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.False(t, found, "Viewer should NOT find folder with permission=Edit")
+			require.False(t, found, "Viewer should NOT find folder with permission=edit")
 		}
 
 		// 4. Editor searching with permission=Edit should find it
 		{
-			res := callSearch(helper.Org1.Editor, "permission=Edit")
+			res := callSearch(helper.Org1.Editor, "permission=edit")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -160,12 +160,12 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Editor should find folder with permission=Edit")
+			require.True(t, found, "Editor should find folder with permission=edit")
 		}
 
 		// 5. Editor searching with permission=View should find it (Edit permission includes View)
 		{
-			res := callSearch(helper.Org1.Editor, "permission=View")
+			res := callSearch(helper.Org1.Editor, "permission=view")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -173,7 +173,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Editor should find folder with permission=View (Edit includes View)")
+			require.True(t, found, "Editor should find folder with permission=view (Edit includes View)")
 		}
 
 		// 6. Editor searching without permission parameter should find it (has Edit access)
@@ -191,7 +191,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 
 		// 7. Admin searching with permission=View should find it (Admin has full access)
 		{
-			res := callSearch(helper.Org1.Admin, "permission=View")
+			res := callSearch(helper.Org1.Admin, "permission=view")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -199,12 +199,12 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Admin should find folder with permission=View")
+			require.True(t, found, "Admin should find folder with permission=view")
 		}
 
 		// 8. Admin searching with permission=Edit should find it (Admin has full access)
 		{
-			res := callSearch(helper.Org1.Admin, "permission=Edit")
+			res := callSearch(helper.Org1.Admin, "permission=edit")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -212,12 +212,12 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Admin should find folder with permission=Edit")
+			require.True(t, found, "Admin should find folder with permission=edit")
 		}
 
 		// 9. Admin searching with permission=Admin should find it (Admin has full access)
 		{
-			res := callSearch(helper.Org1.Admin, "permission=Admin")
+			res := callSearch(helper.Org1.Admin, "permission=admin")
 			found := false
 			for _, h := range res.Hits {
 				if h.Name == folderUID { // Verify it's our folder
@@ -225,7 +225,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 					break
 				}
 			}
-			require.True(t, found, "Admin should find folder with permission=Admin")
+			require.True(t, found, "Admin should find folder with permission=admin")
 		}
 
 		// 10. Admin searching without permission parameter should find it (has Admin access)

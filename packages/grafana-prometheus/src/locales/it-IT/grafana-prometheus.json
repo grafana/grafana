@@ -175,7 +175,7 @@
         "label-scrape-interval": "Intervallo di raccolta",
         "label-series-limit": "Limite della serie",
         "label-use-series-endpoint": "Usa endpoint della serie",
-        "more-info": "",
+        "more-info": "Per ulteriori informazioni sulla configurazione del tipo e della versione di Prometheus nelle origini dati, consulta la <2>documentazione sul provisioning</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Esempio: {{example}}",
         "title-interval-behaviour": "Comportamento intervallo",
         "title-other": "Altro",

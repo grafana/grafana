@@ -64,6 +64,7 @@
         "icon": "info",
         "includeVars": false,
         "keepTime": false,
+        "placement": "inControlsMenu",
         "tags": [],
         "targetBlank": true,
         "title": "Documentation",

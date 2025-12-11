@@ -3,8 +3,9 @@ import { produce } from 'immer';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
+import { AzureMonitorResource } from '../../dataquery.gen';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorQuery, AzureMonitorResource } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { ResourceRow, ResourceRowGroup } from './types';
 

@@ -1,3 +1,4 @@
+import { chain } from 'lodash';
 import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -15,7 +16,9 @@ function getExternalRuleDataSources() {
   return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
 }
 
-const THRESHOLD_LIMIT = 500;
+const NAMESPACE_THRESHOLD_LIMIT = 500;
+const MIN_GROUP_SEARCH_CHARACTERS = 3;
+const GROUP_SEARCH_LIMIT = 100;
 
 function createInfoOption(message: string): ComboboxOption<string> {
   return {
@@ -60,7 +63,10 @@ export function useNamespaceAndGroupOptions(): {
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
       // Grafana namespaces - fetch with limit to check threshold
-      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
+      const grafanaResponse = await fetchGrafanaGroups({
+        limitAlerts: 0,
+        groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+      }).unwrap();
       const grafanaFolderNames = Array.from(
         new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
       );
@@ -71,7 +77,7 @@ export function useNamespaceAndGroupOptions(): {
         fetchExternalGroups({
           ruleSource: { uid: ds.uid },
           excludeAlerts: true,
-          groupLimit: THRESHOLD_LIMIT + 1,
+          groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
           notificationOptions: { showErrorAlert: false },
         }).unwrap()
       );
@@ -84,8 +90,8 @@ export function useNamespaceAndGroupOptions(): {
 
       const totalNamespaces = grafanaFolderNames.length + namespaceNameSet.size;
 
-      // If we have more than THRESHOLD_LIMIT unique namespaces, show info message
-      if (totalNamespaces > THRESHOLD_LIMIT) {
+      // If we have more than NAMESPACE_THRESHOLD_LIMIT unique namespaces, show info message
+      if (totalNamespaces > NAMESPACE_THRESHOLD_LIMIT) {
         return [
           createInfoOption(
             t(
@@ -117,33 +123,53 @@ export function useNamespaceAndGroupOptions(): {
 
   const groupOptions = useCallback(
     async (inputValue: string) => {
-      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
-      const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
-
-      // If we have more than THRESHOLD_LIMIT unique groups, show info message
-      if (groupNames.length > THRESHOLD_LIMIT) {
+      // Require minimum characters for search
+      const trimmedInput = inputValue?.trim() || '';
+      if (trimmedInput.length < MIN_GROUP_SEARCH_CHARACTERS) {
         return [
           createInfoOption(
-            t(
-              'alerting.rules-filter.group-autocomplete-unavailable',
-              'Due to large number of groups, autocomplete is not available'
-            )
+            t('alerting.rules-filter.group-search-prompt', 'Type at least 3 characters to search groups')
           ),
         ];
       }
 
-      const options: Array<ComboboxOption<string>> = groupNames
-        .map((name) => ({ label: name, value: name }))
-        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+      try {
+        // Use the backend search with lightweight response
+        const grafanaResponse = await fetchGrafanaGroups({
+          limitAlerts: 0, // Lightweight - no alert data
+          searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
+          groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
+        }).unwrap();
 
-      const filtered = filterBySearch(options, inputValue);
-      return filtered;
+        // Deduplicate group names
+        const groupNames = chain(grafanaResponse.data.groups).map('name').compact().uniq().value();
+
+        // No results found
+        if (groupNames.length === 0) {
+          return [
+            createInfoOption(
+              t('alerting.rules-filter.group-no-results', 'No groups found matching "{{search}}"', {
+                search: trimmedInput,
+              })
+            ),
+          ];
+        }
+
+        const options: Array<ComboboxOption<string>> = groupNames
+          .map((name) => ({ label: name, value: name }))
+          .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+        return options;
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        return [createInfoOption(t('alerting.rules-filter.group-search-error', 'Error searching groups'))];
+      }
     },
     [fetchGrafanaGroups]
   );
 
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
-  const groupPlaceholder = t('grafana.select-group', 'Select group');
+  const groupPlaceholder = t('alerting.rules-filter.placeholder-group-search', 'Search group');
 
   return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
 }

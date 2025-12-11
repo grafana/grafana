@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Als je een oudere versie van Microsoft SQL Server gebruikt, zoals 2008 en 2008R2, moet je mogelijk versleuteling uitschakelen om verbinding te kunnen maken.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Een ondergrens voor de automatische groepering op tijdsinterval. Aanbevolen om in te stellen op schrijffrequentie, bijvoorbeeld <1>{{exampleInterval}}</1> als je gegevens elke minuut worden geschreven.",
       "description-tls-cert": "Pad naar bestand met het publieke sleutelcertificaat van de CA die het SQL Server-certificaat heeft ondertekend. Nodig wanneer het servercertificaat zelfondertekend is.",
       "label-auth-settings": "Azure-verificatie-instellingen",
       "label-auth-type": "Authenticatietype",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Geef aan of DNS 'SRV'-records moeten worden gebruikt om de KDC's en andere servers voor een realm te lokaliseren. De standaardwaarde is <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "Het pad naar het configuratiebestand voor het <2>MIT krb5-pakket</2>. De standaardwaarde is <4>{{default}}</4>.",
       "description-udp-preference-limit": "De standaardwaarde is <1>{{default}}</1> en betekent altijd TCP gebruiken en is optioneel.",
       "label-dns-lookup-kdc": "DNS Lookup KDC",
       "label-krb5-config-file-path": "pad naar het krb5-config-bestand",

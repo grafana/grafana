@@ -1,11 +1,10 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
 import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
-import { StatusHistorySuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
@@ -113,5 +112,42 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder);
   })
-  .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier())
+  .setSuggestionsSupplier((ds) => {
+    if (!ds.hasData) {
+      return;
+    }
+
+    // This panel needs a time field and a string or number field
+    if (
+      !ds.hasFieldType(FieldType.time) ||
+      (!ds.hasFieldType(FieldType.string) && !ds.hasFieldType(FieldType.number))
+    ) {
+      return;
+    }
+
+    // If there are many series then they won't fit on y-axis so this panel is not good fit
+    if (ds.fieldCountByType(FieldType.number) >= 30) {
+      return;
+    }
+
+    // if there a lot of data points for each series then this is not a good match
+    if (ds.rowCountMax > 100) {
+      return;
+    }
+
+    // Probably better ways to filter out this by inspecting the types of string values so view this as temporary
+    if (ds.hasPreferredVisualisationType('logs')) {
+      return;
+    }
+
+    return [
+      {
+        cardOptions: {
+          previewModifier: (s) => {
+            s.options!.colWidth = 0.7;
+          },
+        },
+      },
+    ];
+  })
   .setDataSupport({ annotations: true });

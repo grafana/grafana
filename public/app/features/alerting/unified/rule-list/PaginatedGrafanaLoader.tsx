@@ -7,7 +7,6 @@ import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-ale
 
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
-import { shouldUseBackendFilters } from '../featureToggles';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -18,7 +17,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { getGrafanaFilter } from './hooks/grafanaFilter';
+import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
@@ -36,25 +35,27 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderP
 }
 
 function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
-  const useBackendFilters = shouldUseBackendFilters();
-
   // When backend filters are enabled, groupFilter is handled on the backend
-  const hasFilters = useBackendFilters ? Boolean(namespaceFilter) : Boolean(groupFilter || namespaceFilter);
+  const filterState = { namespace: namespaceFilter, groupName: groupFilter };
+  const { backendFilter } = getGrafanaFilter(filterState);
+
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
+  const needsClientSideFiltering = hasGrafanaClientSideFilters(filterState);
 
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
-    populateCache: hasFilters ? false : true,
+    populateCache: needsClientSideFiltering ? false : true,
     limitAlerts: 0,
   });
 
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
-  const apiGroupPageSize = getApiGroupPageSize(hasFilters);
+  const apiGroupPageSize = getApiGroupPageSize(needsClientSideFiltering);
 
-  const searchGroupName = useBackendFilters ? groupFilter : undefined;
-
-  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(apiGroupPageSize, { searchGroupName })));
+  const groupsGenerator = useRef(
+    toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter))
+  );
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;

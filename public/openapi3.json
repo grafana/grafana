@@ -6207,6 +6207,10 @@
           "is_paused": {
             "type": "boolean"
           },
+          "message": {
+            "description": "Field is only populated when listing alert rule versions.",
+            "type": "string"
+          },
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
@@ -7608,7 +7612,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -7759,6 +7763,28 @@
           "TLSConfig": {
             "$ref": "#/components/schemas/TLSConfig"
           },
+          "audience": {
+            "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "string"
+          },
+          "claims": {
+            "additionalProperties": {},
+            "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "object"
+          },
+          "client_certificate_key": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "client_certificate_key_file": {
+            "type": "string"
+          },
+          "client_certificate_key_id": {
+            "type": "string"
+          },
+          "client_certificate_key_ref": {
+            "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
+            "type": "string"
+          },
           "client_id": {
             "type": "string"
           },
@@ -7777,6 +7803,14 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "grant_type": {
+            "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
+            "type": "string"
+          },
+          "iss": {
+            "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "string"
           },
           "no_proxy": {
             "description": "NoProxy contains addresses that should not use a proxy.",
@@ -7797,6 +7831,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "signature_algorithm": {
+            "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
+            "type": "string"
           },
           "token_url": {
             "type": "string"
@@ -11571,6 +11609,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -12662,17 +12703,10 @@
       },
       "UpdateTeamCommand": {
         "properties": {
-          "Email": {
+          "email": {
             "type": "string"
           },
-          "ExternalUID": {
-            "type": "string"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Name": {
+          "name": {
             "type": "string"
           }
         },
@@ -14974,7 +15008,7 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ]
       }
@@ -15132,7 +15166,8 @@
         },
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ]
       }
@@ -17019,7 +17054,7 @@
           },
           {
             "in": "header",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "schema": {
               "type": "string"
             }
@@ -17378,7 +17413,7 @@
           },
           {
             "in": "header",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "schema": {
               "type": "string"
             }
@@ -17564,56 +17599,6 @@
         "tags": [
           "dashboards",
           "snapshots"
-        ]
-      }
-    },
-    "/dashboards/calculate-diff": {
-      "post": {
-        "operationId": "calculateDashboardDiff",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "base": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  },
-                  "diffType": {
-                    "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                    "enum": [
-                      "basic",
-                      "json"
-                    ],
-                    "type": "string"
-                  },
-                  "new": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/calculateDashboardDiffResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Perform diff on two dashboards.",
-        "tags": [
-          "dashboards"
         ]
       }
     },
@@ -24943,6 +24928,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           }
         ],

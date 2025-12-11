@@ -23,6 +23,12 @@ type GlobalRoleBinding struct {
 	Spec GlobalRoleBindingSpec `json:"spec" yaml:"spec"`
 }
 
+func NewGlobalRoleBinding() *GlobalRoleBinding {
+	return &GlobalRoleBinding{
+		Spec: *NewGlobalRoleBindingSpec(),
+	}
+}
+
 func (o *GlobalRoleBinding) GetSpec() any {
 	return o.Spec
 }

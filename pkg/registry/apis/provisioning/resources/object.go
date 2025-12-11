@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -30,9 +31,9 @@ type ResourceStore interface {
 }
 
 type ResourceListerFromSearch struct {
-	store          ResourceStore
-	legacyMigrator legacy.LegacyMigrator
-	storageStatus  dualwrite.Service
+	store         ResourceStore
+	migrator      migrations.UnifiedMigrator
+	storageStatus dualwrite.Service
 }
 
 func NewResourceLister(store ResourceStore) ResourceLister {
@@ -42,13 +43,13 @@ func NewResourceLister(store ResourceStore) ResourceLister {
 // FIXME: the logic about migration and storage should probably be separated from this
 func NewResourceListerForMigrations(
 	store ResourceStore,
-	legacyMigrator legacy.LegacyMigrator,
+	migrator migrations.UnifiedMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
 	return &ResourceListerFromSearch{
-		store:          store,
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
+		store:         store,
+		migrator:      migrator,
+		storageStatus: storageStatus,
 	}
 }
 
@@ -133,8 +134,8 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	// Get the stats based on what a migration could support
-	if o.storageStatus != nil && o.legacyMigrator != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
-		rsp, err := o.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+	if o.storageStatus != nil && o.migrator != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
+		rsp, err := o.migrator.Migrate(ctx, legacy.MigrateOptions{
 			Namespace: namespace,
 			Resources: []schema.GroupResource{{
 				Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Node Graph",
   "id": "nodeGraph",
-
+  "suggestions": true,
   "info": {
     "author": {
       "name": "Grafana Labs",

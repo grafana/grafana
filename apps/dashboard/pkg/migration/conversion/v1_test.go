@@ -19,7 +19,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	t.Run("Convert_V1beta1_to_V2alpha1 sets status on conversion error", func(t *testing.T) {
 		// Create a dashboard that will cause conversion to fail
@@ -37,7 +37,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2alpha1(source, target, nil, dsProvider)
+		err := Convert_V1beta1_to_V2alpha1(source, target, nil, dsProvider, leProvider)
 
 		// Convert_V1beta1_to_V2alpha1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V1beta1_to_V2alpha1 doesn't return error")
@@ -64,7 +64,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on first step, status should be set with correct StoredVersion
@@ -91,7 +91,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on second step, status should be set with correct StoredVersion
@@ -117,7 +117,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V1beta1_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		// Should succeed if dashboard is valid
 		if err == nil {

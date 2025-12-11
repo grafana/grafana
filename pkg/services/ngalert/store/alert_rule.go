@@ -336,7 +336,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -352,14 +352,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				r.UID = uid
 			}
 			r.Version = 1
-			if err := st.validateAlertRule(r); err != nil {
+			if err := st.validateAlertRule(r.AlertRule); err != nil {
 				return err
 			}
 			if err := (&r).PreSave(TimeNow, user); err != nil {
 				return err
 			}
 
-			converted, err := alertRuleFromModelsAlertRule(r)
+			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %q to storage model: %w", r.Title, err)
 			}
@@ -369,7 +369,9 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			converted.GUID = uuid.NewString()
 
 			newRules = append(newRules, converted)
-			ruleVersions = append(ruleVersions, alertRuleToAlertRuleVersion(converted))
+			v := alertRuleToAlertRuleVersion(converted)
+			v.Message = r.Message
+			ruleVersions = append(ruleVersions, v)
 		}
 		if len(newRules) > 0 {
 			// we have to insert the rules one by one as otherwise we are
@@ -444,6 +446,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			v := alertRuleToAlertRuleVersion(converted)
 			v.Version++
 			v.ParentVersion = r.Existing.Version
+			v.Message = r.Message
 
 			// check if there is diff between existing and new, and if no, skip saving version.
 			existingConverted, err := alertRuleFromModelsAlertRule(*r.Existing)
@@ -673,8 +676,10 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
-	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
-		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup)
+	return sess.And(
+		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
+		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
+	)
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
@@ -791,6 +796,7 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 	return result, nextToken, err
 }
 
+// nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
 	if query.OrgID >= 0 {
@@ -861,6 +867,22 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		if err != nil {
 			return nil, groupsSet, err
 		}
+	}
+
+	if len(query.DataSourceUIDs) > 0 {
+		orConditions := make([]string, 0, len(query.DataSourceUIDs))
+		orParams := make([]interface{}, 0, len(query.DataSourceUIDs))
+		for _, dsUID := range query.DataSourceUIDs {
+			// The 'data' column holds the alert definition as JSON. The data source's UID is in the 'datasourceUid' field.
+			// Instead of trying to parse that JSON, we can do a simple text search.
+			// All alert rules go through PreSave(), which normalizes the JSON data using json.Marshal().
+			pattern := fmt.Sprintf(`"datasourceUid":"%s"`, dsUID)
+			sql, param := st.SQLStore.GetDialect().LikeOperator("data", true, pattern, true)
+			orConditions = append(orConditions, sql)
+			orParams = append(orParams, param)
+		}
+
+		q = q.And("("+strings.Join(orConditions, " OR ")+")", orParams...)
 	}
 
 	if query.SearchTitle != "" {
@@ -976,10 +998,17 @@ func decodeCursor(token string) (continueCursor, error) {
 }
 
 func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
-	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
-		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup).
-		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx).
-		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID)
+	return sess.And(`(
+		(namespace_uid > ?)
+		OR (namespace_uid = ? AND rule_group > ?)
+		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx > ?)
+		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)
+	)`,
+		c.NamespaceUID,
+		c.NamespaceUID, c.RuleGroup,
+		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx,
+		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID,
+	)
 }
 
 // Count returns either the number of the alert rules under a specific org (if orgID is not zero)
@@ -1097,6 +1126,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 					continue
 				}
 			}
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
 				if optimizations, err := OptimizeAlertQueries(converted.Data); err != nil {
 					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)

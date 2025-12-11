@@ -1,0 +1,2511 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "metadata": {
+    "name": "v0alpha1.table_v12_2_migrations.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "query": {
+            "kind": "grafana",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Kitchen sink - v12.1 schema",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Image,Image w/ Link,Pills,Data Link,Long Text\ndown,https://grafana.com/media/menus/products/grafana-menu-icon.svg,https://grafana.com/media/menus/products/grafana-menu-icon.svg,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus.\"\nup,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor.\"\nup fast,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum.\"\ndown fast,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus.\"",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "calculateField",
+                  "spec": {
+                    "id": "calculateField",
+                    "options": {
+                      "alias": "Action",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Image"
+                          }
+                        },
+                        "right": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "$Filters"
+                          }
+                        }
+                      },
+                      "mode": "index",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 11,
+                        "Action": 7,
+                        "Data Link": 10,
+                        "Image": 5,
+                        "Image w/ Link": 6,
+                        "Info": 1,
+                        "Long Text": 9,
+                        "Max A": 3,
+                        "Min A": 2,
+                        "Pills": 8,
+                        "State A": 4,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": false,
+                  "enablePagination": false,
+                  "fields": [
+                    "Min",
+                    "Max"
+                  ],
+                  "reducer": [
+                    "max"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "frozenColumns": {
+                  "left": 1
+                },
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto",
+                      "wrapText": false
+                    },
+                    "filterable": true,
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Info"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Google this term",
+                            "url": "https://google.com/search?q=${__value:percentencode}"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "actions",
+                        "value": [
+                          {
+                            "fetch": {
+                              "body": "{}",
+                              "headers": [
+                                [
+                                  "Content-Type",
+                                  "application/json"
+                                ]
+                              ],
+                              "method": "GET",
+                              "queryParams": [],
+                              "url": "https://grafana.com"
+                            },
+                            "title": "My action",
+                            "type": "fetch"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "State"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Time"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "auto"
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "dateTimeFromNow"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "/Image/"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "alt": "Grafana icon",
+                          "type": "image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "/(Time|Min|Max|Info|State|Image)/"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 110
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Info"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "pattern": "up",
+                              "result": {
+                                "color": "green",
+                                "index": 0
+                              }
+                            },
+                            "type": "regex"
+                          },
+                          {
+                            "options": {
+                              "pattern": "down",
+                              "result": {
+                                "color": "red",
+                                "index": 1
+                              }
+                            },
+                            "type": "regex"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "continuous-YlRd"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "gradient",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "continuous-purples"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "State"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "State"
+                      },
+                      {
+                        "id": "custom.hidden",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Long Text"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "auto",
+                          "wrapText": true
+                        }
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 255
+                      },
+                      {
+                        "id": "custom.tooltip.field",
+                        "value": "State"
+                      },
+                      {
+                        "id": "custom.tooltip.placement",
+                        "value": "left"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Pills"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "pill",
+                          "wrapText": true
+                        }
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Data Link"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "data-links",
+                          "wrapText": true
+                        }
+                      },
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Product",
+                            "url": "${__value.text}"
+                          },
+                          {
+                            "targetBlank": true,
+                            "title": "Grafana",
+                            "url": "https://grafana.com"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 139
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Gauge"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Action"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "actions"
+                        }
+                      },
+                      {
+                        "id": "actions",
+                        "value": [
+                          {
+                            "confirmation": "",
+                            "fetch": {
+                              "body": "{}",
+                              "headers": [
+                                [
+                                  "Content-Type",
+                                  "application/json"
+                                ]
+                              ],
+                              "method": "GET",
+                              "queryParams": [],
+                              "url": "/api/health"
+                            },
+                            "title": "Get instance health",
+                            "type": "fetch"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 142
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Image w/ Link"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Grafana Cloud Products",
+                            "url": "https://grafana.com/products/cloud/"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Kitchen sink - v12.2 schema",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Image,Image w/ Link,Pills,Data Link,Long Text\ndown,https://grafana.com/media/menus/products/grafana-menu-icon.svg,https://grafana.com/media/menus/products/grafana-menu-icon.svg,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus.\"\nup,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor.\"\nup fast,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum.\"\ndown fast,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus.\"",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "calculateField",
+                  "spec": {
+                    "id": "calculateField",
+                    "options": {
+                      "alias": "Action",
+                      "binary": {
+                        "left": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Image"
+                          }
+                        },
+                        "right": {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "$Filters"
+                          }
+                        }
+                      },
+                      "mode": "index",
+                      "reduce": {
+                        "reducer": "sum"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 11,
+                        "Action": 7,
+                        "Data Link": 10,
+                        "Image": 5,
+                        "Image w/ Link": 6,
+                        "Info": 1,
+                        "Long Text": 9,
+                        "Max A": 3,
+                        "Min A": 2,
+                        "Pills": 8,
+                        "State A": 4,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.2.0",
+              "options": {
+                "cellHeight": "sm",
+                "frameIndex": 0,
+                "frozenColumns": {
+                  "left": 1
+                },
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto",
+                      "wrapText": false
+                    },
+                    "filterable": true,
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Info"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Google this term",
+                            "url": "https://google.com/search?q=${__value:percentencode}"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "actions",
+                        "value": [
+                          {
+                            "fetch": {
+                              "body": "{}",
+                              "headers": [
+                                [
+                                  "Content-Type",
+                                  "application/json"
+                                ]
+                              ],
+                              "method": "GET",
+                              "queryParams": [],
+                              "url": "https://grafana.com"
+                            },
+                            "title": "My action",
+                            "type": "fetch"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "State"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Time"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "auto"
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "dateTimeFromNow"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "/Image/"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "alt": "Grafana icon",
+                          "type": "image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "/(Time|Min|Max|Info|State|Image)/"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 110
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Info"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "pattern": "up",
+                              "result": {
+                                "color": "green",
+                                "index": 0
+                              }
+                            },
+                            "type": "regex"
+                          },
+                          {
+                            "options": {
+                              "pattern": "down",
+                              "result": {
+                                "color": "red",
+                                "index": 1
+                              }
+                            },
+                            "type": "regex"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "continuous-YlRd"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "gradient",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "continuous-purples"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "State"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "State"
+                      },
+                      {
+                        "id": "custom.hideFrom.viz",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Long Text"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "auto"
+                        }
+                      },
+                      {
+                        "id": "custom.wrapText",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 255
+                      },
+                      {
+                        "id": "custom.tooltip.field",
+                        "value": "State"
+                      },
+                      {
+                        "id": "custom.tooltip.placement",
+                        "value": "left"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Pills"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "pill"
+                        }
+                      },
+                      {
+                        "id": "custom.wrapText",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Data Link"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "data-links"
+                        }
+                      },
+                      {
+                        "id": "custom.wrapText",
+                        "value": true
+                      },
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Product",
+                            "url": "${__value.text}"
+                          },
+                          {
+                            "targetBlank": true,
+                            "title": "Grafana",
+                            "url": "https://grafana.com"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 139
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Gauge"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Action"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "actions"
+                        }
+                      },
+                      {
+                        "id": "actions",
+                        "value": [
+                          {
+                            "confirmation": "",
+                            "fetch": {
+                              "body": "{}",
+                              "headers": [
+                                [
+                                  "Content-Type",
+                                  "application/json"
+                                ]
+                              ],
+                              "method": "GET",
+                              "queryParams": [],
+                              "url": "/api/health"
+                            },
+                            "title": "Get instance health",
+                            "type": "fetch"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 142
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Image w/ Link"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Grafana Cloud Products",
+                            "url": "https://grafana.com/products/cloud/"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byNames",
+                      "options": {
+                        "mode": "include",
+                        "names": [
+                          "Min",
+                          "Max"
+                        ]
+                      }
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.footer.reducers",
+                        "value": [
+                          "max"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Global footer, sum",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [],
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Global footer, last not null",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false,
+                        "Max A": false,
+                        "Min A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [],
+                  "reducer": [
+                    "lastNotNull"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Scoped footer, average",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [
+                    "Max",
+                    "A"
+                  ],
+                  "reducer": [
+                    "mean"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Single sum reducer",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [
+                    "Min"
+                  ],
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Count rows",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "Some really long title that requires wrapping",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [
+                    "Max",
+                    "A"
+                  ],
+                  "reducer": [
+                    "count"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Count rows, hide initial columns",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk_table"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "Info",
+                      "mode": "outerTabular"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "A": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "A": 3,
+                        "Boolean": 6,
+                        "Info": 4,
+                        "Max A": 2,
+                        "Min A": 1,
+                        "State A": 5,
+                        "Time A": 0
+                      },
+                      "orderBy": [],
+                      "orderByMode": "manual",
+                      "renameByName": {
+                        "A": "Gauge",
+                        "Info": "",
+                        "Max A": "Max",
+                        "Min A": "Min",
+                        "State A": "State",
+                        "Time": "",
+                        "Time A": "Time",
+                        "img_url": "Cat"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "table",
+            "spec": {
+              "pluginVersion": "12.1.0",
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": true,
+                  "enablePagination": false,
+                  "fields": [
+                    "Max",
+                    "A"
+                  ],
+                  "reducer": [
+                    "count"
+                  ],
+                  "show": true
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Long Text"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "inspect": false,
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "lcd",
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "custom.inspect",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Boolean"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.align",
+                        "value": "center"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Time"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.hideFrom.viz",
+                        "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.hideFrom.viz",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 18,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 18,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Table - v12.2 migrations",
+    "variables": [
+      {
+        "kind": "AdhocVariable",
+        "spec": {
+          "name": "Filters",
+          "baseFilters": [],
+          "filters": [],
+          "defaultKeys": [],
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      }
+    ]
+  },
+  "status": {}
+}

@@ -168,7 +168,9 @@ export class Gauge extends PureComponent<Props> {
     const gaugeElement = (
       <div
         style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }}
-        ref={(element) => (this.canvasElement = element)}
+        ref={(element) => {
+          this.canvasElement = element;
+        }}
       />
     );
 

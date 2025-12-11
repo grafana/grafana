@@ -1,0 +1,570 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.timeline-modes.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "datasource",
+            "version": "v0",
+            "datasource": {
+              "name": "grafana"
+            },
+            "spec": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            }
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Status grid",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 4,
+                        "spread": 14.9,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 20
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "status-history",
+            "version": "7.5.0-pre",
+            "spec": {
+              "options": {
+                "colWidth": 0.9,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "rowHeight": 0.9,
+                "showValue": "always",
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 60,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "fillOpacity": 70,
+                    "lineWidth": 1
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "State timeline",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [
+                          [
+                            0,
+                            1616551651000
+                          ],
+                          [
+                            1,
+                            1616556554000
+                          ],
+                          [
+                            2,
+                            1616559873000
+                          ],
+                          [
+                            0,
+                            1616561077000
+                          ],
+                          [
+                            3,
+                            1616563090000
+                          ]
+                        ],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "manual_entry",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [
+                          [
+                            4,
+                            1616555060000
+                          ],
+                          [
+                            5,
+                            1616560081000
+                          ],
+                          [
+                            4,
+                            1616562217000
+                          ],
+                          [
+                            5,
+                            1616565458000
+                          ]
+                        ],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "manual_entry",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "points": [
+                          [
+                            4,
+                            1616557148000
+                          ],
+                          [
+                            1616558756000
+                          ],
+                          [
+                            4,
+                            1616561658000
+                          ],
+                          [
+                            1616562446000
+                          ],
+                          [
+                            4,
+                            1616564104000
+                          ],
+                          [
+                            1616564548000
+                          ],
+                          [
+                            4,
+                            1616564871000
+                          ]
+                        ],
+                        "scenarioId": "manual_entry"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "state-timeline",
+            "version": "7.5.0-pre",
+            "spec": {
+              "options": {
+                "alignValue": "left",
+                "colWidth": 0.9,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "always",
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "fillOpacity": 70,
+                    "lineWidth": 1,
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "State timeline (strings \u0026 booleans)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "a,a,b,b,b,b,c,a,a,d,d,d,d,d"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "null,null,e,e,e,null,null,e,null,null,e,null,e,e,e,e"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "true,null,false,null,true,false"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "state-timeline",
+            "version": "7.5.0-pre",
+            "spec": {
+              "options": {
+                "alignValue": "left",
+                "colWidth": 0.9,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "always",
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "fillOpacity": 70,
+                    "lineWidth": 1,
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 10,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 21,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph-ng"
+    ],
+    "timeSettings": {
+      "timezone": "utc",
+      "from": "2021-03-24T03:00:00.000Z",
+      "to": "2021-03-24T07:00:00.000Z",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Timeline Modes",
+    "variables": []
+  },
+  "status": {}
+}

@@ -7,9 +7,10 @@ import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
+import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
 import ResourceField from '../ResourceField/ResourceField';

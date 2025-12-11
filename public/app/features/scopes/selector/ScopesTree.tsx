@@ -25,7 +25,7 @@ export interface ScopesTreeProps {
 
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
 
   toggleExpandedNode: (scopeNodeId: string) => void;
 }

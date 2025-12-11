@@ -215,13 +215,25 @@
               3
             ]
           },
-          "legacyOptions": {
-            "mappings": {
-              "tags": "labels",
-              "text": "description",
-              "time": "timestamp",
-              "title": "service"
+          "mappings": {
+            "tags": {
+              "source": "field",
+              "value": "labels"
             },
+            "text": {
+              "source": "field",
+              "value": "description"
+            },
+            "time": {
+              "source": "field",
+              "value": "timestamp"
+            },
+            "title": {
+              "source": "field",
+              "value": "service"
+            }
+          },
+          "legacyOptions": {
             "type": "influxdb"
           }
         }

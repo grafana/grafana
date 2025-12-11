@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Microsoft SQL Server'ın 2008 ve 2008R2 gibi eski bir sürümünü kullanıyorsanız bağlanabilmek için şifrelemeyi devre dışı bırakmanız gerekebilir.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Otomatik gruplama zaman aralığı için alt sınır. Verileriniz her dakika yazılıyorsa (<1>{{exampleInterval}}</1> gibi) yazma sıklığına ayarlanması önerilir.",
       "description-tls-cert": "SQL Server sertifikasını imzalayan Sertifika Yetkilisinin (CA) genel anahtar sertifikasını içeren dosyanın yolu. Sunucu sertifikası kendi kendine imzalanmışsa gereklidir.",
       "label-auth-settings": "Azure Kimlik Doğrulama Ayarları",
       "label-auth-type": "Kimlik Doğrulama Türü",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Bir alan için KDC'leri ve diğer sunucuları bulmak için DNS SRV kayıtlarının kullanılıp kullanılmayacağını belirtir. Varsayılan değer <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "<2>MIT krb5 paketi</2> için yapılandırma dosyasının yolu. Varsayılan değer <4>{{default}}</4>.",
       "description-udp-preference-limit": "Varsayılan değer <1>{{default}}</1> olduğu için her zaman TCP kullanılır ve isteğe bağlıdır.",
       "label-dns-lookup-kdc": "DNS Arama KDC",
       "label-krb5-config-file-path": "krb5 yapılandırma dosyasının yolu",

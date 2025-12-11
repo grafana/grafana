@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestDashboardSearchClient_Search(t *testing.T) {
@@ -130,7 +130,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
+					Field: resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
 					Desc:  false,
 				},
 			},
@@ -195,7 +195,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+					Field: builders.DASHBOARD_ERRORS_LAST_30_DAYS,
 					Desc:  true,
 				},
 			},
@@ -560,7 +560,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL,
+					Field: resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_VIEWS_TOTAL,
 				},
 			},
 		}
@@ -591,7 +591,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"test-library-panel"},
 					},
@@ -633,7 +633,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"panel1", "panel2"},
 					},
@@ -652,7 +652,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"test-library-panel"},
 					},
@@ -679,7 +679,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"unused-library-panel"},
 					},
@@ -713,28 +713,28 @@ func TestParseSortName(t *testing.T) {
 		{
 			name:      "viewed-recently with desc suffix",
 			sortName:  "viewed-recently-desc",
-			wantField: unisearch.DASHBOARD_VIEWS_LAST_30_DAYS,
+			wantField: builders.DASHBOARD_VIEWS_LAST_30_DAYS,
 			wantDesc:  true,
 			wantErr:   false,
 		},
 		{
 			name:      "defaults to desc",
 			sortName:  "viewed",
-			wantField: unisearch.DASHBOARD_VIEWS_TOTAL,
+			wantField: builders.DASHBOARD_VIEWS_TOTAL,
 			wantDesc:  true,
 			wantErr:   false,
 		},
 		{
 			name:      "errors-recentlyy with asc suffix",
 			sortName:  "errors-recently-asc",
-			wantField: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+			wantField: builders.DASHBOARD_ERRORS_LAST_30_DAYS,
 			wantDesc:  false,
 			wantErr:   false,
 		},
 		{
 			name:      "errors - defaults to desc too",
 			sortName:  "errors",
-			wantField: unisearch.DASHBOARD_ERRORS_TOTAL,
+			wantField: builders.DASHBOARD_ERRORS_TOTAL,
 			wantDesc:  true,
 			wantErr:   false,
 		},

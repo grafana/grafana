@@ -55,7 +55,11 @@ const PanelTypeCardComponent = ({
         isCurrent ? t('panel.panel-type-card.title-click-to-close', 'Click again to close this section') : plugin.name
       }
     >
-      <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />
+      <img
+        className={cx(styles.img, { [styles.disabled]: isDisabled })}
+        src={plugin.info.logos.small || undefined}
+        alt=""
+      />
 
       <div className={cx(styles.itemContent, { [styles.disabled]: isDisabled })}>
         <div className={styles.name}>{title}</div>

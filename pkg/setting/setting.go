@@ -150,6 +150,11 @@ type Cfg struct {
 	PluginsPath                     string
 	EnterpriseLicensePath           string
 
+	// Classic Provisioning settings
+	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
+	ClassicProvisioningDashboardsServerLockMinWaitMs          int64
+	ClassicProvisioningDashboardsServerLockMaxWaitMs          int64
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -242,11 +247,12 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep     int
-	MinRefreshInterval          string
-	DefaultHomeDashboardPath    string
-	DashboardPerformanceMetrics []string
-	PanelSeriesLimit            int
+	DashboardVersionsToKeep          int
+	MinRefreshInterval               string
+	DefaultHomeDashboardPath         string
+	DashboardPerformanceMetrics      []string
+	PanelSeriesLimit                 int
+	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
 	LoginCookieName               string
@@ -578,7 +584,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                             map[string]UnifiedStorageConfig
+	UnifiedStorage map[string]UnifiedStorageConfig
+	// DisableDataMigrations will disable resources data migration to unified storage at startup
+	DisableDataMigrations                      bool
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
@@ -608,6 +616,8 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
+	OverridesFilePath                          string
+	OverridesReloadInterval                    time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1219,6 +1229,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	cfg.readClassicProvisioningSettings(iniFile)
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -1226,6 +1238,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1319,7 +1332,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	shortLinks := iniFile.Section("short_links")
-	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(-1)
 
 	if cfg.ShortLinkExpiration > 365 {
 		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
@@ -2103,6 +2116,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
 }
 
 func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {

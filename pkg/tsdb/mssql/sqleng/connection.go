@@ -1,14 +1,14 @@
 package sqleng
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/azure"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
@@ -17,7 +17,7 @@ import (
 	"github.com/microsoft/go-mssqldb/azuread"
 )
 
-func newMSSQL(ctx context.Context, driverName string, rowLimit int64, dsInfo DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, error) {
+func newMSSQL(driverName string, rowLimit int64, dsInfo DataSourceInfo, cnnstr string, logger log.Logger, proxyClient proxy.Client) (*sql.DB, error) {
 	var connector *mssql.Connector
 	var err error
 	if driverName == "azuresql" {
@@ -29,12 +29,6 @@ func newMSSQL(ctx context.Context, driverName string, rowLimit int64, dsInfo Dat
 	if err != nil {
 		logger.Error("mssql connector creation failed", "error", err)
 		return nil, fmt.Errorf("mssql connector creation failed")
-	}
-
-	proxyClient, err := settings.ProxyClient(ctx)
-	if err != nil {
-		logger.Error("mssql proxy creation failed", "error", err)
-		return nil, fmt.Errorf("mssql proxy creation failed")
 	}
 
 	if proxyClient.SecureSocksProxyEnabled() {
@@ -81,7 +75,7 @@ const (
 	kerberosCredentialCacheFile = "Windows AD: Credential cache file" // #nosec G101
 )
 
-func generateConnectionString(dsInfo DataSourceInfo, azureManagedIdentityClientId string, azureEntraPasswordCredentialsEnabled bool, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
+func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger, azureSettings *azsettings.AzureSettings, userAssertion string) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
@@ -119,7 +113,7 @@ func generateConnectionString(dsInfo DataSourceInfo, azureManagedIdentityClientI
 
 	switch dsInfo.JsonData.AuthenticationType {
 	case azureAuthentication:
-		azureCredentialDSNFragment, err := azure.GetAzureCredentialDSNFragment(azureCredentials, azureManagedIdentityClientId, azureEntraPasswordCredentialsEnabled)
+		azureCredentialDSNFragment, err := azure.GetAzureCredentialDSNFragment(azureCredentials, azureSettings, userAssertion)
 		if err != nil {
 			return "", err
 		}

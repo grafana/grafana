@@ -31,9 +31,9 @@ type listIter struct {
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
 	if l.useCurrentRV {
-		return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
+		return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 	}
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
+	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) Error() error {

@@ -4,8 +4,6 @@ import { DataQuery } from '@grafana/schema';
 
 import * as raw from './dataquery.gen';
 
-export * from './dataquery.gen';
-
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
