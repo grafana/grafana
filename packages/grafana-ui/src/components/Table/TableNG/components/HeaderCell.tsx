@@ -56,7 +56,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
       <span className={styles.headerCellLabel} title={displayName}>
-        {getDisplayName(field)}
+        {displayName}
       </span>
       {direction && (
         <Icon
