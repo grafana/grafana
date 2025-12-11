@@ -138,9 +138,12 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	reqCtx := contexthandler.FromContext(ctx)
+
 	// TODO -- restructure so the static stuff is under one variable and the rest is dynamic
 	data := p.data // copy everything
 	data.Nonce = nonce
+	data.Settings.PublicDashboardAccessToken = reqCtx.PublicDashboardAccessToken
 
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
@@ -150,7 +153,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
 	p.runIndexDataHooks(reqCtx, &data)
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")

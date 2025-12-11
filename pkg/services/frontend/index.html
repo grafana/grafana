@@ -271,9 +271,15 @@
         async function fetchBootData() {
           const queryParams = new URLSearchParams(window.location.search);
 
+          let path = '/bootdata';
+          // call a special bootdata url with the public access token
+          // this is needed to set the access token and correct org for public dashboards on the ST backend
+          if ([[.Settings.PublicDashboardAccessToken]]) {
+            path += `/${[[.Settings.PublicDashboardAccessToken]]}`;
+          }
           // pass the search params through to the bootdata request
           // this allows for overriding the theme/language etc
-          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          const bootDataUrl = new URL(path, window.location.origin);
           for (const [key, value] of queryParams.entries()) {
             bootDataUrl.searchParams.append(key, value);
           }
