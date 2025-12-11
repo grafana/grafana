@@ -147,10 +147,21 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                   <div
                     key={suggestion.hash}
                     className={styles.cardContainer}
+                    tabIndex={0}
+                    role="button"
+                    aria-pressed={isCardSelected}
+                    onKeyDown={(ev) => {
+                      if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
+                      }
+                    }}
                     ref={index === 0 ? firstCardRef : undefined}
                   >
                     {isCardSelected && (
                       <Button
+                        // rather than allow direct focus, we handle ketboard events in the card.
+                        tabIndex={-1}
                         variant="primary"
                         size={'md'}
                         className={styles.applySuggestionButton}
@@ -174,7 +185,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       suggestion={suggestion}
                       width={width}
                       isSelected={isCardSelected}
-                      tabIndex={index}
                       onClick={() => applySuggestion(suggestion, true)}
                     />
                   </div>

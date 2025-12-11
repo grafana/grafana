@@ -1057,6 +1057,7 @@ export const versionedComponents = {
   },
   PluginVisualization: {
     item: {
+      '12.4.0': (title: string) => `data-testid Plugin visualization item ${title}`,
       [MIN_GRAFANA_VERSION]: (title: string) => `Plugin visualization item ${title}`,
     },
     current: {

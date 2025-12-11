@@ -105,6 +105,7 @@ export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
     data,
+    disableKeyboardEvents,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -819,9 +820,9 @@ export function TableNG(props: TableNGProps) {
           }
         }}
         onCellKeyDown={
-          hasNestedFrames
+          hasNestedFrames || disableKeyboardEvents
             ? (_, event) => {
-                if (event.isDefaultPrevented()) {
+                if (disableKeyboardEvents || event.isDefaultPrevented()) {
                   // skip parent grid keyboard navigation if nested grid handled it
                   event.preventGridDefault();
                 }
