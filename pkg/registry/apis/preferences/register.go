@@ -42,12 +42,6 @@ func RegisterAPIService(
 	users user.Service,
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
-	// Requires development settings and clearly experimental
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil
-	}
-
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
 		merger: newMerger(cfg, sql),
