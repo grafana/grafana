@@ -8827,6 +8827,13 @@
       "aria-label-default": "Escolher uma cor",
       "aria-label-selected-color": "cor {{colorLabel}} "
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -9024,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Recolher todas as linhas",
       "aria-label-expand-all": "Expandir todas as linhas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
@@ -12425,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
