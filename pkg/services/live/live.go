@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -1048,7 +1047,7 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.Response {
-	cmd := dtos.LivePublishCmd{}
+	cmd := model.LivePublishCmd{}
 	if err := web.Bind(ctx.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -1087,7 +1086,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
 				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 			}
-			return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+			return response.JSON(http.StatusOK, model.LivePublishResponse{})
 		}
 	}
 
@@ -1115,7 +1114,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 		}
 	}
 	logger.Debug("Publication successful", "identity", ctx.GetID(), "channel", cmd.Channel)
-	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+	return response.JSON(http.StatusOK, model.LivePublishResponse{})
 }
 
 type streamChannelListResponse struct {

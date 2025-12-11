@@ -66,3 +66,10 @@ type ChannelHandlerFactory interface {
 	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
+
+type LivePublishCmd struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data,omitempty"`
+}
+
+type LivePublishResponse struct{}
