@@ -146,7 +146,7 @@ func NewAPIService(
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 
-	// TODO: make this configurable
+	// TODO: in a follow up PR, make this configurable
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(map[schema.GroupResource]iamauthorizer.DialConfig{}, nil),
 		iamauthorizer.Versions,

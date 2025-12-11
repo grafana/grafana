@@ -62,7 +62,7 @@ func NewLocalConfigProvider(
 
 // NewRemoteConfigProvider creates a map of ConfigProviders for remote API servers based on the given DialConfig.
 func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeClient authn.TokenExchanger) map[schema.GroupResource]ConfigProvider {
-	configProviders := make(map[schema.GroupResource]ConfigProvider, 2)
+	configProviders := make(map[schema.GroupResource]ConfigProvider, len(cfg))
 	for gr, dialConfig := range cfg {
 		configProviders[gr] = func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{

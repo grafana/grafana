@@ -10,6 +10,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
@@ -27,6 +28,7 @@ type ParentProvider interface {
 type ResourcePermissionsAuthorizer struct {
 	accessClient   types.AccessClient
 	parentProvider ParentProvider
+	logger         log.Logger
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
@@ -38,6 +40,7 @@ func NewResourcePermissionsAuthorizer(
 	return &ResourcePermissionsAuthorizer{
 		accessClient:   accessClient,
 		parentProvider: parentProvider,
+		logger:         log.New("iam.resource-permissions-authorizer"),
 	}
 }
 
@@ -62,6 +65,12 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
 			if err != nil {
+				r.logger.Error("after get: error fetching parent", "error", err.Error(),
+					"namespace", o.Namespace,
+					"group", target.ApiGroup,
+					"resource", target.Resource,
+					"name", target.Name,
+				)
 				return err
 			}
 			parent = p
@@ -106,6 +115,12 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
 			if err != nil {
+				r.logger.Error("before write: error fetching parent", "error", err.Error(),
+					"namespace", o.Namespace,
+					"group", target.ApiGroup,
+					"resource", target.Resource,
+					"name", target.Name,
+				)
 				return err
 			}
 			parent = p
@@ -193,12 +208,20 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 
 			parent := ""
 			// Fetch the parent of the resource
+			// It's not efficient to do for every item in the list, but it's a good starting point.
 			// Access Policies have global scope, so no parent check needed
 			if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 				p, err := r.parentProvider.GetParent(ctx, targetGR, item.Namespace, target.Name)
 				if err != nil {
-					// TODO: Log error
 					// Skip item on error fetching parent
+					r.logger.Warn("filter list: error fetching parent, skipping item",
+						"error", err.Error(),
+						"namespace",
+						item.Namespace,
+						"group", target.ApiGroup,
+						"resource", target.Resource,
+						"name", target.Name,
+					)
 					continue
 				}
 				parent = p
