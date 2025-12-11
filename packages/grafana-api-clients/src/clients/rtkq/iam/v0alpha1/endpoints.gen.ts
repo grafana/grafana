@@ -3,6 +3,7 @@ export const addTagTypes = [
   'API Discovery',
   'Display',
   'ExternalGroupMapping',
+  'Search',
   'ServiceAccount',
   'SSOSetting',
   'TeamBinding',
@@ -151,6 +152,31 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['ExternalGroupMapping'],
+      }),
+      getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
+        query: (queryArg) => ({
+          url: `/searchTeams`,
+          params: {
+            query: queryArg.query,
+            limit: queryArg.limit,
+            offset: queryArg.offset,
+            page: queryArg.page,
+          },
+        }),
+        providesTags: ['Search'],
+      }),
+      getSearchUsers: build.query<GetSearchUsersApiResponse, GetSearchUsersApiArg>({
+        query: (queryArg) => ({
+          url: `/searchUsers`,
+          params: {
+            query: queryArg.query,
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+            sort: queryArg.sort,
+          },
+        }),
+        providesTags: ['Search'],
       }),
       listServiceAccount: build.query<ListServiceAccountApiResponse, ListServiceAccountApiArg>({
         query: (queryArg) => ({
@@ -861,6 +887,39 @@ export type UpdateExternalGroupMappingApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  hits: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  maxScore: number;
+  offset: number;
+  queryCost: number;
+  totalHits: number;
+};
+export type GetSearchTeamsApiArg = {
+  /** team name query string */
+  query?: string;
+  /** limit the number of results */
+  limit?: number;
+  /** start the query at the given offset */
+  offset?: number;
+  /** page number to start from */
+  page?: number;
+};
+export type GetSearchUsersApiResponse = unknown;
+export type GetSearchUsersApiArg = {
+  query?: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  /** sortable field */
+  sort?: string;
 };
 export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
@@ -2033,6 +2092,9 @@ export type UserSpec = {
   role: string;
   title: string;
 };
+export type UserStatus = {
+  lastSeenAt: number;
+};
 export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2041,6 +2103,7 @@ export type User = {
   metadata: ObjectMeta;
   /** Spec is the spec of the User */
   spec: UserSpec;
+  status: UserStatus;
 };
 export type UserList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2084,6 +2147,10 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
+  useGetSearchTeamsQuery,
+  useLazyGetSearchTeamsQuery,
+  useGetSearchUsersQuery,
+  useLazyGetSearchUsersQuery,
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,

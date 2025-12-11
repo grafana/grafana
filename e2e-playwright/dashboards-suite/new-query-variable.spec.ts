@@ -79,6 +79,16 @@ test.describe(
       await expect(regexInput).toHaveAttribute('placeholder', '/.*-(?<text>.*)-(?<value>.*)-.*/');
       await expect(regexInput).toHaveValue('');
 
+      // Check regex apply to field - should default to "Variable value"
+      const regexApplyToField = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+      );
+      await expect(regexApplyToField).toBeVisible();
+      const variableValueRadio = page.getByRole('radio', { name: 'Variable value' });
+      await expect(variableValueRadio).toBeChecked();
+      const displayTextRadio = page.getByRole('radio', { name: 'Display text' });
+      await expect(displayTextRadio).not.toBeChecked();
+
       const sortSelect = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2
       );

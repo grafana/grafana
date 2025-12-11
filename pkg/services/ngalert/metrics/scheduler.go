@@ -130,7 +130,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_group_rules",
 				Help:      "The number of alert rules that are scheduled, by type and state.",
 			},
-			[]string{"org", "type", "state", "rule_group"},
+			[]string{"org", "type", "state", "rule_group", "folder_uid"},
 		),
 		Groups: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{

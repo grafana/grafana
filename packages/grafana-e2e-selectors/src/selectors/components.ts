@@ -1057,6 +1057,7 @@ export const versionedComponents = {
   },
   PluginVisualization: {
     item: {
+      '12.4.0': (title: string) => `data-testid Plugin visualization item ${title}`,
       [MIN_GRAFANA_VERSION]: (title: string) => `Plugin visualization item ${title}`,
     },
     current: {
@@ -1487,6 +1488,16 @@ export const versionedComponents = {
         message: {
           ['12.1.0']: 'data-testid export-image-error-message',
         },
+      },
+    },
+  },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
       },
     },
   },

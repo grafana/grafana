@@ -229,6 +229,16 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+func getUnionField[T ~string](m map[string]interface{}, key string) *T {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			result := T(str)
+			return &result
+		}
+	}
+	return nil
+}
+
 // Helper function to create int64 pointer
 func int64Ptr(i int64) *int64 {
 	return &i
@@ -1195,6 +1205,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			RegexApplyTo:     getUnionField[dashv2alpha1.DashboardVariableRegexApplyTo](varMap, "regexApplyTo"),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
@@ -1539,25 +1550,37 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		},
 	}
 
-	// Transform baseFilters if they exist
+	// Transform baseFilters if they exist, otherwise default to empty array
 	if baseFilters, exists := varMap["baseFilters"]; exists {
 		if baseFiltersArray, ok := baseFilters.([]interface{}); ok {
 			adhocVar.Spec.BaseFilters = transformAdHocFilters(baseFiltersArray)
 		}
 	}
+	// Ensure baseFilters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.BaseFilters == nil {
+		adhocVar.Spec.BaseFilters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform filters if they exist
+	// Transform filters if they exist, otherwise default to empty array
 	if filters, exists := varMap["filters"]; exists {
 		if filtersArray, ok := filters.([]interface{}); ok {
 			adhocVar.Spec.Filters = transformAdHocFilters(filtersArray)
 		}
 	}
+	// Ensure filters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.Filters == nil {
+		adhocVar.Spec.Filters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform defaultKeys if they exist
+	// Transform defaultKeys if they exist, otherwise default to empty array
 	if defaultKeys, exists := varMap["defaultKeys"]; exists {
 		if defaultKeysArray, ok := defaultKeys.([]interface{}); ok {
 			adhocVar.Spec.DefaultKeys = transformMetricFindValues(defaultKeysArray)
 		}
+	}
+	// Ensure defaultKeys is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.DefaultKeys == nil {
+		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)

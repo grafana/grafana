@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/collections
 go 1.25.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.48.4
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.2

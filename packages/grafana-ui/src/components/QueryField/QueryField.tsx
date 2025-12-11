@@ -25,6 +25,7 @@ import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
+  ['aria-labelledby']?: string;
   cleanText?: (text: string) => string;
   disabled?: boolean;
   // We have both value and local state. This is usually an antipattern but we need to keep local state
@@ -201,7 +202,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   }
 
   render() {
-    const { disabled, theme } = this.props;
+    const { disabled, theme, ['aria-labelledby']: ariaLabelledby } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
@@ -214,6 +215,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
             ref={(editor) => {
               this.editor = editor;
             }}
+            aria-labelledby={ariaLabelledby}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}

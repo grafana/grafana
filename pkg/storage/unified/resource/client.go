@@ -39,6 +39,7 @@ type ResourceClient interface {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+	resourcepb.QuotasClient
 }
 
 // Internal implementation
@@ -49,6 +50,7 @@ type resourceClient struct {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+	resourcepb.QuotasClient
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
@@ -76,6 +78,7 @@ func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientCo
 		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
 		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
+		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
 	}
 }
 
@@ -102,6 +105,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
 	} {
 		channel.RegisterService(
 			grpchan.InterceptServer(

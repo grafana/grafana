@@ -92,7 +92,7 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "^3.0.1",
+    "@grafana/plugin-e2e": "^3.0.3",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
@@ -124,7 +124,6 @@
     "@types/eslint": "9.6.1",
     "@types/eslint-scope": "^8.0.0",
     "@types/file-saver": "2.0.7",
-    "@types/glob": "^9.0.0",
     "@types/google.analytics": "^0.0.46",
     "@types/gtag.js": "^0.0.20",
     "@types/history": "4.7.11",
@@ -296,8 +295,8 @@
     "@grafana/plugin-ui": "^0.11.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "6.47.1",
-    "@grafana/scenes-react": "6.47.1",
+    "@grafana/scenes": "6.49.0",
+    "@grafana/scenes-react": "6.49.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -460,7 +459,8 @@
     "gitconfiglocal": "2.1.0",
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
-    "js-yaml@npm:=4.1.0": "^4.1.0"
+    "js-yaml@npm:=4.1.0": "^4.1.0",
+    "nodemailer": "7.0.7"
   },
   "workspaces": {
     "packages": [

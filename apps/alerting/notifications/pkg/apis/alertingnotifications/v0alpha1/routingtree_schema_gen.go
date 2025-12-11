@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaRoutingTree = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &RoutingTree{}, &RoutingTreeList{}, resource.WithKind("RoutingTree"),
+	schemaRoutingTree = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", NewRoutingTree(), &RoutingTreeList{}, resource.WithKind("RoutingTree"),
 		resource.WithPlural("routingtrees"), resource.WithScope(resource.NamespacedScope))
 	kindRoutingTree = resource.Kind{
 		Schema: schemaRoutingTree,

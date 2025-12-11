@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/shorturl
 go 1.25.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.48.4
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250915132226-585b53bc7dba
 	k8s.io/apimachinery v0.34.2
