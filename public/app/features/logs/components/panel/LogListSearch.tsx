@@ -137,22 +137,22 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         onClick={prevResult}
         disabled={!matches || !matches.length}
         name="angle-up"
-        aria-label={t('logs.log-list-search.prev', 'Previous result')}
+        tooltip={t('logs.log-list-search.prev', 'Previous result')}
       />
       <IconButton
         onClick={nextResult}
         disabled={!matches || !matches.length}
         name="angle-down"
-        aria-label={t('logs.log-list-search.next', 'Next result')}
+        tooltip={t('logs.log-list-search.next', 'Next result')}
       />
       <IconButton
         onClick={toggleFilterLogs}
         disabled={!matches || !matches.length}
         className={filterLogs ? styles.controlButtonActive : undefined}
         name="filter"
-        aria-label={t('logs.log-list-search.filter', 'Filter matching logs')}
+        tooltip={t('logs.log-list-search.filter', 'Filter matching logs')}
       />
-      <IconButton onClick={hideSearch} name="times" aria-label={t('logs.log-list-search.close', 'Close search')} />
+      <IconButton onClick={hideSearch} name="times" tooltip={t('logs.log-list-search.close', 'Close search')} />
     </div>
   );
 };
