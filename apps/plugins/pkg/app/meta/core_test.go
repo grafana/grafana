@@ -22,7 +22,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("returns cached plugin when available", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedSpec := pluginsv0alpha1.MetaSpec{
+		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
@@ -31,7 +31,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedSpec
+		provider.loadedPlugins["test-plugin"] = expectedMeta
 		provider.initialized = true
 		provider.mu.Unlock()
 
@@ -39,7 +39,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedSpec, result.Meta)
+		assert.Equal(t, expectedMeta, result.Meta)
 		assert.Equal(t, defaultCoreTTL, result.TTL)
 	})
 
@@ -60,7 +60,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("ignores version parameter", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedSpec := pluginsv0alpha1.MetaSpec{
+		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
@@ -69,7 +69,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedSpec
+		provider.loadedPlugins["test-plugin"] = expectedMeta
 		provider.initialized = true
 		provider.mu.Unlock()
 
@@ -85,7 +85,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		customTTL := 2 * time.Hour
 		provider := NewCoreProviderWithTTL(customTTL)
 
-		expectedSpec := pluginsv0alpha1.MetaSpec{
+		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
@@ -94,7 +94,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedSpec
+		provider.loadedPlugins["test-plugin"] = expectedMeta
 		provider.initialized = true
 		provider.mu.Unlock()
 
