@@ -51,8 +51,9 @@ type Config struct {
 
 // ScopeConfig is used for YAML parsing - converts to v0alpha1.ScopeSpec
 type ScopeConfig struct {
-	Title   string              `yaml:"title"`
-	Filters []ScopeFilterConfig `yaml:"filters"`
+	Title      string              `yaml:"title"`
+	DefaultPath []string           `yaml:"defaultPath,omitempty"`
+	Filters    []ScopeFilterConfig `yaml:"filters"`
 }
 
 // ScopeFilterConfig is used for YAML parsing - converts to v0alpha1.ScopeFilter
@@ -110,10 +111,19 @@ func convertScopeSpec(cfg ScopeConfig) v0alpha1.ScopeSpec {
 	for i, f := range cfg.Filters {
 		filters[i] = convertFilter(f)
 	}
-	return v0alpha1.ScopeSpec{
+	spec := v0alpha1.ScopeSpec{
 		Title:   cfg.Title,
 		Filters: filters,
 	}
+	// Convert defaultPath node IDs to prefixed names
+	if len(cfg.DefaultPath) > 0 {
+		prefixedPath := make([]string, len(cfg.DefaultPath))
+		for i, nodeID := range cfg.DefaultPath {
+			prefixedPath[i] = prefix + "-" + nodeID
+		}
+		spec.DefaultPath = prefixedPath
+	}
+	return spec
 }
 
 type Client struct {

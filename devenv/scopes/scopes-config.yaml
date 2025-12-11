@@ -48,6 +48,14 @@ scopes:
         operator: equals
         value: kids
 
+  shared-service:
+    title: Shared Service
+    defaultPath: [gdev-scopes, gdev-scopes-production]
+    filters:
+      - key: service
+        operator: equals
+        value: shared
+
 tree:
   gdev-scopes:
     title: gdev-scopes
@@ -68,6 +76,11 @@ tree:
             nodeType: leaf
             linkId: app2
             linkType: scope
+          shared-service:
+            title: Shared Service
+            nodeType: leaf
+            linkId: shared-service
+            linkType: scope
       test-cases:
         title: Test cases
         nodeType: container
@@ -82,6 +95,11 @@ tree:
             title: Test case 2
             nodeType: leaf
             linkId: test-case-2
+            linkType: scope
+          shared-service-test:
+            title: Shared Service
+            nodeType: leaf
+            linkId: shared-service
             linkType: scope
       clusters:
         title: Clusters
