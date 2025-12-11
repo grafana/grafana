@@ -57,11 +57,11 @@ func TestIntegrationPluginMeta(t *testing.T) {
 
 		foundIDs := make(map[string]bool)
 		for _, item := range response.Result.Items {
-			require.NotNil(t, item.Spec.PluginJSON)
-			foundIDs[item.Spec.PluginJSON.Id] = true
-			require.NotEmpty(t, item.Spec.PluginJSON.Id)
-			require.NotEmpty(t, item.Spec.PluginJSON.Type)
-			require.NotEmpty(t, item.Spec.PluginJSON.Name)
+			require.NotNil(t, item.Spec.PluginJson)
+			foundIDs[item.Spec.PluginJson.Id] = true
+			require.NotEmpty(t, item.Spec.PluginJson.Id)
+			require.NotEmpty(t, item.Spec.PluginJson.Type)
+			require.NotEmpty(t, item.Spec.PluginJson.Name)
 		}
 		require.True(t, foundIDs["grafana-piechart-panel"])
 		require.True(t, foundIDs["grafana-clock-panel"])

@@ -87,7 +87,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string)
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	spec := pluginsv0alpha1.MetaSpec{
+	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON,
 	}
 
@@ -118,16 +118,16 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string)
 			signature.Org = &gcomMeta.SignedByOrg
 		}
 
-		spec.Signature = signature
+		metaSpec.Signature = signature
 	}
 
 	// Set angular info
-	spec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
+	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
 		Detected: gcomMeta.AngularDetected,
 	}
 
 	return &Result{
-		Meta: spec,
+		Meta: metaSpec,
 		TTL:  p.ttl,
 	}, nil
 }

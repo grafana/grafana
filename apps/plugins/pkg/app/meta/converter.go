@@ -488,7 +488,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Met
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
 func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.LoadingStrategy, moduleHash string) pluginsv0alpha1.MetaSpec {
-	spec := pluginsv0alpha1.MetaSpec{
+	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToPluginMetaJSONData(plugin.JSONData),
 	}
 
@@ -509,11 +509,11 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 			}
 			module.LoadingStrategy = &ls
 		}
-		spec.Module = module
+		metaSpec.Module = module
 	}
 
 	if plugin.BaseURL != "" {
-		spec.BaseURL = &plugin.BaseURL
+		metaSpec.BaseURL = &plugin.BaseURL
 	}
 
 	if plugin.Signature != "" {
@@ -530,22 +530,22 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 			signature.Org = &plugin.SignatureOrg
 		}
 
-		spec.Signature = signature
+		metaSpec.Signature = signature
 	}
 
 	if len(plugin.Children) > 0 {
-		spec.Children = plugin.Children
+		metaSpec.Children = plugin.Children
 	}
 
-	spec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
+	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
 		Detected: plugin.Angular.Detected,
 	}
 
 	if len(plugin.Translations) > 0 {
-		spec.Translations = plugin.Translations
+		metaSpec.Translations = plugin.Translations
 	}
 
-	return spec
+	return metaSpec
 }
 
 // convertSignatureStatus converts plugins.SignatureStatus to pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus.

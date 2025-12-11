@@ -13,7 +13,15 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	pluginsLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 const (
@@ -26,6 +34,7 @@ type CoreProvider struct {
 	loadedPlugins map[string]pluginsv0alpha1.MetaSpec
 	initialized   bool
 	ttl           time.Duration
+	loader        pluginsLoader.Service
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
@@ -35,9 +44,13 @@ func NewCoreProvider() *CoreProvider {
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
 func NewCoreProviderWithTTL(ttl time.Duration) *CoreProvider {
+	cfg := &config.PluginManagementCfg{
+		Features: config.Features{},
+	}
 	return &CoreProvider{
 		loadedPlugins: make(map[string]pluginsv0alpha1.MetaSpec),
 		ttl:           ttl,
+		loader:        createLoader(cfg),
 	}
 }
 
@@ -86,8 +99,8 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 	return nil, ErrMetaNotFound
 }
 
-// loadPlugins discovers and caches all core plugins.
-// Returns an error if the static root path cannot be found or if plugin discovery fails.
+// loadPlugins discovers and caches all core plugins by fully loading them.
+// Returns an error if the static root path cannot be found or if plugin loading fails.
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
@@ -108,30 +121,111 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	panelPath := filepath.Join(staticRootPath, "app", "plugins", "panel")
 
 	src := sources.NewLocalSource(plugins.ClassCore, []string{datasourcePath, panelPath})
-	ps, err := src.Discover(ctx)
+	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
 		return err
 	}
 
-	if len(ps) == 0 {
-		logging.DefaultLogger.Warn("CoreProvider: no core plugins found during discovery")
+	if len(loadedPlugins) == 0 {
+		logging.DefaultLogger.Warn("CoreProvider: no core plugins found during loading")
 		return nil
 	}
 
-	for _, bundle := range ps {
-		spec := pluginsv0alpha1.MetaSpec{
-			PluginJson:   jsonDataToMetaJSONData(bundle.Primary.JSONData),
-			Module:       nil,
-			BaseURL:      nil,
-			Signature:    nil,
-			Angular:      nil,
-			Translations: nil,
-			Children:     nil,
-		}
-		p.loadedPlugins[bundle.Primary.JSONData.ID] = spec
+	for _, plugin := range loadedPlugins {
+		metaSpec := p.pluginToMetaSpec(plugin)
+		p.loadedPlugins[plugin.ID] = metaSpec
 	}
 
 	return nil
+}
+
+// createLoader creates a loader service configured for core plugins.
+func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
+	d := discovery.New(cfg, discovery.Opts{
+		FilterFuncs: []discovery.FilterFunc{
+			// Allow all plugin types for core plugins
+		},
+	})
+	b := bootstrap.New(cfg, bootstrap.Opts{
+		DecorateFuncs: []bootstrap.DecorateFunc{}, // no decoration required for metadata
+	})
+	v := validation.New(cfg, validation.Opts{
+		ValidateFuncs: []validation.ValidateFunc{
+			// Skip validation for core plugins - they're trusted
+		},
+	})
+	i := initialization.New(cfg, initialization.Opts{
+		InitializeFuncs: []initialization.InitializeFunc{
+			// Skip initialization - we only need metadata, not running plugins
+		},
+	})
+	t, _ := termination.New(cfg, termination.Opts{
+		TerminateFuncs: []termination.TerminateFunc{
+			// No termination needed for metadata-only loading
+		},
+	})
+
+	et := pluginerrs.ProvideErrorTracker()
+
+	return pluginsLoader.New(cfg, d, b, v, i, t, et)
+}
+
+// pluginToMetaSpec converts a fully loaded *plugins.Plugin to a pluginsv0alpha1.MetaSpec.
+func (p *CoreProvider) pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Set module information
+	if plugin.Module != "" {
+		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+			Path: plugin.Module,
+		}
+
+		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+		module.LoadingStrategy = &loadingStrategy
+
+		metaSpec.Module = module
+	}
+
+	// Set BaseURL
+	if plugin.BaseURL != "" {
+		metaSpec.BaseURL = &plugin.BaseURL
+	}
+
+	// Set signature information
+	signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		Status: convertSignatureStatus(plugin.Signature),
+	}
+
+	if plugin.SignatureType != "" {
+		sigType := convertSignatureType(plugin.SignatureType)
+		signature.Type = &sigType
+	}
+
+	if plugin.SignatureOrg != "" {
+		signature.Org = &plugin.SignatureOrg
+	}
+
+	metaSpec.Signature = signature
+
+	if len(plugin.Children) > 0 {
+		children := make([]string, 0, len(plugin.Children))
+		for _, child := range plugin.Children {
+			children = append(children, child.ID)
+		}
+		metaSpec.Children = children
+	}
+
+	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
+		Detected: plugin.Angular.Detected,
+	}
+
+	if len(plugin.Translations) > 0 {
+		metaSpec.Translations = plugin.Translations
+	}
+
+	return metaSpec
 }
 
 // jsonDataToMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
