@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 
+import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
 
@@ -41,6 +42,7 @@ export function SecondaryActions({
   const theme = useTheme2();
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
 
   return (
     <div className={styles.containerMargin}>
@@ -74,6 +76,16 @@ export function SecondaryActions({
           )}
         </>
       )}
+      <ToolbarButton
+        key="query-history"
+        variant={drawerOpened ? 'active' : 'canvas'}
+        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+        onClick={() => setDrawerOpened(!drawerOpened)}
+        data-testid={Components.QueryTab.queryHistoryButton}
+        icon="history"
+      >
+        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+      </ToolbarButton>
       <ToolbarButton
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}

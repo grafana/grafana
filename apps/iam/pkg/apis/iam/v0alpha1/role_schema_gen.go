@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaRole = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &Role{}, &RoleList{}, resource.WithKind("Role"),
+	schemaRole = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewRole(), &RoleList{}, resource.WithKind("Role"),
 		resource.WithPlural("roles"), resource.WithScope(resource.NamespacedScope))
 	kindRole = resource.Kind{
 		Schema: schemaRole,

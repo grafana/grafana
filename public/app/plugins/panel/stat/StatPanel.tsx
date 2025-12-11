@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, type JSX } from 'react';
 
 import {
   DisplayValueAlignmentFactors,

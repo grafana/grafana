@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 

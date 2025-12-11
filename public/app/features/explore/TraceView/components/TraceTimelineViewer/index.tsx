@@ -197,7 +197,9 @@ export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
     return (
       <div
         className={styles.TraceTimelineViewer}
-        ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
+        ref={(ref: HTMLDivElement | null) => {
+          ref && this.setState({ height: ref.getBoundingClientRect().height });
+        }}
       >
         <TimelineHeaderRow
           duration={trace.duration}

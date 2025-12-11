@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math"
 
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,18 +21,22 @@ const (
 	UserResourceGroup = "iam.grafana.com"
 )
 
+var _ resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	userService user.Service
 	log         *slog.Logger
+	tracer      trace.Tracer
 }
 
 // NewUserLegacySearchClient creates a new UserLegacySearchClient.
-func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient {
+func NewUserLegacySearchClient(userService user.Service, tracer trace.Tracer) *UserLegacySearchClient {
 	return &UserLegacySearchClient{
 		userService: userService,
 		log:         slog.Default().With("logger", "legacy-user-search-client"),
+		tracer:      tracer,
 	}
 }
 
@@ -39,6 +44,9 @@ func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient
 // It only supports exact matching for title, login, or email.
 // FIXME: This implementation only supports a single field query and will be extended in the future.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "user.Search")
+	defer span.End()
+
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -129,9 +137,9 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	for _, field := range fields {
 		switch field {
 		case "email":
-			columns = append(columns, builders.TableColumnDefinitions[builders.USER_EMAIL])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
 		case "login":
-			columns = append(columns, builders.TableColumnDefinitions[builders.USER_LOGIN])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
 		}
 	}
 	return columns

@@ -9,9 +9,9 @@ export const usePullRequestParam = () => {
   const repoType = params.get('repo_type');
 
   return {
-    prURL: prParam ? textUtil.sanitizeUrl(prParam) : undefined,
-    newPrURL: newPrParam ? textUtil.sanitizeUrl(newPrParam) : undefined,
-    repoURL: repoUrl ? textUtil.sanitizeUrl(repoUrl) : undefined,
-    repoType: repoType ? textUtil.sanitizeUrl(repoType) : undefined,
+    prURL: prParam ? textUtil.sanitizeUrl(decodeURIComponent(prParam)) : undefined,
+    newPrURL: newPrParam ? textUtil.sanitizeUrl(decodeURIComponent(newPrParam)) : undefined,
+    repoURL: repoUrl ? textUtil.sanitizeUrl(decodeURIComponent(repoUrl)) : undefined,
+    repoType: repoType ? textUtil.sanitizeUrl(decodeURIComponent(repoType)) : undefined,
   };
 };

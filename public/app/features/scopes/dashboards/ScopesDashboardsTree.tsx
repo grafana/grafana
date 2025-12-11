@@ -9,12 +9,13 @@ import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
 import { OnFolderUpdate, SuggestedNavigationsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeProps {
+  subScope?: string;
   folders: SuggestedNavigationsFoldersMap;
   folderPath: string[];
   onFolderUpdate: OnFolderUpdate;
 }
 
-export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: ScopesDashboardsTreeProps) {
+export function ScopesDashboardsTree({ subScope, folders, folderPath, onFolderUpdate }: ScopesDashboardsTreeProps) {
   const [queryParams] = useQueryParams();
   const styles = useStyles2(getStyles);
 
@@ -52,6 +53,7 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
       ))}
       {regularNavigations.map((navigation) => (
         <ScopesNavigationTreeLink
+          subScope={subScope}
           key={navigation.id + navigation.title}
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}

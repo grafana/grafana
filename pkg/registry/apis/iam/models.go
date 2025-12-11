@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -79,6 +80,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
 	userSearchClient resourcepb.ResourceIndexClient
+	teamSearch       *TeamSearchHandler
+
+	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST

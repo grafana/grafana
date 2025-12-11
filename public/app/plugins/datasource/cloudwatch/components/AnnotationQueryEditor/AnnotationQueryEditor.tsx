@@ -4,10 +4,11 @@ import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect } from '@grafana/plugin-ui';
 import { Alert, Input, Space } from '@grafana/ui';
 
+import { MetricStat } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchAnnotationQuery } from '../../guards';
 import { useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, MetricStat } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 import { MetricStatEditor } from '../shared/MetricStatEditor/MetricStatEditor';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;

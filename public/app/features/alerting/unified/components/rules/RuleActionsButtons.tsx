@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';

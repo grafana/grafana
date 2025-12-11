@@ -387,3 +387,15 @@ To configure this feature, see the [introduction to exemplars](ref:exemplars) do
 
 If service dependency information is available in Jaeger, it can be visualized in Grafana.
 Use the Jaeger data source with the "Dependency Graph" query type on a Node Graph panel for this.
+
+## Querying Data via gRPC Endpoint (Public Preview)
+
+Jaeger now offers an alternative method for querying data via HTTP, which utilizes their gRPC service. For detailed information about the API and any necessary Jaeger setup requirements, please consult their [documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
+
+The following queries are currently enabled through the gRPC endpoint:
+
+- Service search
+- Operation search
+- Trace ID search
+
+To enable gRPC querying for Jaeger within Grafana, you must enable the `jaegerEnableGrpcEndpoint` feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.

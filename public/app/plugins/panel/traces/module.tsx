@@ -1,11 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { migrateToAdhocFilters } from '../../../features/explore/TraceView/useSearch';
 
 import { FiltersEditor } from './FiltersEditor';
 import { TracesPanel } from './TracesPanel';
-import { TracesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin(TracesPanel)
   .setMigrationHandler((panel) => {
@@ -44,4 +44,4 @@ export const plugin = new PanelPlugin(TracesPanel)
         category,
       });
   })
-  .setSuggestionsSupplier(new TracesSuggestionsSupplier());
+  .setSuggestionsSupplier(showDefaultSuggestion((ds) => ds.hasPreferredVisualisationType('trace')));

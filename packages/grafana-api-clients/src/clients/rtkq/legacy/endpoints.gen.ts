@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -232,7 +230,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -255,7 +253,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,
@@ -1644,7 +1642,12 @@ const injectedRtkApi = api
         invalidatesTags: ['teams'],
       }),
       getTeamById: build.query<GetTeamByIdApiResponse, GetTeamByIdApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.teamId}` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.teamId}`,
+          params: {
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
         providesTags: ['teams'],
       }),
       updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
@@ -3474,6 +3477,7 @@ export type DeleteTeamByIdApiArg = {
 export type GetTeamByIdApiResponse = /** status 200 (empty) */ TeamDto;
 export type GetTeamByIdApiArg = {
   teamId: string;
+  accesscontrol?: boolean;
 };
 export type UpdateTeamApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -6039,6 +6043,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6050,10 +6055,8 @@ export type SearchTeamGroupsQueryResult = {
   totalCount?: number;
 };
 export type UpdateTeamCommand = {
-  Email?: string;
-  ExternalUID?: string;
-  ID?: number;
-  Name?: string;
+  email?: string;
+  name?: string;
 };
 export type TeamMemberDto = {
   auth_module?: string;

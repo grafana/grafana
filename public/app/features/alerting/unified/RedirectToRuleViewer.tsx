@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { type JSX, useMemo } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 

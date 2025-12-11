@@ -1,4 +1,4 @@
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../dataquery.gen';
 
 import { migrateAliasPatterns, migrateMetricQuery } from './metricQueryMigrations';
 

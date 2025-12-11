@@ -154,7 +154,6 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     spec: {
       title: '',
     },
-    status: {},
   },
   workflowOptions: [
     { label: 'Commit directly', value: 'write' },

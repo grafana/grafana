@@ -5,8 +5,8 @@ import { PanelData } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
 
 import { AwsUrl, encodeUrl } from '../../../aws_url';
+import { CloudWatchLogsQuery } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
-import { CloudWatchLogsQuery } from '../../../types';
 
 interface Props {
   query: CloudWatchLogsQuery;

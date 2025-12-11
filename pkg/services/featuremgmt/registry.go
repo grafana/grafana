@@ -415,6 +415,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesUnifiedStorageQuotas",
+			Description:     "Adds support for Kubernetes unified storage quotas",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
@@ -580,6 +587,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "kubernetesDashboardsV2",
+			Description:  "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -596,6 +610,20 @@ var (
 		{
 			Name:         "perPanelNonApplicableDrilldowns",
 			Description:  "Enables viewing non-applicable drilldowns on a panel level",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "panelGroupBy",
+			Description:  "Enables a group by action per panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "perPanelFiltering",
+			Description:  "Enables filtering by grouping labels on the panel level through legend or tooltip",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -1315,7 +1343,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
@@ -1590,11 +1618,26 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "kubernetesExternalGroupMapping",
+			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendSearchNavOrganise,
 			Expression:  "false",
+		},
+		{
+			Name:         "recentlyViewedDashboards",
+			Description:  "Enables recently viewed dashboards section in the browsing dashboard page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 		{
 			Name:         "alertEnrichment",
@@ -1794,10 +1837,10 @@ var (
 		{
 			Name:         "azureResourcePickerUpdates",
 			Description:  "Enables the updated Azure Monitor resource picker",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:            "prometheusTypeMigration",
@@ -1864,6 +1907,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "externalVizSuggestions",
+			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -1888,10 +1939,10 @@ var (
 		{
 			Name:         "newPanelPadding",
 			Description:  "Increases panel padding globally",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "onlyStoreActionSets",
@@ -1933,6 +1984,14 @@ var (
 			Owner:        grafanaDataProSquad,
 		},
 		{
+			Name:            "opentsdbBackendMigration",
+			Description:     "Run queries through the data source backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
 			Name:         "ttlPluginInstanceManager",
 			Description:  "Enable TTL plugin instance manager",
 			Stage:        FeatureStageExperimental,
@@ -1955,6 +2014,28 @@ var (
 			Expression:      "false",
 			RequiresRestart: false,
 			HideFromDocs:    false,
+		},
+		{
+			Name:            "kubernetesAlertingHistorian",
+			Description:     "Adds support for Kubernetes alerting historian APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "useMTPlugins",
+			Description:  "Enables plugins decoupling from bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "multiPropsVariables",
+			Description:  "Enables support for variables whose values can have multiple properties",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )

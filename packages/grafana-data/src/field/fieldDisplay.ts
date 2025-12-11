@@ -190,10 +190,62 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               y: dataFrame.fields[i],
               x: timeField,
             };
-            if (calc === ReducerID.last) {
-              sparkline.highlightIndex = sparkline.y.values.length - 1;
-            } else if (calc === ReducerID.first) {
-              sparkline.highlightIndex = 0;
+            let highlightIdx: number | undefined = (() => {
+              switch (calc) {
+                case ReducerID.last:
+                  return sparkline.y.values.length - 1;
+                case ReducerID.first:
+                  return 0;
+                // TODO: #112977 enable more reducers for highlight index
+                // case ReducerID.lastNotNull: {
+                //   for (let k = sparkline.y.values.length - 1; k >= 0; k--) {
+                //     const v = sparkline.y.values[k];
+                //     if (v !== null && v !== undefined && !Number.isNaN(v)) {
+                //       return k;
+                //     }
+                //   }
+                //   return;
+                // }
+                // case ReducerID.firstNotNull: {
+                //   for (let k = 0; k < sparkline.y.values.length; k++) {
+                //     const v = sparkline.y.values[k];
+                //     if (v !== null && v !== undefined && !Number.isNaN(v)) {
+                //       return k;
+                //     }
+                //   }
+                //   return;
+                // }
+                // case ReducerID.min: {
+                //   let minIdx = -1;
+                //   let prevMin = Infinity;
+                //   for (let k = 0; k < sparkline.y.values.length; k++) {
+                //     const v = sparkline.y.values[k];
+                //     if (v !== null && v !== undefined && !Number.isNaN(v) && v < prevMin) {
+                //       prevMin = v;
+                //       minIdx = k;
+                //     }
+                //   }
+                //   return minIdx >= 0 ? minIdx : undefined;
+                // }
+                // case ReducerID.max: {
+                //   let maxIdx = -1;
+                //   let prevMax = -Infinity;
+                //   for (let k = 0; k < sparkline.y.values.length; k++) {
+                //     const v = sparkline.y.values[k];
+                //     if (v !== null && v !== undefined && !Number.isNaN(v) && v > prevMax) {
+                //       prevMax = v;
+                //       maxIdx = k;
+                //     }
+                //   }
+                //   return maxIdx >= 0 ? maxIdx : undefined;
+                // }
+                default:
+                  return;
+              }
+            })();
+
+            if (typeof highlightIdx === 'number') {
+              sparkline.highlightIndex = highlightIdx;
             }
           }
 

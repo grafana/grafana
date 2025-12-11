@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import { PureComponent } from 'react';
+import { PureComponent, type JSX } from 'react';
 
 import {
   DisplayProcessor,

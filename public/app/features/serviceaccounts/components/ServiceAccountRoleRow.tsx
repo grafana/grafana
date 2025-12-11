@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Label } from '@grafana/ui';

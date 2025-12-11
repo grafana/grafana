@@ -1,8 +1,8 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
-import { LogGroup } from '../../../types';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';

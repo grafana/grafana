@@ -66,7 +66,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   });
 
   return (
-    <Box paddingBottom={2} display="flex" grow={1} alignItems="center">
+    <Box paddingBottom={2} display="flex" grow={1} alignItems="stretch" gap={2} direction={'column'}>
       <RadioButtonGroup
         fullWidth
         value={layoutManager.descriptor}
@@ -79,21 +79,13 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 }
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    const isGridLayout = layoutManager.descriptor.isGridLayout;
-
-    const groupLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.group-layout', 'Group layout'),
-      id: 'dash-group-layout',
-      isOpenDefault: false,
+    const layout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.layout', 'Layout'),
+      id: 'layout',
+      isOpenDefault: true,
     });
 
-    const gridLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
-      id: 'dash-grid-layout',
-      isOpenDefault: false,
-    });
-
-    gridLayout.addItem(
+    layout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
         id: 'dash-grid-layout-option',
@@ -102,33 +94,12 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       })
     );
 
-    if (isGridLayout) {
-      groupLayout.props.disabledText = t(
-        'dashboard.layout.common.group-layout-disabled',
-        'No groups exists on this level'
-      );
-    } else {
-      groupLayout.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: 'dash-group-layout-option',
-          skipField: true,
-          render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
-        })
-      );
-
-      gridLayout.props.disabledText = t(
-        'dashboard.layout.common.panel-layout-disabled',
-        'Select a row or tab to change panel layout options'
-      );
-    }
-
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
-        gridLayout.addItem(option);
+        layout.addItem(option);
       }
     }
 
-    return [groupLayout, gridLayout];
+    return [layout];
   }, [layoutManager]);
 }

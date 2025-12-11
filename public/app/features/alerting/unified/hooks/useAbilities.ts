@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { config } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
@@ -96,6 +97,12 @@ export enum AlertRuleAction {
   DeletePermanently = 'delete-alert-rule-permanently',
 }
 
+// this enum lists all of the available actions we can perform with enrichments
+export enum EnrichmentAction {
+  Read = 'read-enrichment',
+  Write = 'write-enrichment',
+}
+
 // this enum list all of the bulk actions we can perform on a folder
 export enum FolderBulkAction {
   Pause = 'pause-folder', // unpause permissions are the same as pause
@@ -124,7 +131,7 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
 
 /**
  * Represents the ability to perform an action, with two distinct checks:
@@ -186,6 +193,28 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
 
 export const useAlertingAbility = (action: AlertingAction): Ability => {
   const allAbilities = useAlertingAbilities();
+  return allAbilities[action];
+};
+
+/**
+ * This one will check for enrichment abilities
+ */
+export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
+  const userIsAdmin = isAdmin();
+  const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
+  const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);
+
+  // Enrichments are only available when the feature toggle is enabled
+  const enrichmentsSupported = Boolean(config.featureToggles.alertEnrichment);
+
+  return {
+    [EnrichmentAction.Read]: [enrichmentsSupported, userIsAdmin || hasReadPermission],
+    [EnrichmentAction.Write]: [enrichmentsSupported, userIsAdmin || hasWritePermission],
+  };
+};
+
+export const useEnrichmentAbility = (action: EnrichmentAction): Ability => {
+  const allAbilities = useEnrichmentAbilities();
   return allAbilities[action];
 };
 

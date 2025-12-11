@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -35,9 +36,9 @@ type FolderReconciler struct {
 	metrics         *ReconcilerMetrics
 }
 
-func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
+func NewFolderReconciler(cfg ReconcilerConfig, reg prometheus.Registerer) (operator.Reconciler, error) {
 	// Create Zanzana client
-	zanzanaClient, err := authz.NewRemoteZanzanaClient("*", cfg.ZanzanaCfg)
+	zanzanaClient, err := authz.NewRemoteZanzanaClient(cfg.ZanzanaCfg, reg)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create zanzana client: %w", err)

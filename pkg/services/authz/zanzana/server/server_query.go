@@ -8,6 +8,7 @@ import (
 	"time"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
@@ -20,6 +21,8 @@ func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 
 	res, err := s.query(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform query request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform query request")
 	}

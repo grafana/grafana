@@ -6,10 +6,10 @@ import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } fr
 import { config } from '@grafana/runtime';
 import { Select, TextLink } from '@grafana/ui';
 
+import { MetricStat } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { useAccountOptions, useMetrics, useNamespaces } from '../../../hooks';
 import { standardStatistics } from '../../../standardStatistics';
-import { MetricStat } from '../../../types';
 import { appendTemplateVariables, toOption } from '../../../utils/utils';
 import { Account } from '../Account';
 import { Dimensions } from '../Dimensions/Dimensions';

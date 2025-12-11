@@ -1,7 +1,9 @@
+import { useCallback } from 'react';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -337,11 +339,24 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: type,
+        context: 'panel_query_section',
+      });
+      model.onAddExpressionOfType(type);
+    },
+    [model]
+  );
+
   if (!datasource || !dsSettings || !data) {
     return null;
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
@@ -388,6 +403,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
+        panelRef={model.state.panelRef}
       />
 
       <Stack gap={2}>
@@ -421,7 +437,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>

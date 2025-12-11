@@ -110,6 +110,7 @@
             }
           },
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "sort": "alphabeticalAsc",
           "definition": "label_values(up, instance)",
           "options": [
@@ -318,6 +319,19 @@
         }
       },
       {
+        "kind": "SwitchVariable",
+        "spec": {
+          "name": "switch_var",
+          "current": "false",
+          "enabledValue": "true",
+          "disabledValue": "false",
+          "label": "Enable Feature",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Toggle feature on/off"
+        }
+      },
+      {
         "kind": "QueryVariable",
         "spec": {
           "name": "legacy_string_var",
@@ -388,6 +402,7 @@
             }
           },
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "sort": "alphabeticalDesc",
           "definition": "terms field:@host size:100",
           "options": [],
@@ -399,5 +414,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -70,6 +70,7 @@
         "title": "Documentation",
         "tooltip": "View documentation",
         "type": "link",
+        "placement": "inControlsMenu",
         "url": "https://docs.example.com/dashboard-guide"
       },
       {

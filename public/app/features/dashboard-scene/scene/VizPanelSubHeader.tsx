@@ -116,7 +116,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   private refreshDrilldownVarsSubscriptions() {
     if (this._groupByVar) {
       this._groupBySub?.unsubscribe();
-      this._groupByVar?.subscribeToState((n, p) => {
+      this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
         if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
           this.setDrilldownApplicabilitySupportHelper(undefined, {
             datasource: n.datasource,
@@ -127,7 +127,8 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     }
 
     if (this._adHocVar) {
-      this._adHocVar?.subscribeToState((n, p) => {
+      this._adHocSub?.unsubscribe();
+      this._adHocSub = this._adHocVar?.subscribeToState((n, p) => {
         if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
           this.setDrilldownApplicabilitySupportHelper({
             datasource: n.datasource,

@@ -189,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(2, 2),
 
       [theme.breakpoints.down('md')]: {
         paddingLeft: '53px',

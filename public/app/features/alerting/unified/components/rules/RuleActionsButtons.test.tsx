@@ -21,6 +21,10 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { setupDataSources } from '../../testSetup/datasources';
 import { fromCombinedRule, stringifyIdentifier } from '../../utils/rule-id';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 setupMswServer();
 jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);

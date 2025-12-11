@@ -341,6 +341,10 @@
       "type": "boolean",
       "description": "Initialize plugin on startup. By default, the plugin initializes on first use, but when preload is set to true the plugin loads when the Grafana web app loads the first time. Only applicable to app plugins. When setting to `true`, implement [frontend code splitting](https://grafana.com/developers/plugin-tools/get-started/best-practices#app-plugins) to minimise performance implications."
     },
+    "suggestions": {
+      "type": "boolean",
+      "description": "For panel plugins. If set to true, the plugin's suggestions supplier will be invoked and any suggestions returned will be included in the Suggestions pane in the Panel Editor."
+    },
     "queryOptions": {
       "type": "object",
       "description": "For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.",

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isArray, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
-import { FC, Fragment, ReactNode, useState } from 'react';
+import { FC, Fragment, type JSX, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { AlertLabel, getInheritedProperties } from '@grafana/alerting';

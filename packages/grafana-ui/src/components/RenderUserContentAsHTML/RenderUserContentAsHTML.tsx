@@ -1,4 +1,4 @@
-import { HTMLAttributes, PropsWithChildren } from 'react';
+import { HTMLAttributes, PropsWithChildren, type JSX } from 'react';
 import * as React from 'react';
 
 import { textUtil } from '@grafana/data';

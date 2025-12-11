@@ -27,7 +27,6 @@ var _ contracts.SecureValueService = (*SecureValueService)(nil)
 type SecureValueService struct {
 	tracer                     trace.Tracer
 	accessClient               claims.AccessClient
-	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	secureValueValidator       contracts.SecureValueValidator
 	secureValueMutator         contracts.SecureValueMutator
@@ -39,7 +38,6 @@ type SecureValueService struct {
 func ProvideSecureValueService(
 	tracer trace.Tracer,
 	accessClient claims.AccessClient,
-	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	secureValueValidator contracts.SecureValueValidator,
 	secureValueMutator contracts.SecureValueMutator,
@@ -50,7 +48,6 @@ func ProvideSecureValueService(
 	return &SecureValueService{
 		tracer:                     tracer,
 		accessClient:               accessClient,
-		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		secureValueValidator:       secureValueValidator,
 		secureValueMutator:         secureValueMutator,

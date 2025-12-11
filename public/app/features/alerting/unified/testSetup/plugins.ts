@@ -134,6 +134,29 @@ export const pluginMeta = {
     module: 'public/plugins/grafana-asserts-app/module.js',
     baseUrl: 'public/plugins/grafana-asserts-app',
   } satisfies PluginMeta,
+  [SupportedPlugin.Labels]: {
+    id: SupportedPlugin.Labels,
+    name: 'Labels',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: '',
+      },
+      description: 'Labels management for alerting',
+      links: [],
+      logos: {
+        small: 'public/plugins/grafana-labels-app/img/logo.svg',
+        large: 'public/plugins/grafana-labels-app/img/logo.svg',
+      },
+      screenshots: [],
+      version: 'local-dev',
+      updated: '2024-04-09',
+    },
+    module: 'public/plugins/grafana-labels-app/module.js',
+    baseUrl: 'public/plugins/grafana-labels-app',
+  } satisfies PluginMeta,
 };
 
 export const plugins: PluginMeta[] = [
@@ -141,6 +164,7 @@ export const plugins: PluginMeta[] = [
   pluginMeta[SupportedPlugin.Incident],
   pluginMeta[SupportedPlugin.OnCall],
   pluginMeta['grafana-asserts-app'],
+  pluginMeta[SupportedPlugin.Labels],
 ];
 
 export function pluginMetaToPluginConfig(pluginMeta: PluginMeta): AppPluginConfig {

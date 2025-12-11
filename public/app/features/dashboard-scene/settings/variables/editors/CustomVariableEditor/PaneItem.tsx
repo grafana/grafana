@@ -31,7 +31,7 @@ export function PaneItem({ variable }: PaneItemProps) {
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
-      <ModalEditor variable={variable} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {isOpen && <ModalEditor variable={variable} onClose={() => setIsOpen(false)} />}
     </>
   );
 }

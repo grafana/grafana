@@ -1,4 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
+import type { JSX } from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
 import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../mocks/datasource';

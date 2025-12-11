@@ -73,7 +73,6 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
-  updateExpressionType,
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
@@ -591,9 +590,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                     dispatch(removeExpression(refId));
                   }}
                   onUpdateRefId={onUpdateRefId}
-                  onUpdateExpressionType={(refId, type) => {
-                    dispatch(updateExpressionType({ refId, type }));
-                  }}
                   onUpdateQueryExpression={(model) => {
                     dispatch(updateExpression(model));
                   }}

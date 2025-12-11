@@ -757,7 +757,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		}, "actor-uid")
 		require.NoError(t, err)
 
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
 
 		value := secretv1beta1.NewExposedSecureValue("v1")
 		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
@@ -782,7 +782,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 			},
 		}, "actor-uid")
 		require.NoError(t, err)
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
 
 		// - Read secure value created with inactive keeper
 		readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv1.Namespace), sv1.Name)
