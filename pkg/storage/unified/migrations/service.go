@@ -84,6 +84,13 @@ func RegisterMigrations(
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
+	db := mg.DBEngine.DB().DB
+	maxOpenConns := db.Stats().MaxOpenConnections
+	if maxOpenConns <= 2 {
+		// migrations require at least 3 connections due to extra GRPC connections
+		db.SetMaxOpenConns(3)
+		defer db.SetMaxOpenConns(maxOpenConns)
+	}
 	if err := mg.RunMigrations(ctx,
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
