@@ -3708,7 +3708,6 @@
     "recently-viewed": {
       "empty": "Nothing viewed yet",
       "error": "Error loading recently viewed dashboards",
-      "loading": "Loading…",
       "title": "Recently Viewed"
     },
     "restore": {

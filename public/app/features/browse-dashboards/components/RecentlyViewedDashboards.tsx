@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { CollapsableSection, Link, Text, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getRecentlyViewedDashboards } from './utils';
@@ -53,7 +53,7 @@ export function RecentlyViewedDashboards() {
       contentClassName={styles.content}
     >
       {/* placeholder */}
-      {loading && <Text>{t('browse-dashboards.recently-viewed.loading', 'Loading…')}</Text>}
+      {loading && <Spinner />}
       {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
       {!loading && recentDashboards.length === 0 && (
         <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
