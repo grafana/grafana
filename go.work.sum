@@ -1564,6 +1564,8 @@ github.com/xitongsys/parquet-go v1.6.2/go.mod h1:IulAQyalCm0rPiZVNnCgm/PCL64X2td
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d h1:VVWj8KWdzpebBaXpTVpOaQW32y2UCWy3JXJ5lVDa/e8=
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d/go.mod h1:HaLl1OAA7RAuQURU3Enxn7aRAI9yezsPPaxiGrbzxW4=
 github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778/go.mod h1:2MuV+tbUrU1zIOPMxZ5EncGwgmMJsa+9ucAQZXxsObs=
+github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
+github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJuqunuUZ/Dhy/avygyECGrLceyNeo4LiM=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwYZvkeru3RtdrYueztKhOBCSAAzS4Gf+k0tEow=
 github.com/yashtewari/glob-intersection v0.1.0/go.mod h1:LK7pIC3piUjovexikBbJ26Yml7g8xa5bsjfx2v1fwok=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20241112172322-ea1f63298f77 h1:LY6cI8cP4B9rrpTleZk95+08kl2gF4rixG7+V/dwL6Q=
