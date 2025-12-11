@@ -239,7 +239,7 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 
 		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
 		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
@@ -444,7 +444,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -583,7 +583,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -728,7 +728,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -787,7 +787,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
