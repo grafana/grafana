@@ -55,7 +55,9 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <span className={styles.headerCellLabel}>{getDisplayName(field)}</span>
+      <span className={styles.headerCellLabel} title={displayName}>
+        {getDisplayName(field)}
+      </span>
       {direction && (
         <Icon
           className={cx(styles.headerCellIcon, styles.headerSortIcon)}
