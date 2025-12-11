@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Box, Icon, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -48,10 +48,15 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
-
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
-  const children = editableElement.getOutlineChildren?.() ?? [];
+  const children = useMemo(() => {
+    let children = editableElement.getOutlineChildren?.() ?? [];
+    if (!isEditing) {
+      children = children.filter((c) => !(c instanceof SceneVariableSet));
+    }
+    return children;
+  }, [editableElement, isEditing]);
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
