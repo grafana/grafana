@@ -145,7 +145,7 @@ To set up synchronization:
 
 Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
 
-## Configure Git Sync as code
+## Set up Git Sync as code
 
 Alternatively, you can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
