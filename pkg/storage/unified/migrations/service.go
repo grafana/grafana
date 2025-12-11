@@ -47,7 +47,7 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
-func (p *UnifiedStorageMigrationServiceImpl) Run(_ context.Context) error {
+func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
@@ -56,16 +56,17 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(_ context.Context) error {
 	}
 	logger.Info("Running migrations for unified storage")
 	metrics.MUnifiedStorageMigrationStatus.Set(3)
-	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
+	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client)
 }
 
 func RegisterMigrations(
+	ctx context.Context,
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
 ) error {
-	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
+	ctx, span := tracer.Start(ctx, "storage.unified.RegisterMigrations")
 	defer span.End()
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
