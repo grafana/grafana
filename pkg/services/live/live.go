@@ -453,7 +453,6 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	Features              featuremgmt.FeatureToggles
 	DataSourceCache       datasources.CacheService
-	SecretsService        secrets.Service
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 
