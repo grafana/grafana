@@ -764,13 +764,14 @@ describe('Tempo service graph view', () => {
 
   it('should escape span with multi line content correctly', () => {
     const spanContent = [
-      `SELECT * from "my_table"
+      `
+      SELECT * from "my_table"
       WHERE "data_enabled" = 1
-      ORDER BY "name" ASC`
+      ORDER BY "name" ASC`,
     ];
     let escaped = getEscapedRegexValues(getEscapedValues(spanContent));
     expect(escaped).toEqual([
-      'SELECT * from \\"my_table\\"\\nWHERE \\"data_enabled\\" = 1\\nORDER BY \\"name\\" ASC',
+      '\\n      SELECT \\\\* from \\"my_table\\"\\n      WHERE \\"data_enabled\\" = 1\\n      ORDER BY \\"name\\" ASC',
     ]);
   });
 
