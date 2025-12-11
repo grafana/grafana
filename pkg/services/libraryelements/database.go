@@ -616,6 +616,21 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}
+
+	if cmd.FolderUID != nil {
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			UID:          cmd.FolderUID,
+			SignedInUser: signedInUser,
+		})
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+		if f.ManagedBy == utils.ManagerKindRepo {
+			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
+		}
+	}
+
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		elementInDB, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
