@@ -146,7 +146,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	}
 
 	if sv.Spec.Ref != nil {
-		exposedValue, err := keeper.Reference(ctx, keeperConfig, *sv.Spec.Ref)
+		exposedValue, err := keeper.RetrieveReference(ctx, keeperConfig, *sv.Spec.Ref)
 		if err != nil {
 			return "", fmt.Errorf("failed to expose secret using reference: %v (%w)", err, contracts.ErrDecryptFailed)
 		}

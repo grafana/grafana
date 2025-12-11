@@ -107,7 +107,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) Reference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
 	return "", fmt.Errorf("Reference is not implemented by the SQLKeeper")
 }
 

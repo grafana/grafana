@@ -237,7 +237,7 @@ func (m *model) decrypt(ctx context.Context, decrypter, namespace, name string) 
 					keeper := m.findKeeper(v.Namespace, v.Status.Keeper)
 					switch keeper.keeperType {
 					case secretv1beta1.AWSKeeperType:
-						exposedValue, err := m.modelSecretsManager.Reference(ctx, nil, *v.Spec.Ref)
+						exposedValue, err := m.modelSecretsManager.RetrieveReference(ctx, nil, *v.Spec.Ref)
 						if err != nil {
 							return map[string]decrypt.DecryptResult{
 								name: decrypt.NewDecryptResultErr(fmt.Errorf("%w: %w", contracts.ErrDecryptFailed, err)),

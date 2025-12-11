@@ -502,7 +502,7 @@ func (m *ModelSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.Keep
 }
 
 // TODO: this could be namespaced to make it more realistic
-func (m *ModelSecretsManager) Reference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+func (m *ModelSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
 	entry, ok := m.secrets[ref]
 	if !ok {
 		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
