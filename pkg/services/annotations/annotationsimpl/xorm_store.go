@@ -6,16 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -39,6 +38,8 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
+var xormMigrationTrigger sync.Once
+
 type xormRepositoryImpl struct {
 	cfg        *setting.Cfg
 	db         db.DB
@@ -47,12 +48,9 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
-	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
-	// the initial migration occurs
-	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
-	if err != nil {
-		l.Error("failed to populate dashboard_uid for annotations", "error", err)
-	}
+	xormMigrationTrigger.Do(func() {
+		triggerAlwaysOnMigrations(cfg, l, db)
+	})
 
 	return &xormRepositoryImpl{
 		cfg:        cfg,
@@ -60,38 +58,6 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 		log:        l,
 		tagService: tagService,
 	}
-
-	if reg != nil {
-		repo.queryRangeStart = metricutil.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Subsystem: "annotations",
-				Name:      "query_range_start_hours",
-				Help:      "How far back in time (hours from now) annotation queries request",
-			},
-			[]string{"query_type"},
-		)
-		repo.queryRangeDuration = metricutil.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Subsystem: "annotations",
-				Name:      "query_range_duration_hours",
-				Help:      "Time range duration (hours) of annotation queries",
-			},
-			[]string{"query_type"},
-		)
-		repo.queryResultsCount = metricutil.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Subsystem: "annotations",
-				Name:      "query_results_count",
-				Help:      "Number of annotation results returned per query",
-			},
-			[]string{"query_type"},
-		)
-		reg.MustRegister(repo.queryRangeStart, repo.queryRangeDuration, repo.queryResultsCount)
-	}
-	return repo
 }
 
 func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {

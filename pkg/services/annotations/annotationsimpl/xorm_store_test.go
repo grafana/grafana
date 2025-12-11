@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,9 +28,6 @@ import (
 )
 
 func TestIntegrationAnnotations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	sql := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()
@@ -650,7 +648,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 }
 
 func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
-	tutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -670,7 +670,7 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 			}),
 		})
 
-		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), nil)
+		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql))
 		annotation := &annotations.Item{
 			OrgID:        1,
 			UserID:       1,
@@ -695,7 +695,7 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 		require.NoError(t, err)
 
 		xormMigrationTrigger = sync.Once{}
-		store := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), prometheus.NewRegistry())
+		store := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql))
 
 		require.NotNil(t, store)
 		assert.Equal(t, "sql", store.Type())
@@ -732,7 +732,7 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 			}),
 		})
 
-		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), nil)
+		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql))
 		annotation := &annotations.Item{
 			OrgID:        1,
 			UserID:       1,
@@ -757,7 +757,7 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 		require.NoError(t, err)
 
 		xormMigrationTrigger = sync.Once{}
-		store := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), prometheus.NewRegistry())
+		store := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql))
 
 		require.NotNil(t, store)
 		assert.Equal(t, "sql", store.Type())
