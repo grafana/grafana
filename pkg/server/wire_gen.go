@@ -672,10 +672,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
-	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
-	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
+	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, secretsService, usageStats, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -684,6 +681,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
 	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
 	logger := loggermw.Provide(cfg, featureToggles)
+	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
+	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
 	ngAlert := metrics2.ProvideService()
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service15, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, userService)
@@ -708,6 +707,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	ossSearchUserFilter := filters.ProvideOSSSearchUserFilter()
 	ossService := searchusers.ProvideUsersService(cfg, ossSearchUserFilter, userService)
+	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
 	serviceAccountsProxy, err := proxy.ProvideServiceAccountsProxy(cfg, accessControl, acimplService, featureToggles, serviceAccountPermissionsService, serviceAccountsService, routeRegisterImpl)
 	if err != nil {
 		return nil, err
@@ -1329,10 +1329,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
-	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
-	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
+	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, secretsService, usageStats, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1341,6 +1338,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
 	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
 	logger := loggermw.Provide(cfg, featureToggles)
+	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
+	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
 	notificationServiceMock := notifications.MockNotificationService()
 	ngAlert := metrics2.ProvideServiceForTest()
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
@@ -1366,6 +1365,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	ossSearchUserFilter := filters.ProvideOSSSearchUserFilter()
 	ossService := searchusers.ProvideUsersService(cfg, ossSearchUserFilter, userService)
+	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
 	serviceAccountsProxy, err := proxy.ProvideServiceAccountsProxy(cfg, accessControl, acimplService, featureToggles, serviceAccountPermissionsService, serviceAccountsService, routeRegisterImpl)
 	if err != nil {
 		return nil, err
