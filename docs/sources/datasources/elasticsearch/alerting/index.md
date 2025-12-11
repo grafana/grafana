@@ -119,7 +119,7 @@ When using Elasticsearch with Grafana Alerting, be aware of the following limita
 
 Alert queries cannot contain template variables. Grafana evaluates alert rules on the backend without dashboard context, so variables like `$hostname` or `$environment` won't be resolved.
 
-If your dashboard query uses template variables, create a separate query for alerting with hardcoded values.
+If your dashboard query uses template variables, create a separate query for alerting with hard coded values.
 
 ### Logs queries not supported
 
