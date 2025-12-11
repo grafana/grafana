@@ -60,8 +60,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   adHocContainer: css({
     maxWidth: '600px',
+    // Override the inner container's alignItems to keep label at top
+    '& > div': {
+      alignItems: 'flex-start',
+    },
   }),
   groupByContainer: css({
     maxWidth: '400px',
+    // Override the inner container's alignItems to keep label at top
+    '& > div': {
+      alignItems: 'flex-start',
+    },
   }),
 });
