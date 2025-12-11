@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1943,
+  "id": 525,
   "links": [],
   "panels": [
     {
@@ -92,7 +92,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -169,7 +169,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -246,7 +246,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -323,7 +323,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -400,7 +400,7 @@
         "showThresholdMarkers": false,
         "sparkline": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -477,7 +477,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -554,7 +554,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -644,7 +644,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -721,7 +721,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -798,7 +798,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -875,7 +875,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -969,7 +969,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1046,7 +1046,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1123,7 +1123,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1200,7 +1200,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1277,7 +1277,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1371,7 +1371,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1452,7 +1452,7 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1533,7 +1533,7 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
@@ -1624,7 +1624,7 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1706,7 +1706,7 @@
         "sparkline": true,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1802,7 +1802,7 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1885,7 +1885,7 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1967,7 +1967,7 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2049,7 +2049,7 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2133,7 +2133,7 @@
         "showThresholdMarkers": true,
         "sparkline": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -2199,7 +2199,7 @@
         "showThresholdMarkers": true,
         "sparkline": true
       },
-      "pluginVersion": "12.4.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -2223,5 +2223,6 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Panel tests - Gauge (new)",
+  "uid": "panel-tests-gauge-new",
   "version": 9
 }
