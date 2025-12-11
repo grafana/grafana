@@ -7,8 +7,13 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { isCurrentPath } from './scopeNavgiationUtils';
-import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
+import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
+import {
+  ScopeNavigation,
+  SuggestedNavigationsFolder,
+  SuggestedNavigationsFoldersMap,
+  SuggestedNavigationsMap,
+} from './types';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
@@ -24,6 +29,8 @@ interface ScopesDashboardsServiceState {
   loading: boolean;
   searchQuery: string;
   navigationScope?: string;
+  // Path of subScopes which should be expanded
+  navScopePath?: string[];
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
@@ -38,6 +45,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       forScopeNames: [],
       loading: false,
       searchQuery: '',
+      navScopePath: undefined,
     });
 
     // Add/ remove location subscribtion based on the drawer opened state
@@ -57,9 +65,40 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     });
   }
 
+  private openSubScopeFolder = (subScopePath: string[]) => {
+    const subScope = subScopePath[subScopePath.length - 1];
+    const path = buildSubScopePath(subScope, this.state.folders);
+
+    // Get path to the folder - path can now be undefined
+    if (path && path.length > 0) {
+      this.updateFolder(path, true);
+    }
+  };
+
+  public setNavScopePath = async (navScopePath?: string[]) => {
+    const navScopePathArray = navScopePath ?? [];
+
+    if (!isEqual(navScopePathArray, this.state.navScopePath)) {
+      this.updateState({ navScopePath: navScopePathArray });
+
+      for (const subScope of navScopePathArray) {
+        // Find the actual path to the folder with this subScopeName
+        const folderPath = buildSubScopePath(subScope, this.state.folders);
+        if (folderPath && folderPath.length > 0) {
+          await this.fetchSubScopeItems(folderPath, subScope);
+          this.openSubScopeFolder([subScope]);
+        }
+      }
+    }
+  };
+
   // The fallbackScopeNames is used to fetch the ScopeNavigations for the current dashboard when the navigationScope is not set.
   // You only need to awaut this function if you need to wait for the dashboards to be fetched before doing something else.
-  public setNavigationScope = async (navigationScope?: string, fallbackScopeNames?: string[]) => {
+  public setNavigationScope = async (
+    navigationScope?: string,
+    fallbackScopeNames?: string[],
+    navScopePath?: string[]
+  ) => {
     if (this.state.navigationScope === navigationScope) {
       return;
     }
@@ -67,6 +106,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
     this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
     await this.fetchDashboards(forScopeNames);
+    await this.setNavScopePath(navScopePath);
   };
 
   // Expand the group that matches the current path, if it is not already expanded
@@ -148,6 +188,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   private fetchSubScopeItems = async (path: string[], subScopeName: string) => {
+    // Check if folder already has content - skip fetching to preserve existing state
+    const targetFolder = this.getFolder(path);
+    if (
+      targetFolder &&
+      (Object.keys(targetFolder.folders).length > 0 || Object.keys(targetFolder.suggestedNavigations).length > 0)
+    ) {
+      return;
+    }
+
     let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
 
     try {
@@ -206,6 +255,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     this.updateState({ folders, filteredFolders });
+  };
+
+  // Helper to get a folder at a given path
+  private getFolder = (path: string[]): SuggestedNavigationsFolder | undefined => {
+    let folder: SuggestedNavigationsFoldersMap = this.state.folders;
+    for (let i = 0; i < path.length - 1; i++) {
+      folder = folder[path[i]]?.folders ?? {};
+    }
+    return folder[path[path.length - 1]];
   };
 
   public changeSearchQuery = (searchQuery: string) => {

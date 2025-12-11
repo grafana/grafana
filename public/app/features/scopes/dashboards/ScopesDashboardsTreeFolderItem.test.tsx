@@ -16,6 +16,9 @@ const mockScopesSelectorService = {
 
 const mockScopesDashboardsService = {
   setNavigationScope: jest.fn(),
+  state: {
+    navScopePath: undefined,
+  },
 };
 
 jest.mock('../ScopesContextProvider', () => ({
@@ -133,7 +136,7 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
     await user.click(exchangeButton);
 
-    expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined, ['subScope1']);
+    expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined, undefined, []);
   });
 
   it('calls changeScopes when exchange icon is clicked', async () => {
@@ -152,7 +155,7 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
     await user.click(exchangeButton);
 
-    expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1']);
+    expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1'], undefined, undefined, false);
   });
 
   it('passes subScope prop to ScopesDashboardsTree when folder is expanded', () => {
