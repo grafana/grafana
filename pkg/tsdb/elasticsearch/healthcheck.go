@@ -38,7 +38,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	// If the cluster is serverless, return a healthy result
-	if ds.BuildFlavor == "serverless" {
+	if ds.ClusterInfo.IsServerless() {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
 			Message: "Elasticsearch Serverless data source is healthy.",

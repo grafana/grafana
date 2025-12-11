@@ -101,23 +101,6 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		resp, err := httpCli.Get(settings.URL)
-		if err != nil {
-			return nil, fmt.Errorf("error getting serverless cluster info: %w", err)
-		}
-
-		defer resp.Body.Close()
-
-		var clusterInfo struct {
-			Version struct {
-				BuildFlavor string `json:"build_flavor"`
-			} `json:"version"`
-		}
-		err = json.NewDecoder(resp.Body).Decode(&clusterInfo)
-		if err != nil {
-			return nil, fmt.Errorf("error decoding serverless cluster info: %w", err)
-		}
-
 		// we used to have a field named `esVersion`, please do not use this name in the future.
 
 		timeField, ok := jsonData["timeField"].(string)
@@ -176,6 +159,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			includeFrozen = false
 		}
 
+		clusterInfo, err := es.GetClusterInfo(httpCli, settings.URL)
+		if err != nil {
+			return nil, err
+		}
+
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -191,7 +179,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			BuildFlavor:                clusterInfo.Version.BuildFlavor,
+			ClusterInfo:                clusterInfo,
 		}
 		return model, nil
 	}
