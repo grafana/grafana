@@ -350,6 +350,161 @@ type mockJobsQueueStore struct {
 	*jobs.MockStore
 }
 
+func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing.T) {
+	testCases := []struct {
+		name                     string
+		repo                     *provisioning.Repository
+		healthStatus             provisioning.HealthStatus
+		hasHealthStatusChanged   bool
+		expectedUnhealthyMessage bool
+		description              string
+	}{
+		{
+			name: "unhealthy repository should set unhealthy message in sync status",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateSuccess,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection failed"},
+			},
+			hasHealthStatusChanged:   true,
+			expectedUnhealthyMessage: true,
+			description:              "should set unhealthy message when repository becomes unhealthy",
+		},
+		{
+			name: "unhealthy repository should not duplicate unhealthy message",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateError,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{"Repository is unhealthy"},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection failed"},
+			},
+			hasHealthStatusChanged:   false,
+			expectedUnhealthyMessage: false,
+			description:              "should not set unhealthy message when it already exists",
+		},
+		{
+			name: "healthy repository should clear unhealthy message",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateError,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{"Repository is unhealthy"},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{},
+			},
+			hasHealthStatusChanged:   true,
+			expectedUnhealthyMessage: false,
+			description:              "should clear unhealthy message when repository becomes healthy",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create controller
+			rc := &RepositoryController{}
+
+			// Determine sync status ops (this is a pure function, no mocks needed)
+			syncOps := rc.determineSyncStatusOps(tc.repo, nil, tc.healthStatus)
+
+			// Verify expectations
+			hasUnhealthyOp := false
+			hasClearUnhealthyOp := false
+			for _, op := range syncOps {
+				if path, ok := op["path"].(string); ok {
+					if path == "/status/sync/message" {
+						if messages, ok := op["value"].([]string); ok {
+							if len(messages) > 0 && messages[0] == "Repository is unhealthy" {
+								hasUnhealthyOp = true
+							} else if len(messages) == 0 {
+								hasClearUnhealthyOp = true
+							}
+						}
+					}
+				}
+			}
+
+			if tc.expectedUnhealthyMessage {
+				assert.True(t, hasUnhealthyOp, tc.description+": expected unhealthy message operation")
+			} else if tc.repo.Status.Sync.Message != nil && len(tc.repo.Status.Sync.Message) > 0 && tc.healthStatus.Healthy {
+				assert.True(t, hasClearUnhealthyOp, tc.description+": expected clear unhealthy message operation")
+			}
+		})
+	}
+}
+
 func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 	testCases := []struct {
 		name           string
