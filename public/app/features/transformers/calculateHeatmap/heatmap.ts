@@ -87,8 +87,8 @@ export function calculateBucketFactor(bucketValues: number[], defaultFactor = 1.
     const prev = bucketValues.at(-2)!;
     const ratio = last / prev;
 
-    // Calculate ratio if values are positive and result is reasonable
-    if (prev !== 0 && !Number.isNaN(ratio) && ratio > 0) {
+    // Only use ratio if it represents expansion (>1) and is valid
+    if (ratio > 1 && Number.isFinite(ratio)) {
       return ratio;
     }
   }
