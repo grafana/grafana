@@ -68,6 +68,47 @@ if (( CHANGES_COUNT > 0 )); then
     TAGS=$(npm dist-tag ls @grafana/e2e-selectors)
     if [[ $TAGS =~ $regex_pattern ]]; then
         echo "$CHANGES_COUNT file(s) in packages/grafana-e2e-selectors were changed. Adding 'modified' tag to @grafana/e2e-selectors@${BASH_REMATCH[1]}"
+        
+        # If using OIDC, exchange token for npm auth (npm publish handles OIDC internally,
+        # but dist-tag requires explicit authentication)
+        # Reference: https://github.com/electron/npm-trusted-auth-action
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+            echo "Fetching GitHub OIDC token..."
+            OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" | jq -r '.value // empty')
+            
+            if [ -z "$OIDC_TOKEN" ]; then
+                echo "Warning: Failed to fetch OIDC token, dist-tag operation may fail"
+            else
+                # Mask the OIDC token so it won't appear in logs
+                echo "::add-mask::$OIDC_TOKEN"
+                echo "Exchanging OIDC token for npm auth token..."
+                ENCODED_PACKAGE=$(printf "%s" "@grafana/e2e-selectors" | jq -Rr @uri)
+                RESPONSE=$(curl -sS -X POST \
+                    -H "Authorization: Bearer $OIDC_TOKEN" \
+                    -H "Accept: application/json" \
+                    -w "\n%{http_code}" \
+                    "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/$ENCODED_PACKAGE")
+                
+                HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+                BODY=$(echo "$RESPONSE" | sed '$d')
+                
+                if [ "$HTTP_CODE" != "201" ]; then
+                    echo "Warning: Failed to exchange token. Status: $HTTP_CODE"
+                else
+                    NPM_AUTH_TOKEN=$(echo "$BODY" | jq -r '.token // empty')
+                    if [ -n "$NPM_AUTH_TOKEN" ]; then
+                        # Mask the token so it won't appear in logs
+                        echo "::add-mask::$NPM_AUTH_TOKEN"
+                        echo "Configuring npm auth token in ~/.npmrc"
+                        echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" >> ~/.npmrc
+                    else
+                        echo "Warning: No token in response, dist-tag operation may fail"
+                    fi
+                fi
+            fi
+        fi
+        
         npm dist-tag add @grafana/e2e-selectors@"${BASH_REMATCH[1]}" modified
     fi
 fi
