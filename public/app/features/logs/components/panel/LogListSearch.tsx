@@ -22,7 +22,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     useLogListSearchContext();
   const { displayedFields, noInteractions } = useLogListContext();
   const [currentResult, setCurrentResult] = useState<number | null>(null);
-  const inputRef = useRef('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const searchUsedRef = useRef(false);
   const styles = useStyles2(getStyles);
 
@@ -35,9 +35,8 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      inputRef.current = e.target.value;
       startTransition(() => {
-        setSearch(inputRef.current);
+        setSearch(inputRef.current?.value ?? '');
       });
       if (!searchUsedRef.current && !noInteractions) {
         reportInteraction('logs_log_list_search_used');
@@ -78,10 +77,16 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
   useEffect(() => {
     if (!searchVisible) {
-      setSearch(undefined);
       setMatchingUids(null);
     }
-  }, [searchVisible, setMatchingUids, setSearch]);
+  }, [searchVisible, setMatchingUids]);
+
+  useEffect(() => {
+    if (!inputRef.current || !search) {
+      return;
+    }
+    inputRef.current.value = search;
+  }, [search]);
 
   useEffect(() => {
     const newMatchingUids = matches.map((log) => log.uid);
@@ -116,6 +121,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
           onChange={handleChange}
           autoFocus
           placeholder={t('logs.log-list-search.input-placeholder', 'Search in logs')}
+          ref={inputRef}
           suffix={suffix}
         />
       </div>
