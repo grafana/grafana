@@ -1,10 +1,11 @@
+import type { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState } from 'app/types/store';
 

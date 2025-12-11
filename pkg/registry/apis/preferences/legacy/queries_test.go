@@ -17,21 +17,6 @@ func TestStarsQueries(t *testing.T) {
 		},
 	}
 
-	getStarQuery := func(orgId int64, user string) sqltemplate.SQLTemplate {
-		v := newStarQueryReq(nodb, user, orgId)
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
-	getHistoryReq := func(orgId int64, userId int64, stars []string, star string) sqltemplate.SQLTemplate {
-		v := newStarQueryReq(nodb, "", orgId)
-		v.UserID = userId
-		v.QueryUIDs = stars
-		v.QueryUID = star
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	getPreferencesQuery := func(orgId int64, cb func(q *preferencesQuery)) sqltemplate.SQLTemplate {
 		v := newPreferencesQueryReq(nodb, orgId)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -49,56 +34,6 @@ func TestStarsQueries(t *testing.T) {
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlDashboardStarsQuery: {
-				{
-					Name: "all",
-					Data: getStarQuery(0, ""),
-				},
-				{
-					Name: "org",
-					Data: getStarQuery(3, ""),
-				},
-				{
-					Name: "user",
-					Data: getStarQuery(3, "abc"),
-				},
-			},
-			sqlDashboardStarsRV: {
-				{
-					Name: "get",
-					Data: getStarQuery(0, ""),
-				},
-			},
-			sqlHistoryStarsQuery: {
-				{
-					Name: "user",
-					Data: getStarQuery(1, "abc"),
-				},
-			},
-			sqlHistoryStarsQuery: {
-				{
-					Name: "org",
-					Data: getStarQuery(1, ""),
-				},
-			},
-			sqlHistoryStarsInsert: {
-				{
-					Name: "add star",
-					Data: getHistoryReq(1, 3, nil, "XXX"),
-				},
-			},
-			sqlHistoryStarsDelete: {
-				{
-					Name: "remove star",
-					Data: getHistoryReq(1, 3, []string{"xxx", "yyy"}, ""),
-				},
-			},
-			sqlHistoryStarsDelete: {
-				{
-					Name: "remove all star",
-					Data: getHistoryReq(1, 3, nil, ""),
-				},
-			},
 			sqlPreferencesQuery: {
 				{
 					Name: "all",

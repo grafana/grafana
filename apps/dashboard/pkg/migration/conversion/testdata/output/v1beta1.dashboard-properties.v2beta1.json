@@ -137,7 +137,8 @@
         "asDropdown": false,
         "targetBlank": true,
         "includeVars": false,
-        "keepTime": false
+        "keepTime": false,
+        "placement": "inControlsMenu"
       },
       {
         "title": "Tag-based Link",
@@ -204,5 +205,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

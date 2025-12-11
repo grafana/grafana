@@ -58,8 +58,10 @@ type GooglechatIntegration struct {
 
 	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
-	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Title           *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message         *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	HideOpenButton  *bool   `json:"hide_open_button,omitempty" yaml:"hide_open_button,omitempty" hcl:"hide_open_button"`
+	HideVersionInfo *bool   `json:"hide_version_info,omitempty" yaml:"hide_version_info,omitempty" hcl:"hide_version_info"`
 }
 
 type JiraIntegration struct {

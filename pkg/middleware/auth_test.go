@@ -1,12 +1,17 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var openfeatureTestMutex sync.Mutex
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
 	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
@@ -422,6 +429,60 @@ func TestCanAdminPlugin(t *testing.T) {
 	}
 }
 
+func TestPageIsFeatureToggleEnabled(t *testing.T) {
+	type testCase struct {
+		desc           string
+		path           string
+		flags          map[string]bool
+		expectedResult bool
+	}
+
+	tests := []testCase{
+		{
+			desc: "returns true when feature flag is enabled",
+			path: "/a/my-plugin/settings",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": true,
+			},
+			expectedResult: true,
+		},
+		{
+			desc: "returns false when feature flag is disabled",
+			path: "/a/my-plugin/settings",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": false,
+			},
+			expectedResult: false,
+		},
+		{
+			desc: "returns false when feature flag is disabled with trailing slash",
+			path: "/a/my-plugin/settings/",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": false,
+			},
+			expectedResult: false,
+		},
+		{
+			desc:           "returns true when feature flag does not exist",
+			path:           "/a/my-plugin/settings",
+			flags:          map[string]bool{},
+			expectedResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			setupTestProvider(t, tt.flags)
+
+			result := PageIsFeatureToggleEnabled(ctx, tt.path)
+
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
+
 func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler {
 	return func(c *web.Context) {
 		reqCtx := &contextmodel.ReqContext{
@@ -436,4 +497,39 @@ func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler 
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
+}
+
+// setupTestProvider creates a test OpenFeature provider with the given flags.
+// Uses a global lock to prevent concurrent provider changes across tests.
+func setupTestProvider(t *testing.T, flags map[string]bool) oftesting.TestProvider {
+	t.Helper()
+
+	// Lock to prevent concurrent provider changes
+	openfeatureTestMutex.Lock()
+
+	testProvider := oftesting.NewTestProvider()
+	flagsMap := map[string]memprovider.InMemoryFlag{}
+
+	for key, value := range flags {
+		flagsMap[key] = memprovider.InMemoryFlag{
+			DefaultVariant: "defaultVariant",
+			Variants: map[string]any{
+				"defaultVariant": value,
+			},
+		}
+	}
+
+	testProvider.UsingFlags(t, flagsMap)
+
+	err := openfeature.SetProviderAndWait(testProvider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		testProvider.Cleanup()
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		// Unlock after cleanup to allow other tests to run
+		openfeatureTestMutex.Unlock()
+	})
+
+	return testProvider
 }

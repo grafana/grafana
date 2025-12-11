@@ -89,7 +89,9 @@
   "templating": {
     "list": [
       {
-        "datasource": "prometheus",
+        "datasource": {
+          "type": "prometheus"
+        },
         "name": "server",
         "options": [],
         "query": "label_values(server)",

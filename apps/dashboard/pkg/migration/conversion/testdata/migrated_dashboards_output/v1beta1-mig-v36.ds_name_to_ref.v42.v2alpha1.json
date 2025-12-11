@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -35,7 +35,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "enable": false,
@@ -52,7 +52,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {}
           },
           "enable": false,
@@ -69,7 +69,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {}
           },
           "enable": false,
@@ -86,7 +86,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "enable": false,
@@ -103,7 +103,7 @@
             "uid": "unknown-datasource-name"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "enable": false,
@@ -131,7 +131,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -175,7 +175,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -219,7 +219,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -263,7 +263,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -307,7 +307,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -351,7 +351,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -395,7 +395,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -410,7 +410,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -454,7 +454,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -498,7 +498,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -542,7 +542,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -557,7 +557,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "__expr__",
                       "spec": {}
                     },
                     "datasource": {
@@ -601,7 +601,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -645,7 +645,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
@@ -922,7 +922,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -949,7 +949,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {}
           },
           "regex": "",
@@ -976,7 +976,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {}
           },
           "regex": "",
@@ -1003,7 +1003,7 @@
             "uid": "unknown-datasource"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -1029,5 +1029,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

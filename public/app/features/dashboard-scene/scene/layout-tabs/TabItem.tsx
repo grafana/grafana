@@ -12,13 +12,14 @@ import {
   SceneGridLayout,
 } from '@grafana/scenes';
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -108,7 +109,18 @@ export class TabItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout });
+    const currentLayout = this.state.layout;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
+      source: this,
+      perform: () => {
+        this.setState({ layout });
+      },
+      undo: () => {
+        this.setState({ layout: currentLayout });
+      },
+    });
   }
 
   public useEditPaneOptions = useEditOptions.bind(this);

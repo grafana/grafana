@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     '&:hover ': {
       boxShadow: `${theme.shadows.z1}`,
-      background: `${theme.colors.background.secondary}`,
+      background: theme.colors.secondary.shade,
       color: `${theme.colors.text.primary}`,
     },
   });

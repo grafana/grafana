@@ -3,7 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export function useIsProvisionedInstance(settings?: RepositoryViewList) {
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;

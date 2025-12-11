@@ -37,6 +37,7 @@ export type AppPluginConfig = {
   dependencies: PluginDependencies;
   extensions: PluginExtensions;
   moduleHash?: string;
+  buildMode?: string;
 };
 
 export type PreinstalledPlugin = {
@@ -305,6 +306,7 @@ export interface GrafanaConfig {
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;
   pluginCatalogURL: string;

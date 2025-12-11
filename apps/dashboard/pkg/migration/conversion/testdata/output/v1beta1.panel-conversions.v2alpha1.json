@@ -34,7 +34,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "up",
                         "interval": "30s"
@@ -52,7 +52,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "cpu_usage",
                         "interval": "1m"
@@ -159,7 +159,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -205,7 +205,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "format": "table",
                         "rawSql": "SELECT * FROM metrics"
@@ -259,7 +259,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {
                         "bucketAggs": [
                           {
@@ -501,5 +501,10 @@
     "title": "Panel Conversions Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

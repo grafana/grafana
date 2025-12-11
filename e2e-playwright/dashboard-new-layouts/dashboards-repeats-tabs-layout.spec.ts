@@ -316,9 +316,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       // repeated panel in original tab repeat
       await dashboardPage
@@ -341,9 +339,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       // repeated panel in repeated tab
       await dashboardPage

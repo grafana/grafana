@@ -47,7 +47,7 @@ interface EditableVariableConfig {
 export type EditableVariableType = Exclude<VariableType, 'system' | 'snapshot'>;
 
 export function isEditableVariableType(type: VariableType): type is EditableVariableType {
-  return type !== 'system';
+  return type !== 'system' && type !== 'snapshot';
 }
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({

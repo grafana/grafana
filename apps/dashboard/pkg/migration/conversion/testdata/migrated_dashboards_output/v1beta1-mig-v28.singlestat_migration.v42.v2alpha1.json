@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -61,7 +61,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -105,7 +105,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -120,7 +120,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -164,7 +164,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -208,7 +208,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -223,7 +223,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -267,7 +267,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -313,7 +313,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -400,7 +400,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -452,7 +452,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "rate(http_requests_total[5m])"
                       }
@@ -622,5 +622,10 @@
     "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

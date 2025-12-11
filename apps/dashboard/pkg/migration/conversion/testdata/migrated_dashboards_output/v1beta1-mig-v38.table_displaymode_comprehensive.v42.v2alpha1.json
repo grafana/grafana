@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -659,5 +659,10 @@
     "title": "V38 Table Migration Comprehensive Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -65,6 +65,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     top: number;
     left: number;
   } | null = null;
+  private _lastDropTargetGridItemKey: string | null = null;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({
@@ -145,6 +146,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     }
 
     this._draggedGridItem = gridItem;
+    this._lastDropTargetGridItemKey = gridItem.state.key!;
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
@@ -166,6 +168,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
+    this._lastDropTargetGridItemKey = null;
     this._resetPanelPositionAndSize();
 
     this.setState({ draggingKey: undefined });
@@ -196,7 +199,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       })
       ?.getAttribute('data-auto-grid-item-drop-target');
 
-    if (dropTargetGridItemKey) {
+    if (dropTargetGridItemKey && dropTargetGridItemKey !== this._lastDropTargetGridItemKey) {
       this._onDragOverItem(dropTargetGridItemKey);
     }
   }
@@ -207,12 +210,14 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     const draggedIdx = children.findIndex((child) => child === this._draggedGridItem);
     const draggedOverIdx = children.findIndex((child) => child.state.key === key);
 
-    if (draggedIdx === -1 || draggedOverIdx === -1) {
+    if (draggedIdx === -1 || draggedOverIdx === -1 || draggedIdx === draggedOverIdx) {
+      this._lastDropTargetGridItemKey = key;
       return;
     }
 
     children.splice(draggedIdx, 1);
     children.splice(draggedOverIdx, 0, this._draggedGridItem!);
+    this._lastDropTargetGridItemKey = this._draggedGridItem!.state.key!;
 
     this.setState({ children });
   }

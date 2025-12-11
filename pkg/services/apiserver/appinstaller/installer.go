@@ -108,6 +108,9 @@ func RegisterAuthorizers(
 		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
 			authorizer := authorizerProvider.GetAuthorizer()
 			for _, gv := range installer.GroupVersions() {
+				if authorizer == nil {
+					panic("authorizer cannot be nil for api group: " + gv.String())
+				}
 				registrar.Register(gv, authorizer)
 				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
 			}
@@ -147,7 +150,7 @@ func InstallAPIs(
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
 			ctx:               ctx,
-			GenericAPIServer:  server,
+			GenericAPIServer:  appsdkapiserver.NewKubernetesGenericAPIServer(server),
 			installer:         installer,
 			storageOpts:       storageOpts,
 			restOptionsGetter: restOpsGetter,

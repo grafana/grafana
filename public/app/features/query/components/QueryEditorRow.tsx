@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode, type JSX } from 'react';
 
 import {
   CoreApp,
@@ -310,11 +310,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource?.getQueryDisplayText) {
-      return datasource.getQueryDisplayText(this.props.query);
+
+    if (!datasource || typeof datasource.getQueryDisplayText !== 'function') {
+      return null;
     }
 
-    return null;
+    try {
+      return datasource.getQueryDisplayText(this.props.query);
+    } catch (error) {
+      // Some datasource plugins may throw errors in getQueryDisplayText
+      // Return null gracefully to prevent the query editor from crashing.
+      return null;
+    }
   }
 
   renderWarnings = (type: string): JSX.Element | null => {

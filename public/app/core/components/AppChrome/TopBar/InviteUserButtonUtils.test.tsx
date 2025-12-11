@@ -1,6 +1,6 @@
 import type { FeatureToggles } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
   },

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -175,6 +176,28 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	})
 
+	t.Run("RebuildIndexes", func(t *testing.T) {
+		instanceResponseCount := make(map[string]int)
+
+		// simulate RebuildIndexes for a single namespace
+		testNamespace := testNamespaces[0]
+
+		req := &resourcepb.RebuildIndexesRequest{
+			Namespace: testNamespace,
+			Keys: []*resourcepb.ResourceKey{{
+				Namespace: testNamespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+			}},
+		}
+		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
+		require.Nil(t, distributorRes.Error)
+
+		// assert all instances got the response by looking at the merged details
+		count := strings.Count(distributorRes.Details, "{instance:")
+		require.Equal(t, len(testServers), count)
+	})
+
 	var wg sync.WaitGroup
 	for _, testServer := range testServers {
 		wg.Add(1)
@@ -279,6 +302,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
+	cfg.EnableSearch = true
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -321,6 +345,7 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	// otherwise the tests will be flaky,
 	// also, tests are going to timeout after 300 seconds anyway
 	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
+	cfg.EnableSearch = true
 
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
@@ -334,8 +359,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -359,12 +383,13 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	cfg.IndexPath = t.TempDir()
 	cfg.IndexFileThreshold = testIndexFileThreshold
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch)
+	cfg.EnableSearch = true
+	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		DB:             nil,

@@ -57,7 +57,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   };
 
   const onDeleteSnapshotClick = async () => {
-    await deleteSnapshot(snapshotResult.value?.deleteUrl!);
+    await deleteSnapshot(snapshotResult.value?.key!);
     reset();
   };
 

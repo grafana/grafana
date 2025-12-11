@@ -6,8 +6,8 @@ import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, useFavoriteDatasources, FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 

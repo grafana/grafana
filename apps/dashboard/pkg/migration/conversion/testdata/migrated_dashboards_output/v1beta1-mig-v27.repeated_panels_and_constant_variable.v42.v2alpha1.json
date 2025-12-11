@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -207,5 +207,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

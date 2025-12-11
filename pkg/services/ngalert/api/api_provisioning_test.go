@@ -2023,7 +2023,16 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 
 		exportRaw, err := receiverExportResponses.ReadFile(p)
 		require.NoError(t, err)
-		require.Equal(t, string(exportRaw), string(actualBody))
+		switch tc.exportType {
+		case "json":
+			require.JSONEq(t, string(exportRaw), string(actualBody))
+		case "yaml":
+			require.YAMLEq(t, string(exportRaw), string(actualBody))
+		case "hcl":
+			require.Equal(t, string(exportRaw), string(actualBody))
+		default:
+			t.Fatalf("unknown export type %q", tc.exportType)
+		}
 	}
 
 	t.Run("contact point export for all known configs", func(t *testing.T) {

@@ -1,14 +1,12 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -335,17 +333,6 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 		return server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/versions"), userWithPermissions(1, permissions)))
 	}
 
-	calculateDiff := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
-		cmd := &dtos.CalculateDiffOptions{
-			Base:     dtos.CalculateDiffTarget{DashboardId: 1, Version: 1},
-			New:      dtos.CalculateDiffTarget{DashboardId: 1, Version: 2},
-			DiffType: "json",
-		}
-		jsonBytes, err := json.Marshal(cmd)
-		require.NoError(t, err)
-		return server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/calculate-diff", bytes.NewReader(jsonBytes)), userWithPermissions(1, permissions)))
-	}
-
 	t.Run("Should not be able to list dashboard versions without correct permission", func(t *testing.T) {
 		server := setup()
 
@@ -377,28 +364,6 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-		require.NoError(t, res.Body.Close())
-	})
-
-	t.Run("Should be able to diff dashboards with correct permissions", func(t *testing.T) {
-		server := setup()
-
-		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
-		}
-
-		res, err := calculateDiff(server, permissions)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
-
-	t.Run("Should not be able to diff dashboards without permissions", func(t *testing.T) {
-		server := setup()
-
-		res, err := calculateDiff(server, []accesscontrol.Permission{})
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
 }
@@ -900,45 +865,6 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, false, dash.Meta.Provisioned)
-		}, mockSQLStore)
-	})
-
-	t.Run("v2 dashboards should not be returned in api", func(t *testing.T) {
-		mockSQLStore := dbtest.NewFakeDB()
-		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardProvisioningService := dashboards.NewFakeDashboardProvisioning(t)
-
-		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "apiVersion": "v2"}`))
-		require.NoError(t, err)
-		qResult := &dashboards.Dashboard{
-			ID:         1,
-			UID:        "dash",
-			OrgID:      1,
-			APIVersion: "v2",
-			Data:       dataValue,
-		}
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
-			hs := &HTTPServer{
-				Cfg:                          setting.NewCfg(),
-				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
-				SQLStore:                     mockSQLStore,
-				AccessControl:                actest.FakeAccessControl{ExpectedEvaluate: true},
-				DashboardService:             dashboardService,
-				Features:                     featuremgmt.WithFeatures(),
-				starService:                  startest.NewStarServiceFake(),
-				tracer:                       tracing.InitializeTracerForTest(),
-				dashboardProvisioningService: dashboardProvisioningService,
-				folderService:                foldertest.NewFakeService(),
-				log:                          log.New("test"),
-				namespacer:                   func(orgID int64) string { return strconv.FormatInt(orgID, 10) },
-			}
-			hs.callGetDashboard(sc)
-
-			assert.Equal(t, http.StatusNotAcceptable, sc.resp.Code)
-			result := sc.ToJSON()
-			assert.Equal(t, "dashboard api version not supported, use /apis/dashboard.grafana.app/v2/namespaces/1/dashboards/dash instead", result.Get("message").MustString())
 		}, mockSQLStore)
 	})
 }

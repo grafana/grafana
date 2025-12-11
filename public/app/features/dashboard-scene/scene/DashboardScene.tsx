@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -275,7 +275,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true });
+    this.setState({ isEditing: true, editable: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
@@ -692,16 +692,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   canEditDashboard() {
     const { meta } = this.state;
 
-    return Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit);
+    return !meta.isSnapshot && Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit);
   }
 
   public getInitialSaveModel() {
     return this.serializer.initialSaveModel;
   }
 
-  public getSnapshotUrl = () => {
-    return this.serializer.getSnapshotUrl();
-  };
+  public getSnapshotUrl() {
+    return this.serializer.getSnapshotUrl() ?? '';
+  }
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
   setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta, apiVersion?: string): void;
@@ -835,7 +835,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
-        name: meta.uid ?? meta.k8s?.name,
+        name: options.isNew ? undefined : (meta.uid ?? meta.k8s?.name),
         generateName: options.isNew ? 'd' : undefined,
       },
       spec,

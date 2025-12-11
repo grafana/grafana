@@ -15,7 +15,7 @@ import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -95,6 +95,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           viewPanel: panel.getPathId(),
           editPanel: undefined,
         }),
+        onClick: () => {
+          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+        },
       });
     }
 
@@ -106,6 +109,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'edit',
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
+        onClick: () => {
+          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel');
+        },
       });
     }
 
@@ -187,6 +193,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
         onClick: () => {
+          DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(panel), 'panel');
           dashboard.duplicatePanel(panel);
         },
         shortcut: 'p d',
@@ -198,6 +205,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
         onClick: () => {
+          DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
           dashboard.copyPanel(panel);
         },
       });
@@ -359,6 +367,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.remove', `Remove`),
         iconClassName: 'trash-alt',
         onClick: () => {
+          DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(panel), 'panel');
           onRemovePanel(dashboard, panel);
         },
         shortcut: 'p r',

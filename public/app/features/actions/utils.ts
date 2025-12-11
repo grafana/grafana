@@ -17,7 +17,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';

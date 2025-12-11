@@ -50,6 +50,15 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
 
+  const handleVisibleChange = () => {
+    if (!isOpen) {
+      reportInteraction('grafana_create_new_button_menu_opened', {
+        from: location.pathname,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
   let renderPreBuiltDashboardAction = false;
   if (config.featureToggles.dashboardTemplates) {
     const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
@@ -129,7 +138,7 @@ export default function CreateNewButton({
 
   return (
     <>
-      <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
+      <Dropdown overlay={newMenu} onVisibleChange={handleVisibleChange}>
         <Button
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}

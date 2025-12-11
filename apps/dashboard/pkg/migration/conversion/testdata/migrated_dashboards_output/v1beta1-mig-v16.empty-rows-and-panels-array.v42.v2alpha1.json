@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -47,7 +47,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "increase(demo_latency_iota{env=~\"$env\", region=~\"$region\", node=~\"$node\", service=~\"$service\", type=\"primary\"}[$__rate_interval])",
                         "format": "time_series",
@@ -152,7 +152,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "increase(demo_latency_iota{env=~\"$env\", region=~\"$region\", node=~\"$node\", service=~\"$service\", type=\"secondary\"}[$__rate_interval])",
                         "format": "time_series",
@@ -257,7 +257,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "increase(example_events_kappa{env=~\"$env\", region=~\"$region\", node=~\"$node\", service=~\"$service\"}[$__rate_interval])",
                         "format": "time_series",
@@ -366,7 +366,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "random_metric_alpha{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
                         "format": "time_series",
@@ -475,7 +475,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "rate(sample_counter_beta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}[$__rate_interval])",
                         "format": "time_series",
@@ -584,7 +584,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "increase(test_errors_gamma{env=~\"$env\", region=~\"$region\", node=~\"$node\"}[$__rate_interval])",
                         "format": "time_series",
@@ -693,7 +693,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "rate(demo_events_delta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}[$__rate_interval])",
                         "format": "time_series",
@@ -802,7 +802,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "example_usage_epsilon{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
                         "format": "time_series",
@@ -910,7 +910,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "random_total_zeta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
                         "format": "time_series",
@@ -930,7 +930,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sample_target_eta{env=~\"$env\", region=~\"$region\", node=~\"$node\"}",
                         "format": "time_series",
@@ -1038,7 +1038,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "100 * random_total_zeta{env=~\"$env\", region=~\"$region\", node=~\"$node\"} / clamp_min(test_available_theta{env=~\"$env\", region=~\"$region\", node=~\"$node\"},1)",
                         "format": "time_series",
@@ -1346,7 +1346,7 @@
             "uid": "${example_datasource}"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(system_info_lambda{}, env)"
             }
@@ -1377,7 +1377,7 @@
             "uid": "${example_datasource}"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(system_info_lambda{env=~\"$env\"}, region)"
             }
@@ -1408,7 +1408,7 @@
             "uid": "${example_datasource}"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(system_info_lambda{env=~\"$env\", region=~\"$region\"}, node)"
             }
@@ -1439,7 +1439,7 @@
             "uid": "${example_datasource}"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(example_events_kappa{env=~\"$env\", region=~\"$region\", node=~\"$node\"}, service)"
             }
@@ -1455,5 +1455,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

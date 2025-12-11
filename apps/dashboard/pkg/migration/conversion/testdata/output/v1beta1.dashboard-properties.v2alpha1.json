@@ -13,7 +13,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "refId": "Anno"
             }
@@ -45,7 +45,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {}
                     },
                     "refId": "A",
@@ -132,7 +132,8 @@
         "asDropdown": false,
         "targetBlank": true,
         "includeVars": false,
-        "keepTime": false
+        "keepTime": false,
+        "placement": "inControlsMenu"
       },
       {
         "title": "Tag-based Link",
@@ -199,5 +200,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

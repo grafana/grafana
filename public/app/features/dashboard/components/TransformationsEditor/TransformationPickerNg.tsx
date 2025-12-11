@@ -1,34 +1,16 @@
-import { cx, css } from '@emotion/css';
+import { css } from '@emotion/css';
 import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
 
-import {
-  DataFrame,
-  TransformerRegistryItem,
-  TransformationApplicabilityLevels,
-  GrafanaTheme2,
-  standardTransformersRegistry,
-  SelectableValue,
-} from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TransformerRegistryItem, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Badge,
-  Card,
-  Drawer,
-  FilterPill,
-  Grid,
-  IconButton,
-  Input,
-  Stack,
-  Switch,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Drawer, FilterPill, Grid, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
+import { TransformationCard } from './TransformationCard';
 import { FilterCategory } from './TransformationsEditor';
 
 const VIEW_ALL_VALUE = 'viewAll';
@@ -132,6 +114,10 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           transformations={xforms}
           data={data}
           onClick={(id) => {
+            reportInteraction('grafana_panel_transformations_clicked', {
+              type: id,
+              context: 'transformations_drawer',
+            });
             onTransformationAdd({ value: id });
           }}
         />
@@ -175,143 +161,17 @@ interface TransformationsGridProps {
 }
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
-  const theme = useTheme2();
-  const styles = useStyles2(getTransformationGridStyles);
-
   return (
     <Grid columns={3} gap={1}>
-      {transformations.map((transform) => {
-        // Check to see if the transform
-        // is applicable to the given data
-        let applicabilityScore = TransformationApplicabilityLevels.Applicable;
-        if (transform.transformation.isApplicable !== undefined) {
-          applicabilityScore = transform.transformation.isApplicable(data);
-        }
-        const isApplicable = applicabilityScore > 0;
-
-        let applicabilityDescription = null;
-        if (transform.transformation.isApplicableDescription !== undefined) {
-          if (typeof transform.transformation.isApplicableDescription === 'function') {
-            applicabilityDescription = transform.transformation.isApplicableDescription(data);
-          } else {
-            applicabilityDescription = transform.transformation.isApplicableDescription;
-          }
-        }
-
-        // Add disabled styles to disabled
-        let cardClasses = styles.newCard;
-        if (!isApplicable) {
-          cardClasses = cx(styles.newCard, styles.cardDisabled);
-        }
-
-        const imageUrl = theme.isDark ? transform.imageDark : transform.imageLight;
-
-        return (
-          <Card
-            className={cardClasses}
-            data-testid={selectors.components.TransformTab.newTransform(transform.name)}
-            onClick={() => onClick(transform.id)}
-            key={transform.id}
-            noMargin
-          >
-            <Card.Heading className={styles.heading}>
-              <div className={styles.titleRow}>
-                <span>{transform.name}</span>
-                <span className={styles.pluginStateInfoWrapper}>
-                  <PluginStateInfo state={transform.state} />
-                </span>
-              </div>
-              {transform.tags && transform.tags.size > 0 && (
-                <div className={styles.tagsWrapper}>
-                  {Array.from(transform.tags).map((tag) => (
-                    <Badge color="darkgrey" icon="tag-alt" key={tag} text={tag} />
-                  ))}
-                </div>
-              )}
-            </Card.Heading>
-            <Card.Description className={styles.description}>
-              <span>{standardTransformersRegistry.getIfExists(transform.id)?.description}</span>
-              {showIllustrations && (
-                <span>
-                  <img className={styles.image} src={imageUrl} alt={transform.name} />
-                </span>
-              )}
-              {!isApplicable && applicabilityDescription !== null && (
-                <IconButton
-                  className={styles.cardApplicableInfo}
-                  name="info-circle"
-                  tooltip={applicabilityDescription}
-                />
-              )}
-            </Card.Description>
-          </Card>
-        );
-      })}
+      {transformations.map((transform) => (
+        <TransformationCard
+          key={transform.id}
+          transform={transform}
+          showIllustrations={showIllustrations}
+          onClick={onClick}
+          data={data}
+        />
+      ))}
     </Grid>
   );
-}
-
-function getTransformationGridStyles(theme: GrafanaTheme2) {
-  return {
-    heading: css({
-      fontWeight: 400,
-      '> button': {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: theme.spacing(1),
-      },
-    }),
-    titleRow: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'nowrap',
-      width: '100%',
-    }),
-    description: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-    }),
-    image: css({
-      display: 'block',
-      maxWidth: '100%',
-      marginTop: theme.spacing(2),
-    }),
-    grid: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-      gridAutoRows: '1fr',
-      gap: theme.spacing(1),
-      width: '100%',
-      padding: `${theme.spacing(1)} 0`,
-    }),
-    cardDisabled: css({
-      backgroundColor: theme.colors.action.disabledBackground,
-      img: {
-        filter: 'grayscale(100%)',
-        opacity: 0.33,
-      },
-    }),
-    cardApplicableInfo: css({
-      position: 'absolute',
-      bottom: theme.spacing(1),
-      right: theme.spacing(1),
-    }),
-    newCard: css({
-      gridTemplateRows: 'min-content 0 1fr 0',
-      marginBottom: 0,
-    }),
-    pluginStateInfoWrapper: css({
-      marginLeft: theme.spacing(0.5),
-    }),
-    tagsWrapper: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: theme.spacing(0.5),
-    }),
-  };
 }

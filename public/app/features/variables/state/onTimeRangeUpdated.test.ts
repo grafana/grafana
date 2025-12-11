@@ -5,7 +5,7 @@ import { DashboardState } from 'app/types/dashboard';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';

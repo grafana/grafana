@@ -21,11 +21,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-
-      // Check that current dashboard title is visible in breadcrumb
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb('Annotation filtering'))
-      ).toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       const titleInput = page.locator('[aria-label="dashboard-options Title field property editor"] input');
       await expect(titleInput).toHaveValue('Annotation filtering');

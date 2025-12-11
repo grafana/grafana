@@ -1,4 +1,4 @@
-import { ReactElement, useMemo } from 'react';
+import { type JSX, ReactElement, useMemo } from 'react';
 
 import { PluginExtensionLink } from '@grafana/data';
 import { Menu } from '@grafana/ui';

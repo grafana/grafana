@@ -96,11 +96,14 @@ export const setupXAxisPan = (
 
       xAxisEl.style.cursor = 'grab';
 
-      config.setState({ isPanning: false });
+      const isSignificantDrag = Math.abs(dragPixels) >= MIN_PAN_DIST;
 
-      if (Math.abs(dragPixels) >= MIN_PAN_DIST) {
+      if (isSignificantDrag) {
         const newRange = calculatePanRange(startMin, startMax, dragPixels, u.bbox.width);
+        config.setState({ isPanning: true, min: newRange.from, max: newRange.to, isTimeRangePending: true });
         queryZoom(newRange);
+      } else {
+        config.setState({ isPanning: false });
       }
 
       document.removeEventListener('mousemove', onMove);

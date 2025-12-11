@@ -2163,7 +2163,7 @@ func TestGitRepository_commitAndPush(t *testing.T) {
 	}
 }
 
-func TestGitRepository_logger(t *testing.T) {
+func TestGitRepository_withGitContext(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
@@ -2179,7 +2179,7 @@ func TestGitRepository_logger(t *testing.T) {
 
 	t.Run("creates new logger context", func(t *testing.T) {
 		ctx := context.Background()
-		newCtx, logger := gitRepo.logger(ctx, "feature-branch")
+		newCtx, logger := gitRepo.withGitContext(ctx, "feature-branch")
 
 		require.NotNil(t, newCtx)
 		require.NotNil(t, logger)
@@ -2188,7 +2188,7 @@ func TestGitRepository_logger(t *testing.T) {
 
 	t.Run("uses default branch when ref is empty", func(t *testing.T) {
 		ctx := context.Background()
-		newCtx, logger := gitRepo.logger(ctx, "")
+		newCtx, logger := gitRepo.withGitContext(ctx, "")
 
 		require.NotNil(t, newCtx)
 		require.NotNil(t, logger)
@@ -2198,10 +2198,10 @@ func TestGitRepository_logger(t *testing.T) {
 		ctx := context.Background()
 
 		// First call creates the logger context
-		ctx1, logger1 := gitRepo.logger(ctx, "branch1")
+		ctx1, logger1 := gitRepo.withGitContext(ctx, "branch1")
 
 		// Second call should return the existing logger context
-		ctx2, logger2 := gitRepo.logger(ctx1, "branch2")
+		ctx2, logger2 := gitRepo.withGitContext(ctx1, "branch2")
 
 		// When logger context already exists, it should return the same context
 		require.Equal(t, ctx1, ctx2)

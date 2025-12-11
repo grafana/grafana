@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: JSON schema v2
-weight: 200
+weight: 500
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/schema-v2/
 aliases:
   - ../../observability-as-code/schema-v2/ # /docs/grafana/next/observability-as-code/schema-v2/

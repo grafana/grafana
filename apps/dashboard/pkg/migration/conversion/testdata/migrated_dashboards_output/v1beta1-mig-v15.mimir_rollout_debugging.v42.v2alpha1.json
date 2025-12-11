@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -31,7 +31,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {}
           },
           "enable": true,
@@ -66,7 +66,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sum by (job, version) (up{job=~\".*\"})",
                         "format": "table",
@@ -209,7 +209,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
                         "format": "table",
@@ -331,7 +331,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
                         "format": "table",
@@ -453,7 +453,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "max by (pod) (up{job=\"mimir-aggregator\"})",
                         "format": "time_series",
@@ -541,7 +541,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
                         "format": "table",
@@ -663,7 +663,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
                         "format": "table",
@@ -962,7 +962,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(up, job)"
             }
@@ -989,7 +989,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(up{job=~\"$cluster\"}, instance)"
             }
@@ -1004,5 +1004,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

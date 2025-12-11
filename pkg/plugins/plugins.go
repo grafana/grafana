@@ -105,6 +105,7 @@ type JSONData struct {
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
+	Suggestions   bool `json:"suggestions,omitempty"`
 
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`
@@ -133,6 +134,9 @@ type JSONData struct {
 
 	// List of languages supported by the plugin
 	Languages []string `json:"languages,omitempty"`
+
+	// Build mode of the plugin (set automatically at build time)
+	BuildMode string `json:"buildMode,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -493,7 +497,7 @@ func (p *Plugin) IsCorePlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return !p.IsCorePlugin()
+	return p.Class == ClassExternal
 }
 
 type Class string
@@ -501,7 +505,6 @@ type Class string
 const (
 	ClassCore     Class = "core"
 	ClassExternal Class = "external"
-	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

@@ -135,7 +135,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to authorize decryption with reason %v (%w)", reason, contracts.ErrDecryptNotAuthorized)
 	}
 
-	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Spec.Keeper, contracts.ReadOpts{})
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return "", fmt.Errorf("failed to read keeper config metadata storage: %v (%w)", err, contracts.ErrDecryptFailed)
 	}

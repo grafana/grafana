@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type JSX } from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';

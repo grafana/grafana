@@ -5,7 +5,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/util/osutil"
 )
+
+var MigratedUnifiedResources = []string{
+	"playlists.playlist.grafana.app",
+	"folders.folder.grafana.app",
+	"dashboards.dashboard.grafana.app",
+}
 
 // read storage configs from ini file. They look like:
 // [unified_storage.<group>.<resource>]
@@ -51,6 +58,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
+	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
+	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
+		// Helper log to find instances running migrations in the future
+		cfg.Logger.Info("Unified migration configs not yet enforced")
+		// cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
+	} else {
+		// Helper log to find instances disabling migration
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
+	}
+	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
@@ -79,6 +96,51 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
 	cfg.ResourceServerJoinRingTimeout = section.Key("resource_server_join_ring_timeout").MustDuration(10 * time.Second)
 
+	// quotas/limits config
+	cfg.OverridesFilePath = section.Key("overrides_path").String()
+	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
+
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
+}
+
+// nolint:unused
+// enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5
+// All migrated resources in MigratedUnifiedResources are set to mode 5 and unified search is enabled
+func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
+	section := cfg.Raw.Section("unified_storage")
+	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	if !cfg.EnableSearch {
+		cfg.Logger.Info("Enforcing enable_search for unified storage")
+		section.Key("enable_search").SetValue("true")
+		cfg.EnableSearch = true
+	}
+	for _, resource := range MigratedUnifiedResources {
+		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
+		if oldCfg, ok := cfg.UnifiedStorage[resource]; ok {
+			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", oldCfg)
+		}
+		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
+			DualWriterMode:                      5,
+			DualWriterMigrationDataSyncDisabled: true,
+		}
+	}
+}
+
+// getUnifiedStorageType returns the configured storage type without creating or mutating keys.
+// Precedence: env > ini > default ("unified").
+// Used to decide unified storage behavior early without side effects.
+func (cfg *Cfg) getUnifiedStorageType() string {
+	const (
+		grafanaAPIServerSectionName = "grafana-apiserver"
+		storageTypeKeyName          = "storage_type"
+		defaultStorageType          = "unified"
+	)
+	if envStorageType := (osutil.RealEnv{}).Getenv(EnvKey(grafanaAPIServerSectionName, storageTypeKeyName)); envStorageType != "" {
+		return envStorageType
+	}
+	if cfg.Raw.Section(grafanaAPIServerSectionName).HasKey(storageTypeKeyName) {
+		return cfg.Raw.Section(grafanaAPIServerSectionName).Key(storageTypeKeyName).Value()
+	}
+	return defaultStorageType
 }

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
-import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -20,6 +20,16 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const { data } = useGetAffectedItems(selectedItems);
   const deleteIsInvalid = Boolean(data && (data.alertrules || data.library_elements));
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
+  const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]);
+  const selectedPanels = Object.keys(selectedItems.panel || {}).filter((uid) => selectedItems.panel[uid]);
+  const { data: folderData } = useGetFolderQueryFacade(selectedFolders.length === 1 ? selectedFolders[0] : undefined);
+
+  // If we are only moving one folder, we can show a different message
+  // (we might be in the "Folder actions" version of the modal)
+  const onlyOneFolderSelected =
+    selectedFolders.length === 1 && selectedDashboards.length === 0 && selectedPanels.length === 0;
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -58,9 +68,22 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
             </>
           )}
           <Text element="p">
-            <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-              This action will delete the following content:
-            </Trans>
+            {onlyOneFolderSelected ? (
+              <Trans
+                i18nKey="browse-dashboards.action.delete-modal-text-one-folder"
+                values={{ folderName: folderData?.title }}
+              >
+                This action will delete the folder &quot;
+                <Text variant="code" weight="bold">
+                  {'{{ folderName }}'}
+                </Text>
+                &quot; and the following content:
+              </Trans>
+            ) : (
+              <Trans i18nKey="browse-dashboards.action.delete-modal-text">
+                This action will delete the following content:
+              </Trans>
+            )}
           </Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />

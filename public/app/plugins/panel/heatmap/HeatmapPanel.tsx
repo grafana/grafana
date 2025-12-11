@@ -14,6 +14,7 @@ import {
   useTheme2,
   VizLayout,
   EventBusPlugin,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -54,6 +55,7 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
         timeRange,
       });
     } catch (ex) {
+      console.error(ex);
       return { warning: `${ex}` };
     }
   }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
@@ -199,6 +201,7 @@ const HeatmapPanelViz = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}
+            <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}

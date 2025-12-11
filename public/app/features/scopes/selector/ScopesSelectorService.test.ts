@@ -15,6 +15,14 @@ jest.mock('@grafana/runtime', () => ({
     push: jest.fn(),
     getLocation: jest.fn(),
   },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+
+    featureToggles: {
+      ...jest.requireActual('@grafana/runtime').config.featureToggles,
+      useScopeSingleNodeEndpoint: true,
+    },
+  },
 }));
 
 describe('ScopesSelectorService', () => {
@@ -69,10 +77,12 @@ describe('ScopesSelectorService', () => {
       }),
       fetchDashboards: jest.fn().mockResolvedValue([]),
       fetchScopeNavigations: jest.fn().mockResolvedValue([]),
+      fetchScopeNode: jest.fn().mockResolvedValue(mockNode),
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     dashboardsService = {
       fetchDashboards: jest.fn().mockResolvedValue(undefined),
+      setNavigationScope: jest.fn(),
       state: {
         scopeNavigations: [],
         dashboards: [],
@@ -82,6 +92,7 @@ describe('ScopesSelectorService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       },
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
@@ -105,162 +116,9 @@ describe('ScopesSelectorService', () => {
     service = new ScopesSelectorService(apiClient, dashboardsService, store);
   });
 
-  describe('updateNode', () => {
-    it('should update node and fetch children when expanded', async () => {
-      await service.updateNode('', true, '');
-      expect(service.state.nodes['test-scope-node']).toEqual(mockNode);
-      expect(service.state.tree).toMatchObject({
-        children: { 'test-scope-node': { expanded: false, scopeNodeId: 'test-scope-node' } },
-        expanded: true,
-        query: '',
-        scopeNodeId: '',
-      });
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: '' });
-    });
-
-    it.skip('should update node query and fetch children when query changes', async () => {
-      await service.updateNode('', true, ''); // Expand first
-      // Simulate a change in the query
-      await service.updateNode('', true, 'new-qu');
-      await service.updateNode('', true, 'new-query');
-      expect(service.state.tree).toMatchObject({
-        children: {},
-        expanded: true,
-        query: 'new-query',
-        scopeNodeId: '',
-      });
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: 'new-query' });
-    });
-
-    it('should not fetch children when node is collapsed and query is unchanged', async () => {
-      // First expand the node
-      await service.updateNode('', true, '');
-      // Then collapse it
-      await service.updateNode('', false, '');
-      // Only the first expansion should trigger fetchNodes
-      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(1);
-    });
-
-    it.skip('should clear query on first expansion but keep it when filtering within populated node', async () => {
-      const mockChildNode: ScopeNode = {
-        metadata: { name: 'child-node' },
-        spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
-      };
-
-      apiClient.fetchNodes.mockResolvedValue([mockChildNode]);
-
-      // Scenario 1: First expansion (no children yet) - clear query for unfiltered view
-      await service.updateNode('', true, 'search-query');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
-
-      // Parent query should be cleared and child nodes should have no query (first expansion)
-      expect(service.state.tree?.query).toBe('');
-      let childTreeNode = service.state.tree?.children?.['child-node'];
-      expect(childTreeNode?.query).toBe('');
-
-      // Scenario 2: Filtering within node that already has children
-      await service.updateNode('', true, 'new-search');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: 'new-search' });
-
-      // Parent and child nodes should have the filter query (filtering within existing children)
-      expect(service.state.tree?.query).toBe('new-search');
-      childTreeNode = service.state.tree?.children?.['child-node'];
-      expect(childTreeNode?.query).toBe('new-search');
-
-      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(2);
-    });
-
-    it.skip('should always reset query on any expansion', async () => {
-      const mockChildNode: ScopeNode = {
-        metadata: { name: 'child-node' },
-        spec: { linkId: 'child-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'child-node' },
-      };
-
-      apiClient.fetchNodes.mockResolvedValue([mockChildNode]);
-
-      // First expansion with any query should reset parent query and not pass query to API
-      await service.updateNode('', true, 'some-search-query');
-
-      // Verify query is reset and API called without query for first expansion
-      expect(service.state.tree?.query).toBe('');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
-      expect(service.state.tree?.children?.['child-node']?.query).toBe('');
-    });
-
-    it.skip('should handle query reset correctly for nested levels beyond root', async () => {
-      // Set up mock nodes for multi-level hierarchy
-      const mockParentNode: ScopeNode = {
-        metadata: { name: 'parent-container' },
-        spec: { linkId: '', linkType: 'scope', parentName: '', nodeType: 'container', title: 'Parent Container' },
-      };
-
-      const mockChildNode: ScopeNode = {
-        metadata: { name: 'child-container' },
-        spec: {
-          linkId: '',
-          linkType: 'scope',
-          parentName: 'parent-container',
-          nodeType: 'container',
-          title: 'Child Container',
-        },
-      };
-
-      const mockGrandchildNode: ScopeNode = {
-        metadata: { name: 'grandchild-leaf' },
-        spec: {
-          linkId: 'leaf-scope',
-          linkType: 'scope',
-          parentName: 'child-container',
-          nodeType: 'leaf',
-          title: 'Grandchild Leaf',
-        },
-      };
-
-      // Mock different responses for different parent nodes
-      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
-        if (options.parent === '') {
-          return Promise.resolve([mockParentNode]);
-        } else if (options.parent === 'parent-container') {
-          return Promise.resolve([mockChildNode]);
-        } else if (options.parent === 'child-container') {
-          return Promise.resolve([mockGrandchildNode]);
-        }
-        return Promise.resolve([]);
-      });
-
-      // Step 1: Expand root node with search query
-      await service.updateNode('', true, 'search-query');
-
-      // Root should have query reset, API called without query
-      expect(service.state.tree?.query).toBe('');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: undefined });
-      expect(service.state.tree?.children?.['parent-container']?.query).toBe('');
-
-      // Step 2: Expand first-level child with search query
-      await service.updateNode('parent-container', true, 'open-search-query');
-
-      // First-level child should have query reset, API called without query
-      const parentContainer = service.state.tree?.children?.['parent-container'];
-      expect(parentContainer?.query).toBe('');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: 'parent-container', query: undefined });
-      expect(parentContainer?.children?.['child-container']?.query).toBe('');
-
-      // Step 3: Now filter within the first-level child (second call to same node)
-      await service.updateNode('parent-container', true, 'filter-search');
-
-      // Now both parent and children should show the filter query since we're filtering within existing children
-      const newParentContainer = service.state.tree?.children?.['parent-container'];
-      expect(newParentContainer?.query).toBe('filter-search');
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: 'parent-container', query: 'filter-search' });
-      expect(newParentContainer?.children?.['child-container']?.query).toBe('filter-search');
-
-      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(3);
-    });
-  });
-
   describe('selectScope and deselectScope', () => {
     beforeEach(async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
     });
 
     it('should select a scope', async () => {
@@ -309,7 +167,7 @@ describe('ScopesSelectorService', () => {
 
     it('should set parent node for recent scopes', async () => {
       // Load mock node
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
 
       await service.changeScopes(['test-scope'], 'test-scope-node');
       expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
@@ -348,6 +206,190 @@ describe('ScopesSelectorService', () => {
       await service.open();
       expect(service.state.opened).toBe(true);
     });
+
+    it('should use scopeNodeId to resolve path when opening selector', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          //parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      // Mock API responses
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-1') {
+          return Promise.resolve(childNode);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      // Apply scope with scopeNodeId and parentNodeId set
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+
+      // Open the selector
+      await service.open();
+
+      // Verify the tree is expanded to the selected scope's parent
+      // The key fix: it should resolve path using scopeNodeId (child-1), not parentNodeId
+      expect(service.state.tree?.expanded).toBe(true);
+      expect(service.state.tree?.children?.['parent-container']?.expanded).toBe(true);
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-1']).toBeDefined();
+    });
+
+    it('should load parent node children when opening to selected scope', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode1: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      const childNode2: ScopeNode = {
+        metadata: { name: 'child-2' },
+        spec: {
+          linkId: 'scope-2',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 2',
+        },
+      };
+
+      const childNode3: ScopeNode = {
+        metadata: { name: 'child-3' },
+        spec: {
+          linkId: 'scope-3',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 3',
+        },
+      };
+
+      // Mock API responses
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode1, childNode2, childNode3]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-2') {
+          return Promise.resolve(childNode2);
+        } else if (scopeNodeId === 'parent-container') {
+          return Promise.resolve(parentNode);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      await service.changeScopes(['scope-2'], 'parent-container', 'child-2');
+      await service.open();
+
+      // Verify all sibling nodes are loaded (not just the selected one)
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-1']).toBeDefined();
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-2']).toBeDefined();
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-3']).toBeDefined();
+
+      // Verify childrenLoaded flag is set on the parent
+      expect(service.state.tree?.children?.['parent-container']?.childrenLoaded).toBe(true);
+    });
+
+    it('should only load children if childrenLoaded is false', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-1') {
+          return Promise.resolve(childNode);
+        } else if (scopeNodeId === 'parent-container') {
+          return Promise.resolve(parentNode);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+
+      // First open
+      await service.open();
+
+      // Close and open again
+      service.closeAndReset();
+      await service.open();
+
+      // The key: childrenLoaded flag should prevent redundant fetches
+      // Verify the flag is set correctly
+      expect(service.state.tree?.children?.['parent-container']?.childrenLoaded).toBe(true);
+    });
   });
 
   describe('closeAndReset', () => {
@@ -361,7 +403,7 @@ describe('ScopesSelectorService', () => {
 
   describe('closeAndApply', () => {
     it('should close the selector and apply the selected scopes', async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.closeAndApply();
       expect(service.state.opened).toBe(false);
@@ -371,6 +413,7 @@ describe('ScopesSelectorService', () => {
 
   describe('apply', () => {
     it('should apply the selected scopes without closing the selector', async () => {
+      await service.filterNode('', '');
       await service.open();
       await service.selectScope('test-scope-node');
       await service.apply();
@@ -389,17 +432,45 @@ describe('ScopesSelectorService', () => {
 
   describe('removeAllScopes', () => {
     it('should remove all selected and applied scopes', async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
       await service.removeAllScopes();
       expect(service.state.appliedScopes).toEqual([]);
     });
+
+    it('should clear navigation scope when removing all scopes', async () => {
+      await service.filterNode('', '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      await service.removeAllScopes();
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  describe('navigation scope interaction', () => {
+    it('should skip fetchDashboards when navigationScope is set', async () => {
+      dashboardsService.state.navigationScope = 'navScope1';
+      jest.clearAllMocks();
+
+      await service.changeScopes(['test-scope']);
+
+      expect(dashboardsService.fetchDashboards).not.toHaveBeenCalled();
+    });
+
+    it('should call fetchDashboards when navigationScope is not set', async () => {
+      dashboardsService.state.navigationScope = undefined;
+      jest.clearAllMocks();
+
+      await service.changeScopes(['test-scope']);
+
+      expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
+    });
   });
 
   describe('getRecentScopes', () => {
     it('should parse and filter scopes', async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
       storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScope2], [mockScope]]);
@@ -409,7 +480,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should work with old version', async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
       storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
@@ -585,9 +656,347 @@ describe('ScopesSelectorService', () => {
     });
   });
 
+  describe('toggleExpandedNode', () => {
+    const expandableNode: ScopeNode = {
+      metadata: { name: 'expandable-node' },
+      spec: {
+        linkId: '',
+        linkType: undefined,
+        parentName: '',
+        nodeType: 'container',
+        title: 'Expandable Node',
+      },
+    };
+
+    const childNode: ScopeNode = {
+      metadata: { name: 'child-node' },
+      spec: {
+        linkId: 'child-scope',
+        linkType: 'scope',
+        parentName: 'expandable-node',
+        nodeType: 'leaf',
+        title: 'Child Node',
+      },
+    };
+
+    const leafNode: ScopeNode = {
+      metadata: { name: 'leaf-node' },
+      spec: {
+        linkId: 'leaf-scope',
+        linkType: 'scope',
+        parentName: '',
+        nodeType: 'leaf',
+        title: 'Leaf Node',
+      },
+    };
+
+    beforeEach(async () => {
+      // Mock fetchNodes to return different nodes based on parent
+      apiClient.fetchNodes = jest
+        .fn()
+        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+          if (options.parent === '') {
+            return [expandableNode, leafNode];
+          } else if (options.parent === 'expandable-node') {
+            return [childNode];
+          }
+          return [];
+        });
+
+      // Load root nodes
+      await service.filterNode('', '');
+    });
+
+    it('should expand a collapsed node and load its children', async () => {
+      // Node should start collapsed
+      expect(service.state.tree?.children?.['expandable-node']?.expanded).toBe(false);
+
+      // Expand the node
+      await service.toggleExpandedNode('expandable-node');
+
+      // Node should now be expanded
+      expect(service.state.tree?.children?.['expandable-node']?.expanded).toBe(true);
+      // Children should be loaded
+      expect(service.state.tree?.children?.['expandable-node']?.children).toBeDefined();
+      expect(service.state.tree?.children?.['expandable-node']?.children?.['child-node']).toBeDefined();
+    });
+
+    it('should collapse an expanded node', async () => {
+      // First expand the node
+      await service.toggleExpandedNode('expandable-node');
+      expect(service.state.tree?.children?.['expandable-node']?.expanded).toBe(true);
+
+      // Now collapse it
+      await service.toggleExpandedNode('expandable-node');
+      expect(service.state.tree?.children?.['expandable-node']?.expanded).toBe(false);
+    });
+
+    it('should reset query to empty string when toggling', async () => {
+      // First filter with a query
+      await service.filterNode('expandable-node', 'test-query');
+      expect(service.state.tree?.children?.['expandable-node']?.query).toBe('test-query');
+
+      // Toggle the node
+      await service.toggleExpandedNode('expandable-node');
+
+      // Query should be reset
+      expect(service.state.tree?.children?.['expandable-node']?.query).toBe('');
+    });
+
+    it('should throw error when node not found in tree', async () => {
+      await expect(service.toggleExpandedNode('non-existent-node')).rejects.toThrow(
+        'Node non-existent-node not found in tree'
+      );
+    });
+
+    it('should throw error when trying to toggle a non-expandable node', async () => {
+      await expect(service.toggleExpandedNode('leaf-node')).rejects.toThrow(
+        'Trying to expand node at id leaf-node that is not expandable'
+      );
+    });
+
+    it('should reload parent children when collapsing', async () => {
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+
+      // Expand then collapse
+      await service.toggleExpandedNode('expandable-node');
+      fetchNodesSpy.mockClear();
+
+      await service.toggleExpandedNode('expandable-node');
+
+      // Should reload parent's (root) children
+      expect(fetchNodesSpy).toHaveBeenCalledWith({ parent: '', query: '' });
+    });
+
+    it('should reload parent children with parent query when collapsing', async () => {
+      // First filter the root with a query
+      await service.filterNode('', 'parent-query');
+
+      // Expand a node
+      await service.toggleExpandedNode('expandable-node');
+
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+
+      // Collapse the node
+      await service.toggleExpandedNode('expandable-node');
+
+      // Should reload parent's children with parent's query
+      expect(fetchNodesSpy).toHaveBeenCalledWith({ parent: '', query: 'parent-query' });
+    });
+  });
+
+  describe('filterNode', () => {
+    const containerNode: ScopeNode = {
+      metadata: { name: 'container-node' },
+      spec: {
+        linkId: '',
+        linkType: undefined,
+        parentName: '',
+        nodeType: 'container',
+        title: 'Container Node',
+      },
+    };
+
+    const filteredChild: ScopeNode = {
+      metadata: { name: 'filtered-child' },
+      spec: {
+        linkId: 'filtered-scope',
+        linkType: 'scope',
+        parentName: 'container-node',
+        nodeType: 'leaf',
+        title: 'Filtered Child',
+      },
+    };
+
+    const leafNode: ScopeNode = {
+      metadata: { name: 'leaf-node-2' },
+      spec: {
+        linkId: 'leaf-scope-2',
+        linkType: 'scope',
+        parentName: '',
+        nodeType: 'leaf',
+        title: 'Leaf Node 2',
+      },
+    };
+
+    beforeEach(async () => {
+      // Mock fetchNodes to return different nodes based on query
+      apiClient.fetchNodes = jest
+        .fn()
+        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+          if (options.parent === '' && !options.query) {
+            return [containerNode, leafNode];
+          } else if (options.parent === 'container-node' && options.query === 'test-filter') {
+            return [filteredChild];
+          } else if (options.parent === 'container-node' && !options.query) {
+            return [filteredChild];
+          }
+          return [];
+        });
+
+      // Load root nodes
+      await service.filterNode('', '');
+    });
+
+    it('should filter node with non-empty query', async () => {
+      await service.filterNode('container-node', 'test-filter');
+
+      // Node should be expanded
+      expect(service.state.tree?.children?.['container-node']?.expanded).toBe(true);
+      // Query should be set
+      expect(service.state.tree?.children?.['container-node']?.query).toBe('test-filter');
+    });
+
+    it('should load children with the query parameter', async () => {
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+
+      await service.filterNode('container-node', 'my-query');
+
+      expect(fetchNodesSpy).toHaveBeenCalledWith({ parent: 'container-node', query: 'my-query' });
+    });
+
+    it('should set expanded to true when filtering', async () => {
+      // Node starts collapsed
+      expect(service.state.tree?.children?.['container-node']?.expanded).toBe(false);
+
+      await service.filterNode('container-node', 'test-filter');
+
+      // Should be expanded after filtering
+      expect(service.state.tree?.children?.['container-node']?.expanded).toBe(true);
+    });
+
+    it('should throw error when node not found', async () => {
+      await expect(service.filterNode('non-existent-node', 'query')).rejects.toThrow(
+        'Trying to filter node at path or id non-existent-node not found'
+      );
+    });
+
+    it('should throw error when trying to filter a non-expandable node', async () => {
+      await expect(service.filterNode('leaf-node-2', 'query')).rejects.toThrow(
+        'Trying to filter node at id leaf-node-2 that is not expandable'
+      );
+    });
+
+    it('should handle multiple calls with different queries', async () => {
+      // First filter
+      await service.filterNode('container-node', 'first-query');
+      expect(service.state.tree?.children?.['container-node']?.query).toBe('first-query');
+
+      // Second filter with different query
+      await service.filterNode('container-node', 'second-query');
+      expect(service.state.tree?.children?.['container-node']?.query).toBe('second-query');
+
+      // Third filter with empty query
+      await service.filterNode('container-node', '');
+      expect(service.state.tree?.children?.['container-node']?.query).toBe('');
+    });
+
+    it('should start profiler interaction', async () => {
+      const profiler = {
+        startInteraction: jest.fn(),
+        stopInteraction: jest.fn(),
+      };
+
+      // Create new service with profiler
+      const serviceWithProfiler = new ScopesSelectorService(apiClient, dashboardsService, store, profiler as never);
+
+      await serviceWithProfiler.filterNode('', '');
+
+      expect(profiler.startInteraction).toHaveBeenCalledWith('scopeNodeFilter');
+      expect(profiler.stopInteraction).toHaveBeenCalled();
+    });
+
+    it('should stop profiler even when error is thrown', async () => {
+      const profiler = {
+        startInteraction: jest.fn(),
+        stopInteraction: jest.fn(),
+      };
+
+      const serviceWithProfiler = new ScopesSelectorService(apiClient, dashboardsService, store, profiler as never);
+
+      // Load initial nodes
+      await serviceWithProfiler.filterNode('', '');
+
+      // Try to filter a non-existent node
+      await expect(serviceWithProfiler.filterNode('non-existent', 'query')).rejects.toThrow();
+
+      // Profiler should still be stopped
+      expect(profiler.stopInteraction).toHaveBeenCalled();
+    });
+  });
+
+  describe('interaction between toggleExpandedNode and filterNode', () => {
+    const expandableNode: ScopeNode = {
+      metadata: { name: 'interaction-node' },
+      spec: {
+        linkId: '',
+        linkType: undefined,
+        parentName: '',
+        nodeType: 'container',
+        title: 'Interaction Node',
+      },
+    };
+
+    const childNode: ScopeNode = {
+      metadata: { name: 'interaction-child' },
+      spec: {
+        linkId: 'child-scope',
+        linkType: 'scope',
+        parentName: 'interaction-node',
+        nodeType: 'leaf',
+        title: 'Child Node',
+      },
+    };
+
+    beforeEach(async () => {
+      apiClient.fetchNodes = jest
+        .fn()
+        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+          if (options.parent === '') {
+            return [expandableNode];
+          } else if (options.parent === 'interaction-node') {
+            return [childNode];
+          }
+          return [];
+        });
+
+      await service.filterNode('', '');
+    });
+
+    it('should clear query when toggleExpandedNode is called after filterNode', async () => {
+      // Filter with a query
+      await service.filterNode('interaction-node', 'test-query');
+      expect(service.state.tree?.children?.['interaction-node']?.query).toBe('test-query');
+
+      // Toggle should clear the query
+      await service.toggleExpandedNode('interaction-node');
+      expect(service.state.tree?.children?.['interaction-node']?.query).toBe('');
+    });
+
+    it('should set query when filterNode is called after toggleExpandedNode', async () => {
+      // First toggle (expand)
+      await service.toggleExpandedNode('interaction-node');
+      expect(service.state.tree?.children?.['interaction-node']?.query).toBe('');
+
+      // Filter should set the query
+      await service.filterNode('interaction-node', 'new-query');
+      expect(service.state.tree?.children?.['interaction-node']?.query).toBe('new-query');
+    });
+
+    it('should maintain expanded state when filtering an already expanded node', async () => {
+      // Expand the node
+      await service.toggleExpandedNode('interaction-node');
+      expect(service.state.tree?.children?.['interaction-node']?.expanded).toBe(true);
+
+      // Filter should keep it expanded
+      await service.filterNode('interaction-node', 'query');
+      expect(service.state.tree?.children?.['interaction-node']?.expanded).toBe(true);
+    });
+  });
+
   describe('redirect on scope selection', () => {
     it('should redirect to the first scopeNavigation with /d/ URL when current URL is not a scopeNavigation', async () => {
-      const mockNavigations: ScopeNavigation[] = [
+      dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
@@ -602,8 +1011,6 @@ describe('ScopesSelectorService', () => {
           },
         },
       ];
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.changeScopes(['test-scope']);
@@ -612,7 +1019,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should NOT redirect when the first scopeNavigation does not contain /d/ (e.g., logs drilldown)', async () => {
-      const mockNavigations: ScopeNavigation[] = [
+      dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
@@ -627,8 +1034,6 @@ describe('ScopesSelectorService', () => {
           },
         },
       ];
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.changeScopes(['test-scope']);
@@ -637,7 +1042,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should NOT redirect when current URL matches a scopeNavigation', async () => {
-      const mockNavigations: ScopeNavigation[] = [
+      dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
@@ -652,8 +1057,6 @@ describe('ScopesSelectorService', () => {
           },
         },
       ];
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' });
 
       await service.changeScopes(['test-scope']);
@@ -671,7 +1074,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should NOT redirect when scopeNavigation does not have a url property', async () => {
-      const mockNavigations = [
+      dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
@@ -686,8 +1089,6 @@ describe('ScopesSelectorService', () => {
           },
         },
       ] as unknown as ScopeNavigation[];
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.changeScopes(['test-scope']);
@@ -696,7 +1097,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should handle multiple scopeNavigations and redirect to the first dashboard one', async () => {
-      const mockNavigations: ScopeNavigation[] = [
+      dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
@@ -724,8 +1125,6 @@ describe('ScopesSelectorService', () => {
           },
         },
       ];
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.changeScopes(['test-scope']);
@@ -760,7 +1159,7 @@ describe('ScopesSelectorService', () => {
         });
 
       // First update the node to populate the service state
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
 
       // Then select the scope to set scopeNodeId in selectedScopes
       await service.selectScope('test-scope-node');
@@ -807,7 +1206,7 @@ describe('ScopesSelectorService', () => {
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       // First update the node to populate the service state
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
 
       // Then select the scope to set scopeNodeId in selectedScopes
       await service.selectScope('test-scope-node');
@@ -821,16 +1220,14 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should fall back to scope navigation when scope node is undefined', async () => {
-      const mockNavigations: ScopeNavigation[] = [
+      // Don't add the node to the service state, so it will be undefined
+      dashboardsService.state.scopeNavigations = [
         {
           spec: { scope: 'test-scope', url: '/d/dashboard1' },
           status: { title: 'Dashboard 1', groups: [] },
           metadata: { name: 'dashboard1' },
         },
       ];
-
-      // Don't add the node to the service state, so it will be undefined
-      dashboardsService.state.scopeNavigations = mockNavigations;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
       await service.changeScopes(['test-scope']);

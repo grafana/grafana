@@ -10,6 +10,7 @@ import {
   TooltipPlugin2,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
@@ -117,6 +118,7 @@ export const StatusHistoryPanel = ({
               {cursorSync !== DashboardCursorSync.Off && (
                 <EventBusPlugin config={builder} eventBus={eventBus} frame={alignedFrame} />
               )}
+              <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
                   config={builder}

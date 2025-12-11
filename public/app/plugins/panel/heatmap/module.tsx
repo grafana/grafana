@@ -18,7 +18,7 @@ import { HeatmapPanel } from './HeatmapPanel';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { HeatmapSuggestionsSupplier } from './suggestions';
+import { heatmapSuggestionsSupplier } from './suggestions';
 import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
@@ -472,5 +472,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setSuggestionsSupplier(heatmapSuggestionsSupplier)
   .setDataSupport({ annotations: true });

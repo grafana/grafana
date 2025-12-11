@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Om du använder en äldre version av Microsoft SQL Server, exempelvis 2008 eller 2008R2, kan du behöva inaktivera kryptering för att kunna ansluta.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "En nedre gräns för den automatiska grupperingen efter tidsintervall. Rekommenderas att ställas in på skrivfrekvens, till exempel<1>{{exampleInterval}}</1> om data skrivs varje minut.",
       "description-tls-cert": "Sökväg till fil som innehåller det offentliga nyckelcertifikatet för den certifikatutfärdare som undertecknade SQL Server-certifikatet. Behövs när servercertifikatet är självsignerat.",
       "label-auth-settings": "Inställningar för Azure-autentisering",
       "label-auth-type": "Behörighetskontrolltyp",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Ange om DNS \"SRV\"-poster ska användas för att hitta KDC:er och andra servrar för en realm. Standard är <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "Sökvägen till konfigurationsfilen för <2>MIT krb5-paketet</2>. Standard är <4>{{default}}</4>.",
       "description-udp-preference-limit": "Standard är <1>{{default}}</1> och innebär att alltid använda TCP och är valfritt.",
       "label-dns-lookup-kdc": "DNS-sökning KDC",
       "label-krb5-config-file-path": "Sökväg till krb5-konfigurationsfil",

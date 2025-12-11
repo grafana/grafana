@@ -3,17 +3,23 @@ package authorizer
 import (
 	"context"
 	"fmt"
+	"slices"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &roleAuthorizer{}
 
+var orgRoleNoneAsViewerAPIGroups = []string{
+	"productactivation.ext.grafana.com",
+}
+
 type roleAuthorizer struct{}
 
-func newRoleAuthorizer() *roleAuthorizer {
+func NewRoleAuthorizer() *roleAuthorizer {
 	return &roleAuthorizer{}
 }
 
@@ -34,13 +40,25 @@ func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attribute
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
-	case org.RoleViewer, org.RoleNone:
+	case org.RoleViewer:
 		switch a.GetVerb() {
 		case "get", "list", "watch":
 			return authorizer.DecisionAllow, "", nil
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
+	case org.RoleNone:
+		// HOTFIX: granting Viewer actions to None roles to a fixed group of APIs,
+		//  while we work on a proper fix.
+		if slices.Contains(orgRoleNoneAsViewerAPIGroups, a.GetAPIGroup()) {
+			switch a.GetVerb() {
+			case "get", "list", "watch":
+				return authorizer.DecisionAllow, "", nil
+			default:
+				return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
+			}
+		}
+		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 	}
 	return authorizer.DecisionDeny, "", nil
 }

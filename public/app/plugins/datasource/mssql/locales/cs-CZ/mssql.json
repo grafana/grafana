@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Pokud používáte starší verzi Microsoft SQL Server, jako je 2008 a 2008R2, možná budete muset zakázat šifrování, abyste se mohli připojit.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Dolní limit pro automatické seskupení podle časového intervalu. Doporučuje se nastavit frekvenci zápisu, například <1>{{exampleInterval}}</1>, pokud jsou data zapisována každou minutu.",
       "description-tls-cert": "Cesta k souboru obsahujícímu certifikát veřejného klíče CA, který podepsal certifikát SQL Server. Nutné, když je certifikát serveru podepsán sám sebou.",
       "label-auth-settings": "Nastavení ověření Azure",
       "label-auth-type": "Typ ověření",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Uveďte, zda by měly být k vyhledání KDC a dalších serverů pro oblast použity záznamy DNS „SRV“. Výchozí hodnota je <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "Cesta ke konfiguračnímu souboru pro <2>balíček MIT krb5</2>. Výchozí hodnota je <4>{{default}}</4>.",
       "description-udp-preference-limit": "Výchozí hodnota je <1>{{default}}</1> (vždy použít TCP) a je volitelná.",
       "label-dns-lookup-kdc": "DNS pro vyhledání KDC",
       "label-krb5-config-file-path": "Cesta ke konfiguračnímu souboru krb5",

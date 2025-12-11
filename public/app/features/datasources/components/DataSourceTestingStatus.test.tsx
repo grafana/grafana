@@ -13,7 +13,7 @@ import { getMockDataSource } from '../mocks/dataSourcesMocks';
 import { DataSourceTestingStatus, Props } from './DataSourceTestingStatus';
 
 // Mock contextSrv
-jest.mock('../../../core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasAccessToExplore: jest.fn(() => true),
   },

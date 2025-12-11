@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/html"
@@ -250,7 +249,11 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
 		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
-		return nil, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed with error: %s", graphiteError), false)
+		err := fmt.Errorf("request failed with error: %s", graphiteError)
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, backend.PluginError(err)
 	}
 
 	var data []TargetResponseDTO

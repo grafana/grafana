@@ -4,9 +4,9 @@ import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata/resourceTypes';
-import { ARGScope } from '../dataquery.gen';
+import { ARGScope, AzureQueryType } from '../dataquery.gen';
 import { createFilter } from '../resourcePicker/resourcePickerData';
-import { AzureMonitorQuery, AzureQueryType } from '../types/query';
+import { AzureMonitorQuery } from '../types/query';
 import {
   AzureGetResourceNamesQuery,
   AzureGraphResponse,

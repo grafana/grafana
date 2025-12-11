@@ -79,7 +79,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "prometheus",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-prometheus"

@@ -31,13 +31,7 @@ import { ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../../profile/state/selectors';
-import {
-  addResultsToCache,
-  clearCache,
-  loadSupplementaryQueryData,
-  selectIsWaitingForData,
-  setSupplementaryQueryEnabled,
-} from '../state/query';
+import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQueryEnabled } from '../state/query';
 import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
@@ -58,7 +52,6 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
-  scrollElement?: HTMLDivElement;
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
   onClickFilterString: (value: string, refId?: string) => void;
   onClickFilterOutString: (value: string, refId?: string) => void;
@@ -260,14 +253,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     );
   };
 
-  addResultsToCache = () => {
-    this.props.addResultsToCache(this.props.exploreId);
-  };
-
-  clearCache = () => {
-    this.props.clearCache(this.props.exploreId);
-  };
-
   loadLogsVolumeData = () => {
     this.props.loadSupplementaryQueryData(this.props.exploreId, SupplementaryQueryType.LogsVolume);
   };
@@ -298,7 +283,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       isLive,
       exploreId,
       logsVolume,
-      scrollElement,
       onPinLineCallback,
     } = this.props;
 
@@ -358,12 +342,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             getRowContextQuery={this.getLogRowContextQuery}
             getLogRowContextUi={this.getLogRowContextUi}
             getFieldLinks={this.getFieldLinks}
-            addResultsToCache={this.addResultsToCache}
-            clearCache={this.clearCache}
             eventBus={this.props.eventBus}
             panelState={this.props.panelState}
             logsFrames={this.props.logsFrames}
-            scrollElement={scrollElement}
             isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
             onPinLineCallback={onPinLineCallback}
@@ -419,8 +400,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 const mapDispatchToProps = {
   updateTimeRange,
   loadMoreLogs,
-  addResultsToCache,
-  clearCache,
   loadSupplementaryQueryData,
   setSupplementaryQueryEnabled,
 };

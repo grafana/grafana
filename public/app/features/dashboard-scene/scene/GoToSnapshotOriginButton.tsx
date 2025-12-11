@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
-import appEvents from '../../../core/app_events';
+import { appEvents } from '../../../core/app_events';
 import { ShowModalReactEvent } from '../../../types/events';
 
 export function GoToSnapshotOriginButton(props: { originalURL: string }) {
@@ -20,7 +20,7 @@ export function GoToSnapshotOriginButton(props: { originalURL: string }) {
   );
 }
 
-const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
+export const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
   const relativeURL = originalUrl ?? '';
   const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
   try {

@@ -175,7 +175,7 @@
         "label-scrape-interval": "抓取間隔",
         "label-series-limit": "序列限制",
         "label-use-series-endpoint": "使用序列端點",
-        "more-info": "",
+        "more-info": "如需更多在資料來源中設定 Prometheus 類型與版本的相關資訊，請參閱<2>佈建文件</2>。",
         "placeholder-example-maxsourceresolutionmtimeout": "範例：{{example}}",
         "title-interval-behaviour": "間隔行為",
         "title-other": "其他",

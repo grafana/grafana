@@ -94,9 +94,18 @@ exports[`TableNG utils buildInspectValue should handle string 1`] = `
 ]
 `;
 
+exports[`TableNG utils buildInspectValue should handle string w/ JSON (invalid JSON) 1`] = `
+[
+  ""{\\"invalid\\": \\"json"",
+  "code",
+]
+`;
+
 exports[`TableNG utils buildInspectValue should handle string w/ JSON 1`] = `
 [
-  ""baz"",
+  "{
+  "valid": "json"
+}",
   "code",
 ]
 `;

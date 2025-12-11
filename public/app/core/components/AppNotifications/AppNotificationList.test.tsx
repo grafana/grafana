@@ -1,7 +1,7 @@
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { KioskMode } from 'app/types/dashboard';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
@@ -95,6 +95,49 @@ describe('AppNotificationList', () => {
       await sendTestNotification(AppEvents.alertInfo, expectedInfoMessage);
 
       expect(await screen.findByText(expectedInfoMessage)).toBeInTheDocument();
+    });
+  });
+
+  describe('Event listener cleanup', () => {
+    let onSpy: jest.SpyInstance;
+    let offSpy: jest.SpyInstance;
+
+    const eventTypes = [AppEvents.alertWarning, AppEvents.alertSuccess, AppEvents.alertError, AppEvents.alertInfo];
+
+    beforeEach(() => {
+      onSpy = jest.spyOn(appEvents, 'on');
+      offSpy = jest.spyOn(appEvents, 'off');
+    });
+
+    afterEach(() => {
+      onSpy.mockRestore();
+      offSpy.mockRestore();
+    });
+
+    it('should register event listeners on mount', () => {
+      renderWithContext();
+
+      expect(onSpy).toHaveBeenCalledTimes(4);
+      eventTypes.forEach((eventType) => {
+        expect(onSpy).toHaveBeenCalledWith(eventType, expect.any(Function));
+      });
+    });
+
+    it('should unregister event listeners on unmount', () => {
+      const { unmount } = renderWithContext();
+
+      const handlers = eventTypes.map((eventType) => {
+        const handler = onSpy.mock.calls.find((call) => call[0] === eventType)?.[1];
+        expect(handler).toBeDefined();
+        return { eventType, handler };
+      });
+
+      unmount();
+
+      expect(offSpy).toHaveBeenCalledTimes(4);
+      handlers.forEach(({ eventType, handler }) => {
+        expect(offSpy).toHaveBeenCalledWith(eventType, handler);
+      });
     });
   });
 

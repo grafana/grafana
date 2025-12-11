@@ -19,7 +19,7 @@ First, check if the `group` and the `version` are already present in [openapi_te
 }
 ```
 
-Afterwards, you need to run the `TestIntegrationOpenAPIs` test. Note that it will fail the first time you run it. On the second run, it will generate the corresponding OpenAPI spec, which you can find in [openapi_snapshots](../../pkg/tests/apis/openapi_snapshots).
+Afterwards, you need to run the `TestIntegrationOpenAPIs` test with `go test ./pkg/tests/apis -run TestIntegrationOpenAPIs`. Note that it will fail the first time you run it. On the second run, it will generate the corresponding OpenAPI spec, which you can find in [openapi_snapshots](../../pkg/tests/apis/openapi_snapshots).
 
 > Note: You don't need to follow these two steps if the `group` you're working with is already in the `openapi_test.go` file.
 

@@ -302,10 +302,6 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 
 	if renderType == RenderPDF {
-		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
-			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
-		}
-
 		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
 			return nil, err
 		}

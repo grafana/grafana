@@ -1,6 +1,13 @@
 import { css } from '@emotion/css';
 
-import { CoreApp, getPanelDataSummary, GrafanaTheme2, PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
+import {
+  CoreApp,
+  FieldType,
+  getPanelDataSummary,
+  GrafanaTheme2,
+  PanelDataSummary,
+  PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
@@ -63,7 +70,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     );
   };
 
-  const loadSuggestion = (s: VisualizationSuggestion) => {
+  const loadSuggestion = (s: PanelPluginVisualizationSuggestion) => {
     if (!panel) {
       return;
     }
@@ -128,15 +135,15 @@ function getMessageFor(
     return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
-  if (needsStringField && !dataSummary.hasStringField) {
+  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
     return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
 
-  if (needsNumberField && !dataSummary.hasNumberField) {
+  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
     return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
-  if (needsTimeField && !dataSummary.hasTimeField) {
+  if (needsTimeField && !dataSummary.hasFieldType(FieldType.time)) {
     return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
   }
 

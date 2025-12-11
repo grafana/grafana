@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -282,93 +284,6 @@ func TestSearchHandlerPagination(t *testing.T) {
 }
 
 func TestSearchHandler(t *testing.T) {
-	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?field=field1&field=field2&field=field3", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", "field1", "field2", "field3"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
-	t.Run("Single field will be appended to default dashboard search fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?field=field1", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", "field1"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
-	t.Run("Passing no fields will search using default dashboard fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
 	t.Run("Sort - default sort by resource", func(t *testing.T) {
 		rows := make([]*resourcepb.ResourceTableRow, len(mockResults))
 		for i, r := range mockResults {
@@ -689,6 +604,408 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	})
 }
 
+func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
+	testUser := &user.SignedInUser{
+		Namespace: "test-namespace",
+		OrgID:     1,
+	}
+
+	dashboardKey := &resourcepb.ResourceKey{
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Namespace: "test-namespace",
+	}
+	folderKey := &resourcepb.ResourceKey{
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+		Namespace: "test-namespace",
+	}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+
+	tests := map[string]struct {
+		queryString           string
+		sharedDashboards      []string
+		sharedDashboardsError error
+		expected              *resourcepb.ResourceSearchRequest
+		expectedError         error
+	}{
+		"default values with no query params": {
+			queryString: "",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"custom limit and offset": {
+			queryString: "limit=100&offset=50",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     100,
+				Offset:    50,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"pagination with page parameter": {
+			queryString: "limit=25&page=3",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     25,
+				Offset:    50,
+				Page:      3,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"query string and explain": {
+			queryString: "query=test-query&explain=true",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "test-query",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   true,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"additional fields": {
+			queryString: "field=custom1&field=custom2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    append(defaultFields, "custom1", "custom2"),
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"view permission": {
+			queryString: "permission=view",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_VIEW),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"edit permission": {
+			queryString: "permission=Edit",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_EDIT),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"admin permission": {
+			queryString: "permission=ADMIN",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_ADMIN),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"type dashboard only": {
+			queryString: "type=dashboard",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
+		"type folder only": {
+			queryString: "type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: folderKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
+		"both types should include federated": {
+			queryString: "type=dashboard&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort ascending": {
+			queryString: "sort=title",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: false}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort descending": {
+			queryString: "sort=-title",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields": {
+			queryString: "facet=tags&facet=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags":   {Field: "tags", Limit: 50},
+					"folder": {Field: "folder", Limit: 50},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"tag filter": {
+			queryString: "tag=tag1&tag=tag2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"folder filter": {
+			queryString: "folder=my-folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{"my-folder"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"tag and folder filter together": {
+			queryString: "tag=tag1&tag=tag2&folder=my-folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}},
+						{Key: "folder", Operator: "=", Values: []string{"my-folder"}},
+					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"root folder should be converted to empty string": {
+			queryString: "folder=general",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{""}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"shared with me folder with dashboards": {
+			queryString:      "folder=sharedwithme",
+			sharedDashboards: []string{"dash1", "dash2", "dash3"},
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "name", Operator: "in", Values: []string{"dash1", "dash2", "dash3"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"shared with me folder without dashboards returns error": {
+			queryString:      "folder=sharedwithme",
+			sharedDashboards: []string{},
+			expectedError:    errEmptyResults,
+		},
+		"name filter": {
+			queryString: "name=name1&name=name2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "name", Operator: "in", Values: []string{"name1", "name2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"comprehensive filter with query, tags, folder, and name": {
+			queryString: "query=search-term&tag=monitoring&tag=prod&folder=my-folder&name=dash1&name=dash2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
+						{Key: "folder", Operator: "=", Values: []string{"my-folder"}},
+						{Key: "name", Operator: "in", Values: []string{"dash1", "dash2"}},
+					},
+				},
+				Query:     "search-term",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"libraryPanel filter": {
+			queryString: "libraryPanel=panel1&libraryPanel=panel2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1", "panel2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"libraryPanel and tag filter together": {
+			queryString: "libraryPanel=panel1&tag=monitoring&tag=prod",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
+						{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1"}},
+					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			queryParams, err := url.ParseQuery(tt.queryString)
+			require.NoError(t, err)
+
+			getDashboardsFunc := func() ([]string, error) {
+				if tt.sharedDashboardsError != nil {
+					return nil, tt.sharedDashboardsError
+				}
+				return tt.sharedDashboards, nil
+			}
+
+			result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, getDashboardsFunc)
+
+			if tt.expectedError != nil {
+				assert.ErrorIs(t, err, tt.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 // MockClient implements the ResourceIndexClient interface for testing
 type MockClient struct {
 	resourcepb.ResourceIndexClient
@@ -785,4 +1102,8 @@ func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (
 }
 func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 	return nil
+}
+
+func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
 }

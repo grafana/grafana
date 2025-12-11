@@ -8,7 +8,7 @@ import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { isCurrentPath } from './scopeNavgiationUtils';
-import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
+import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
@@ -23,6 +23,7 @@ interface ScopesDashboardsServiceState {
   forScopeNames: string[];
   loading: boolean;
   searchQuery: string;
+  navigationScope?: string;
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
@@ -55,6 +56,18 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       }
     });
   }
+
+  // The fallbackScopeNames is used to fetch the ScopeNavigations for the current dashboard when the navigationScope is not set.
+  // You only need to awaut this function if you need to wait for the dashboards to be fetched before doing something else.
+  public setNavigationScope = async (navigationScope?: string, fallbackScopeNames?: string[]) => {
+    if (this.state.navigationScope === navigationScope) {
+      return;
+    }
+
+    const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
+    this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
+    await this.fetchDashboards(forScopeNames);
+  };
 
   // Expand the group that matches the current path, if it is not already expanded
   private onLocationChange = (pathname: string) => {
@@ -105,6 +118,92 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     currentFolder.expanded = expanded;
     currentFilteredFolder.expanded = expanded;
+
+    // If expanding a subScope folder, fetch items for that subScope asynchronously
+    if (expanded && currentFolder.subScopeName) {
+      // Only fetch if folder is empty (hasn't been loaded yet)
+      const isEmpty =
+        Object.keys(currentFolder.folders).length === 0 && Object.keys(currentFolder.suggestedNavigations).length === 0;
+
+      if (!isEmpty) {
+        // Folder already has content, skip fetching
+        this.updateState({ folders, filteredFolders });
+        return;
+      }
+
+      // Set loading state for this folder
+      currentFolder.loading = true;
+      currentFilteredFolder.loading = true;
+      // Extract the subScope name from the folder (stored when folder was created)
+      const subScopeName = currentFolder.subScopeName || name;
+      // Fetch asynchronously without blocking the state update
+      this.fetchSubScopeItems(path, subScopeName);
+    } else if (!expanded) {
+      // Clear loading state when collapsing
+      currentFolder.loading = false;
+      currentFilteredFolder.loading = false;
+    }
+
+    this.updateState({ folders, filteredFolders });
+  };
+
+  private fetchSubScopeItems = async (path: string[], subScopeName: string) => {
+    let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
+
+    try {
+      // Fetch navigations for this subScope
+      const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
+        ? this.apiClient.fetchScopeNavigations
+        : this.apiClient.fetchDashboards;
+
+      const subScopeItems = await fetchNavigations([subScopeName]);
+
+      // Filter out items that have a subScope matching any subScope already in the path
+      // This prevents infinite loops when a subScope returns items with the same subScope
+      const filteredItems = filterItemsWithSubScopesInPath(subScopeItems, path, subScopeName, this.state.folders);
+
+      // Group the items and add them to the subScope folder
+      subScopeFolders = this.groupSuggestedItems(filteredItems);
+    } catch (error) {
+      // On error, subScopeFolders will remain undefined and we'll only clear loading state
+    }
+
+    // Get the current state and navigate to the target folder
+    let folders = { ...this.state.folders };
+    let filteredFolders = { ...this.state.filteredFolders };
+    let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
+
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      currentLevelFolders = currentLevelFolders[path[idx]].folders;
+      currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
+    }
+
+    const name = path[path.length - 1];
+    const currentFolder = currentLevelFolders[name];
+    const currentFilteredFolder = currentLevelFilteredFolders[name];
+
+    // Clear loading state
+    currentFolder.loading = false;
+    currentFilteredFolder.loading = false;
+
+    // Merge the subScope folder's content with the fetched items (if fetch succeeded)
+    if (subScopeFolders) {
+      // Take items from the root of the grouped structure
+      const rootSubScopeFolder = subScopeFolders[''];
+      currentFolder.folders = { ...currentFolder.folders, ...rootSubScopeFolder.folders };
+      currentFolder.suggestedNavigations = {
+        ...currentFolder.suggestedNavigations,
+        ...rootSubScopeFolder.suggestedNavigations,
+      };
+
+      // Also update filtered folders
+      currentFilteredFolder.folders = { ...currentFilteredFolder.folders, ...rootSubScopeFolder.folders };
+      currentFilteredFolder.suggestedNavigations = {
+        ...currentFilteredFolder.suggestedNavigations,
+        ...rootSubScopeFolder.suggestedNavigations,
+      };
+    }
 
     this.updateState({ folders, filteredFolders });
   };
@@ -180,6 +279,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     navigationItems.forEach((navigation) => {
       const rootNode = folders[''];
       const groups = navigation.status.groups ?? [];
+      const subScope = 'subScope' in navigation.spec ? navigation.spec.subScope : undefined;
 
       // If the current URL matches an item, expand the parent folders.
       let expanded = false;
@@ -193,31 +293,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         expanded = currentPath.startsWith(navigation.spec.url);
       }
 
-      groups.forEach((group) => {
-        const groupExists = !!rootNode.folders[group];
-        const groupCurrentlyExpanded = groupExists && rootNode.folders[group].expanded;
-
-        if (group && !groupExists) {
-          rootNode.folders[group] = {
-            title: group,
-            expanded,
-            folders: {},
-            suggestedNavigations: {},
-          };
-        }
-        if (group && expanded && !groupCurrentlyExpanded) {
-          rootNode.folders[group].expanded = true;
-        }
-      });
-
-      const targets =
-        groups.length > 0
-          ? groups.map((group) =>
-              group === '' ? rootNode.suggestedNavigations : rootNode.folders[group].suggestedNavigations
-            )
-          : [rootNode.suggestedNavigations];
-
-      targets.forEach((target) => {
+      // Helper function to add navigation item to a target
+      const addNavigationToTarget = (target: SuggestedNavigationsMap) => {
         // Dashboard
         if (
           'dashboard' in navigation.spec &&
@@ -236,7 +313,64 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
             id: navigation.metadata.name,
           };
         }
-      });
+      };
+
+      // Items with subScope completely ignore groups and go to a separate section
+      // They only create expandable folders, not navigation items
+      // Multiple items with the same subScope create separate folders that reference the same subScope
+      if (subScope) {
+        const navigationTitle =
+          ('title' in navigation.status && navigation.status.title) ||
+          ('dashboardTitle' in navigation.status && navigation.status.dashboardTitle) ||
+          navigation.metadata.name;
+
+        // Create a separate folder for each item, using a unique key
+        // All folders with the same subScope will load the same content when expanded
+        const folderKey = `${subScope}-${navigation.metadata.name}`;
+        if (!rootNode.folders[folderKey]) {
+          rootNode.folders[folderKey] = {
+            title: navigationTitle,
+            expanded,
+            folders: {},
+            suggestedNavigations: {},
+            subScopeName: subScope,
+          };
+        }
+        if (expanded && !rootNode.folders[folderKey].expanded) {
+          rootNode.folders[folderKey].expanded = true;
+        }
+        // Don't add the navigation item - it only creates/updates the folder
+      } else {
+        // Items without subScope: add to group folders (if groups exist) or root
+        if (groups.length > 0) {
+          // Add item to all group folders at root level
+          // Each group gets the item separately, not nested
+          groups.forEach((group) => {
+            if (group) {
+              if (!rootNode.folders[group]) {
+                rootNode.folders[group] = {
+                  title: group,
+                  expanded,
+                  folders: {},
+                  suggestedNavigations: {},
+                };
+              }
+              if (expanded && !rootNode.folders[group].expanded) {
+                rootNode.folders[group].expanded = true;
+              }
+
+              // Add the navigation item directly to the group folder
+              addNavigationToTarget(rootNode.folders[group].suggestedNavigations);
+            } else {
+              // Empty string group means add to root folder
+              addNavigationToTarget(rootNode.suggestedNavigations);
+            }
+          });
+        } else {
+          // If no groups, add to root
+          addNavigationToTarget(rootNode.suggestedNavigations);
+        }
+      }
     });
 
     return folders;
@@ -276,4 +410,44 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
+}
+
+/**
+ * Filters out navigation items that have a subScope matching any subScope already in the path.
+ * This prevents infinite loops when a subScope returns items with the same subScope.
+ * @param items - The navigation items to filter
+ * @param path - The folder path to check for existing subScopes
+ * @param currentSubScope - The subScope currently being expanded
+ * @param folders - The folder structure to traverse
+ * @returns Filtered items without subScopes that would create infinite loops
+ */
+export function filterItemsWithSubScopesInPath(
+  items: Array<ScopeDashboardBinding | ScopeNavigation>,
+  path: string[],
+  currentSubScope: string,
+  folders: SuggestedNavigationsFoldersMap
+): Array<ScopeDashboardBinding | ScopeNavigation> {
+  const subScopesInPath = new Set<string>();
+  // Include the current subScope being expanded
+  subScopesInPath.add(currentSubScope);
+
+  // Traverse the path and collect all subScope names
+  let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+  for (const folderKey of path) {
+    const folder = currentLevelFolders[folderKey];
+    if (folder?.subScopeName) {
+      subScopesInPath.add(folder.subScopeName);
+    }
+    if (folder) {
+      currentLevelFolders = folder.folders;
+    } else {
+      // If folder is not found, break to avoid errors
+      break;
+    }
+  }
+
+  return items.filter((item) => {
+    const itemSubScope = 'subScope' in item.spec ? item.spec.subScope : undefined;
+    return !itemSubScope || !subScopesInPath.has(itemSubScope);
+  });
 }

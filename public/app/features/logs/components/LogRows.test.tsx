@@ -18,13 +18,6 @@ jest.mock('../utils', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      logRowsPopoverMenu: true,
-    },
-  },
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 

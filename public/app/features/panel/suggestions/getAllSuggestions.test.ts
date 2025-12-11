@@ -2,38 +2,91 @@ import {
   DataFrame,
   FieldType,
   getDefaultTimeRange,
+  getPanelDataSummary,
   LoadingState,
   PanelData,
-  PanelPluginMeta,
+  PanelPluginVisualizationSuggestion,
+  PluginType,
   toDataFrame,
-  VisualizationSuggestion,
+  VisualizationSuggestionScore,
 } from '@grafana/data';
-import { GraphFieldConfig, ReduceDataOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BigValueColorMode,
+  GraphFieldConfig,
+  ReduceDataOptions,
+  StackingMode,
+  VizOrientation,
+} from '@grafana/schema';
 import { config } from 'app/core/config';
-import { SuggestionName } from 'app/types/suggestions';
 
-import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
+import { panelsToCheckFirst } from './consts';
+import { getAllSuggestions, sortSuggestions } from './getAllSuggestions';
 
+config.featureToggles.externalVizSuggestions = true;
+
+let idx = 0;
 for (const pluginId of panelsToCheckFirst) {
+  if (pluginId === 'geomap') {
+    continue;
+  }
   config.panels[pluginId] = {
-    module: `core:plugin/${pluginId}`,
     id: pluginId,
-  } as PanelPluginMeta;
+    module: `core:plugin/${pluginId}`,
+    sort: idx++,
+    name: pluginId,
+    type: PluginType.panel,
+    baseUrl: 'public/app/plugins/panel',
+    suggestions: true,
+    info: {
+      version: '1.0.0',
+      updated: '2025-01-01',
+      links: [],
+      screenshots: [],
+      author: {
+        name: 'Grafana Labs',
+      },
+      description: pluginId,
+      logos: { small: 'small/logo', large: 'large/logo' },
+    },
+  };
 }
 
-config.panels['text'] = {
+config.panels.text = {
   id: 'text',
+  module: 'core:plugin/text',
+  sort: idx++,
   name: 'Text',
+  type: PluginType.panel,
+  baseUrl: 'public/app/plugins/panel',
   skipDataQuery: true,
+  suggestions: false,
   info: {
-    description: 'pretty decent plugin',
+    version: '1.0.0',
+    updated: '2025-01-01',
+    links: [],
+    screenshots: [],
+    author: {
+      name: 'Grafana Labs',
+    },
+    description: 'Text panel',
     logos: { small: 'small/logo', large: 'large/logo' },
   },
-} as PanelPluginMeta;
+};
+
+jest.mock('../state/util', () => {
+  const originalModule = jest.requireActual('../state/util');
+  return {
+    ...originalModule,
+    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
+  };
+});
+
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: Array<VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
+  suggestions: Array<PanelPluginVisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;
@@ -69,7 +122,10 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel]);
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'text' }),
+    ]);
   });
 });
 
@@ -84,7 +140,7 @@ scenario('No rows', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table]);
+    expect(ctx.suggestions).toEqual([expect.objectContaining({ pluginId: 'table' })]);
   });
 });
 
@@ -99,34 +155,47 @@ scenario('Single frame with time and number field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChart,
-      SuggestionName.LineChartGradientColorScheme,
-      SuggestionName.BarChart,
-      SuggestionName.BarChartGradientColorScheme,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
+      expect.objectContaining({ pluginId: 'gauge' }),
+      expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
+      expect.objectContaining({ pluginId: 'stat' }),
+      expect.objectContaining({
+        pluginId: 'stat',
+        options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
+      expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'state-timeline' }),
+      expect.objectContaining({ pluginId: 'status-history' }),
+      expect.objectContaining({ pluginId: 'heatmap' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
   it('Bar chart suggestion should be using timeseries panel', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)?.pluginId).toBe('timeseries');
+    expect(ctx.suggestions.find((x) => x.name === 'Bar chart')?.pluginId).toBe('timeseries');
   });
 
-  it('Stat panels have reduce values disabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
-      }
+  it('Scalar panels should use calcs', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            reduceOptions: expect.objectContaining({ values: false, calcs: ['lastNotNull'] }),
+          }),
+        })
+      );
     }
   });
 });
@@ -143,32 +212,47 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChartStacked,
-      SuggestionName.AreaChartStackedPercent,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked by percentage' }),
+      expect.objectContaining({ pluginId: 'gauge' }),
+      expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
+      expect.objectContaining({ pluginId: 'stat' }),
+      expect.objectContaining({
+        pluginId: 'stat',
+        options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
+      }),
+      expect.objectContaining({ pluginId: 'piechart' }),
+      expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
+      expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'state-timeline' }),
+      expect.objectContaining({ pluginId: 'status-history' }),
+      expect.objectContaining({ pluginId: 'heatmap' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
-  it('Stat panels have reduceOptions.values disabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
-      }
+  it('Scalar panels should use calcs', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            reduceOptions: expect.objectContaining({ values: false, calcs: ['lastNotNull'] }),
+          }),
+        })
+      );
     }
   });
 });
@@ -184,7 +268,7 @@ scenario('Single time series with 100 data points', (ctx) => {
   ]);
 
   it('should not suggest bar chart', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)).toBe(undefined);
+    expect(ctx.suggestions.find((x) => x.name === 'Bar chart')).toBe(undefined);
   });
 });
 
@@ -235,26 +319,40 @@ scenario('Single frame with string and number field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.BarChart,
-      SuggestionName.BarChartHorizontal,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'piechart' }),
+      expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
+      expect.objectContaining({ pluginId: 'barchart' }),
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ orientation: VizOrientation.Horizontal }),
+      }),
+      expect.objectContaining({ pluginId: 'gauge' }),
+      expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
+      expect.objectContaining({ pluginId: 'stat' }),
+      expect.objectContaining({
+        pluginId: 'stat',
+        options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
+      expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
-  it('Stat/Gauge/BarGauge/PieChart panels to have reduceOptions.values enabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions && !suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to false when it should be true`);
-      }
+  it('Scalar panels should contain raw values', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({ reduceOptions: expect.objectContaining({ values: true, calcs: [] }) }),
+        })
+      );
     }
   });
 });
@@ -271,22 +369,48 @@ scenario('Single frame with string and 2 number field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.BarChart,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
-      SuggestionName.BarChartHorizontal,
-      SuggestionName.BarChartHorizontalStacked,
-      SuggestionName.BarChartHorizontalStackedPercent,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'barchart' }),
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ stacking: StackingMode.Normal }),
+      }),
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ stacking: StackingMode.Percent }),
+      }),
+
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ orientation: VizOrientation.Horizontal }),
+      }),
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ orientation: VizOrientation.Horizontal, stacking: StackingMode.Normal }),
+      }),
+      expect.objectContaining({
+        pluginId: 'barchart',
+        options: expect.objectContaining({ orientation: VizOrientation.Horizontal, stacking: StackingMode.Percent }),
+      }),
+      expect.objectContaining({ pluginId: 'gauge' }),
+      expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
+      expect.objectContaining({ pluginId: 'stat' }),
+      expect.objectContaining({
+        pluginId: 'stat',
+        options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
+      }),
+      expect.objectContaining({ pluginId: 'piechart' }),
+      expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
+      expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 });
@@ -299,11 +423,14 @@ scenario('Single frame with only string field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.Table]);
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'stat' }),
+      expect.objectContaining({ pluginId: 'table' }),
+    ]);
   });
 
   it('Stat panels have reduceOptions.fields set to show all fields', () => {
-    for (const suggestion of ctx.suggestions) {
+    for (const suggestion of ctx.suggestions.filter((s) => s.pluginId === 'stat')) {
       if (suggestion.options?.reduceOptions) {
         expect(suggestion.options.reduceOptions.fields).toBe('/.*/');
       }
@@ -333,7 +460,10 @@ scenario('Given default loki logs data', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Logs, SuggestionName.Table]);
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'logs' }),
+      expect.objectContaining({ pluginId: 'table' }),
+    ]);
   });
 });
 
@@ -356,7 +486,71 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   ]);
 
   it('should return the preferred visualization first', () => {
-    expect(ctx.names()[0]).toEqual(SuggestionName.Table);
+    expect(ctx.suggestions[0]).toEqual(expect.objectContaining({ pluginId: 'table' }));
+  });
+});
+
+describe('sortSuggestions', () => {
+  it('should sort suggestions correctly by score', () => {
+    const suggestions = [
+      { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'stat', name: 'Stat', hash: 'c', score: VisualizationSuggestionScore.Good },
+    ] satisfies PanelPluginVisualizationSuggestion[];
+
+    const dataSummary = getPanelDataSummary([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+          { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        ],
+      }),
+    ]);
+
+    sortSuggestions(suggestions, dataSummary);
+
+    expect(suggestions[0].pluginId).toBe('stat');
+    expect(suggestions[1].pluginId).toBe('timeseries');
+    expect(suggestions[2].pluginId).toBe('table');
+  });
+
+  it('should sort suggestions based on core module', () => {
+    const suggestions = [
+      {
+        pluginId: 'fake-external-panel',
+        name: 'Time series',
+        hash: 'b',
+        score: VisualizationSuggestionScore.Good,
+      },
+      {
+        pluginId: 'fake-external-panel',
+        name: 'Time series',
+        hash: 'd',
+        score: VisualizationSuggestionScore.Best,
+      },
+      { pluginId: 'timeseries', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'stat', name: 'Stat', hash: 'c', score: VisualizationSuggestionScore.Good },
+    ] satisfies PanelPluginVisualizationSuggestion[];
+
+    const dataSummary = getPanelDataSummary([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+          { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        ],
+      }),
+    ]);
+
+    sortSuggestions(suggestions, dataSummary);
+
+    expect(suggestions[0].pluginId).toBe('stat');
+    expect(suggestions[1].pluginId).toBe('timeseries');
+    expect(suggestions[2].pluginId).toBe('fake-external-panel');
+    expect(suggestions[2].hash).toBe('d');
+    expect(suggestions[3].pluginId).toBe('fake-external-panel');
+    expect(suggestions[3].hash).toBe('b');
   });
 });
 

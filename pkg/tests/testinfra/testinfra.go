@@ -49,6 +49,12 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, db.DB) {
 }
 
 func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv) {
+	addr, env, testDB := StartGrafanaEnvWithDB(t, grafDir, cfgPath)
+	t.Cleanup(testDB.Cleanup)
+	return addr, env
+}
+
+func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -93,7 +99,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	// Use proper database type based on the environment variable GRAFANA_TEST_DB in tests
 	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
 	require.NoError(t, err)
-	t.Cleanup(testDB.Cleanup)
 
 	dbCfg := cfg.Raw.Section("database")
 	dbCfg.Key("type").SetValue(testDB.DriverName)
@@ -102,6 +107,9 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	dbCfg.Key("user").SetValue(testDB.User)
 	dbCfg.Key("password").SetValue(testDB.Password)
 	dbCfg.Key("name").SetValue(testDB.Database)
+	if testDB.Path != "" {
+		dbCfg.Key("path").SetValue(testDB.Path)
+	}
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
@@ -169,7 +177,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr, env
+	return addr, env, testDB
 }
 
 // CreateGrafDir creates the Grafana directory.
@@ -307,6 +315,21 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
+
+	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
+	require.NoError(t, err)
+	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
+	require.NoError(t, err)
+	if !opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+		require.NoError(t, err)
+		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
+		require.NoError(t, err)
+
+		// so staticFlags can be provided to static provider
+		_, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+	}
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
@@ -526,10 +549,22 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.UnifiedStorageEnableSearch {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_search", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
+		require.NoError(t, err)
+	}
+	if opts.DisableDataMigrations {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("disable_data_migrations", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -622,6 +657,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageEnableSearch            bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
@@ -630,7 +666,10 @@ type GrafanaOpts struct {
 	EnableSCIM                            bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
+	DisableDBCleanup                      bool
+	DisableDataMigrations                 bool
 	SecretsManagerEnableDBMigrations      bool
+	OpenFeatureAPIEnabled                 bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string

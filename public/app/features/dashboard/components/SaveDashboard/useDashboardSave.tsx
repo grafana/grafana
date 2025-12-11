@@ -5,7 +5,7 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -65,7 +65,13 @@ export const useDashboardSave = (isCopy = false) => {
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          trackDashboardCreatedOrSaved(!!dashboard.id, { name: dashboard.title, url: result.url });
+          trackDashboardCreatedOrSaved(!!dashboard.id, {
+            name: dashboard.title,
+            url: result.url,
+            uid: result.uid,
+            numPanels: dashboard.panels.filter((p) => p.type !== 'row').length,
+            numRows: dashboard.panels.filter((p) => p.type === 'row').length,
+          });
         }
 
         const currentPath = locationService.getLocation().pathname;

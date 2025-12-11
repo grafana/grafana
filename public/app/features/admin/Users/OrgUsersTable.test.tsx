@@ -7,7 +7,7 @@ import { getMockUsers } from '../../users/mocks/userMocks';
 
 import { OrgUsersTable, Props } from './OrgUsersTable';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,

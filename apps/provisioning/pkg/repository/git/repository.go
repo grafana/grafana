@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/hash"
+	"github.com/grafana/nanogit/retry"
 )
 
 type RepositoryConfig struct {
@@ -144,7 +145,7 @@ func isValidGitURL(gitURL string) bool {
 
 // Test implements provisioning.Repository.
 func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	ctx, _ = r.logger(ctx, "")
+	ctx, _ = r.withGitContext(ctx, "")
 
 	t := string(r.config.Spec.Type)
 
@@ -219,7 +220,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 // Read implements provisioning.Repository.
 func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
 
 	// Resolve ref to commit hash
@@ -271,7 +272,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 }
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
@@ -319,7 +320,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
@@ -364,7 +365,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 
 	// Check if trying to update a directory
 	if safepath.IsDir(path) {
@@ -411,7 +412,7 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 		ref = r.gitConfig.Branch
 	}
 
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 	info, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
@@ -431,7 +432,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
@@ -454,7 +455,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
-	ctx, _ = r.logger(ctx, ref)
+	ctx, _ = r.withGitContext(ctx, ref)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
@@ -545,6 +546,7 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 }
 
 func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	ctx, _ = r.withGitContext(ctx, "")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list refs: %w", err)
@@ -566,7 +568,7 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 }
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
-	ctx, _ = r.logger(ctx, "")
+	ctx, _ = r.withGitContext(ctx, "")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
 		return "", fmt.Errorf("get branch ref: %w", err)
@@ -583,7 +585,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("ref cannot be empty")
 	}
 
-	ctx, logger := r.logger(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, ref)
 
 	// Resolve base ref to hash
 	var baseHash hash.Hash
@@ -671,11 +673,15 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 }
 
 func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
+	ctx = ensureRetryContext(ctx)
+	ctx, _ = r.withGitContext(ctx, "")
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
 // resolveRefToHash resolves a ref (branch name or commit hash) to a commit hash
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
+	ctx, _ = r.withGitContext(ctx, ref)
+
 	// Use default branch if ref is empty
 	if ref == "" {
 		ref = r.gitConfig.Branch
@@ -706,6 +712,8 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 // ensureBranchExists checks if a branch exists and creates it if it doesn't,
 // returning the branch reference to avoid duplicate GetRef calls
 func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName string) (nanogit.Ref, error) {
+	ctx, _ = r.withGitContext(ctx, branchName)
+
 	if !IsValidGitBranchName(branchName) {
 		return nanogit.Ref{}, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -802,7 +810,57 @@ func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.Staged
 	return nil
 }
 
-func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
+// defaultGitRetrier returns a default retrier configuration for Git operations.
+//
+// Retry attempts will happen when:
+//   - Network errors occur: connection timeouts, temporary network failures, or connection errors
+//   - HTTP 5xx server errors: For GET and DELETE operations (idempotent)
+//   - HTTP 429 Too Many Requests: For all operations (rate limiting is temporary)
+//
+// The retry behavior:
+//   - Total attempts: 8 (1 initial attempt + 7 retries)
+//   - Initial delay: 100ms before the first retry
+//   - Exponential backoff: delay doubles after each failed attempt (100ms → 200ms → 400ms → 800ms → 1.6s → 3.2s → 5s)
+//   - Maximum delay: capped at 5 seconds
+//   - Jitter: enabled to prevent thundering herd problems
+//   - Total retry window: approximately 10 seconds from first attempt to last retry
+//
+// All attempts will fail when:
+//   - The Git server is completely unavailable or unreachable
+//   - Network connectivity issues persist beyond the retry window (~10 seconds)
+//   - The server returns transient errors consistently for the entire retry duration
+//   - Context cancellation occurs before retries complete
+//
+// Non-transient errors (e.g., 4xx client errors except 429, authentication failures) are not retried and returned immediately.
+func defaultGitRetrier() *retry.ExponentialBackoffRetrier {
+	return retry.NewExponentialBackoffRetrier().
+		WithMaxAttempts(8). // 1 initial + 7 retries = 8 total attempts (~10s total retry window)
+		WithInitialDelay(100 * time.Millisecond).
+		WithMaxDelay(5 * time.Second).
+		WithMultiplier(2.0).
+		WithJitter()
+}
+
+// ensureRetryContext ensures that retry logic is configured in the context.
+// This function should be called at the beginning of all methods that make client calls
+// to guarantee retry logic is always present, regardless of context state.
+func ensureRetryContext(ctx context.Context) context.Context {
+	// Only add retrier if one doesn't already exist in the context
+	if retry.FromContext(ctx).MaxAttempts() <= 1 {
+		ctx = retry.ToContext(ctx, defaultGitRetrier())
+	}
+	return ctx
+}
+
+// withGitContext sets up the context with logging, git repository metadata, and retry logic.
+// This function should be called at the beginning of all public methods to ensure:
+// - Proper logging context with git repository details
+// - Retry logic is configured for all Git operations
+// - Context is properly prepared for nanogit client calls
+func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context.Context, logging.Logger) {
+	// Ensure retry logic is configured first, before any early returns
+	ctx = ensureRetryContext(ctx)
+
 	logger := logging.FromContext(ctx)
 
 	type containsGit int

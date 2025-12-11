@@ -38,6 +38,8 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
     url                     = "[REDACTED]"
     title                   = "test-title"
     message                 = "test-message"
+    hide_open_button        = true
+    hide_version_info       = true
   }
 
   jira {

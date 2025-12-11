@@ -1,5 +1,5 @@
 import React from 'react';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -536,5 +536,239 @@ describe('AddedComponentsRegistry', () => {
 
     expect(Object.keys(currentState)).toHaveLength(1);
     expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  describe('asObservableSlice', () => {
+    it('should return the selected slice from the registry', async () => {
+      const registry = new AddedComponentsRegistry();
+      const extensionPointId = 'grafana/alerting/home';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Component',
+            description: 'Test description',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Test'),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Component');
+      });
+    });
+
+    it('should return undefined when the selected key does not exist', async () => {
+      const registry = new AddedComponentsRegistry();
+      const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+        expect(slice).toBeUndefined();
+      });
+    });
+
+    it('should only emit when the selected slice changes', async () => {
+      const registry = new AddedComponentsRegistry();
+      const extensionPointId = 'grafana/alerting/home';
+      const subscribeCallback = jest.fn();
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      observable.subscribe(subscribeCallback);
+
+      // Initial empty state
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]).toBeUndefined();
+
+      // Register first component
+      registry.register({
+        pluginId: 'test-plugin-1',
+        configs: [
+          {
+            title: 'Component 1',
+            description: 'Description 1',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Component 1'),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      expect(subscribeCallback.mock.calls[1][0]?.length).toBe(1);
+
+      // Register another component to the same extension point
+      registry.register({
+        pluginId: 'test-plugin-2',
+        configs: [
+          {
+            title: 'Component 2',
+            description: 'Description 2',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Component 2'),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed (array reference changed)
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+      expect(subscribeCallback.mock.calls[2][0]?.length).toBe(2);
+
+      // Register a component to a different extension point
+      registry.register({
+        pluginId: 'test-plugin-3',
+        configs: [
+          {
+            title: 'Component 3',
+            description: 'Description 3',
+            targets: ['grafana/other/point'],
+            component: () => React.createElement('div', null, 'Component 3'),
+          },
+        ],
+      });
+
+      // Should NOT emit because the selected slice (for extensionPointId) didn't change
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+    });
+
+    it('should deep freeze the selected slice', async () => {
+      const registry = new AddedComponentsRegistry();
+      const extensionPointId = 'grafana/alerting/home';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Component',
+            description: 'Test description',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Test'),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        // @ts-expect-error - Testing that frozen objects cannot be modified
+        expect(() => slice.push({})).toThrow();
+        expect(() => (slice[0].title = 'Modified')).toThrow();
+      });
+    });
+
+    it('should work with read-only registries', async () => {
+      const registry = new AddedComponentsRegistry();
+      const readOnlyRegistry = registry.readOnly();
+      const extensionPointId = 'grafana/alerting/home';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Component',
+            description: 'Test description',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Test'),
+          },
+        ],
+      });
+
+      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Component');
+      });
+    });
+
+    it('should emit immediately to new subscribers with the current slice value', async () => {
+      const registry = new AddedComponentsRegistry();
+      const extensionPointId = 'grafana/alerting/home';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Component',
+            description: 'Test description',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Test'),
+          },
+        ],
+      });
+
+      // Subscribe after registration
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      const subscribeCallback = jest.fn();
+      observable.subscribe(subscribeCallback);
+
+      // Should have been called immediately with the current value
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]?.length).toBe(1);
+      expect(subscribeCallback.mock.calls[0][0]?.[0].title).toBe('Test Component');
+    });
+
+    it('should not emit when Object.is returns true for the same value', async () => {
+      const registry = new AddedComponentsRegistry();
+      const extensionPointId = 'grafana/alerting/home';
+      const subscribeCallback = jest.fn();
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      observable.subscribe(subscribeCallback);
+
+      // Initial state
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+      // Register a component
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Component',
+            description: 'Test description',
+            targets: [extensionPointId],
+            component: () => React.createElement('div', null, 'Test'),
+          },
+        ],
+      });
+
+      // Should emit once more
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      const firstValue = subscribeCallback.mock.calls[1][0];
+
+      // Register another component to a different extension point
+      registry.register({
+        pluginId: 'test-plugin-2',
+        configs: [
+          {
+            title: 'Other Component',
+            description: 'Other description',
+            targets: ['grafana/other/point'],
+            component: () => React.createElement('div', null, 'Other'),
+          },
+        ],
+      });
+
+      // Should NOT emit because the selected slice (same reference) didn't change
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      const secondValue = subscribeCallback.mock.calls[1][0];
+      expect(Object.is(firstValue, secondValue)).toBe(true);
+    });
   });
 });

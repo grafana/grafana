@@ -151,10 +151,22 @@
           "hide": false,
           "iconColor": "#FF5722",
           "mappings": {
-            "tags": "labels",
-            "text": "description",
-            "time": "timestamp",
-            "title": "service"
+            "tags": {
+              "source": "field",
+              "value": "labels"
+            },
+            "text": {
+              "source": "field",
+              "value": "description"
+            },
+            "time": {
+              "source": "field",
+              "value": "timestamp"
+            },
+            "title": {
+              "source": "field",
+              "value": "service"
+            }
           },
           "name": "Complex Filter Annotation",
           "target": {

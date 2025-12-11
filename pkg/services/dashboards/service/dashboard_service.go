@@ -57,7 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
@@ -479,7 +479,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{
 				{
-					Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+					Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 					Operator: string(selection.Equals),
 					Values:   []string{libraryPanelUID},
 				},
@@ -1305,6 +1305,11 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 	if err != nil {
 		return nil, err
 	}
+
+	if query.ID <= 0 {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
 	result, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        requester.GetOrgID(),
 		DashboardIds: []int64{query.ID},
@@ -1316,7 +1321,7 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 	if len(result) == 0 {
 		return nil, dashboards.ErrDashboardNotFound
 	} else if len(result) > 1 {
-		return nil, fmt.Errorf("unexpected number of dashboards found: %d. desired: 1", len(result))
+		return nil, fmt.Errorf("unexpected number of dashboards for id %d. found: %d. desired: 1", query.ID, len(result))
 	}
 
 	return &dashboards.DashboardRef{UID: result[0].UID, Slug: result[0].Slug, FolderUID: result[0].FolderUID}, nil

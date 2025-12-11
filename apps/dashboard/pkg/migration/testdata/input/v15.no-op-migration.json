@@ -32,7 +32,9 @@
         {
           "name": "server",
           "type": "query",
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus"
+          },
           "query": "label_values(server)",
           "refresh": 1,
           "options": []

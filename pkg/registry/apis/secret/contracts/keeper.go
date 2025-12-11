@@ -10,6 +10,9 @@ import (
 )
 
 var (
+	// The name used to refer to the system keeper
+	SystemKeeperName = "system"
+
 	ErrKeeperNotFound      = errors.New("keeper not found")
 	ErrKeeperAlreadyExists = errors.New("keeper already exists")
 )
@@ -21,7 +24,9 @@ type KeeperMetadataStorage interface {
 	Update(ctx context.Context, keeper *secretv1beta1.Keeper, actorUID string) (*secretv1beta1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.Keeper, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name *string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
+	SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error
+	GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.

@@ -161,6 +161,7 @@ test.describe('Scope Redirect Functionality', () => {
 
     await test.step('Deselect scopes and verify no redirect', async () => {
       // Click the clear button to remove all scopes
+      await page.getByTestId('scopes-selector-input').hover();
       await page.getByTestId('scopes-selector-input-clear').click();
 
       // Should stay on the same dashboard (cuj-dashboard-3), not redirect

@@ -63,6 +63,7 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 				return nil // Skip this resource
 			}
 
+			// Deletion works by name, so we can use any client regardless of version
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
 				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", result.Group, result.Kind, result.Name, err)
 				progress.Record(ctx, result)

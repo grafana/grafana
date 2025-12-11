@@ -175,7 +175,7 @@
         "label-scrape-interval": "Adatgyűjtési intervallum",
         "label-series-limit": "Sorozatkorlát",
         "label-use-series-endpoint": "Sorozat végpontjának használata",
-        "more-info": "",
+        "more-info": "A Prometheus-típus és -verzió adatforrásokban történő konfigurálásával kapcsolatos további információkért tekintse meg a <2>kiépítési dokumentációt</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Példa: {{example}}",
         "title-interval-behaviour": "Intervallum viselkedése",
         "title-other": "Egyéb",

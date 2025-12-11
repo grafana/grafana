@@ -17,7 +17,7 @@
       "label-subscription": "Berlangganan",
       "placeholder-resource-name": "nama",
       "tooltip-region": "Wilayah kode sumber daya. Opsional untuk satu sumber daya tetapi wajib saat memilih beberapa sumber daya.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Edit <2>uri sumber daya</2> secara manual. Mendukung penggunaan beberapa variabel templat (misalnya: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Fungsi agregat",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Log Dasar",
-      "description-basic-logs": "",
+      "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "config-editor": {

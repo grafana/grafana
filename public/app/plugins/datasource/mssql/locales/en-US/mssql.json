@@ -69,7 +69,7 @@
       "description-encrypt-false": "<i>{{encryptionValue}}</i> - Data sent between client and server is not encrypted beyond the login packet. (default)",
       "description-encrypt-older-version": "If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.",
       "description-encrypt-true": "<i>{{encryptionValue}}</i> - Data sent between client and server is encrypted.",
-      "description-min-interval": "A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example <1>{{exampleInterval}}</1> if your data is written every minute.",
+      "description-min-interval": "A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example<1>{{exampleInterval}}</1> if your data is written every minute.",
       "description-tls-cert": "Path to file containing the public key certificate of the CA that signed the SQL Server certificate. Needed when the server certificate is self signed.",
       "label-auth-settings": "Azure Authentication Settings",
       "label-auth-type": "Authentication Type",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Indicate whether DNS `SRV` records should be used to locate the KDCs and other servers for a realm. The default is <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "The path to the configuration file for the <2>MIT krb5 package</2> . The default is <4>{{default}}</4>.",
+      "description-krb5-config-file-path": "The path to the configuration file for the <2>MIT krb5 package</2>. The default is <4>{{default}}</4>.",
       "description-udp-preference-limit": "The default is <1>{{default}}</1> and means always use TCP and is optional.",
       "label-dns-lookup-kdc": "DNS Lookup KDC",
       "label-krb5-config-file-path": "krb5 config file path",

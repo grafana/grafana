@@ -9,12 +9,13 @@ import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
+import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
@@ -27,6 +28,7 @@ import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
+import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
@@ -60,6 +62,8 @@ export const SingleTopBar = memo(function SingleTopBar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
   return (
     <>
@@ -73,11 +77,12 @@ export const SingleTopBar = memo(function SingleTopBar({
               tooltip={t('navigation.megamenu.open', 'Open menu')}
             >
               <Stack gap={0} alignItems="center">
-                <Branding.MenuLogo className={styles.img} />
-                <Icon size="sm" name="angle-down" />
+                <Icon name="bars" size="xl" />
               </Stack>
             </ToolbarButton>
           )}
+          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
+          {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
         </Stack>
@@ -90,6 +95,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
           minWidth={{ xs: 'unset', lg: 0 }}
         >
+          <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}

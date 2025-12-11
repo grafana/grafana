@@ -1049,7 +1049,15 @@ export function buildInspectValue(value: unknown, field: Field): [string, TableC
     inspectValue += ']';
     mode = TableCellInspectorMode.code;
   } else if (cellOptions.type === TableCellDisplayMode.JSONView || Array.isArray(value) || isPlainObject(value)) {
-    inspectValue = JSON.stringify(value, null, '  ');
+    let toStringify = value;
+    if (typeof value === 'string') {
+      try {
+        toStringify = JSON.parse(value);
+      } catch {
+        // do nothing, toStringify will stay as the raw string
+      }
+    }
+    inspectValue = JSON.stringify(toStringify, null, '  ');
     mode = TableCellInspectorMode.code;
   } else {
     inspectValue = String(value ?? '');

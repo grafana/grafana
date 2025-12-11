@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 

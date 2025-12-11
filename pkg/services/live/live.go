@@ -120,7 +120,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		Metrics: centrifuge.MetricsConfig{
 			MetricsNamespace: "grafana_live",
 		},
-		ClientQueueMaxSize: 4194304, // 4MB
+		ClientQueueMaxSize: cfg.LiveClientQueueMaxSize,
 		// Use reasonably large expiration interval for stream meta key,
 		// much bigger than maximum HistoryLifetime value in Node config.
 		// This way stream meta data will expire, in some cases you may want
@@ -513,18 +513,17 @@ type GrafanaLive struct {
 
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
-	// Called when a dashboard is saved -- this includes the error so we can support a
-	// gitops workflow that knows if the value was saved to the local database or not
-	// in many cases all direct save requests will fail, but the request should be forwarded
-	// to any gitops observers
-	DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error
+	// Called when a dashboard is saved
+	DashboardSaved(orgID int64, uid string) error
 
 	// Called when a dashboard is deleted
-	DashboardDeleted(orgID int64, requester identity.Requester, uid string) error
+	DashboardDeleted(orgID int64, uid string) error
+}
 
-	// Experimental! Indicate is GitOps is active.  This really means
-	// someone is subscribed to the `grafana/dashboards/gitops` channel
-	HasGitOpsObserver(orgID int64) bool
+// ProvideDashboardActivityChannel extracts the DashboardActivityChannel from GrafanaLive.
+// This is used by wire to inject the channel into the dashboard API service.
+func ProvideDashboardActivityChannel(live *GrafanaLive) DashboardActivityChannel {
+	return live.GrafanaScope.Dashboards
 }
 
 func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (backend.StreamHandler, error) {
@@ -1178,12 +1177,6 @@ func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Respon
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Response {
-	path := web.Params(ctx.Req)["*"]
-	if path == "grafana/dashboards/gitops" {
-		return response.JSON(http.StatusOK, util.DynMap{
-			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.GetOrgID()),
-		})
-	}
 	return response.JSONStreaming(http.StatusNotFound, util.DynMap{
 		"message": "Info is not supported for this channel",
 	})

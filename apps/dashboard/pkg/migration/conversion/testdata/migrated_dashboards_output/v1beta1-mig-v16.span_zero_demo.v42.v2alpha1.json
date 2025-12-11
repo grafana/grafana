@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -93,7 +93,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt"
                       }
@@ -144,7 +144,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -191,7 +191,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(app_worker_threads_active{cluster=\"$cluster\", namespace=\"default\"})",
                         "instant": true
@@ -238,7 +238,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "tempo",
                       "spec": {
                         "filters": [
                           {
@@ -305,7 +305,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
                         "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}"
@@ -323,7 +323,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.9, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
                         "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}"
@@ -341,7 +341,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
                         "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}"
@@ -359,7 +359,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
                         "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}"
@@ -461,7 +461,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
                         "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}"
@@ -479,7 +479,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.95, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
                         "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}"
@@ -497,7 +497,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
                         "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}"
@@ -515,7 +515,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
                         "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}"
@@ -562,7 +562,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "clamp_min(sum(app_operation_queue_size{cluster=\"$cluster\", namespace=\"default\"}), 0)",
                         "legendFormat": "Queue size"
@@ -609,7 +609,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "avg(histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le)))",
                         "legendFormat": "Queue size"
@@ -660,7 +660,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.99, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
                         "legendFormat": "q0.99"
@@ -678,7 +678,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.95, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
                         "legendFormat": "q0.95"
@@ -696,7 +696,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
                         "legendFormat": "q0.5"
@@ -714,7 +714,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "histogram_quantile(0.1, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
                         "legendFormat": "q0.1"
@@ -761,7 +761,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -808,7 +808,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "count by (cluster, channel)(label_replace(label_replace(kube_pod_container_info{namespace=\"default\", container=\"app-worker\", pod=~\"app-worker.*\", cluster=~\"$cluster\"}, \"version\", \"$1\", \"image\", \".+:(.+)\"), \"channel\", \"$1\", \"container\", \".+-(.+)\"))",
                         "legendFormat": "{{cluster}}"
@@ -855,7 +855,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
                         "legendFormat": "Memory Request"
@@ -873,7 +873,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
                         "legendFormat": "Memory Limit"
@@ -891,7 +891,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(container_memory_usage_bytes{namespace=\"default\",cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"}) by (pod)",
                         "legendFormat": "Container usage {{pod}}"
@@ -938,7 +938,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container, cpu)",
                         "legendFormat": "Usage {{pod}}"
@@ -956,7 +956,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "sum(irate(container_cpu_cfs_throttled_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container)",
                         "legendFormat": "Throttling {{pod}}"
@@ -974,7 +974,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
                         "legendFormat": "CPU limit"
@@ -992,7 +992,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
                         "legendFormat": "CPU request"
@@ -1039,7 +1039,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -1086,7 +1086,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -1133,7 +1133,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "sum by (action) (app_jobs_processed_total{outcome=\"success\", cluster=\"$cluster\", namespace=\"default\"})\n/\nsum by (action) (app_jobs_processed_total{cluster=\"$cluster\", namespace=\"default\"})\n",
                         "legendFormat": "{{action}}"
@@ -1199,7 +1199,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt | level=\"error\""
                       }
@@ -1640,7 +1640,7 @@
             "uid": "${prom}"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(app_worker_threads_active,cluster)"
             }
@@ -1655,5 +1655,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   controlWrapper: css({
+    height: theme.spacing(2),
     '& > div': {
       border: 'none',
       background: 'transparent',

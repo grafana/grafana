@@ -2,8 +2,12 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -112,6 +116,100 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	}
 
 	return client.GetStats(ctx, r)
+}
+
+func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
+	defer span.End()
+
+	// validate input
+	for _, key := range r.Keys {
+		if r.Namespace != key.Namespace {
+			return &resourcepb.RebuildIndexesResponse{
+				Error: NewBadRequestError("key namespace does not match request namespace"),
+			}, nil
+		}
+	}
+
+	// distribute the request to all search pods to minimize risk of stale index
+	// it will not rebuild on those which don't have the index open
+	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all healthy instances from the ring")
+	}
+
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", "all"))
+	if err != nil {
+		ds.log.Debug("error setting grpc header", "err", err)
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
+
+	var wg sync.WaitGroup
+	var totalRebuildCount atomic.Int64
+	detailsCh := make(chan string, len(rs.Instances))
+	errorCh := make(chan error, len(rs.Instances))
+
+	for _, inst := range rs.Instances {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			client, err := ds.clientPool.GetClientForInstance(inst)
+			if err != nil {
+				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
+				return
+			}
+
+			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
+			if err != nil {
+				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
+				return
+			}
+
+			if rsp.Error != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+				return
+			}
+
+			if rsp.Details != "" {
+				detailsCh <- fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
+			}
+
+			totalRebuildCount.Add(rsp.RebuildCount)
+		}()
+	}
+
+	wg.Wait()
+	close(errorCh)
+	close(detailsCh)
+
+	errs := make([]error, 0, len(errorCh))
+	for err := range errorCh {
+		ds.log.Error("rebuild indexes call failed with %w", err)
+		errs = append(errs, err)
+	}
+
+	var details string
+	for d := range detailsCh {
+		if len(details) > 0 {
+			details += ", "
+		}
+		details += d
+	}
+
+	response := &resourcepb.RebuildIndexesResponse{
+		RebuildCount: totalRebuildCount.Load(),
+		Details:      details,
+	}
+	if len(errs) > 0 {
+		response.Error = AsErrorResult(errors.Join(errs...))
+	}
+	return response, nil
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {

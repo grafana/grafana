@@ -1397,7 +1397,7 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	}
 
 	// Get stats for default namespace
-	stats, err := backend.GetResourceStats(ctx, "default", 0)
+	stats, err := backend.GetResourceStats(ctx, NamespacedResource{Namespace: "default"}, 0)
 	require.NoError(t, err)
 	require.Len(t, stats, 2) // Should have stats for 2 resource types in default namespace
 
@@ -1413,12 +1413,12 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	require.Equal(t, int64(1), resourceTypes["default/core/services"])
 
 	// Get stats for all namespaces (empty string)
-	allStats, err := backend.GetResourceStats(ctx, "", 0)
+	allStats, err := backend.GetResourceStats(ctx, NamespacedResource{Namespace: ""}, 0)
 	require.NoError(t, err)
 	require.Len(t, allStats, 4) // Should have stats for all 4 resource types across namespaces
 
 	// Get stats with minCount filter
-	filteredStats, err := backend.GetResourceStats(ctx, "", 1)
+	filteredStats, err := backend.GetResourceStats(ctx, NamespacedResource{Namespace: ""}, 1)
 	require.NoError(t, err)
 	require.Len(t, filteredStats, 1) // Only resources in default namespace has count > 1
 

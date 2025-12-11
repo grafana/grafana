@@ -93,6 +93,10 @@ You can also create a state timeline visualization using time series data. To do
 
 ![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
 
+## Zoom panel time range
+
+{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}

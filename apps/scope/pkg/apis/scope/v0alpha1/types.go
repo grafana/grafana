@@ -209,6 +209,8 @@ type FindScopeNavigationsResults struct {
 type ScopeNavigationSpec struct {
 	URL   string `json:"url"`
 	Scope string `json:"scope"`
+	// Used to navigate to a sub-scope of the main scope. URL will not be used if this is set.
+	SubScope string `json:"subScope,omitempty"`
 }
 
 // Type of the item.

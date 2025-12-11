@@ -57,7 +57,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import appEvents from './core/app_events';
+import { appEvents } from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
 import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';

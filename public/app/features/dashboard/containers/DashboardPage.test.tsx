@@ -46,14 +46,11 @@ jest.mock('app/features/query/components/QueryGroup', () => {
   };
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
     },
-  },
-  contextSrv: {
-    user: { orgId: 1 },
   },
 }));
 
@@ -88,7 +85,7 @@ const mockCleanUpDashboardAndVariables = jest.fn();
 function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
     { text: 'Dashboards', id: 'dashboards/browse' },
-    { text: 'Home', id: HOME_NAV_ID },
+    { text: 'Home', id: HOME_NAV_ID, url: '/' },
     {
       text: 'Help',
       id: 'help',
@@ -104,9 +101,9 @@ function setup(propOverrides?: Partial<Props>) {
       'dashboards/browse': {
         text: 'Dashboards',
         id: 'dashboards/browse',
-        parentItem: { text: 'Home', id: HOME_NAV_ID },
+        parentItem: { text: 'Home', id: HOME_NAV_ID, url: '/' },
       },
-      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID, url: '/' },
     },
     initPhase: DashboardInitPhase.NotStarted,
     initError: null,

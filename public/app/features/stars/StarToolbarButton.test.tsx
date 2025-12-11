@@ -1,6 +1,7 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { GrafanaConfig, locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
@@ -109,6 +110,44 @@ describe('StarToolbarButton', () => {
       await user.click(await findStarButton(existingStarredItem.title, true));
 
       expect(screen.queryByTestId(expectedTestId)).not.toBeInTheDocument();
+    });
+
+    it('shows spinner initially and transitions to empty star when loading completes with no starred items', async () => {
+      setup(itemToStar);
+      const button = screen.getByTestId(selectors.components.NavToolbar.markAsFavorite);
+
+      // Initially, button should be disabled (loading state)
+      expect(button).toBeDisabled();
+
+      // Wait for loading to complete
+      await waitFor(
+        () => {
+          expect(button).not.toBeDisabled();
+        },
+        { timeout: 3000 }
+      );
+
+      // After loading, should show "Mark as favorite" (empty star state)
+      expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
+    });
+
+    it('shows spinner initially and transitions to filled star when loading completes with starred item', async () => {
+      setup(existingStarredItem);
+      const button = screen.getByTestId(selectors.components.NavToolbar.markAsFavorite);
+
+      // Initially, button should be disabled (loading state)
+      expect(button).toBeDisabled();
+
+      // Wait for loading to complete
+      await waitFor(
+        () => {
+          expect(button).not.toBeDisabled();
+        },
+        { timeout: 3000 }
+      );
+
+      // After loading, should show "Unmark as favorite" (filled star state)
+      expect(await findStarButton(existingStarredItem.title, true)).toBeInTheDocument();
     });
   });
 });

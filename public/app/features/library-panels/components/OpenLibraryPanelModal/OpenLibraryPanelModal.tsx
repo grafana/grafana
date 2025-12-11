@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

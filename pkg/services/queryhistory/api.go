@@ -168,16 +168,6 @@ func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.R
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
-	if s.k8sClients != nil {
-		if err := s.k8sClients.AddStar(c, queryUID); err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to star query in query history", err)
-		}
-		return response.JSON(http.StatusOK, QueryHistoryResponse{
-			Result: QueryHistoryDTO{
-				UID:     queryUID,
-				Starred: true,
-			}})
-	}
 
 	query, err := s.StarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
@@ -202,17 +192,6 @@ func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
-	if s.k8sClients != nil {
-		if err := s.k8sClients.RemoveStar(c, queryUID); err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to star query in query history", err)
-		}
-		return response.JSON(http.StatusOK, QueryHistoryResponse{
-			Result: QueryHistoryDTO{
-				UID:     queryUID,
-				Starred: true,
-			}})
-	}
-
 	query, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)

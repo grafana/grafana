@@ -447,6 +447,14 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 	return result
 }
 
+func ToOpenFGADeleteTupleKey(tuples *openfgav1.TupleKey) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     tuples.GetUser(),
+		Relation: tuples.GetRelation(),
+		Object:   tuples.GetObject(),
+	}
+}
+
 func AddRenderContext(req *openfgav1.CheckRequest) {
 	if req.ContextualTuples == nil {
 		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}

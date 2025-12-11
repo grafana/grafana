@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import { PureComponent, CSSProperties } from 'react';
+import { PureComponent, CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
 import { VizOrientation } from '@grafana/data';

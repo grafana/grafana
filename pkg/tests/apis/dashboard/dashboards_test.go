@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -286,12 +285,205 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 
-	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
+}
+
+func TestIntegrationListPagination(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+
+	// Test on modes with legacy
+	modes := []rest.DualWriterMode{rest.Mode1, rest.Mode2, rest.Mode3}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:      true,
+				DisableDataMigrations: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+			})
+			t.Cleanup(helper.Shutdown)
+
+			ctx := context.Background()
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Test 1: List with no dashboards
+			rsp, err := client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, rsp.Items, 0)
+
+			// Create 5 dashboards to test pagination with small limits
+			const totalDashboards = 5
+			createdNames := make([]string, 0, totalDashboards)
+			for i := 0; i < totalDashboards; i++ {
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"spec": map[string]any{
+							"title":         fmt.Sprintf("Pagination test dashboard %d", i),
+							"schemaVersion": 42,
+						},
+					},
+				}
+				obj.SetGenerateName("pag-")
+				obj.SetAPIVersion(gvr.GroupVersion().String())
+				obj.SetKind("Dashboard")
+				created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+				require.NoError(t, err)
+				createdNames = append(createdNames, created.GetName())
+			}
+
+			// Test 2: List all without limit - should return all dashboards
+			rsp, err = client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, rsp.Items, totalDashboards, "should return all %d dashboards", totalDashboards)
+
+			// Test 3: List with small limit (2) - should paginate
+			const pageSize = 2
+			allNames := make(map[string]bool)
+			continueToken := ""
+			pageCount := 0
+
+			for {
+				pageCount++
+				listOpts := metav1.ListOptions{
+					Limit:    pageSize,
+					Continue: continueToken,
+				}
+				rsp, err = client.Resource.List(ctx, listOpts)
+				require.NoError(t, err)
+
+				// Collect names from this page
+				for _, item := range rsp.Items {
+					name := item.GetName()
+					require.False(t, allNames[name], "duplicate item %s found across pages", name)
+					allNames[name] = true
+				}
+
+				// Check if there's more pages
+				continueToken = rsp.GetContinue()
+				if continueToken == "" {
+					break
+				}
+
+				// Safety check to prevent infinite loops
+				require.Less(t, pageCount, 5)
+			}
+
+			// Verify we got all dashboards across all pages
+			require.Len(t, allNames, totalDashboards, "should have collected all %d dashboards across pages", totalDashboards)
+
+			// Verify all created dashboards were found
+			for _, name := range createdNames {
+				require.True(t, allNames[name], "dashboard %s not found in paginated results", name)
+			}
+		})
+
+		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:      true,
+				DisableDataMigrations: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+			})
+			t.Cleanup(helper.Shutdown)
+
+			ctx := context.Background()
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a dashboard
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]any{
+						"title":         "History pagination test dashboard",
+						"schemaVersion": 42,
+					},
+				},
+			}
+			obj.SetGenerateName("hist-")
+			obj.SetAPIVersion(gvr.GroupVersion().String())
+			obj.SetKind("Dashboard")
+			created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			dashName := created.GetName()
+
+			// Update the dashboard multiple times to create history entries
+			const totalVersions = 5
+			for i := 1; i < totalVersions; i++ {
+				// Get latest version
+				current, err := client.Resource.Get(ctx, dashName, metav1.GetOptions{})
+				require.NoError(t, err)
+
+				// Update title
+				spec := current.Object["spec"].(map[string]interface{})
+				spec["title"] = fmt.Sprintf("History pagination test dashboard v%d", i+1)
+				current.Object["spec"] = spec
+
+				_, err = client.Resource.Update(ctx, current, metav1.UpdateOptions{})
+				require.NoError(t, err)
+			}
+
+			// Test: List history with pagination
+			labelSelector := utils.LabelKeyGetHistory + "=true"
+			fieldSelector := "metadata.name=" + dashName
+
+			const pageSize int64 = 2
+			allVersions := make([]string, 0)
+			continueToken := ""
+			pageCount := 0
+
+			for {
+				pageCount++
+				listOpts := metav1.ListOptions{
+					LabelSelector: labelSelector,
+					FieldSelector: fieldSelector,
+					Limit:         pageSize,
+					Continue:      continueToken,
+				}
+				rsp, err := client.Resource.List(ctx, listOpts)
+				require.NoError(t, err)
+
+				// Collect resource versions from this page
+				for _, item := range rsp.Items {
+					rv := item.GetResourceVersion()
+					allVersions = append(allVersions, rv)
+				}
+
+				// Check if there's more pages
+				continueToken = rsp.GetContinue()
+				if continueToken == "" {
+					break
+				}
+
+				// Safety check to prevent infinite loops
+				require.Less(t, pageCount, 5)
+			}
+
+			// Verify we got all history versions
+			require.Len(t, allVersions, totalVersions, "should have collected all %d history versions across pages", totalVersions)
+		})
+	}
 }
 
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
@@ -307,20 +499,15 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 	t.Run(fmt.Sprintf("search types with dual writer mode %d", mode), func(t *testing.T) {
 		ctx := context.Background()
 
-		flags := []string{}
-		if mode >= rest.Mode3 {
-			flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
-		}
-
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
-			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
+			UnifiedStorageEnableSearch: mode >= rest.Mode3,
 		})
 		defer helper.Shutdown()
 

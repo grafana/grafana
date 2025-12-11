@@ -11,6 +11,7 @@ export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOp
       maxConcurrentShardRequests: 300,
       logMessageField: 'test.message',
       logLevelField: 'test.level',
+      defaultQueryMode: 'metrics',
     },
     secureJsonFields: {},
   } as DataSourceSettings<ElasticsearchOptions>;

@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 

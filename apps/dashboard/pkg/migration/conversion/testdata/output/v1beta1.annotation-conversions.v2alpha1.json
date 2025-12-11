@@ -17,7 +17,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {
               "limit": 100,
               "matchAny": false,
@@ -43,7 +43,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "expr": "ALERTS{alertstate=\"firing\"}",
               "interval": "1m",
@@ -69,7 +69,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "lines": 10,
               "refId": "Anno",
@@ -94,7 +94,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {
               "query": "tags:deployment",
               "refId": "Anno",
@@ -123,7 +123,7 @@
             "uid": "non-default-test-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "loki",
             "spec": {
               "format": "table",
               "rawSql": "SELECT time, title, text, tags FROM annotations WHERE $__timeFilter(time)",
@@ -148,7 +148,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "expr": "static_annotation_query",
               "refId": "Anno"
@@ -172,7 +172,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "expr": "disabled_query",
               "refId": "Anno"
@@ -196,7 +196,7 @@
             "uid": "influx-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "influxdb",
             "spec": {
               "query": "from(bucket: \"events\") |\u003e range(start: $__timeFrom, stop: $__timeTo) |\u003e filter(fn: (r) =\u003e r._measurement == \"deployments\")",
               "refId": "Anno"
@@ -215,13 +215,25 @@
               3
             ]
           },
-          "legacyOptions": {
-            "mappings": {
-              "tags": "labels",
-              "text": "description",
-              "time": "timestamp",
-              "title": "service"
+          "mappings": {
+            "tags": {
+              "source": "field",
+              "value": "labels"
             },
+            "text": {
+              "source": "field",
+              "value": "description"
+            },
+            "time": {
+              "source": "field",
+              "value": "timestamp"
+            },
+            "title": {
+              "source": "field",
+              "value": "service"
+            }
+          },
+          "legacyOptions": {
             "type": "influxdb"
           }
         }
@@ -234,7 +246,7 @@
             "uid": "cloudwatch-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "cloudwatch",
             "spec": {
               "dimensions": {
                 "InstanceId": "i-1234567890abcdef"
@@ -264,7 +276,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "expr": "ALERTS{alertstate=\"firing\"}",
               "interval": "1m",
@@ -323,5 +335,10 @@
     "title": "Annotation Conversions Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

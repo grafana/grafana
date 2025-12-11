@@ -3,8 +3,8 @@ import { memo, useRef, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { contextSrv } from 'app/core/core';
 import { formatDate } from 'app/core/internationalization/dates';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { UserSession } from 'app/types/user';
 

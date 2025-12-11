@@ -30,7 +30,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -625,9 +625,9 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
-	var alert *alertingNotify.TestReceiversConfigAlertParams
+	var alert *alertingModels.TestReceiversConfigAlertParams
 	if c.Alert != nil {
-		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		alert = &alertingModels.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
 	}
 
 	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{

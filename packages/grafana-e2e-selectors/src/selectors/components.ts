@@ -57,6 +57,14 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  Sidebar: {
+    closePane: {
+      '12.4.0': 'data-testid Sidebar close pane',
+    },
+    dockToggle: {
+      '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -69,9 +77,6 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
-    },
-    backButton: {
-      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {
@@ -426,6 +431,9 @@ export const versionedComponents = {
       loadingBar: {
         '10.0.0': () => `Panel loading bar`,
       },
+      PanelNonApplicableDrilldownsSubHeader: {
+        '12.4.0': 'Panel non-applicable drilldowns subheader',
+      },
       HoverWidget: {
         container: {
           '10.1.0': 'data-testid hover-header-container',
@@ -437,6 +445,9 @@ export const versionedComponents = {
       },
       PanelDataErrorMessage: {
         '10.4.0': 'data-testid Panel data error message',
+      },
+      PanelGroupByHeaderAction: {
+        '12.4.0': 'data-testid Panel group by header action',
       },
     },
     Visualization: {
@@ -572,6 +583,9 @@ export const versionedComponents = {
         '11.1.0': 'data-testid Panel editor option pane content',
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane content',
       },
+      header: {
+        '12.4.0': 'data-testid Panel editor OptionsPane header',
+      },
       select: {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
       },
@@ -681,6 +695,11 @@ export const versionedComponents = {
       TabsLayout: {
         titleInput: {
           '12.2.0': 'data-testid tab title input',
+        },
+      },
+      RowsLayout: {
+        titleInput: {
+          '12.3.0': 'data-testid row title input',
         },
       },
     },
@@ -914,6 +933,10 @@ export const versionedComponents = {
     addTransformationButton: {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
+    },
+    goToQueriesButton: {
+      '10.4.0': 'data-testid go to queries button',
+      [MIN_GRAFANA_VERSION]: 'go to queries button',
     },
     removeAllTransformationsButton: {
       '10.4.0': 'data-testid remove all transformations button',
@@ -1464,6 +1487,16 @@ export const versionedComponents = {
         message: {
           ['12.1.0']: 'data-testid export-image-error-message',
         },
+      },
+    },
+  },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
       },
     },
   },

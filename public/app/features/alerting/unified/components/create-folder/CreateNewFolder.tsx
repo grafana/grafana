@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { Folder } from '../../types/rule-form';

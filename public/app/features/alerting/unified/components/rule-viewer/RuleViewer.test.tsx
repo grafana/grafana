@@ -9,6 +9,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
+  __clearRuleViewTabsForTests,
+  addEnrichmentSection,
+} from '../../enterprise-components/rule-view-page/extensions';
+import {
   getCloudRule,
   getGrafanaRule,
   getVanillaPromRule,
@@ -31,6 +35,10 @@ import { stringifyIdentifier } from '../../utils/rule-id';
 import { AlertRuleProvider } from './RuleContext';
 import RuleViewer, { ActiveTab } from './RuleViewer';
 import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -85,6 +93,18 @@ const openSilenceDrawer = async () => {
   await user.click(ELEMENTS.actions.more.actions.silence.get());
   await screen.findByText(/Configure silences/i);
 };
+
+beforeAll(() => {
+  // Register the enrichment tab for all tests
+  addEnrichmentSection();
+});
+
+afterEach(() => {
+  // Clear tabs after each test to prevent interference
+  __clearRuleViewTabsForTests();
+  // Re-register for next test
+  addEnrichmentSection();
+});
 
 beforeEach(() => {
   grantPermissionsHelper([
@@ -483,6 +503,34 @@ describe('RuleViewer', () => {
         expect.any(Object)
       );
       expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
+    });
+
+    it('should show enrichment tab when user has enrichments:read permission', async () => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingEnrichmentsRead]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      // Check if enrichment tab exists in the navigation
+      expect(screen.getByText('Alert enrichment')).toBeInTheDocument();
+    });
+
+    it('should hide enrichment tab when user lacks enrichments:read permission', async () => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      // Check that enrichment tab does not exist in the navigation
+      expect(screen.queryByText('Alert enrichment')).not.toBeInTheDocument();
+    });
+
+    it('should show enrichment tab for admin users', async () => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead]);
+      jest.spyOn(require('../../utils/misc'), 'isAdmin').mockReturnValue(true);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      // Admin should see the tab even without explicit permission
+      expect(screen.getByText('Alert enrichment')).toBeInTheDocument();
     });
   });
 });

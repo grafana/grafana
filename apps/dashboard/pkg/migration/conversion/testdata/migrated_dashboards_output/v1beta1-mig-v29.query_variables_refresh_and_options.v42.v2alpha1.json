@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "expr": "up"
                       }
@@ -136,7 +136,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -159,7 +159,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -182,7 +182,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -205,7 +205,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -228,7 +228,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -251,7 +251,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -274,7 +274,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -297,7 +297,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -320,7 +320,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -343,7 +343,7 @@
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {}
           },
           "regex": "",
@@ -435,5 +435,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

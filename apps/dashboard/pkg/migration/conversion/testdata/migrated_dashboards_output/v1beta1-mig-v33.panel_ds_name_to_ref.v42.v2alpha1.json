@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "description": "Target with UID reference should migrate to full object"
                       }
@@ -92,7 +92,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Nested target should also migrate from string to object"
                       }
@@ -138,7 +138,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "elasticsearch",
                       "spec": {
                         "description": "Target with existing object should remain unchanged"
                       }
@@ -184,7 +184,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {}
                     },
                     "datasource": {
@@ -228,7 +228,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -272,7 +272,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "description": "Null target datasource should remain null"
                       }
@@ -289,7 +289,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Valid string should migrate to object"
                       }
@@ -306,7 +306,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Non-existing datasource should be preserved as-is (migration returns nil)"
                       }
@@ -323,7 +323,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "description": "Target without datasource field should remain unchanged"
                       }
@@ -369,7 +369,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Existing object target should remain unchanged"
                       }
@@ -386,7 +386,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "loki",
                       "spec": {
                         "description": "String target should migrate to object"
                       }
@@ -403,7 +403,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Default datasource string should migrate to object"
                       }
@@ -449,7 +449,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {
                         "description": "Empty string target should also migrate to empty object {}"
                       }
@@ -491,7 +491,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Unknown target datasource should remain unchanged (migration returns nil)"
                       }
@@ -508,7 +508,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Empty string target should migrate to {}"
                       }
@@ -720,5 +720,10 @@
     "title": "V33 Panel Datasource Name to Ref Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

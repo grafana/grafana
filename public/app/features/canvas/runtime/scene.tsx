@@ -34,7 +34,7 @@ import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Co
 import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 
-import appEvents from '../../../core/app_events';
+import { appEvents } from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { isInfinityActionWithAuth } from '../../actions/utils';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';

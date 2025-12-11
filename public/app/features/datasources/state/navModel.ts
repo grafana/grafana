@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types/accessControl';

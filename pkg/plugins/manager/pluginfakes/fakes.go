@@ -433,6 +433,7 @@ func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, 
 type FakePluginFS struct {
 	OpenFunc   func(name string) (fs.File, error)
 	RemoveFunc func() error
+	TypeFunc   func() plugins.FSType
 	RelFunc    func(string) (string, error)
 
 	base string
@@ -442,10 +443,6 @@ func NewFakePluginFS(base string) *FakePluginFS {
 	return &FakePluginFS{
 		base: base,
 	}
-}
-
-func (f *FakePluginFS) Type() string {
-	return "fake"
 }
 
 func (f *FakePluginFS) Open(name string) (fs.File, error) {
@@ -460,6 +457,13 @@ func (f *FakePluginFS) Rel(_ string) (string, error) {
 		return f.RelFunc(f.base)
 	}
 	return "", nil
+}
+
+func (f *FakePluginFS) Type() plugins.FSType {
+	if f.TypeFunc != nil {
+		return f.TypeFunc()
+	}
+	return "fake"
 }
 
 func (f *FakePluginFS) Base() string {

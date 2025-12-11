@@ -987,15 +987,6 @@ This option is deprecated - assign your viewers as editors, if you are using RBA
 
 Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
-#### `editors_can_admin`
-
-{{< admonition type="note" >}}
-This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
-{{< /admonition >}}
-
-Editors can administrate dashboards, folders and teams they create.
-Default is `false`.
-
 #### `user_invite_max_lifetime_duration`
 
 The duration in time a user invitation remains valid before expiring.
@@ -1942,6 +1933,10 @@ The initial delay before retrying a failed alert evaluation. Default is `1s`.
 
 This value is the starting point for exponential backoff.
 
+#### `initialization_timeout`
+
+Allows the context deadline for the `AlertNG` service to be configurable. The default timeout is 30s.
+
 #### `max_retry_delay`
 
 The maximum delay between retries during exponential backoff. Default is `4s`.
@@ -2147,17 +2142,13 @@ Configures settings around the short link feature.
 
 #### `expire_time`
 
-Short links that are never accessed are considered expired or stale and are deleted as cleanup.
+Short links that are never accessed are considered expired or stale and can be deleted as cleanup.
 Set the expiration time in days.
-The default is `7` days.
+The default is `-1` days (never expire).
 The maximum is `365` days.
-A setting above the maximum uses the value `365` instead.
-Setting `0` means the short links are cleaned up approximately every 10 minutes.
-A negative value such as `-1` disables expiry.
 
-{{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
-{{< /admonition >}}
+A setting above the maximum uses the value `365` instead.
+A negative value such as `-1` disables expiry.
 
 <hr>
 

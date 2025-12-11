@@ -55,6 +55,8 @@ var (
 	errOAuthTokenExchange = errutil.Internal("auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
 	errOAuthUserInfo      = errutil.Internal("auth.oauth.userinfo.error")
 
+	errOAuthMissingRefreshToken = errutil.Unauthorized("auth.oauth.token.refresh-token.missing", errutil.WithPublicMessage("Provider did not return a refresh token"))
+
 	errOAuthMissingRequiredEmail = errutil.Unauthorized("auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
@@ -165,6 +167,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
 	}
 	token.TokenType = "Bearer"
+
+	if oauthCfg.UseRefreshToken && token.RefreshToken == "" {
+		c.log.FromContext(ctx).Warn("No refresh token available with use_refresh_token enabled", "authmodule", c.moduleName)
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if c.features.IsEnabledGlobally(featuremgmt.FlagRefreshTokenRequired) {
+			return nil, errOAuthMissingRefreshToken.Errorf("provider did not return a refresh token")
+		}
+	}
 
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
