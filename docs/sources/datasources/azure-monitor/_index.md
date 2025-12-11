@@ -69,6 +69,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
+  configure-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
+  query-editor-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
+  template-variables-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+  alerting-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+  troubleshooting-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
+  annotations-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
 ---
 
 # Azure Monitor data source
@@ -98,20 +128,20 @@ The Azure Monitor data source supports the following Azure services:
 
 The following documents will help you get started with the Azure Monitor data source:
 
-- [Configure the Azure Monitor data source](configure/) - Set up authentication and connect to Azure
-- [Azure Monitor query editor](query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
-- [Template variables](template-variables/) - Create dynamic dashboards with Azure Monitor variables
-- [Alerting](alerting/) - Create alert rules using Azure Monitor data
-- [Troubleshooting](troubleshooting/) - Solve common configuration and query errors
+- [Configure the Azure Monitor data source](ref:configure-azure-monitor) - Set up authentication and connect to Azure
+- [Azure Monitor query editor](ref:query-editor-azure-monitor) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
+- [Template variables](ref:template-variables-azure-monitor) - Create dynamic dashboards with Azure Monitor variables
+- [Alerting](ref:alerting-azure-monitor) - Create alert rules using Azure Monitor data
+- [Troubleshooting](ref:troubleshooting-azure-monitor) - Solve common configuration and query errors
 
 ## Additional features
 
 After you have configured the Azure Monitor data source, you can:
 
-- Add [Annotations](annotations/) to overlay Azure log events on your graphs.
-- Configure and use [Template variables](template-variables/) for dynamic dashboards.
+- Add [Annotations](ref:annotations-azure-monitor) to overlay Azure log events on your graphs.
+- Configure and use [Template variables](ref:template-variables-azure-monitor) for dynamic dashboards.
 - Add [Transformations](ref:transform-data) to manipulate query results.
-- Set up [Alerting](alerting/) and recording rules using Metrics, Logs, Traces, and Resource Graph queries.
+- Set up [Alerting](ref:alerting-azure-monitor) and recording rules using Metrics, Logs, Traces, and Resource Graph queries.
 - Use [Explore](ref:explore) to investigate your Azure data without building a dashboard.
 
 ## Pre-built dashboards

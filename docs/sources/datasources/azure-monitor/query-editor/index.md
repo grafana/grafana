@@ -53,6 +53,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+  alerting-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+  annotations-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
 ---
 
 # Azure Monitor query editor
@@ -126,7 +141,7 @@ Optionally, you can apply further aggregations or filter by dimensions.
 
 The available options change depending on what is relevant to the selected metric.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 ### Format legend aliases
 
@@ -213,7 +228,7 @@ You can switch from Builder to Code mode at any time to view or edit the generat
 
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 **To create a Basic Logs query:**
 
@@ -228,7 +243,7 @@ You can also augment queries by using [template variables](../template-variables
    {{< /admonition >}}
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 ### Logs query examples
 
@@ -439,13 +454,13 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
 
 Running a query returns all trace data within the time span specified by the panel or dashboard time range.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 ## Use queries for alerting and recording rules
 
 All Azure Monitor query types (Metrics, Logs, Azure Resource Graph, and Traces) can be used with Grafana Alerting and recording rules.
 
-For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](../alerting/).
+For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](ref:alerting-azure-monitor).
 
 ## Work with large Azure resource datasets
 
@@ -455,6 +470,6 @@ You can use filters to reduce the amount of records returned under that value.
 ## Next steps
 
 - [Use template variables](../template-variables/) to create dynamic, reusable dashboards
-- [Add annotations](../annotations/) to overlay events on your graphs
-- [Set up alerting](../alerting/) to create alert rules based on Azure Monitor data
+- [Add annotations](ref:annotations-azure-monitor) to overlay events on your graphs
+- [Set up alerting](ref:alerting-azure-monitor) to create alert rules based on Azure Monitor data
 - [Troubleshoot](ref:troubleshoot-azure-monitor) common query and configuration issues
