@@ -248,6 +248,21 @@ func ValidateCondition(condition string, queries []apimodels.AlertQuery, canPatc
 	return nil
 }
 
+func validateGroupInterval(incoming prommodels.Duration, limits RuleLimits) (time.Duration, error) {
+	interval := time.Duration(incoming)
+	if interval == 0 {
+		// if group interval is 0 (undefined) then we automatically fall back to the default interval
+		interval = limits.DefaultRuleEvaluationInterval
+	}
+
+	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
+		return 0, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
+	}
+
+	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
+	return interval, nil
+}
+
 func ValidateInterval(interval, baseInterval time.Duration) (int64, error) {
 	intervalSeconds := int64(interval.Seconds())
 
@@ -335,17 +350,10 @@ func ValidateRuleGroup(
 		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
-	interval := time.Duration(ruleGroupConfig.Interval)
-	if interval == 0 {
-		// if group interval is 0 (undefined) then we automatically fall back to the default interval
-		interval = limits.DefaultRuleEvaluationInterval
+	interval, err := validateGroupInterval(ruleGroupConfig.Interval, limits)
+	if err != nil {
+		return nil, err
 	}
-
-	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
-	}
-
-	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
 	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
 	if isNoGroupRuleGroup && len(ruleGroupConfig.Rules) > 1 {
@@ -408,4 +416,33 @@ func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([
 	return []ngmodels.NotificationSettings{
 		s,
 	}, nil
+}
+
+func ValidateBacktestConfig(orgId int64, config apimodels.BacktestConfig, limits RuleLimits) (*ngmodels.AlertRule, error) {
+	if config.From.After(config.To) {
+		return nil, fmt.Errorf("invalid testing range: from %s must be before to %s", config.From, config.To)
+	}
+
+	interval, err := validateGroupInterval(config.Interval, limits)
+	if err != nil {
+		return nil, err
+	}
+
+	return ValidateRuleNode(&apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:           config.For,
+			KeepFiringFor: config.KeepFiringFor,
+			Labels:        config.Labels,
+			Annotations:   nil,
+		},
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:                       config.Title,
+			Condition:                   config.Condition,
+			Data:                        config.Data,
+			UID:                         "",
+			NoDataState:                 config.NoDataState,
+			ExecErrState:                config.ExecErrState,
+			MissingSeriesEvalsToResolve: config.MissingSeriesEvalsToResolve,
+		},
+	}, "backtesting", interval, orgId, "backtesting", limits)
 }

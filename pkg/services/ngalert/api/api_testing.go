@@ -230,51 +230,13 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
 	}
 
-	if cmd.From.After(cmd.To) {
-		return ErrResp(400, nil, "From cannot be greater than To")
-	}
-
-	noDataState, err := ngmodels.NoDataStateFromString(string(cmd.NoDataState))
-
+	rule, err := apivalidation.ValidateBacktestConfig(c.GetOrgID(), cmd, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
-		return ErrResp(400, err, "")
-	}
-	forInterval := time.Duration(cmd.For)
-	if forInterval < 0 {
-		return ErrResp(400, nil, "Bad For interval")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	intervalSeconds, err := apivalidation.ValidateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
-	if err != nil {
-		return ErrResp(400, err, "")
-	}
-
-	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{Data: queries}); err != nil {
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule); err != nil {
 		return errorToResponse(err)
-	}
-
-	rule := &ngmodels.AlertRule{
-		// ID:             0,
-		// Updated:        time.Time{},
-		// Version:        0,
-		// NamespaceUID:   "",
-		// DashboardUID:   nil,
-		// PanelID:        nil,
-		// RuleGroup:      "",
-		// RuleGroupIndex: 0,
-		// ExecErrState:   "",
-		Title: cmd.Title,
-		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
-		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.GetOrgID(),
-		Condition:       cmd.Condition,
-		Data:            queries,
-		IntervalSeconds: intervalSeconds,
-		NoDataState:     noDataState,
-		For:             forInterval,
-		Annotations:     cmd.Annotations,
-		Labels:          cmd.Labels,
 	}
 
 	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To)
