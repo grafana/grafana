@@ -8792,6 +8792,13 @@
       "aria-label-default": "Pilih warna",
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Hapus",
       "cancel": "Batalkan",
@@ -8989,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ciutkan semua baris",
       "aria-label-expand-all": "Perluas semua baris",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
@@ -12373,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

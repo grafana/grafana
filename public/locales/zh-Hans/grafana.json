@@ -8792,6 +8792,13 @@
       "aria-label-default": "选择颜色",
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "删除",
       "cancel": "取消",
@@ -8989,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "折叠所有行",
       "aria-label-expand-all": "展开所有行",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "切换行展开",
       "tooltip-collapse-all": "折叠所有行",
       "tooltip-expand-all": "展开所有行"
@@ -12373,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

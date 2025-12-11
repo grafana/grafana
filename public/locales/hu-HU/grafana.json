@@ -8827,6 +8827,13 @@
       "aria-label-default": "Válasszon színt",
       "aria-label-selected-color": "{{colorLabel}} szín"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Törlés",
       "cancel": "Mégse",
@@ -9024,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Minden sor összecsukása",
       "aria-label-expand-all": "Minden sor kibontása",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Sorkibontás váltása",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
@@ -12425,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
