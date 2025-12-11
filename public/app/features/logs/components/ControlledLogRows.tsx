@@ -43,6 +43,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   width?: number;
   logsTableFrames?: DataFrame[];
   displayedFields?: string[];
+  defaultDisplayedFields?: string[];
   exploreId?: string;
   absoluteRange?: AbsoluteTimeRange;
   logRows?: LogRowModel[];

@@ -596,9 +596,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const clearDisplayedFields = useCallback(() => {
     updatePanelState({
-      displayedFields: [],
+      displayedFields: defaultDisplayedFields,
     });
-  }, [updatePanelState]);
+  }, [defaultDisplayedFields, updatePanelState]);
 
   // Wrapper function for setDisplayedFields prop - updates Redux directly
   const setDisplayedFields = useCallback(
@@ -1047,6 +1047,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
                 displayedFields={displayedFields}
+                defaultDisplayedFields={defaultDisplayedFields}
                 exploreId={props.exploreId}
                 absoluteRange={props.absoluteRange}
                 logRows={props.logRows}
@@ -1086,6 +1087,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                   displayedFields={displayedFields}
+                  defaultDisplayedFields={defaultDisplayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   app={CoreApp.Explore}

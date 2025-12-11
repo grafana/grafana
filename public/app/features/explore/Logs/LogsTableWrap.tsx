@@ -53,6 +53,7 @@ interface Props {
   datasourceType?: string;
   exploreId?: string;
   displayedFields?: string[];
+  defaultDisplayedFields?: string[];
   absoluteRange?: AbsoluteTimeRange;
   logRows?: LogRowModel[];
 }
@@ -78,7 +79,7 @@ type FieldName = string;
 export type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
-  const { logsFrames, updatePanelState, panelState } = props;
+  const { logsFrames, updatePanelState, panelState, defaultDisplayedFields } = props;
   const propsColumns = panelState?.displayedFields;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
@@ -124,14 +125,17 @@ export function LogsTableWrap(props: Props) {
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
-      const defaultColumns = [logsFrame?.timeField.name, logsFrame?.bodyField.name];
+      // Use defaultDisplayedFields if available, otherwise fall back to basic defaults
+      const columns = defaultDisplayedFields?.length
+        ? defaultDisplayedFields
+        : [logsFrame?.timeField.name, logsFrame?.bodyField.name];
       updatePanelState({
-        displayedFields: defaultColumns,
+        displayedFields: columns,
         visualisationType: 'table',
         labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
       });
     }
-  }, [logsFrame, propsColumns, updatePanelState]);
+  }, [logsFrame, propsColumns, updatePanelState, defaultDisplayedFields]);
 
   /**
    * When logs frame updates (e.g. query|range changes), we need to set the selected frame to state
@@ -399,9 +403,9 @@ export function LogsTableWrap(props: Props) {
       }
     });
     setColumnsWithMeta(pendingLabelState);
-    // Reset displayedFields to empty array to trigger defaults logic
+    // Reset displayedFields to defaults
     updatePanelState({
-      displayedFields: [],
+      displayedFields: defaultDisplayedFields?.length ? defaultDisplayedFields : [],
     });
   };
 

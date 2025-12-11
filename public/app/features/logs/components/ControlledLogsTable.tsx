@@ -26,6 +26,7 @@ export const ControlledLogsTable = ({
   logsTableFrames,
   visualisationType,
   displayedFields,
+  defaultDisplayedFields,
   exploreId,
   absoluteRange,
   logRows,
@@ -63,6 +64,7 @@ export const ControlledLogsTable = ({
           updatePanelState={updatePanelState}
           datasourceType={datasourceType}
           displayedFields={displayedFields}
+          defaultDisplayedFields={defaultDisplayedFields}
           exploreId={exploreId}
           absoluteRange={absoluteRange}
           logRows={logRows}
