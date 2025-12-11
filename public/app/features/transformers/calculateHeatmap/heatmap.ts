@@ -277,12 +277,12 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       type: FieldType.number,
       values: ys,
       config: {
-        unit: useLinearScale ? undefined : 'short', // ordinal lookup only in auto mode
+        unit: useLinearScale ? undefined : 'short', // preserves original unit from data source
       },
     },
   ];
 
-  // Add yMax field only in linear scale mode
+  // yMax provides explicit upper bounds for proper rendering, critical for ge layout
   if (useLinearScale && ys2) {
     fields.push({
       name: 'yMax',
