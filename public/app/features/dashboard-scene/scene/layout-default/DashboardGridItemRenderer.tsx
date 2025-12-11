@@ -36,7 +36,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   }
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
   }
 
   if (!variableName) {
