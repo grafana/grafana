@@ -2,7 +2,6 @@ import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
 import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { VariableKind } from '@grafana/schema/src/schema/dashboard/v2';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
