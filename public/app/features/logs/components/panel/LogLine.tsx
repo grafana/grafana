@@ -561,8 +561,9 @@ export const getStyles = (
         '.log-search-match': {
           color: theme.components.textHighlight.text,
           backgroundColor: theme.components.textHighlight.background,
-          borderRadius: theme.shape.radius.default,
-          padding: '0 1px',
+          // This is a different usage of border radius
+          // eslint-disable-next-line @grafana/no-border-radius-literal
+          borderRadius: '3px',
         },
         '&.log-line-body': {
           color: colors.logLineBody,
