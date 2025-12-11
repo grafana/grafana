@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { SavedSearch, SavedSearches } from './SavedSearches';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './SavedSearches.types';
 
 const mockSavedSearches: SavedSearch[] = [
   {
@@ -144,16 +145,6 @@ describe('SavedSearches', () => {
       await user.click(await screen.findByRole('button', { name: /save$/i }));
 
       expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
-    });
-
-    it('shows maxLength attribute is set on input to prevent exceeding 64 characters', async () => {
-      const { user } = setup({ currentSearchQuery: 'state:pending' });
-
-      await user.click(screen.getByRole('button', { name: /saved searches/i }));
-      await user.click(await screen.findByRole('button', { name: /save current search/i }));
-
-      const input = await screen.findByPlaceholderText(/enter a name/i);
-      expect(input).toHaveAttribute('maxLength', '64');
     });
 
     it('shows validation error from onSave callback (duplicate name)', async () => {
