@@ -66,6 +66,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddDashboardUIDPanelIDMigration(mg)
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
+	addExploreMapMigrations(mg)
 
 	accesscontrol.AddDisabledMigrator(mg)
 	accesscontrol.AddTeamMembershipMigrations(mg)

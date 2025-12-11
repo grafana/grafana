@@ -190,6 +190,8 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
+	r.Get("/atlas", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
+	r.Get("/atlas/*", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 	r.Get("/drilldown", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
@@ -501,6 +503,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Playlist
 		hs.registerPlaylistAPI(apiRoute)
+
+		// Atlas
+		hs.registerExploreMapAPI(apiRoute, hs.exploreMapService)
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))

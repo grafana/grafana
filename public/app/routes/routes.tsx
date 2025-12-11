@@ -171,6 +171,26 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/atlas',
+      pageClass: 'page-explore-maps',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore-map-list" */ 'app/features/explore-map/ExploreMapListPage')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
+    },
+    {
+      path: '/atlas/:uid',
+      pageClass: 'page-explore-map',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore-map" */ 'app/features/explore-map/ExploreMapPage')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
+    },
+    {
       path: '/drilldown',
       component: () => <NavLandingPage navId="drilldown" />,
     },
