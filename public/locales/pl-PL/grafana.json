@@ -4819,6 +4819,8 @@
       "remove": "Usuń: {{typeName}}",
       "row-title": "",
       "switch-layout": "Przełącz układ",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5929,6 +5931,17 @@
       "label-value": "Wartość",
       "placeholder-your-metric-prefix": "Prefiks metryki"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opcje niestandardowe",
       "name-values-separated-comma": "Wartości rozdzielone przecinkami",
@@ -6302,12 +6315,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opcjonalnie pozwalają wyodrębnić część nazwy serii lub segmentu węzła metryki.",
+      "description-regex-apply-to": "",
       "label-data-source": "Źródło danych",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Sortowanie opcji statycznych",
       "label-target-data-source": "Docelowe źródło danych",
       "label-use-static-options": "Użyj opcji statycznych",
       "name-regex": "Wyrażenie regularne",
       "query-options": "Opcje zapytania",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opcje wyboru",
       "static-options-legend": "Opcje statyczne"
     },

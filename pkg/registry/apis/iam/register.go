@@ -97,11 +97,11 @@ func RegisterAPIService(
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
-		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation),
-		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation),
-		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
-		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation),
-		ssoLegacyStore:              sso.NewLegacyStore(ssoService),
+		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation, tracing),
+		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
+		ssoLegacyStore:              sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:            coreRolesStorage,
 		rolesStorage:                rolesStorage,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
@@ -122,7 +122,7 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(userService), features),
+			unified, user.NewUserLegacySearchClient(userService, tracing), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
 	apiregistration.RegisterAPI(builder)

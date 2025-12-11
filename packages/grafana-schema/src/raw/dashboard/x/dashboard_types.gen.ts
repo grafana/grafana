@@ -188,6 +188,10 @@ export interface VariableModel {
    */
   regex?: string;
   /**
+   * Determine whether regex applies to variable value or display text
+   */
+  regexApplyTo?: VariableRegexApplyTo;
+  /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync?: boolean;
@@ -258,6 +262,12 @@ export enum VariableHide {
   hideVariable = 2,
   inControlsMenu = 3,
 }
+
+/**
+ * Determine whether regex applies to variable value or display text
+ * Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+ */
+export type VariableRegexApplyTo = ('value' | 'text');
 
 /**
  * Sort variable options

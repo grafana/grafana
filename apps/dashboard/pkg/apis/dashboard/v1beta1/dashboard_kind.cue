@@ -222,6 +222,8 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
+      // Determine whether regex applies to variable value or display text
+      regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -248,6 +250,10 @@ lineage: schemas: [{
 		// Determine if the variable shows on dashboard
 		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
+
+		// Determine whether regex applies to variable value or display text
+		// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="type")
 
 		// Sort variable options
 		// Accepted values are:

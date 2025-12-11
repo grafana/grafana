@@ -550,7 +550,7 @@ const LogListComponent = ({
 function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
-  displayedFields: string[],
+  displayedFields: string[] = [],
   { showTime }: { showTime: boolean }
 ) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
