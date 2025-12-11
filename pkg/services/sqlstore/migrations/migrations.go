@@ -165,5 +165,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddStateAnnotationsColumn(mg)
 
+	ualert.CollateBinAlertRuleNamespace(mg)
+
 	ualert.CollateBinAlertRuleGroup(mg)
 }
