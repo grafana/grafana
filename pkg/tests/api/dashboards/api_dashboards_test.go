@@ -265,7 +265,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID,
 				"uid":   savedDashInFolder.UID,
-				"title": "Dashboard with ",
+				"title": "Dashboard with existing UID",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
@@ -274,9 +274,10 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
+	})
 
-		t.Run("When updating id with a dashboard already using that uid", func(t *testing.T) {})
-		resp, err = postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+	t.Run("When updating id with a dashboard already using that uid", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   savedDashInGeneralFolder.UID,
