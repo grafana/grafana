@@ -43,6 +43,8 @@ composableKinds: PanelCfg: {
 					frozenColumns?: {
 						left?: number | *0
 					}
+          // If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+          disableKeyboardEvents?: bool
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.TableFieldOptions
