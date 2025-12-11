@@ -48,6 +48,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
+  configure-grafana-feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
 ---
 
 # Azure Monitor query editor
@@ -166,6 +171,32 @@ The Azure Monitor data source also supports querying of [Basic Logs](https://lea
 
 {{< figure src="/static/img/docs/azure-monitor/query-editor-logs.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Logs sample query comparing successful requests to failed requests" >}}
 
+### Logs query builder (public preview)
+
+{{< admonition type="note" >}}
+The Logs query builder is a [public preview feature](/docs/release-life-cycle/). It may not be enabled in all Grafana environments.
+{{< /admonition >}}
+
+The Logs query builder provides a visual interface for building Azure Monitor Logs queries without writing KQL. This is helpful if you're new to KQL or want to quickly build simple queries.
+
+**To enable the Logs query builder:**
+
+1. Enable the `azureMonitorLogsBuilderEditor` [feature toggle](ref:configure-grafana-feature-toggles) in your Grafana configuration.
+1. Restart Grafana for the change to take effect.
+
+**To switch between Builder and Code modes:**
+
+When the feature is enabled, a **Builder / Code** toggle appears in the Logs query editor:
+
+- **Builder**: Use the visual interface to select tables, columns, filters, and aggregations. The builder generates the KQL query for you.
+- **Code**: Write KQL queries directly. Use this mode for complex queries that require full KQL capabilities.
+
+New queries default to Builder mode. Existing queries that were created with raw KQL remain in Code mode.
+
+{{< admonition type="note" >}}
+You can switch from Builder to Code mode at any time to view or edit the generated KQL. However, switching from Code to Builder mode may not preserve complex queries that can't be represented in the builder interface.
+{{< /admonition >}}
+
 ### Create a Logs query
 
 **To create a Logs query:**
@@ -176,7 +207,7 @@ The Azure Monitor data source also supports querying of [Basic Logs](https://lea
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
    {{< admonition type="note" >}}
-   If a timespan is specified in the query, the overlap of the timespan between the query and the dashboard will be used as the query timespan. See the [API documentation for
+   If a time span is specified in the query, the overlap between the query time span and the dashboard time range will be used. See the [API documentation for
    details.](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters)
    {{< /admonition >}}
 
@@ -406,7 +437,7 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
    Selecting the trace format filters events to only the `trace` type. Use this format with the Trace visualization.
    {{< /admonition >}}
 
-Running a query returns all trace data within the timespan specified by the panel or dashboard time range.
+Running a query returns all trace data within the time span specified by the panel or dashboard time range.
 
 You can also augment queries by using [template variables](../template-variables/).
 
@@ -416,7 +447,7 @@ All Azure Monitor query types (Metrics, Logs, Azure Resource Graph, and Traces) 
 
 For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](../alerting/).
 
-## Work with large Azure resource data sets
+## Work with large Azure resource datasets
 
 If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned.
 You can use filters to reduce the amount of records returned under that value.

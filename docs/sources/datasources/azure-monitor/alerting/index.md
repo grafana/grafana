@@ -86,15 +86,15 @@ Alert queries must return numeric data that Grafana can evaluate against a thres
 
 Alerting and recording rules run as background processes without a user context. This means they require service-level authentication and don't work with all authentication methods.
 
-| Authentication method            | Supported |
-| -------------------------------- | --------- |
-| App Registration (client secret) | ✓         |
-| Managed Identity                 | ✓         |
-| Workload Identity                | ✓         |
-| Current User                     | ✗         |
+| Authentication method            | Supported                            |
+| -------------------------------- | ------------------------------------ |
+| App Registration (client secret) | ✓                                    |
+| Managed Identity                 | ✓                                    |
+| Workload Identity                | ✓                                    |
+| Current User                     | ✓ (with fallback service credentials) |
 
-{{< admonition type="warning" >}}
-If you use **Current User** authentication, alerting and recording rules won't function because user credentials aren't available for background operations. To use these features, [configure the data source](ref:configure-azure-monitor) with App Registration, Managed Identity, or Workload Identity authentication.
+{{< admonition type="note" >}}
+If you use **Current User** authentication, you must configure **fallback service credentials** for alerting and recording rules to function. User credentials aren't available for background operations, so Grafana uses the fallback credentials instead. Refer to [configure the data source](ref:configure-azure-monitor) for details on setting up fallback credentials.
 {{< /admonition >}}
 
 ## Create an alert rule
@@ -232,7 +232,7 @@ If your Azure Monitor alerts aren't working as expected, use the following secti
 
 ### Alerts not firing
 
-- Verify the data source uses a supported authentication method (not Current User).
+- Verify the data source uses a supported authentication method. If using Current User authentication, ensure fallback service credentials are configured.
 - Check that the query returns numeric data in Explore.
 - Ensure the evaluation interval allows enough time for data to be available.
 - Review the alert rule's health and any error messages in the Alerting UI.
@@ -241,8 +241,9 @@ If your Azure Monitor alerts aren't working as expected, use the following secti
 
 If you see authentication errors when alerts evaluate:
 
-- Confirm the data source is configured with App Registration, Managed Identity, or Workload Identity.
+- Confirm the data source is configured with App Registration, Managed Identity, Workload Identity, or Current User with fallback service credentials.
 - If using App Registration, verify the client secret hasn't expired.
+- If using Current User, verify that fallback service credentials are configured and valid.
 - Check that the service principal has appropriate permissions on Azure resources.
 
 ### Query timeout errors

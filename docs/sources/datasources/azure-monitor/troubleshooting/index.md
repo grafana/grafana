@@ -72,9 +72,10 @@ These errors typically occur when setting up the data source or when authenticat
 
 **Solutions:**
 
-1. Verify the client secret was copied correctly (no extra spaces or truncation).
-2. Check if the secret has expired in Azure Portal under **App registrations** > your app > **Certificates & secrets**.
-3. Create a new secret and update the data source configuration.
+1. Ensure you copied the client secret **value**, not the secret ID. In Azure Portal under **Certificates & secrets**, the secret value is only shown once when created. The secret ID is a different identifier and won't work for authentication.
+2. Verify the client secret was copied correctly (no extra spaces or truncation).
+3. Check if the secret has expired in Azure Portal under **App registrations** > your app > **Certificates & secrets**.
+4. Create a new secret and update the data source configuration.
 
 ### "Tenant not found" or "Invalid tenant ID"
 
@@ -116,7 +117,7 @@ These errors typically occur when setting up the data source or when authenticat
 1. Verify `workload_identity_enabled = true` is set in the Grafana server configuration.
 2. Check that the service account is correctly annotated for workload identity.
 3. Verify the federated credential is configured in Azure.
-4. Ensure the token file path is accessible to the Grafana pod.
+4. Ensure the token path is accessible to the Grafana pod.
 5. Check the workload identity webhook is running in the cluster.
 
 ## Query errors

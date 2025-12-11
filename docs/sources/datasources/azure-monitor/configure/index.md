@@ -89,13 +89,17 @@ For general information about data sources, refer to [Grafana data sources](ref:
 Before configuring the Azure Monitor data source, ensure you have the following:
 
 - **Grafana permissions:** You must have the `Organization administrator` role to configure data sources.
-  Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system or [using Terraform](#configure-with-terraform).
+  Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system or [using Terraform](#configure-with-terraform).
 
 - **Azure prerequisites:** Depending on your chosen authentication method, you may need:
-  - An Azure AD app registration with a service principal (for App Registration authentication)
+  - A Microsoft Entra ID (formerly Azure AD) app registration with a service principal (for App Registration authentication)
   - A Managed Identity enabled on your Azure VM or App Service (for Managed Identity authentication)
   - Workload identity configured in your Kubernetes cluster (for Workload Identity authentication)
-  - Azure AD authentication configured for Grafana login (for Current User authentication)
+  - Microsoft Entra ID authentication configured for Grafana login (for Current User authentication)
+
+{{< admonition type="note" >}}
+**Grafana Cloud users:** Managed Identity and Workload Identity authentication methods are not available in Grafana Cloud because they require Grafana to run on your Azure infrastructure. Use **App Registration** authentication instead.
+{{< /admonition >}}
 
 - **Azure RBAC permissions:** The identity used to authenticate must have the `Reader` role on the Azure subscription containing the resources you want to monitor.
   For Log Analytics queries, the identity also needs appropriate permissions on the Log Analytics workspaces to be queried.
@@ -123,10 +127,10 @@ The Azure Monitor data source supports four authentication methods. Choose based
 
 | Authentication method | Best for                                   | Requirements                                         |
 | --------------------- | ------------------------------------------ | ---------------------------------------------------- |
-| **App Registration**  | Any Grafana deployment                     | Azure AD app registration with client secret         |
+| **App Registration**  | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret |
 | **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource       |
 | **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured              |
-| **Current User**      | User-level access control                  | Azure AD authentication configured for Grafana login |
+| **Current User**      | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login |
 
 ## Configure authentication
 
@@ -134,11 +138,11 @@ Select one of the following authentication methods and complete the configuratio
 
 ### App Registration
 
-Use an Azure AD app registration (service principal) to authenticate. This method works with any Grafana deployment.
+Use a Microsoft Entra ID app registration (service principal) to authenticate. This method works with any Grafana deployment.
 
 #### App Registration prerequisites
 
-1. Create an app registration in Azure AD.
+1. Create an app registration in Microsoft Entra ID.
    Refer to the [Azure documentation for creating a service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
 
 1. Create a client secret for the app registration.
@@ -153,7 +157,7 @@ Use an Azure AD app registration (service principal) to authenticate. This metho
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Authentication**          | Select **App Registration**.                                                                                                               |
 | **Azure Cloud**             | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
-| **Directory (tenant) ID**   | The GUID that identifies your Azure AD tenant.                                                                                             |
+| **Directory (tenant) ID**   | The GUID that identifies your Microsoft Entra ID tenant.                                                                                             |
 | **Application (client) ID** | The GUID for the app registration you created.                                                                                             |
 | **Client secret**           | The secret key for the app registration. Keep this secure and rotate periodically.                                                         |
 | **Default Subscription**    | Click **Load Subscriptions** to populate available subscriptions, then select your default.                                                |
@@ -262,7 +266,7 @@ Optional configuration variables:
 ```ini
 [azure]
 workload_identity_enabled = true
-workload_identity_tenant_id = <IDENTITY_TENANT_ID>    # Azure AD tenant containing the managed identity
+workload_identity_tenant_id = <IDENTITY_TENANT_ID>    # Microsoft Entra ID tenant containing the managed identity
 workload_identity_client_id = <IDENTITY_CLIENT_ID>    # Client ID if different from default
 workload_identity_token_file = <TOKEN_FILE_PATH>      # Path to the token file
 ```
@@ -303,7 +307,7 @@ Current User authentication is an [experimental feature](/docs/release-life-cycl
 
 #### Current User prerequisites
 
-Your Grafana instance must be configured with Azure Entra (formerly Active Directory) authentication. Refer to the [Azure AD authentication documentation](ref:configure-grafana-azure-auth).
+Your Grafana instance must be configured with Microsoft Entra ID authentication. Refer to the [Microsoft Entra ID authentication documentation](ref:configure-grafana-azure-auth).
 
 #### Configure your Azure App Registration
 
@@ -452,7 +456,7 @@ If the test fails, verify:
 
 ## Provision the data source
 
-You can define and configure the Azure Monitor data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the Azure Monitor data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 ### Provision quick reference

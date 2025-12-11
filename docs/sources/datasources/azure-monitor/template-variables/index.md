@@ -164,7 +164,7 @@ For dashboards with many variables or complex queries, use **On dashboard load**
 
 ## Use variables in queries
 
-Once created, you can use template variables in your Azure Monitor queries by referencing them with the `$` prefix.
+After you create template variables, you can use them in your Azure Monitor queries by referencing them with the `$` prefix.
 
 ### Metrics query example
 

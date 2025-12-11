@@ -106,7 +106,7 @@ The following documents will help you get started with the Azure Monitor data so
 
 ## Additional features
 
-Once you have configured the Azure Monitor data source, you can:
+After you have configured the Azure Monitor data source, you can:
 
 - Add [Annotations](annotations/) to overlay Azure log events on your graphs.
 - Configure and use [Template variables](template-variables/) for dynamic dashboards.
