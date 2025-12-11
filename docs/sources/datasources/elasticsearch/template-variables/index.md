@@ -54,14 +54,14 @@ You can use this variable type to specify any number of key/value filters, and G
 
 Ad hoc filters support the following operators:
 
-| Operator | Description |
-| -------- | ----------- |
-| `=` | Equals. Adds `AND field:"value"` to the query. |
-| `!=` | Not equals. Adds `AND -field:"value"` to the query. |
-| `=~` | Matches regex. Adds `AND field:/value/` to the query. |
-| `!~` | Does not match regex. Adds `AND -field:/value/` to the query. |
-| `>` | Greater than. Adds `AND field:>value` to the query. |
-| `<` | Less than. Adds `AND field:<value` to the query. |
+| Operator | Description                                                   |
+| -------- | ------------------------------------------------------------- |
+| `=`      | Equals. Adds `AND field:"value"` to the query.                |
+| `!=`     | Not equals. Adds `AND -field:"value"` to the query.           |
+| `=~`     | Matches regex. Adds `AND field:/value/` to the query.         |
+| `!~`     | Does not match regex. Adds `AND -field:/value/` to the query. |
+| `>`      | Greater than. Adds `AND field:>value` to the query.           |
+| `<`      | Less than. Adds `AND field:<value` to the query.              |
 
 For more information, refer to [Add ad hoc filters](ref:add-template-variables-add-ad-hoc-filters).
 
@@ -94,7 +94,7 @@ You can create nested variables, where one variable's values depend on another v
 This example defines a variable named `$host` that only shows hosts matching the selected `$environment`:
 
 ```json
-{"find": "terms", "field": "hostname", "query": "environment:$environment"}
+{ "find": "terms", "field": "hostname", "query": "environment:$environment" }
 ```
 
 Whenever you change the value of the `$environment` variable via the drop-down, Grafana triggers an update of the `$host` variable to contain only hostnames filtered by the selected environment.
@@ -116,15 +116,15 @@ Write the query using a custom JSON string, with the field mapped as a [keyword]
 
 If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
 
-| Query | Description |
-| ----- | ----------- |
-| `{"find": "fields", "type": "keyword"}` | Returns a list of field names with the index type `keyword`. |
-| `{"find": "fields", "type": "number"}` | Returns a list of numeric field names (includes `float`, `double`, `integer`, `long`, `scaled_float`). |
-| `{"find": "fields", "type": "date"}` | Returns a list of date field names. |
-| `{"find": "terms", "field": "hostname.keyword", "size": 1000}` | Returns a list of values for a keyword field. Uses the current dashboard time range. |
-| `{"find": "terms", "field": "hostname", "query": "<Lucene query>"}` | Returns a list of values filtered by a Lucene query. Uses the current dashboard time range. |
-| `{"find": "terms", "field": "status", "orderBy": "doc_count"}` | Returns values sorted by document count (descending by default). |
-| `{"find": "terms", "field": "status", "orderBy": "doc_count", "order": "asc"}` | Returns values sorted by document count in ascending order. |
+| Query                                                                          | Description                                                                                            |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `{"find": "fields", "type": "keyword"}`                                        | Returns a list of field names with the index type `keyword`.                                           |
+| `{"find": "fields", "type": "number"}`                                         | Returns a list of numeric field names (includes `float`, `double`, `integer`, `long`, `scaled_float`). |
+| `{"find": "fields", "type": "date"}`                                           | Returns a list of date field names.                                                                    |
+| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`                 | Returns a list of values for a keyword field. Uses the current dashboard time range.                   |
+| `{"find": "terms", "field": "hostname", "query": "<Lucene query>"}`            | Returns a list of values filtered by a Lucene query. Uses the current dashboard time range.            |
+| `{"find": "terms", "field": "status", "orderBy": "doc_count"}`                 | Returns values sorted by document count (descending by default).                                       |
+| `{"find": "terms", "field": "status", "orderBy": "doc_count", "order": "asc"}` | Returns values sorted by document count in ascending order.                                            |
 
 Queries of `terms` have a 500-result limit by default. To set a custom limit, set the `size` property in your query.
 
@@ -135,13 +135,13 @@ By default, queries return results in term order (which can then be sorted alpha
 To produce a list of terms sorted by document count (a top-N values list), add an `orderBy` property of `doc_count`. This automatically selects a descending sort:
 
 ```json
-{"find": "terms", "field": "status", "orderBy": "doc_count"}
+{ "find": "terms", "field": "status", "orderBy": "doc_count" }
 ```
 
 You can also use the `order` property to explicitly set ascending or descending sort:
 
 ```json
-{"find": "terms", "field": "hostname", "orderBy": "doc_count", "order": "asc"}
+{ "find": "terms", "field": "hostname", "orderBy": "doc_count", "order": "asc" }
 ```
 
 {{< admonition type="note" >}}

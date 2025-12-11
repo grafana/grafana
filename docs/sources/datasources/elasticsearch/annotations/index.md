@@ -56,13 +56,13 @@ Use the query field to filter which Elasticsearch documents appear as annotation
 
 **Examples:**
 
-| Query | Description |
-| ----- | ----------- |
-| `*` | Matches all documents. |
-| `type:deployment` | Shows only deployment events. |
-| `level:error OR level:critical` | Shows error and critical events. |
+| Query                                    | Description                                          |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `*`                                      | Matches all documents.                               |
+| `type:deployment`                        | Shows only deployment events.                        |
+| `level:error OR level:critical`          | Shows error and critical events.                     |
 | `service:api AND environment:production` | Shows events for a specific service and environment. |
-| `tags:release` | Shows events tagged as releases. |
+| `tags:release`                           | Shows events tagged as releases.                     |
 
 You can use template variables in your annotation queries. For example, `service:$service` filters annotations based on the selected service variable.
 
