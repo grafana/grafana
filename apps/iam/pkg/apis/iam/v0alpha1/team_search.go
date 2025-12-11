@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 // +k8s:deepcopy-gen=true
@@ -27,9 +29,12 @@ type TeamSearchResults struct {
 
 // +k8s:deepcopy-gen=true
 type TeamHit struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Email       string `json:"email,omitempty"`
-	Provisioned bool   `json:"provisioned,omitempty"`
-	ExternalUID string `json:"externalUID,omitempty"`
+	Name          string              `json:"name"`
+	Title         string              `json:"title"`
+	Email         string              `json:"email,omitempty"`
+	Provisioned   bool                `json:"provisioned,omitempty"`
+	ExternalUID   string              `json:"externalUID,omitempty"`
+	MemberCount   int64               `json:"memberCount"`
+	Permission    team.PermissionType `json:"permission"`
+	AccessControl map[string]bool     `json:"accessControl,omitempty"`
 }
