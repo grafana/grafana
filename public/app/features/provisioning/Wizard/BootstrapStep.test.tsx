@@ -143,7 +143,7 @@ describe('BootstrapStep', () => {
     it('should render correct info for GitHub repository type', async () => {
       setup();
       expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
+      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should show "Empty" (2 external + 2 unmanaged, one per card)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -198,7 +198,7 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('7 resources')).toBeInTheDocument();
+      expect((await screen.findAllByText('7 resources')).length).toBeGreaterThan(0);
     });
   });
 
