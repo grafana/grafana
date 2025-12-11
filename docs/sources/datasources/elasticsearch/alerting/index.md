@@ -59,7 +59,7 @@ Queries that return time series data allow Grafana to evaluate values over time 
 | Metrics without Date histogram | ⚠️ Limited | May not evaluate correctly over time |
 | Logs | ❌ Not supported | Use metrics queries instead |
 | Raw data | ❌ Not supported | Use metrics queries instead |
-| Raw document | ❌ Not supported | Use metrics queries instead |
+| Raw document (deprecated) | ❌ Not supported | Deprecated since Grafana v10.1. Use metrics queries instead |
 
 ## Create an alert rule
 
