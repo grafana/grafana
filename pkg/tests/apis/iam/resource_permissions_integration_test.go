@@ -69,6 +69,32 @@ func newPermissionMaps(permissions ...permission) []map[string]interface{} {
 	return permissionsMaps
 }
 
+type k8sTestClients struct {
+	rpAdmin  *apis.K8sResourceClient
+	rpEditor *apis.K8sResourceClient
+	rpViewer *apis.K8sResourceClient
+}
+
+func newk8sTestHelperClients(helper *apis.K8sTestHelper) *k8sTestClients {
+	return &k8sTestClients{
+		rpAdmin: helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.OrgID),
+			GVR:       gvrResourcePermissions,
+		}),
+		rpEditor: helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Editor,
+			Namespace: helper.Namespacer(helper.Org1.OrgID),
+			GVR:       gvrResourcePermissions,
+		}),
+		rpViewer: helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Viewer,
+			Namespace: helper.Namespacer(helper.Org1.OrgID),
+			GVR:       gvrResourcePermissions,
+		}),
+	}
+}
+
 func TestIntegrationResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -99,7 +125,6 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-
 					// Prevents nested folders from having default permissions
 					featuremgmt.FlagKubernetesDashboards,
 				},
@@ -110,31 +135,26 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			parentFolder := createRootFolderWithoutDefaultPermissions(t, helper)
 			parentUID := parentFolder.GetName()
 
-			doResourcePermissionCRUDTests(t, helper, parentUID)
-			doResourcePermissionAuthzTests(t, helper, parentUID)
-			doResourcePermissionHierarchyTests(t, helper, parentUID)
-			doResourcePermissionListFilteringTests(t, helper, parentUID)
+			clients := newk8sTestHelperClients(helper)
+			doResourcePermissionCRUDTests(t, helper, clients, parentUID)
+			doResourcePermissionAuthzTests(t, helper, clients, parentUID)
+			doResourcePermissionHierarchyTests(t, helper, clients, parentUID)
+			doResourcePermissionListFilteringTests(t, helper, clients, parentUID)
 			// TODO: Add tests for External JWT authentication
 			// doResourcePermissionAccessPolicyTests(t, helper)
 		})
 	}
 }
 
-func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, parentUID string) {
+func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
 	t.Run("should create/get/update/delete ResourcePermission using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
-
 		// Create ResourcePermission for the folder
 		permission := newPermission("ServiceAccount", helper.Org1.ViewerServiceAccount.UID, "view")
-		toCreate := createResourcePermissionObject(parentUID, "folder.grafana.app", "folders", permission)
+		toCreate := createResourcePermissionObject(parentUID, gvrFolders.Group, gvrFolders.Resource, permission)
 
-		created, err := rpClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		created, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -144,12 +164,12 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, par
 		// Verify spec
 		spec := created.Object["spec"].(map[string]interface{})
 		resource := spec["resource"].(map[string]interface{})
-		require.Equal(t, "folder.grafana.app", resource["apiGroup"])
-		require.Equal(t, "folders", resource["resource"])
+		require.Equal(t, gvrFolders.Group, resource["apiGroup"])
+		require.Equal(t, gvrFolders.Resource, resource["resource"])
 		require.Equal(t, parentUID, resource["name"])
 
 		// Get the ResourcePermission
-		fetched, err := rpClient.Resource.Get(ctx, createdName, metav1.GetOptions{})
+		fetched, err := clients.rpAdmin.Resource.Get(ctx, createdName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 		require.Equal(t, createdName, fetched.GetName())
@@ -158,7 +178,7 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, par
 		fetched.Object["spec"].(map[string]interface{})["permissions"] = newPermissionMaps(
 			newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "edit"),
 		)
-		updated, err := rpClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		updated, err := clients.rpAdmin.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
@@ -170,10 +190,10 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, par
 		require.Equal(t, "edit", perm["verb"])
 
 		// Delete should work
-		err = rpClient.Resource.Delete(ctx, createdName, metav1.DeleteOptions{})
+		err = clients.rpAdmin.Resource.Delete(ctx, createdName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
-		_, err = rpClient.Resource.Get(ctx, createdName, metav1.GetOptions{})
+		_, err = clients.rpAdmin.Resource.Get(ctx, createdName, metav1.GetOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -182,13 +202,8 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, par
 
 	t.Run("should return 404 for non-existent ResourcePermission", func(t *testing.T) {
 		ctx := context.Background()
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
 
-		_, err := rpClient.Resource.Get(ctx, "folder.grafana.app-folders-unknown", metav1.GetOptions{})
+		_, err := clients.rpAdmin.Resource.Get(ctx, "folder.grafana.app-folders-unknown", metav1.GetOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -196,30 +211,24 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, par
 	})
 }
 
-func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, parentUID string) {
+func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
 	t.Run("admin can create/update/delete ResourcePermission", func(t *testing.T) {
 		ctx := context.Background()
 
 		folder := createTestFolder(t, helper, helper.Org1.Admin, "test-folder-admin", parentUID)
 		folderUID := folder.GetName()
 
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
-
 		permission := newPermission("User", helper.Org1.Admin.Identity.GetIdentifier(), "admin")
 
-		toCreate := createResourcePermissionObject(folderUID, "folder.grafana.app", "folders", permission)
-		created, err := rpClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, permission)
+		created, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		createdName := created.GetName()
 
 		// Get the created object
-		fetched, err := rpClient.Resource.Get(ctx, createdName, metav1.GetOptions{})
+		fetched, err := clients.rpAdmin.Resource.Get(ctx, createdName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
@@ -227,11 +236,11 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, pa
 		permission = newPermission("Team", helper.Org1.Staff.UID, "edit")
 		fetched.Object["spec"].(map[string]interface{})["permissions"] = []interface{}{permission.ToMap()}
 
-		_, err = rpClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		_, err = clients.rpAdmin.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Delete should work
-		err = rpClient.Resource.Delete(ctx, createdName, metav1.DeleteOptions{})
+		err = clients.rpAdmin.Resource.Delete(ctx, createdName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
@@ -241,15 +250,9 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, pa
 		folder := createTestFolder(t, helper, helper.Org1.Admin, "test-folder-editor-deny", parentUID)
 		folderUID := folder.GetName()
 
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Editor,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
-
 		permission := newPermission("User", helper.Org1.Editor.Identity.GetIdentifier(), "admin")
-		toCreate := createResourcePermissionObject(folderUID, "folder.grafana.app", "folders", permission)
-		_, err := rpClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, permission)
+		_, err := clients.rpEditor.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -262,15 +265,9 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, pa
 		folder := createTestFolder(t, helper, helper.Org1.Admin, "test-folder-viewer-deny", parentUID)
 		folderUID := folder.GetName()
 
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Viewer,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
-
 		permission := newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "admin")
-		toCreate := createResourcePermissionObject(folderUID, "folder.grafana.app", "folders", permission)
-		_, err := rpClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, permission)
+		_, err := clients.rpViewer.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -284,24 +281,13 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, pa
 		folderUID := folder.GetName()
 
 		// Grant admin permissions to the viewer
-		rpAdminClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
 		permission := newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "admin")
-		toCreate := createResourcePermissionObject(folderUID, "folder.grafana.app", "folders", permission)
-		_, err := rpAdminClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, permission)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		// As a Viewer we should now be able to get and update the ResourcePermission of the folder
-		rpClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Viewer,
-			Namespace: helper.Namespacer(helper.Org1.OrgID),
-			GVR:       gvrResourcePermissions,
-		})
-
-		fetched, err := rpClient.Resource.Get(ctx, "folder.grafana.app-folders-"+folderUID, metav1.GetOptions{})
+		fetched, err := clients.rpViewer.Resource.Get(ctx, "folder.grafana.app-folders-"+folderUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
@@ -311,24 +297,13 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, pa
 			newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "admin"),
 		)
 
-		_, err = rpClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		_, err = clients.rpViewer.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
 	})
 }
 
-func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper, parentUID string) {
+func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
 	permission := newPermission("BasicRole", "Editor", "admin")
-
-	rpAdminClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
-		GVR:       gvrResourcePermissions,
-	})
-	rpEditorClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Editor,
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
-		GVR:       gvrResourcePermissions,
-	})
 
 	t.Run("should respect folder hierarchy for folder permissions", func(t *testing.T) {
 		ctx := context.Background()
@@ -339,26 +314,24 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 		sub2 := createTestFolder(t, helper, helper.Org1.Admin, "sub2-folder-hierarchy", sub1UID)
 		sub2UID := sub2.GetName()
 
-		toCreate := createResourcePermissionObject(sub2UID, "folder.grafana.app", "folders", permission)
-		created, err := rpAdminClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(sub2UID, gvrFolders.Group, gvrFolders.Resource, permission)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, created)
 
 		t.Run("editor can update ResourcePermission of sub2", func(t *testing.T) {
-			fetched, err := rpEditorClient.Resource.Get(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.GetOptions{})
+			fetched, err := clients.rpEditor.Resource.Get(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.GetOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, fetched)
 
 			fetched.Object["spec"].(map[string]interface{})["permissions"] = newPermissionMaps(
 				newPermission("BasicRole", "Editor", "admin"),
 				newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "edit"),
 			)
-			_, err = rpEditorClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+			_, err = clients.rpEditor.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 			require.NoError(t, err)
 		})
 		t.Run("editor cannot create ResourcePermission of sub1", func(t *testing.T) {
-			toCreate := createResourcePermissionObject(sub1UID, "folder.grafana.app", "folders", permission)
-			_, err := rpEditorClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+			toCreate := createResourcePermissionObject(sub1UID, gvrFolders.Group, gvrFolders.Resource, permission)
+			_, err := clients.rpEditor.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.Error(t, err)
 			var statusErr *errors.StatusError
 			require.ErrorAs(t, err, &statusErr)
@@ -366,22 +339,21 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 		})
 
 		// Delete the ResourcePermission of sub2
-		err = rpAdminClient.Resource.Delete(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.DeleteOptions{})
+		err = clients.rpAdmin.Resource.Delete(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
 		// Create a new ResourcePermission for sub2
-		toCreate = createResourcePermissionObject(sub1UID, "folder.grafana.app", "folders", permission)
-		created, err = rpAdminClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate = createResourcePermissionObject(sub1UID, gvrFolders.Group, gvrFolders.Resource, permission)
+		_, err = clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, created)
 
 		t.Run("editor can create ResourcePermission of sub2 with parent folder permission", func(t *testing.T) {
-			toCreate = createResourcePermissionObject(sub2UID, "folder.grafana.app", "folders", permission)
+			toCreate := createResourcePermissionObject(sub2UID, gvrFolders.Group, gvrFolders.Resource, permission)
 
-			_, err = rpEditorClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+			_, err = clients.rpEditor.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.NoError(t, err)
 
-			fetched, err := rpEditorClient.Resource.Get(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.GetOptions{})
+			fetched, err := clients.rpEditor.Resource.Get(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, fetched)
 
@@ -405,8 +377,8 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 		require.Equal(t, folderUID, annotations[utils.AnnoKeyFolder])
 
 		t.Run("editor cannot create ResourcePermission of dashboard without parent folder permission", func(t *testing.T) {
-			toCreate := createResourcePermissionObject(dashboardUID, "dashboard.grafana.app", "dashboards", permission)
-			_, err := rpEditorClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+			toCreate := createResourcePermissionObject(dashboardUID, gvrDashboards.Group, gvrDashboards.Resource, permission)
+			_, err := clients.rpEditor.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.Error(t, err)
 			var statusErr *errors.StatusError
 			require.ErrorAs(t, err, &statusErr)
@@ -414,17 +386,17 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 		})
 
 		// Admin creates ResourcePermission for parent folder
-		toCreate := createResourcePermissionObject(folderUID, "folder.grafana.app", "folders", permission)
-		created, err := rpAdminClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, permission)
+		created, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		t.Run("editor can create ResourcePermission of dashboard with parent folder permission", func(t *testing.T) {
-			toCreate = createResourcePermissionObject(dashboardUID, "dashboard.grafana.app", "dashboards", permission)
-			_, err = rpEditorClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+			toCreate := createResourcePermissionObject(dashboardUID, gvrDashboards.Group, gvrDashboards.Resource, permission)
+			_, err := clients.rpEditor.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.NoError(t, err)
 
-			fetched, err := rpEditorClient.Resource.Get(ctx, "dashboard.grafana.app-dashboards-"+dashboardUID, metav1.GetOptions{})
+			fetched, err := clients.rpEditor.Resource.Get(ctx, "dashboard.grafana.app-dashboards-"+dashboardUID, metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, fetched)
 
@@ -434,26 +406,10 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 	})
 }
 
-func doResourcePermissionListFilteringTests(t *testing.T, helper *apis.K8sTestHelper, parentUID string) {
+func doResourcePermissionListFilteringTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
 	viewerCanAdmin := newPermission("BasicRole", "Viewer", "admin")
 	viewerCanView := newPermission("BasicRole", "Viewer", "view")
 	editorCanAdmin := newPermission("BasicRole", "Editor", "admin")
-
-	rpAdminClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
-		GVR:       gvrResourcePermissions,
-	})
-	rpEditorClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Editor,
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
-		GVR:       gvrResourcePermissions,
-	})
-	rpViewerClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Viewer,
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
-		GVR:       gvrResourcePermissions,
-	})
 
 	ctx := context.Background()
 
@@ -470,32 +426,29 @@ func doResourcePermissionListFilteringTests(t *testing.T, helper *apis.K8sTestHe
 	dashboardViewerCanViewUID := dashboardViewerCanView.GetName()
 
 	// Grant admin permissions to the viewer on folder2 and dashboard1
-	rp1 := createResourcePermissionObject(viewerFolderUID, "folder.grafana.app", "folders", viewerCanAdmin)
-	_, err := rpAdminClient.Resource.Create(ctx, rp1, metav1.CreateOptions{})
+	rp1 := createResourcePermissionObject(viewerFolderUID, gvrFolders.Group, gvrFolders.Resource, viewerCanAdmin)
+	_, err := clients.rpAdmin.Resource.Create(ctx, rp1, metav1.CreateOptions{})
 	require.NoError(t, err)
-	rp2 := createResourcePermissionObject(dashboardViewerCanAdminUID, "dashboard.grafana.app", "dashboards", viewerCanAdmin)
-	_, err = rpAdminClient.Resource.Create(ctx, rp2, metav1.CreateOptions{})
+	rp2 := createResourcePermissionObject(dashboardViewerCanAdminUID, gvrDashboards.Group, gvrDashboards.Resource, viewerCanAdmin)
+	_, err = clients.rpAdmin.Resource.Create(ctx, rp2, metav1.CreateOptions{})
 	require.NoError(t, err)
 	// Grant admin permissions to the editor on folder1
-	rp3 := createResourcePermissionObject(editorFolderUID, "folder.grafana.app", "folders", editorCanAdmin)
-	_, err = rpAdminClient.Resource.Create(ctx, rp3, metav1.CreateOptions{})
+	rp3 := createResourcePermissionObject(editorFolderUID, gvrFolders.Group, gvrFolders.Resource, editorCanAdmin)
+	_, err = clients.rpAdmin.Resource.Create(ctx, rp3, metav1.CreateOptions{})
 	require.NoError(t, err)
 	// Grant view permissions to the viewer on dashboard2
-	rp4 := createResourcePermissionObject(dashboardViewerCanViewUID, "dashboard.grafana.app", "dashboards", viewerCanView)
-	_, err = rpAdminClient.Resource.Create(ctx, rp4, metav1.CreateOptions{})
+	rp4 := createResourcePermissionObject(dashboardViewerCanViewUID, gvrDashboards.Group, gvrDashboards.Resource, viewerCanView)
+	_, err = clients.rpAdmin.Resource.Create(ctx, rp4, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	t.Run("Admin can list all ResourcePermissions", func(t *testing.T) {
 		// Admin can list all ResourcePermissions
-		list, err := rpAdminClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := clients.rpAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, list)
 
 		// Check that all expected items are present (there may be more from other tests)
-		itemNames := make([]string, len(list.Items))
-		for i, item := range list.Items {
-			itemNames[i] = item.GetName()
-		}
+		itemNames := getNamesFromList(list)
 		require.Contains(t, itemNames, rp1.GetName(), "Admin should see viewer folder permission")
 		require.Contains(t, itemNames, rp2.GetName(), "Admin should see dashboard viewer can admin permission")
 		require.Contains(t, itemNames, rp3.GetName(), "Admin should see editor folder permission")
@@ -503,14 +456,11 @@ func doResourcePermissionListFilteringTests(t *testing.T, helper *apis.K8sTestHe
 	})
 
 	t.Run("Viewer can list ResourcePermissions of folder2 and dashboard1", func(t *testing.T) {
-		list, err := rpViewerClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := clients.rpViewer.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, list)
 
-		itemNames := make([]string, len(list.Items))
-		for i, item := range list.Items {
-			itemNames[i] = item.GetName()
-		}
+		itemNames := getNamesFromList(list)
 		// Viewer should see permissions for resources they can admin
 		require.Contains(t, itemNames, rp1.GetName(), "Viewer should see viewer folder permission")
 		require.Contains(t, itemNames, rp2.GetName(), "Viewer should see dashboard viewer can admin permission")
@@ -520,14 +470,11 @@ func doResourcePermissionListFilteringTests(t *testing.T, helper *apis.K8sTestHe
 		require.NotContains(t, itemNames, rp4.GetName(), "Viewer should NOT see dashboard viewer can view permission")
 	})
 	t.Run("Editor can list ResourcePermissions of folder1 and its nested dashboards", func(t *testing.T) {
-		list, err := rpEditorClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := clients.rpEditor.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, list)
 
-		itemNames := make([]string, len(list.Items))
-		for i, item := range list.Items {
-			itemNames[i] = item.GetName()
-		}
+		itemNames := getNamesFromList(list)
 		// Editor has admin on editorFolder, so they should see:
 		// - rp3 (editorFolder permission)
 		// - rp2 (dashboard in editorFolder with admin permission)
@@ -667,4 +614,12 @@ func createResourcePermissionObject(resourceName, apiGroup, resource string, per
 			},
 		},
 	}
+}
+
+func getNamesFromList(list *unstructured.UnstructuredList) []string {
+	names := make([]string, len(list.Items))
+	for i, item := range list.Items {
+		names[i] = item.GetName()
+	}
+	return names
 }
