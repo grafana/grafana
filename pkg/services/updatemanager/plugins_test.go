@@ -378,8 +378,8 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 
 	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
 		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]bool{
-			featuremgmt.FlagPluginsAutoUpdate: flagValue,
+		StaticFlags: map[string]setting.FeatureToggle{
+			featuremgmt.FlagPluginsAutoUpdate: {Value: flagValue, Type: setting.Boolean},
 		},
 	})
 	require.NoError(t, err)
