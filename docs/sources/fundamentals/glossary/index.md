@@ -86,8 +86,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">grafanactl</td>
     <td>
-      A command-line tool designed to simplify interaction with Grafana instances. It enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana's REST API. It's suitable for CI/CD pipelines, local development, or free-form tasks, and works across all environments for Grafana OSS, Enterprise, and Cloud. For more information, refer to the <a href="https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/">Grafana CLI</a> topic.
-    </td>
+      A command-line tool that enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana's REST API. 
   </tr>
   <tr>
     <td style="vertical-align: top">mixin</td>
