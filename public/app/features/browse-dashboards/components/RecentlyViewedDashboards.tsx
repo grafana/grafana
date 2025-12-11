@@ -39,37 +39,35 @@ export function RecentlyViewedDashboards() {
   }
 
   return (
-    <div>
-      <CollapsableSection
-        headerDataTestId="browseDashboardsRecentlyViewedTitle"
-        label={
-          <Text variant="h4" element="h3">
-            {t('browse-dashboards.recently-viewed.title', 'Recently Viewed')}
-          </Text>
-        }
-        isOpen={true}
-        className={styles.title}
-        contentClassName={styles.content}
-      >
-        {/* placeholder */}
-        {loading && <Text>{t('browse-dashboards.recently-viewed.loading', 'Loading…')}</Text>}
-        {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
-        {!loading && recentDashboards.length === 0 && (
-          <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
-        )}
+    <CollapsableSection
+      headerDataTestId="browseDashboardsRecentlyViewedTitle"
+      label={
+        <Text variant="h4" element="h3">
+          {t('browse-dashboards.recently-viewed.title', 'Recently Viewed')}
+        </Text>
+      }
+      isOpen={true}
+      className={styles.title}
+      contentClassName={styles.content}
+    >
+      {/* placeholder */}
+      {loading && <Text>{t('browse-dashboards.recently-viewed.loading', 'Loading…')}</Text>}
+      {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
+      {!loading && recentDashboards.length === 0 && (
+        <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
+      )}
 
-        {/* TODO: implement actual card content */}
-        {!loading && recentDashboards.length > 0 && (
-          <>
-            {recentDashboards.map((dash) => (
-              <div key={dash.uid}>
-                <Link href={dash.url}>{dash.name}</Link>
-              </div>
-            ))}
-          </>
-        )}
-      </CollapsableSection>
-    </div>
+      {/* TODO: implement actual card content */}
+      {!loading && recentDashboards.length > 0 && (
+        <>
+          {recentDashboards.map((dash) => (
+            <div key={dash.uid}>
+              <Link href={dash.url}>{dash.name}</Link>
+            </div>
+          ))}
+        </>
+      )}
+    </CollapsableSection>
   );
 }
 
