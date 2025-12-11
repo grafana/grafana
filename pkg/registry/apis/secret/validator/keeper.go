@@ -80,7 +80,6 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 				errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "externalId"), "externalId must be present"))
 			}
 		}
-
 	}
 
 	if keeper.Spec.Azure != nil {

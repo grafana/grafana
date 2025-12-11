@@ -465,8 +465,7 @@ func (m *ModelSecretsManager) Store(ctx context.Context, cfg secretv1beta1.Keepe
 		}
 
 		// Tried to create a secret that already exists
-		return "", fmt.Errorf("ResourceExistsException: The operation failed because the secret %+v already exists.", versionID)
-
+		return "", fmt.Errorf("ResourceExistsException: The operation failed because the secret %+v already exists", versionID)
 	}
 
 	// First time creating the secret
@@ -491,12 +490,12 @@ func (m *ModelSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.Keep
 	versionID := buildVersionID(namespace, name, version)
 
 	if m.deleted(versionID) {
-		return "", fmt.Errorf("InvalidRequestException: You can't perform this operation on the secret because it was marked for deletion.")
+		return "", fmt.Errorf("InvalidRequestException: You can't perform this operation on the secret because it was marked for deletion")
 	}
 
 	entry, ok := m.secrets[versionID]
 	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret.")
+		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
 	}
 
 	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
@@ -506,7 +505,7 @@ func (m *ModelSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.Keep
 func (m *ModelSecretsManager) Reference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
 	entry, ok := m.secrets[ref]
 	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret.")
+		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
 	}
 	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
 }
