@@ -62,11 +62,16 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
     currentData !== undefined
       ? pagedData.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
       : [];
+  let fmtedError = undefined;
+
+  if (error !== undefined) {
+    fmtedError = new Error(error?.toString() ?? 'useListCorrelationQuery error');
+  }
 
   return {
     currentData: enrichedCorrelations,
     isLoading,
-    error,
+    error: fmtedError,
     remainingItems: currentData?.metadata.remainingItemCount || 0,
   };
 };

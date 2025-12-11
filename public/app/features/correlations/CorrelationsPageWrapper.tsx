@@ -49,7 +49,7 @@ function CorrelationsPageAppPlatform() {
         totalCount: totalItems.current,
       }}
       isLoading={isLoading}
-      error={error as Error}
+      error={error}
       removeFn={(params: RemoveCorrelationParams) => {
         const deleteData = deleteCorrelation({ name: params.uid });
         return deleteData.unwrap();
