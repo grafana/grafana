@@ -249,6 +249,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             explain: queryArg.explain,
+            owner: queryArg.owner,
           },
         }),
         providesTags: ['Search'],
@@ -606,6 +607,8 @@ export type GetSearchApiArg = {
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
   folder?: string;
+  /** filter by owner reference name or UID */
+  owner?: string;
   /** count distinct terms for selected fields */
   facet?: string[];
   /** tag query filter */

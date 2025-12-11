@@ -20,6 +20,7 @@ import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
+import { useTeamOwnedFolder } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
 
@@ -82,7 +83,10 @@ export function NestedFolderPicker({
   id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const selectedFolder = useGetFolderQueryFacade(value);
+  const { folder: teamFolder } = useTeamOwnedFolder();
+  const effectiveValue = value || teamFolder?.name;
+  const selectedFolder = useGetFolderQueryFacade(effectiveValue);
+
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
@@ -111,6 +115,12 @@ export function NestedFolderPicker({
     rootFolderUID,
     rootFolderItem,
   });
+
+  useEffect(() => {
+    if (value === undefined && teamFolder && onChange) {
+      onChange(teamFolder.name, teamFolder.title);
+    }
+  }, [onChange, teamFolder, value]);
 
   useEffect(() => {
     if (!search) {
@@ -209,6 +219,23 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
+  const teamFolderTreeItem = useMemo(() => {
+    if (!teamFolder) {
+      return undefined;
+    }
+
+    return {
+      isOpen: false,
+      level: 0,
+      item: {
+        kind: 'folder' as const,
+        title: teamFolder.title,
+        uid: teamFolder.name,
+        parentUID: teamFolder.folder,
+      },
+    };
+  }, [teamFolder]);
+
   const flatTree = useMemo(() => {
     let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
 
@@ -229,6 +256,10 @@ export function NestedFolderPicker({
         })) ?? [];
     }
 
+    if (teamFolderTreeItem) {
+      flatTree = [teamFolderTreeItem, ...flatTree];
+    }
+
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal
     if (!showRootFolder || excludeUIDs?.length) {
@@ -246,7 +277,7 @@ export function NestedFolderPicker({
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItem]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -276,7 +307,7 @@ export function NestedFolderPicker({
   });
 
   let label = selectedFolder.data?.title;
-  if (value === '') {
+  if (!label) {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
@@ -362,7 +393,7 @@ export function NestedFolderPicker({
 
             <NestedFolderList
               items={flatTree}
-              selectedFolder={value}
+              selectedFolder={effectiveValue}
               focusedItemIndex={focusedItemIndex}
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
