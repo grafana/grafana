@@ -301,9 +301,8 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name:     "query",
-											In:       "query",
-											Required: true,
+											Name: "query",
+											In:   "query",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type: []string{"string"},

@@ -29,7 +29,7 @@ v0alpha1: {
 				"GET": {
 					request: {
 						query: {
-							query: string
+							query?: string
 							limit?:  int64 | 10
 							offset?: int64 | 0
 							page?:   int64 | 1

@@ -65,8 +65,8 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > maxLimit {
+		req.Limit = maxLimit
 	}
 	if req.Limit <= 0 {
 		req.Limit = 30
@@ -159,7 +159,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		})
 	}
 
-	list.TotalHits = int64(len(list.Results.Rows))
+	list.TotalHits = res.TotalCount
 	return list, nil
 }
 

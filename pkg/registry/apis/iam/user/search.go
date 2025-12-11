@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -29,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
+
+const maxLimit = 100
 
 type SearchHandler struct {
 	log      *slog.Logger
@@ -59,7 +62,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 						OperationProps: spec3.OperationProps{
 							Description: "User search",
 							Tags:        []string{"Search"},
-							OperationId: "getSearchUser",
+							OperationId: "getSearchUsers",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -219,15 +222,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	limit := int64(30)
 	if limitStr != "" {
 		if l, err := strconv.ParseInt(limitStr, 10, 64); err == nil && l > 0 {
-			limit = l
+			if l > maxLimit {
+				limit = maxLimit
+			} else {
+				limit = l
+			}
 		}
 	}
 
-	rawQuery := queryParams.Get("query")
 	// Escape characters that are used by bleve wildcard search to be literal strings.
-	rawQuery = strings.ReplaceAll(rawQuery, "\\", "\\\\")
-	rawQuery = strings.ReplaceAll(rawQuery, "*", "\\*")
-	rawQuery = strings.ReplaceAll(rawQuery, "?", "\\?")
+	rawQuery := escapeBleveQuery(queryParams.Get("query"))
 
 	searchQuery := fmt.Sprintf(`*%s*`, rawQuery)
 
@@ -380,4 +384,10 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 	}
 
 	return sr, nil
+}
+
+var bleveEscapeRegex = regexp.MustCompile(`([\\*?])`)
+
+func escapeBleveQuery(query string) string {
+	return bleveEscapeRegex.ReplaceAllString(query, `\$1`)
 }

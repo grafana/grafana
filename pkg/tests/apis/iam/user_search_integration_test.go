@@ -142,6 +142,9 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 			}
 
 			t.Run("sort by lastSeenAt", func(t *testing.T) {
+				if mode >= rest.Mode3 {
+					t.Skip("Skipping lastSeenAt sort test for Mode >= 3: API does not persist status.lastSeenAt")
+				}
 				// Populate lastSeenAt
 				// Alice: 30 minutes ago
 				// Bob: 1 minute ago
@@ -154,10 +157,6 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				updateLastSeenAt(t, helper, "charlie", now.Add(-2*time.Hour), mode)
 				updateLastSeenAt(t, helper, "testuser-editor", now.Add(-40*time.Minute), mode)
 				updateLastSeenAt(t, helper, "testuser-viewer", now.Add(-90*time.Minute), mode)
-
-				if mode >= rest.Mode3 {
-					t.Skip("Skipping lastSeenAt sort test for Mode >= 3: API does not persist status.lastSeenAt")
-				}
 
 				// lastSeenAt ASC means oldest date first to match legacy behavior
 				res := searchUsersWithSort(t, helper, "TestUser", "lastSeenAt")

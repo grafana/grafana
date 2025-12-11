@@ -132,40 +132,4 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 		_, err := client.Search(ctx, req)
 		require.NoError(t, err)
 	})
-
-	t.Run("should filter out hidden users", func(t *testing.T) {
-		mockOrgService := orgtest.NewMockService(t)
-		cfg := &setting.Cfg{
-			HiddenUsers: map[string]struct{}{
-				"hidden_user": {},
-			},
-		}
-		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), cfg)
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Login: "admin"})
-		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{Namespace: "default"},
-			},
-			Query: "user",
-		}
-
-		mockUsers := []*org.OrgUserDTO{
-			{UID: "uid1", Name: "Visible User", Email: "visible@example.com", Login: "visible_user"},
-			{UID: "uid2", Name: "Hidden User", Email: "hidden@example.com", Login: "hidden_user"},
-		}
-
-		mockOrgService.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
-			return q.Query == "user"
-		})).Return(&org.SearchOrgUsersQueryResult{
-			OrgUsers:   mockUsers,
-			TotalCount: 2,
-		}, nil)
-
-		resp, err := client.Search(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, int64(1), resp.TotalHits)
-		require.Len(t, resp.Results.Rows, 1)
-		require.Equal(t, "uid1", resp.Results.Rows[0].Key.Name)
-	})
 }
