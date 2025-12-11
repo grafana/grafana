@@ -14,7 +14,11 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
-import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  calculateBucketFactor,
+  isHeatmapCellsDense,
+  readHeatmapRowsCustomMeta,
+} from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
@@ -201,12 +205,16 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
 
-  // Determine shouldUseLogScale based on yBucketScale option when available (calculate from data: No)
+  // Determine scale distribution based on yBucketScale option when available (calculate from data: No)
   // If yBucketScale is undefined (Auto), use the old behavior (check yScale)
-  // If yBucketScale is Linear, force linear scale (current PR behavior)
-  const shouldUseLogScale = yBucketScale
-    ? yBucketScale.type !== ScaleDistribution.Linear
-    : yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
+  const scaleDistribution = yBucketScale
+    ? yBucketScale.type
+    : yScale.type !== ScaleDistribution.Linear || isSparseHeatmap
+      ? ScaleDistribution.Log
+      : ScaleDistribution.Linear;
+
+  const scaleLog = yBucketScale?.log ?? yScale.log ?? 2;
+  const scaleLinearThreshold = yBucketScale?.linearThreshold;
 
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
@@ -221,8 +229,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     orientation: ScaleOrientation.Vertical,
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
-    distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: yScale.log ?? 2,
+    distribution: scaleDistribution,
+    log: scaleLog,
+    linearThreshold: scaleLinearThreshold,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
@@ -235,11 +244,13 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             let scaleMin: number | null, scaleMax: number | null;
 
-            [scaleMin, scaleMax] = shouldUseLogScale
-              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
+            const isLogScale =
+              scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
+            [scaleMin, scaleMax] = isLogScale
+              ? uPlot.rangeLog(dataMin, dataMax, scaleLog as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
-            if (shouldUseLogScale && !isOrdinalY) {
+            if (isLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
 
@@ -268,7 +279,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
             // logarithmic expansion
-            if (shouldUseLogScale) {
+            if (scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog) {
               let yExp = u.scales[yScaleKey].log!;
 
               let minExpanded = false;
@@ -291,17 +302,31 @@ export function prepConfig(opts: PrepConfigOpts) {
                 }
               }
 
+              // For pre-bucketed data with explicit scale, calculate expansion factor from actual bucket spacing
+              // For calculated heatmaps, use the full log base
+              let expansionFactor: number = yExp;
+
+              if (yBucketScale !== undefined) {
+                // Try to infer the bucket factor from the actual data spacing
+                const yValues = u.data[1]?.[1];
+                if (Array.isArray(yValues) && yValues.length >= 2 && typeof yValues[0] === 'number') {
+                  expansionFactor = calculateBucketFactor(yValues, yExp);
+                }
+              }
+
               if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
                 if (!minExpanded) {
-                  scaleMin /= yExp;
+                  scaleMin /= expansionFactor;
                 }
               } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
                 if (!maxExpanded) {
-                  scaleMax *= yExp;
+                  scaleMax *= expansionFactor;
                 }
               } else {
-                scaleMin /= yExp / 2;
-                scaleMax *= yExp / 2;
+                // Unknown layout - expand both directions
+                const factor = Math.sqrt(expansionFactor); // Use sqrt for balanced expansion
+                scaleMin /= factor;
+                scaleMax *= factor;
               }
 
               if (!isOrdinalY) {
@@ -596,15 +621,18 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let ySize: number;
 
         if (scaleX.distr === 3) {
-          xSize = Math.abs(valToPosX(xs[0] * scaleX.log!, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
+          // For log scales, calculate cell size from actual adjacent bucket positions
+          const nextXValue = xs[yBinQty] ?? xs[0] * scaleX.log!;
+          xSize = Math.abs(valToPosX(nextXValue, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
         } else {
           xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
         }
 
         if (scaleY.distr === 3) {
+          // For log scales, calculate cell size from actual adjacent bucket positions
+          const nextYValue = ys[1] ?? ys[0] * scaleY.log!;
           ySize =
-            Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
-            ySizeDivisor;
+            Math.abs(valToPosY(nextYValue, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) / ySizeDivisor;
         } else {
           ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
         }
