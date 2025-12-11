@@ -44,9 +44,9 @@ Before you begin, ensure you have the following:
 
 ### Known limitations
 
-Refer to [Known limitations](/docs/grafana/latest/observability-as-code/provision-resources/intro-git-sync#known-limitations) before using Git Sync.
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#known-limitations) before using Git Sync.
 
-Refer to [Supported resources](/docs/grafana/latest/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
+Refer to [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
 
 ### Performance considerations
 
@@ -68,17 +68,17 @@ Optionally, you can also [extend Git Sync with webhooks and image rendering](#ex
 
 {{< admonition type="note" >}}
 
-Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](/docs/grafana/latest/observability-as-code/provision-resources/file-path-setup/) for more information.
+Alternatively, you can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/file-path-setup/) for more information.
 
 {{< /admonition >}}
 
 ## Enable required feature toggles
 
-To activate Git Sync in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles. For more information about feature toggles, refer to [Configure feature toggles](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
+To activate Git Sync in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
 To enable the required feature toggles:
 
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 1. Locate or add a `[feature_toggles]` section. Add these values:
 
    ```ini
@@ -180,8 +180,8 @@ To set up Git Sync with `grafanactl`, follow these steps:
 For more information, refer to the following documents:
 
 - [grafanactl Documentation](https://grafana.github.io/grafanactl/)
-- [Repository CRD Reference](/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/)
-- [Dashboard CRD Format](/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
+- [Repository CRD Reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-setup/)
+- [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 
 ### Create the repository CRD
 
@@ -316,7 +316,7 @@ grafanactl resources get repositories
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
 
-Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
+Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/) for more information.
 
 ## Extend Git Sync for real-time notification and image rendering
 
@@ -366,7 +366,7 @@ You've successfully set up Git Sync to manage your Grafana dashboards through ve
 
 To learn more about using Git Sync:
 
-- [Work with provisioned dashboards](/docs/grafana/latest/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
-- [Manage provisioned repositories with Git Sync](/docs/grafana/latest/observability-as-code/provision-resources/use-git-sync/)
-- [Export resources](/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
+- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
+- [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 - [grafanactl documentation](https://grafana.github.io/grafanactl/)
