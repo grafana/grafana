@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Klientkällor"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Visar {{visibleItems}} av {{totalItems}} instanser",
-      "button-show-all_one": "Visa alla {{totalItems}} larminstanser",
-      "button-show-all_other": "Visa alla {{totalItems}} larminstanser"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4781,8 @@
       "remove": "Ta bort {{typeName}}",
       "row-title": "",
       "switch-layout": "Byt layout",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5888,6 +5889,17 @@
       "label-value": "Värde",
       "placeholder-your-metric-prefix": "Ditt metrikprefix"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Anpassade alternativ",
       "name-values-separated-comma": "Värden åtskilda med kommatecken",
@@ -6259,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Valfritt, om du vill extrahera en del av ett serienamn eller metriskt nodsegment.",
+      "description-regex-apply-to": "",
       "label-data-source": "Datakälla",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Sortering av statiska alternativ",
       "label-target-data-source": "Måldatakälla",
       "label-use-static-options": "Använd statiska alternativ",
       "name-regex": "Regex",
       "query-options": "Frågealternativ",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Urvalsalternativ",
       "static-options-legend": "Statiska alternativ"
     },
@@ -8252,6 +8272,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8827,13 @@
       "aria-label-default": "Välj en färg",
       "aria-label-selected-color": "{{colorLabel}} färg"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Radera",
       "cancel": "Avbryt",
@@ -8998,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Dölj alla rader",
       "aria-label-expand-all": "Expandera alla rader",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Växla rad utökad",
       "tooltip-collapse-all": "Dölj alla rader",
       "tooltip-expand-all": "Expandera alla rader"
@@ -9252,6 +9287,8 @@
       "actions-confirmation-label": "Bekräftelsemeddelande",
       "actions-confirmation-message": "Tillhandahåll en beskrivande prompt för att bekräfta eller avbryta åtgärden.",
       "footer-add-annotation": "Lägg till kommentar",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klicka för att {{actionTitle}}",
       "footer-click-to-navigate": "Klicka för att öppna {{linkTitle}}",
       "footer-filter-for-value": "Filtrera för ”{{value}}”",
@@ -12397,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

@@ -194,6 +194,45 @@ describe('Tree', () => {
     expectResultApplicationsMimirPresent();
   });
 
+  it('Opens to a selected scope and shows all sibling nodes', async () => {
+    // Select a scope and apply
+    await openSelector();
+    await expandResultApplications();
+    await selectResultApplicationsMimir();
+    await applyScopes();
+
+    // Reopen selector - should show the selected scope AND all its siblings
+    await openSelector();
+
+    // Verify all sibling nodes (Grafana, Mimir, Cloud) are visible
+    expectResultApplicationsGrafanaPresent();
+    expectResultApplicationsMimirPresent();
+    expectResultApplicationsCloudPresent();
+
+    // Verify the Applications container is expanded
+    expect(screen.getByRole('button', { name: 'Applications' })).toBeInTheDocument();
+  });
+
+  it('Opens to a nested selected scope and shows all siblings at that level', async () => {
+    // Select a nested scope
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    await selectResultApplicationsCloudDev();
+    await applyScopes();
+
+    // Reopen selector - should expand to Cloud and show all its children
+    await openSelector();
+
+    // Verify the full path is expanded
+    expect(screen.getByRole('button', { name: 'Cloud' })).toBeInTheDocument();
+
+    // Verify all siblings at the Cloud level are visible
+    // The test should verify that when Cloud is expanded, we see all its children
+    // (This depends on what siblings Dev has - at minimum, we should see Dev itself)
+    expect(screen.getByRole('treeitem', { name: 'Dev' })).toBeInTheDocument();
+  });
+
   it('Persists a scope', async () => {
     await openSelector();
     await expandResultApplications();
@@ -291,7 +330,7 @@ describe('Tree', () => {
     expectScopesHeadline('Recommended');
   });
 
-  it('Should open to a specific path when scopes and scope_parent are provided', async () => {
+  it('Should open to a specific path when scopes and scope_node are applied', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();

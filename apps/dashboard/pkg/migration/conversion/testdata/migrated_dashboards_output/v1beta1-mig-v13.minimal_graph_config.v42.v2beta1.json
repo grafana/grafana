@@ -132,5 +132,10 @@
     "title": "Dashboard with minimal graph panel settings",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

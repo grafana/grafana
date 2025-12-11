@@ -630,5 +630,10 @@
     "title": "Datasource tests -  Shared Queries",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

@@ -188,6 +188,7 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 	return &pb.AlertInstance{
 		Labels:            modelInstance.Labels,
 		LabelsHash:        modelInstance.LabelsHash,
+		Annotations:       modelInstance.Annotations,
 		CurrentState:      string(modelInstance.CurrentState),
 		CurrentStateSince: timestamppb.New(modelInstance.CurrentStateSince),
 		CurrentStateEnd:   timestamppb.New(modelInstance.CurrentStateEnd),
@@ -255,6 +256,7 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 			LabelsHash: protoInstance.LabelsHash,
 		},
 		Labels:            protoInstance.Labels,
+		Annotations:       protoInstance.Annotations,
 		CurrentState:      models.InstanceStateType(protoInstance.CurrentState),
 		CurrentStateSince: protoInstance.CurrentStateSince.AsTime(),
 		CurrentStateEnd:   protoInstance.CurrentStateEnd.AsTime(),

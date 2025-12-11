@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Fuentes de inquilinos"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Mostrando {{visibleItems}} de {{totalItems}} instancias",
-      "button-show-all_one": "Mostrar {{totalItems}} instancia de alerta",
-      "button-show-all_other": "Mostrar las {{totalItems}} instancias de alerta"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4781,8 @@
       "remove": "Eliminar {{typeName}}",
       "row-title": "",
       "switch-layout": "Cambiar diseño",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5888,6 +5889,17 @@
       "label-value": "Valor",
       "placeholder-your-metric-prefix": "Tu prefijo métrico"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
       "name-values-separated-comma": "Valores separados por comas",
@@ -6259,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
+      "description-regex-apply-to": "",
       "label-data-source": "Fuente de datos",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Ordenar opciones estáticas",
       "label-target-data-source": "Fuente de datos de destino",
       "label-use-static-options": "Usar opciones estáticas",
       "name-regex": "RegEx",
       "query-options": "Opciones de consulta",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opciones de selección",
       "static-options-legend": "Opciones estáticas"
     },
@@ -8252,6 +8272,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8827,13 @@
       "aria-label-default": "Elegir un color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -8998,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Contraer todas las filas",
       "aria-label-expand-all": "Expandir todas las filas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar fila expandida",
       "tooltip-collapse-all": "Contraer todas las filas",
       "tooltip-expand-all": "Expandir todas las filas"
@@ -9252,6 +9287,8 @@
       "actions-confirmation-label": "Mensaje de confirmación",
       "actions-confirmation-message": "Proporciona un mensaje descriptivo para confirmar o cancelar la acción.",
       "footer-add-annotation": "Añadir anotación",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Haz clic para {{actionTitle}}",
       "footer-click-to-navigate": "Haz clic para abrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrar por «{{value}}»",
@@ -12397,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

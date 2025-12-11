@@ -5,6 +5,7 @@ import (
 	"net"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,6 +41,15 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	runtimeConfig := apiserverCfg.Key("runtime_config").String()
+	runtimeConfigSplit := strings.Split(runtimeConfig, ",")
+
+	// TODO: temporary fix to allow disabling local features service and still being able to use its authz handler
+	if !cfg.OpenFeature.APIEnabled {
+		runtimeConfigSplit = append(runtimeConfigSplit, "features.grafana.app/v0alpha1=false")
+	}
+
+	runtimeConfig = strings.Join(runtimeConfigSplit, ",")
+
 	if runtimeConfig != "" {
 		if err := o.APIEnablementOptions.RuntimeConfig.Set(runtimeConfig); err != nil {
 			return fmt.Errorf("failed to set runtime config: %w", err)
