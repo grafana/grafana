@@ -195,25 +195,3 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 
 	return pluginMeta, nil
 }
-
-// createMetaFromMetaJSONData creates a Meta k8s object from MetaJSONData and plugin metadata.
-func createMetaFromMetaJSONData(pluginJSON pluginsv0alpha1.MetaJSONData, name, namespace string) *pluginsv0alpha1.Meta {
-	pluginMeta := &pluginsv0alpha1.Meta{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: pluginsv0alpha1.MetaSpec{
-			PluginJson: pluginJSON,
-		},
-	}
-
-	// Set the GroupVersionKind
-	pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   pluginsv0alpha1.APIGroup,
-		Version: pluginsv0alpha1.APIVersion,
-		Kind:    pluginsv0alpha1.MetaKind().Kind(),
-	})
-
-	return pluginMeta
-}

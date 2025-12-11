@@ -2,15 +2,16 @@ package meta
 
 import (
 	"encoding/json"
+	"time"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-// jsonDataToPluginMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
+// jsonDataToMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
 // nolint:gocyclo
-func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSONData {
+func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSONData {
 	meta := pluginsv0alpha1.MetaJSONData{
 		Id:   jsonData.ID,
 		Name: jsonData.Name,
@@ -489,7 +490,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Met
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
 func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.LoadingStrategy, moduleHash string) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
-		PluginJson: jsonDataToPluginMetaJSONData(plugin.JSONData),
+		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
 
 	if plugin.Module != "" {
@@ -582,4 +583,143 @@ func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.MetaV0a
 	default:
 		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
 	}
+}
+
+// pluginToMetaSpec converts a fully loaded *plugins.Plugin to a pluginsv0alpha1.MetaSpec.
+func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Set module information
+	if plugin.Module != "" {
+		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+			Path: plugin.Module,
+		}
+
+		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+		module.LoadingStrategy = &loadingStrategy
+
+		metaSpec.Module = module
+	}
+
+	// Set BaseURL
+	if plugin.BaseURL != "" {
+		metaSpec.BaseURL = &plugin.BaseURL
+	}
+
+	// Set signature information
+	signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		Status: convertSignatureStatus(plugin.Signature),
+	}
+
+	if plugin.SignatureType != "" {
+		sigType := convertSignatureType(plugin.SignatureType)
+		signature.Type = &sigType
+	}
+
+	if plugin.SignatureOrg != "" {
+		signature.Org = &plugin.SignatureOrg
+	}
+
+	metaSpec.Signature = signature
+
+	if len(plugin.Children) > 0 {
+		children := make([]string, 0, len(plugin.Children))
+		for _, child := range plugin.Children {
+			children = append(children, child.ID)
+		}
+		metaSpec.Children = children
+	}
+
+	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
+		Detected: plugin.Angular.Detected,
+	}
+
+	if len(plugin.Translations) > 0 {
+		metaSpec.Translations = plugin.Translations
+	}
+
+	return metaSpec
+}
+
+// grafanaComPluginVersionMeta represents the response from grafana.com API
+// GET /api/plugins/{pluginId}/versions/{version}
+type grafanaComPluginVersionMeta struct {
+	PluginID        string                       `json:"pluginSlug"`
+	Version         string                       `json:"version"`
+	URL             string                       `json:"url"`
+	Commit          string                       `json:"commit"`
+	Description     string                       `json:"description"`
+	Keywords        []string                     `json:"keywords"`
+	CreatedAt       time.Time                    `json:"createdAt"`
+	UpdatedAt       time.Time                    `json:"updatedAt"`
+	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+	Readme          string                       `json:"readme"`
+	Downloads       int                          `json:"downloads"`
+	Verified        bool                         `json:"verified"`
+	Status          string                       `json:"status"`
+	StatusContext   string                       `json:"statusContext"`
+	DownloadSlug    string                       `json:"downloadSlug"`
+	SignatureType   string                       `json:"signatureType"`
+	SignedByOrg     string                       `json:"signedByOrg"`
+	SignedByOrgName string                       `json:"signedByOrgName"`
+	Packages        struct {
+		Any struct {
+			Md5         string `json:"md5"`
+			Sha256      string `json:"sha256"`
+			PackageName string `json:"packageName"`
+			DownloadURL string `json:"downloadUrl"`
+		} `json:"any"`
+	} `json:"packages"`
+	Links []struct {
+		Rel  string `json:"rel"`
+		Href string `json:"href"`
+	} `json:"links"`
+	AngularDetected bool     `json:"angularDetected"`
+	Scopes          []string `json:"scopes"`
+}
+
+// grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
+func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+	metaSpec := pluginsv0alpha1.MetaSpec{
+		PluginJson: gcomMeta.JSON,
+	}
+
+	if gcomMeta.SignatureType != "" {
+		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
+		}
+
+		switch gcomMeta.SignatureType {
+		case "grafana":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
+			signature.Type = &sigType
+		case "commercial":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
+			signature.Type = &sigType
+		case "community":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
+			signature.Type = &sigType
+		case "private":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
+			signature.Type = &sigType
+		case "private-glob":
+			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
+			signature.Type = &sigType
+		}
+
+		if gcomMeta.SignedByOrg != "" {
+			signature.Org = &gcomMeta.SignedByOrg
+		}
+
+		metaSpec.Signature = signature
+	}
+
+	// Set angular info
+	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
+		Detected: gcomMeta.AngularDetected,
+	}
+
+	return metaSpec
 }

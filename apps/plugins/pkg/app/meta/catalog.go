@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
-	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
 
 const (
@@ -87,84 +85,9 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string)
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	metaSpec := pluginsv0alpha1.MetaSpec{
-		PluginJson: gcomMeta.JSON,
-	}
-
-	if gcomMeta.SignatureType != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
-			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
-		}
-
-		switch gcomMeta.SignatureType {
-		case "grafana":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
-			signature.Type = &sigType
-		case "commercial":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
-			signature.Type = &sigType
-		case "community":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
-			signature.Type = &sigType
-		case "private":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
-			signature.Type = &sigType
-		case "private-glob":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
-			signature.Type = &sigType
-		}
-
-		if gcomMeta.SignedByOrg != "" {
-			signature.Org = &gcomMeta.SignedByOrg
-		}
-
-		metaSpec.Signature = signature
-	}
-
-	// Set angular info
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: gcomMeta.AngularDetected,
-	}
-
+	metaSpec := grafanaComPluginVersionMetaToMetaSpec(gcomMeta)
 	return &Result{
 		Meta: metaSpec,
 		TTL:  p.ttl,
 	}, nil
-}
-
-// grafanaComPluginVersionMeta represents the response from grafana.com API
-// GET /api/plugins/{pluginId}/versions/{version}
-type grafanaComPluginVersionMeta struct {
-	PluginID        string                       `json:"pluginSlug"`
-	Version         string                       `json:"version"`
-	URL             string                       `json:"url"`
-	Commit          string                       `json:"commit"`
-	Description     string                       `json:"description"`
-	Keywords        []string                     `json:"keywords"`
-	CreatedAt       time.Time                    `json:"createdAt"`
-	UpdatedAt       time.Time                    `json:"updatedAt"`
-	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
-	Readme          string                       `json:"readme"`
-	Downloads       int                          `json:"downloads"`
-	Verified        bool                         `json:"verified"`
-	Status          string                       `json:"status"`
-	StatusContext   string                       `json:"statusContext"`
-	DownloadSlug    string                       `json:"downloadSlug"`
-	SignatureType   string                       `json:"signatureType"`
-	SignedByOrg     string                       `json:"signedByOrg"`
-	SignedByOrgName string                       `json:"signedByOrgName"`
-	Packages        struct {
-		Any struct {
-			Md5         string `json:"md5"`
-			Sha256      string `json:"sha256"`
-			PackageName string `json:"packageName"`
-			DownloadURL string `json:"downloadUrl"`
-		} `json:"any"`
-	} `json:"packages"`
-	Links []struct {
-		Rel  string `json:"rel"`
-		Href string `json:"href"`
-	} `json:"links"`
-	AngularDetected bool     `json:"angularDetected"`
-	Scopes          []string `json:"scopes"`
 }
