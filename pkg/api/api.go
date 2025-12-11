@@ -190,6 +190,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		r.Get("/bootdata/:accessToken",
 			reqNoAuth,
+			hs.PublicDashboardsApi.Middleware.HandleView,
 			publicdashboardsapi.SetPublicDashboardAccessToken,
 			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
 			publicdashboardsapi.CountPublicDashboardRequest(),
