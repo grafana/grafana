@@ -165,13 +165,14 @@ const injectedRtkApi = api
         }),
         providesTags: ['Search'],
       }),
-      getSearchUser: build.query<GetSearchUserApiResponse, GetSearchUserApiArg>({
+      getSearchUsers: build.query<GetSearchUsersApiResponse, GetSearchUsersApiArg>({
         query: (queryArg) => ({
           url: `/searchUsers`,
           params: {
             query: queryArg.query,
             limit: queryArg.limit,
             page: queryArg.page,
+            offset: queryArg.offset,
             sort: queryArg.sort,
           },
         }),
@@ -908,13 +909,15 @@ export type GetSearchTeamsApiArg = {
   /** page number to start from */
   page?: number;
 };
-export type GetSearchUserApiResponse = unknown;
-export type GetSearchUserApiArg = {
+export type GetSearchUsersApiResponse = unknown;
+export type GetSearchUsersApiArg = {
   query?: string;
   /** number of results to return */
   limit?: number;
   /** page number (starting from 1) */
   page?: number;
+  /** number of results to skip */
+  offset?: number;
   /** sortable field */
   sort?: string;
 };
@@ -2146,8 +2149,8 @@ export const {
   useUpdateExternalGroupMappingMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
-  useGetSearchUserQuery,
-  useLazyGetSearchUserQuery,
+  useGetSearchUsersQuery,
+  useLazyGetSearchUsersQuery,
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,
