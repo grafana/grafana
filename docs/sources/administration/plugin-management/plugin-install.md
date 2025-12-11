@@ -21,7 +21,16 @@ weight: 120
 
 # Install a plugin
 
-Besides the UI, you can use alternative methods to install a plugin depending on your environment or set-up.
+The most common way to install a plugin is through the Grafana UI.
+
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. Browse and find a plugin.
+1. Click the plugin's logo.
+1. Click **Install**.
+
+You can use use the following alternative methods to install a plugin depending on your environment or set-up.
+
+[DEPRECATION NOTE HERE???]
 
 ## Install a plugin using Grafana CLI
 
