@@ -480,6 +480,10 @@ func (alertRule *AlertRule) GetPanelID() int64 {
 	return -1
 }
 
+func (alertRule *AlertRule) GetInterval() time.Duration {
+	return time.Duration(alertRule.IntervalSeconds) * time.Second
+}
+
 type LabelOption func(map[string]string)
 
 func WithoutInternalLabels() LabelOption {

@@ -90,6 +90,20 @@ func (qr QueryResultBuilder) ToFrame() *data.Frame {
 	return qr.frame
 }
 
+func (qr QueryResultBuilder) AddWarn(s string) {
+	m := qr.frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		qr.frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, data.Notice{
+		Severity: data.NoticeSeverityWarning,
+		Text:     s,
+		Link:     "",
+		Inspect:  0,
+	})
+}
+
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"

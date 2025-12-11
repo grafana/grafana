@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type folderService interface {
@@ -247,9 +246,5 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(500, err, "Failed to evaluate")
 	}
 
-	body, err := data.FrameToJSON(result, data.IncludeAll)
-	if err != nil {
-		return ErrResp(500, err, "Failed to convert frame to JSON")
-	}
-	return response.JSON(http.StatusOK, body)
+	return response.JSONStreaming(http.StatusOK, result)
 }

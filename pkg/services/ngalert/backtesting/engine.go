@@ -15,12 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -30,7 +34,7 @@ var (
 	backtestingEvaluatorFactory = newBacktestingEvaluator
 )
 
-type callbackFunc = func(evaluationIndex int, now time.Time, results eval.Results) error
+type callbackFunc = func(evaluationIndex int, now time.Time, results eval.Results) (bool, error)
 
 type backtestingEvaluator interface {
 	Eval(ctx context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error
@@ -42,11 +46,15 @@ type stateManager interface {
 }
 
 type Engine struct {
-	evalFactory        eval.EvaluatorFactory
-	createStateManager func() stateManager
+	evalFactory          eval.EvaluatorFactory
+	createStateManager   func() stateManager
+	disableGrafanaFolder bool
+	featureToggles       featuremgmt.FeatureToggles
+	minInterval          time.Duration
+	baseInterval         time.Duration
 }
 
-func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer) *Engine {
+func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer, cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
@@ -62,22 +70,60 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 			}
 			return state.NewManager(cfg, state.NewNoopPersister())
 		},
+		disableGrafanaFolder: false,
+		featureToggles:       toggles,
+		minInterval:          0,
+		baseInterval:         cfg.BaseInterval,
 	}
 }
 
-func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
-	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
-	logger := logger.FromContext(ctx)
-
+func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (res *data.Frame, err error) {
+	if rule == nil {
+		return nil, fmt.Errorf("%w: rule is not defined", ErrInvalidInputData)
+	}
 	if !from.Before(to) {
-		return nil, fmt.Errorf("%w: invalid interval of the backtesting [%d,%d]", ErrInvalidInputData, from.Unix(), to.Unix())
+		return nil, fmt.Errorf("%w: invalid interval [%d,%d]", ErrInvalidInputData, from.Unix(), to.Unix())
 	}
-	if to.Sub(from).Seconds() < float64(rule.IntervalSeconds) {
-		return nil, fmt.Errorf("%w: interval of the backtesting [%d,%d] is less than evaluation interval [%ds]", ErrInvalidInputData, from.Unix(), to.Unix(), rule.IntervalSeconds)
-	}
-	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	stateManager := e.createStateManager()
+	rule = rule.Copy()
+	rule.UID = "backtesting"
+	rule.NamespaceUID = "backtesting"
+	rule.RuleGroup = "backtesting"
+
+	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
+	logger := logger.FromContext(ruleCtx).New("backtesting", util.GenerateShortUID())
+
+	var warns []string
+	if rule.GetInterval() < e.minInterval {
+		logger.Warn("Interval adjusted to minimal interval", "originalInterval", rule.GetInterval(), "adjustedInterval", e.minInterval)
+		rule.IntervalSeconds = int64(e.minInterval.Seconds())
+		warns = append(warns, fmt.Sprintf("Interval adjusted to minimal interval %ds", rule.IntervalSeconds))
+	}
+	if rule.IntervalSeconds%int64(e.baseInterval.Seconds()) != 0 {
+		return nil, fmt.Errorf("%w: interval %ds is not divisible by base interval %ds", ErrInvalidInputData, rule.IntervalSeconds, int64(e.baseInterval.Seconds()))
+	}
+
+	// Now calculate the time of the tick the same way as in the scheduler
+	firstTick := ticker.GetStartTick(from, e.baseInterval)
+	if firstTick != from {
+		if firstTick.Before(from) {
+			firstTick = firstTick.Add(rule.GetInterval())
+		}
+		logger.Info("Adjusted the first tick of the backtesting interval", "from", from, "actualFrom", firstTick)
+	}
+	var evaluations int
+	if to.After(firstTick) {
+		evaluations = int(to.Sub(firstTick).Seconds()) / int(rule.IntervalSeconds)
+	} else {
+		evaluations = 1
+	}
+
+	start := time.Now()
+	defer func() {
+		if err != nil {
+			logger.Info("Rule testing finished successfully", "duration", time.Since(start))
+		}
+	}()
 
 	stateMgr := e.createStateManager()
 
@@ -94,11 +140,10 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
 
-	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
-
-	start := time.Now()
+	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", evaluations)
 
 	var builder *historian.QueryResultBuilder
+
 	ruleMeta := history_model.RuleMeta{
 		ID:           rule.ID,
 		OrgID:        rule.OrgID,
@@ -128,7 +173,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 			return false, nil
 		}
 		if builder == nil {
-			builder = historian.NewQueryResultBuilder(length * len(results))
+			builder = historian.NewQueryResultBuilder(evaluations * len(results))
 		}
 		states := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
 		for _, s := range states {
@@ -138,11 +183,15 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 			entry := historian.StateTransitionToLokiEntry(ruleMeta, s)
 			err := builder.AddRow(currentTime, entry, labelsBytes)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
-		return nil
-	})
+		if currentTime.Add(time.Duration(rule.IntervalSeconds) * time.Second).After(to) {
+		}
+		return false, nil
+	}
+
+	err = evaluator.Eval(ruleCtx, from, rule.GetInterval(), evaluations, processFn)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +199,9 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, errors.New("no results were produced")
 	}
 	logger.Info("Rule testing finished successfully", "duration", time.Since(start))
+	for _, warn := range warns {
+		builder.AddWarn(warn)
+	}
 	return builder.ToFrame(), nil
 }
 
