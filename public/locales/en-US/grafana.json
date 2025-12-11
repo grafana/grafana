@@ -2681,7 +2681,6 @@
       "error-load-title": "Failed to load saved searches",
       "error-name-duplicate": "A saved search with this name already exists",
       "error-name-required": "Name is required",
-      "error-name-too-long": "Name must be {{max}} characters or less",
       "error-save-description": "Your changes could not be saved. Please try again.",
       "error-save-title": "Failed to save",
       "list-aria-label": "Saved searches list",

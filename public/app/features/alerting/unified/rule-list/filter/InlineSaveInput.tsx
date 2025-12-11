@@ -31,10 +31,8 @@ export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveI
 
   // Clear error when value changes
   useEffect(() => {
-    if (error) {
-      setError(null);
-    }
-  }, [value, error]);
+    setError(null);
+  }, [value]);
 
   const handleSubmit = async () => {
     const validationError = validateSearchName(value, savedSearches);

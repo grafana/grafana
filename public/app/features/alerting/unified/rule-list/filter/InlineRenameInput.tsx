@@ -42,10 +42,8 @@ export function InlineRenameInput({
 
   // Clear error when value changes
   useEffect(() => {
-    if (error) {
-      setError(null);
-    }
-  }, [value, error]);
+    setError(null);
+  }, [value]);
 
   const handleSubmit = async () => {
     const validationError = validateSearchName(value, savedSearches, excludeId);
