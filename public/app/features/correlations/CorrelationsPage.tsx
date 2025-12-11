@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { CorrelationData, CorrelationsData, isFetchError, reportInteraction } from '@grafana/runtime';
@@ -34,14 +35,19 @@ type CorrelationsPageProps = {
   correlations?: CorrelationsData;
   isLoading: boolean;
   changePageFn?: (page: number) => void;
-  removeFn?: (params: RemoveCorrelationParams) => Promise<{
-    message: string;
-  }>;
+  removeFn?: (params: RemoveCorrelationParams) => Promise<
+    | {
+        message: string;
+      }
+    | Status
+  >;
   error?: Error;
 };
 
+const collator = new Intl.Collator();
+
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
-  a.values[column].name.localeCompare(b.values[column].name);
+  collator.compare(a.values[column].name, b.values[column].name);
 
 const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
@@ -78,13 +84,15 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
 
   const handleDelete = useCallback(
     async (params: RemoveCorrelationParams, isLastRow: boolean) => {
-      await removeFn(params);
-      reportInteraction('grafana_correlations_deleted');
+      if (removeFn) {
+        await removeFn(params);
+        reportInteraction('grafana_correlations_deleted');
 
-      if (isLastRow) {
-        page.current--;
+        if (isLastRow) {
+          page.current--;
+        }
+        fetchCorrelations({ page: page.current });
       }
-      fetchCorrelations({ page: page.current });
     },
     [removeFn, fetchCorrelations]
   );

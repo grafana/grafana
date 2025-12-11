@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 
+import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { config, CorrelationsData } from '@grafana/runtime';
 
 import CorrelationsPage from './CorrelationsPage';
+import { RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 
@@ -21,17 +23,13 @@ function CorrelationsPageLegacy() {
 
 function CorrelationsPageAppPlatform() {
   // todo remove fake limit
-  /* const { currentData, isLoading, error } = useListCorrelationQuery({ limit: 10 });
-  const enrichedCorrelations = (correlations?: CorrelationList) => {
-    return correlations !== undefined
-      ? correlations.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
-      : [];
-  }; */
+
   const [page, setPage] = useState(1);
   let totalItems = useRef(0);
 
   const limit = 10;
   const { currentData, isLoading, error, remainingItems } = useCorrelationsK8s(limit, page);
+  const [deleteCorrelation] = useDeleteCorrelationMutation();
   if (page === 1) {
     totalItems.current = remainingItems;
   }
@@ -55,6 +53,10 @@ function CorrelationsPageAppPlatform() {
       }}
       isLoading={isLoading}
       error={error as Error}
+      removeFn={(params: RemoveCorrelationParams) => {
+        const deleteData = deleteCorrelation({ name: params.uid });
+        return deleteData.unwrap();
+      }}
     />
   );
 }
