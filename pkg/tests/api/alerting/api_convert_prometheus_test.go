@@ -1166,12 +1166,11 @@ func TestIntegrationConvertPrometheusEndpoints_Editor(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableLegacyAlerting:   true,
-		EnableUnifiedAlerting:   true,
-		DisableAnonymous:        true,
-		AppModeProduction:       true,
-		EnableRecordingRules:    true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableRecordingRules:  true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)

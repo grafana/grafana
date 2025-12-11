@@ -61,8 +61,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
-		cfg.Logger.Info("Unified migration configs enforced")
-		cfg.enforceMigrationToUnifiedConfigs()
+		cfg.Logger.Info("Unified migration configs not yet enforced")
+		// cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
 	} else {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
@@ -104,6 +104,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }
 
+// nolint:unused
 // enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5
 // All migrated resources in MigratedUnifiedResources are set to mode 5 and unified search is enabled
 func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {

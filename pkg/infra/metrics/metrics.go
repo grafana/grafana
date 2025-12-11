@@ -224,7 +224,7 @@ var (
 	MStatTotalRepositories prometheus.Gauge
 
 	// MUnifiedStorageMigrationStatus indicates the migration status for unified storage in this instance.
-	// Possible values: 0 (default/undefined), 1 (migration disabled), 2 (migration would run), 3 (migration will run).
+	// Possible values: 0 (default/undefined), 1 (migration disabled), 2 (migration would run).
 	MUnifiedStorageMigrationStatus prometheus.Gauge
 )
 

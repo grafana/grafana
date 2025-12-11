@@ -53,11 +53,10 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableLegacyAlerting:   true,
-		EnableUnifiedAlerting:   true,
-		DisableAnonymous:        true,
-		AppModeProduction:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -361,11 +360,10 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableLegacyAlerting:   true,
-		EnableUnifiedAlerting:   true,
-		DisableAnonymous:        true,
-		AppModeProduction:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -1431,11 +1429,10 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableLegacyAlerting:   true,
-		EnableUnifiedAlerting:   true,
-		DisableAnonymous:        true,
-		AppModeProduction:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 

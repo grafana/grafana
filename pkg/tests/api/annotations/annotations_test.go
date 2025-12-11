@@ -32,9 +32,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableAnonymous:        true,
-		EnableFeatureToggles:    []string{featuremgmt.FlagAnnotationPermissionUpdate},
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{featuremgmt.FlagAnnotationPermissionUpdate},
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	noneUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

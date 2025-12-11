@@ -37,10 +37,9 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},

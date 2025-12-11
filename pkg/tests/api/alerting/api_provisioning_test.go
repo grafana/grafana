@@ -1192,11 +1192,10 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 
 func TestIntegrationFullpath(t *testing.T) {
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAuthZClientCache: true,
-		DisableLegacyAlerting:   true,
-		EnableUnifiedAlerting:   true,
-		DisableAnonymous:        true,
-		AppModeProduction:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

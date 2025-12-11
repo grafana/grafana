@@ -48,10 +48,9 @@ func TestIntegrationFolderTree(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
