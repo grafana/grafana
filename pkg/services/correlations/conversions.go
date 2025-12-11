@@ -89,7 +89,7 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 		return nil, err
 	}
 	if len(out.Target) == 0 {
-		out.Target =  map[string]any{} 
+		out.Target = map[string]any{}
 	}
 	return out, err
 }
@@ -105,7 +105,7 @@ func ToConfig(orig correlationsV0.CorrelationConfigSpec) (*CorrelationConfig, er
 		return nil, err
 	}
 	if len(out.Target) == 0 {
-		out.Target = map[string]any{} 
+		out.Target = map[string]any{}
 	}
 	return out, err
 }
