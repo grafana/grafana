@@ -98,21 +98,17 @@ export function RadialText({
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 
   // adjust the text up on gauges and when sparklines are present
-  let dy = 0;
+  let yOffset = 0;
   if (shape === 'gauge') {
-    if (showName) {
-      dy -= nameFontSize * 0.2;
-    }
-    if (showValue) {
-      dy -= valueFontSize * 0.3;
-    }
+    // we render from the center of the gauge, so move up by half of half of the total height
+    yOffset -= (valueHeight + nameHeight) / 4;
   }
   if (sparkline) {
-    dy -= 8;
+    yOffset -= 8;
   }
 
   return (
-    <g transform={`translate(0, ${dy})`}>
+    <g transform={`translate(0, ${yOffset})`}>
       {showValue && (
         <text
           x={centerX}

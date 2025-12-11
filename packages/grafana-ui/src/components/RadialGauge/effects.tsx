@@ -8,6 +8,7 @@ export interface GlowGradientProps {
 }
 
 export function GlowGradient({ id, barWidth }: GlowGradientProps) {
+  // 0.75 is the minimum glow size, and it scales with bar width
   const glowSize = 0.75 + barWidth * 0.08;
 
   return (

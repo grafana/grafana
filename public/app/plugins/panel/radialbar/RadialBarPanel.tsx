@@ -3,7 +3,6 @@ import type { JSX } from 'react';
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
-  FieldType,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
