@@ -200,13 +200,13 @@ func Test_SetAsActive(t *testing.T) {
 		require.NoError(t, err)
 
 		// Set the new keeper as active
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 		keeperName, _, err := sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace)
 		require.NoError(t, err)
 		require.Equal(t, keeper.Name, keeperName)
 
 		// Set the system keeper as active
-		require.NoError(t, sut.SecureValueService.SetKeeperAsActive(t.Context(), xkube.Namespace(namespace), contracts.SystemKeeperName))
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), contracts.SystemKeeperName))
 		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), namespace)
 		require.NoError(t, err)
 		require.Equal(t, contracts.SystemKeeperName, keeperName)
