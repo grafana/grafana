@@ -22,14 +22,14 @@ const (
 
 // GetClusterInfo fetches cluster information from the Elasticsearch root endpoint.
 // It returns the cluster build flavor which is used to determine if the cluster is serverless.
-func GetClusterInfo(httpCli *http.Client, url string) (*ClusterInfo, error) {
+func GetClusterInfo(httpCli *http.Client, url string) (ClusterInfo, error) {
 	resp, err := httpCli.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("error getting ES cluster info: %w", err)
+		return ClusterInfo{}, fmt.Errorf("error getting ES cluster info: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code %d getting ES cluster info", resp.StatusCode)
+		return ClusterInfo{}, fmt.Errorf("unexpected status code %d getting ES cluster info", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
@@ -37,12 +37,12 @@ func GetClusterInfo(httpCli *http.Client, url string) (*ClusterInfo, error) {
 	var clusterInfo ClusterInfo
 	err = json.NewDecoder(resp.Body).Decode(&clusterInfo)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding ES cluster info: %w", err)
+		return ClusterInfo{}, fmt.Errorf("error decoding ES cluster info: %w", err)
 	}
 
-	return &clusterInfo, nil
+	return clusterInfo, nil
 }
 
-func (ci *ClusterInfo) IsServerless() bool {
+func (ci ClusterInfo) IsServerless() bool {
 	return ci.Version.BuildFlavor == BuildFlavorServerless
 }

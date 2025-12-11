@@ -35,7 +35,7 @@ type DatasourceInfo struct {
 	Interval                   string
 	MaxConcurrentShardRequests int64
 	IncludeFrozen              bool
-	ClusterInfo                *ClusterInfo
+	ClusterInfo                ClusterInfo
 }
 
 type ConfiguredFields struct {

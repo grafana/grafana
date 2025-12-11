@@ -73,22 +73,11 @@ func TestGetClusterInfo(t *testing.T) {
 		assert.True(t, clusterInfo.IsServerless())
 	})
 
-	t.Run("should return error when status code is not 200", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			rw.WriteHeader(http.StatusInternalServerError)
-		}))
-
-		clusterInfo, err := GetClusterInfo(ts.Client(), ts.URL)
-		require.Error(t, err)
-		require.Nil(t, clusterInfo)
-		assert.Contains(t, err.Error(), "unexpected status code 500 getting ES cluster info")
-	})
-
 	t.Run("Should return error when HTTP request fails", func(t *testing.T) {
 		clusterInfo, err := GetClusterInfo(http.DefaultClient, "http://invalid-url-that-does-not-exist.local:9999")
 
 		require.Error(t, err)
-		require.Nil(t, clusterInfo)
+		require.Equal(t, ClusterInfo{}, clusterInfo)
 		assert.Contains(t, err.Error(), "error getting ES cluster info")
 	})
 
@@ -106,7 +95,7 @@ func TestGetClusterInfo(t *testing.T) {
 		clusterInfo, err := GetClusterInfo(ts.Client(), ts.URL)
 
 		require.Error(t, err)
-		require.Nil(t, clusterInfo)
+		require.Equal(t, ClusterInfo{}, clusterInfo)
 		assert.Contains(t, err.Error(), "error decoding ES cluster info")
 	})
 
@@ -127,7 +116,7 @@ func TestGetClusterInfo(t *testing.T) {
 		clusterInfo, err := GetClusterInfo(ts.Client(), ts.URL)
 
 		require.NoError(t, err)
-		require.NotNil(t, clusterInfo)
+		require.Equal(t, ClusterInfo{}, clusterInfo)
 		assert.Equal(t, "", clusterInfo.Version.BuildFlavor)
 		assert.False(t, clusterInfo.IsServerless())
 	})
@@ -145,38 +134,57 @@ func TestGetClusterInfo(t *testing.T) {
 
 		clusterInfo, err := GetClusterInfo(ts.Client(), ts.URL)
 
-		require.NoError(t, err)
-		require.NotNil(t, clusterInfo)
+		require.Error(t, err)
+		require.Equal(t, ClusterInfo{}, clusterInfo)
+		assert.Contains(t, err.Error(), "unexpected status code 401 getting ES cluster info")
 	})
 }
 
 func TestClusterInfo_IsServerless(t *testing.T) {
 	t.Run("Should return true when build_flavor is serverless", func(t *testing.T) {
-		clusterInfo := &ClusterInfo{}
-		clusterInfo.Version.BuildFlavor = BuildFlavorServerless
+		clusterInfo := ClusterInfo{
+			Version: VersionInfo{
+				BuildFlavor: BuildFlavorServerless,
+			},
+		}
 
 		assert.True(t, clusterInfo.IsServerless())
 	})
 
 	t.Run("Should return false when build_flavor is default", func(t *testing.T) {
-		clusterInfo := &ClusterInfo{}
-		clusterInfo.Version.BuildFlavor = "default"
+		clusterInfo := ClusterInfo{
+			Version: VersionInfo{
+				BuildFlavor: "default",
+			},
+		}
 
 		assert.False(t, clusterInfo.IsServerless())
 	})
 
 	t.Run("Should return false when build_flavor is empty", func(t *testing.T) {
-		clusterInfo := &ClusterInfo{}
-		clusterInfo.Version.BuildFlavor = ""
+		clusterInfo := ClusterInfo{
+			Version: VersionInfo{
+				BuildFlavor: "",
+			},
+		}
 
 		assert.False(t, clusterInfo.IsServerless())
 	})
 
 	t.Run("Should return false when build_flavor is unknown value", func(t *testing.T) {
-		clusterInfo := &ClusterInfo{}
-		clusterInfo.Version.BuildFlavor = "unknown"
+		clusterInfo := ClusterInfo{
+			Version: VersionInfo{
+				BuildFlavor: "unknown",
+			},
+		}
 
 		assert.False(t, clusterInfo.IsServerless())
 	})
 
+	t.Run("should panic when cluster info is empty", func(t *testing.T) {
+		clusterInfo := ClusterInfo{}
+		assert.Panics(t, func() {
+			clusterInfo.IsServerless()
+		})
+	})
 }
