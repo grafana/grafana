@@ -32,10 +32,17 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import {
@@ -80,6 +87,23 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         gridRowToSaveModel(child, panels, isSnapshot);
       }
     }
+  } else if (body instanceof RowsLayoutManager) {
+    // Handle RowsLayoutManager - convert to v1beta1 row panels
+    // Track absolute Y position across all rows (v2 has relative Y, v1 needs absolute)
+    let currentY = 0;
+    for (const row of body.state.rows) {
+      currentY = rowItemToSaveModel(row, panels, isSnapshot, currentY);
+    }
+  } else if (body instanceof TabsLayoutManager) {
+    // Handle TabsLayoutManager - convert tabs to row panels
+    // In V1, tabs become expanded row panels (collapsed: false)
+    let currentY = 0;
+    for (const tab of body.state.tabs) {
+      currentY = tabItemToSaveModel(tab, panels, isSnapshot, currentY);
+    }
+  } else if (body instanceof AutoGridLayoutManager) {
+    // Handle AutoGridLayoutManager - convert to panels with calculated positions
+    panels = autoGridLayoutToPanels(body, isSnapshot);
   }
 
   let annotations: AnnotationQuery[] = [];
@@ -134,9 +158,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       list: variables,
     },
     version: state.version,
-    timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-    weekStart: timeRange.weekStart,
+    weekStart: timeRange.weekStart ?? '',
     tags: state.tags,
     links: state.links,
     graphTooltip,
@@ -146,6 +169,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     // @ts-expect-error not in dashboard schema because it's experimental
     scopeMeta: state.scopeMeta,
   };
+
+  // Only add optional fields if they are explicitly set (not default values)
+  if (timeRange.timeZone !== '') {
+    dashboard.timezone = timeRange.timeZone;
+  }
 
   return sortedDeepCloneWithoutNulls(dashboard, true);
 }
@@ -198,7 +226,7 @@ export function vizPanelToPanel(
         uid: libPanel!.state.uid,
       },
       type: 'library-panel-ref',
-    } as Panel;
+    };
 
     return panel;
   } else {
@@ -206,7 +234,7 @@ export function vizPanelToPanel(
       id: getPanelIdForVizPanel(vizPanel),
       type: vizPanel.state.pluginId,
       title: vizPanel.state.title,
-      description: vizPanel.state.description ?? undefined,
+      description: vizPanel.state.description || undefined,
       gridPos,
       fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
       transformations: [],
@@ -279,9 +307,20 @@ function vizPanelDataToPanel(
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
-    panel.targets = queryRunner.state.queries;
+    // Clean up targets by removing hide: false (it's the default value)
+    // This ensures consistency with Go backend which omits hide when false
+    panel.targets = queryRunner.state.queries.map((query) => {
+      if (query.hide === false) {
+        const { hide, ...rest } = query;
+        return rest;
+      }
+      return query;
+    });
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
-    panel.datasource = queryRunner.state.datasource;
+    // Only set panel-level datasource if explicitly specified
+    if (queryRunner.state.datasource) {
+      panel.datasource = queryRunner.state.datasource;
+    }
 
     if (queryRunner.state.cacheTimeout) {
       panel.cacheTimeout = queryRunner.state.cacheTimeout;
@@ -445,6 +484,505 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   } else {
     panelsArray.push(...panelsInsideRow);
   }
+}
+
+/**
+ * Converts a RowItem from RowsLayoutManager to v1beta1 row panel format.
+ * Handles Y position conversion from relative (v2) to absolute (v1) positions.
+ * Also handles nested rows by flattening them.
+ *
+ * @param row - The RowItem to convert
+ * @param panelsArray - The array to push panels to
+ * @param isSnapshot - Whether this is a snapshot
+ * @param currentY - The current absolute Y position in the dashboard
+ * @returns The next Y position after this row's content
+ */
+export function rowItemToSaveModel(
+  row: RowItem,
+  panelsArray: Array<Panel | RowPanel>,
+  isSnapshot = false,
+  currentY = 0
+): number {
+  const collapsed = Boolean(row.state.collapse);
+  const hideHeader = Boolean(row.state.hideHeader);
+  const rowLayout = row.state.layout;
+
+  // Calculate the max relative Y in this row's content to determine row height
+  // For DefaultGridLayoutManager, we need to normalize the Y values first
+  let maxRelativeY = getMaxYFromLayout(rowLayout);
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    // DefaultGridLayoutManager from V1 has absolute Y - normalize to relative
+    const children = rowLayout.state.grid.state.children;
+    const yValues = children
+      .filter((c): c is DashboardGridItem => c instanceof DashboardGridItem)
+      .map((c) => c.state.y ?? 0);
+    if (yValues.length > 0) {
+      const minY = Math.min(...yValues);
+      maxRelativeY = maxRelativeY - minY;
+    }
+  }
+
+  // If hideHeader is true, we don't create a row panel - just add the panels directly
+  // Go backend: for hidden header rows, panels keep their relative Y positions
+  // but currentY IS updated based on panel heights (so next row starts after this content)
+  if (hideHeader) {
+    if (rowLayout instanceof DefaultGridLayoutManager) {
+      let localMaxY = 0;
+      for (const child of rowLayout.state.grid.state.children) {
+        if (child instanceof DashboardGridItem) {
+          const panel = child.state.variableName
+            ? panelRepeaterToPanels(child, isSnapshot)
+            : [gridItemToPanel(child, isSnapshot)];
+
+          // For hidden header rows with DefaultGridLayoutManager, panels keep their relative Y positions
+          panelsArray.push(...panel);
+
+          // Track the max Y extent
+          const panelEndY = (child.state.y ?? 0) + (child.state.height ?? 0);
+          if (panelEndY > localMaxY) {
+            localMaxY = panelEndY;
+          }
+        }
+      }
+      // Update currentY based on content height
+      return localMaxY;
+    } else if (rowLayout instanceof RowsLayoutManager) {
+      // Nested rows - flatten them
+      let nestedY = currentY;
+      for (const nestedRow of rowLayout.state.rows) {
+        nestedY = rowItemToSaveModel(nestedRow, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    } else if (rowLayout instanceof TabsLayoutManager) {
+      // Nested tabs inside hidden header row - flatten them
+      let nestedY = currentY;
+      for (const tab of rowLayout.state.tabs) {
+        nestedY = tabItemToSaveModel(tab, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    } else if (rowLayout instanceof AutoGridLayoutManager) {
+      // AutoGrid inside hidden header row - convert to panels WITH Y offset
+      const autoGridPanels = autoGridLayoutToPanels(rowLayout, isSnapshot);
+      // Add currentY offset to convert relative Y to absolute Y
+      for (const panel of autoGridPanels) {
+        if (panel.gridPos) {
+          panel.gridPos.y = (panel.gridPos.y ?? 0) + currentY;
+        }
+      }
+      panelsArray.push(...autoGridPanels);
+      // Update currentY to account for the content height
+      const layoutHeight = getMaxYFromLayout(rowLayout);
+      return currentY + layoutHeight;
+    }
+    // Fallback for unknown layouts
+    return currentY;
+  }
+
+  // Create the row panel with absolute Y position
+  const rowPanel: RowPanel = {
+    type: 'row',
+    id: -1, // Will be assigned by dashboard model TODO: CHECK
+    title: row.state.title ?? '',
+    gridPos: {
+      x: 0,
+      y: currentY,
+      w: 24,
+      h: 1,
+    },
+    collapsed,
+    panels: [],
+  };
+
+  // Handle row repeat variable
+  if (row.state.repeatByVariable) {
+    rowPanel.repeat = row.state.repeatByVariable;
+  }
+
+  panelsArray.push(rowPanel);
+
+  // The base Y position for panels in this row
+  // In Go backend: adjustedItem.Spec.Y = item.Spec.Y + currentRowY - 1
+  // Since we increment currentY after setting row Y, panelBaseY = currentY
+  // (i.e., panels start at the same Y as the row, not after it)
+  const panelBaseY = currentY;
+
+  // Extract panels from the row's layout
+  let panelsInsideRow: Panel[] = [];
+
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    for (const child of rowLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsInsideRow.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (rowLayout instanceof RowsLayoutManager) {
+    // Nested rows - flatten them and collect panels
+    // For collapsed parent row, nested row panels should be stored inside
+    // For expanded parent row, nested content goes to top level
+    if (collapsed) {
+      // Flatten nested rows into panelsInsideRow (keep relative Y positions)
+      for (const nestedRow of rowLayout.state.rows) {
+        flattenRowItemToPanels(nestedRow, panelsInsideRow, isSnapshot);
+      }
+    } else {
+      // Process nested rows recursively with proper Y offset
+      // Start at currentY + 1 (after the parent row panel which is at currentY with h=1)
+      let nestedY = currentY + 1;
+      for (const nestedRow of rowLayout.state.rows) {
+        nestedY = rowItemToSaveModel(nestedRow, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    }
+  } else if (rowLayout instanceof TabsLayoutManager) {
+    // Row contains TabsLayout - keep parent row, then process tabs
+    // Go backend behavior: create parent row first, then flatten tabs as nested rows
+    if (collapsed) {
+      // Flatten tabs into panelsInsideRow (keep relative Y positions)
+      for (const tab of rowLayout.state.tabs) {
+        flattenTabItemToPanels(tab, panelsInsideRow, isSnapshot);
+      }
+    } else {
+      // Process tabs recursively with proper Y offset (after the parent row)
+      let nestedY = currentY + 1; // +1 for the parent row we already added
+      for (const tab of rowLayout.state.tabs) {
+        nestedY = tabItemToSaveModel(tab, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    }
+  } else if (rowLayout instanceof AutoGridLayoutManager) {
+    // Row contains AutoGridLayout - convert to panels
+    const autoGridPanels = autoGridLayoutToPanels(rowLayout, isSnapshot);
+    if (collapsed) {
+      panelsInsideRow = autoGridPanels;
+    } else {
+      // Adjust Y positions and add to panelsArray
+      for (const panel of autoGridPanels) {
+        if (panel.gridPos) {
+          panel.gridPos.y = (panel.gridPos.y ?? 0) + panelBaseY;
+        }
+      }
+      panelsArray.push(...autoGridPanels);
+      // Return at least currentY + 1 (row panel height) even for empty grids
+      const layoutHeight = getMaxYFromLayout(rowLayout);
+      return panelBaseY + Math.max(layoutHeight, 1);
+    }
+  }
+
+  // Panel Y position handling:
+  // Always calculate absolute Y based on current row position.
+  // For DefaultGridLayoutManager from V1, panels have old absolute Y that needs recalculation.
+  // For AutoGridLayoutManager from V2, panels have relative Y starting from 0.
+  // In both cases, we need to set Y = panelStartY + relativeY
+  const panelStartY = currentY + 1; // Panels start after the row header (which is at currentY with h=1)
+
+  // For DefaultGridLayoutManager, find the minimum Y to normalize to relative coordinates first
+  let minY = 0;
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    const yValues = panelsInsideRow.map((p) => p.gridPos?.y ?? 0).filter((y) => y >= 0);
+    if (yValues.length > 0) {
+      minY = Math.min(...yValues);
+    }
+  }
+
+  // Convert to absolute Y based on current row position
+  for (const panel of panelsInsideRow) {
+    if (panel.gridPos) {
+      // For DefaultGridLayoutManager, subtract minY to get relative Y first, then add panelStartY
+      // For other layouts (AutoGrid), Y is already relative (starting from 0)
+      const relativeY =
+        rowLayout instanceof DefaultGridLayoutManager ? (panel.gridPos.y ?? 0) - minY : (panel.gridPos.y ?? 0);
+      panel.gridPos.y = relativeY + panelStartY;
+    }
+  }
+
+  if (collapsed) {
+    // For collapsed rows, store panels inside the row
+    rowPanel.panels = panelsInsideRow;
+  } else {
+    // For expanded rows, add panels to top level
+    panelsArray.push(...panelsInsideRow);
+  }
+
+  // Next row starts after all content in this row
+  return panelStartY + maxRelativeY;
+}
+
+/**
+ * Flattens a RowItem's panels into an array (for collapsed parent rows).
+ * Keeps relative Y positions.
+ */
+function flattenRowItemToPanels(row: RowItem, panelsArray: Panel[], isSnapshot = false) {
+  const rowLayout = row.state.layout;
+
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    for (const child of rowLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsArray.push(...panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsArray.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (rowLayout instanceof RowsLayoutManager) {
+    // Recursively flatten nested rows
+    for (const nestedRow of rowLayout.state.rows) {
+      flattenRowItemToPanels(nestedRow, panelsArray, isSnapshot);
+    }
+  } else if (rowLayout instanceof TabsLayoutManager) {
+    // Recursively flatten nested tabs
+    for (const tab of rowLayout.state.tabs) {
+      flattenTabItemToPanels(tab, panelsArray, isSnapshot);
+    }
+  } else if (rowLayout instanceof AutoGridLayoutManager) {
+    // Flatten AutoGrid panels
+    const autoGridPanels = autoGridLayoutToPanels(rowLayout, isSnapshot);
+    panelsArray.push(...autoGridPanels);
+  }
+}
+
+/**
+ * Converts a TabItem to v1beta1 row panel format.
+ * Tabs become expanded row panels (collapsed: false) in V1.
+ *
+ * @param tab - The TabItem to convert
+ * @param panelsArray - The array to push panels to
+ * @param isSnapshot - Whether this is a snapshot
+ * @param currentY - The current absolute Y position in the dashboard
+ * @returns The next Y position after this tab's content
+ */
+export function tabItemToSaveModel(
+  tab: TabItem,
+  panelsArray: Array<Panel | RowPanel>,
+  isSnapshot = false,
+  currentY = 0
+): number {
+  const tabLayout = tab.state.layout;
+
+  // Calculate the max relative Y in this tab's content
+  const maxRelativeY = getMaxYFromLayout(tabLayout);
+
+  // Create the row panel for this tab (tabs become expanded rows in V1)
+  const rowPanel: RowPanel = {
+    type: 'row',
+    id: -1, // Will be assigned later
+    title: tab.state.title ?? '',
+    gridPos: {
+      x: 0,
+      y: currentY,
+      w: 24,
+      h: 1,
+    },
+    collapsed: false, // Tabs are always expanded when converted to rows
+    panels: [],
+  };
+
+  panelsArray.push(rowPanel);
+
+  // The base Y position for panels in this tab (after the row panel)
+  const panelBaseY = currentY + 1;
+
+  // Extract panels from the tab's layout
+  let panelsInsideTab: Panel[] = [];
+
+  if (tabLayout instanceof DefaultGridLayoutManager) {
+    for (const child of tabLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsInsideTab = panelsInsideTab.concat(panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsInsideTab.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (tabLayout instanceof RowsLayoutManager) {
+    // Tab contains RowsLayout - process nested rows
+    let nestedY = panelBaseY;
+    for (const nestedRow of tabLayout.state.rows) {
+      nestedY = rowItemToSaveModel(nestedRow, panelsArray, isSnapshot, nestedY);
+    }
+    return nestedY;
+  } else if (tabLayout instanceof TabsLayoutManager) {
+    // Tab contains TabsLayout - flatten nested tabs
+    let nestedY = panelBaseY;
+    for (const nestedTab of tabLayout.state.tabs) {
+      nestedY = tabItemToSaveModel(nestedTab, panelsArray, isSnapshot, nestedY);
+    }
+    return nestedY;
+  } else if (tabLayout instanceof AutoGridLayoutManager) {
+    // Tab contains AutoGridLayout - convert to panels with Y offset
+    panelsInsideTab = autoGridLayoutToPanels(tabLayout, isSnapshot);
+  }
+
+  // Convert relative Y to absolute Y for expanded tab panels
+  for (const panel of panelsInsideTab) {
+    if (panel.gridPos) {
+      panel.gridPos.y = (panel.gridPos.y ?? 0) + panelBaseY;
+    }
+  }
+  panelsArray.push(...panelsInsideTab);
+
+  // Next row starts after all content in this tab
+  return panelBaseY + maxRelativeY;
+}
+
+/**
+ * Flattens a TabItem's panels into an array (for collapsed parent rows).
+ * Keeps relative Y positions.
+ */
+function flattenTabItemToPanels(tab: TabItem, panelsArray: Panel[], isSnapshot = false) {
+  const tabLayout = tab.state.layout;
+
+  if (tabLayout instanceof DefaultGridLayoutManager) {
+    for (const child of tabLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsArray.push(...panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsArray.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (tabLayout instanceof RowsLayoutManager) {
+    // Recursively flatten nested rows
+    for (const nestedRow of tabLayout.state.rows) {
+      flattenRowItemToPanels(nestedRow, panelsArray, isSnapshot);
+    }
+  } else if (tabLayout instanceof TabsLayoutManager) {
+    // Recursively flatten nested tabs
+    for (const nestedTab of tabLayout.state.tabs) {
+      flattenTabItemToPanels(nestedTab, panelsArray, isSnapshot);
+    }
+  } else if (tabLayout instanceof AutoGridLayoutManager) {
+    // Flatten AutoGrid panels
+    const autoGridPanels = autoGridLayoutToPanels(tabLayout, isSnapshot);
+    panelsArray.push(...autoGridPanels);
+  }
+}
+
+/**
+ * Converts an AutoGridLayoutManager to V1 panels with calculated grid positions.
+ * Uses the AutoGrid's settings to calculate panel dimensions.
+ */
+function autoGridLayoutToPanels(layout: AutoGridLayoutManager, isSnapshot = false): Panel[] {
+  const panels: Panel[] = [];
+
+  const gridWidth = 24;
+  const maxColumnCount = layout.state.maxColumnCount ?? 3;
+  const panelWidth = Math.floor(gridWidth / maxColumnCount);
+
+  // Calculate panel height based on rowHeight setting
+  let panelHeight = 9; // default: standard
+  const rowHeight = layout.state.rowHeight;
+  if (typeof rowHeight === 'number') {
+    // Custom height in pixels - convert to grid units
+    // Each grid unit is approximately 30px + 8px margin
+    panelHeight = Math.ceil(rowHeight / 38);
+  } else {
+    switch (rowHeight) {
+      case 'short':
+        panelHeight = 5;
+        break;
+      case 'standard':
+        panelHeight = 9;
+        break;
+      case 'tall':
+        panelHeight = 14;
+        break;
+    }
+  }
+
+  let currentX = 0;
+  let currentY = 0;
+
+  for (const item of layout.state.layout.state.children) {
+    if (item instanceof AutoGridItem) {
+      const vizPanel = item.state.body;
+      const panel = vizPanelToPanel(
+        vizPanel,
+        {
+          x: currentX,
+          y: currentY,
+          w: panelWidth,
+          h: panelHeight,
+        },
+        isSnapshot
+      );
+      panels.push(panel);
+
+      // Move to next position
+      currentX += panelWidth;
+      if (currentX >= gridWidth) {
+        currentX = 0;
+        currentY += panelHeight;
+      }
+    }
+  }
+
+  return panels;
+}
+
+/**
+ * Gets the maximum Y extent from a layout (relative to the layout's origin).
+ */
+function getMaxYFromLayout(layout: DashboardLayoutManager): number {
+  if (layout instanceof DefaultGridLayoutManager) {
+    let maxY = 0;
+    for (const child of layout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        const y = child.state.y ?? 0;
+        const h = child.state.height ?? 0;
+        maxY = Math.max(maxY, y + h);
+      }
+    }
+    return maxY;
+  } else if (layout instanceof RowsLayoutManager) {
+    let totalY = 0;
+    for (const row of layout.state.rows) {
+      totalY += getMaxYFromLayout(row.state.layout);
+      if (!row.state.hideHeader) {
+        totalY += 1; // Row header takes 1 unit
+      }
+    }
+    return totalY;
+  } else if (layout instanceof TabsLayoutManager) {
+    let totalY = 0;
+    for (const tab of layout.state.tabs) {
+      totalY += getMaxYFromLayout(tab.state.layout);
+      totalY += 1; // Tab row header takes 1 unit
+    }
+    return totalY;
+  } else if (layout instanceof AutoGridLayoutManager) {
+    // Calculate height based on number of items and row height
+    const itemCount = layout.state.layout.state.children.length;
+    const maxColumnCount = layout.state.maxColumnCount ?? 3;
+    const rowCount = Math.ceil(itemCount / maxColumnCount);
+
+    let panelHeight = 9; // default: standard
+    const rowHeight = layout.state.rowHeight;
+    if (typeof rowHeight === 'number') {
+      panelHeight = Math.ceil(rowHeight / 38);
+    } else {
+      switch (rowHeight) {
+        case 'short':
+          panelHeight = 5;
+          break;
+        case 'standard':
+          panelHeight = 9;
+          break;
+        case 'tall':
+          panelHeight = 14;
+          break;
+      }
+    }
+
+    return rowCount * panelHeight;
+  }
+  return 0;
 }
 
 export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: Dashboard, panel?: VizPanel) {

@@ -15,7 +15,7 @@ const EXPRESSION_ICON_MAP = {
 } as const satisfies Record<ExpressionQueryType, string>;
 
 interface ExpressionTypeDropdownProps {
-  children: ReactElement;
+  children: ReactElement<Record<string, unknown>>;
   handleOnSelect: (value: ExpressionQueryType) => void;
 }
 

@@ -12,7 +12,8 @@ INSERT INTO {{ .Ident "resource_history" }}
         {{ .Ident "previous_resource_version"}},
         {{ .Ident "generation"}},
         {{ .Ident "value" }},
-        {{ .Ident "action" }}
+        {{ .Ident "action" }},
+        {{ .Ident "key_path" }}
     )
 
     VALUES (
@@ -28,6 +29,7 @@ INSERT INTO {{ .Ident "resource_history" }}
         {{ .Arg .WriteEvent.PreviousRV }},
         {{ .Arg .Generation }},
         {{ .Arg .WriteEvent.Value }},
-        {{ .Arg .WriteEvent.Type }}
+        {{ .Arg .WriteEvent.Type }},
+        {{ .Arg .KeyPath }}
     )
 ;

@@ -110,7 +110,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 ### Suggest features
 
-If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md).
+If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md). To learn how to write an effective feature request, refer to [Create a feature request](contribute/create-feature-request.md).
 
 We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?template=2-accessibility.md) to help us understand what we can improve.
 

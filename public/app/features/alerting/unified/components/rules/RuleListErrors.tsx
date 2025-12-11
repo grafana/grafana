@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
-import { FC, ReactElement, useMemo, useState } from 'react';
+import { FC, type JSX, ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Stat",
   "id": "stat",
-
+  "suggestions": true,
   "info": {
     "description": "Big stat values & sparklines",
     "author": {

@@ -79,10 +79,26 @@ LibraryPanelRef: {
 
 AnnotationPanelFilter: {
 	// Should the specified panels be included or excluded
-	exclude?: bool | *false
+	exclude?: bool | *false 
 
 	// Panel IDs that should be included or excluded
 	ids: [...uint32]
+} 
+
+// Annotation event field source. Defines how to obtain the value for an annotation event field.
+// - "field": Find the value with a matching key (default)
+// - "text": Write a constant string into the value
+// - "skip": Do not include the field
+AnnotationEventFieldSource: "field" | "text" | "skip" | *"field"
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+AnnotationEventFieldMapping: {
+	// Source type for the field value
+	source?: AnnotationEventFieldSource | *"field"
+	// Constant value to use when source is "text"
+	value?: string
+	// Regular expression to apply to the field value
+	regex?: string
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -117,7 +133,7 @@ DashboardLink: {
 	placement?: DashboardLinkPlacement
 }
 
-// Dashboard Link placement. Defines where the link should be displayed. 
+// Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 DashboardLinkPlacement: "inControlsMenu"
 
@@ -346,7 +362,12 @@ ValueMappingResult: {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -358,7 +379,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -383,7 +404,7 @@ FetchOptions: {
 	url: string
 	body?: string
 	// These are 2D arrays of strings, each representing a key-value pair
-	// We are defining them this way because we can't generate a go struct that 
+	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
 	queryParams?: [...[...string]]
 	headers?: [...[...string]]
@@ -393,7 +414,7 @@ InfinityOptions: FetchOptions & {
 	datasourceUid: string
 }
 
-HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 
 // Action variable type
 ActionVariableType: "string"
@@ -449,7 +470,10 @@ AnnotationQuerySpec: {
 	filter?:     AnnotationPanelFilter
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
 	placement?:  AnnotationQueryPlacement
-	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?:   [string]: AnnotationEventFieldMapping
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	legacyOptions?:     [string]: _
 }
 
 AnnotationQueryKind: {
@@ -752,6 +776,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
 
@@ -786,6 +814,7 @@ QueryVariableSpec: {
 	description?: string
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]

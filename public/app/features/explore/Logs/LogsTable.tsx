@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
+  urlUtil,
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
@@ -16,14 +18,26 @@ import {
   TimeRange,
   transformDataFrame,
   ValueLinkConfig,
+  ExploreLogsPanelState,
+  AbsoluteTimeRange,
+  LogRowModel,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Table } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import {
+  AdHocFilterItem,
+  CustomCellRendererProps,
+  TableSortByFieldState,
+  Table,
+  TableCellDisplayMode,
+  useStyles2,
+} from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
+import { LogsTableActionButtons } from './LogsTableActionButtons';
 import { FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
@@ -38,12 +52,86 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
+  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
+  displayedFields?: string[];
+  exploreId?: string;
+  panelState?: ExploreLogsPanelState;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
+  const {
+    timeZone,
+    splitOpen,
+    range,
+    logsSortOrder,
+    width,
+    dataFrame,
+    columnsWithMeta,
+    logsFrame,
+    tableSortBy,
+    tableSortDir,
+    onSortByChange,
+  } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
+  const [columnWidthMap, setColumnWidthMap] = useState<Record<string, number>>({});
   const timeIndex = logsFrame?.timeField.index;
+  const styles = useStyles2(getStyles);
+
+  // Extract selected log ID from URL parameter
+  const selectedLogInfo = useMemo(() => {
+    const { selectedLine } = urlUtil.getUrlSearchParams();
+
+    const param = Array.isArray(selectedLine) ? selectedLine[0] : selectedLine;
+
+    if (typeof param !== 'string') {
+      return undefined;
+    }
+
+    try {
+      const { id, row } = JSON.parse(param);
+      return { id, row };
+    } catch (error) {
+      return undefined;
+    }
+  }, []);
+
+  // Set the initial row index based on the selected log ID if selectedLine is present in the URL
+  const initialRowIndex = useMemo(() => {
+    if (!selectedLogInfo || !tableFrame || !selectedLogInfo.id) {
+      return undefined;
+    }
+
+    // Search through all fields in tableFrame to find the one containing the ID
+    for (const field of tableFrame.fields) {
+      const lineIndex = field.values.findIndex((v: unknown) => v === selectedLogInfo.id);
+      if (lineIndex !== -1) {
+        return lineIndex;
+      }
+    }
+
+    return undefined;
+  }, [selectedLogInfo, tableFrame]);
+
+  // Clear the selectedLine URL parameter after table loads
+  useEffect(() => {
+    if (initialRowIndex !== undefined && tableFrame) {
+      // Remove selectedLine from URL using locationService (proper Grafana way)
+      locationService.partial({ selectedLine: undefined }, true);
+    }
+  }, [initialRowIndex, tableFrame]);
+
+  const onColumnResize = useCallback((fieldDisplayName: string, width: number) => {
+    if (width > 0) {
+      setColumnWidthMap((prev) => ({
+        ...prev,
+        [fieldDisplayName]: width,
+      }));
+    }
+  }, []);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -66,7 +154,21 @@ export function LogsTable(props: Props) {
         },
       });
       // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
-      for (const field of frameWithOverrides.fields) {
+      for (const [index, field] of frameWithOverrides.fields.entries()) {
+        // Hide ID field from visualization (it's only needed for row matching)
+        if (logsFrame?.idField && (field.name === logsFrame.idField.name || field.name === 'id')) {
+          field.config = {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              hideFrom: {
+                ...field.config.custom?.hideFrom,
+                viz: true,
+              },
+            },
+          };
+        }
+
         field.getLinks = (config: ValueLinkConfig) => {
           return getFieldLinksForExplore({
             field,
@@ -76,13 +178,44 @@ export function LogsTable(props: Props) {
             dataFrame: sortedFrame!,
           });
         };
+
+        // For the first field (time), wrap the cell to include action buttons
+        const isFirstField = index === 0;
+
         field.config = {
           ...field.config,
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
-            width: getInitialFieldWidth(field),
+            width: columnWidthMap[field.name] ?? getInitialFieldWidth(field),
             ...field.config.custom,
+            cellOptions: isFirstField
+              ? {
+                  type: TableCellDisplayMode.Custom,
+                  cellComponent: (cellProps: CustomCellRendererProps) => (
+                    <>
+                      <LogsTableActionButtons
+                        {...cellProps}
+                        logsFrame={logsFrame ?? undefined}
+                        displayedFields={props.displayedFields}
+                        exploreId={props.exploreId}
+                        panelState={props.panelState}
+                        absoluteRange={props.absoluteRange}
+                        logRows={props.logRows}
+                        rowIndex={cellProps.rowIndex}
+                      />
+                      <span className={styles.firstColumnCell}>
+                        {cellProps.field.display?.(cellProps.value).text ?? String(cellProps.value)}
+                      </span>
+                    </>
+                  ),
+                }
+              : field.config.custom?.cellOptions,
+            headerComponent: isFirstField
+              ? (headerProps: { defaultContent: React.ReactNode }) => (
+                  <div className={styles.firstColumnHeader}>{headerProps.defaultContent}</div>
+                )
+              : field.config.custom?.headerComponent,
           },
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
@@ -94,7 +227,22 @@ export function LogsTable(props: Props) {
 
       return frameWithOverrides;
     },
-    [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
+    [
+      logsSortOrder,
+      timeZone,
+      splitOpen,
+      range,
+      columnWidthMap,
+      logsFrame,
+      timeIndex,
+      styles.firstColumnCell,
+      styles.firstColumnHeader,
+      props.displayedFields,
+      props.exploreId,
+      props.panelState,
+      props.absoluteRange,
+      props.logRows,
+    ]
   );
 
   useEffect(() => {
@@ -112,9 +260,24 @@ export function LogsTable(props: Props) {
       // Add the label filters to the transformations
       const transform = getLabelFiltersTransform(labelFilters);
       if (transform) {
+        // Ensure ID field is always included for row matching
+        if (logsFrame?.idField?.name) {
+          transform.options.includeByName = {
+            ...transform.options.includeByName,
+            [logsFrame.idField.name]: true,
+          };
+        }
         transformations.push(transform);
       } else {
         // If no fields are filtered, filter the default fields, so we don't render all columns
+        // Always include ID field for row matching
+        const includeByName: Record<string, boolean> = {
+          [logsFrame.bodyField.name]: true,
+          [logsFrame.timeField.name]: true,
+        };
+        if (logsFrame?.idField?.name) {
+          includeByName[logsFrame.idField.name] = true;
+        }
         transformations.push({
           id: 'organize',
           options: {
@@ -122,10 +285,7 @@ export function LogsTable(props: Props) {
               [logsFrame.bodyField.name]: 0,
               [logsFrame.timeField.name]: 1,
             },
-            includeByName: {
-              [logsFrame.bodyField.name]: true,
-              [logsFrame.timeField.name]: true,
-            },
+            includeByName,
           },
         });
       }
@@ -146,6 +306,7 @@ export function LogsTable(props: Props) {
     prepareTableFrame,
     logsFrame?.bodyField.name,
     logsFrame?.timeField.name,
+    logsFrame?.idField?.name,
   ]);
 
   if (!tableFrame) {
@@ -167,16 +328,24 @@ export function LogsTable(props: Props) {
     }
   };
 
+  // Use persisted sortBy if available, otherwise default to time field based on logsSortOrder
+  const defaultSortBy: TableSortByFieldState[] = [
+    { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
+  ];
+  const initialSortBy: TableSortByFieldState[] =
+    tableSortBy && tableSortDir ? [{ displayName: tableSortBy, desc: tableSortDir === 'desc' }] : defaultSortBy;
+
   return (
     <Table
       data={tableFrame}
       width={width}
+      onColumnResize={onColumnResize}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-      initialSortBy={[
-        { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
-      ]}
+      initialSortBy={initialSortBy}
+      onSortByChange={onSortByChange}
+      initialRowIndex={initialRowIndex}
     />
   );
 }
@@ -263,7 +432,19 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
 
 function getInitialFieldWidth(field: Field): number | undefined {
   if (field.type === FieldType.time) {
-    return 200;
+    return 230;
   }
   return undefined;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  firstColumnHeader: css({
+    display: 'flex',
+    label: 'wrapper',
+    marginLeft: theme.spacing(7),
+    width: '100%',
+  }),
+  firstColumnCell: css({
+    paddingLeft: theme.spacing(7),
+  }),
+});

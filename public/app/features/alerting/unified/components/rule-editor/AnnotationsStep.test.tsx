@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';

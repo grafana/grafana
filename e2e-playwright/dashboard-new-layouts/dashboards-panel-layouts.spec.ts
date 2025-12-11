@@ -33,7 +33,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       await expect(
@@ -65,8 +64,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       // Get initial positions - standard width should have panels on different rows
@@ -127,8 +124,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       await dashboardPage
@@ -186,7 +181,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       await dashboardPage
@@ -222,7 +216,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
@@ -278,7 +271,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
@@ -336,7 +328,6 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       // Set narrow column width first to ensure panels fit horizontally

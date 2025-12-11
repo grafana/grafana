@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import type { JSX } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

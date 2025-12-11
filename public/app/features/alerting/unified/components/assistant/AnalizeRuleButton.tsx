@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
 
@@ -59,7 +59,7 @@ function AnalyzeRuleButtonView({
     });
 
     openAssistant({
-      origin: 'alerting',
+      origin: 'alerting/analyze-rule-menu-item',
       mode: 'assistant',
       prompt: analyzeRulePrompt,
       context: [alertContext],
@@ -98,8 +98,16 @@ function buildAnalyzeRulePrompt(rule: GrafanaRule): string {
 function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
   const state = rule.state || 'firing';
   const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
+  const alertsNavigationPrompt = config.featureToggles.alertingTriage
+    ? '\n- Include navigation to follow up on the alerts page'
+    : '';
 
-  let prompt = `Analyze the ${state} alert "${rule.name}"${timeInfo}.`;
+  let prompt = `
+  Analyze the ${state} alert "${rule.name} (uid: ${rule.uid})"${timeInfo}.
+- Get the rule definition, read the queries and run them to understand the rule
+- Get the rule state and instances to understand its current state
+- Read the rule conditions and understand how it works. Then suggest query and conditions improvements if applicable${alertsNavigationPrompt}
+  `;
 
   const description = rule.annotations?.description || rule.annotations?.summary || '';
   if (description) {

@@ -259,7 +259,7 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 }
 
 // Memoize the function to avoid calling getDatasourceAPIUid for the filter values multiple times
-const mapDataSourceNamesToUids = memoize(
+export const mapDataSourceNamesToUids = memoize(
   (names: string[]): string[] => {
     return names.map((name) => attempt(getDatasourceAPIUid, name)).filter(isString);
   },

@@ -8,10 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-// jsonDataToPluginMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.PluginMetaJSONData.
+// jsonDataToPluginMetaJSONData converts a plugins.JSONData to a pluginsv0alpha1.MetaJSONData.
 // nolint:gocyclo
-func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.PluginMetaJSONData {
-	meta := pluginsv0alpha1.PluginMetaJSONData{
+func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSONData {
+	meta := pluginsv0alpha1.MetaJSONData{
 		Id:   jsonData.ID,
 		Name: jsonData.Name,
 	}
@@ -19,19 +19,19 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	// Map plugin type
 	switch jsonData.Type {
 	case plugins.TypeApp:
-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeApp
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeApp
 	case plugins.TypeDataSource:
-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeDatasource
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeDatasource
 	case plugins.TypePanel:
-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypePanel
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypePanel
 	case plugins.TypeRenderer:
-		meta.Type = pluginsv0alpha1.PluginMetaJSONDataTypeRenderer
+		meta.Type = pluginsv0alpha1.MetaJSONDataTypeRenderer
 	}
 
 	// Map Info
-	meta.Info = pluginsv0alpha1.PluginMetaInfo{
+	meta.Info = pluginsv0alpha1.MetaInfo{
 		Keywords: jsonData.Info.Keywords,
-		Logos: pluginsv0alpha1.PluginMetaV0alpha1InfoLogos{
+		Logos: pluginsv0alpha1.MetaV0alpha1InfoLogos{
 			Small: jsonData.Info.Logos.Small,
 			Large: jsonData.Info.Logos.Large,
 		},
@@ -44,7 +44,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	if jsonData.Info.Author.Name != "" || jsonData.Info.Author.URL != "" {
-		author := &pluginsv0alpha1.PluginMetaV0alpha1InfoAuthor{}
+		author := &pluginsv0alpha1.MetaV0alpha1InfoAuthor{}
 		if jsonData.Info.Author.Name != "" {
 			author.Name = &jsonData.Info.Author.Name
 		}
@@ -55,9 +55,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	if len(jsonData.Info.Links) > 0 {
-		meta.Info.Links = make([]pluginsv0alpha1.PluginMetaV0alpha1InfoLinks, 0, len(jsonData.Info.Links))
+		meta.Info.Links = make([]pluginsv0alpha1.MetaV0alpha1InfoLinks, 0, len(jsonData.Info.Links))
 		for _, link := range jsonData.Info.Links {
-			v0Link := pluginsv0alpha1.PluginMetaV0alpha1InfoLinks{}
+			v0Link := pluginsv0alpha1.MetaV0alpha1InfoLinks{}
 			if link.Name != "" {
 				v0Link.Name = &link.Name
 			}
@@ -69,9 +69,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	if len(jsonData.Info.Screenshots) > 0 {
-		meta.Info.Screenshots = make([]pluginsv0alpha1.PluginMetaV0alpha1InfoScreenshots, 0, len(jsonData.Info.Screenshots))
+		meta.Info.Screenshots = make([]pluginsv0alpha1.MetaV0alpha1InfoScreenshots, 0, len(jsonData.Info.Screenshots))
 		for _, screenshot := range jsonData.Info.Screenshots {
-			v0Screenshot := pluginsv0alpha1.PluginMetaV0alpha1InfoScreenshots{}
+			v0Screenshot := pluginsv0alpha1.MetaV0alpha1InfoScreenshots{}
 			if screenshot.Name != "" {
 				v0Screenshot.Name = &screenshot.Name
 			}
@@ -83,7 +83,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	// Map Dependencies
-	meta.Dependencies = pluginsv0alpha1.PluginMetaDependencies{
+	meta.Dependencies = pluginsv0alpha1.MetaDependencies{
 		GrafanaDependency: jsonData.Dependencies.GrafanaDependency,
 	}
 
@@ -92,18 +92,18 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	if len(jsonData.Dependencies.Plugins) > 0 {
-		meta.Dependencies.Plugins = make([]pluginsv0alpha1.PluginMetaV0alpha1DependenciesPlugins, 0, len(jsonData.Dependencies.Plugins))
+		meta.Dependencies.Plugins = make([]pluginsv0alpha1.MetaV0alpha1DependenciesPlugins, 0, len(jsonData.Dependencies.Plugins))
 		for _, dep := range jsonData.Dependencies.Plugins {
-			var depType pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsType
+			var depType pluginsv0alpha1.MetaV0alpha1DependenciesPluginsType
 			switch dep.Type {
 			case "app":
-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypeApp
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeApp
 			case "datasource":
-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypeDatasource
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeDatasource
 			case "panel":
-				depType = pluginsv0alpha1.PluginMetaV0alpha1DependenciesPluginsTypePanel
+				depType = pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypePanel
 			}
-			meta.Dependencies.Plugins = append(meta.Dependencies.Plugins, pluginsv0alpha1.PluginMetaV0alpha1DependenciesPlugins{
+			meta.Dependencies.Plugins = append(meta.Dependencies.Plugins, pluginsv0alpha1.MetaV0alpha1DependenciesPlugins{
 				Id:   dep.ID,
 				Type: depType,
 				Name: dep.Name,
@@ -112,7 +112,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	}
 
 	if len(jsonData.Dependencies.Extensions.ExposedComponents) > 0 {
-		meta.Dependencies.Extensions = &pluginsv0alpha1.PluginMetaV0alpha1DependenciesExtensions{
+		meta.Dependencies.Extensions = &pluginsv0alpha1.MetaV0alpha1DependenciesExtensions{
 			ExposedComponents: jsonData.Dependencies.Extensions.ExposedComponents,
 		}
 	}
@@ -160,40 +160,40 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map category
 	if jsonData.Category != "" {
-		var category pluginsv0alpha1.PluginMetaJSONDataCategory
+		var category pluginsv0alpha1.MetaJSONDataCategory
 		switch jsonData.Category {
 		case "tsdb":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryTsdb
+			category = pluginsv0alpha1.MetaJSONDataCategoryTsdb
 		case "logging":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryLogging
+			category = pluginsv0alpha1.MetaJSONDataCategoryLogging
 		case "cloud":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryCloud
+			category = pluginsv0alpha1.MetaJSONDataCategoryCloud
 		case "tracing":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryTracing
+			category = pluginsv0alpha1.MetaJSONDataCategoryTracing
 		case "profiling":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryProfiling
+			category = pluginsv0alpha1.MetaJSONDataCategoryProfiling
 		case "sql":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategorySql
+			category = pluginsv0alpha1.MetaJSONDataCategorySql
 		case "enterprise":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryEnterprise
+			category = pluginsv0alpha1.MetaJSONDataCategoryEnterprise
 		case "iot":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryIot
+			category = pluginsv0alpha1.MetaJSONDataCategoryIot
 		case "other":
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryOther
+			category = pluginsv0alpha1.MetaJSONDataCategoryOther
 		default:
-			category = pluginsv0alpha1.PluginMetaJSONDataCategoryOther
+			category = pluginsv0alpha1.MetaJSONDataCategoryOther
 		}
 		meta.Category = &category
 	}
 
 	// Map state
 	if jsonData.State != "" {
-		var state pluginsv0alpha1.PluginMetaJSONDataState
+		var state pluginsv0alpha1.MetaJSONDataState
 		switch jsonData.State {
 		case plugins.ReleaseStateAlpha:
-			state = pluginsv0alpha1.PluginMetaJSONDataStateAlpha
+			state = pluginsv0alpha1.MetaJSONDataStateAlpha
 		case plugins.ReleaseStateBeta:
-			state = pluginsv0alpha1.PluginMetaJSONDataStateBeta
+			state = pluginsv0alpha1.MetaJSONDataStateBeta
 		default:
 		}
 		if state != "" {
@@ -208,7 +208,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map QueryOptions
 	if len(jsonData.QueryOptions) > 0 {
-		queryOptions := &pluginsv0alpha1.PluginMetaQueryOptions{}
+		queryOptions := &pluginsv0alpha1.MetaQueryOptions{}
 		if val, ok := jsonData.QueryOptions["maxDataPoints"]; ok {
 			queryOptions.MaxDataPoints = &val
 		}
@@ -223,23 +223,23 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map Includes
 	if len(jsonData.Includes) > 0 {
-		meta.Includes = make([]pluginsv0alpha1.PluginMetaInclude, 0, len(jsonData.Includes))
+		meta.Includes = make([]pluginsv0alpha1.MetaInclude, 0, len(jsonData.Includes))
 		for _, include := range jsonData.Includes {
-			v0Include := pluginsv0alpha1.PluginMetaInclude{}
+			v0Include := pluginsv0alpha1.MetaInclude{}
 			if include.UID != "" {
 				v0Include.Uid = &include.UID
 			}
 			if include.Type != "" {
-				var includeType pluginsv0alpha1.PluginMetaIncludeType
+				var includeType pluginsv0alpha1.MetaIncludeType
 				switch include.Type {
 				case "dashboard":
-					includeType = pluginsv0alpha1.PluginMetaIncludeTypeDashboard
+					includeType = pluginsv0alpha1.MetaIncludeTypeDashboard
 				case "page":
-					includeType = pluginsv0alpha1.PluginMetaIncludeTypePage
+					includeType = pluginsv0alpha1.MetaIncludeTypePage
 				case "panel":
-					includeType = pluginsv0alpha1.PluginMetaIncludeTypePanel
+					includeType = pluginsv0alpha1.MetaIncludeTypePanel
 				case "datasource":
-					includeType = pluginsv0alpha1.PluginMetaIncludeTypeDatasource
+					includeType = pluginsv0alpha1.MetaIncludeTypeDatasource
 				}
 				v0Include.Type = &includeType
 			}
@@ -250,14 +250,14 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 				v0Include.Component = &include.Component
 			}
 			if include.Role != "" {
-				var role pluginsv0alpha1.PluginMetaIncludeRole
+				var role pluginsv0alpha1.MetaIncludeRole
 				switch include.Role {
 				case "Admin":
-					role = pluginsv0alpha1.PluginMetaIncludeRoleAdmin
+					role = pluginsv0alpha1.MetaIncludeRoleAdmin
 				case "Editor":
-					role = pluginsv0alpha1.PluginMetaIncludeRoleEditor
+					role = pluginsv0alpha1.MetaIncludeRoleEditor
 				case "Viewer":
-					role = pluginsv0alpha1.PluginMetaIncludeRoleViewer
+					role = pluginsv0alpha1.MetaIncludeRoleViewer
 				}
 				v0Include.Role = &role
 			}
@@ -282,9 +282,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map Routes
 	if len(jsonData.Routes) > 0 {
-		meta.Routes = make([]pluginsv0alpha1.PluginMetaRoute, 0, len(jsonData.Routes))
+		meta.Routes = make([]pluginsv0alpha1.MetaRoute, 0, len(jsonData.Routes))
 		for _, route := range jsonData.Routes {
-			v0Route := pluginsv0alpha1.PluginMetaRoute{}
+			v0Route := pluginsv0alpha1.MetaRoute{}
 			if route.Path != "" {
 				v0Route.Path = &route.Path
 			}
@@ -309,9 +309,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 				v0Route.Headers = headers
 			}
 			if len(route.URLParams) > 0 {
-				v0Route.UrlParams = make([]pluginsv0alpha1.PluginMetaV0alpha1RouteUrlParams, 0, len(route.URLParams))
+				v0Route.UrlParams = make([]pluginsv0alpha1.MetaV0alpha1RouteUrlParams, 0, len(route.URLParams))
 				for _, param := range route.URLParams {
-					v0Param := pluginsv0alpha1.PluginMetaV0alpha1RouteUrlParams{}
+					v0Param := pluginsv0alpha1.MetaV0alpha1RouteUrlParams{}
 					if param.Name != "" {
 						v0Param.Name = &param.Name
 					}
@@ -322,7 +322,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 				}
 			}
 			if route.TokenAuth != nil {
-				v0Route.TokenAuth = &pluginsv0alpha1.PluginMetaV0alpha1RouteTokenAuth{}
+				v0Route.TokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteTokenAuth{}
 				if route.TokenAuth.Url != "" {
 					v0Route.TokenAuth.Url = &route.TokenAuth.Url
 				}
@@ -337,7 +337,7 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 				}
 			}
 			if route.JwtTokenAuth != nil {
-				v0Route.JwtTokenAuth = &pluginsv0alpha1.PluginMetaV0alpha1RouteJwtTokenAuth{}
+				v0Route.JwtTokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuth{}
 				if route.JwtTokenAuth.Url != "" {
 					v0Route.JwtTokenAuth.Url = &route.JwtTokenAuth.Url
 				}
@@ -364,12 +364,12 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	// Map Extensions
 	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
 		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 {
-		extensions := &pluginsv0alpha1.PluginMetaExtensions{}
+		extensions := &pluginsv0alpha1.MetaExtensions{}
 
 		if len(jsonData.Extensions.AddedLinks) > 0 {
-			extensions.AddedLinks = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))
+			extensions.AddedLinks = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))
 			for _, link := range jsonData.Extensions.AddedLinks {
-				v0Link := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedLinks{
+				v0Link := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks{
 					Targets: link.Targets,
 					Title:   link.Title,
 				}
@@ -381,9 +381,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 		}
 
 		if len(jsonData.Extensions.AddedComponents) > 0 {
-			extensions.AddedComponents = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedComponents, 0, len(jsonData.Extensions.AddedComponents))
+			extensions.AddedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents, 0, len(jsonData.Extensions.AddedComponents))
 			for _, comp := range jsonData.Extensions.AddedComponents {
-				v0Comp := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsAddedComponents{
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedComponents{
 					Targets: comp.Targets,
 					Title:   comp.Title,
 				}
@@ -395,9 +395,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 		}
 
 		if len(jsonData.Extensions.ExposedComponents) > 0 {
-			extensions.ExposedComponents = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
+			extensions.ExposedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
 			for _, comp := range jsonData.Extensions.ExposedComponents {
-				v0Comp := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExposedComponents{
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents{
 					Id: comp.Id,
 				}
 				if comp.Title != "" {
@@ -411,9 +411,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 		}
 
 		if len(jsonData.Extensions.ExtensionPoints) > 0 {
-			extensions.ExtensionPoints = make([]pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
+			extensions.ExtensionPoints = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
 			for _, point := range jsonData.Extensions.ExtensionPoints {
-				v0Point := pluginsv0alpha1.PluginMetaV0alpha1ExtensionsExtensionPoints{
+				v0Point := pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints{
 					Id: point.Id,
 				}
 				if point.Title != "" {
@@ -431,13 +431,13 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map Roles
 	if len(jsonData.Roles) > 0 {
-		meta.Roles = make([]pluginsv0alpha1.PluginMetaRole, 0, len(jsonData.Roles))
+		meta.Roles = make([]pluginsv0alpha1.MetaRole, 0, len(jsonData.Roles))
 		for _, role := range jsonData.Roles {
-			v0Role := pluginsv0alpha1.PluginMetaRole{
+			v0Role := pluginsv0alpha1.MetaRole{
 				Grants: role.Grants,
 			}
 			if role.Role.Name != "" || role.Role.Description != "" || len(role.Role.Permissions) > 0 {
-				v0RoleRole := &pluginsv0alpha1.PluginMetaV0alpha1RoleRole{}
+				v0RoleRole := &pluginsv0alpha1.MetaV0alpha1RoleRole{}
 				if role.Role.Name != "" {
 					v0RoleRole.Name = &role.Role.Name
 				}
@@ -445,9 +445,9 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 					v0RoleRole.Description = &role.Role.Description
 				}
 				if len(role.Role.Permissions) > 0 {
-					v0RoleRole.Permissions = make([]pluginsv0alpha1.PluginMetaV0alpha1RoleRolePermissions, 0, len(role.Role.Permissions))
+					v0RoleRole.Permissions = make([]pluginsv0alpha1.MetaV0alpha1RoleRolePermissions, 0, len(role.Role.Permissions))
 					for _, perm := range role.Role.Permissions {
-						v0Perm := pluginsv0alpha1.PluginMetaV0alpha1RoleRolePermissions{}
+						v0Perm := pluginsv0alpha1.MetaV0alpha1RoleRolePermissions{}
 						if perm.Action != "" {
 							v0Perm.Action = &perm.Action
 						}
@@ -465,11 +465,11 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 
 	// Map IAM
 	if jsonData.IAM != nil && len(jsonData.IAM.Permissions) > 0 {
-		iam := &pluginsv0alpha1.PluginMetaIAM{
-			Permissions: make([]pluginsv0alpha1.PluginMetaV0alpha1IAMPermissions, 0, len(jsonData.IAM.Permissions)),
+		iam := &pluginsv0alpha1.MetaIAM{
+			Permissions: make([]pluginsv0alpha1.MetaV0alpha1IAMPermissions, 0, len(jsonData.IAM.Permissions)),
 		}
 		for _, perm := range jsonData.IAM.Permissions {
-			v0Perm := pluginsv0alpha1.PluginMetaV0alpha1IAMPermissions{}
+			v0Perm := pluginsv0alpha1.MetaV0alpha1IAMPermissions{}
 			if perm.Action != "" {
 				v0Perm.Action = &perm.Action
 			}
@@ -484,28 +484,28 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	return meta
 }
 
-// pluginStorePluginToPluginMetaSpec converts a pluginstore.Plugin to a pluginsv0alpha1.PluginMetaSpec.
+// pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
-func pluginStorePluginToPluginMetaSpec(plugin pluginstore.Plugin, loadingStrategy plugins.LoadingStrategy, moduleHash string) pluginsv0alpha1.PluginMetaSpec {
-	spec := pluginsv0alpha1.PluginMetaSpec{
+func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.LoadingStrategy, moduleHash string) pluginsv0alpha1.MetaSpec {
+	spec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToPluginMetaJSONData(plugin.JSONData),
 	}
 
 	if plugin.Module != "" {
-		module := &pluginsv0alpha1.PluginMetaV0alpha1SpecModule{
+		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
 		}
 		if moduleHash != "" {
 			module.Hash = &moduleHash
 		}
 		if loadingStrategy != "" {
-			var ls pluginsv0alpha1.PluginMetaV0alpha1SpecModuleLoadingStrategy
+			var ls pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
 			switch loadingStrategy {
 			case plugins.LoadingStrategyFetch:
-				ls = pluginsv0alpha1.PluginMetaV0alpha1SpecModuleLoadingStrategyFetch
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
 			case plugins.LoadingStrategyScript:
-				ls = pluginsv0alpha1.PluginMetaV0alpha1SpecModuleLoadingStrategyScript
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
 			}
 			module.LoadingStrategy = &ls
 		}
@@ -517,7 +517,7 @@ func pluginStorePluginToPluginMetaSpec(plugin pluginstore.Plugin, loadingStrateg
 	}
 
 	if plugin.Signature != "" {
-		signature := &pluginsv0alpha1.PluginMetaV0alpha1SpecSignature{
+		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
 			Status: convertSignatureStatus(plugin.Signature),
 		}
 
@@ -537,7 +537,7 @@ func pluginStorePluginToPluginMetaSpec(plugin pluginstore.Plugin, loadingStrateg
 		spec.Children = plugin.Children
 	}
 
-	spec.Angular = &pluginsv0alpha1.PluginMetaV0alpha1SpecAngular{
+	spec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
 		Detected: plugin.Angular.Detected,
 	}
 
@@ -548,38 +548,38 @@ func pluginStorePluginToPluginMetaSpec(plugin pluginstore.Plugin, loadingStrateg
 	return spec
 }
 
-// convertSignatureStatus converts plugins.SignatureStatus to pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatus.
-func convertSignatureStatus(status plugins.SignatureStatus) pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatus {
+// convertSignatureStatus converts plugins.SignatureStatus to pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus.
+func convertSignatureStatus(status plugins.SignatureStatus) pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus {
 	switch status {
 	case plugins.SignatureStatusInternal:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusInternal
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInternal
 	case plugins.SignatureStatusValid:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusValid
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid
 	case plugins.SignatureStatusInvalid:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusInvalid
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInvalid
 	case plugins.SignatureStatusModified:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusModified
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusModified
 	case plugins.SignatureStatusUnsigned:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusUnsigned
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusUnsigned
 	default:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusUnsigned
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusUnsigned
 	}
 }
 
-// convertSignatureType converts plugins.SignatureType to pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureType.
-func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureType {
+// convertSignatureType converts plugins.SignatureType to pluginsv0alpha1.MetaV0alpha1SpecSignatureType.
+func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.MetaV0alpha1SpecSignatureType {
 	switch sigType {
 	case plugins.SignatureTypeGrafana:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeGrafana
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
 	case plugins.SignatureTypeCommercial:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeCommercial
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
 	case plugins.SignatureTypeCommunity:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeCommunity
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
 	case plugins.SignatureTypePrivate:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypePrivate
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
 	case plugins.SignatureTypePrivateGlob:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypePrivateGlob
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
 	default:
-		return pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeGrafana
+		return pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
 	}
 }

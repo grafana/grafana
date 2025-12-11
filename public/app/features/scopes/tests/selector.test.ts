@@ -91,7 +91,7 @@ describe('Selector', () => {
   it('Should initializae values from the URL', async () => {
     const mockLocation = {
       pathname: '/dashboard',
-      search: '?scopes=grafana&scope_parent=applications',
+      search: '?scopes=grafana&scope_node=applications-grafana',
       hash: '',
       key: 'test',
       state: null,
@@ -105,6 +105,7 @@ describe('Selector', () => {
     // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
     expectScopesSelectorValue('grafana');
     await openSelector();
+    //screen.debug(undefined, 100000);
     expectResultApplicationsGrafanaSelected();
 
     jest.spyOn(locationService, 'getLocation').mockRestore();

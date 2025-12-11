@@ -38,7 +38,7 @@ export function transformV1ToV2AnnotationQuery(
   const result: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      builtIn: Boolean(annotation.builtIn),
+      ...(annotation.builtIn !== undefined ? { builtIn: annotation.builtIn === 1 || Boolean(annotation.builtIn) } : {}),
       name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),
@@ -74,7 +74,10 @@ export function transformV1ToV2AnnotationQuery(
     result.spec.filter = annotation.filter;
   }
 
-  // TODO: add mappings
+  // Add mappings if they exist
+  if (annotation.mappings && Object.keys(annotation.mappings).length > 0) {
+    result.spec.mappings = annotation.mappings;
+  }
 
   return result;
 }
@@ -88,8 +91,12 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     hide: annotation.spec.hide,
     iconColor: annotation.spec.iconColor,
     name: annotation.spec.name,
-    // TOOO: mappings
   };
+
+  // Add mappings if they exist
+  if (annotation.spec.mappings && Object.keys(annotation.spec.mappings).length > 0) {
+    annoQuerySpec.mappings = annotation.spec.mappings;
+  }
 
   // Add placement if it exists
   if (annotation.spec.placement) {
@@ -103,9 +110,13 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     };
   }
 
-  if (annotation.spec.builtIn) {
-    annoQuerySpec.type = 'dashboard';
-    annoQuerySpec.builtIn = 1;
+  if (annotation.spec.builtIn !== undefined) {
+    if (annotation.spec.builtIn) {
+      annoQuerySpec.type = 'dashboard';
+      annoQuerySpec.builtIn = 1;
+    } else {
+      annoQuerySpec.builtIn = 0;
+    }
   }
 
   if (annotation.spec.filter) {

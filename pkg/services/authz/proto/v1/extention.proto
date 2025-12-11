@@ -36,6 +36,10 @@ message MutateOperation {
     AddUserOrgRoleOperation add_user_org_role = 7;
     CreateRoleBindingOperation create_role_binding = 8;
     DeleteRoleBindingOperation delete_role_binding = 9;
+    CreateTeamBindingOperation create_team_binding = 10;
+    DeleteTeamBindingOperation delete_team_binding = 11;
+    CreateRoleOperation create_role = 12;
+    DeleteRoleOperation delete_role = 13;
   }
 }
 
@@ -109,6 +113,47 @@ message DeleteRoleBindingOperation {
   string role_kind = 3;
   // uid of the role
   string role_name = 4;
+}
+
+message CreateTeamBindingOperation {
+  // uid of the identity
+  string subject_name = 1;
+  // uid of the team
+  string team_name = 2;
+  // permission of the identity in the team (admin/member)
+  string permission = 3;
+}
+
+message DeleteTeamBindingOperation {
+  // uid of the identity
+  string subject_name = 1;
+  // uid of the team
+  string team_name = 2;
+  // permission of the identity in the team (admin/member)
+  string permission = 3;
+}
+
+message CreateRoleOperation {
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 1;
+  // uid of the role
+  string role_name = 2;
+  // permissions of the role
+  repeated RolePermission permissions = 3;
+}
+
+message DeleteRoleOperation {
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 1;
+  // uid of the role
+  string role_name = 2;
+  // permissions of the role
+  repeated RolePermission permissions = 3;
+}
+
+message RolePermission {
+  string action = 1;
+  string scope = 2;
 }
 
 message Resource {

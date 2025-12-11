@@ -23,6 +23,12 @@ type Receiver struct {
 	Spec ReceiverSpec `json:"spec" yaml:"spec"`
 }
 
+func NewReceiver() *Receiver {
+	return &Receiver{
+		Spec: *NewReceiverSpec(),
+	}
+}
+
 func (o *Receiver) GetSpec() any {
 	return o.Spec
 }

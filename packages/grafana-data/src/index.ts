@@ -521,6 +521,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
+  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
@@ -715,11 +716,9 @@ export {
 export {
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,
-  type VisualizationSuggestionsSupplierFn,
   type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestionsBuilder,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/suggestions';
 export {
   type MatcherConfig,

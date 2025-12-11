@@ -23,11 +23,12 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
+import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
+import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
@@ -117,19 +118,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     }
   }
 
-  // Dashboard controls is a separate dropdown menu at the top-right of the controls
-  public hasDashboardControls(): boolean {
-    const dashboard = getDashboardSceneFor(this);
-    const { links } = dashboard.state;
-    const hasControlMenuVariables = sceneGraph
-      .getVariables(dashboard)
-      ?.state.variables.some((v) => v.state.hide === VariableHide.inControlsMenu);
-    const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
-
-    return hasControlMenuVariables || hasControlMenuLinks;
-  }
-
   public hasControls(): boolean {
+    const dashboard = getDashboardSceneFor(this);
     const hasVariables = sceneGraph
       .getVariables(this)
       ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
@@ -138,7 +128,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
     const hideTimePicker = this.state.hideTimeControls;
-    const hideDashboardControls = this.state.hideDashboardControls || !this.hasDashboardControls();
+    const hideDashboardControls = this.state.hideDashboardControls || !hasDashboardControls(dashboard);
 
     return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
   }
@@ -157,10 +147,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasDashboardControls = useHasDashboardControls(dashboard);
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
@@ -171,13 +161,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
-          <div className={styles.timeControls}>
+          <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
-        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+        {config.featureToggles.dashboardNewLayouts && (
+          <div className={styles.fixedControls}>
+            <DashboardControlActions dashboard={dashboard} />
+          </div>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -185,7 +179,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -268,17 +262,26 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rightControls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
       float: 'right',
       alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
-    timeControls: css({
+    fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
+      order: 2,
+      marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
+      marginLeft: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',

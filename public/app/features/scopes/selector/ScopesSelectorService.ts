@@ -46,7 +46,7 @@ export interface ScopesSelectorServiceState {
 
   // Simple tree structure for the scopes categories. Each node in a tree has a scopeNodeId which keys the nodes cache
   // map.
-  tree: TreeNode | undefined;
+  tree: TreeNode;
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
@@ -116,9 +116,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     scopeNodeId: string,
     tree: TreeNode
   ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
-    if (!tree) {
-      throw new Error('Tree is required');
-    }
     const nodePath = await this.getNodePath(scopeNodeId);
     const newTree = insertPathNodesIntoTree(tree, nodePath);
 
@@ -133,7 +130,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     try {
       const path = getPathOfNode(scopeNodeId, this.state.nodes);
-      const nodeToToggle = treeNodeAtPath(this.state.tree!, path);
+      const nodeToToggle = treeNodeAtPath(this.state.tree, path);
 
       if (!nodeToToggle) {
         throw new Error(`Node ${scopeNodeId} not found in tree`);
@@ -143,7 +140,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
 
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
         treeNode.expanded = !nodeToToggle.expanded;
         treeNode.query = '';
       });
@@ -152,7 +149,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // If we are collapsing, we need to make sure that all the parent's children are available
       if (nodeToToggle.expanded) {
         const parentPath = path.slice(0, -1);
-        const parentNode = treeNodeAtPath(this.state.tree!, parentPath);
+        const parentNode = treeNodeAtPath(this.state.tree, parentPath);
         if (parentNode) {
           await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
         }
@@ -173,7 +170,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     try {
       const path = getPathOfNode(scopeNodeId, this.state.nodes);
-      const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
+      const nodeToFilter = treeNodeAtPath(this.state.tree, path);
 
       if (!nodeToFilter) {
         throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
@@ -183,7 +180,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
       }
 
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
         treeNode.expanded = true;
         treeNode.query = query;
       });
@@ -209,7 +206,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       newNodes[node.metadata.name] = node;
     }
 
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+    const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
       // Set parent query only when filtering within existing children
       treeNode.children = {};
       for (const node of childNodes) {
@@ -221,6 +218,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           children: undefined,
         };
       }
+      // Set loaded to true if node is a container
+      treeNode.childrenLoaded = true;
     });
 
     // TODO: we might not want to update the tree as a side effect of this function
@@ -259,7 +258,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const selectedScope = {
       scopeId: scopeNode.spec.linkId,
       scopeNodeId: scopeNode.metadata.name,
-      parentNodeId: parentNode?.metadata.name,
     };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
@@ -345,20 +343,29 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
+
+      // Fetch the scope node if it is not available
+      let newNodesState = { ...this.state.nodes };
+      let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+
+      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
+        scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
+        if (scopeNode) {
+          newNodesState[scopeNode.metadata.name] = scopeNode;
+        }
+      }
+
       const newScopesState = { ...this.state.scopes };
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
 
-      const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-
-      // If parentNodeId is provided, use it directly as the parent node
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
-      this.addRecentScopes(fetchedScopes, parentNode);
+      this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
@@ -401,15 +408,18 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.setNavigationScope(undefined);
   };
 
-  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode, scopeNodeId?: string) => {
     if (scopes.length === 0) {
       return;
     }
 
     const newScopes: RecentScope[] = structuredClone(scopes);
-    // Set parent node for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
+    // Set parent node and scopeNodeId for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
     if (parentNode) {
       newScopes[0].parentNode = parentNode;
+    }
+    if (scopeNodeId) {
+      newScopes[0].scopeNodeId = scopeNodeId;
     }
 
     const RECENT_SCOPES_MAX_LENGTH = 5;
@@ -455,15 +465,31 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
   public open = async () => {
-    if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
+    if (
+      !this.state.tree.children ||
+      Object.keys(this.state.tree.children).length === 0 ||
+      !this.state.tree.childrenLoaded
+    ) {
       await this.filterNode('', '');
     }
 
-    // First close all nodes
-    let newTree = closeNodes(this.state.tree!);
+    // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
+    if (
+      config.featureToggles.useScopeSingleNodeEndpoint &&
+      this.state.selectedScopes[0]?.scopeNodeId &&
+      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
+    ) {
+      const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
+      if (scopeNode) {
+        this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });
+      }
+    }
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
+    // First close all nodes
+    let newTree = closeNodes(this.state.tree);
+
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
+      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
       let nodeAtPath = treeNodeAtPath(newTree, path);
@@ -471,22 +497,30 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // In the cases where nodes are not in the tree yet
       if (!nodeAtPath) {
         try {
-          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].parentNodeId, newTree)).tree;
+          const result = await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree);
+          newTree = result.tree;
+          // Update path to use the resolved path since nodes have been fetched
+          path = result.path.map((n) => n.metadata.name);
+          path.unshift('');
           nodeAtPath = treeNodeAtPath(newTree, path);
         } catch (error) {
           console.error('Failed to resolve path to root', error);
         }
       }
 
-      if (nodeAtPath && !nodeAtPath.children) {
+      // We have resolved to root, which means the parent node should be available
+      let parentPath = path.slice(0, -1);
+      let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
+
+      if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
         // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(parentPath, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
       }
 
       // Expand the nodes to the selected scope - must be done after loading children
       try {
-        newTree = expandNodes(newTree, path);
+        newTree = expandNodes(newTree, parentPath);
       } catch (error) {
         console.error('Failed to expand nodes', error);
       }

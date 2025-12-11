@@ -22,11 +22,11 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("returns cached plugin when available", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
+		expectedSpec := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
-				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
 			},
 		}
 
@@ -60,11 +60,11 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("ignores version parameter", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
+		expectedSpec := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
-				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
 			},
 		}
 
@@ -85,11 +85,11 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		customTTL := 2 * time.Hour
 		provider := NewCoreProviderWithTTL(customTTL)
 
-		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
+		expectedSpec := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
-				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
 			},
 		}
 
@@ -277,11 +277,11 @@ func TestJsonDataToMeta(t *testing.T) {
 			},
 		}
 
-		meta := jsonDataToPluginMetaJSONData(jsonData)
+		meta := jsonDataToMetaJSONData(jsonData)
 
 		assert.Equal(t, "test-plugin", meta.Id)
 		assert.Equal(t, "Test Plugin", meta.Name)
-		assert.Equal(t, pluginsv0alpha1.PluginMetaJSONDataTypeDatasource, meta.Type)
+		assert.Equal(t, pluginsv0alpha1.MetaJSONDataTypeDatasource, meta.Type)
 		assert.Equal(t, "1.0.0", meta.Info.Version)
 		assert.Equal(t, "Test description", *meta.Info.Description)
 		assert.Equal(t, []string{"test", "plugin"}, meta.Info.Keywords)
@@ -299,7 +299,7 @@ func TestJsonDataToMeta(t *testing.T) {
 			},
 		}
 
-		meta := jsonDataToPluginMetaJSONData(jsonData)
+		meta := jsonDataToMetaJSONData(jsonData)
 
 		assert.Nil(t, meta.Info.Description)
 		assert.Nil(t, meta.Info.Author)

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -42,9 +44,13 @@ const (
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestKeyPathGeneration         = "key_path generation"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
+
+// NewBackendWithDBFunc creates a backend with database access for testing
+type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sqldb.DB)
 
 // TestOptions configures which tests to run
 type TestOptions struct {
@@ -96,6 +102,37 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 
 		t.Run(tc.name, func(t *testing.T) {
 			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+		})
+	}
+}
+
+func RunSQLStorageBackendCompatibilityTest(t *testing.T, newBackend NewBackendWithDBFunc, opts *TestOptions) {
+	if opts == nil {
+		opts = &TestOptions{}
+	}
+
+	if opts.NSPrefix == "" {
+		opts.NSPrefix = GenerateRandomNSPrefix()
+	}
+
+	t.Logf("Running tests with namespace prefix: %s", opts.NSPrefix)
+
+	cases := []struct {
+		name string
+		fn   func(*testing.T, resource.StorageBackend, string, sqldb.DB)
+	}{
+		{TestKeyPathGeneration, runTestIntegrationBackendKeyPathGeneration},
+	}
+
+	for _, tc := range cases {
+		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
+			t.Logf("Skipping test: %s", tc.name)
+			continue
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			backend, db := newBackend(context.Background())
+			tc.fn(t, backend, opts.NSPrefix, db)
 		})
 	}
 }
@@ -440,16 +477,14 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
-		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
-		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
+		require.NotEmpty(t, res.NextPageToken)
 
 		res, err = server.List(ctx, &resourcepb.ListRequest{
 			Limit:         3,
-			NextPageToken: continueToken.String(),
+			NextPageToken: res.NextPageToken,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
@@ -460,6 +495,8 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		})
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
+		require.Contains(t, string(res.Items[0].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item6 ADDED")
 		require.Len(t, res.Items, 2)
 		require.Empty(t, res.NextPageToken)
 	})
@@ -504,15 +541,12 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
-
-		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
-		require.Equal(t, rv7, continueToken.ResourceVersion)
+		require.NotEmpty(t, res.NextPageToken)
 
 		res, err = server.List(ctx, &resourcepb.ListRequest{
 			Limit:           3,
 			ResourceVersion: rv7,
-			NextPageToken:   continueToken.String(),
+			NextPageToken:   res.NextPageToken,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
@@ -756,10 +790,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				require.GreaterOrEqual(t, res.ResourceVersion, tc.minExpectedHeadRV)
 
 				// Check continue token
-				continueToken, err := resource.GetContinueToken(res.NextPageToken)
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedContinueRV, continueToken.ResourceVersion)
-				require.Equal(t, tc.expectedSortAsc, continueToken.SortAscending)
+				require.NotEmpty(t, res.NextPageToken)
 			})
 		}
 
@@ -775,10 +806,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			}
 			firstPageRes, err := server.List(ctx, firstRequest)
 			require.NoError(t, err)
-
-			// Get continue token for second page
-			continueToken, err := resource.GetContinueToken(firstPageRes.NextPageToken)
-			require.NoError(t, err)
+			require.NotEmpty(t, firstPageRes.NextPageToken)
 
 			// Get second page
 			secondPageRes, err := server.List(ctx, &resourcepb.ListRequest{
@@ -786,12 +814,13 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				Source:          resourcepb.ListRequest_HISTORY,
 				ResourceVersion: rv1,
 				VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
-				NextPageToken:   continueToken.String(),
+				NextPageToken:   firstPageRes.NextPageToken,
 				Options:         &resourcepb.ListOptions{Key: baseKey},
 			})
 			require.NoError(t, err)
 			require.Nil(t, secondPageRes.Error)
 			require.Len(t, secondPageRes.Items, 3)
+			require.Empty(t, secondPageRes.NextPageToken)
 
 			// Second page should continue in ascending order
 			expectedRVs := []int64{rvHistory3, rvHistory4, rvHistory5}
@@ -829,7 +858,6 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	t.Run("fetch second page of history at revision", func(t *testing.T) {
 		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
-			StartOffset:     2,
 			SortAscending:   false,
 		}
 		res, err := server.List(ctx, &resourcepb.ListRequest{
@@ -1730,4 +1758,223 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// The important thing is that at most one succeeds (race condition is prevented).
 		require.LessOrEqual(t, successes, 1, "at most one create should succeed (errors: %v)", errorMessages)
 	})
+}
+
+func runTestIntegrationBackendKeyPathGeneration(t *testing.T, backend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("Create resource", func(t *testing.T) {
+		// Create a test resource
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: nsPrefix + "-default",
+			Name:      "test-playlist-crud",
+		}
+
+		// Create the K8s unstructured object
+		testObj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "playlist.grafana.app/v0alpha1",
+				"kind":       "Playlist",
+				"metadata": map[string]interface{}{
+					"name":      "test-playlist-crud",
+					"namespace": nsPrefix + "-default",
+					"uid":       "test-uid-crud-123",
+				},
+				"spec": map[string]interface{}{
+					"title": "My Test Playlist",
+				},
+			},
+		}
+
+		// Get metadata accessor
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+
+		// Serialize to JSON
+		jsonBytes, err := testObj.MarshalJSON()
+		require.NoError(t, err)
+
+		// Create WriteEvent
+		writeEvent := resource.WriteEvent{
+			Type:       resourcepb.WatchEvent_ADDED,
+			Key:        key,
+			Value:      jsonBytes,
+			Object:     metaAccessor,
+			PreviousRV: 0, // Always 0 for new resources
+			GUID:       "create-guid-crud-123",
+		}
+
+		// Create the resource using WriteEvent
+		createRV, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+		require.Greater(t, createRV, int64(0))
+
+		// Verify created resource key_path
+		verifyKeyPath(t, db, ctx, key, "created", createRV, "")
+
+		t.Run("Update resource", func(t *testing.T) {
+			// Update the resource
+			testObj.Object["spec"] = map[string]interface{}{
+				"title": "My Updated Playlist",
+			}
+
+			updatedMetaAccessor, err := utils.MetaAccessor(testObj)
+			require.NoError(t, err)
+
+			updatedJsonBytes, err := testObj.MarshalJSON()
+			require.NoError(t, err)
+
+			updateEvent := resource.WriteEvent{
+				Type:       resourcepb.WatchEvent_MODIFIED,
+				Key:        key,
+				Value:      updatedJsonBytes,
+				Object:     updatedMetaAccessor,
+				PreviousRV: createRV,
+				GUID:       fmt.Sprintf("update-guid-%d", createRV),
+			}
+
+			// Update the resource
+			updateRV, err := backend.WriteEvent(ctx, updateEvent)
+			require.NoError(t, err)
+			require.Greater(t, updateRV, createRV)
+
+			// Verify updated resource key_path
+			verifyKeyPath(t, db, ctx, key, "updated", updateRV, "")
+
+			t.Run("Delete resource", func(t *testing.T) {
+				deleteEvent := resource.WriteEvent{
+					Type:       resourcepb.WatchEvent_DELETED,
+					Key:        key,
+					Value:      updatedJsonBytes, // Keep the last known value
+					Object:     updatedMetaAccessor,
+					PreviousRV: updateRV,
+					GUID:       fmt.Sprintf("delete-guid-%d", updateRV),
+				}
+
+				// Delete the resource
+				deleteRV, err := backend.WriteEvent(ctx, deleteEvent)
+				require.NoError(t, err)
+				require.Greater(t, deleteRV, updateRV)
+
+				// Verify deleted resource key_path
+				verifyKeyPath(t, db, ctx, key, "deleted", deleteRV, "")
+			})
+		})
+	})
+
+	t.Run("Resource with folder", func(t *testing.T) {
+		// Create a resource in a folder
+		folderKey := &resourcepb.ResourceKey{
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Namespace: nsPrefix + "-default",
+			Name:      "my-dashboard",
+		}
+
+		// Create dashboard object with folder
+		dashboardObj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name":      "my-dashboard",
+					"namespace": nsPrefix + "-default",
+					"uid":       "dash-uid-456",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": "test-folder",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": "My Dashboard",
+				},
+			},
+		}
+
+		folderMetaAccessor, err := utils.MetaAccessor(dashboardObj)
+		require.NoError(t, err)
+
+		folderJsonBytes, err := dashboardObj.MarshalJSON()
+		require.NoError(t, err)
+
+		folderWriteEvent := resource.WriteEvent{
+			Type:       resourcepb.WatchEvent_ADDED,
+			Key:        folderKey,
+			Value:      folderJsonBytes,
+			Object:     folderMetaAccessor,
+			PreviousRV: 0,
+			GUID:       "folder-guid-456",
+		}
+
+		// Create the dashboard in folder
+		folderRV, err := backend.WriteEvent(ctx, folderWriteEvent)
+		require.NoError(t, err)
+		require.Greater(t, folderRV, int64(0))
+
+		// Verify folder resource key_path includes folder
+		verifyKeyPath(t, db, ctx, folderKey, "created", folderRV, "test-folder")
+	})
+}
+
+// verifyKeyPath is a helper function to verify key_path generation
+func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
+	var query string
+	if db.DriverName() == "postgres" {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
+	} else {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
+	}
+	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
+	require.NoError(t, err)
+
+	require.True(t, rows.Next())
+
+	var keyPath string
+	var actualRV int64
+	var actualAction int
+	var actualFolder string
+
+	err = rows.Scan(&keyPath, &actualRV, &actualAction, &actualFolder)
+	require.NoError(t, err)
+	err = rows.Close()
+	require.NoError(t, err)
+
+	// Verify basic key_path format
+	require.Contains(t, keyPath, "unified/data/")
+	require.Contains(t, keyPath, key.Group)
+	require.Contains(t, keyPath, key.Resource)
+	require.Contains(t, keyPath, key.Namespace)
+	require.Contains(t, keyPath, key.Name)
+
+	// Verify action suffix
+	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
+
+	// Verify snowflake calculation
+	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
+	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
+
+	// Verify folder if specified
+	if expectedFolder != "" {
+		require.Equal(t, expectedFolder, actualFolder)
+		require.Contains(t, keyPath, expectedFolder)
+	}
+
+	// Verify action code matches
+	var expectedActionCode int
+	switch action {
+	case "created":
+		expectedActionCode = 1
+	case "updated":
+		expectedActionCode = 2
+	case "deleted":
+		expectedActionCode = 3
+	}
+	require.Equal(t, expectedActionCode, actualAction)
+
+	t.Logf("Action: %s, RV: %d, Snowflake: %d", action, resourceVersion, expectedSnowflake)
+	t.Logf("Key_path: %s", keyPath)
+	if expectedFolder != "" {
+		t.Logf("Folder: %s", actualFolder)
+	}
 }

@@ -4,6 +4,8 @@ import { test, expect, E2ESelectorGroups, DashboardPage, DashboardPageArgs } fro
 
 import testDashboard from '../dashboards/DashboardWithAllConditionalRendering.json';
 
+import { checkRepeatedPanelTitles } from './utils';
+
 test.use({
   featureToggles: {
     kubernetesDashboards: true,
@@ -93,7 +95,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
 
   test.afterAll(async ({ request }) => {
     if (uid) {
-      await request.delete(`/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/${uid}`);
+      await request.delete(`/apis/dashboard.grafana.app/v1beta1/namespaces/stacks-12345/dashboards/${uid}`);
     }
   });
 
@@ -406,5 +408,53 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(getTabHideMatches(dashboardPage, selectors)).toBeVisible();
     await expect(getTabShowNotMatches(dashboardPage, selectors)).toBeVisible();
     await expect(getTabHideNotMatches(dashboardPage, selectors)).not.toBeVisible();
+  });
+
+  test.describe('Variable repeat', () => {
+    const repeatOptions = ['a', 'b', 'c'];
+
+    async function failTestDataRequestForOption(page: Page, option: string) {
+      await page.route(/\/api\/ds\/query\?.*\bds_type=grafana-testdata-datasource/, async (route) => {
+        const rawPostData = route.request().postData();
+        if (!rawPostData) {
+          return;
+        }
+
+        // the first panel query has a label set to the current variable value
+        if (JSON.parse(rawPostData).queries[0].labels === `key=${option}`) {
+          await route.fulfill({ status: 500, body: '{}' });
+        } else {
+          await route.continue();
+        }
+      });
+    }
+
+    test('Hide when equals, hide when no data', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await loadDashboard(page, gotoDashboardPage);
+
+      await getTab(dashboardPage, selectors, 'repeated items').click();
+
+      const optionForHiddenPanels = repeatOptions[0];
+
+      await failTestDataRequestForOption(page, optionForHiddenPanels);
+
+      await checkRepeatedPanelTitles(
+        dashboardPage,
+        selectors,
+        'Hide panel - ',
+        [
+          `custom variable equals ${optionForHiddenPanels} (current = ${optionForHiddenPanels})`,
+          `no data (current = ${optionForHiddenPanels})`,
+        ],
+        true
+      );
+
+      const optionsForVisiblePanels = repeatOptions.slice(1);
+
+      await checkRepeatedPanelTitles(dashboardPage, selectors, 'Hide panel - ', [
+        ...optionsForVisiblePanels.map((o) => `custom variable equals ${optionForHiddenPanels} (current = ${o})`),
+        ...optionsForVisiblePanels.map((o) => `no data (current = ${o})`),
+      ]);
+    });
   });
 });

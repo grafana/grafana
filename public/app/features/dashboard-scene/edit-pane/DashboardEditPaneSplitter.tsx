@@ -69,6 +69,8 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
+    persistanceKey: 'dashboard',
+    onClosePane: () => editPane.closePane(),
   });
 
   /**
@@ -188,11 +190,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
-    }),
-    editPane: css({
-      flexDirection: 'column',
-      // borderLeft: `1px solid ${theme.colors.border.weak}`,
-      // background: theme.colors.background.primary,
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {

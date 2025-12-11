@@ -1581,6 +1581,8 @@ export type RepositoryView = {
   branch?: string;
   /** The k8s name for this repository */
   name: string;
+  /** For git, this is the target path */
+  path?: string;
   /** When syncing, where values are saved
     
     Possible enum values:
@@ -1598,6 +1600,8 @@ export type RepositoryView = {
      - `"gitlab"`
      - `"local"` */
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** For git, this is the target URL */
+  url?: string;
   /** The supported workflows */
   workflows: ('branch' | 'write')[];
 };

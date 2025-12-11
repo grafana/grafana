@@ -30,7 +30,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   };
 
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName} onClose={() => editPane.closePane()}>
+    <Sidebar.PaneHeader title={elementInfo.typeName}>
       <Stack direction="row" gap={1}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (

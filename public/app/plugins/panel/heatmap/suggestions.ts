@@ -3,7 +3,7 @@ import {
   FieldType,
   PanelDataSummary,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
@@ -43,7 +43,7 @@ function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionS
   return VisualizationSuggestionScore.OK;
 }
 
-export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
   dataSummary: PanelDataSummary
 ) => {
   if (

@@ -20,6 +20,8 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */
   skipDataQuery?: boolean;
+  /** Indicates that the panel implements suggestions */
+  suggestions?: boolean;
   /** Indicates that panel should not be available in visualisation picker */
   hideFromList?: boolean;
   /** Sort order */
