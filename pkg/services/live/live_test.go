@@ -11,15 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 
-	"github.com/centrifugal/centrifuge"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -347,10 +345,8 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
-		db.InitTestDB(t),
 		nil,
 		&usagestats.UsageStatsMock{T: t},
-		nil,
 		featuremgmt.WithFeatures(),
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&dashboards.FakeDashboardService{},

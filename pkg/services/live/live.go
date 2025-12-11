@@ -28,9 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -43,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
@@ -57,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -80,8 +76,8 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore pluginstore.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
+	dataSourceCache datasources.CacheService, secretsService secrets.Service,
+	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 	orgService org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
@@ -93,9 +89,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pluginClient:          pluginClient,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
-		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
-		queryDataService:      queryDataService,
 		channels:              make(map[string]model.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]model.ChannelHandlerFactory),
@@ -186,14 +180,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	dash := &features.DashboardHandler{
 		Publisher:        g.Publish,
 		ClientCount:      g.ClientCount,
-		Store:            sqlStore,
 		DashboardService: dashboardService,
 		AccessControl:    accessControl,
 	}
-	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
 	// Testing watch with just the provisioning support -- this will be removed when it is well validated
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -475,11 +466,9 @@ type GrafanaLive struct {
 	RouteRegister         routing.RouteRegister
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
-	SQLStore              db.DB
 	SecretsService        secrets.Service
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
-	queryDataService      query.Service
 	orgService            org.Service
 
 	keyPrefix string
@@ -505,7 +494,6 @@ type GrafanaLive struct {
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
-	storage          *database.Storage
 
 	usageStatsService usagestats.Service
 	usageStats        usageStats
@@ -694,31 +682,8 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 		return centrifuge.RPCReply{}, centrifuge.ErrorExpired
 	}
 
-	var req dtos.MetricRequest
-	err := json.Unmarshal(e.Data, &req)
-	if err != nil {
-		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
-	}
-	resp, err := g.queryDataService.QueryData(clientContextWithSpan, user, false, req)
-	if err != nil {
-		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
-		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
-			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
-		}
-		var gfErr errutil.Error
-		if errors.As(err, &gfErr) && gfErr.Reason.Status() == errutil.StatusBadRequest {
-			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
-		}
-		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
-	}
-	data, err := jsonStd.Marshal(resp)
-	if err != nil {
-		logger.Error("Error marshaling query response", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
-		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
-	}
-	return centrifuge.RPCReply{
-		Data: data,
-	}, nil
+	// RPC events not available
+	return centrifuge.RPCReply{}, centrifuge.ErrorNotAvailable
 }
 
 func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
