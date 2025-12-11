@@ -77,10 +77,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -170,11 +170,11 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "scheme",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -267,11 +267,11 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "scheme",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -365,12 +365,12 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "sparkline": false,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "scheme",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -464,11 +464,11 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "hue",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -561,11 +561,11 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "hue",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -657,10 +657,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -749,10 +749,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -841,10 +841,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -933,10 +933,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1025,10 +1025,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1117,10 +1117,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1205,10 +1205,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1297,10 +1297,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1389,10 +1389,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1481,10 +1481,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": true,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "auto",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1577,10 +1577,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1665,10 +1665,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1757,10 +1757,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": true,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "auto",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1853,10 +1853,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": true,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "auto",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1949,10 +1949,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": true,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "auto",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -2049,10 +2049,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -2141,10 +2141,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -2233,10 +2233,10 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": false,
                   "rounded": true,
                   "spotlight": true
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -2326,11 +2326,11 @@
                 "effects": {
                   "barGlow": true,
                   "centerGlow": true,
+                  "gradient": true,
                   "rounded": true,
                   "spotlight": true
                 },
                 "glow": "both",
-                "gradient": "auto",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [

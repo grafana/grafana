@@ -397,7 +397,7 @@
   },
   "packages/grafana-prometheus/src/language_provider.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/language_utils.ts": {
@@ -784,11 +784,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 13
-    }
-  },
-  "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {

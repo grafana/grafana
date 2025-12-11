@@ -864,10 +864,10 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
+                  "gradient": false,
                   "rounded": false,
                   "spotlight": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
