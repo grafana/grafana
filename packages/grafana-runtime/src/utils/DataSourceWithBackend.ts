@@ -209,11 +209,6 @@ class DataSourceWithBackend<
 
     let url = '/api/ds/query?ds_type=' + this.type;
 
-    // Use the new query service for explore
-    if (config.featureToggles.queryServiceFromExplore && request.app === CoreApp.Explore) {
-      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
-    }
-
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
       url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
