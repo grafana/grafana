@@ -15,6 +15,8 @@ export function RecentlyViewedDashboards() {
   // state
   const [recentDashboards, setRecentDashboards] = useState<DashboardQueryResult[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // hook
   const styles = useStyles2(getStyles);
 
   const getRecentlyViewedDashboardsList = async () => {
@@ -42,7 +44,7 @@ export function RecentlyViewedDashboards() {
     <CollapsableSection
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
-        <Text variant="h4" element="h3">
+        <Text variant="h5" element="h3">
           {t('browse-dashboards.recently-viewed.title', 'Recently Viewed')}
         </Text>
       }
@@ -76,8 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     title: css({
-      background: `linear-gradient(90deg, ${accent} 0%, #d961ebff 100%)`,
-      WebkitBackgroundClip: 'text',
+      background: `linear-gradient(90deg, ${accent} 0%, #e478eaff 100%)`,
       WebkitTextFillColor: 'transparent',
       backgroundClip: 'text',
       color: 'transparent',
