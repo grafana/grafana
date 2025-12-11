@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -243,7 +242,7 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
@@ -255,7 +254,7 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
@@ -278,7 +277,7 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
@@ -290,7 +289,7 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
@@ -313,7 +312,7 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
@@ -324,7 +323,7 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})

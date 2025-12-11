@@ -378,14 +378,14 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			UserID: strconv.FormatInt(id, 10),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx = identity.WithRequester(newCtx, user)
 		r := ctx.Req.WithContext(newCtx)
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
 	g.pushWebsocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
+		newCtx := identity.WithRequester(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextStreamID(newCtx, web.Params(ctx.Req)[":streamId"])
 		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
@@ -393,7 +393,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.pushPipelineWebsocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
+		newCtx := identity.WithRequester(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextChannelID(newCtx, web.Params(ctx.Req)["*"])
 		r := ctx.Req.WithContext(newCtx)
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
@@ -670,8 +670,8 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 	if e.Method != "grafana.query" {
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
-	user, ok := livecontext.GetContextSignedUser(clientContextWithSpan)
-	if !ok {
+	user, err := identity.GetRequester(clientContextWithSpan)
+	if err != nil {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "method", e.Method)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}
@@ -688,8 +688,8 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
-	user, ok := livecontext.GetContextSignedUser(clientContextWithSpan)
-	if !ok {
+	user, err := identity.GetRequester(clientContextWithSpan)
+	if err != nil {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
@@ -794,8 +794,8 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
-	user, ok := livecontext.GetContextSignedUser(clientCtxWithSpan)
-	if !ok {
+	user, err := identity.GetRequester(clientCtxWithSpan)
+	if err != nil {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
