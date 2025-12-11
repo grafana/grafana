@@ -640,6 +640,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           };
         }
 
+        ds =
+          (typeof v.datasource === 'string' ? getDataSourceSrv().getInstanceSettings(v.datasource) : v.datasource) ||
+          getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const qv: QueryVariableKind = {
           kind: 'QueryVariable',
           spec: {
@@ -660,10 +665,10 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
-              group: v.datasource?.type ?? getDefaultDatasourceType(),
-              ...(v.datasource?.uid && {
+              group: dsType,
+              ...(ds.uid && {
                 datasource: {
-                  name: v.datasource.uid,
+                  name: ds.uid,
                 },
               }),
               spec: query,
@@ -720,7 +725,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(cv);
         break;
       case 'adhoc':
-        ds = v.datasource || getDefaultDatasource();
+        ds =
+          (typeof v.datasource === 'string' ? getDataSourceSrv().getInstanceSettings(v.datasource) : v.datasource) ||
+          getDefaultDatasource();
         dsType = ds.type ?? getDefaultDatasourceType();
 
         const av: AdhocVariableKind = {
@@ -796,7 +803,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(tx);
         break;
       case 'groupby':
-        ds = v.datasource || getDefaultDatasource();
+        ds =
+          (typeof v.datasource === 'string' ? getDataSourceSrv().getInstanceSettings(v.datasource) : v.datasource) ||
+          getDefaultDatasource();
         dsType = ds.type ?? getDefaultDatasourceType();
 
         const gb: GroupByVariableKind = {
