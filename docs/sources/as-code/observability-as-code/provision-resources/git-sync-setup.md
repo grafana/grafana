@@ -35,16 +35,16 @@ This guide shows you how to set up Git Sync to synchronize your Grafana dashboar
 
 Before you begin, ensure you have the following:
 
--  A Grafana instance (Cloud, OSS, or Enterprise)
-  - If you're using webhooks or image rendering, a public instance with external access 
+- A Grafana instance (Cloud, OSS, or Enterprise).
+- If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
 - Administration rights in your Grafana organization
-- A GitHub private access token
+- A [GitHub private access token](#create-a-github-access-token)
 - A GitHub repository to store your dashboards in
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
 ### Known limitations
 
-Refer to [Known limitations](/docs/grafana/latest/observability-as-code/provision-resources/intro-git-sync#known-limitations) before using Git Sync. 
+Refer to [Known limitations](/docs/grafana/latest/observability-as-code/provision-resources/intro-git-sync#known-limitations) before using Git Sync.
 
 Refer to [Supported resources](/docs/grafana/latest/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
 
@@ -52,9 +52,9 @@ Refer to [Supported resources](/docs/grafana/latest/observability-as-code/provis
 
 When Git Sync is enabled, the database load might increase, especially for instances with many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
-Git Sync is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
+Git Sync is under continuous development. [Report any issues](https://grafana.com/help/) you encounter to help us improve Git Sync.
 
-## Set up Git Sync 
+## Set up Git Sync
 
 To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
@@ -65,7 +65,7 @@ To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
 After setup, you can [verify your dashboards](#verify-your-dashboards-in-grafana).
 
-Optionally, you can also [extend Git Sync with webhooks and image rendering](#extend-git-sync-with-webhooks-and-image-rendering).
+Optionally, you can also [extend Git Sync with webhooks and image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering).
 
 {{< admonition type="note" >}}
 
@@ -110,7 +110,7 @@ To create a GitHub access token:
 
 GitHub Apps aren't currently supported.
 
-## Set up Git Sync using Grafana UI 
+## Set up Git Sync using Grafana UI
 
 1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github)
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
@@ -308,7 +308,7 @@ To verify that your dashboards are available at the location that you specified,
 
 Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
 
-## Extend Git Sync with webhooks and image rendering
+## Extend Git Sync for real-time notification and image rendering
 
 Optionally, you can extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
 
@@ -370,5 +370,3 @@ To learn more about using Git Sync:
 - [Manage provisioned repositories with Git Sync](/docs/grafana/latest/observability-as-code/provision-resources/use-git-sync/)
 - [Export resources](/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/)
 - [grafanactl documentation](https://grafana.github.io/grafanactl/)
-
-
