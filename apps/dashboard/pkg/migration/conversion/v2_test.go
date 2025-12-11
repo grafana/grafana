@@ -39,7 +39,7 @@ func TestV2alpha1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2alpha1_to_V1beta1(source, target, nil, dsProvider)
+		err := Convert_V2alpha1_to_V1beta1(source, target, nil)
 
 		// Convert_V2alpha1_to_V1beta1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V2alpha1_to_V1beta1 doesn't return error")

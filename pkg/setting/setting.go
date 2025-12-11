@@ -1330,7 +1330,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	shortLinks := iniFile.Section("short_links")
-	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(-1)
 
 	if cfg.ShortLinkExpiration > 365 {
 		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")

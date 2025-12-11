@@ -140,11 +140,30 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 }
 
 func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
-	// Use transaction if available in context.
+	var tx *sql.Tx
+	// After this function runs, the `tx` variable will only be set if
+	// this function was called in the context of a transaction set up by a
+	// caller upstream. In that case, we reuse the transaction.
+	_ = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		coreTx, err := sess.Tx()
+		if err != nil {
+			return nil
+		}
+
+		tx = coreTx.Tx
+		return nil
+	})
+
+	// Use transaction from unified storage if available in the context.
 	// This allows us to run migrations in a transaction which is specifically required for SQLite.
-	if tx := resource.TransactionFromContext(ctx); tx != nil {
+	if tx == nil {
+		tx = resource.TransactionFromContext(ctx)
+	}
+
+	if tx != nil {
 		return tx.QueryContext(ctx, query, args...)
 	}
+
 	return helper.DB.GetSqlxSession().Query(ctx, query, args...)
 }
 

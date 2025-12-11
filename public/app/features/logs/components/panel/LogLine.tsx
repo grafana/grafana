@@ -334,14 +334,14 @@ const Log = memo(
       <>
         {showTime && (
           <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}{' '}
           </span>
         )}
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {(log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -395,7 +395,7 @@ const DisplayedFields = ({
     if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
         <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
+          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
         </span>
       );
     }
@@ -410,7 +410,7 @@ const DisplayedFields = ({
           />
         ) : (
           log.getDisplayedFieldValue(field)
-        )}
+        )}{' '}
       </span>
     );
   });
@@ -434,7 +434,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   if (log.hasAnsi) {
     return (
       <span className="field no-highlighting">
-        <LogMessageAnsi value={log.body} highlight={highlight} />
+        <LogMessageAnsi value={log.body} highlight={highlight} />{' '}
       </span>
     );
   }
@@ -448,13 +448,13 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body}</span>
+      <span className="field no-highlighting">{log.body} </span>
     );
   }
 
   return (
     <span className="field log-syntax-highlight">
-      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />
+      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
 };

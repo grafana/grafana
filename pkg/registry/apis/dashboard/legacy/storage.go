@@ -132,8 +132,17 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 			} else {
 				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
-				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+				sql, err := a.sql(ctx)
 				if err != nil {
+					return 0, err
+				}
+
+				var after *dashboard.Dashboard
+				if err := sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+					var err error
+					after, _, err = a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+					return err
+				}); err != nil {
 					return 0, err
 				}
 				if after != nil {

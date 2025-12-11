@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -66,7 +65,6 @@ const (
 type resourceVersionManager struct {
 	dialect    sqltemplate.Dialect
 	db         db.DB
-	tracer     trace.Tracer
 	batchMu    sync.RWMutex
 	batchChMap map[string]chan *writeOp
 
@@ -98,7 +96,6 @@ type ResourceManagerOptions struct {
 	DB               db.DB               // The database to use
 	MaxBatchSize     int                 // The maximum number of operations to batch together
 	MaxBatchWaitTime time.Duration       // The maximum time to wait for a batch to be ready
-	Tracer           trace.Tracer        // The tracer to use for tracing
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -109,9 +106,6 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 	if opts.MaxBatchWaitTime == 0 {
 		opts.MaxBatchWaitTime = defaultMaxBatchWaitTime
 	}
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("resource-version-manager")
-	}
 	if opts.Dialect == nil {
 		return nil, errors.New("dialect is required")
 	}
@@ -121,7 +115,6 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 	return &resourceVersionManager{
 		dialect:          opts.Dialect,
 		db:               opts.DB,
-		tracer:           opts.Tracer,
 		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
@@ -143,7 +136,7 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.ExecWithRV")
+	ctx, span := tracer.Start(ctx, "sql.resourceVersionManager.ExecWithRV")
 	defer span.End()
 
 	span.SetAttributes(
@@ -223,7 +216,7 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 }
 
 func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
-	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.execBatch")
+	ctx, span := tracer.Start(ctx, "sql.resourceVersionManager.execBatch")
 	defer span.End()
 
 	// Add batch size attribute

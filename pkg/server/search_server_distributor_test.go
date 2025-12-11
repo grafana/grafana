@@ -389,7 +389,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		DB:             nil,

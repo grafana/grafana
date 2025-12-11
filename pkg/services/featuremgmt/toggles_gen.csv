@@ -56,6 +56,7 @@ kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
+kubernetesUnifiedStorageQuotas,experimental,@grafana/search-and-storage,false,true,false
 kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -273,3 +274,4 @@ lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
+multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
