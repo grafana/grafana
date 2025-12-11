@@ -66,22 +66,3 @@ type ChannelHandlerFactory interface {
 	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
-
-type LiveMessage struct {
-	ID        int64 `xorm:"pk autoincr 'id'"`
-	OrgID     int64 `xorm:"org_id"`
-	Channel   string
-	Data      json.RawMessage
-	Published time.Time
-}
-
-type SaveLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-	Data    json.RawMessage
-}
-
-type GetLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-}
