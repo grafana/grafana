@@ -187,7 +187,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         path: 'rowsFrame.layout',
         name: t('heatmap.name-tick-alignment', 'Tick alignment'),
         defaultValue: defaultOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
-        category: [t('heatmap.category-y-axis', 'Y Axis')],
+        category,
         settings: {
           options: [
             { label: t('heatmap.tick-alignment-options.label-auto', 'Auto'), value: HeatmapCellLayout.auto },
