@@ -98,7 +98,7 @@ Before configuring the Azure Monitor data source, ensure you have the following:
   - Azure AD authentication configured for Grafana login (for Current User authentication)
 
 - **Azure RBAC permissions:** The identity used to authenticate must have the `Reader` role on the Azure subscription containing the resources you want to monitor.
-  For Log Analytics queries, the identity also needs appropriate permissions on the Log Analytics workspace.
+  For Log Analytics queries, the identity also needs appropriate permissions on the Log Analytics workspaces to be queried.
   Refer to the [Azure documentation for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current).
 
 {{< admonition type="note" >}}
