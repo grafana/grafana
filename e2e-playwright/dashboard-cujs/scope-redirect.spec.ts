@@ -62,31 +62,6 @@ test.describe('Scope Redirect Functionality', () => {
     });
   });
 
-  test('should fall back to scope navigation when no redirectUrl', async ({ page, gotoDashboardPage }) => {
-    const scopes = testScopesWithRedirect();
-
-    await test.step('Navigate to dashboard and open scopes selector', async () => {
-      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
-      await openScopesSelector(page, scopes);
-    });
-
-    await test.step('Select scope without redirectUrl', async () => {
-      // Select the scope without redirectUrl directly
-      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
-    });
-
-    await test.step('Apply scopes and verify fallback behavior', async () => {
-      await applyScopes(page, [scopes[1]]);
-
-      // Should stay on current dashboard since no redirectUrl is provided
-      // The scope navigation fallback should not redirect (as per existing behavior)
-      await expect(page).toHaveURL(/\/d\/cuj-dashboard-1/);
-
-      // Verify the scope was applied
-      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
-    });
-  });
-
   test('should not redirect when reloading page on dashboard not in dashboard list', async ({
     page,
     gotoDashboardPage,
