@@ -79,10 +79,17 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 
 	stateManager := e.createStateManager()
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition().WithSource("backtesting"), &schedule.AlertingResultsFromRuleState{
-		Manager: stateManager,
-		Rule:    rule,
-	})
+	stateMgr := e.createStateManager()
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx,
+		e.evalFactory,
+		user,
+		rule.GetEvalCondition().WithSource("backtesting"),
+		&schedule.AlertingResultsFromRuleState{
+			Manager: stateMgr,
+			Rule:    rule,
+		},
+	)
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
@@ -113,15 +120,17 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, err
 	}
 
-	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
-		if idx >= length {
-			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
-			return nil
+	extraLabels := state.GetRuleExtraLabels(logger, rule, "Backtesting", !e.disableGrafanaFolder, e.featureToggles)
+
+	processFn := func(idx int, currentTime time.Time, results eval.Results) (bool, error) {
+		if idx >= evaluations {
+			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", evaluations)
+			return false, nil
 		}
 		if builder == nil {
 			builder = historian.NewQueryResultBuilder(length * len(results))
 		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
+		states := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
 		for _, s := range states {
 			if !historian.ShouldRecord(s) {
 				continue
