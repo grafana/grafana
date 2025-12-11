@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/conversion"
-
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -121,6 +119,14 @@ func countPanelsV0V1(spec map[string]interface{}) int {
 	return count
 }
 
+// countTargetsFromPanel counts the number of targets/queries in a panel.
+func countTargetsFromPanel(panelMap map[string]interface{}) int {
+	if targets, ok := panelMap["targets"].([]interface{}); ok {
+		return len(targets)
+	}
+	return 0
+}
+
 // countQueriesV0V1 counts data queries in v0alpha1 or v1beta1 dashboard spec
 // Note: Row panels are layout containers and should not have queries.
 // We ignore any queries on row panels themselves, but count queries in their collapsed panels.
@@ -145,9 +151,7 @@ func countQueriesV0V1(spec map[string]interface{}) int {
 
 		// Count queries in regular panels (NOT row panels)
 		if panelType != "row" {
-			if targets, ok := panelMap["targets"].([]interface{}); ok {
-				count += len(targets)
-			}
+			count += countTargetsFromPanel(panelMap)
 		}
 
 		// Count queries in collapsed panels inside row panels
@@ -155,9 +159,7 @@ func countQueriesV0V1(spec map[string]interface{}) int {
 			if collapsedPanels, ok := panelMap["panels"].([]interface{}); ok {
 				for _, cp := range collapsedPanels {
 					if cpMap, ok := cp.(map[string]interface{}); ok {
-						if targets, ok := cpMap["targets"].([]interface{}); ok {
-							count += len(targets)
-						}
+						count += countTargetsFromPanel(cpMap)
 					}
 				}
 			}
@@ -441,78 +443,4 @@ func collectDashboardStats(dashboard interface{}) dashboardStats {
 		return collectStatsV2beta1(d.Spec)
 	}
 	return dashboardStats{}
-}
-
-// withConversionDataLossDetection wraps a conversion function to detect data loss
-func withConversionDataLossDetection(sourceFuncName, targetFuncName string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
-	return func(a, b interface{}, scope conversion.Scope) error {
-		// Collect source statistics
-		var sourceStats dashboardStats
-		switch source := a.(type) {
-		case *dashv0.Dashboard:
-			if source.Spec.Object != nil {
-				sourceStats = collectStatsV0V1(source.Spec.Object)
-			}
-		case *dashv1.Dashboard:
-			if source.Spec.Object != nil {
-				sourceStats = collectStatsV0V1(source.Spec.Object)
-			}
-		case *dashv2alpha1.Dashboard:
-			sourceStats = collectStatsV2alpha1(source.Spec)
-		case *dashv2beta1.Dashboard:
-			sourceStats = collectStatsV2beta1(source.Spec)
-		}
-
-		// Execute the conversion
-		err := conversionFunc(a, b, scope)
-		if err != nil {
-			return err
-		}
-
-		// Collect target statistics
-		var targetStats dashboardStats
-		switch target := b.(type) {
-		case *dashv0.Dashboard:
-			if target.Spec.Object != nil {
-				targetStats = collectStatsV0V1(target.Spec.Object)
-			}
-		case *dashv1.Dashboard:
-			if target.Spec.Object != nil {
-				targetStats = collectStatsV0V1(target.Spec.Object)
-			}
-		case *dashv2alpha1.Dashboard:
-			targetStats = collectStatsV2alpha1(target.Spec)
-		case *dashv2beta1.Dashboard:
-			targetStats = collectStatsV2beta1(target.Spec)
-		}
-
-		// Detect if data was lost
-		if dataLossErr := detectConversionDataLoss(sourceStats, targetStats, sourceFuncName, targetFuncName); dataLossErr != nil {
-			getLogger().Error("Dashboard conversion data loss detected",
-				"sourceFunc", sourceFuncName,
-				"targetFunc", targetFuncName,
-				"sourcePanels", sourceStats.panelCount,
-				"targetPanels", targetStats.panelCount,
-				"sourceQueries", sourceStats.queryCount,
-				"targetQueries", targetStats.queryCount,
-				"sourceAnnotations", sourceStats.annotationCount,
-				"targetAnnotations", targetStats.annotationCount,
-				"sourceLinks", sourceStats.linkCount,
-				"targetLinks", targetStats.linkCount,
-				"error", dataLossErr,
-			)
-			return dataLossErr
-		}
-
-		getLogger().Debug("Dashboard conversion completed without data loss",
-			"sourceFunc", sourceFuncName,
-			"targetFunc", targetFuncName,
-			"panels", targetStats.panelCount,
-			"queries", targetStats.queryCount,
-			"annotations", targetStats.annotationCount,
-			"links", targetStats.linkCount,
-		)
-
-		return nil
-	}
 }
