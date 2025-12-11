@@ -72,7 +72,7 @@ function AnalyzeRuleButtonView({
       label={t('alerting.alert-menu.analyze-rule', 'Analyze rule')}
       icon="ai-sparkle"
       onClick={handleClick}
-      data-testid="analyze-rule-menu-item"
+      data-testid="alerting/analyze-rule-menu-item"
     />
   );
 }
