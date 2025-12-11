@@ -1,6 +1,9 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import impressionSrv from 'app/core/services/impression_srv';
 import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
@@ -59,4 +62,25 @@ export function canSelectItems(permissions: BrowseDashboardsPermissions) {
   const canSelectFolders = canEditFolders || canDeleteFolders;
   const canSelectDashboards = canEditDashboards || canDeleteDashboards;
   return Boolean(canSelectFolders || canSelectDashboards);
+}
+
+/**
+ * Returns dashboard search results ordered the same way the user opened them.
+ */
+export async function getRecentlyViewedDashboards(maxItems = 5): Promise<DashboardQueryResult[]> {
+  const recentlyOpened = (await impressionSrv.getDashboardOpened()).slice(0, maxItems);
+
+  if (recentlyOpened.length === 0) {
+    return [];
+  }
+
+  const searchResults = await getGrafanaSearcher().search({
+    kind: ['dashboard'],
+    limit: recentlyOpened.length,
+    uid: recentlyOpened,
+  });
+
+  const dashboards = searchResults.view.toArray();
+  dashboards.sort((a, b) => recentlyOpened.indexOf(a.uid) - recentlyOpened.indexOf(b.uid));
+  return dashboards;
 }

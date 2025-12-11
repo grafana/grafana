@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import impressionSrv from 'app/core/services/impression_srv';
+import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/components/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { CommandPaletteAction } from '../types';
@@ -20,20 +20,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return [];
   }
 
-  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
-  const resultsDataFrame = await getGrafanaSearcher().search({
-    kind: ['dashboard'],
-    limit: MAX_RECENT_DASHBOARDS,
-    uid: recentUids,
-  });
-
-  // Search results are alphabetical, so reorder them according to recently viewed
-  const recentResults = resultsDataFrame.view.toArray();
-  recentResults.sort((resultA, resultB) => {
-    const orderA = recentUids.indexOf(resultA.uid);
-    const orderB = recentUids.indexOf(resultB.uid);
-    return orderA - orderB;
-  });
+  const recentResults = await getRecentlyViewedDashboards(MAX_RECENT_DASHBOARDS);
 
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
     const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure

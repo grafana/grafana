@@ -27,6 +27,7 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
@@ -177,6 +178,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       }
     >
       <Page.Contents className={styles.pageContents}>
+        {/* only show recently viewed dashboards when in root */}
+        {!folderUID && <RecentlyViewedDashboards />}
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
           <FilterInput
