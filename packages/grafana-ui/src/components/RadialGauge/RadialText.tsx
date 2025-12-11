@@ -92,9 +92,8 @@ export function RadialText({
   const valueHeight = valueFontSize * lineHeight;
   const nameHeight = nameFontSize * lineHeight;
 
-  const valueY = showName ? centerY - nameHeight / 2 : centerY;
-  const valueNameSpacing = valueHeight / 3.5;
-  const nameY = showValue ? valueY + valueHeight / 2 + valueNameSpacing : centerY;
+  const valueY = showName ? centerY - nameHeight * 0.3 : centerY;
+  const nameY = showValue ? valueY + valueHeight * 0.7 : centerY;
   const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 

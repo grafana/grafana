@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { FieldDisplay, GrafanaTheme2, FieldConfig } from '@grafana/data';
@@ -20,8 +19,8 @@ interface RadialSparklineProps {
 export function RadialSparkline({ sparkline, dimensions, theme, color, shape, textMode }: RadialSparklineProps) {
   const { radius, barWidth } = dimensions;
 
-  const showName = textMode === 'name' || textMode === 'value_and_name';
-  const height = showName ? radius / 4 : radius / 3;
+  const showNameAndValue = textMode === 'value_and_name';
+  const height = showNameAndValue ? radius / 4 : radius / 3;
   const widthFactor = shape === 'gauge' ? 1.6 : 1.4;
   const width = radius * widthFactor - barWidth;
   const topPos = useMemo(() => {
@@ -31,17 +30,12 @@ export function RadialSparkline({ sparkline, dimensions, theme, color, shape, te
     if (shape === 'gauge') {
       return `${dimensions.gaugeBottomY - height}px`;
     }
-    return `calc(50% + ${radius / 3.3}px)`;
-  }, [sparkline, dimensions.gaugeBottomY, height, radius, shape]);
+    return `calc(50% + ${radius / (showNameAndValue ? 3.3 : 4)}px)`;
+  }, [sparkline, shape, radius, dimensions.gaugeBottomY, height, showNameAndValue]);
 
   if (!sparkline) {
     return null;
   }
-
-  const styles = css({
-    position: 'absolute',
-    top: topPos,
-  });
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: {
@@ -56,7 +50,12 @@ export function RadialSparkline({ sparkline, dimensions, theme, color, shape, te
   };
 
   return (
-    <div className={styles}>
+    <div
+      style={{
+        position: 'absolute',
+        top: topPos,
+      }}
+    >
       <Sparkline height={height} width={width} sparkline={sparkline} theme={theme} config={config} />
     </div>
   );
