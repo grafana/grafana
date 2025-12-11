@@ -168,4 +168,3 @@ func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
 
 	return pluginsLoader.New(cfg, d, b, v, i, t, et)
 }
-
