@@ -488,7 +488,7 @@ func withConversionDataLossDetection(sourceFuncName, targetFuncName string, conv
 
 		// Detect if data was lost
 		if dataLossErr := detectConversionDataLoss(sourceStats, targetStats, sourceFuncName, targetFuncName); dataLossErr != nil {
-			logger.Error("Dashboard conversion data loss detected",
+			getLogger().Error("Dashboard conversion data loss detected",
 				"sourceFunc", sourceFuncName,
 				"targetFunc", targetFuncName,
 				"sourcePanels", sourceStats.panelCount,
@@ -504,7 +504,7 @@ func withConversionDataLossDetection(sourceFuncName, targetFuncName string, conv
 			return dataLossErr
 		}
 
-		logger.Debug("Dashboard conversion completed without data loss",
+		getLogger().Debug("Dashboard conversion completed without data loss",
 			"sourceFunc", sourceFuncName,
 			"targetFunc", targetFuncName,
 			"panels", targetStats.panelCount,
