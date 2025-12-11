@@ -35,7 +35,8 @@ type NewKVFunc func(ctx context.Context) resource.KV
 
 // KVTestOptions configures which tests to run
 type KVTestOptions struct {
-	NSPrefix string // namespace prefix for isolation
+	SkipTests map[string]bool
+	NSPrefix  string // namespace prefix for isolation
 }
 
 // GenerateRandomKVPrefix creates a random namespace prefix for test isolation
@@ -72,6 +73,11 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 	}
 
 	for _, tc := range cases {
+		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
+			t.Logf("Skipping test: %s", tc.name)
+			continue
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			tc.fn(t, newKV(context.Background()), opts.NSPrefix)
 		})
