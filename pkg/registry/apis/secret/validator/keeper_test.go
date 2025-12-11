@@ -22,6 +22,7 @@ func TestValidateKeeper(t *testing.T) {
 				ObjectMeta: objectMeta,
 				Spec: secretv1beta1.KeeperSpec{
 					Aws: &secretv1beta1.KeeperAWSConfig{
+						Region: "us-east-1",
 						AccessKey: &secretv1beta1.KeeperAWSAccessKey{
 							AccessKeyID:     secretv1beta1.KeeperCredentialValue{ValueFromEnv: "some-value"},
 							SecretAccessKey: secretv1beta1.KeeperCredentialValue{ValueFromEnv: "some-value"},
@@ -43,6 +44,7 @@ func TestValidateKeeper(t *testing.T) {
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
+					Region: "us-east-1",
 					AccessKey: &secretv1beta1.KeeperAWSAccessKey{
 						AccessKeyID: secretv1beta1.KeeperCredentialValue{
 							ValueFromEnv: "some-value",
@@ -63,7 +65,7 @@ func TestValidateKeeper(t *testing.T) {
 
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
-				require.Equal(t, "spec.aws.accessKeyID", errs[0].Field)
+				require.Equal(t, "spec.aws.accessKey.accessKeyID", errs[0].Field)
 			})
 
 			t.Run("at most one of the credential value must be present", func(t *testing.T) {
@@ -76,7 +78,7 @@ func TestValidateKeeper(t *testing.T) {
 
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
-				require.Equal(t, "spec.aws.accessKeyID", errs[0].Field)
+				require.Equal(t, "spec.aws.accessKey.accessKeyID", errs[0].Field)
 			})
 		})
 
@@ -87,7 +89,7 @@ func TestValidateKeeper(t *testing.T) {
 
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
-				require.Equal(t, "spec.aws.secretAccessKey", errs[0].Field)
+				require.Equal(t, "spec.aws.accessKey.secretAccessKey", errs[0].Field)
 			})
 
 			t.Run("at most one of the credential value must be present", func(t *testing.T) {
@@ -100,7 +102,7 @@ func TestValidateKeeper(t *testing.T) {
 
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
-				require.Equal(t, "spec.aws.secretAccessKey", errs[0].Field)
+				require.Equal(t, "spec.aws.accessKey.secretAccessKey", errs[0].Field)
 			})
 		})
 	})
