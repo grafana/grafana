@@ -219,7 +219,7 @@ These errors are specific to Azure Resource Graph (ARG) queries.
 1. Validate query syntax in Azure Portal Resource Graph Explorer.
 2. Check that you have access to the subscriptions being queried.
 3. Verify table names are correct (e.g., `Resources`, `ResourceContainers`).
-4. Some ARG features require specific permissions—check [ARG documentation](https://docs.microsoft.com/en-us/azure/governance/resource-graph/).
+4. Some ARG features require specific permissions, check [ARG documentation](https://docs.microsoft.com/en-us/azure/governance/resource-graph/).
 
 ### Query returns incomplete results
 
