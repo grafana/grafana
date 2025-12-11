@@ -43,6 +43,11 @@ export const LogsTableActionButtons = memo((props: Props) => {
     return logRowById?.raw ?? '';
   };
 
+  const lineValue = getLineValue();
+
+  // Check if line value is available
+  const isLineValueAvailable = lineValue !== undefined && lineValue !== null && lineValue !== '';
+
   const styles = getStyles(theme);
 
   // Generate link to the log line
@@ -94,7 +99,9 @@ export const LogsTableActionButtons = memo((props: Props) => {
   }, [absoluteRange, displayedFields, exploreId, logId, logRows, rowIndex, panelState]);
 
   const handleViewClick = () => {
-    setIsInspecting(true);
+    if (isLineValueAvailable) {
+      setIsInspecting(true);
+    }
   };
 
   return (
@@ -110,6 +117,7 @@ export const LogsTableActionButtons = memo((props: Props) => {
           name="eye"
           onClick={handleViewClick}
           tabIndex={0}
+          disabled={!isLineValueAvailable}
         />
         <ClipboardButton
           className={styles.icon}
@@ -122,6 +130,7 @@ export const LogsTableActionButtons = memo((props: Props) => {
           tabIndex={0}
           aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
           getText={getText}
+          disabled={!isLineValueAvailable}
         />
       </div>
       {isInspecting && (
