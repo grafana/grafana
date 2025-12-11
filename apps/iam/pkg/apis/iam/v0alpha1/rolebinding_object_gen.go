@@ -23,6 +23,12 @@ type RoleBinding struct {
 	Spec RoleBindingSpec `json:"spec" yaml:"spec"`
 }
 
+func NewRoleBinding() *RoleBinding {
+	return &RoleBinding{
+		Spec: *NewRoleBindingSpec(),
+	}
+}
+
 func (o *RoleBinding) GetSpec() any {
 	return o.Spec
 }

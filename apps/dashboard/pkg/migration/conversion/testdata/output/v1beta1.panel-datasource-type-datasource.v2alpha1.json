@@ -201,5 +201,10 @@
     "title": "Panel ds inheritance ",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

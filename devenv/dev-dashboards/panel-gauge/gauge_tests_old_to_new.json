@@ -947,7 +947,6 @@
         },
         "orientation": "auto",
         "shape": "gauge",
-        "gradient": "none",
         "barWidthFactor": 0.5,
         "segmentCount": 70,
         "segmentSpacing": 0.3,
@@ -958,7 +957,8 @@
           "barGlow": false,
           "centerGlow": false,
           "rounded": false,
-          "spotlight": false
+          "spotlight": false,
+          "gradient": false
         }
       }
     },

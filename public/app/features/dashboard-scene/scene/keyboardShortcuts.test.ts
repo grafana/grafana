@@ -269,6 +269,13 @@ describe('setupKeyboardShortcuts', () => {
         expect(tPlusBinding).toBeDefined();
       });
 
+      it('should setup t = zoom in shortcut', () => {
+        setupKeyboardShortcuts(mockScene);
+
+        const tEqualsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't =');
+        expect(tEqualsBinding).toBeDefined();
+      });
+
       it('should setup t - zoom out shortcut with keypress type', () => {
         setupKeyboardShortcuts(mockScene);
 
@@ -302,9 +309,11 @@ describe('setupKeyboardShortcuts', () => {
         setupKeyboardShortcuts(mockScene);
 
         const tPlusBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't +');
+        const tEqualsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't =');
         const tMinusBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't -');
 
         expect(tPlusBinding).toBeUndefined();
+        expect(tEqualsBinding).toBeUndefined();
         expect(tMinusBinding).toBeUndefined();
       });
     });
@@ -347,6 +356,28 @@ describe('setupKeyboardShortcuts', () => {
 
         const tPlusBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't +');
         const handler = tPlusBinding![0].onTrigger;
+
+        handler();
+
+        // Scale 0.5 should result in 3 hour span (half of 6)
+        expect(mockTimeRange.onTimeRangeChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            from: expect.any(Object),
+            to: expect.any(Object),
+            raw: expect.any(Object),
+          })
+        );
+
+        const call = mockTimeRange.onTimeRangeChange.mock.calls[0][0];
+        const newSpan = call.to.valueOf() - call.from.valueOf();
+        expect(newSpan).toBe(3 * 60 * 60 * 1000); // 3 hours in milliseconds
+      });
+
+      it('should zoom in (scale 0.5) when t = is pressed', () => {
+        setupKeyboardShortcuts(mockScene);
+
+        const tEqualsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't =');
+        const handler = tEqualsBinding![0].onTrigger;
 
         handler();
 

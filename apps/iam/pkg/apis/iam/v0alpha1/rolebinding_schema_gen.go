@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaRoleBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &RoleBinding{}, &RoleBindingList{}, resource.WithKind("RoleBinding"),
+	schemaRoleBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewRoleBinding(), &RoleBindingList{}, resource.WithKind("RoleBinding"),
 		resource.WithPlural("rolebindings"), resource.WithScope(resource.NamespacedScope))
 	kindRoleBinding = resource.Kind{
 		Schema: schemaRoleBinding,

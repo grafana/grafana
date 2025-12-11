@@ -428,5 +428,10 @@
     "title": "Transforms - Test extractFields JSON",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }
