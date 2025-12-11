@@ -25,6 +25,13 @@ type LogsDrilldown struct {
 	Status LogsDrilldownStatus `json:"status" yaml:"status"`
 }
 
+func NewLogsDrilldown() *LogsDrilldown {
+	return &LogsDrilldown{
+		Spec:   *NewLogsDrilldownSpec(),
+		Status: *NewLogsDrilldownStatus(),
+	}
+}
+
 func (o *LogsDrilldown) GetSpec() any {
 	return o.Spec
 }
