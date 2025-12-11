@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -181,6 +182,10 @@ func TestIntegrationStars(t *testing.T) {
 			require.NoError(t, err)
 
 			after = typed(t, rspObj, &collections.Stars{})
+
+			// FIXME: when we remove legacy support this should not sort!
+			slices.Sort(after.Spec.Resource[0].Names)
+
 			jj, err := json.MarshalIndent(after.Spec, "", "  ")
 			require.NoError(t, err)
 			require.JSONEq(t, `{
@@ -189,9 +194,9 @@ func TestIntegrationStars(t *testing.T) {
 							"group": "dashboard.grafana.app",
 							"kind": "Dashboard",
 							"names": [
-								"test-2",
 								"aaa",
-								"bbb"
+								"bbb",
+								"test-2"
 							]
 						}
 					]
