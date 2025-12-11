@@ -83,6 +83,12 @@ tree:
             nodeType: leaf
             linkId: test-case-2
             linkType: scope
+          test-case-redirect:
+            title: Test case with redirect
+            nodeType: leaf
+            linkId: shoe-org
+            linkType: scope
+            redirectPath: /d/dcb9f5e9-8066-4397-889e-864b99555dbb #Reliability dashboard
       clusters:
         title: Clusters
         nodeType: container

@@ -8,6 +8,7 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
+    useScopesNavigationEndpoint: true,
   },
 });
 
@@ -169,6 +170,49 @@ test.describe('Scope Redirect Functionality', () => {
 
       // Verify the scope is no longer in the URL
       await expect(page).not.toHaveURL(/scopes=/);
+    });
+  });
+
+  test('should not redirect to redirectPath when on active scope navigation', async ({ page, gotoDashboardPage }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Set up scope navigation to dashboard-1', async () => {
+      // First, apply a scope that creates scope navigation to dashboard-1 (without redirectPath)
+      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-setup', scopes[2]);
+      await applyScopes(page, [scopes[2]]);
+
+      // Verify we're on dashboard-1 with the scope applied
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-1/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-setup/);
+    });
+
+    await test.step('Navigate to dashboard-1 to be on active scope navigation', async () => {
+      // Navigate to dashboard-1 which is now a scope navigation target
+      await gotoDashboardPage({
+        uid: 'cuj-dashboard-1',
+        queryParams: new URLSearchParams({ scopes: 'scope-sn-redirect-setup' }),
+      });
+
+      // Verify we're on dashboard-1
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-1/);
+    });
+
+    await test.step('Apply scope with redirectPath and verify no redirect', async () => {
+      // Now apply a different scope that has redirectPath
+      // Since we're on an active scope navigation, it should NOT redirect
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-with-navigation', scopes[3]);
+      await applyScopes(page, [scopes[3]]);
+
+      // Verify the new scope was applied
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-with-navigation/);
+
+      // Since we're already on the active scope navigation (dashboard-1),
+      // we should NOT redirect to redirectPath (dashboard-3)
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-1/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-3/);
     });
   });
 });
