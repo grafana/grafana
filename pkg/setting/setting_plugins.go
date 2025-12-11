@@ -102,7 +102,7 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 		if len(parts) > 1 {
 			version = parts[1]
 			if len(parts) > 2 {
-				url = parts[2]
+				url = strings.Join(parts[2:], "@")
 			}
 		}
 

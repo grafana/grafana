@@ -85,7 +85,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"orgs":                "orgs:id:",
 		"plugins":             "plugins:id:",
 		"plugins.plugins":     "plugins.plugins:uid:",
-		"plugins.pluginsmeta": "plugins.pluginsmeta:uid:",
+		"plugins.metas":       "plugins.metas:uid:",
 		"provisioners":        "provisioners:",
 		"reports":             "reports:id:",
 		"permissions":         "permissions:type:",
