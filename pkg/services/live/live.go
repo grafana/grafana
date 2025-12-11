@@ -73,27 +73,23 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore pluginstore.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, secretsService secrets.Service,
+	pluginStore pluginstore.Store, pluginClient plugins.Client, _ *localcache.CacheService,
+	dataSourceCache datasources.CacheService, _ secrets.Service,
 	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
-	orgService org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
+	_ org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
 		PluginContextProvider: plugCtxProvider,
-		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
 		pluginClient:          pluginClient,
-		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
-		SecretsService:        secretsService,
 		channels:              make(map[string]model.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]model.ChannelHandlerFactory),
 		},
 		usageStatsService: usageStatsService,
-		orgService:        orgService,
 		keyPrefix:         "gf_live",
 	}
 
@@ -183,12 +179,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-
-	// Testing watch with just the provisioning support -- this will be removed when it is well validated
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
-	}
+	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -398,11 +389,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
+	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
 	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
-	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
+	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
@@ -461,13 +452,10 @@ type GrafanaLive struct {
 	PluginContextProvider *plugincontext.Provider
 	Cfg                   *setting.Cfg
 	Features              featuremgmt.FeatureToggles
-	RouteRegister         routing.RouteRegister
-	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SecretsService        secrets.Service
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
-	orgService            org.Service
 
 	keyPrefix string // HA prefix for grafana cloud (since the org is always 1)
 
@@ -1354,71 +1342,6 @@ func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contextmodel.ReqContext) res
 	return response.JSON(http.StatusOK, util.DynMap{
 		"writeConfig": pipeline.WriteConfigToDto(result),
 	})
-}
-
-// HandleWriteConfigsPutHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contextmodel.ReqContext) response.Response {
-	body, err := io.ReadAll(c.Req.Body)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reading body", err)
-	}
-	var cmd pipeline.WriteConfigUpdateCmd
-	err = json.Unmarshal(body, &cmd)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Error decoding write config update command", err)
-	}
-	if cmd.UID == "" {
-		return response.Error(http.StatusBadRequest, "UID required", nil)
-	}
-	existingBackend, ok, err := g.pipelineStorage.GetWriteConfig(c.Req.Context(), c.GetOrgID(), pipeline.WriteConfigGetCmd{
-		UID: cmd.UID,
-	})
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get write config", err)
-	}
-	if ok {
-		if cmd.SecureSettings == nil {
-			cmd.SecureSettings = map[string]string{}
-		}
-		secureJSONData, err := g.SecretsService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings)
-		if err != nil {
-			logger.Error("Error decrypting secure settings", "error", err)
-			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)
-		}
-		for k, v := range secureJSONData {
-			if _, ok := cmd.SecureSettings[k]; !ok {
-				cmd.SecureSettings[k] = v
-			}
-		}
-	}
-	result, err := g.pipelineStorage.UpdateWriteConfig(c.Req.Context(), c.GetOrgID(), cmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update write config", err)
-	}
-	return response.JSON(http.StatusOK, util.DynMap{
-		"writeConfig": pipeline.WriteConfigToDto(result),
-	})
-}
-
-// HandleWriteConfigsDeleteHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contextmodel.ReqContext) response.Response {
-	body, err := io.ReadAll(c.Req.Body)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reading body", err)
-	}
-	var cmd pipeline.WriteConfigDeleteCmd
-	err = json.Unmarshal(body, &cmd)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Error decoding write config delete command", err)
-	}
-	if cmd.UID == "" {
-		return response.Error(http.StatusBadRequest, "UID required", nil)
-	}
-	err = g.pipelineStorage.DeleteWriteConfig(c.Req.Context(), c.GetOrgID(), cmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to delete write config", err)
-	}
-	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // Write to the standard log15 logger
