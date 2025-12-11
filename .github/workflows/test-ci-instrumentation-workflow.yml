@@ -43,7 +43,10 @@ jobs:
 
       - name: Start Go Cache Plugin
         run: |
-          ./atool serve --plugin 5930 --http=localhost:5970 --modproxy --cache-dir=/tmp/gocache --local --cache-dir=/tmp/gocachenew --log-file go-cache.log &
+          ./atool serve --plugin 5930 --http=localhost:5970 --modproxy \
+          --cache-dir=/tmp/gocache --local --cache-dir=/tmp/gocachenew --log-file go-cache.log  \
+          --tracing "${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}:${GITHUB_JOB}:Build Grafana" &
+
           echo $! > atool.pid
 
       - name: Build Grafana
