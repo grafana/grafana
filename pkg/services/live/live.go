@@ -15,7 +15,6 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/gobwas/glob"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -659,11 +658,6 @@ func (g *GrafanaLive) HandleDatasourceUpdate(orgID int64, dsUID string) {
 		logger.Error("Error handling datasource update", "error", err)
 	}
 }
-
-// Use a configuration that's compatible with the standard library
-// to minimize the risk of introducing bugs. This will make sure
-// that map keys is ordered.
-var jsonStd = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client *centrifuge.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
 	logger.Debug("Client calls RPC", "user", client.UserID(), "client", client.ID(), "method", e.Method)
