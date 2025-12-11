@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live/model"
@@ -35,7 +34,6 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher        model.ChannelPublisher
 	ClientCount      model.ChannelClientCount
-	Store            db.DB
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 }
