@@ -29,7 +29,7 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
-This guide shows you how to set up Git Sync to synchronize your Grafana dashboards and folders with a GitHub repository. You'll configure Git Sync to enable version-controlled dashboard management.
+This guide shows you how to set up Git Sync to synchronize your Grafana dashboards and folders with a GitHub repository. You'll set up Git Sync to enable version-controlled dashboard management either [using the UI](#set-up-git-sync-using-grafana-ui) or [as code](#set-up-git-sync-as-code).
 
 ## Before you begin
 
@@ -60,8 +60,7 @@ To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
 1. [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time setup)
 1. [Create a GitHub access token](#create-a-github-access-token)
-1. [Set up Git Sync using the UI](#set-up-git-sync-using-grafana-ui) or [configure Git Sync as code](#configure-git-sync-as-code)
-1. [Choose additional settings](#choose-additional-settings)
+1. Set up Git Sync [using the UI](#set-up-git-sync-using-grafana-ui) or [as code](#set-up-git-sync-as-code)
 
 After setup, you can [verify your dashboards](#verify-your-dashboards-in-grafana).
 
@@ -114,6 +113,7 @@ GitHub Apps aren't currently supported.
 
 1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github)
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
+1. [Choose additional settings](#choose-additional-settings)
 
 ### Set up the connection to GitHub
 
@@ -144,6 +144,27 @@ To set up synchronization:
 - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
 Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
+
+### Choose additional settings
+
+Finally, you can set up how often your configured storage is polled for updates.
+
+To configure additional settings:
+
+1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
+1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
+1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering isn't available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
+1. Select **Finish** to proceed.
+
+### Modify your configuration after setup is complete
+
+To update your repository configuration after you've completed setup:
+
+1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
+1. Select **Administration** in the left-side menu and then **Provisioning**.
+1. Select **Settings** for the repository you wish to modify.
+1. Use the **Configure repository** screen to update any of the settings.
+1. Select **Save** to preserve the updates.
 
 ## Set up Git Sync as code
 
@@ -291,16 +312,7 @@ grafanactl resources get repositories
 # Navigate to: Administration → Provisioning → Git Sync
 ```
 
-## Choose additional settings
 
-Finally, you can set up how often your configured storage is polled for updates.
-
-To configure additional settings:
-
-1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
-1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
-1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering isn't available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
-1. Select **Finish** to proceed.
 
 ## Verify your dashboards in Grafana
 
@@ -350,15 +362,7 @@ Set up image rendering to add visual previews of dashboard updates directly in p
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-## Modify your configuration after setup is complete
 
-To update your repository configuration after you've completed setup:
-
-1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration** in the left-side menu and then **Provisioning**.
-1. Select **Settings** for the repository you wish to modify.
-1. Use the **Configure repository** screen to update any of the settings.
-1. Select **Save** to preserve the updates.
 
 ## Next steps
 
