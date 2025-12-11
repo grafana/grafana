@@ -62,10 +62,10 @@ export const ElasticsearchProvider = ({
   // useStatelessReducer will then call `onChange` with the newly generated query
   useEffect(() => {
     if (shouldRunInit && isUninitialized) {
-      dispatch(initQuery());
+      dispatch(initQuery(datasource.defaultQueryMode));
       setShouldRunInit(false);
     }
-  }, [shouldRunInit, dispatch, isUninitialized]);
+  }, [shouldRunInit, dispatch, isUninitialized, datasource.defaultQueryMode]);
 
   if (isUninitialized) {
     return null;

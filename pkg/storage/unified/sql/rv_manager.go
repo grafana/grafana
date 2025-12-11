@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -240,6 +241,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 	defer cancel()
 
 	guidToRV := make(map[string]int64, len(batch))
+	guidToSnowflakeRV := make(map[string]int64, len(batch))
 	guids := make([]string, len(batch)) // The GUIDs of the created resources in the same order as the batch
 	rvs := make([]int64, len(batch))    // The RVs of the created resources in the same order as the batch
 
@@ -285,6 +287,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
+			guidToSnowflakeRV[guid] = snowflakeFromRv(rv)
 			rvs[i] = rv
 			rv++
 		}
@@ -301,8 +304,9 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		span.AddEvent("resource_versions_updated")
 
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate: sqltemplate.New(m.dialect),
-			GUIDToRV:    guidToRV,
+			SQLTemplate:       sqltemplate.New(m.dialect),
+			GUIDToRV:          guidToRV,
+			GUIDToSnowflakeRV: guidToSnowflakeRV,
 		}); err != nil {
 			span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
 				attribute.String("error", err.Error()),
@@ -338,6 +342,12 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 			batchTraceLink: trace.LinkFromContext(ctx),
 		}
 	}
+}
+
+// takes a unix microsecond rv and transforms into a snowflake format. The timestamp is converted from microsecond to
+// millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
+func snowflakeFromRv(rv int64) int64 {
+	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
 }
 
 // lock locks the resource version for the given key
