@@ -5463,6 +5463,12 @@
         "label": "Edit",
         "tooltip": "Enter edit mode"
       },
+      "edit-button": {
+        "enter": "Edit",
+        "enter-tooltip": "Enter edit mode",
+        "exit": "Exit edit",
+        "exit-tooltip": "Exit edit mode"
+      },
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -5483,14 +5489,6 @@
         "discard-panel-new": "Discard panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit dashboard v2 schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Enter edit mode"
-          },
-          "exit": {
-            "label": "Exit edit mode"
-          }
         },
         "enter-edit-mode": {
           "label": "Make editable",
