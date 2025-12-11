@@ -28,11 +28,12 @@ const (
 )
 
 var (
-	_               resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
-	fieldLogin                                     = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
-	fieldEmail                                     = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
-	fieldLastSeenAt                                = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
-	fieldRole                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
+	_                resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+	fieldLogin                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
+	fieldEmail                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
+	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
+	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
+	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
 )
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
@@ -80,19 +81,10 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Page = 1
 	}
 
-	wildcardsMatcher := regexp.MustCompile(`[\*\?\\]`)
-
 	legacySortOptions := convertToSortOptions(req.SortBy)
-
-	// Unified search `query` has wildcards, but legacy search does not support them.
-	// We have to remove them here to make legacy search work as expected with SQL LIKE queries.
-	if req.Query != "" {
-		req.Query = wildcardsMatcher.ReplaceAllString(req.Query, "")
-	}
 
 	query := &org.SearchOrgUsersQuery{
 		OrgID:    signedInUser.GetOrgID(),
-		Query:    req.Query,
 		Limit:    int(req.Limit),
 		Page:     int(req.Page),
 		SortOpts: legacySortOptions,
@@ -126,8 +118,10 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		query.Query = email
 	}
 
+	// Unified search `query` has wildcards, but legacy search does not support them.
+	// We have to remove them here to make legacy search work as expected with SQL LIKE queries.
 	if req.Query != "" {
-		query.Query = req.Query
+		query.Query = wildcardsMatcher.ReplaceAllString(req.Query, "")
 	}
 
 	fields := req.Fields

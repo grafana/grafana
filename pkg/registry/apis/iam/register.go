@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,7 +78,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	orgService org.Service,
-	tracer trace.Tracer,
 	userService legacyuser.Service,
 	teamService teamservice.Service,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -121,7 +119,7 @@ func RegisterAPIService(
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features, cfg)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
 
 	apiregistration.RegisterAPI(builder)
 
