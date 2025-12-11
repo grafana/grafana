@@ -100,8 +100,10 @@ if (( CHANGES_COUNT > 0 )); then
                     if [ -n "$NPM_AUTH_TOKEN" ]; then
                         # Mask the token so it won't appear in logs
                         echo "::add-mask::$NPM_AUTH_TOKEN"
-                        echo "Configuring npm auth token in ~/.npmrc"
-                        echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" >> ~/.npmrc
+                        echo "Configuring npm auth via NPM_TOKEN env var"
+                        export NPM_TOKEN="$NPM_AUTH_TOKEN"
+                        # Reference the env var in npmrc (single quotes to prevent shell expansion)
+                        echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> ~/.npmrc
                     else
                         echo "Warning: No token in response, dist-tag operation may fail"
                     fi
