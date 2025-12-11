@@ -81,7 +81,9 @@ export const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
 
 export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[], lp: TempoLanguageProvider) => {
   if (Array.isArray(f.value) && f.value.length > 1 && !isRegExpOperator(f.operator!)) {
-    return `(${f.value.map((v) => `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper({ ...f, value: v })}`).join(' || ')})`;
+    // For negative operators (!=), use && instead of ||
+    const joinOperator = f.operator === '!=' ? ' && ' : ' || ';
+    return `(${f.value.map((v) => `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper({ ...f, value: v })}`).join(joinOperator)})`;
   }
 
   return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;

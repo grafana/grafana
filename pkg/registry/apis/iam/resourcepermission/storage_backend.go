@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -59,7 +60,7 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 	}
 }
 
-func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	return []resource.ResourceStats{}, errNotImplemented
 }
 
@@ -95,7 +96,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	}
 
 	pagination := &common.Pagination{
-		Limit:    limit,
+		Limit:    limit + 1, // fetch one more to determine if there is a next page
 		Continue: token.offset,
 	}
 
@@ -234,9 +235,14 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 		return 0, errDatabaseHelper
 	}
 
-	mapper, grn, err := s.splitResourceName(event.Key.Name)
+	grn, err := splitResourceName(event.Key.Name)
 	if err != nil {
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid resource name %q: %v", event.Key.Name, err.Error()))
+	}
+
+	mapper, err := s.getResourceMapper(grn.Group, grn.Resource)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid group/resource in resource name %q: %v", event.Key.Name, err.Error()))
 	}
 
 	if grn.Name == "" {
@@ -289,4 +295,10 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	return rv, err
+}
+
+func (s *ResourcePermSqlBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errNotImplemented)
+	}
 }

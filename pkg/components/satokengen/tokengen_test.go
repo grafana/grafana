@@ -9,15 +9,15 @@ import (
 
 func TestApiKeyValidation(t *testing.T) {
 	result := KeyGenResult{
-		ClientSecret: "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
-		HashedKey:    "26cd2524985150529dc5f32109f544860512b999766e11bc8f3d5711bf0ba6e7020099f9f21538b5df94d577782f7431dd27",
+		ClientSecret: "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
+		HashedKey:    "c59a6e547944ef768df51d1fc8b2a9810bc777a0bd2e5daa9ef8590f300c884e0ab9470c22c6f789414fdb6485b531166ded",
 	}
 
 	keyInfo, err := Decode(result.ClientSecret)
 	require.NoError(t, err)
 	require.Equal(t, "sa", keyInfo.ServiceID)
-	require.Equal(t, "yscW25imSKJIuav8zF37RZmnbiDvB05G", keyInfo.Secret)
-	require.Equal(t, "fcaaf58a", keyInfo.Checksum)
+	require.Equal(t, "iNValIdinValiDinvalidinvalidinva", keyInfo.Secret)
+	require.Equal(t, "5b582697", keyInfo.Checksum)
 
 	hash, err := keyInfo.Hash()
 	require.NoError(t, err)

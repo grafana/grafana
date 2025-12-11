@@ -139,7 +139,6 @@ describe('panelEditor actions', () => {
     it('should not increment configRev when no changes made and leaving panel edit', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
@@ -169,7 +168,6 @@ describe('panelEditor actions', () => {
     it('should apply changes when dashboard was saved from panel edit', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],

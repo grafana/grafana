@@ -3,10 +3,11 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -50,6 +51,7 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
+	connections            DataSourceConnectionProvider
 }
 
 func NewQueryAPIBuilder(
@@ -60,9 +62,12 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
+	connections DataSourceConnectionProvider,
+	concurrentQueryLimit int,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
@@ -77,7 +82,7 @@ func NewQueryAPIBuilder(
 	}
 
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: 4,
+		concurrentQueryLimit: concurrentQueryLimit,
 		log:                  log.New("query_apiserver"),
 		instanceProvider:     instanceProvider,
 		authorizer:           ar,
@@ -86,6 +91,7 @@ func NewQueryAPIBuilder(
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
+		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -127,6 +133,8 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
+	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -135,6 +143,8 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
+		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -144,18 +154,21 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return query.SchemeGroupVersion
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
+		&query.DataSourceConnection{},
+		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
 		&query.QueryTypeDefinitionList{},
+		&query.SQLSchemas{},
 	)
 }
 
-func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
 	addKnownTypes(scheme, query.SchemeGroupVersion)
 	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)
@@ -170,8 +183,18 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	storage := map[string]rest.Storage{}
 
+	// Get a list of all datasource instances
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		// Eventually this would be backed either by search or reconciler pattern
+		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
+			connections: b.connections,
+		}
+	}
+
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		// The plugin registry is still experimental, and not yet accurate
 		// For standard k8s api discovery to work, at least one resource must be registered
@@ -181,6 +204,8 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
+
+	storage["sqlschemas"] = newSQLSchemasREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)

@@ -18,8 +18,6 @@ const meta: Meta<typeof Checkbox> = {
     controls: {
       exclude: ['value', 'htmlValue'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
 };
 
@@ -94,7 +92,7 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
-        <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+        <Checkbox value={false} indeterminate={true} label="Indeterminate" />
         <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
         <Checkbox value={true} invalid={true} label="Invalid and checked" />
       </Stack>

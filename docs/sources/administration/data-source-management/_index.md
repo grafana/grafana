@@ -12,7 +12,7 @@ labels:
     - enterprise
     - cloud
 title: Data source management
-weight: 100
+weight: 500
 ---
 
 # Data source management

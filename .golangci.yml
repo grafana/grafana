@@ -83,7 +83,7 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
-        apps-secret:  
+        apps-secret:
           list-mode: lax
           files:
             - ./apps/secret/*
@@ -105,6 +105,8 @@ linters:
             - '**/pkg/tsdb/graphite/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
+            - '**/pkg/tsdb/opentsdb/*'
+            - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
             - '**/pkg/tsdb/tempo/*'
@@ -179,7 +181,9 @@ linters:
             - pkg: io/ioutil
               desc: 'Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details.'
             - pkg: gopkg.in/yaml.v2
-              desc: Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available
+              desc: use go.yaml.in/yaml/v3 instead
+            - pkg: gopkg.in/yaml.v3
+              desc: use go.yaml.in/yaml/v3 instead
             - pkg: github.com/pkg/errors
               desc: 'Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library.'
             - pkg: github.com/xorcare/pointer

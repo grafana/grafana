@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -123,6 +123,12 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
+    reportInteraction('grafana_provisioning_dashboard_move_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
+
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       if (!currentFileData?.resource?.file) {
@@ -219,6 +225,8 @@ export function MoveProvisionedDashboardForm({
     request: moveRequest,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
     successMessage: t(
       'dashboard-scene.move-provisioned-dashboard-form.success-message',
       'Dashboard moved successfully'

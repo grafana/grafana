@@ -15,4 +15,5 @@ var WireSet = wire.NewSet(
 	ProvideService,
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(builder.APIRegistrar), new(*service)),
+	ProvideClientGenerator,
 )

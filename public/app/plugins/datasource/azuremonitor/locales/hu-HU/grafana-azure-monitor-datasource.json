@@ -13,7 +13,7 @@
       "label-resource-group": "Erőforráscsoport",
       "label-resource-name": "Erőforrásnév",
       "label-resource-number": "Erőforrás {{resourceNum}}",
-      "label-resource-uri": "Erőforrás-URI-k ",
+      "label-resource-uri": "",
       "label-subscription": "Előfizetés",
       "placeholder-resource-name": "név",
       "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",

@@ -164,9 +164,7 @@ export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
 export function getPanelStrings(dashboard: DashboardModel): string[] {
   const panelStrings = dashboard.panels
     .filter(
-      (panel) =>
-        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
-        (panel.description && panel.description.length > 0)
+      (panel) => (panel.title && panel.title !== NEW_PANEL_TITLE) || (panel.description && panel.description.length > 0)
     )
     .map(getPanelString);
 

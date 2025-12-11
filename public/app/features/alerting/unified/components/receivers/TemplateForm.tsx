@@ -26,15 +26,17 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
@@ -100,6 +102,16 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
+  // Check if user has permission to test templates
+  const canTestTemplates =
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
+
+  // Only show preview and payload panels if both conditions are met:
+  // 1. It's a Grafana Alertmanager
+  // 2. User has the test permission
+  const showPreviewAndPayload = isGrafanaAlertManager && canTestTemplates;
+
   const error = updateTemplateError ?? createTemplateError;
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
@@ -118,16 +130,16 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   // splitter for template and payload editor
   const columnSplitter = useSplitter({
     direction: 'column',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
-    initialSize: isGrafanaAlertManager ? 0.5 : 1,
+    // if showing preview/payload panels, split 50/50, otherwise 100/0 because there is no payload editor
+    initialSize: showPreviewAndPayload ? 0.5 : 1,
     dragPosition: 'middle',
   });
 
   // splitter for template editor and preview
   const rowSplitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 60/40, otherwise 100/0 because there is no preview
-    initialSize: isGrafanaAlertManager ? 0.6 : 1,
+    // if showing preview/payload panels, split 60/40, otherwise 100/0 because there is no preview
+    initialSize: showPreviewAndPayload ? 0.6 : 1,
     dragPosition: 'middle',
   });
 
@@ -319,8 +331,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </Box>
                       </div>
                     </div>
-                    {/* payload editor – only available for Grafana Alertmanager */}
-                    {isGrafanaAlertManager && (
+                    {/* payload editor – only shown if user has test permission */}
+                    {showPreviewAndPayload && (
                       <>
                         <div {...columnSplitter.splitterProps} />
                         <div {...columnSplitter.secondaryProps}>
@@ -345,8 +357,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                     )}
                   </div>
                 </div>
-                {/* preview column – full height and half-width */}
-                {isGrafanaAlertManager && (
+                {/* preview column – only shown if user has test permission */}
+                {showPreviewAndPayload && (
                   <div {...rowSplitter.secondaryProps}>
                     <div {...rowSplitter.splitterProps} />
                     <TemplatePreview

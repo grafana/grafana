@@ -16,6 +16,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,24 +27,24 @@ import (
 type Runner struct {
 	checkRegistry checkregistry.CheckService
 	client        resource.Client
-	namespace     string
+	orgService    org.Service
+	stackID       string
 	log           logging.Logger
 	retryAttempts int
 	retryDelay    time.Duration
 }
 
+var _ app.Runnable = (*Runner)(nil)
+
 // NewRunner creates a new Runner.
-func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
+func New(cfg app.Config, log logging.Logger) (*Runner, error) {
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
-	namespace, err := checks.GetNamespace(specificConfig.StackID)
-	if err != nil {
-		return nil, err
-	}
+	orgService := specificConfig.OrgService
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -55,7 +56,8 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	return &Runner{
 		checkRegistry: checkRegistry,
 		client:        client,
-		namespace:     namespace,
+		orgService:    orgService,
+		stackID:       specificConfig.StackID,
 		log:           log.With("runner", "advisor.checktyperegisterer"),
 		retryAttempts: 5,
 		retryDelay:    time.Second * 10,
@@ -64,36 +66,24 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
-	for _, t := range r.checkRegistry.Checks() {
-		steps := t.Steps()
-		stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
-		for i, s := range steps {
-			stepTypes[i] = advisorv0alpha1.CheckTypeStep{
-				Title:       s.Title(),
-				Description: s.Description(),
-				StepID:      s.ID(),
-				Resolution:  s.Resolution(),
-			}
-		}
-		obj := &advisorv0alpha1.CheckType{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      t.ID(),
-				Namespace: r.namespace,
-				Annotations: map[string]string{
-					checks.NameAnnotation: t.Name(),
-					// Flag to indicate feature availability
-					checks.RetryAnnotation:       "1",
-					checks.IgnoreStepsAnnotation: "1",
-				},
-			},
-			Spec: advisorv0alpha1.CheckTypeSpec{
-				Name:  t.ID(),
-				Steps: stepTypes,
-			},
-		}
-		err := r.registerCheckType(ctx, logger, t.ID(), obj)
+	// If stackID is empty and OrgService is nil, do nothing (on-demand registration only)
+	if r.stackID == "" && r.orgService == nil {
+		logger.Debug("Auto-registration of checktypes disabled")
+		return nil
+	}
+
+	// Determine namespaces based on StackID or OrgID
+	namespaces, err := checks.GetNamespaces(ctx, r.stackID, r.orgService)
+	if err != nil {
+		return fmt.Errorf("failed to get namespaces: %w", err)
+	}
+	logger.Debug("Registering check types", "namespaces", len(namespaces))
+
+	// Register check types in each namespace
+	for _, namespace := range namespaces {
+		err := r.RegisterCheckTypesInNamespace(ctx, logger, namespace)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to register check types in namespace %s: %w", namespace, err)
 		}
 	}
 	return nil
@@ -226,4 +216,39 @@ func isAPIServerShuttingDown(err error, logger logging.Logger) bool {
 		return true
 	}
 	return false
+}
+
+func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger logging.Logger, namespace string) error {
+	for _, t := range r.checkRegistry.Checks() {
+		steps := t.Steps()
+		stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
+		for i, s := range steps {
+			stepTypes[i] = advisorv0alpha1.CheckTypeStep{
+				Title:       s.Title(),
+				Description: s.Description(),
+				StepID:      s.ID(),
+				Resolution:  s.Resolution(),
+			}
+		}
+		obj := &advisorv0alpha1.CheckType{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      t.ID(),
+				Namespace: namespace,
+				Annotations: map[string]string{
+					checks.NameAnnotation: t.Name(),
+					// Flag to indicate feature availability
+					checks.RetryAnnotation:       "1",
+					checks.IgnoreStepsAnnotation: "1",
+				},
+			},
+			Spec: advisorv0alpha1.CheckTypeSpec{
+				Name:  t.ID(),
+				Steps: stepTypes,
+			},
+		}
+		if err := r.registerCheckType(ctx, logger, t.ID(), obj); err != nil {
+			return fmt.Errorf("failed to register check type %s: %w", t.ID(), err)
+		}
+	}
+	return nil
 }

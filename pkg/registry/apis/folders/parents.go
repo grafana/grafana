@@ -72,11 +72,6 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				break
 			}
 
-			if len(info.Items) >= maxDepth {
-				err = folderLegacy.ErrMaximumDepthReached
-				break
-			}
-
 			found[parentFolder.Name] = true
 			folder = parentFolder
 		}

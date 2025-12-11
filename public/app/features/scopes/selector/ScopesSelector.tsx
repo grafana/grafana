@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -17,10 +16,7 @@ import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
-  const { chrome } = useGrafana();
-  const chromeState = chrome.useState();
-  const menuDockedAndOpen = !chromeState.chromeless && chromeState.megaMenuDocked && chromeState.megaMenuOpen;
-  const styles = useStyles2(getStyles, menuDockedAndOpen);
+  const styles = useStyles2(getStyles);
   const scopes = useScopes();
 
   const services = useScopesServices();
@@ -65,10 +61,11 @@ export const ScopesSelector = () => {
     removeAllScopes,
     closeAndApply,
     closeAndReset,
-    updateNode,
+    filterNode,
     selectScope,
     deselectScope,
     getRecentScopes,
+    toggleExpandedNode,
   } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
@@ -80,7 +77,7 @@ export const ScopesSelector = () => {
       : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
-    <div className={styles.container}>
+    <>
       <IconButton
         name="web-section-alt"
         className={styles.dashboards}
@@ -107,7 +104,7 @@ export const ScopesSelector = () => {
 
       {opened && (
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
-          <ErrorBoundary>
+          <ErrorBoundary boundaryName="scopes-selector">
             {({ error, errorInfo }) => {
               if (error) {
                 return (
@@ -128,14 +125,15 @@ export const ScopesSelector = () => {
                         <ScopesTree
                           tree={tree}
                           loadingNodeName={loadingNodeName}
-                          onNodeUpdate={updateNode}
+                          filterNode={filterNode}
                           recentScopes={recentScopes}
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
                           selectScope={selectScope}
                           deselectScope={deselectScope}
-                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
-                            scopesSelectorService.changeScopes(scopeIds, parentNodeId);
+                          toggleExpandedNode={toggleExpandedNode}
+                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => {
+                            scopesSelectorService.changeScopes(scopeIds, parentNodeId, scopeNodeId);
                             scopesSelectorService.closeAndReset();
                           }}
                         />
@@ -158,20 +156,14 @@ export const ScopesSelector = () => {
           </ErrorBoundary>
         </Drawer>
       )}
-    </div>
+    </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'row',
-      paddingLeft: menuDockedAndOpen ? theme.spacing(2) : 'unset',
-    }),
     dashboards: css({
       color: theme.colors.text.secondary,
-      marginRight: theme.spacing(2),
 
       '&:hover': css({
         color: theme.colors.text.primary,

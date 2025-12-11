@@ -1,22 +1,11 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
 
 import { TableContainerWithTheme } from './TableContainer';
 
-function getTables(): HTMLElement[] {
-  return screen.getAllByRole('table');
-}
-
-function getRowsData(rows: HTMLElement[]): Object[] {
-  let content = [];
-  for (let i = 1; i < rows.length; i++) {
-    content.push({
-      time: within(rows[i]).getByText(/2021*/).textContent,
-      text: within(rows[i]).getByText(/test_string_*/).textContent,
-    });
-  }
-  return content;
+function getPanels(): HTMLElement[] {
+  return screen.getAllByText(/PanelRenderer/);
 }
 
 const dataFrame = toDataFrame({
@@ -60,17 +49,9 @@ describe('TableContainerWithTheme', () => {
   describe('With one main frame', () => {
     it('should render component', () => {
       render(<TableContainerWithTheme {...defaultProps} />);
-      const tables = getTables();
+      const tables = getPanels();
       expect(tables.length).toBe(1);
       expect(tables[0]).toBeInTheDocument();
-      const rows = within(tables[0]).getAllByRole('row');
-      expect(rows).toHaveLength(5);
-      expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', text: 'test_string_1' },
-        { time: '2021-01-01 03:00:00', text: 'test_string_2' },
-        { time: '2021-01-01 01:00:00', text: 'test_string_3' },
-        { time: '2021-01-01 02:00:00', text: 'test_string_4' },
-      ]);
     });
 
     it('should render 0 series returned on no items', () => {
@@ -83,26 +64,6 @@ describe('TableContainerWithTheme', () => {
       ];
       render(<TableContainerWithTheme {...defaultProps} tableResult={emptyFrames} />);
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
-    });
-
-    it('should update time when timezone changes', () => {
-      const { rerender } = render(<TableContainerWithTheme {...defaultProps} />);
-      const rowsBeforeChange = within(getTables()[0]).getAllByRole('row');
-      expect(getRowsData(rowsBeforeChange)).toEqual([
-        { time: '2021-01-01 00:00:00', text: 'test_string_1' },
-        { time: '2021-01-01 03:00:00', text: 'test_string_2' },
-        { time: '2021-01-01 01:00:00', text: 'test_string_3' },
-        { time: '2021-01-01 02:00:00', text: 'test_string_4' },
-      ]);
-
-      rerender(<TableContainerWithTheme {...defaultProps} timeZone="cest" />);
-      const rowsAfterChange = within(getTables()[0]).getAllByRole('row');
-      expect(getRowsData(rowsAfterChange)).toEqual([
-        { time: '2020-12-31 19:00:00', text: 'test_string_1' },
-        { time: '2020-12-31 22:00:00', text: 'test_string_2' },
-        { time: '2020-12-31 20:00:00', text: 'test_string_3' },
-        { time: '2020-12-31 21:00:00', text: 'test_string_4' },
-      ]);
     });
 
     it('should render table title with Prometheus query', () => {
@@ -118,7 +79,7 @@ describe('TableContainerWithTheme', () => {
       const dataFrames = [dataFrame, dataFrame];
       const multiDefaultProps = { ...defaultProps, tableResult: dataFrames };
       render(<TableContainerWithTheme {...multiDefaultProps} />);
-      const tables = getTables();
+      const tables = getPanels();
       expect(tables.length).toBe(2);
       expect(tables[0]).toBeInTheDocument();
       expect(tables[1]).toBeInTheDocument();

@@ -151,7 +151,7 @@ func readSeries(iter *sdkjsoniter.Iterator, query *models.Query) *backend.DataRe
 				}
 				if util.GetVisType(query.ResultFormat) != util.TableVisType {
 					for i, v := range valueFields {
-						if v.Type() == data.FieldTypeNullableJSON {
+						if v.Type() == data.FieldTypeNullableJSON { //nolint:staticcheck
 							maybeFixValueFieldType(valueFields, data.FieldTypeNullableFloat64, i)
 						}
 					}
@@ -189,7 +189,7 @@ func readSeries(iter *sdkjsoniter.Iterator, query *models.Query) *backend.DataRe
 	// also frontend probably will not interpret the nullableJson value
 	for i, f := range rsp.Frames {
 		for j, v := range f.Fields {
-			if v.Type() == data.FieldTypeNullableJSON {
+			if v.Type() == data.FieldTypeNullableJSON { //nolint:staticcheck
 				newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 				newField.Name = v.Name
 				newField.Config = v.Config
@@ -301,7 +301,7 @@ func readValues(iter *sdkjsoniter.Iterator, hasTimeColumn bool) (valueFields dat
 					// we don't know the type of the values for this field, yet
 					// so we create a FieldTypeNullableJSON to hold nil values
 					// if that is something else it will be replaced later
-					unknownField := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+					unknownField := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0) //nolint:staticcheck
 					unknownField.Name = "Value"
 					valueFields = append(valueFields, unknownField)
 				}
@@ -335,7 +335,7 @@ func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType,
 // or the type of the field in valueFields is nullableJSON
 // we change the type of the field as expectedType
 func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType, colIdx int) {
-	if valueFields[colIdx].Type() == expectedType || valueFields[colIdx].Type() != data.FieldTypeNullableJSON {
+	if valueFields[colIdx].Type() == expectedType || valueFields[colIdx].Type() != data.FieldTypeNullableJSON { //nolint:staticcheck
 		return
 	}
 	stringField := data.NewFieldFromFieldType(expectedType, 0)
@@ -364,7 +364,7 @@ func typeOf(value interface{}) data.FieldType {
 		return data.FieldTypeNullableBool
 	default:
 		slog.Error("unknown influx value type", "value", v)
-		return data.FieldTypeNullableJSON
+		return data.FieldTypeNullableJSON //nolint:staticcheck
 	}
 }
 
@@ -471,7 +471,7 @@ func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fi
 		} else {
 			ll := valueFields[i].Len()
 			for vi := 0; vi < ll; vi++ {
-				if valueFields[i].Type() == data.FieldTypeNullableJSON {
+				if valueFields[i].Type() == data.FieldTypeNullableJSON { //nolint:staticcheck
 					// add nil explicitly.
 					// we don't know if it is a float pointer nil or string pointer nil or etc
 					rsp.Frames[0].Fields[si].Append(nil)

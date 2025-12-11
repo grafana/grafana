@@ -57,6 +57,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		Buckets:   sizeDefBuckets, // 100B ... ~1MB
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
 		// the recommended default value from the prom_client
 		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
@@ -70,6 +71,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
 		reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
 			// setting Buckets to nil with native options set means the classic
 			// histogram will no longer be exposed - this can be a good way to
@@ -112,6 +114,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 					handler = "notfound"
 				} else {
 					// log requests where we could not identify handler so we can register them.
+					//nolint:staticcheck // not yet migrated to OpenFeature
 					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
 						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}

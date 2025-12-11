@@ -1286,3 +1286,38 @@ describe('when exitPanelEditor is called', () => {
     expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
   });
 });
+
+describe('when creating dashboard with specific target schema version', () => {
+  it('should migrate to specified target version', () => {
+    const oldDashboard = {
+      panels: [],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(oldDashboard, undefined, { targetSchemaVersion: 5 });
+
+    expect(model.schemaVersion).toBe(5);
+  });
+
+  it('should not migrate when target version equals current version', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 20,
+    };
+
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+
+    expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should migrate to latest version when no target version specified', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(dashboard);
+
+    expect(model.schemaVersion).toBeGreaterThan(1);
+  });
+});

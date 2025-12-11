@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { memo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { t } from '@grafana/i18n';
@@ -19,31 +19,30 @@ interface OwnProps {
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-class InviteeRow extends PureComponent<Props> {
-  render() {
-    const { invitee, revokeInvite } = this.props;
-    return (
-      <tr>
-        <td>{invitee.email}</td>
-        <td>{invitee.name}</td>
-        <td className="text-right">
-          <ClipboardButton icon="copy" variant="secondary" size="sm" getText={() => invitee.url}>
-            Copy Invite
-          </ClipboardButton>
-          &nbsp;
-        </td>
-        <td>
-          <Button
-            variant="destructive"
-            size="sm"
-            icon="times"
-            onClick={() => revokeInvite(invitee.code)}
-            aria-label={t('invites.invitee-row.aria-label-revoke-invite', 'Revoke invite')}
-          />
-        </td>
-      </tr>
-    );
-  }
-}
+const InviteeRow = memo<Props>(({ invitee, revokeInvite }) => {
+  return (
+    <tr>
+      <td>{invitee.email}</td>
+      <td>{invitee.name}</td>
+      <td className="text-right">
+        <ClipboardButton icon="copy" variant="secondary" size="sm" getText={() => invitee.url}>
+          Copy Invite
+        </ClipboardButton>
+        &nbsp;
+      </td>
+      <td>
+        <Button
+          variant="destructive"
+          size="sm"
+          icon="times"
+          onClick={() => revokeInvite(invitee.code)}
+          aria-label={t('invites.invitee-row.aria-label-revoke-invite', 'Revoke invite')}
+        />
+      </td>
+    </tr>
+  );
+});
+
+InviteeRow.displayName = 'InviteeRow';
 
 export default connector(InviteeRow);

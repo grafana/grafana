@@ -93,6 +93,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
+  xAxisConfig,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -155,7 +156,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: coreConfig.xRange,
+    range: (u) => {
+      const state = builder.getState();
+      if (state.isPanning) {
+        if (state.isTimeRangePending) {
+          const propsRange = coreConfig.xRange(u);
+          const propsFrom = propsRange[0];
+          const propsTo = propsRange[1];
+
+          if (propsFrom != null && propsTo != null) {
+            const MIN_TIMESPAN_MS = 1;
+            const fromMatches = Math.abs(propsFrom - state.min) <= MIN_TIMESPAN_MS;
+            const toMatches = Math.abs(propsTo - state.max) <= MIN_TIMESPAN_MS;
+            const timeRangeHasUpdated = fromMatches && toMatches;
+
+            if (timeRangeHasUpdated) {
+              builder.setState({ isPanning: false });
+              return propsRange;
+            }
+          }
+        }
+
+        return [state.min, state.max];
+      }
+      return coreConfig.xRange(u);
+    },
   });
 
   builder.addScale({
@@ -166,7 +191,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: coreConfig.yRange,
   });
 
-  const xAxisHidden = frame.fields[0].config.custom.axisPlacement === AxisPlacement.Hidden;
+  const xField = frame.fields[0];
+  const xAxisHidden = xField.config.custom.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     show: !xAxisHidden,
@@ -176,6 +202,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
+    formatValue: xField.config.unit?.startsWith('time:')
+      ? (v, decimals) => xField.display!(v, decimals).text
+      : undefined,
+    ...xAxisConfig,
   });
 
   const yCustomConfig = frame.fields[1].config.custom;

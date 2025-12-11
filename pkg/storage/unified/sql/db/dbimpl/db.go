@@ -48,6 +48,11 @@ type sqlTx struct {
 	*sql.Tx
 }
 
+// NewTx wraps an existing *sql.Tx with sqlTx
+func NewTx(tx *sql.Tx) db.Tx {
+	return sqlTx{tx}
+}
+
 func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	// // codeql-suppress go/sql-query-built-from-user-controlled-sources "The query comes from a safe template source
 	// and the parameters are passed as arguments."

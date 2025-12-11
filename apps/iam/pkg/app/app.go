@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
@@ -12,7 +14,6 @@ import (
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/services/authz"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var appManifestData = app.ManifestData{
@@ -36,7 +37,7 @@ func Provider(appCfg app.SpecificConfig) app.Provider {
 }
 
 func generateInformerSupplier(informerConfig InformerConfig, metrics *reconcilers.ReconcilerMetrics) simple.InformerSupplier {
-	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.ListWatchOptions) (operator.Informer, error) {
+	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
 		client, err := clients.ClientFor(kind)
 		if err != nil {
 			return nil, err
@@ -44,9 +45,7 @@ func generateInformerSupplier(informerConfig InformerConfig, metrics *reconciler
 
 		informer, err := operator.NewKubernetesBasedInformer(
 			kind, client,
-			operator.KubernetesBasedInformerOptions{
-				ListWatchOptions: options,
-			},
+			options,
 		)
 		if err != nil {
 			return nil, err
@@ -79,9 +78,8 @@ func New(cfg app.Config) (app.App, error) {
 
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
 		ZanzanaCfg: appSpecificConfig.ZanzanaClientCfg,
-		KubeConfig: &cfg.KubeConfig,
 		Metrics:    metrics,
-	})
+	}, appSpecificConfig.MetricsRegisterer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FolderReconciler: %w", err)
 	}
@@ -93,12 +91,14 @@ func New(cfg app.Config) (app.App, error) {
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			InformerSupplier: generateInformerSupplier(appSpecificConfig.InformerConfig, metrics),
-			ErrorHandler: func(ctx context.Context, err error) {
-				logging.FromContext(ctx).With("error", err).Error("Informer processing error")
-				if metrics != nil {
-					// Use "unknown" for action since top-level informer errors don't have specific actions
-					metrics.RecordReconcileFailure("unknown", "informer")
-				}
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					logging.FromContext(ctx).With("error", err).Error("Informer processing error")
+					if metrics != nil {
+						// Use "unknown" for action since top-level informer errors don't have specific actions
+						metrics.RecordReconcileFailure("unknown", "informer")
+					}
+				},
 			},
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{

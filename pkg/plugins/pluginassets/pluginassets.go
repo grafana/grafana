@@ -11,7 +11,7 @@ var _ Provider = (*LocalProvider)(nil)
 
 type LocalProvider struct{}
 
-func ProvideService() *LocalProvider {
+func NewLocalProvider() *LocalProvider {
 	return &LocalProvider{}
 }
 

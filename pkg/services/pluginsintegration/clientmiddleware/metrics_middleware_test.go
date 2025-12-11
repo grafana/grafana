@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 const (
@@ -70,7 +70,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 		} {
 			t.Run(string(tc.expEndpoint), func(t *testing.T) {
 				promRegistry := prometheus.NewRegistry()
-				pluginsRegistry := fakes.NewFakePluginRegistry()
+				pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 				require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
 					JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 				}))
@@ -149,7 +149,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
 
 	promRegistry := prometheus.NewRegistry()
-	pluginsRegistry := fakes.NewFakePluginRegistry()
+	pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 	}))

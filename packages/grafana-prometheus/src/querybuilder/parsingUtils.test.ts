@@ -4,6 +4,7 @@ import { parser } from '@prometheus-io/lezer-promql';
 import {
   getLeftMostChild,
   getString,
+  isFunctionOrAggregation,
   replaceBuiltInVariable,
   replaceVariables,
   returnBuiltInVariable,
@@ -121,6 +122,19 @@ describe('builtInTimeVariables', () => {
 
       const actual2 = returnBuiltInVariable(actual1);
       expect(actual2).toBe(testCase.expr);
+    });
+  });
+
+  describe('isFunctionOrAggregation', () => {
+    it('should identify function and aggregation nodes', () => {
+      const tree = parser.parse('clamp(sum(foo[5m]))');
+      const root = tree.topNode;
+      const functionNode = root.firstChild!.lastChild; // clamp
+      const aggregationNode = root.firstChild!.lastChild!.firstChild; // sum
+
+      expect(isFunctionOrAggregation(functionNode!)).toBe(true);
+      expect(isFunctionOrAggregation(aggregationNode!)).toBe(true);
+      expect(isFunctionOrAggregation(root)).toBe(false);
     });
   });
 });

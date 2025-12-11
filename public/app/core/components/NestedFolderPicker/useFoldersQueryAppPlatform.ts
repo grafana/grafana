@@ -6,14 +6,16 @@ import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/types';
+import { ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
+type GetFolderChildrenQuery = ReturnType<
+  ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
+>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
@@ -27,23 +29,26 @@ const collator = new Intl.Collator();
  * does not have pagination at the moment.
  */
 
-type Props = Omit<UseFoldersQueryProps, 'permission'>;
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID,
   rootFolderItem,
-}: Props) {
+  permission,
+}: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<GetFolderChildrenRequest[]>([]);
 
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+
   // Keep a list of selectors for dynamic state selection
-  const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
-    []
-  );
+  const [selectors, setSelectors] = useState<
+    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>>
+  >([]);
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
   // tree and returns the whole tree that was loaded so far.
@@ -86,19 +91,19 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' };
+      const args = { folder: finalParentUid, type: 'folder', permission } as const;
 
       // Make a request
-      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = dashboardAPIv0alpha1.endpoints.getSearch.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch]
+    [state, dispatch, permission]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -138,13 +143,21 @@ export function useFoldersQueryAppPlatform({
             // query by it.
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
-            parentUID: item.parentUID,
+            managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            parentUID: item.folder,
           },
         };
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
+          // If we finished loading and there are no children add to empty list
+          if (
+            childResponse.data &&
+            childResponse.status !== QueryStatus.pending &&
+            childResponse.data.hits.length === 0
+          ) {
+            setEmptyFolders((prev) => new Set(prev).add(name));
+          }
           const childFlatItems = createFlatList(name, childResponse, level + 1);
           return [flatItem, ...childFlatItems];
         }
@@ -168,6 +181,7 @@ export function useFoldersQueryAppPlatform({
   }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

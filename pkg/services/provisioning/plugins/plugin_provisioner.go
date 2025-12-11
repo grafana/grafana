@@ -3,11 +3,17 @@ package plugins
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+)
+
+var (
+	ErrPluginProvisioningNotFound    = errors.New("plugin not found")
+	ErrPluginProvisioningAutoEnabled = errors.New("plugin is auto enabled and cannot be disabled")
 )
 
 // Provision scans a directory for provisioning config files
@@ -49,10 +55,10 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 
 		p, found := ap.pluginStore.Plugin(ctx, app.PluginID)
 		if !found {
-			return errors.New("plugin not found")
+			return fmt.Errorf("%w: %s", ErrPluginProvisioningNotFound, app.PluginID)
 		}
 		if p.AutoEnabled && !app.Enabled {
-			return errors.New("plugin is auto enabled and cannot be disabled")
+			return fmt.Errorf("%w: %s", ErrPluginProvisioningAutoEnabled, app.PluginID)
 		}
 
 		ps, err := ap.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
@@ -61,7 +67,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		})
 		if err != nil {
 			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-				return err
+				return fmt.Errorf("%w: %s", err, app.PluginID)
 			}
 		} else {
 			app.PluginVersion = ps.PluginVersion
@@ -77,7 +83,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}); err != nil {
-			return err
+			return fmt.Errorf("%w: %s", err, app.PluginID)
 		}
 	}
 

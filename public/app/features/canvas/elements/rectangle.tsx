@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -18,20 +17,19 @@ import {
 } from '../element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
-class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+const RectangleDisplay = memo<CanvasElementProps<TextConfig, TextData>>(({ data }) => {
+  const styles = useStyles2(getStyles, data);
 
-    return (
-      <div className={styles.container}>
-        <span className={styles.span}>{data?.text}</span>
-      </div>
-    );
-  }
-}
+  return (
+    <div className={styles.container}>
+      <span className={styles.span}>{data?.text}</span>
+    </div>
+  );
+});
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
+RectangleDisplay.displayName = 'RectangleDisplay';
+
+const getStyles = (theme: GrafanaTheme2, data: TextData | undefined) => ({
   container: css({
     position: 'absolute',
     height: '100%',
@@ -45,7 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     fontSize: `${data?.size}px`,
     color: data?.color,
   }),
-}));
+});
 
 export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'rectangle',

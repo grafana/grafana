@@ -26,41 +26,10 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlStarsQuery       = mustTemplate("sql_stars_query.sql")
-	sqlStarsRV          = mustTemplate("sql_stars_rv.sql")
 	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
 	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
 	sqlTeams            = mustTemplate("sql_teams.sql")
 )
-
-type starQuery struct {
-	sqltemplate.SQLTemplate
-
-	OrgID   int64 // >= 1 if UserID != ""
-	UserUID string
-
-	StarTable string
-	UserTable string
-}
-
-func (r starQuery) Validate() error {
-	if r.UserUID != "" && r.OrgID < 1 {
-		return fmt.Errorf("requests with a userid, must include an orgID")
-	}
-	return nil
-}
-
-func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) starQuery {
-	return starQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-
-		UserUID: user,
-		OrgID:   orgId,
-
-		StarTable: sql.Table("star"),
-		UserTable: sql.Table("user"),
-	}
-}
 
 type preferencesQuery struct {
 	sqltemplate.SQLTemplate

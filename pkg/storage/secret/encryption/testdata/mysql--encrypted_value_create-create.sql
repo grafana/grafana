@@ -3,6 +3,7 @@ INSERT INTO `secret_encrypted_value` (
   `name`,
   `version`,
   `encrypted_data`,
+  `data_key_id`,
   `created`,
   `updated`
 ) VALUES (
@@ -10,6 +11,7 @@ INSERT INTO `secret_encrypted_value` (
   'n1',
   1,
   '[115 101 99 114 101 116]',
+  'test-data-key-id',
   1234,
   5678
 );

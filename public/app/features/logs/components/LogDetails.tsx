@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { PureComponent, useMemo } from 'react';
 
 import {
+  TimeRange,
   CoreApp,
   DataFrame,
   DataFrameType,
@@ -44,23 +45,25 @@ export interface Props extends Themeable2 {
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   links?: Record<string, LinkModel[]>;
+  timeRange: TimeRange;
 }
 
 interface LinkModelWithIcon extends LinkModel {
   icon?: IconName;
 }
 
-export const useAttributesExtensionLinks = (row: LogRowModel) => {
+export const useAttributesExtensionLinks = (row: LogRowModel, timeRange: TimeRange) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     return {
       attributes: Object.fromEntries(Object.entries(row.labels).map(([key, value]) => [key, [value]])),
+      timeRange: { from: timeRange.from.valueOf(), to: timeRange.to.valueOf() },
       datasource: {
         type: row.datasourceType ?? '',
         uid: row.datasourceUid ?? '',
       },
     };
-  }, [row.labels, row.datasourceType, row.datasourceUid]);
+  }, [row.labels, row.datasourceType, row.datasourceUid, timeRange]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
@@ -93,7 +96,7 @@ export const useAttributesExtensionLinks = (row: LogRowModel) => {
 
 const withAttributesExtensionLinks = (Component: React.ComponentType<Props>) => {
   function ComponentWithLinks(props: Props) {
-    const labelLinks = useAttributesExtensionLinks(props.row);
+    const labelLinks = useAttributesExtensionLinks(props.row, props.timeRange);
     return <Component {...props} links={labelLinks} />;
   }
 

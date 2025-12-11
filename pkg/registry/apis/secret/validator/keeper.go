@@ -41,6 +41,10 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 		return errs
 	}
 
+	if keeper.Name == contracts.SystemKeeperName {
+		errs = append(errs, field.Forbidden(field.NewPath("name"), "the keeper name `system` is reserved"))
+	}
+
 	if keeper.Spec.Description == "" {
 		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
 	}

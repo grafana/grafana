@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineSwitch, Input, Badge, useStyles2, Box, Stack } from '@grafana/ui';
 
 export interface Props {
   dataSourceName: string;
@@ -17,16 +17,16 @@ export interface Props {
 export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange, disabled }: Props) {
   return (
     <>
-      <div
-        className="gf-form-group"
+      <Box
+        marginBottom={5}
         aria-label={t(
           'datasources.basic-settings.aria-label-datasource-settings-page-basic',
           'Datasource settings page basic settings'
         )}
       >
-        <div className="gf-form-inline">
+        <Stack direction="row" wrap alignItems="flex-start" justifyContent="start" gap={0}>
           {/* Name */}
-          <div className="gf-form max-width-30">
+          <Box width={64}>
             <InlineField
               label={t('datasources.basic-settings.label-name', 'Name')}
               tooltip={t(
@@ -47,7 +47,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
                 data-testid={selectors.pages.DataSource.name}
               />
             </InlineField>
-          </div>
+          </Box>
 
           {/* Is Default */}
           <InlineField
@@ -63,8 +63,8 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               }}
             />
           </InlineField>
-        </div>
-      </div>
+        </Stack>
+      </Box>
     </>
   );
 }

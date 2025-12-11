@@ -18,22 +18,28 @@ import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   dateMath,
   DateTime,
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
 import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
 
-export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
+export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuery, OpenTsdbOptions> {
   type: 'opentsdb';
   url: string;
   name: string;
@@ -73,6 +79,20 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
   // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const hasValidTargets = options.targets.some((target) => target.metric && !target.hide);
+      if (!hasValidTargets) {
+        return of({ data: [] });
+      }
+
+      return super.query(options).pipe(
+        map((response) => {
+          this._saveTagKeysFromFrames(response.data);
+          return response;
+        })
+      );
+    }
+
     // migrate annotations
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
@@ -260,6 +280,15 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     this.tagKeys[metricData.metric] = tagKeys;
   }
 
+  _saveTagKeysFromFrames(frames: DataFrame[]) {
+    for (const frame of frames) {
+      const tagKeys = frame.meta?.custom?.tagKeys;
+      if (frame.name && tagKeys) {
+        this.tagKeys[frame.name] = tagKeys;
+      }
+    }
+  }
+
   _performSuggestQuery(query: string, type: string) {
     return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).pipe(
       map((result) => {
@@ -398,7 +427,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return Promise.resolve([]);
   }
 
-  testDatasource() {
+  async testDatasource() {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._performSuggestQuery('cpu', 'metrics').pipe(
         map(() => {

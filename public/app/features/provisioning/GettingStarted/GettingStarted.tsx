@@ -22,7 +22,6 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-kubernetesDashboards = true ; use k8s from browser
 `;
 
 const ngrokExample = `ngrok http 3000
@@ -103,7 +102,7 @@ const getModalContent = (setupType: SetupType) => {
             ),
             description: t(
               'provisioning.getting-started.step-description-enable-feature-toggles',
-              'Add these settings to your custom.ini file to enable necessary features:'
+              'Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.'
             ),
             code: featureIni,
           },
@@ -153,7 +152,8 @@ export default function GettingStarted({ items }: Props) {
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>
-            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
+            {/* decorative img, use empty str to skip alt*/}
+            <img src={provisioningSvg} className={styles.image} alt="" />
           </div>
           <FeaturesList
             hasRequiredFeatures={hasRequiredFeatures}

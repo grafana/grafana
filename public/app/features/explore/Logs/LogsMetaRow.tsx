@@ -1,7 +1,16 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
+import {
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsMetaKind,
+  LogRowModel,
+  CoreApp,
+  Labels,
+  store,
+  shallowCompare,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
@@ -10,6 +19,7 @@ import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/co
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 
+import { LogsVisualisationType } from './Logs';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
@@ -30,11 +40,22 @@ export type Props = {
   dedupCount: number;
   displayedFields: string[];
   logRows: LogRowModel[];
-  clearDetectedFields: () => void;
+  clearDisplayedFields: () => void;
+  defaultDisplayedFields: string[];
+  visualisationType: LogsVisualisationType;
 };
 
 export const LogsMetaRow = memo(
-  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
+  ({
+    meta,
+    dedupStrategy,
+    dedupCount,
+    displayedFields,
+    clearDisplayedFields,
+    logRows,
+    defaultDisplayedFields,
+    visualisationType,
+  }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -49,7 +70,11 @@ export const LogsMetaRow = memo(
     }
 
     // Add detected fields info
-    if (displayedFields?.length > 0) {
+    if (
+      visualisationType === 'logs' &&
+      displayedFields?.length > 0 &&
+      shallowCompare(displayedFields, defaultDisplayedFields) === false
+    ) {
       logsMetaItem.push(
         {
           label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
@@ -58,8 +83,8 @@ export const LogsMetaRow = memo(
         {
           label: '',
           value: (
-            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
-              <Trans i18nKey="explore.logs-meta-row.show-original-line">Show original line</Trans>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDisplayedFields}>
+              {t('explore.logs-meta-row.show-original-line', 'Show original line')}
             </Button>
           ),
         }

@@ -170,6 +170,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: boolean;
+  timeCompare?: string;
   declare options: {
     [key: string]: any;
   };

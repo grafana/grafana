@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -15,6 +16,7 @@ import (
 )
 
 type subChildrenREST struct {
+	getter rest.Getter
 	lister rest.Lister
 }
 
@@ -45,6 +47,10 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+		return nil, err
+	}
+
 	obj, err := r.lister.List(ctx, &internalversion.ListOptions{
 		Limit: 500,
 		// TODO, field selector

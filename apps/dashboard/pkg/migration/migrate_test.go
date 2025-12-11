@@ -1,4 +1,4 @@
-package migration_test
+package migration
 
 import (
 	"bytes"
@@ -8,35 +8,59 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
+const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
+const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
+const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
+const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 
 func TestMigrate(t *testing.T) {
-	files, err := os.ReadDir(INPUT_DIR)
-	require.NoError(t, err)
-
-	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
+	// Reset the migration singleton and use the same datasource provider as the frontend test to ensure consistency
+	ResetForTesting()
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	t.Run("minimum version check", func(t *testing.T) {
-		err := migration.Migrate(context.Background(), map[string]interface{}{
+		err := Migrate(context.Background(), map[string]interface{}{
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
-		}, schemaversion.MIN_VERSION)
+		}, schemaversion.LATEST_VERSION)
 
 		var minVersionErr = schemaversion.NewMinimumVersionError(schemaversion.MIN_VERSION - 1)
 		require.ErrorAs(t, err, &minVersionErr)
 	})
+
+	runMigrationTests(t, schemaversion.LATEST_VERSION, LATEST_VERSION_OUTPUT_DIR)
+}
+
+func TestMigrateSingleVersion(t *testing.T) {
+	// Use the same datasource provider as the frontend test to ensure consistency
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
+
+	runSingleVersionMigrationTests(t, SINGLE_VERSION_OUTPUT_DIR)
+}
+
+// runMigrationTests runs migration tests with a unified approach
+func runMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	files, err := os.ReadDir(INPUT_DIR)
+	require.NoError(t, err)
 
 	for _, f := range files {
 		if f.IsDir() {
@@ -48,47 +72,120 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("input filename must use v{N}.{name}.json format, got: %s", f.Name())
 		}
 
+		versionStr := strings.TrimPrefix(f.Name(), "v")
+		dotIndex := strings.Index(versionStr, ".")
+		if dotIndex == -1 {
+			t.Fatalf("input filename must use v{N}.{name}.json format, got: %s", f.Name())
+		}
+
+		filenameTargetVersion, err := strconv.Atoi(versionStr[:dotIndex])
+		require.NoError(t, err, "failed to parse version from filename: %s", f.Name())
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, filepath.Join(INPUT_DIR, f.Name()))
 		inputVersion := getSchemaVersion(t, inputDash)
 
-		t.Run("input check "+f.Name(), func(t *testing.T) {
-			// use input version as the target version to ensure there are no changes
-			require.NoError(t, migration.Migrate(context.Background(), inputDash, inputVersion), "input check migration failed")
-			outBytes, err := json.MarshalIndent(inputDash, "", "  ")
-			require.NoError(t, err, "failed to marshal migrated dashboard")
-			// We can ignore gosec G304 here since it's a test
-			// nolint:gosec
-			expectedDash, err := os.ReadFile(filepath.Join(INPUT_DIR, f.Name()))
-			require.NoError(t, err, "failed to read expected output file")
-			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
-		})
+		// Validate naming convention: filename version should be the tested version, schemaVersion should be target - 1
+		expectedSchemaVersion := filenameTargetVersion - 1
+		require.Equal(t, expectedSchemaVersion, inputVersion,
+			"naming convention violation for %s: filename suggests target v%d, but schemaVersion is %d (should be %d)",
+			f.Name(), filenameTargetVersion, inputVersion, expectedSchemaVersion)
 
-		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, schemaversion.LATEST_VERSION)
+		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
-			testMigration(t, inputDash, f.Name(), schemaversion.LATEST_VERSION)
+			testMigrationUnified(t, inputDash, f.Name(), inputVersion, targetVersion, outputDir)
 		})
 	}
 }
 
-func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, targetVersion int) {
-	t.Helper()
-	require.NoError(t, migration.Migrate(context.Background(), dash, targetVersion), "%d migration failed", targetVersion)
+// runSingleVersionMigrationTests runs single version migration tests
+func runSingleVersionMigrationTests(t *testing.T, outputDir string) {
+	files, err := os.ReadDir(INPUT_DIR)
+	require.NoError(t, err)
 
-	outPath := filepath.Join(OUTPUT_DIR, inputFileName)
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
+		// Validate filename format
+		if !strings.HasPrefix(f.Name(), "v") || !strings.HasSuffix(f.Name(), ".json") {
+			t.Fatalf("input filename must use v{N}.{name}.json format, got: %s", f.Name())
+		}
+
+		// Extract version from filename (e.g., v16.grid_layout_upgrade.json -> 16)
+		versionStr := strings.TrimPrefix(f.Name(), "v")
+		dotIndex := strings.Index(versionStr, ".")
+		if dotIndex == -1 {
+			t.Fatalf("input filename must use v{N}.{name}.json format, got: %s", f.Name())
+		}
+
+		targetVersion, err := strconv.Atoi(versionStr[:dotIndex])
+		require.NoError(t, err, "failed to parse version from filename: %s", f.Name())
+
+		// Skip if target version exceeds latest version
+		if targetVersion > schemaversion.LATEST_VERSION {
+			t.Skipf("skipping %s: target version %d exceeds latest version %d", f.Name(), targetVersion, schemaversion.LATEST_VERSION)
+		}
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, filepath.Join(INPUT_DIR, f.Name()))
+		inputVersion := getSchemaVersion(t, inputDash)
+
+		// Validate naming convention: filename version should be target version, schemaVersion should be target - 1
+		expectedSchemaVersion := targetVersion - 1
+		require.Equal(t, expectedSchemaVersion, inputVersion,
+			"naming convention violation for %s: filename suggests target v%d, but schemaVersion is %d (should be %d)",
+			f.Name(), targetVersion, inputVersion, expectedSchemaVersion)
+
+		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, f.Name(), inputVersion, targetVersion, outputDir)
+		})
+	}
+}
+
+// testMigrationUnified is the unified test function that handles both single and full migrations
+func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int, outputDir string) {
+	t.Helper()
+
+	// 1. Verify input version matches filename
+	actualInputVersion := getSchemaVersion(t, dash)
+	require.Equal(t, inputVersion, actualInputVersion, "input version mismatch for %s", inputFileName)
+
+	// 2. Run migration to target version
+	require.NoError(t, Migrate(context.Background(), dash, targetVersion), "migration from v%d to v%d failed", inputVersion, targetVersion)
+
+	// 3. Verify final schema version
+	finalVersion := getSchemaVersion(t, dash)
+	require.Equal(t, targetVersion, finalVersion, "dashboard not migrated to target version %d", targetVersion)
+
+	// 4. Generate output filename with target version suffix
+	outputFileName := strings.TrimSuffix(inputFileName, ".json") + fmt.Sprintf(".v%d.json", targetVersion)
+	outPath := filepath.Join(outputDir, outputFileName)
+
+	// 5. Marshal the migrated dashboard
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
+	// 6. Check if output file already exists
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		// 7a. If no existing file, create a new one (ensure directory exists first)
+		outDir := filepath.Dir(outPath)
+		err = os.MkdirAll(outDir, 0750)
+		require.NoError(t, err, "failed to create output directory %s", outDir)
+
 		err = os.WriteFile(outPath, outBytes, 0644)
-		require.NoError(t, err, "failed to write new output file", outPath)
+		require.NoError(t, err, "failed to write new output file %s", outPath)
 		return
 	}
 
+	// 7b. If existing file exists, compare them and fail if different
 	// We can ignore gosec G304 here since it's a test
 	// nolint:gosec
 	existingBytes, err := os.ReadFile(outPath)
-	require.NoError(t, err, "failed to read existing output file")
-	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
+	require.NoError(t, err, "failed to read existing output file %s", outPath)
+	require.JSONEq(t, string(existingBytes), string(outBytes), "output file %s did not match expected result", outPath)
 }
 
 func getSchemaVersion(t *testing.T, dash map[string]interface{}) int {
@@ -122,11 +219,13 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 // TestSchemaMigrationMetrics tests that schema migration metrics are recorded correctly
 func TestSchemaMigrationMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
-	migration.RegisterMetrics(registry)
+	RegisterMetrics(registry)
 
 	tests := []struct {
 		name           string
@@ -192,7 +291,7 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Execute migration
-			err := migration.Migrate(context.Background(), tt.dashboard, tt.targetVersion)
+			err := Migrate(context.Background(), tt.dashboard, tt.targetVersion)
 
 			// Check error expectation
 			if tt.expectSuccess {
@@ -206,7 +305,9 @@ func TestSchemaMigrationMetrics(t *testing.T) {
 
 // TestSchemaMigrationLogging tests that schema migration logging works correctly
 func TestSchemaMigrationLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
 
 	tests := []struct {
 		name           string
@@ -262,7 +363,7 @@ func TestSchemaMigrationLogging(t *testing.T) {
 			// and check that the migration behaves correctly (logs are called internally)
 
 			// Execute migration
-			err := migration.Migrate(context.Background(), tt.dashboard, tt.targetVersion)
+			err := Migrate(context.Background(), tt.dashboard, tt.targetVersion)
 
 			// Check error expectation
 			if tt.expectSuccess {
@@ -286,8 +387,6 @@ func TestSchemaMigrationLogging(t *testing.T) {
 
 // TestLogMessageStructure tests that log messages contain expected structured fields
 func TestLogMessageStructure(t *testing.T) {
-	migration.Initialize(migrationtestutil.GetTestDataSourceProvider())
-
 	t.Run("log messages include all required fields", func(t *testing.T) {
 		// Test that migration functions execute successfully, ensuring log code paths are hit
 		dashboard := map[string]interface{}{
@@ -296,7 +395,7 @@ func TestLogMessageStructure(t *testing.T) {
 		}
 
 		// Successful migration - should trigger debug log
-		err := migration.Migrate(context.Background(), dashboard, schemaversion.LATEST_VERSION)
+		err := Migrate(context.Background(), dashboard, schemaversion.LATEST_VERSION)
 		require.NoError(t, err, "migration should succeed")
 
 		// Failed migration - should trigger error log
@@ -304,7 +403,7 @@ func TestLogMessageStructure(t *testing.T) {
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
 			"title":         "old dashboard",
 		}
-		err = migration.Migrate(context.Background(), oldDashboard, schemaversion.LATEST_VERSION)
+		err = Migrate(context.Background(), oldDashboard, schemaversion.LATEST_VERSION)
 		require.Error(t, err, "migration should fail")
 
 		// Both cases above execute the logging code in reportMigrationMetrics
@@ -319,4 +418,266 @@ func TestLogMessageStructure(t *testing.T) {
 		t.Log("✓ Error logging includes errorType and error fields")
 		t.Log("✓ Success logging uses Debug level, failure logging uses Error level")
 	})
+}
+
+func TestMigrateDevDashboards(t *testing.T) {
+	// Reset the migration singleton and use the dev dashboard datasource provider
+	// to match the frontend devDashboardDataSources configuration
+	ResetForTesting()
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.DevDashboardConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	Initialize(dsProvider, leProvider, DefaultCacheTTL)
+
+	runDevDashboardMigrationTests(t, schemaversion.LATEST_VERSION, DEV_DASHBOARDS_OUTPUT_DIR)
+}
+
+// runDevDashboardMigrationTests runs migration tests for dev dashboards with a unified approach (same as runMigrationTests)
+func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir string) {
+	// Find all JSON files in the dev-dashboards directory
+	jsonFiles, err := migrationtestutil.FindJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in dev-dashboards directory")
+
+	t.Logf("Found %d JSON files in dev-dashboards", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := migrationtestutil.GetRelativeOutputPath(jsonFile, DEV_DASHBOARDS_INPUT_DIR)
+
+		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
+		inputDash := loadDashboard(t, jsonFile)
+		inputVersion := getSchemaVersion(t, inputDash)
+
+		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
+		t.Run(testName, func(t *testing.T) {
+			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
+		})
+	}
+}
+
+func TestMigrateWithCache(t *testing.T) {
+	// Reset the migration singleton before each test
+	ResetForTesting()
+	datasources := []schemaversion.DataSourceInfo{
+		{UID: "ds-uid-1", Type: "prometheus", Name: "Prometheus", Default: true, APIVersion: "v1"},
+		{UID: "ds-uid-2", Type: "loki", Name: "Loki", Default: false, APIVersion: "v1"},
+		{UID: "ds-uid-3", Type: "prometheus", Name: "Prometheus 2", Default: false, APIVersion: "v1"},
+	}
+
+	// Create a dashboard at schema version 32 for V33 and V36 migration with datasource references
+	dashboard1 := map[string]interface{}{
+		"schemaVersion": 32,
+		"title":         "Test Dashboard 1",
+		"panels": []interface{}{
+			map[string]interface{}{
+				"id":   1,
+				"type": "timeseries",
+				// String datasource that V33 will migrate to object reference
+				"datasource": "Prometheus",
+				"targets": []interface{}{
+					map[string]interface{}{
+						"refId":      "A",
+						"datasource": "Loki",
+					},
+				},
+			},
+		},
+	}
+
+	// Create a dashboard at schema version 35 for testing V36 migration with datasource references in annotations
+	dashboard2 := map[string]interface{}{
+		"schemaVersion": 35,
+		"title":         "Test Dashboard 2",
+		"annotations": map[string]interface{}{
+			"list": []interface{}{
+				map[string]interface{}{
+					"name":       "Test Annotation",
+					"datasource": "Prometheus 2", // String reference that V36 should convert
+					"enable":     true,
+				},
+			},
+		},
+	}
+
+	t.Run("with datasources", func(t *testing.T) {
+		ResetForTesting()
+		dsProvider := newCountingProvider(datasources)
+		leProvider := newCountingLibraryProvider(nil)
+		// Initialize the migration system with our counting providers
+		Initialize(dsProvider, leProvider, DefaultCacheTTL)
+		// Verify initial call count is zero
+		assert.Equal(t, dsProvider.GetCallCount(), int64(0))
+		// Create a context with namespace (required for caching)
+		ctx := request.WithNamespace(context.Background(), "default")
+
+		// First migration - should invoke the provider once to build the cache
+		dash1 := deepCopyDashboard(dashboard1)
+		err := Migrate(ctx, dash1, schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), dsProvider.GetCallCount())
+
+		// Verify datasource conversion from string to object reference
+		panels := dash1["panels"].([]interface{})
+		panel := panels[0].(map[string]interface{})
+		panelDS, ok := panel["datasource"].(map[string]interface{})
+		require.True(t, ok, "panel datasource should be converted to object")
+		assert.Equal(t, "ds-uid-1", panelDS["uid"])
+		assert.Equal(t, "prometheus", panelDS["type"])
+
+		// Verify target datasource conversion
+		targets := panel["targets"].([]interface{})
+		target := targets[0].(map[string]interface{})
+		targetDS, ok := target["datasource"].(map[string]interface{})
+		require.True(t, ok, "target datasource should be converted to object")
+		assert.Equal(t, "ds-uid-2", targetDS["uid"])
+		assert.Equal(t, "loki", targetDS["type"])
+
+		// Migration with V35 dashboard - should use the cached index from first migration
+		dash2 := deepCopyDashboard(dashboard2)
+		err = Migrate(ctx, dash2, schemaversion.LATEST_VERSION)
+		require.NoError(t, err, "second migration should succeed")
+		assert.Equal(t, int64(1), dsProvider.GetCallCount())
+
+		// Verify the annotation datasource was converted to object reference
+		annotations := dash2["annotations"].(map[string]interface{})
+		list := annotations["list"].([]interface{})
+		var testAnnotation map[string]interface{}
+		for _, a := range list {
+			ann := a.(map[string]interface{})
+			if ann["name"] == "Test Annotation" {
+				testAnnotation = ann
+				break
+			}
+		}
+		require.NotNil(t, testAnnotation, "Test Annotation should exist")
+		annotationDS, ok := testAnnotation["datasource"].(map[string]interface{})
+		require.True(t, ok, "annotation datasource should be converted to object")
+		assert.Equal(t, "ds-uid-3", annotationDS["uid"])
+		assert.Equal(t, "prometheus", annotationDS["type"])
+	})
+
+	// tests that cache isolates data per namespace
+	t.Run("with multiple orgs", func(t *testing.T) {
+		// Reset the migration singleton
+		ResetForTesting()
+		dsProvider := newCountingProvider(datasources)
+		leProvider := newCountingLibraryProvider(nil)
+		Initialize(dsProvider, leProvider, DefaultCacheTTL)
+		// Create contexts for different orgs with proper namespace format (org-ID)
+		ctx1 := request.WithNamespace(context.Background(), "default")  // org 1
+		ctx2 := request.WithNamespace(context.Background(), "stacks-2") // stack 2
+
+		// Migrate for org 1
+		err := Migrate(ctx1, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg1 := dsProvider.GetCallCount()
+
+		// Migrate for org 2 - should build separate cache
+		err = Migrate(ctx2, deepCopyDashboard(dashboard2), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg2 := dsProvider.GetCallCount()
+
+		assert.Greater(t, callsAfterOrg2, callsAfterOrg1,
+			"org 2 migration should have called provider (separate cache)")
+
+		// Migrate again for org 1 - should use cache
+		err = Migrate(ctx1, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg1Again := dsProvider.GetCallCount()
+		assert.Equal(t, callsAfterOrg2, callsAfterOrg1Again,
+			"second org 1 migration should use cache")
+
+		// Migrate again for org 2 - should use cache
+		err = Migrate(ctx2, deepCopyDashboard(dashboard1), schemaversion.LATEST_VERSION)
+		require.NoError(t, err)
+		callsAfterOrg2Again := dsProvider.GetCallCount()
+		assert.Equal(t, callsAfterOrg2, callsAfterOrg2Again,
+			"second org 2 migration should use cache")
+	})
+}
+
+// countingProvider wraps a datasource provider and counts calls to Index()
+type countingProvider struct {
+	datasources []schemaversion.DataSourceInfo
+	callCount   atomic.Int64
+}
+
+func newCountingProvider(datasources []schemaversion.DataSourceInfo) *countingProvider {
+	return &countingProvider{
+		datasources: datasources,
+	}
+}
+
+func (p *countingProvider) Index(_ context.Context) *schemaversion.DatasourceIndex {
+	p.callCount.Add(1)
+	return schemaversion.NewDatasourceIndex(p.datasources)
+}
+
+func (p *countingProvider) GetCallCount() int64 {
+	return p.callCount.Load()
+}
+
+// countingLibraryProvider wraps a library element provider and counts calls
+type countingLibraryProvider struct {
+	elements  []schemaversion.LibraryElementInfo
+	callCount atomic.Int64
+}
+
+func newCountingLibraryProvider(elements []schemaversion.LibraryElementInfo) *countingLibraryProvider {
+	return &countingLibraryProvider{
+		elements: elements,
+	}
+}
+
+func (p *countingLibraryProvider) GetLibraryElementInfo(_ context.Context) []schemaversion.LibraryElementInfo {
+	p.callCount.Add(1)
+	return p.elements
+}
+
+func (p *countingLibraryProvider) GetCallCount() int64 {
+	return p.callCount.Load()
+}
+
+// deepCopyDashboard creates a deep copy of a dashboard map
+func deepCopyDashboard(dash map[string]interface{}) map[string]interface{} {
+	cpy := make(map[string]interface{})
+	for k, v := range dash {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[k] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[k] = deepCopyMapForCache(val)
+		default:
+			cpy[k] = v
+		}
+	}
+	return cpy
+}
+
+func deepCopySlice(s []interface{}) []interface{} {
+	cpy := make([]interface{}, len(s))
+	for i, v := range s {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[i] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[i] = deepCopyMapForCache(val)
+		default:
+			cpy[i] = v
+		}
+	}
+	return cpy
+}
+
+func deepCopyMapForCache(m map[string]interface{}) map[string]interface{} {
+	cpy := make(map[string]interface{})
+	for k, v := range m {
+		switch val := v.(type) {
+		case []interface{}:
+			cpy[k] = deepCopySlice(val)
+		case map[string]interface{}:
+			cpy[k] = deepCopyMapForCache(val)
+		default:
+			cpy[k] = v
+		}
+	}
+	return cpy
 }

@@ -1,9 +1,10 @@
 import { HttpResponse, http } from 'msw';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
@@ -20,9 +21,9 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [PROVENANCE_ANNOTATION]: PROVENANCE_NONE,
+          [K8sAnnotations.Provenance]: PROVENANCE_NONE,
         },
-        name: TIME_INTERVAL_UID_HAPPY_PATH,
+        name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
         uid: TIME_INTERVAL_UID_HAPPY_PATH,
         namespace: 'default',
         resourceVersion: 'e0270bfced786660',
@@ -32,9 +33,9 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [PROVENANCE_ANNOTATION]: 'file',
+          [K8sAnnotations.Provenance]: 'file',
         },
-        name: TIME_INTERVAL_UID_FILE_PROVISIONED,
+        name: base64UrlEncode(TIME_INTERVAL_NAME_FILE_PROVISIONED),
         uid: TIME_INTERVAL_UID_FILE_PROVISIONED,
         namespace: 'default',
         resourceVersion: 'a76d2fcc6731aa0c',
@@ -65,11 +66,11 @@ export const listNamespacedTimeIntervalHandler = () =>
         );
       }
 
-      // Rudimentary filter support for `spec.name`
+      // Rudimentary filter support for `metadata.name`
       const url = new URL(request.url);
       const fieldSelector = url.searchParams.get('fieldSelector');
 
-      if (fieldSelector && fieldSelector.includes('spec.name')) {
+      if (fieldSelector && fieldSelector.includes('metadata.name')) {
         const filteredItems = filterBySelector(allTimeIntervals.items, fieldSelector);
 
         return HttpResponse.json({ items: filteredItems });

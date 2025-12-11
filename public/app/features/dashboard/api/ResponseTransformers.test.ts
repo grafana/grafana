@@ -51,6 +51,7 @@ jest.mock('@grafana/runtime', () => ({
         },
         isDefault: true,
         apiVersion: 'v2',
+        type: 'prometheus',
       },
       '-- Grafana --': {
         uid: 'grafana',
@@ -62,6 +63,7 @@ jest.mock('@grafana/runtime', () => ({
           type: 'datasource',
         },
         isDefault: false,
+        type: 'datasource',
       },
     },
 
@@ -74,7 +76,7 @@ describe('ResponseTransformers', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
         apiVersion: 'v2',
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -83,7 +85,7 @@ describe('ResponseTransformers', () => {
   describe('getDefaultDataSourceRef', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDataSourceRef()).toEqual({
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -139,6 +141,19 @@ describe('ResponseTransformers', () => {
             icon: 'external link',
             type: 'link',
             tooltip: 'Link 1 Tooltip',
+          },
+          {
+            title: 'Link 2',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag3', 'tag4'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 2 Tooltip',
+            placement: 'inControlsMenu',
           },
         ],
         annotations: {
@@ -309,6 +324,31 @@ describe('ResponseTransformers', () => {
               type: 'query',
               query: { refId: 'A', query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)' },
             },
+            {
+              type: 'switch',
+              name: 'var9',
+              label: 'Switch variable',
+              description: 'Switch variable description',
+              skipUrlSync: false,
+              hide: 0,
+              current: {
+                value: 'true',
+                text: 'true',
+              },
+              options: [
+                {
+                  selected: true,
+                  text: 'true',
+                  value: 'true',
+                },
+                {
+                  selected: false,
+                  text: 'false',
+                  value: 'false',
+                },
+              ],
+              query: '',
+            },
           ],
         },
         panels: [
@@ -320,7 +360,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  uid: 'datasource1',
+                  type: 'prometheus',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -443,10 +486,11 @@ describe('ResponseTransformers', () => {
           description: '',
           id: 1,
           links: [],
+          transparent: false,
           vizConfig: {
             kind: 'VizConfig',
             group: 'timeseries',
-            version: undefined,
+            version: '',
             spec: {
               fieldConfig: {
                 defaults: {},
@@ -478,15 +522,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: {
-                cacheTimeout: undefined,
-                hideTimeOverride: undefined,
-                interval: undefined,
-                maxDataPoints: undefined,
-                queryCachingTTL: undefined,
-                timeFrom: undefined,
-                timeShift: undefined,
-              },
+              queryOptions: {},
               transformations: [],
             },
           },
@@ -525,6 +561,7 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
       validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
       validateVariablesV1ToV2(spec.variables[8], dashboardV1.templating?.list?.[8]);
+      validateVariablesV1ToV2(spec.variables[9], dashboardV1.templating?.list?.[9]);
     });
   });
 
@@ -582,7 +619,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -627,7 +667,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -656,7 +699,10 @@ describe('ResponseTransformers', () => {
                 targets: [
                   {
                     refId: 'A',
-                    datasource: 'datasource1',
+                    datasource: {
+                      type: 'prometheus',
+                      uid: 'datasource1',
+                    },
                     expr: 'test-query',
                     hide: false,
                   },
@@ -853,6 +899,19 @@ describe('ResponseTransformers', () => {
               type: 'link',
               tooltip: 'Link 1 Tooltip',
             },
+            {
+              title: 'Link 2',
+              url: 'https://grafana.com',
+              asDropdown: false,
+              targetBlank: true,
+              includeVars: true,
+              keepTime: true,
+              tags: ['tag3', 'tag4'],
+              icon: 'external link',
+              type: 'link',
+              tooltip: 'Link 2 Tooltip',
+              placement: 'inControlsMenu',
+            },
           ],
           annotations: handyTestingSchema.annotations,
           variables: handyTestingSchema.variables,
@@ -923,6 +982,7 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(dashboardV2.spec.variables[5], dashboard.templating?.list?.[5]);
       validateVariablesV1ToV2(dashboardV2.spec.variables[6], dashboard.templating?.list?.[6]);
       validateVariablesV1ToV2(dashboardV2.spec.variables[7], dashboard.templating?.list?.[7]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[8], dashboard.templating?.list?.[8]);
       // annotations
       validateAnnotation(dashboard.annotations!.list![0], dashboardV2.spec.annotations[0]);
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
@@ -968,9 +1028,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');
@@ -996,9 +1059,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');
@@ -1017,7 +1083,7 @@ describe('ResponseTransformers', () => {
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
     expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }
@@ -1158,6 +1224,24 @@ describe('ResponseTransformers', () => {
       expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
       expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
+    }
+
+    if (v2.kind === 'SwitchVariable') {
+      // V1 switch variables have options array with exactly 2 options
+      // First option is enabledValue, second is disabledValue
+      const options = v1.options ?? [];
+      const enabledValueRaw = options[0]?.value ?? 'true';
+      const disabledValueRaw = options[1]?.value ?? 'false';
+      const enabledValue = Array.isArray(enabledValueRaw) ? enabledValueRaw[0] : enabledValueRaw;
+      const disabledValue = Array.isArray(disabledValueRaw) ? disabledValueRaw[0] : disabledValueRaw;
+
+      // Current value should be a string (not array)
+      const currentValueRaw = v1.current?.value ?? disabledValue;
+      const currentValue = Array.isArray(currentValueRaw) ? currentValueRaw[0] : currentValueRaw;
+
+      expect(v2.spec.current).toBe(currentValue);
+      expect(v2.spec.enabledValue).toBe(enabledValue);
+      expect(v2.spec.disabledValue).toBe(disabledValue);
     }
   }
 });

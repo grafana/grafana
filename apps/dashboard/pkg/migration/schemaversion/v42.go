@@ -77,7 +77,7 @@ func migrateHideFromForPanel(panel map[string]interface{}) {
 						}
 
 						// Check if this is a custom.hideFrom property
-						if id, ok := property["id"].(string); ok && id == "custom.hideFrom" {
+						if id := GetStringValue(property, "id"); id == "custom.hideFrom" {
 							if value, ok := property["value"].(map[string]interface{}); ok {
 								// If viz is true, also set tooltip to true
 								if GetBoolValue(value, "viz") {

@@ -80,7 +80,8 @@ export class UnifiedDashboardAPI
 
     return {
       ...v2Response,
-      items: [...filteredV1Items, ...filteredV2Items],
+      // Make sure we display only valid resources
+      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
     };
   }
 

@@ -2,6 +2,8 @@ package tempo
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,7 +67,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())
-			return nil, err
+			return nil, backend.DownstreamErrorf("error reading settings: %w", err)
 		}
 
 		opts.ForwardHTTPHeaders = true
@@ -110,7 +112,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			res, err = s.getTrace(ctx, req.PluginContext, q)
 			if err != nil {
 				ctxLogger.Error("Error processing TraceId query", "error", err)
-				return response, err
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
 			}
 
 		case string(dataquery.TempoQueryTypeTraceqlSearch):
@@ -119,11 +122,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
 			if err != nil {
 				ctxLogger.Error("Error processing TraceQL query", "error", err)
-				return response, err
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
 			}
 
 		default:
-			return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", q.QueryType, q.RefID)
+			return nil, backend.DownstreamErrorf("unsupported query type: '%s' for query with refID '%s'", q.QueryType, q.RefID)
 		}
 
 		if res != nil {
@@ -154,6 +158,112 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return s.resourceHandler.CallResource(ctx, req, sender)
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	var streamingEnabled bool
+	var jsonData map[string]interface{}
+
+	pluginCtx := backend.PluginConfigFromContext(ctx)
+	dsInfo, err := s.getDSInfo(ctx, pluginCtx)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	if pluginCtx.DataSourceInstanceSettings != nil && pluginCtx.DataSourceInstanceSettings.JSONData != nil {
+		if err := json.Unmarshal(pluginCtx.DataSourceInstanceSettings.JSONData, &jsonData); err == nil {
+			if streaming, ok := jsonData["streamingEnabled"].(map[string]interface{}); ok {
+				if searchEnabled, ok := streaming["search"].(bool); ok && searchEnabled {
+					streamingEnabled = true
+				}
+			}
+		}
+	}
+
+	if streamingEnabled {
+		if dsInfo.StreamingClient == nil {
+			return &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "Streaming client is not available",
+			}, nil
+		}
+
+		currentTime := time.Now()
+		queryStartTime := currentTime.Add(-15 * time.Minute)
+		searchRequest := &tempopb.SearchRequest{
+			Query: "{}",
+			Start: uint32(queryStartTime.Unix()),
+			End:   uint32(currentTime.Unix()),
+			Limit: 1,
+		}
+
+		streamingConnection, err := dsInfo.StreamingClient.Search(ctx, searchRequest)
+		if err != nil {
+			return &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: err.Error(),
+			}, nil
+		}
+
+		_, err = streamingConnection.Recv()
+		if err != nil && !errors.Is(err, io.EOF) {
+			return &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: err.Error(),
+			}, nil
+		}
+
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "Data source is working. Streaming test succeeded.",
+		}, nil
+	}
+
+	parsedURL, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	parsedURL.Path = path.Join(parsedURL.Path, "api/echo")
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", parsedURL.String(), nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	resp, err := dsInfo.HTTPClient.Do(httpReq)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.logger.Warn("Failed to close response body", "error", err)
+		}
+	}()
+
+	if resp.StatusCode != 200 {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Tempo echo endpoint returned status %d", resp.StatusCode),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
 }
 
 // handleTags handles requests to /tags resource

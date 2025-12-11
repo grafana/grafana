@@ -187,6 +187,13 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
+		return nil
+	}
+
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
@@ -226,7 +233,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	}
 
 	// Reject non-provisioned users if configured to do so
-	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+	if effectiveReject {
 		log.Error("Failed to authenticate user, user is not provisioned")
 		return errUserNotProvisioned.Errorf("user is not provisioned")
 	}
@@ -431,6 +438,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 			AuthId:     identity.AuthID,
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			setAuthInfoCmd.OAuthToken = identity.OAuthToken
 		}
@@ -443,6 +451,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		AuthModule: identity.AuthenticatedBy,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
@@ -506,7 +515,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
 		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})

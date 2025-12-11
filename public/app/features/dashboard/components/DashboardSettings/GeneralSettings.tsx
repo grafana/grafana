@@ -1,4 +1,4 @@
-import { useCallback, ChangeEvent, useState } from 'react';
+import { useCallback, ChangeEvent, useState, type JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';

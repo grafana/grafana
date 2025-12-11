@@ -17,6 +17,16 @@ type LibraryElementService struct {
 	idCounter int64
 }
 
+// DeleteLibraryElement implements libraryelements.Service.
+func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
+	panic("unimplemented")
+}
+
+// PatchLibraryElement implements libraryelements.Service.
+func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+	panic("unimplemented")
+}
+
 var _ libraryelements.Service = (*LibraryElementService)(nil)
 
 func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
@@ -66,6 +76,11 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 	l.elements[createUID] = dto
 
 	return dto, nil
+}
+
+// PatchElement implements libraryelements.Service.
+func (l *LibraryElementService) PatchElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+	panic("unimplemented")
 }
 
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {

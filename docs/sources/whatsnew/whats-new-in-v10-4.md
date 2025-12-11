@@ -219,7 +219,7 @@ We are working on adding complete support for configuring all other supported OA
 
 {{< youtube id="xXW2eRTbjDY" >}}
 
-[Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/)
+[Documentation](https://grafana.com/docs/grafana/next/setup-grafana/configure-access/configure-authentication/)
 
 ## Data sources
 

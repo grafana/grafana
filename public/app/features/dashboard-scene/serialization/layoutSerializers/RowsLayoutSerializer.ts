@@ -17,11 +17,28 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager): Dashboard
 
 export function serializeRow(row: RowItem): RowsLayoutRowKind {
   const layout = row.state.layout.serialize();
+
+  // Normalize Y coordinates to be relative within the row
+  // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
+  if (layout.kind === 'GridLayout' && layout.spec.items.length > 0) {
+    // Find the minimum Y coordinate among all items in this row
+    const minY = Math.min(...layout.spec.items.map((item) => item.spec.y));
+
+    // Subtract minY from each item's Y to make coordinates relative to the row start
+    layout.spec.items = layout.spec.items.map((item) => ({
+      ...item,
+      spec: {
+        ...item.spec,
+        y: item.spec.y - minY,
+      },
+    }));
+  }
+
   const rowKind: RowsLayoutRowKind = {
     kind: 'RowsLayoutRow',
     spec: {
       title: row.state.title,
-      collapse: row.state.collapse,
+      collapse: row.state.collapse ?? false,
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,

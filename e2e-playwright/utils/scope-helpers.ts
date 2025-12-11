@@ -19,6 +19,7 @@ export type TestScope = {
   type?: string;
   category?: string;
   addLinks?: boolean;
+  redirectPath?: string;
 };
 
 type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
@@ -54,6 +55,9 @@ export async function scopeNodeChildrenRequest(
             ...((scope.addLinks || scope.children) && {
               linkType: 'scope',
               linkId: `scope-${scope.name}`,
+            }),
+            ...(scope.redirectPath && {
+              redirectPath: scope.redirectPath,
             }),
           },
         })),
@@ -124,7 +128,7 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
 export async function selectScope(page: Page, scopeName: string, selectedScope?: TestScope) {
   const click = async () => {
     const element = page.locator(
-      `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"]`
+      `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"], [data-testid="scopes-tree-${scopeName}-link"]`
     );
     await element.scrollIntoViewIfNeeded();
     await element.click({ force: true });
@@ -152,13 +156,18 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     return;
   }
 
-  const url: string =
+  const dashboardBindingsUrl: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
+    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+
+  const scopeNavigationsUrl: string =
+    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
   const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
 
-  await page.route(url, async (route) => {
+  // Mock scope_dashboard_bindings endpoint
+  await page.route(dashboardBindingsUrl, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -211,7 +220,52 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_dashboard_bindings`));
+  // Mock scope_navigations endpoint
+  await page.route(scopeNavigationsUrl, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: scopes.flatMap((scope) => {
+          const navigations: Array<{
+            kind: string;
+            apiVersion: string;
+            metadata: { name: string; resourceVersion: string; creationTimestamp: string };
+            spec: { url: string; scope: string };
+            status: { title: string };
+          }> = [];
+
+          // Create a scope navigation if dashboardUid is provided
+          if (scope.dashboardUid && scope.addLinks) {
+            navigations.push({
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: `scope-${scope.name}-nav`,
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                url: `/d/${scope.dashboardUid}`,
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                title: scope.dashboardTitle ?? scope.title,
+              },
+            });
+          }
+
+          return navigations;
+        }),
+      }),
+    });
+  });
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/find/scope_dashboard_bindings`) || response.url().includes(`/find/scope_navigations`)
+  );
   const scopeRequestPromises: Array<Promise<Response>> = [];
 
   for (const scope of scopes) {
@@ -250,9 +304,9 @@ export async function getScopeTreeName(page: Page, nth: number): Promise<string>
 }
 
 export async function getScopeLeafName(page: Page, nth: number): Promise<string> {
-  const locator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
+  const locator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio|link)/).nth(nth);
   const fullTestId = await locator.getAttribute('data-testid');
-  const scopeName = fullTestId?.replace(/^scopes-tree-/, '').replace(/-(checkbox|radio)/, '');
+  const scopeName = fullTestId?.replace(/^scopes-tree-/, '').replace(/-(checkbox|radio|link)/, '');
 
   if (!scopeName) {
     throw new Error('There are no scopes in the selector');
@@ -262,10 +316,11 @@ export async function getScopeLeafName(page: Page, nth: number): Promise<string>
 }
 
 export async function getScopeLeafTitle(page: Page, nth: number): Promise<string> {
-  const leafLocator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
+  // Get the nth selectable tree item (checkbox, radio, or link)
+  const leafLocator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio|link)/).nth(nth);
   // Find the closest ancestor element that has the main tree item test id
   const titleLocator = leafLocator.locator(
-    'xpath=ancestor::*[@data-testid][starts-with(@data-testid, "scopes-tree-") and not(contains(@data-testid, "-checkbox")) and not(contains(@data-testid, "-radio")) and not(contains(@data-testid, "-expand"))]'
+    'xpath=ancestor::*[@data-testid][starts-with(@data-testid, "scopes-tree-") and not(contains(@data-testid, "-checkbox")) and not(contains(@data-testid, "-radio")) and not(contains(@data-testid, "-link")) and not(contains(@data-testid, "-expand"))]'
   );
   const scopeTitle = await titleLocator.textContent();
   if (!scopeTitle) {

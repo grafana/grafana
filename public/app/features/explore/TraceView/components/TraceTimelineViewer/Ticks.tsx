@@ -21,8 +21,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import TNil from '../types/TNil';
-
-import { formatDuration } from './utils';
+import { formatDuration } from '../utils/date';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   Ticks: css({

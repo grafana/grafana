@@ -104,7 +104,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	return obj, err
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -113,6 +113,11 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.V
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
 	}
 
 	p, ok := obj.(*model.RecordingRule)
@@ -157,11 +162,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, err
 	}
 
-	current, ok := old.(*model.RecordingRule)
-	if !ok {
-		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
-	}
-
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return old, false, err
@@ -179,10 +179,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	// FIXME(@rwwiv): this shouldn't be necessary
 	if new.Name != "" {
 		new.UID = types.UID(new.Name)
-	}
-	// TODO: move to validation function
-	if current.Labels[model.GroupLabelKey] == "" && new.Labels[model.GroupLabelKey] != "" {
-		return nil, false, k8serrors.NewBadRequest("cannot set group label when updating un-grouped recording rule")
 	}
 
 	model, provenance, err := convertToDomainModel(info.OrgID, new)

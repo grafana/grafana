@@ -23,27 +23,31 @@ import {
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
+  getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
+import { DashboardDTO, DashboardDataDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { LoadDashboardOptions, shouldForceV2API } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+// DashboardPanelProfilingBehavior removed - now using composed SceneRenderProfiler
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -51,6 +55,7 @@ import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -71,11 +76,11 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+export function transformSaveModelToScene(rsp: DashboardDTO, options?: LoadDashboardOptions): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const apiVersion = config.featureToggles.kubernetesDashboards
@@ -240,7 +245,9 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
     layout: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         // If the row is collapsed it will have panels within the row model.
-        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+        children: (
+          row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? []
+        ).concat(panels),
       }),
     }),
     repeatByVariable: row.repeat,
@@ -248,12 +255,17 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  options?: LoadDashboardOptions
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const isReport = options?.route === DashboardRoutes.Report;
+  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -270,6 +282,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         name: a.name,
         isEnabled: Boolean(a.enable),
         isHidden: Boolean(a.hide),
+        placement: a.placement,
       });
     });
   }
@@ -296,22 +309,24 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
+
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      enableProfiling,
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onInteractionComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      enableInteractionTracking: enableProfiling,
+      onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const behaviorList: SceneObjectState['$behaviors'] = [
@@ -330,9 +345,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     }),
   ];
 
+  if (enableProfiling) {
+    // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
+    behaviorList.push(dashboardAnalyticsInitializer);
+  }
+  // Will be enabled in the dashboard creation below
+
   let body: DashboardLayoutManager;
 
-  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
+  if (serializerVersion === 'v2' && oldModel.panels.some((p) => p.type === 'row')) {
     body = createRowsFromPanels(oldModel.panels);
   } else {
     body = new DefaultGridLayoutManager({
@@ -385,6 +406,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     serializerVersion
   );
 
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, uid);
+
   return dashboardScene;
 }
 
@@ -424,12 +448,15 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (panel.libraryPanel) {
@@ -446,11 +473,12 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     });
   }
 
-  if (panel.timeFrom || panel.timeShift) {
+  if (panel.timeFrom || panel.timeShift || panel.timeCompare) {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: panel.timeFrom,
       timeShift: panel.timeShift,
       hideTimeOverride: panel.hideTimeOverride,
+      compareWith: panel.timeCompare,
     });
   }
 

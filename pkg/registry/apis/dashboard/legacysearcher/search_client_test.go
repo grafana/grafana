@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestDashboardSearchClient_Search(t *testing.T) {
@@ -130,7 +130,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
+					Field: resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
 					Desc:  false,
 				},
 			},
@@ -195,7 +195,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+					Field: builders.DASHBOARD_ERRORS_LAST_30_DAYS,
 					Desc:  true,
 				},
 			},
@@ -454,7 +454,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
 		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{
 			{
-				Dashboard:   dashboards.Dashboard{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+				UID:         "uid",
+				Title:       "Test Dashboard",
+				FolderUID:   "folder1",
 				ExternalID:  "test",
 				Provisioner: string(utils.ManagerKindClassicFP), // nolint:staticcheck
 			},
@@ -558,7 +560,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
-					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL,
+					Field: resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_VIEWS_TOTAL,
 				},
 			},
 		}
@@ -579,12 +581,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
 		}, nil).Once()
 
+		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"test-library-panel"},
 					},
@@ -626,7 +633,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"panel1", "panel2"},
 					},
@@ -637,6 +644,54 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "only one library panel uid is supported")
 		require.Nil(t, resp)
+	})
+
+	t.Run("Should reject library panel query when combined with explicit dashboard names", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"test-library-panel"},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: "=",
+						Values:   []string{"dashboard-uid"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "libraryPanel query must not include explicit names")
+		require.Nil(t, resp)
+		// Note: mockStore should NOT be called since validation happens before any store calls
+	})
+
+	t.Run("Should return empty results when library panel has no connected dashboards", func(t *testing.T) {
+		mockStore.On("GetDashboardsByLibraryPanelUID", mock.Anything, "unused-library-panel", int64(2)).Return([]*dashboards.DashboardRef{}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"unused-library-panel"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(0), resp.TotalHits)
+		require.Empty(t, resp.Results.Rows)
+		mockStore.AssertExpectations(t)
 	})
 }
 
@@ -658,28 +713,28 @@ func TestParseSortName(t *testing.T) {
 		{
 			name:      "viewed-recently with desc suffix",
 			sortName:  "viewed-recently-desc",
-			wantField: unisearch.DASHBOARD_VIEWS_LAST_30_DAYS,
+			wantField: builders.DASHBOARD_VIEWS_LAST_30_DAYS,
 			wantDesc:  true,
 			wantErr:   false,
 		},
 		{
 			name:      "defaults to desc",
 			sortName:  "viewed",
-			wantField: unisearch.DASHBOARD_VIEWS_TOTAL,
+			wantField: builders.DASHBOARD_VIEWS_TOTAL,
 			wantDesc:  true,
 			wantErr:   false,
 		},
 		{
 			name:      "errors-recentlyy with asc suffix",
 			sortName:  "errors-recently-asc",
-			wantField: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+			wantField: builders.DASHBOARD_ERRORS_LAST_30_DAYS,
 			wantDesc:  false,
 			wantErr:   false,
 		},
 		{
 			name:      "errors - defaults to desc too",
 			sortName:  "errors",
-			wantField: unisearch.DASHBOARD_ERRORS_TOTAL,
+			wantField: builders.DASHBOARD_ERRORS_TOTAL,
 			wantDesc:  true,
 			wantErr:   false,
 		},

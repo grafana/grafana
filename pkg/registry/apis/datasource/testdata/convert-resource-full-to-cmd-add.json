@@ -1,0 +1,22 @@
+{
+  "name": "Hello testdata",
+  "type": "grafana-testdata-datasource",
+  "access": "proxy",
+  "url": "http://something/",
+  "user": "",
+  "database": "db",
+  "basicAuth": true,
+  "basicAuthUser": "xxx",
+  "withCredentials": true,
+  "isDefault": true,
+  "jsonData": {
+    "aaa": "bbb",
+    "bbb": true,
+    "ccc": 1.234
+  },
+  "secureJsonData": {
+    "extra": "",
+    "password": "XXXX"
+  },
+  "uid": "cejobd88i85j4d"
+}

@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
-import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
+import { RoutingTree, notificationsAPI } from '../../api/notifications/v0alpha1/notifications.api.gen';
 import { Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
 import { Route, RouteWithID } from '../types';
-import { RouteMatchResult, convertRoutingTreeToRoute, matchAlertInstancesToPolicyTree } from '../utils';
+import { RouteMatchResult, TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
 
 export type RouteMatch = {
   route: Route;
@@ -32,12 +32,11 @@ export type InstanceMatchResult = {
  * 2. Compute the inherited properties for each node in the tree
  * 3. Find routes within each tree that match the given set of labels
  *
- * @returns An object containing a `matchInstancesToPolicies` function that takes alert instances
+ * @returns An object containing a `matchInstancesToRoutingTrees` function that takes alert instances
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
-export function useMatchAlertInstancesToNotificationPolicies() {
-  // fetch the routing trees from the API
-  const { data, ...rest } = alertingAPI.endpoints.listRoutingTree.useQuery(
+export function useMatchInstancesToRouteTrees() {
+  const { data, ...rest } = notificationsAPI.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,
@@ -45,52 +44,52 @@ export function useMatchAlertInstancesToNotificationPolicies() {
     }
   );
 
-  const matchInstancesToPolicies = useCallback(
-    (instances: Label[][]): InstanceMatchResult[] => {
-      if (!data) {
-        return [];
-      }
-
-      // the routing trees are returned as an array of items because there can be several
-      const trees = data.items;
-
-      return instances.map<InstanceMatchResult>((labels) => {
-        // Collect all matched routes from all trees
-        const allMatchedRoutes: RouteMatch[] = [];
-
-        // Process each tree for this instance
-        trees.forEach((tree) => {
-          const treeName = tree.metadata.name ?? USER_DEFINED_TREE_NAME;
-          // We have to convert the RoutingTree structure to a Route structure to be able to use the matching functions
-          const rootRoute = convertRoutingTreeToRoute(tree);
-
-          // Match this single instance against the route tree
-          const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], rootRoute);
-
-          // Process each matched route from the tree
-          matchedPolicies.forEach((results, route) => {
-            // For each match result, create a RouteMatch object
-            results.forEach((matchDetails) => {
-              allMatchedRoutes.push({
-                route,
-                routeTree: {
-                  metadata: { name: treeName },
-                  expandedSpec: expandedTree,
-                },
-                matchDetails,
-              });
-            });
-          });
-        });
-
-        return {
-          labels,
-          matchedRoutes: allMatchedRoutes,
-        };
-      });
-    },
-    [data]
+  const memoizedFunction = useCallback(
+    (instances: Label[][]) => matchInstancesToRouteTrees(data?.items ?? [], instances),
+    [data?.items]
   );
 
-  return { matchInstancesToPolicies, ...rest };
+  return {
+    matchInstancesToRouteTrees: memoizedFunction,
+    ...rest,
+  };
+}
+
+/**
+ * This function will match a set of labels to multiple routing trees. Assumes a list of routing trees has already been fetched.
+ *
+ * Use "useMatchInstancesToRouteTrees" if you want the hook to automatically fetch the latest definition of routing trees.
+ */
+export function matchInstancesToRouteTrees(trees: RoutingTree[], instances: Label[][]): InstanceMatchResult[] {
+  // Process each tree and get matches for all instances
+  const treeMatches = trees.map<TreeMatch>((tree) => {
+    const rootRoute = convertRoutingTreeToRoute(tree);
+    return matchInstancesToRoute(rootRoute, instances);
+  });
+
+  // Group results by instance
+  return instances.map<InstanceMatchResult>((labels) => {
+    // Collect matches for this specific instance from all trees
+    const allMatchedRoutes = treeMatches.flatMap(({ expandedTree, matchedPolicies }, index) => {
+      const tree = trees[index];
+
+      return Array.from(matchedPolicies.entries()).flatMap(([route, results]) =>
+        results
+          .filter((matchDetails) => matchDetails.labels === labels)
+          .map((matchDetails) => ({
+            route,
+            routeTree: {
+              metadata: { name: tree.metadata.name ?? USER_DEFINED_TREE_NAME },
+              expandedSpec: expandedTree,
+            },
+            matchDetails,
+          }))
+      );
+    });
+
+    return {
+      labels,
+      matchedRoutes: allMatchedRoutes,
+    };
+  });
 }

@@ -12,6 +12,8 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 }));
 
 const mockPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -28,6 +30,8 @@ const mockPlaylist: Playlist = {
 };
 
 const mockEmptyPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   spec: {
     title: 'A test playlist',
     interval: '10m',
@@ -102,6 +106,8 @@ describe('PlaylistForm', () => {
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith({
+        apiVersion: 'playlist.grafana.app/v0alpha1',
+        kind: 'Playlist',
         spec: {
           title: 'A test playlist',
           interval: '10m',

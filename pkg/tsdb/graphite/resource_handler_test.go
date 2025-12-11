@@ -735,21 +735,41 @@ func TestHandleFunctions(t *testing.T) {
 			responseBody:  `{"error": "internal error"}`,
 			statusCode:    500,
 			expectError:   true,
-			errorContains: "version request failed",
+			errorContains: "functions request failed",
 		},
 		{
 			name:          "functions request not found",
 			responseBody:  `{"error": "not found"}`,
 			statusCode:    404,
 			expectError:   true,
-			errorContains: "version request failed",
+			errorContains: "functions request failed",
 		},
 		{
 			name:          "network error",
 			responseBody:  "",
 			statusCode:    0,
 			expectError:   true,
-			errorContains: "version request failed",
+			errorContains: "functions request failed",
+		},
+		{
+			name: "html response",
+			responseBody: `<html>
+			<head>
+				<title>Graphite Browser</title>
+			</head>
+					
+
+			<frameset rows="60,*" frameborder="1" border="1">
+			<frame src="/browser/header/" name="Header" id='header' scrolling="no" noresize="true" />
+			
+				<frame src="/composer/?" name="content" id="composerFrame"/>
+			
+			</frameset>
+			</html>
+			`,
+			statusCode:    200,
+			expectError:   true,
+			errorContains: "invalid functions response received from Graphite",
 		},
 	}
 

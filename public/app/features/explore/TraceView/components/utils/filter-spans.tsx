@@ -14,20 +14,173 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
+import { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
 
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import TNil from '../types/TNil';
-import { TraceSpan } from '../types/trace';
+import { TraceSpan, CriticalPathSection } from '../types/trace';
+
+/**
+ * Filter spans using adhoc filters.
+ * Returns filtered spans or undefined if no filters match.
+ */
+const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<SelectableValue<string>>) => {
+  // Remove empty filters
+  const validFilters = adhocFilters.filter((filter) => {
+    return filter.key && filter.key.trim() !== '' && filter.value && filter.value.trim() !== '';
+  });
+
+  if (validFilters.length === 0) {
+    return undefined;
+  }
+
+  return spans.filter((span: TraceSpan) => {
+    // All filters must match for the span to be included
+    return validFilters.every((filter) => {
+      const key = filter.key || '';
+      const operator = filter.operator || '=';
+      const value = filter.value || '';
+
+      // Special handling for _textSearch_
+      if (key === '_textSearch_') {
+        return matchTextSearch(value, span);
+      }
+
+      // Special handling for serviceName
+      if (key === 'serviceName') {
+        return matchField(span.process.serviceName, operator, value);
+      }
+
+      // Special handling for spanName (operationName)
+      if (key === 'spanName') {
+        return matchField(span.operationName, operator, value);
+      }
+
+      if (key === 'duration') {
+        return matchTimeField(span.duration, operator, value);
+      }
+
+      // Handle tag filters (same logic as getTagMatches)
+      const tagFilter: TraceSearchTag = {
+        id: '', // Not needed for matching
+        key,
+        operator,
+        value,
+      };
+
+      if (operator === '=' || operator === '!=') {
+        const matches = checkKeyValConditionForMatch(tagFilter, span);
+        return operator === '=' ? matches : !matches;
+      } else if (operator === '=~' || operator === '!~') {
+        const matches = checkKeyValConditionForRegex(tagFilter, span);
+        return operator === '=~' ? matches : !matches;
+      }
+
+      return false;
+    });
+  });
+};
+
+/**
+ * Match a field value against an operator and expected value.
+ */
+const matchField = (fieldValue: string, operator: string, expectedValue: string): boolean => {
+  if (operator === '=') {
+    return fieldValue === expectedValue;
+  } else if (operator === '!=') {
+    return fieldValue !== expectedValue;
+  } else if (operator === '=~') {
+    return fieldValue.includes(expectedValue);
+  } else if (operator === '!~') {
+    return !fieldValue.includes(expectedValue);
+  }
+  return false;
+};
+
+/**
+ * Match a field value against an operator and expected value.
+ */
+const matchTimeField = (fieldValue: number, operator: string, expectedValue: string): boolean => {
+  const timeFilter = convertTimeFilter(expectedValue);
+
+  if (!timeFilter) {
+    return false;
+  }
+
+  switch (operator) {
+    case '>':
+      return fieldValue > timeFilter;
+    case '<':
+      return fieldValue < timeFilter;
+    case '>=':
+      return fieldValue >= timeFilter;
+    case '<=':
+      return fieldValue <= timeFilter;
+    case '=':
+      return fieldValue === timeFilter;
+    default:
+      return false;
+  }
+};
+
+/**
+ * Match text search across all span fields.
+ */
+const matchTextSearch = (query: string, span: TraceSpan): boolean => {
+  const queryParts = query
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.toLowerCase());
+
+  const isTextInQuery = (text: string) => queryParts.some((queryPart) => text.toLowerCase().includes(queryPart));
+
+  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
+    kvs
+      ? kvs.some((kv) => {
+          return isTextInQuery(kv.key) || isTextInQuery(getStringValue(kv.value));
+        })
+      : false;
+
+  return (
+    isTextInQuery(span.operationName) ||
+    isTextInQuery(span.process.serviceName) ||
+    isTextInKeyValues(span.tags) ||
+    (span.kind && isTextInQuery(span.kind)) ||
+    (span.statusCode !== undefined && isTextInQuery(SpanStatusCode[span.statusCode])) ||
+    (span.statusMessage && isTextInQuery(span.statusMessage)) ||
+    (span.instrumentationLibraryName && isTextInQuery(span.instrumentationLibraryName)) ||
+    (span.instrumentationLibraryVersion && isTextInQuery(span.instrumentationLibraryVersion)) ||
+    (span.traceState && isTextInQuery(span.traceState)) ||
+    (span.logs !== null &&
+      span.logs.some((log) => (log.name && isTextInQuery(log.name)) || isTextInKeyValues(log.fields))) ||
+    isTextInKeyValues(span.process.tags) ||
+    queryParts.some((queryPart) => queryPart === span.spanID)
+  );
+};
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpans(searchProps: TraceSearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpans(
+  searchProps: TraceSearchProps,
+  spans: TraceSpan[] | TNil,
+  criticalPath?: CriticalPathSection[]
+) {
   if (!spans) {
     return undefined;
   }
 
   let filteredSpans = false;
+
+  // New adhoc filters approach
+  if (searchProps.adhocFilters && searchProps.adhocFilters.length > 0) {
+    const adhocMatches = getAdhocFilterMatches(spans, searchProps.adhocFilters);
+    if (adhocMatches) {
+      spans = adhocMatches;
+      filteredSpans = true;
+    }
+  }
+
+  // Legacy filters (kept for backward compatibility)
   if (searchProps.serviceName) {
     spans = getServiceNameMatches(spans, searchProps);
     filteredSpans = true;
@@ -52,6 +205,12 @@ export function filterSpans(searchProps: TraceSearchProps, spans: TraceSpan[] | 
       spans = queryMatches;
       filteredSpans = true;
     }
+  }
+
+  // Critical path filtering
+  if (searchProps.criticalPathOnly && criticalPath) {
+    spans = getCriticalPathMatches(spans, criticalPath);
+    filteredSpans = true;
   }
 
   return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
@@ -243,6 +402,12 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: TraceSearchProps) =
   return filteredSpans;
 };
 
+const getCriticalPathMatches = (spans: TraceSpan[], criticalPath: CriticalPathSection[]) => {
+  return spans.filter((span: TraceSpan) => {
+    return criticalPath.some((section) => section.spanId === span.spanID);
+  });
+};
+
 export const convertTimeFilter = (time: string) => {
   if (time.includes('ns')) {
     return parseFloat(time.split('ns')[0]) / 1000;
@@ -259,5 +424,5 @@ export const convertTimeFilter = (time: string) => {
   } else if (time.includes('h')) {
     return parseFloat(time.split('h')[0]) * 1000 * 1000 * 60 * 60;
   }
-  return undefined;
+  return parseFloat(time);
 };

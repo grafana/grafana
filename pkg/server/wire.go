@@ -70,6 +70,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -123,9 +124,11 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
@@ -179,6 +182,7 @@ import (
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -235,7 +239,9 @@ var wireBasicSet = wire.NewSet(
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
-	legacy.ProvideLegacyMigrator,
+	provisioning.ProvideStubProvisioningService,
+	legacy.ProvideMigratorDashboardAccessor,
+	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -250,6 +256,7 @@ var wireBasicSet = wire.NewSet(
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
+	wire.Bind(new(installsync.ServerLock), new(*serverlock.ServerLockService)),
 	annotationsimpl.ProvideCleanupService,
 	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
@@ -273,6 +280,7 @@ var wireBasicSet = wire.NewSet(
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
+	live.ProvideDashboardActivityChannel,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
@@ -401,6 +409,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
+	accesscontrol.ProvideFixedRolesLoader,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -428,6 +437,7 @@ var wireBasicSet = wire.NewSet(
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrationimpl.ProvideService,
+	caching.ProvideCachingServiceClient,
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
@@ -444,6 +454,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideGlobalDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretencryption.ProvideGlobalEncryptedValueStorage,
+	secretencryption.ProvideEncryptedValueMigrationExecutor,
 	secretsecurevalueservice.ProvideSecureValueService,
 	secretvalidator.ProvideKeeperValidator,
 	secretvalidator.ProvideSecureValueValidator,
@@ -459,6 +470,7 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

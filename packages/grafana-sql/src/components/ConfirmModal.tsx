@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 type ConfirmModalProps = {
@@ -33,6 +33,7 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
           </span>
         </div>
       }
+      ariaLabel={t('grafana-sql.components.confirm-modal.warning', 'Warning')}
       onDismiss={onCancel}
       isOpen={isOpen}
     >

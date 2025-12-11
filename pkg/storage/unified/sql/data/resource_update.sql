@@ -10,4 +10,5 @@ UPDATE {{ .Ident "resource" }}
         AND {{ .Ident "resource" }}  = {{ .Arg .WriteEvent.Key.Resource }}
         AND {{ .Ident "namespace" }} = {{ .Arg .WriteEvent.Key.Namespace }}
         AND {{ .Ident "name" }}      = {{ .Arg .WriteEvent.Key.Name }}
+        AND {{ .Ident "resource_version" }} = {{ .Arg .WriteEvent.PreviousRV }}
 ;

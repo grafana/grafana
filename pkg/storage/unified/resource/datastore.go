@@ -2,15 +2,16 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	gocache "github.com/patrickmn/go-cache"
 )
 
@@ -18,6 +19,8 @@ const (
 	dataSection = "unified/data"
 	// cache
 	groupResourcesCacheKey = "group-resources"
+	// batch operations
+	dataBatchSize = 50 // default batch size for BatchGet operations
 )
 
 // dataStore is a data store that uses a KV store to store data.
@@ -54,12 +57,6 @@ type GroupResource struct {
 	Resource string
 }
 
-var (
-	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
-	// and starts and ends with an alphanumeric character
-	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
-)
-
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
 }
@@ -69,42 +66,37 @@ func (k DataKey) Equals(other DataKey) bool {
 }
 
 func (k DataKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
 	if k.ResourceVersion <= 0 {
-		return fmt.Errorf("resource version must be positive")
+		return NewValidationError("resourceVersion", fmt.Sprintf("%d", k.ResourceVersion), ErrResourceVersionInvalid)
 	}
 	if k.Action == "" {
-		return fmt.Errorf("action is required")
+		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
 	// Validate naming conventions for all required fields
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
 
 	// Validate folder field if provided (optional field)
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return NewValidationError("folder", k.Folder, err[0])
+		}
 	}
 
 	// Validate action is one of the valid values
@@ -124,27 +116,21 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" && k.Name != "" {
-		return fmt.Errorf("name must be empty when namespace is empty")
+		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
+
 	return nil
 }
 
@@ -168,31 +154,22 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+		return errors.New(ErrNamespaceRequired)
 	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-
-	// Validate naming conventions
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
 
 	return nil
@@ -264,6 +241,49 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	return DataKey{}, ErrNotFound
 }
 
+// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
+// in a single atomic operation. Returns (latest, predecessor, error).
+// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
+func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	var latest, predecessor DataKey
+	count := 0
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    2, // Get latest and predecessor
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		parsedKey, err := ParseKey(k)
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		switch count {
+		case 0:
+			latest = parsedKey
+		case 1:
+			predecessor = parsedKey
+		}
+		count++
+	}
+	if count == 0 {
+		return DataKey{}, DataKey{}, ErrNotFound
+	}
+	if count == 1 {
+		return latest, DataKey{}, nil
+	}
+	return latest, predecessor, nil
+}
+
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
@@ -283,7 +303,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
+	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
 	for dataKey, err := range iter {
 		if err != nil {
 			return DataKey{}, err
@@ -293,32 +313,77 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	return DataKey{}, ErrNotFound
 }
 
+type ListRequestOptions struct {
+	// Key defines the range to query (Group/Resource/Namespace/Name prefix).
+	Key ListRequestKey
+	// ContinueNamespace is the namespace to continue from.
+	// Only used when Key.Namespace is empty (cross-namespace query).
+	ContinueNamespace string
+	// ContinueName is the name to continue from.
+	ContinueName    string
+	ResourceVersion int64
+}
+
+// Validate checks that the ListRequestOptions are valid.
+func (o ListRequestOptions) Validate() error {
+	if err := o.Key.Validate(); err != nil {
+		return fmt.Errorf("invalid list request key: %w", err)
+	}
+	// ContinueNamespace is only valid for cross-namespace queries
+	if o.ContinueNamespace != "" && o.Key.Namespace != "" {
+		return fmt.Errorf("continue namespace %q not allowed when request namespace is set to %q", o.ContinueNamespace, o.Key.Namespace)
+	}
+	return nil
+}
+
 // ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
 // Only returns keys for resources that are not deleted.
 func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
-	return d.ListResourceKeysAtRevision(ctx, key, 0)
+	return d.ListResourceKeysAtRevision(ctx, ListRequestOptions{
+		Key: key,
+	})
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
-func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[DataKey, error] {
-	if err := key.Validate(); err != nil {
+func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
+	if err := options.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
-			yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
+			yield(DataKey{}, err)
 		}
+	}
+
+	rv := options.ResourceVersion
+	prefix := options.Key.Prefix()
+
+	startKey := prefix
+	if options.ContinueName != "" {
+		// Build the start key from the continue position
+		continueKey := ListRequestKey{
+			Group:     options.Key.Group,
+			Resource:  options.Key.Resource,
+			Namespace: options.Key.Namespace,
+			Name:      options.ContinueName,
+		}
+		// For cross-namespace queries, use the continue namespace
+		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
+			continueKey.Namespace = options.ContinueNamespace
+		}
+		startKey = continueKey.Prefix()
+	}
+
+	listOptions := ListOptions{
+		StartKey: startKey,
+		EndKey:   PrefixRangeEnd(prefix),
+		Sort:     SortOrderAsc,
 	}
 
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
 
-	prefix := key.Prefix()
 	// List all keys in the prefix.
-	iter := d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Sort:     SortOrderAsc,
-	})
+	iter := d.kv.Keys(ctx, dataSection, listOptions)
 
 	return func(yield func(DataKey, error) bool) {
 		var candidateKey *DataKey // The current candidate key we are iterating over
@@ -389,6 +454,63 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 	return d.kv.Get(ctx, dataSection, key.String())
 }
 
+// BatchGet retrieves multiple data objects in batches.
+// It returns an iterator that yields DataObj results for the given keys.
+// Keys are processed in batches (default 50).
+// Non-existent entries will not appear in the result.
+func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		// Validate all keys first
+		for _, key := range keys {
+			if err := key.Validate(); err != nil {
+				yield(DataObj{}, fmt.Errorf("invalid data key %s: %w", key.String(), err))
+				return
+			}
+		}
+
+		// Process keys in batches
+		for i := 0; i < len(keys); i += dataBatchSize {
+			end := i + dataBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batch := keys[i:end]
+
+			// Convert DataKeys to string keys and create a mapping
+			stringKeys := make([]string, len(batch))
+			keyMap := make(map[string]DataKey) // map string key back to DataKey
+			for j, key := range batch {
+				strKey := key.String()
+				stringKeys[j] = strKey
+				keyMap[strKey] = key
+			}
+
+			// Call kv.BatchGet for this batch
+			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
+				if err != nil {
+					yield(DataObj{}, err)
+					return
+				}
+
+				// Look up the original DataKey
+				dataKey, ok := keyMap[kv.Key]
+				if !ok {
+					yield(DataObj{}, fmt.Errorf("unexpected key in batch response: %s", kv.Key))
+					return
+				}
+
+				// Yield the DataObj
+				if !yield(DataObj{
+					Key:   dataKey,
+					Value: kv.Value,
+				}, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {
 	if err := key.Validate(); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
@@ -413,6 +535,27 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	}
 
 	return d.kv.Delete(ctx, dataSection, key.String())
+}
+
+func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
+	for len(keys) > 0 {
+		batch := keys
+		if len(batch) > dataBatchSize {
+			batch = batch[:dataBatchSize]
+		}
+
+		keys = keys[len(batch):]
+		stringKeys := make([]string, len(batch))
+		for _, dataKey := range batch {
+			stringKeys = append(stringKeys, dataKey.String())
+		}
+
+		if err := n.kv.BatchDelete(ctx, dataSection, stringKeys); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ParseKey parses a string key into a DataKey struct

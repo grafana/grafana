@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -21,18 +22,37 @@ type iamAuthorizer struct {
 func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient authlib.AccessClient) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
+	// Authorizer that allows any authenticated user
+	// To be used when authorization is handled at the storage layer
+	allowAuthorizer := authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Any authenticated user can access the API
+		return authorizer.DecisionAllow, "", nil
+	})
+
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
-	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = legacyAuthorizer
-	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
 
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
+	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+
+	serviceAuthorizer := gfauthorizer.NewServiceAuthorizer()
+	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
@@ -54,25 +74,6 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 	client := accesscontrol.NewLegacyAccessClient(
 		ac,
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.UserResourceInfo.GetName(),
-			Attr:     "id",
-			Mapping: map[string]string{
-				utils.VerbCreate: accesscontrol.ActionUsersCreate,
-				utils.VerbDelete: accesscontrol.ActionUsersDelete,
-				utils.VerbGet:    accesscontrol.ActionOrgUsersRead,
-				utils.VerbList:   accesscontrol.ActionOrgUsersRead,
-			},
-			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
-				res, err := store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
-					UID: name,
-				})
-				if err != nil {
-					return nil, err
-				}
-				return []string{fmt.Sprintf("users:id:%d", res.ID)}, nil
-			}),
-		},
-		accesscontrol.ResourceAuthorizerOptions{
 			Resource: "display",
 			Unchecked: map[string]bool{
 				utils.VerbGet:  true,
@@ -80,17 +81,11 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			},
 		},
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.ServiceAccountResourceInfo.GetName(),
-			Attr:     "id",
-			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
-				res, err := store.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{
-					UID: name,
-				})
-				if err != nil {
-					return nil, err
-				}
-				return []string{fmt.Sprintf("serviceaccounts:id:%d", res.ID)}, nil
-			}),
+			Resource: "searchTeams",
+			Unchecked: map[string]bool{
+				utils.VerbGet:  true,
+				utils.VerbList: true,
+			},
 		},
 		accesscontrol.ResourceAuthorizerOptions{
 			Resource: iamv0.TeamResourceInfo.GetName(),

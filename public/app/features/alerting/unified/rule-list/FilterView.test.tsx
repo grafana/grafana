@@ -12,6 +12,10 @@ import { RulesFilter } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 

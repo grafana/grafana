@@ -48,9 +48,6 @@ const zenTheme: NewThemeOptions = {
     hoverFactor: 0.03,
     tonalOffset: 0.2,
   },
-  shape: {
-    borderRadius: 8,
-  },
 };
 
 export default zenTheme;

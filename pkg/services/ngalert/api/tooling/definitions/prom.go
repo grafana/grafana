@@ -377,10 +377,89 @@ type GetGrafanaRuleStatusesParams struct {
 	// Filter the list of rules to those that belong to the specified dashboard UID.
 	// in: query
 	// required: false
-	DashboardUID string
+	DashboardUID string `json:"dashboard_uid"`
 
 	// Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.
 	// in: query
 	// required: false
-	PanelID int64
+	PanelID int64 `json:"panel_id"`
+
+	// Filter the list of rules to those that belong to the specified folder UID.
+	// in: query
+	// required: false
+	FolderUID string `json:"folder_uid"`
+
+	// Filter the list of rules to those that belong to the specified rule group(s). Can be specified multiple times.
+	// in: query
+	// required: false
+	RuleGroup []string `json:"rule_group"`
+
+	// Filter the list of rules to those that reference the specified receiver/contact point.
+	// in: query
+	// required: false
+	ReceiverName string `json:"receiver_name"`
+
+	// Search rules by title (case insensitive substring match).
+	// in: query
+	// required: false
+	SearchRuleName string `json:"search.rule_name"`
+
+	// Search rules by rule group name (case insensitive substring match).
+	// in: query
+	// required: false
+	SearchRuleGroup string `json:"search.rule_group"`
+
+	// Filter the list of rules to those whose titles exactly match the specified values. Can be specified multiple times.
+	// in: query
+	// required: false
+	RuleName []string `json:"rule_name"`
+
+	// Filter by rule type: "alerting" or "recording".
+	// in: query
+	// required: false
+	RuleType string `json:"rule_type"`
+
+	// Filter by alert state: "normal" (or "inactive"), "pending", "alerting" (or "firing"), "nodata", "error", "recovering".
+	// in: query
+	// required: false
+	State []string `json:"state"`
+
+	// Filter by rule health: "ok", "error", "nodata".
+	// in: query
+	// required: false
+	Health []string `json:"health"`
+
+	// Limit the number of alert instances per rule.
+	// in: query
+	// required: false
+	// default: -1
+	LimitAlerts int64 `json:"limit_alerts"`
+
+	// Limit the number of rules per group.
+	// in: query
+	// required: false
+	// default: -1
+	LimitRules int64 `json:"limit_rules"`
+
+	// Limit the number of rule groups returned.
+	// in: query
+	// required: false
+	// default: -1
+	GroupLimit int64 `json:"group_limit"`
+
+	// Limit the total number of rules returned across all groups. Returns complete groups until the limit is met or exceeded.
+	// in: query
+	// required: false
+	// default: -1
+	RuleLimit int64 `json:"rule_limit"`
+
+	// Continuation token for pagination. Use the value returned in the previous response's "groupNextToken" field.
+	// in: query
+	// required: false
+	GroupNextToken string `json:"group_next_token"`
+
+	// Filter by label matchers encoded as JSON representations of Prometheus matchers (for example, {"type":0,"name":"severity","value":"critical"}). Provide one matcher per query string value.
+	// in: query
+	// required: false
+	Matchers []string `json:"matcher"`
 }

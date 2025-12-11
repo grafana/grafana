@@ -5,15 +5,17 @@ correlationsv0alpha1: {
 	pluralName: "Correlations"
 	schema: {
 		spec: {
-			source_ds_ref:  DataSourceRef
-			target_ds_ref?:  DataSourceRef
-			label:       string
+			type:         CorrelationType
+			source:       DataSourceRef
+			target?:      DataSourceRef
 			description?: string
-			config:      ConfigSpec
-			provisioned: bool
-			type:        CorrelationType
+			label:        string
+			config:       ConfigSpec
 		}
 	}
+	selectableFields: [
+		"spec.datasource.name"
+	]
 }
 
 DataSourceRef: {
@@ -32,7 +34,7 @@ ConfigSpec: {
 TargetSpec:  [string]: _
 
 TransformationSpec: {
-	type: string
+	type: "regex" | "logfmt"
 	expression: string
 	field: string
 	mapValue: string

@@ -12,6 +12,7 @@ import (
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -26,6 +27,7 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 		return nil // skip registration unless opting into aggregator mode
 	}
@@ -36,7 +38,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 }
 
 func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default authorizer is fine
+	return roleauthorizer.NewRoleAuthorizer()
 }
 
 func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {

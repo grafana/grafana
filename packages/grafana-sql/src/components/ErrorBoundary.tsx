@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { Component, ErrorInfo, PropsWithChildren } from 'react';
 
 import { Trans } from '@grafana/i18n';
 
@@ -6,14 +6,14 @@ type Props = {
   fallBackComponent?: React.ReactNode;
 };
 
-export class ErrorBoundary extends React.Component<React.PropsWithChildren<Props>, { hasError: boolean }> {
-  constructor(props: React.PropsWithChildren<Props>) {
+export class ErrorBoundary extends Component<React.PropsWithChildren<Props>, { hasError: boolean }> {
+  constructor(props: PropsWithChildren<Props>) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.setState({ hasError: true });
   }
 
   render() {

@@ -1,14 +1,10 @@
+import { getAPIBaseURL } from '@grafana/api-clients';
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 
-import { getAPINamespace } from '../../api/utils';
-
 import { ScopeNavigation } from './dashboards/types';
 
-const apiGroup = 'scope.grafana.app';
-const apiVersion = 'v0alpha1';
-const apiNamespace = getAPINamespace();
-const apiUrl = `/apis/${apiGroup}/${apiVersion}/namespaces/${apiNamespace}`;
+const apiUrl = getAPIBaseURL('scope.grafana.app', 'v0alpha1');
 
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {
@@ -24,6 +20,21 @@ export class ScopesApiClient {
   async fetchMultipleScopes(scopesIds: string[]): Promise<Scope[]> {
     const scopes = await Promise.all(scopesIds.map((id) => this.fetchScope(id)));
     return scopes.filter((scope) => scope !== undefined);
+  }
+
+  async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
+    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    try {
+      const res = await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
+        names: names,
+      });
+      return res?.items ?? [];
+    } catch (err) {
+      return [];
+    }
   }
 
   /**

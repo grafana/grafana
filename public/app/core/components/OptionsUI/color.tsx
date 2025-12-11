@@ -81,6 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'pointer',
       color: theme.colors.text.primary,
       background: theme.components.input.background,
+      borderRadius: theme.shape.radius.default,
       padding: '3px',
       height: theme.v1.spacing.formInputHeight,
       border: `1px solid ${theme.components.input.borderColor}`,

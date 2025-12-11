@@ -1,3 +1,4 @@
+import { http, HttpResponse } from 'msw';
 import { ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -5,10 +6,10 @@ import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';
@@ -41,9 +42,25 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({}),
 }));
 
-function render(ui: Parameters<typeof testRender>[0]) {
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    getDataSourceSrv: () => ({
+      getList: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+        ]),
+    }),
+  };
+});
+
+function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof testRender>[1] = {}) {
   return testRender(ui, {
-    preloadedState: { navIndex: { 'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' } } },
+    preloadedState: {
+      navIndex: { 'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' } },
+    },
+    ...options,
   });
 }
 
@@ -322,6 +339,44 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       );
 
       expect(checkbox).toBeInTheDocument();
+    });
+  });
+
+  describe('Template dashboard modal', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardTemplates = true;
+      server.use(
+        http.get('/api/gnet/dashboards', () => {
+          return HttpResponse.json({
+            page: 1,
+            pages: 1,
+            items: [
+              {
+                id: 1,
+                name: 'Test Template Dashboard',
+                description: 'A test template dashboard',
+                downloads: 100,
+                datasource: 'grafana-testdata-datasource',
+              },
+            ],
+          });
+        })
+      );
+    });
+
+    it('should show TemplateDashboard modal when the feature flag is enabled', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      });
+      expect(await screen.findByRole('dialog', { name: 'Start a dashboard from a template' })).toBeInTheDocument();
+    });
+
+    it('should not show TemplateDashboard modal when the feature flag is disabled', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      });
+      expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
   });
 });

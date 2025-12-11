@@ -85,7 +85,7 @@ func TestReceiverAccess(t *testing.T) {
 		// Receiver read.
 		{
 			name: "global receiver reader should have no elevated permissions",
-			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll}),
+			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
 				recv2.UID: permissions(),
@@ -94,7 +94,7 @@ func TestReceiverAccess(t *testing.T) {
 		},
 		{
 			name: "global receiver secret reader should have secret permissions",
-			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversAll}),
+			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionReadSecret),
 				recv2.UID: permissions(models.ReceiverPermissionReadSecret),
@@ -104,8 +104,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver secret reader should have per-receiver",
 			user: newEmptyUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionReadSecret),
@@ -173,7 +173,7 @@ func TestReceiverAccess(t *testing.T) {
 		// Receiver update.
 		{
 			name: "global receiver update should have write but no delete",
-			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversAll}),
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionWrite),
 				recv2.UID: permissions(models.ReceiverPermissionWrite),
@@ -183,8 +183,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver update should have per-receiver write but no delete",
 			user: newViewUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionWrite),
@@ -195,8 +195,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver update should require read",
 			user: newEmptyUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
@@ -207,7 +207,7 @@ func TestReceiverAccess(t *testing.T) {
 		// Receiver delete.
 		{
 			name: "global receiver delete should have delete but no write",
-			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversAll}),
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionDelete),
 				recv2.UID: permissions(models.ReceiverPermissionDelete),
@@ -217,8 +217,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver delete should have per-receiver delete but no write",
 			user: newViewUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionDelete),
@@ -229,8 +229,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver delete should require read",
 			user: newEmptyUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
@@ -241,7 +241,7 @@ func TestReceiverAccess(t *testing.T) {
 		// Receiver admin.
 		{
 			name: "receiver read permissions alone can't admin",
-			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversAll}),
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
 				recv2.UID: permissions(),
@@ -250,7 +250,7 @@ func TestReceiverAccess(t *testing.T) {
 		},
 		{
 			name: "receiver write permissions alone can't admin",
-			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversAll}),
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll}),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
 				recv2.UID: permissions(),
@@ -260,8 +260,8 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "global receiver read + write permissions can admin",
 			user: newViewUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversAll},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionAdmin),
@@ -272,10 +272,10 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver read + write permissions should have per-receiver admin",
 			user: newViewUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionAdmin),
@@ -286,10 +286,10 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "per-receiver admin should require read",
 			user: newEmptyUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
@@ -302,7 +302,7 @@ func TestReceiverAccess(t *testing.T) {
 			name: "legacy provisioning secret read, receiver write",
 			user: newViewUser(
 				ac.Permission{Action: ac.ActionAlertingProvisioningReadSecrets},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
@@ -319,7 +319,7 @@ func TestReceiverAccess(t *testing.T) {
 			name: "legacy provisioning secret read, receiver delete",
 			user: newViewUser(
 				ac.Permission{Action: ac.ActionAlertingProvisioningReadSecrets},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
@@ -336,7 +336,7 @@ func TestReceiverAccess(t *testing.T) {
 			name: "legacy write, receiver secret",
 			user: newViewUser(
 				ac.Permission{Action: ac.ActionAlertingNotificationsWrite},
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
@@ -347,12 +347,12 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "mixed secret / delete / write",
 			user: newViewUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionReadSecret, models.ReceiverPermissionWrite),
@@ -363,12 +363,12 @@ func TestReceiverAccess(t *testing.T) {
 		{
 			name: "mixed requires read",
 			user: newEmptyUser(
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
-				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
 			),
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(models.ReceiverPermissionReadSecret, models.ReceiverPermissionWrite),
@@ -404,7 +404,7 @@ func newEmptyUser(permissions ...ac.Permission) identity.Requester {
 
 func newViewUser(permissions ...ac.Permission) identity.Requester {
 	return ac.BackgroundUser("test", orgID, org.RoleNone, append([]ac.Permission{
-		{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll},
+		{Action: ac.ActionAlertingReceiversRead, Scope: models.ScopeReceiversAll},
 		{Action: ac.ActionAlertingNotificationsRead},
 	}, permissions...))
 }

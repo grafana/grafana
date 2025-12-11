@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
-import { AlertingPageWrapper } from 'app/features/alerting/unified/components/AlertingPageWrapper';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
@@ -336,9 +335,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 
   if (cfg.featureToggles.alertingTriage) {
     routes.push({
-      path: '/alerting/triage',
+      path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
-      component: () => <AlertingPageWrapper />,
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
     });
   }
 

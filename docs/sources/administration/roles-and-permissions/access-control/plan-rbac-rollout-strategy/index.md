@@ -82,7 +82,7 @@ For example:
 
 1. Map SAML, LDAP, or Oauth roles to Grafana basic roles (viewer, editor, or admin).
 
-2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or OAuth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -123,7 +123,7 @@ If you have a use case that you'd like to share, feel free to contribute to this
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:explorer` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or OAuth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions
@@ -162,7 +162,7 @@ The following request creates a custom role that includes permissions to access 
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \
---header 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+--header 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "version": 1,
@@ -208,13 +208,13 @@ By default, only a Grafana Server Admin can create and manage custom roles. If y
 
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_editor' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "roles:read", "scope": "roles:*"}, {"action": "roles:write", "scope": "permissions:type:delegate"}, {"action": "roles:delete", "scope": "permissions:type:delegate"}]' > /tmp/basic_editor.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_editor.json '<grafana_url>/api/access-control/roles/basic_editor'
   ```
 
@@ -253,13 +253,13 @@ If you want your `Viewers` to create reports, [update the `Viewer` basic role pe
 
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "reports:create"}, {"action": "reports:read", "scope": "reports:*"}, {"action": "reports:write", "scope": "reports:*"}, {"action": "reports:send", "scope": "reports:*"}]' > /tmp/basic_viewer.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
@@ -299,13 +299,13 @@ There are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove the undesired permissions and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_grafana_admin' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "users:create")) | del(.permissions[] | select (.action == "org.users:add" and .scope == "users:*"))' > /tmp/basic_grafana_admin.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT-d @/tmp/basic_grafana_admin.json '<grafana_url>/api/access-control/roles/basic_grafana_admin'
   ```
 
@@ -361,14 +361,14 @@ Here are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove the undesired permissions, add the new permission and increment its version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:*"))' | \
     jq '.permissions += [{"action": "plugins.app:access", "scope": "plugins:id:kentik-connect-app"}]' > /tmp/basic_viewer.json
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
@@ -400,13 +400,13 @@ Here are two ways to achieve this:
 
   ```bash
   # Fetch the role, modify it to remove permissions to kentik-connect-app and increment role version
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' \
     -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:id:kentik-connect-app"))'
 
   # Update the role
-  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+  curl -H 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697' -H 'Content-Type: application/json' \
     -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 

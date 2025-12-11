@@ -189,12 +189,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -260,12 +259,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        4, // Next ID after max panel ID (3)
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4, // Next ID after max panel ID (3)
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -283,12 +281,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -391,12 +388,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        8,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     8,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -433,12 +429,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        9,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     9,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 10,
@@ -552,12 +547,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -1230,12 +1224,11 @@ func TestV16(t *testing.T) {
 					},
 					// Repeated row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        3,
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3,
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -1255,12 +1248,11 @@ func TestV16(t *testing.T) {
 					},
 					// Second row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        4,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -1316,12 +1308,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        3, // Next ID after max panel ID (2)
-						"type":      "row",
-						"title":     "Row1",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3, // Next ID after max panel ID (2)
+						"type":   "row",
+						"title":  "Row1",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -1456,6 +1447,265 @@ func TestV16(t *testing.T) {
 					},
 				},
 				// rows field should be removed
+			},
+		},
+		{
+			name: "should parse string heights with px suffix during rows to panels migration",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"height":    "700px", // String height with px suffix
+						"showTitle": true,
+						"title":     "Rollout progress",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    1,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Versions running",
+								"targets": []interface{}{
+									map[string]interface{}{
+										"expr": "up",
+									},
+								},
+							},
+							map[string]interface{}{
+								"id":    2,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Deployment progress",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					// First panel
+					map[string]interface{}{
+						"id":    1,
+						"type":  "barchart",
+						"title": "Versions running",
+						"targets": []interface{}{
+							map[string]interface{}{
+								"expr": "up",
+							},
+						},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,  // After row panel
+							"w": 8,  // 4 span * 2 = 8 width
+							"h": 19, // 700px parsed correctly: ceil(700/38) = 19
+						},
+					},
+					// Second panel
+					map[string]interface{}{
+						"id":    2,
+						"type":  "barchart",
+						"title": "Deployment progress",
+						"gridPos": map[string]interface{}{
+							"x": 8, // Next to first panel
+							"y": 1,
+							"w": 8,
+							"h": 19,
+						},
+					},
+					// Row panel (created because showTitle is true)
+					map[string]interface{}{
+						"id":        3, // Next available ID
+						"type":      "row",
+						"title":     "Rollout progress",
+						"collapsed": false, // Backend always sets this
+						"repeat":    "",    // Backend always sets this
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 19, // Same height as calculated from "700px"
+						},
+					},
+				},
+				// rows field should be removed
+			},
+		},
+		{
+			name: "should handle span zero by defaulting to DEFAULT_PANEL_SPAN",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"showTitle": true, // Need this to create row panel
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 0, // This should be defaulted to 4 (DEFAULT_PANEL_SPAN)
+							},
+							map[string]interface{}{
+								"id":   2,
+								"type": "stat",
+								"span": 6, // Normal span value
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 8, // span 0 -> DEFAULT_PANEL_SPAN (4) -> 4 * 2 = 8 width
+							"h": 7, // default height
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "stat",
+						"gridPos": map[string]interface{}{
+							"x": 8, // After first panel
+							"y": 1,
+							"w": 12, // span 6 -> 6 * 2 = 12 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":        3,
+						"type":      "row",
+						"title":     "Test Row",
+						"collapsed": false, // Set because input has "collapse": false
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should not set collapsed property when input row has no collapse property",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						// No "collapse" property in input
+						"showTitle": true,
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 12,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 24, // span 12 -> 12 * 2 = 24 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":    2,
+						"type":  "row",
+						"title": "Test Row",
+						// No "collapsed" property because input had no "collapse" property
+						"repeat": "",
+						"panels": []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should correctly calculate panel width from fractional spans",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse": false,
+						"height":   55.625 * 38, // Original height from oldest-historical-1913-dashboard-nobreak.json
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    3,
+								"type":  "text",
+								"title": "Nobreak APC Modulo - X",
+								"span":  6.070139911634757, // Fractional span from real dashboard
+							},
+							map[string]interface{}{
+								"id":    5,
+								"type":  "text",
+								"title": "Nobreak APC Modulo - Y",
+								"span":  5.929860088365242, // Fractional span from real dashboard
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    3,
+						"type":  "text",
+						"title": "Nobreak APC Modulo - X",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							// Critical: Frontend logic Math.floor(6.070139911634757) * 2 = 6 * 2 = 12
+							// NOT Math.floor(6.070139911634757 * 2) = Math.floor(12.140279823269514) = 12
+							// Both give same result here, but test documents the correct order
+							"w": 12,
+							"h": 56, // ceil(55.625 * 38 / 38) = 56
+						},
+					},
+					map[string]interface{}{
+						"id":    5,
+						"type":  "text",
+						"title": "Nobreak APC Modulo - Y",
+						"gridPos": map[string]interface{}{
+							"x": 12,
+							"y": 0,
+							// Critical: Frontend logic Math.floor(5.929860088365242) * 2 = 5 * 2 = 10
+							// NOT Math.floor(5.929860088365242 * 2) = Math.floor(11.859720176730484) = 11
+							// This is the actual bug we fixed - old backend would give w: 11, new gives w: 10
+							"w": 10,
+							"h": 56,
+						},
+					},
+				},
 			},
 		},
 	}

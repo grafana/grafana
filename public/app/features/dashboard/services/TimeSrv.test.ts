@@ -9,7 +9,7 @@ import { TimeModel } from '../state/TimeModel';
 
 import { TimeSrv } from './TimeSrv';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: () => {},
   },

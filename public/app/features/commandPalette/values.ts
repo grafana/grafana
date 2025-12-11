@@ -1,5 +1,6 @@
+// Bumped to way higher value, to give it more weight when searching
+export const RECENT_SCOPES_PRIORITY = 50;
 export const SCOPES_PRIORITY = 8;
-export const RECENT_SCOPES_PRIORITY = 7;
 export const RECENT_DASHBOARDS_PRIORITY = 6;
 export const ACTIONS_PRIORITY = 5;
 export const DEFAULT_PRIORITY = 4;

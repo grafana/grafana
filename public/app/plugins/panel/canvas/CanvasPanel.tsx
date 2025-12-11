@@ -340,7 +340,7 @@ export class CanvasPanel extends Component<Props, State> {
   render() {
     return (
       <>
-        {this.scene.render()}
+        {this.scene.renderElement()}
         {this.state.openInlineEdit && this.renderInlineEdit()}
         {this.state.openSetBackground && this.renderSetBackground()}
       </>

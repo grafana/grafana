@@ -8,6 +8,7 @@ export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `solid 1px ${theme.colors.border.weak}`,
     backgroundColor: theme.colors.background.secondary,
+    overflow: 'hidden',
 
     th: {
       padding: theme.spacing(1),

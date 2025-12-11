@@ -43,7 +43,7 @@ const addedComponentConfigMock: ExtensionInfo = {
 };
 
 const extensionSidebarContextMock: ExtensionSidebarContextType = {
-  dockedComponentId: getComponentIdFromComponentMeta(pluginId, addedComponentConfigMock),
+  dockedComponentId: getComponentIdFromComponentMeta(pluginId, addedComponentConfigMock.title),
   props: {},
   isOpen: true,
   setDockedComponentId: jest.fn(),

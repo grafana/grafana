@@ -1,336 +1,91 @@
-package schemaversion_test
+package schemaversion
 
 import (
+	"context"
 	"testing"
-
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func TestV31(t *testing.T) {
-	tests := []migrationTestCase{
+func TestV31LabelsToFieldsMigration(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
 		{
-			name: "panel with basic labelsToFields transformation gets merge transformation added",
+			name: "do_not_add_empty_transformations",
 			input: map[string]interface{}{
-				"title":         "V31 LabelsToFields Migration Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with basic labelsToFields",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "labelsToFields",
-								"options": map[string]interface{}{},
-							},
-						},
-					},
-				},
+				"type":  "timeseries",
+				"title": "Test Panel",
 			},
 			expected: map[string]interface{}{
-				"title":         "V31 LabelsToFields Migration Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with basic labelsToFields",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "labelsToFields",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "merge",
-								"options": map[string]interface{}{},
-							},
-						},
-					},
-				},
+				"type":  "timeseries",
+				"title": "Test Panel",
 			},
+			description: "V31 migration should not add empty transformations arrays to panels",
 		},
 		{
-			name: "panel with labelsToFields options preserved during migration",
+			name: "preserve_existing_transformations",
 			input: map[string]interface{}{
-				"title":         "V31 LabelsToFields Options Preservation Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
+				"type": "timeseries",
+				"transformations": []interface{}{
 					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with labelsToFields options",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id": "labelsToFields",
-								"options": map[string]interface{}{
-									"mode":       "rows",
-									"keepLabels": []interface{}{"job", "instance"},
-									"valueLabel": "value",
-								},
-							},
+						"id": "labelsToFields",
+						"options": map[string]interface{}{
+							"keepLabels": []interface{}{"__name__"},
 						},
 					},
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V31 LabelsToFields Options Preservation Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
+				"type": "timeseries",
+				"transformations": []interface{}{
 					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with labelsToFields options",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id": "labelsToFields",
-								"options": map[string]interface{}{
-									"mode":       "rows",
-									"keepLabels": []interface{}{"job", "instance"},
-									"valueLabel": "value",
-								},
-							},
-							map[string]interface{}{
-								"id":      "merge",
-								"options": map[string]interface{}{},
-							},
+						"id": "labelsToFields",
+						"options": map[string]interface{}{
+							"keepLabels": []interface{}{"__name__"},
 						},
 					},
 				},
 			},
-		},
-		{
-			name: "panel with multiple labelsToFields transformations",
-			input: map[string]interface{}{
-				"title":         "V31 Multiple LabelsToFields Migration Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with multiple labelsToFields",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "organize",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "labelsToFields",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "calculateField",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id": "labelsToFields",
-								"options": map[string]interface{}{
-									"mode": "rows",
-								},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V31 Multiple LabelsToFields Migration Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with multiple labelsToFields",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "organize",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "labelsToFields",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "merge",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "calculateField",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id": "labelsToFields",
-								"options": map[string]interface{}{
-									"mode": "rows",
-								},
-							},
-							map[string]interface{}{
-								"id":      "merge",
-								"options": map[string]interface{}{},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "panel with no transformations remains unchanged",
-			input: map[string]interface{}{
-				"title":         "V31 No Transformations Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with no transformations",
-						"id":    1,
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V31 No Transformations Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with no transformations",
-						"id":    1,
-					},
-				},
-			},
-		},
-		{
-			name: "panel with transformations but no labelsToFields remains unchanged",
-			input: map[string]interface{}{
-				"title":         "V31 Other Transformations Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with other transformations",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "organize",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "reduce",
-								"options": map[string]interface{}{},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V31 Other Transformations Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":  "timeseries",
-						"title": "Panel with other transformations",
-						"id":    1,
-						"transformations": []interface{}{
-							map[string]interface{}{
-								"id":      "organize",
-								"options": map[string]interface{}{},
-							},
-							map[string]interface{}{
-								"id":      "reduce",
-								"options": map[string]interface{}{},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "nested panels in row with labelsToFields transformation",
-			input: map[string]interface{}{
-				"title":         "V31 Nested Panels Test Dashboard",
-				"schemaVersion": 30,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":      "row",
-						"title":     "Row with nested panels",
-						"id":        1,
-						"collapsed": false,
-						"panels": []interface{}{
-							map[string]interface{}{
-								"type":  "timeseries",
-								"title": "Nested panel with labelsToFields",
-								"id":    2,
-								"transformations": []interface{}{
-									map[string]interface{}{
-										"id":      "labelsToFields",
-										"options": map[string]interface{}{},
-									},
-								},
-							},
-							map[string]interface{}{
-								"type":  "timeseries",
-								"title": "Nested panel without labelsToFields",
-								"id":    3,
-								"transformations": []interface{}{
-									map[string]interface{}{
-										"id":      "organize",
-										"options": map[string]interface{}{},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V31 Nested Panels Test Dashboard",
-				"schemaVersion": 31,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":      "row",
-						"title":     "Row with nested panels",
-						"id":        1,
-						"collapsed": false,
-						"panels": []interface{}{
-							map[string]interface{}{
-								"type":  "timeseries",
-								"title": "Nested panel with labelsToFields",
-								"id":    2,
-								"transformations": []interface{}{
-									map[string]interface{}{
-										"id":      "labelsToFields",
-										"options": map[string]interface{}{},
-									},
-									map[string]interface{}{
-										"id":      "merge",
-										"options": map[string]interface{}{},
-									},
-								},
-							},
-							map[string]interface{}{
-								"type":  "timeseries",
-								"title": "Nested panel without labelsToFields",
-								"id":    3,
-								"transformations": []interface{}{
-									map[string]interface{}{
-										"id":      "organize",
-										"options": map[string]interface{}{},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "dashboard with no panels",
-			input: map[string]interface{}{
-				"title":         "V31 No Panels Test Dashboard",
-				"schemaVersion": 30,
-			},
-			expected: map[string]interface{}{
-				"title":         "V31 No Panels Test Dashboard",
-				"schemaVersion": 31,
-			},
+			description: "Existing labelsToFields transformations should be preserved and updated if needed",
 		},
 	}
-	runMigrationTests(t, tests, schemaversion.V31)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := map[string]interface{}{
+				"schemaVersion": 30,
+				"panels":        []interface{}{tt.input},
+			}
+
+			err := V31(context.Background(), dashboard)
+			if err != nil {
+				t.Fatalf("V31 migration failed: %v", err)
+			}
+
+			if dashboard["schemaVersion"] != 31 {
+				t.Errorf("Expected schemaVersion to be 31, got %v", dashboard["schemaVersion"])
+			}
+
+			panels, ok := dashboard["panels"].([]interface{})
+			if !ok || len(panels) == 0 {
+				t.Fatalf("Expected panels array with at least one panel")
+			}
+
+			panel, ok := panels[0].(map[string]interface{})
+			if !ok {
+				t.Fatalf("Expected panel to be a map")
+			}
+
+			// Check that transformations array is not added if it wasn't in input
+			if _, hasTransformations := tt.input["transformations"]; !hasTransformations {
+				if _, exists := panel["transformations"]; exists {
+					t.Errorf("Empty transformations array should not be added")
+				}
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
 }

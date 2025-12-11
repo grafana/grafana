@@ -21,7 +21,7 @@ var (
 )
 
 type ruleFactory interface {
-	new(context.Context, *models.AlertRule) Rule
+	new(context.Context, ruleWithFolder) Rule
 }
 
 type ruleRegistry struct {
@@ -35,14 +35,14 @@ func newRuleRegistry() ruleRegistry {
 
 // getOrCreate gets a rule routine from registry for the provided rule. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
-func (r *ruleRegistry) getOrCreate(context context.Context, item *models.AlertRule, factory ruleFactory) (Rule, bool) {
+func (r *ruleRegistry) getOrCreate(context context.Context, rf ruleWithFolder, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	key := item.GetKey()
+	key := rf.rule.GetKey()
 	rule, ok := r.rules[key]
 	if !ok {
-		rule = factory.new(context, item)
+		rule = factory.new(context, rf)
 		r.rules[key] = rule
 	}
 	return rule, !ok
@@ -304,7 +304,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	}
 
 	for _, setting := range rule.NotificationSettings {
-		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint()))
+		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint(nil)))
 		writeBytes(tmp)
 	}
 

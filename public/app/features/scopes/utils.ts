@@ -6,9 +6,6 @@ export function getEmptyScopeObject(name: string, title?: string): Scope {
     spec: {
       filters: [],
       title: title || name,
-      type: '',
-      category: '',
-      description: '',
     },
   };
 }

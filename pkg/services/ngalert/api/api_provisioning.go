@@ -75,7 +75,7 @@ type AlertRuleService interface {
 	UpdateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
-	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
+	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance, message string) error
 	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
 	DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance alerting_models.Provenance, opts *provisioning.FilterOptions) error
 	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
@@ -492,7 +492,10 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance))
+	// TODO: https://github.com/grafana/grafana/issues/114197
+	// Support passing change messages.
+	changeMessage := ""
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance), changeMessage)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -525,7 +528,7 @@ func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
 }
 
 func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryParams {
-	var format = "yaml"
+	format := "yaml"
 
 	acceptHeader := c.Req.Header.Get("Accept")
 	if strings.Contains(acceptHeader, "yaml") {
@@ -673,11 +676,22 @@ func escapeRuleGroup(group definitions.AlertRuleGroupExport) definitions.AlertRu
 
 func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettingsExport) definitions.AlertRuleNotificationSettingsExport {
 	ns.Receiver = addEscapeCharactersToString(ns.Receiver)
-	for j := range ns.GroupBy {
-		ns.GroupBy[j] = addEscapeCharactersToString(ns.GroupBy[j])
+	if ns.GroupBy != nil {
+		for j := range *ns.GroupBy {
+			(*ns.GroupBy)[j] = addEscapeCharactersToString((*ns.GroupBy)[j])
+		}
 	}
-	for k := range ns.MuteTimeIntervals {
-		ns.MuteTimeIntervals[k] = addEscapeCharactersToString(ns.MuteTimeIntervals[k])
+
+	if ns.MuteTimeIntervals != nil {
+		for k := range *ns.MuteTimeIntervals {
+			(*ns.MuteTimeIntervals)[k] = addEscapeCharactersToString((*ns.MuteTimeIntervals)[k])
+		}
+	}
+
+	if ns.ActiveTimeIntervals != nil {
+		for k := range *ns.ActiveTimeIntervals {
+			(*ns.ActiveTimeIntervals)[k] = addEscapeCharactersToString((*ns.ActiveTimeIntervals)[k])
+		}
 	}
 	return ns
 }

@@ -35,6 +35,7 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  onTagClick: (tag: string) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
@@ -50,6 +51,7 @@ export function DashboardsTree({
   height,
   isSelected,
   onFolderClick,
+  onTagClick,
   onAllSelectionChange,
   onItemSelectionChange,
   isItemLoaded,
@@ -98,13 +100,13 @@ export function DashboardsTree({
       id: 'tags',
       width: 2,
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
-      Cell: TagsCell,
+      Cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
     const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, permissions]);
+  }, [onFolderClick, onTagClick, permissions]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;

@@ -8,10 +8,13 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
+func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv0.APIVERSION
+	out.Kind = in.Kind
 
 	out.Spec.Object = in.Spec.Object
 
@@ -24,47 +27,104 @@ func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope convers
 	return nil
 }
 
-func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	// TODO (@radiohead): implement V1 to V2 conversion
-	// This is the bare minimum conversion that is needed to make the dashboard servable.
-
-	if v, ok := in.Spec.Object["title"]; ok {
-		if title, ok := v.(string); ok {
-			out.Spec.Title = title
+func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope, dsIndexProvider, leIndexProvider); err != nil {
+		out.ObjectMeta = in.ObjectMeta
+		out.APIVersion = dashv2alpha1.APIVERSION
+		out.Kind = in.Kind
+		out.Status = dashv2alpha1.DashboardStatus{
+			Conversion: &dashv2alpha1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
 		}
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return err
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
-		GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
-			Kind: "GridLayout",
-			Spec: dashv2alpha1.DashboardGridLayoutSpec{},
-		},
+	if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+		out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+			},
+		}
 	}
 
+	// Set successful conversion status
 	out.Status = dashv2alpha1.DashboardStatus{
 		Conversion: &dashv2alpha1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
+			Failed:        false,
 		},
 	}
 
 	return nil
 }
 
-func Convert_V1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
+func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	v2alpha1 := &dashv2alpha1.Dashboard{}
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope, dsIndexProvider, leIndexProvider); err != nil {
+		out.ObjectMeta = in.ObjectMeta
+		out.APIVersion = dashv2beta1.APIVERSION
+		out.Kind = in.Kind
+		out.Status = dashv2beta1.DashboardStatus{
+			Conversion: &dashv2beta1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
+		}
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2beta1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return err
+	}
 
-	// TODO: implement V1 to v2beta1 conversion
+	if err := ConvertDashboard_V2alpha1_to_V2beta1(v2alpha1, out, scope); err != nil {
+		out.ObjectMeta = in.ObjectMeta
+		out.APIVersion = dashv2beta1.APIVERSION
+		out.Kind = in.Kind
+		out.Status = dashv2beta1.DashboardStatus{
+			Conversion: &dashv2beta1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
+		}
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2beta1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return err
+	}
 
+	// Set successful conversion status
 	out.Status = dashv2beta1.DashboardStatus{
 		Conversion: &dashv2beta1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
+			Failed:        false,
 		},
 	}
 

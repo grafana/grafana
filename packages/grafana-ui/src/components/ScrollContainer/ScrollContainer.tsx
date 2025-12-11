@@ -17,6 +17,11 @@ interface Props extends Omit<BoxProps, 'display' | 'direction' | 'element' | 'fl
   scrollbarWidth?: Property.ScrollbarWidth;
 }
 
+/**
+ * This component is used to create a scrollable container. It uses native scrollbars, has an option to show scroll indicators, and supports most `Box` properties.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-scrollcontainer--docs
+ */
 export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(
   (
     {

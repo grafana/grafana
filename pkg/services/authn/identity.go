@@ -156,6 +156,9 @@ func (i *Identity) GetExtra() map[string][]string {
 	if i.GetOrgRole().IsValid() {
 		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
 	}
+	if i.AccessTokenClaims != nil && i.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		extra[authn.ServiceIdentityKey] = []string{i.AccessTokenClaims.Rest.ServiceIdentity}
+	}
 	return extra
 }
 

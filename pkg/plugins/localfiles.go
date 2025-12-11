@@ -30,8 +30,8 @@ func NewLocalFS(basePath string) LocalFS {
 	return LocalFS{basePath: basePath}
 }
 
-func (f LocalFS) Type() string {
-	return "local"
+func (f LocalFS) Type() FSType {
+	return FSTypeLocal
 }
 
 // fileIsAllowed takes an absolute path to a file and an os.FileInfo for that file, and it checks if access to that
@@ -219,7 +219,7 @@ func NewStaticFS(fs FS) (StaticFS, error) {
 	}, nil
 }
 
-func (f StaticFS) Type() string {
+func (f StaticFS) Type() FSType {
 	return f.FS.Type()
 }
 

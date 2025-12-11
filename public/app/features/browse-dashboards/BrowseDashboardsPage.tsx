@@ -15,6 +15,7 @@ import { useDispatch } from 'app/types/store';
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
+import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
@@ -206,11 +207,18 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView permissions={permissions} width={width} height={height} folderUID={folderUID} />
+                <BrowseView
+                  permissions={permissions}
+                  width={width}
+                  height={height}
+                  folderUID={folderUID}
+                  isReadOnlyRepo={isReadOnlyRepo}
+                />
               )
             }
           </AutoSizer>
         </div>
+        {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
     </Page>
   );

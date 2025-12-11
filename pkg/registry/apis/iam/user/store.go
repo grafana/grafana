@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,19 +37,70 @@ var (
 
 var resource = iamv0alpha1.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	tracer              trace.Tracer
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	ctx, span := s.tracer.Start(ctx, "user.Update")
+	defer span.End()
+
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, newObj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	userObj, ok := newObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User object, got %T", newObj)
+	}
+
+	updateCmd := legacy.UpdateUserCommand{
+		UID:           name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Title,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		Role:          userObj.Spec.Role,
+	}
+
+	result, err := s.store.UpdateUser(ctx, ns, updateCmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -58,6 +110,9 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Delete")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
 	}
@@ -75,11 +130,11 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	if err != nil {
 		return nil, false, err
 	}
-	if found == nil || len(found.Users) < 1 {
+	if found == nil || len(found.Items) < 1 {
 		return nil, false, resource.NewNotFound(name)
 	}
 
-	userToDelete := &found.Users[0]
+	userToDelete := &found.Items[0]
 
 	if deleteValidation != nil {
 		userObj := toUserItem(userToDelete, ns.Value)
@@ -124,6 +179,9 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.List")
+	defer span.End()
+
 	res, err := common.List(
 		ctx, resource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.User], error) {
@@ -135,8 +193,8 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			users := make([]iamv0alpha1.User, 0, len(found.Users))
-			for _, u := range found.Users {
+			users := make([]iamv0alpha1.User, 0, len(found.Items))
+			for _, u := range found.Items {
 				users = append(users, toUserItem(&u, ns.Value))
 			}
 
@@ -159,6 +217,9 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -172,16 +233,19 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if found == nil || err != nil {
 		return nil, resource.NewNotFound(name)
 	}
-	if len(found.Users) < 1 {
+	if len(found.Items) < 1 {
 		return nil, resource.NewNotFound(name)
 	}
 
-	obj := toUserItem(&found.Users[0], ns.Value)
+	obj := toUserItem(&found.Items[0], ns.Value)
 	return &obj, nil
 }
 
 // Create implements rest.Creater.
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Create")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
 	}
@@ -211,7 +275,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		UID:           userObj.Name,
 		Login:         userObj.Spec.Login,
 		Email:         userObj.Spec.Email,
-		Name:          userObj.Spec.Name,
+		Name:          userObj.Spec.Title,
 		IsAdmin:       userObj.Spec.GrafanaAdmin,
 		IsDisabled:    userObj.Spec.Disabled,
 		EmailVerified: userObj.Spec.EmailVerified,
@@ -237,7 +301,7 @@ func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
 		Spec: iamv0alpha1.UserSpec{
-			Name:          u.Name,
+			Title:         u.Name,
 			Login:         u.Login,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,

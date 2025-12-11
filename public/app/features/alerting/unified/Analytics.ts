@@ -1,7 +1,7 @@
 import { pickBy } from 'lodash';
 
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';

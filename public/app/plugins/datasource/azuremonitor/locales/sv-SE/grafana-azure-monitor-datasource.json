@@ -13,7 +13,7 @@
       "label-resource-group": "Resursgrupp",
       "label-resource-name": "Rättigheter",
       "label-resource-number": "Resurs {{resourceNum}}",
-      "label-resource-uri": "Resurs-URI ",
+      "label-resource-uri": "",
       "label-subscription": "Prenumeration",
       "placeholder-resource-name": "namn",
       "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",

@@ -2,8 +2,8 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
-/** @typedef {import('@typescript-eslint/utils').TSESLint.RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties', [{ forceFix: string[] , calleesToIgnore: string[] }]>} RuleDefinition */
-/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties',  [{forceFix: string[], calleesToIgnore: string[]}]>} RuleContextWithOptions */
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties', [{ forceFix: string[] , calleesToIgnore: string[], basePaths: string[], namespace?: string }]>} RuleDefinition */
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties',  [{forceFix: string[], calleesToIgnore: string[], basePaths: string[], namespace?: string}]>} RuleContextWithOptions */
 
 const {
   getNodeValue,
@@ -301,12 +301,23 @@ const noUntranslatedStrings = createRule({
             },
             default: [],
           },
+          basePaths: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+            default: ['src'],
+          },
+          namespace: {
+            type: 'string',
+            description: 'Namespace to prepend to translation keys',
+          },
         },
         additionalProperties: false,
       },
     ],
   },
-  defaultOptions: [{ forceFix: [], calleesToIgnore: [] }],
+  defaultOptions: [{ forceFix: [], calleesToIgnore: [], basePaths: ['src'] }],
 });
 
 module.exports = noUntranslatedStrings;

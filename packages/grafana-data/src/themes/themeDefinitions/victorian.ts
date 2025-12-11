@@ -48,9 +48,6 @@ const victorianTheme: NewThemeOptions = {
     hoverFactor: 0.07,
     tonalOffset: 0.15,
   },
-  shape: {
-    borderRadius: 6,
-  },
   typography: {
     fontFamily: '"Georgia", "Times New Roman", serif',
     fontFamilyMonospace: "'Courier New', monospace",

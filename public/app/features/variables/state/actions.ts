@@ -29,8 +29,8 @@ import { store } from 'app/store/store';
 import { AppNotification } from 'app/types/appNotifications';
 import { ThunkResult, StoreState } from 'app/types/store';
 
+import { appEvents } from '../../../core/app_events';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { Graph, Node } from '../../../core/utils/dag';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';

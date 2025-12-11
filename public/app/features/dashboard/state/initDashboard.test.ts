@@ -3,7 +3,7 @@ import { thunk } from 'redux-thunk';
 import { Subject } from 'rxjs';
 
 import { BackendSrv, FetchError, locationService, setEchoSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -62,6 +62,13 @@ jest.mock('@grafana/data', () => {
     })),
   };
 });
+jest.mock('app/core/app_events', () => ({
+  ...jest.requireActual('app/core/app_events'),
+  appEvents: {
+    publish: jest.fn(),
+    subscribe: jest.fn(),
+  },
+}));
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);

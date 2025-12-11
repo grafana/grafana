@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Manage organizations
 title: Manage organizations
-weight: 200
+weight: 3500
 ---
 
 # Manage organizations

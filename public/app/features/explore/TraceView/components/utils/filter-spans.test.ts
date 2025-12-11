@@ -673,4 +673,27 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set([spanID0]));
   });
+
+  it('filters by critical path', () => {
+    const criticalPath = [
+      { spanId: spanID0, section_start: 0, section_end: 1000 },
+      { spanId: spanID2, section_start: 1000, section_end: 2000 },
+    ];
+
+    // Only critical path spans should be returned
+    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true }, spans, criticalPath)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+
+    // Critical path filtering combined with other filters
+    expect(
+      filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', criticalPathOnly: true }, spans, criticalPath)
+    ).toEqual(new Set([spanID0]));
+
+    // When criticalPathOnly is false, critical path should not be applied
+    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: false }, spans, criticalPath)).toEqual(undefined);
+
+    // When no criticalPath is provided, filtering should not be applied
+    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true }, spans)).toEqual(undefined);
+  });
 });

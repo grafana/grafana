@@ -37,8 +37,7 @@ import "context"
 //	refresh: ""           // property added with empty string
 func V40(_ context.Context, dash map[string]interface{}) error {
 	dash["schemaVersion"] = int(40)
-	if _, ok := dash["refresh"].(string); !ok {
-		dash["refresh"] = ""
-	}
+	// Ensure refresh is a string, set to empty string if missing or not a string
+	dash["refresh"] = GetStringValue(dash, "refresh")
 	return nil
 }

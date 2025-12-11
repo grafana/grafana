@@ -85,6 +85,9 @@ export const versionedPages = {
     dataSources: {
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
+    dataSourceAddButton: {
+      '12.4.0': 'data-testid data-source-add-button',
+    },
   },
   EditDataSource: {
     url: {
@@ -179,6 +182,14 @@ export const versionedPages = {
   Dashboard: {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
+    },
+    Sidebar: {
+      optionsButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar options button',
+      },
+      outlineButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar outline button',
+      },
     },
     DashNav: {
       nav: {
@@ -341,6 +352,9 @@ export const versionedPages = {
           showInLabel: {
             '11.1.0': 'data-testid show-in-label',
           },
+          annotationControlsDisplay: {
+            '12.4.0': 'data-testid annotation-controls-display-label',
+          },
           previewInDashboard: {
             '10.0.0': 'data-testid annotations-preview',
           },
@@ -434,6 +448,9 @@ export const versionedPages = {
             generalHideSelectV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Hide select',
             },
+            generalDisplaySelect: {
+              '12.4.0': 'data-testid Variable editor Display select',
+            },
             selectionOptionsAllowCustomValueSwitch: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Allow Custom Value switch',
             },
@@ -491,6 +508,9 @@ export const versionedPages = {
             queryOptionsRegExInputV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegEx field',
             },
+            queryOptionsRegExApplyToSelectV2: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegExApplyTo select',
+            },
             queryOptionsSortSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Sort select',
             },
@@ -500,23 +520,8 @@ export const versionedPages = {
             queryOptionsQueryInput: {
               '10.4.0': 'data-testid Variable editor Form Default Variable Query Editor textarea',
             },
-            queryOptionsStaticOptionsRow: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options row',
-            },
             queryOptionsStaticOptionsToggle: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
-            },
-            queryOptionsStaticOptionsLabelInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Label input',
-            },
-            queryOptionsStaticOptionsValueInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Value input',
-            },
-            queryOptionsStaticOptionsDeleteButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Delete button',
-            },
-            queryOptionsStaticOptionsAddButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Add button',
             },
             queryOptionsStaticOptionsOrderDropdown: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Order dropdown',
@@ -559,6 +564,15 @@ export const versionedPages = {
             customValueInput: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-input',
             },
+            optionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-options-open-button',
+            },
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-close-button',
+            },
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
@@ -594,6 +608,37 @@ export const versionedPages = {
             },
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
+            },
+          },
+          SwitchVariable: {
+            valuePairTypeSelect: {
+              ['12.3.0']: 'data-testid switch variable value pair type select',
+            },
+            enabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable enabled value input',
+            },
+            disabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable disabled value input',
+            },
+          },
+          StaticOptionsEditor: {
+            addButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Add button',
+            },
+            labelInput: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Label input',
+            },
+            valueInput: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Value input',
+            },
+            moveButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Move button',
+            },
+            deleteButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Delete button',
+            },
+            row: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Row',
             },
           },
         },

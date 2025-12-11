@@ -166,23 +166,14 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
 
   it('deletes multiple folders and publishes success alert', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
+    // Same test as for legacy as right now we always use legacy API for deletes.
     const folderUIDs = ['uid1', 'uid2'];
     const deleteFolders = useDeleteMultipleFoldersMutationFacade();
     await deleteFolders({ folderUIDs });
 
     // Should call deleteFolder for each UID
-    expect(mockDeleteFolder).toHaveBeenCalledTimes(folderUIDs.length);
-    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid1' });
-    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid2' });
-
-    // Should publish success alert
-    expect(publishMockFn).toHaveBeenCalledWith({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Folder deleted'],
-    });
-
-    // Should dispatch refreshParents
-    expect(dispatchMockFn).toHaveBeenCalled();
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
   });
 
   it('uses legacy call when flag is false', async () => {

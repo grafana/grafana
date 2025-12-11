@@ -15,22 +15,19 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-var logger = log.New("tsdb.opentsdb")
+var logger = backend.NewLoggerWith("tsdb.opentsdb")
 
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
@@ -52,7 +49,23 @@ type JSONData struct {
 	LookupLimit    int32   `json:"lookupLimit"`
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+type QueryModel struct {
+	Metric               string                 `json:"metric"`
+	Aggregator           string                 `json:"aggregator"`
+	DownsampleInterval   string                 `json:"downsampleInterval"`
+	DownsampleAggregator string                 `json:"downsampleAggregator"`
+	DownsampleFillPolicy string                 `json:"downsampleFillPolicy"`
+	DisableDownsampling  bool                   `json:"disableDownsampling"`
+	Filters              []any                  `json:"filters"`
+	Tags                 map[string]interface{} `json:"tags"`
+	ShouldComputeRate    bool                   `json:"shouldComputeRate"`
+	IsCounter            bool                   `json:"isCounter"`
+	CounterMax           string                 `json:"counterMax"`
+	CounterResetValue    string                 `json:"counterResetValue"`
+	ExplicitTags         bool                   `json:"explicitTags"`
+}
+
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -82,6 +95,66 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger := logger.FromContext(ctx)
+
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	u, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	u.Path = path.Join(u.Path, "api/suggest")
+	query := u.Query()
+	query.Set("q", "cpu")
+	query.Set("type", "metrics")
+	u.RawQuery = query.Encode()
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	res, err := dsInfo.HTTPClient.Do(httpReq)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res.StatusCode != 200 {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("OpenTSDB suggest endpoint returned status %d", res.StatusCode),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
 
@@ -100,10 +173,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			Queries: []map[string]any{
 				s.buildMetric(query),
 			},
-		}
-
-		if setting.Env == setting.Dev {
-			logger.Debug("OpenTsdb request", "refId", query.RefID, "params", tsdbQuery)
 		}
 
 		httpReq, err := s.createRequest(ctx, logger, dsInfo, tsdbQuery)
@@ -168,8 +237,19 @@ func createInitialFrame(val OpenTsdbCommon, length int, refID string) *data.Fram
 		labels[label] = value
 	}
 
+	tagKeys := make([]string, 0, len(val.Tags)+len(val.AggregateTags))
+	for tagKey := range val.Tags {
+		tagKeys = append(tagKeys, tagKey)
+	}
+	sort.Strings(tagKeys)
+	tagKeys = append(tagKeys, val.AggregateTags...)
+
 	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
-	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+		Custom:      map[string]any{"tagKeys": tagKeys},
+	}
 	frame.RefID = refID
 	timeField := frame.Fields[0]
 	timeField.Name = data.TimeSeriesTimeFieldName
@@ -274,47 +354,65 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response, refID str
 func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 	metric := make(map[string]any)
 
-	model, err := simplejson.NewJson(query.JSON)
-	if err != nil {
+	var model QueryModel
+	if err := json.Unmarshal(query.JSON, &model); err != nil {
 		return nil
 	}
 
 	// Setting metric and aggregator
-	metric["metric"] = model.Get("metric").MustString()
-	metric["aggregator"] = model.Get("aggregator").MustString()
+	metric["metric"] = model.Metric
+	metric["aggregator"] = model.Aggregator
 
 	// Setting downsampling options
-	disableDownsampling := model.Get("disableDownsampling").MustBool()
-	if !disableDownsampling {
-		downsampleInterval := model.Get("downsampleInterval").MustString()
+	if !model.DisableDownsampling {
+		downsampleInterval := model.DownsampleInterval
 		if downsampleInterval == "" {
-			downsampleInterval = "1m" // default value for blank
+			if ms := query.Interval.Milliseconds(); ms > 0 {
+				downsampleInterval = FormatDownsampleInterval(ms)
+			} else {
+				downsampleInterval = "1m"
+			}
+		} else if strings.Contains(downsampleInterval, ".") && strings.HasSuffix(downsampleInterval, "s") {
+			if val, err := strconv.ParseFloat(strings.TrimSuffix(downsampleInterval, "s"), 64); err == nil {
+				downsampleInterval = strconv.FormatInt(int64(val*1000), 10) + "ms"
+			}
 		}
-		downsample := downsampleInterval + "-" + model.Get("downsampleAggregator").MustString()
-		if model.Get("downsampleFillPolicy").MustString() != "none" {
-			metric["downsample"] = downsample + "-" + model.Get("downsampleFillPolicy").MustString()
+
+		downsample := downsampleInterval + "-" + model.DownsampleAggregator
+		if model.DownsampleFillPolicy != "" && model.DownsampleFillPolicy != "none" {
+			metric["downsample"] = downsample + "-" + model.DownsampleFillPolicy
 		} else {
 			metric["downsample"] = downsample
 		}
 	}
 
 	// Setting rate options
-	if model.Get("shouldComputeRate").MustBool() {
+	if model.ShouldComputeRate {
 		metric["rate"] = true
 		rateOptions := make(map[string]any)
-		rateOptions["counter"] = model.Get("isCounter").MustBool()
+		rateOptions["counter"] = model.IsCounter
 
-		counterMax, counterMaxCheck := model.CheckGet("counterMax")
-		if counterMaxCheck {
-			rateOptions["counterMax"] = counterMax.MustFloat64()
+		var counterMax *float64
+		if model.CounterMax != "" {
+			if val, err := strconv.ParseFloat(model.CounterMax, 64); err == nil {
+				counterMax = &val
+			}
+		}
+		if counterMax != nil {
+			rateOptions["counterMax"] = *counterMax
 		}
 
-		resetValue, resetValueCheck := model.CheckGet("counterResetValue")
-		if resetValueCheck {
-			rateOptions["resetValue"] = resetValue.MustFloat64()
+		var counterResetValue *float64
+		if model.CounterResetValue != "" {
+			if val, err := strconv.ParseFloat(model.CounterResetValue, 64); err == nil {
+				counterResetValue = &val
+			}
+		}
+		if counterResetValue != nil {
+			rateOptions["resetValue"] = *counterResetValue
 		}
 
-		if !counterMaxCheck && (!resetValueCheck || resetValue.MustFloat64() == 0) {
+		if counterMax == nil && (counterResetValue == nil || *counterResetValue == 0) {
 			rateOptions["dropResets"] = true
 		}
 
@@ -322,15 +420,17 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 	}
 
 	// Setting tags
-	tags, tagsCheck := model.CheckGet("tags")
-	if tagsCheck && len(tags.MustMap()) > 0 {
-		metric["tags"] = tags.MustMap()
+	if len(model.Tags) > 0 {
+		metric["tags"] = model.Tags
 	}
 
 	// Setting filters
-	filters, filtersCheck := model.CheckGet("filters")
-	if filtersCheck && len(filters.MustArray()) > 0 {
-		metric["filters"] = filters.MustArray()
+	if len(model.Filters) > 0 {
+		metric["filters"] = model.Filters
+	}
+
+	if model.ExplicitTags {
+		metric["explicitTags"] = true
 	}
 
 	return metric

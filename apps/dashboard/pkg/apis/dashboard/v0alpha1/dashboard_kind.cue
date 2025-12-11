@@ -177,6 +177,9 @@ lineage: schemas: [{
 			// Set to 1 for the standard annotation query all dashboards have by default.
 			builtIn?: number | *0
 
+			// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+			placement?: #AnnotationQueryPlacement
+
 			// unless datasources have migrated to the target+mapping,
 			// they just spread their query into the base object :(
 			...
@@ -219,6 +222,8 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
+      // Determine whether regex applies to variable value or display text
+      regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -245,6 +250,10 @@ lineage: schemas: [{
 		// Determine if the variable shows on dashboard
 		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
+
+		// Determine whether regex applies to variable value or display text
+		// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="type")
 
 		// Sort variable options
 		// Accepted values are:
@@ -298,9 +307,13 @@ lineage: schemas: [{
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
-		// Dashboard Link placement. Defines where the link should be displayed. 
-		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
+		// Dashboard Link placement. Defines where the link should be displayed.
+		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
+
+		// Annotation Query placement. Defines where the annotation query should be displayed.
+		// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+		#AnnotationQueryPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Dashboard action type
 		#ActionType: "fetch" | "infinity" @cuetsy(kind="type")
@@ -311,7 +324,7 @@ lineage: schemas: [{
 			url: string
 			body?: string
 			// These are 2D arrays of strings, each representing a key-value pair
-			// We are defining this way because we can't generate a go struct that 
+			// We are defining this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
 			queryParams?: [...[...string]]
 			headers?: [...[...string]]
@@ -323,7 +336,7 @@ lineage: schemas: [{
 			url: string
 			body?: string
 			// These are 2D arrays of strings, each representing a key-value pair
-			// We are defining them this way because we can't generate a go struct that 
+			// We are defining them this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
 			queryParams?: [...[...string]]
 			headers?: [...[...string]]
@@ -364,8 +377,9 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+		// `switch`: Boolean variables rendered as a switch
 		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+			"system" | "snapshot" | "switch" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -373,7 +387,12 @@ lineage: schemas: [{
 		// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 		// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 		// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-		// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+		// `continuous-viridis`: Continuous Viridis palette mode
+		// `continuous-magma`: Continuous Magma palette mode
+		// `continuous-plasma`: Continuous Plasma palette mode
+		// `continuous-inferno`: Continuous Inferno palette mode
+		// `continuous-cividis`: Continuous Cividis palette mode
+		// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 		// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 		// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 		// `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -385,7 +404,7 @@ lineage: schemas: [{
 		// `continuous-purples`: Continuous Purple palette mode
 		// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 		// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades") @grafanamaturity(NeedsExpertReview)
+		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousViridis|ContinuousMagma|ContinuousPlasma|ContinuousInferno|ContinuousCividis|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades") @grafanamaturity(NeedsExpertReview)
 
 		// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 		#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
@@ -668,6 +687,10 @@ lineage: schemas: [{
 
 			// Controls if the timeFrom or timeShift overrides are shown in the panel header
 			hideTimeOverride?: bool
+
+			// Compare the current time range with a previous period
+			// For example "1d" to compare current period but shifted back 1 day
+			timeCompare?: string
 
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef

@@ -89,7 +89,53 @@ This page provides various examples illustrating how to template common notifica
 
 Notification templates can access the [notification data](ref:reference-notification-data) using the dot (`.`). The following examples demonstrate some basic uses of the [template language](ref:language).
 
-For instance, to check if there are common labels (`.CommonLabels`) for all alerts in the notification, use `if`:
+### Text formatting examples
+
+Text formatting in notification templates varies by contact point type. Each platform has its own formatting syntax:
+
+#### Slack formatting
+
+For Slack contact points, you can use:
+
+```go
+{{ define "slack_formatted_message" -}}
+*This text will be bold in Slack*
+_This text will be italic in Slack_
+Regular text without formatting
+{{ end }}
+```
+
+Execute the template:
+
+```go
+{{ template "slack_formatted_message" . }}
+```
+
+```template_output
+*This text will be bold in Slack*
+_This text will be italic in Slack_
+Regular text without formatting
+```
+
+#### Additional contact point types
+
+{{< admonition type="note" >}}
+Each contact point type has its own formatting requirements:
+
+- Some support Markdown-style formatting
+- Others use HTML tags
+- Some may not support formatting at all
+
+Check your specific contact point's documentation for supported formatting syntax.
+{{< /admonition >}}
+
+## Template logic examples
+
+Beyond text formatting, you can use template logic to create dynamic notification content. The following examples demonstrate basic template operations:
+
+### Conditional logic
+
+To check if there are common labels (`.CommonLabels`) for all alerts in the notification, use `if`:
 
 ```go
 {{ define "custom_message" -}}
@@ -100,6 +146,8 @@ There are no common labels
 {{ end }}
 {{ end }}
 ```
+
+### Iterating over alerts
 
 To iterate on the alerts in the notification and print a specific label, use `range` and `index`:
 

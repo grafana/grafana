@@ -2,7 +2,7 @@ import { UserEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitFor, within } from 'test/test-utils';
+import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -13,14 +13,13 @@ import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/serv
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { grafanaRulerGroup } from '../../../../mocks/grafanaRulerApi';
+import { grafanaRulerGroup, mockPreviewApiResponse } from '../../../../mocks/grafanaRulerApi';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
@@ -63,6 +62,8 @@ const selectContactPoint = async (contactPointName: string) => {
   await clickSelectOption(contactPointInput, contactPointName);
 };
 
+const server = setupMswServer();
+
 // combobox hack
 beforeEach(() => {
   const mockGetBoundingClientRect = jest.fn(() => ({
@@ -77,9 +78,10 @@ beforeEach(() => {
   Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
     value: mockGetBoundingClientRect,
   });
+
+  mockPreviewApiResponse(server, []);
 });
 
-setupMswServer();
 setupDataSources(dataSources.default, dataSources.am);
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
@@ -168,7 +170,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('switch modes enabled', () => {
-    testWithFeatureToggles(['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode']);
+    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'] });
 
     it('can create the new grafana-managed rule with default modes', async () => {
       const contactPointName = 'lotsa-emails';

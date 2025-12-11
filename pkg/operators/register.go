@@ -8,12 +8,6 @@ import (
 
 func init() {
 	server.RegisterOperator(server.Operator{
-		Name:        "provisioning-jobs",
-		Description: "Watch provisioning jobs and manage job history cleanup",
-		RunFunc:     provisioning.RunJobController,
-	})
-
-	server.RegisterOperator(server.Operator{
 		Name:        "provisioning-repo",
 		Description: "Watch provisioning repositories",
 		RunFunc:     provisioning.RunRepoController,

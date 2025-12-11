@@ -1,16 +1,32 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { BackendSrv, FetchResponse, TemplateSrv } from '@grafana/runtime';
 
-import { createFetchResponse } from '../../../../../test/helpers/createFetchResponse';
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbQuery } from '../types';
 
+export function createFetchResponse<T>(data: T): FetchResponse<T> {
+  return {
+    data,
+    status: 200,
+    url: 'http://localhost:3000/api/ds/query',
+    config: { url: 'http://localhost:3000/api/ds/query' },
+    type: 'basic',
+    statusText: 'Ok',
+    redirected: false,
+    headers: new Headers(),
+    ok: true,
+  };
+}
+
+const mockBackendSrv = {
+  fetch: jest.fn(),
+} as unknown as BackendSrv;
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
+  getBackendSrv: () => mockBackendSrv,
 }));
 
 const metricFindQueryData = [
@@ -26,7 +42,7 @@ const metricFindQueryData = [
 describe('opentsdb', () => {
   function getTestcontext({ data = metricFindQueryData }: { data?: unknown } = {}) {
     jest.clearAllMocks();
-    const fetchMock = jest.spyOn(backendSrv, 'fetch');
+    const fetchMock = jest.spyOn(mockBackendSrv, 'fetch');
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };

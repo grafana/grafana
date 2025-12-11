@@ -8,6 +8,7 @@ import {
   getColorByStringHash,
   FALLBACK_COLOR,
   fieldColorModeRegistry,
+  formattedValueToString,
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
@@ -20,10 +21,11 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
     const pillValues = inferPills(value);
     return pillValues.length > 0
       ? pillValues.map((pill, index) => {
-          const bgColor = getPillColor(pill, field, theme);
+          const renderedValue = formattedValueToString(field.display!(pill));
+          const bgColor = getPillColor(renderedValue, field, theme);
           const textColor = getTextColorForBackground(bgColor);
           return {
-            value: String(pill),
+            value: renderedValue,
             key: `${pill}-${index}`,
             bgColor,
             color: textColor,
@@ -63,6 +65,10 @@ const TRANSPARENT = 'rgba(0,0,0,0)';
 export function inferPills(rawValue: TableCellValue): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
   }
 
   const value = String(rawValue);

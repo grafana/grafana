@@ -56,6 +56,15 @@ export interface PanelContext {
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
   /**
+   * Returns filters based on existing grouping or an empty array
+   */
+  getFiltersBasedOnGrouping?: (items: AdHocFilterItem[]) => AdHocFilterItem[];
+  /**
+   *
+   * Used to apply multiple filters at once
+   */
+  onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+  /**
    * Enables modifying thresholds directly from the panel
    *
    * @alpha -- experimental

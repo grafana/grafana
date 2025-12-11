@@ -29,6 +29,11 @@ export interface Props {
   autoColors?: boolean;
 }
 
+/**
+ * A set of an input field and a button next to it that allows the user to add new tags. The added tags are previewed next to the input and can be removed by clicking the "X" icon. You can customize the width of the input.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-tagsinput--docs
+ */
 export const TagsInput = forwardRef<HTMLInputElement, Props>(
   (
     {

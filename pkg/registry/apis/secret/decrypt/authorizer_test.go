@@ -23,7 +23,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := context.Background()
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.Empty(t, identity)
 		require.False(t, allowed)
 	})
@@ -32,7 +32,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -41,7 +41,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.Empty(t, identity)
 		require.False(t, allowed)
 	})
@@ -50,7 +50,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), " ", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.Empty(t, identity)
 		require.False(t, allowed)
 	})
@@ -60,13 +60,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 
 		// nameless
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -76,13 +76,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 
 		// nameless
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:*"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:something"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -91,7 +91,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -100,7 +100,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"wrong.group/securevalues/invalid:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -110,13 +110,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 
 		// nameless
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -125,7 +125,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.NotEmpty(t, identity)
 		require.True(t, allowed)
 	})
@@ -135,13 +135,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 
 		// nameless
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
@@ -151,13 +151,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 
 		// nameless
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 
 		// named
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "name", []string{"identity"}, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "name", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 	})
@@ -172,11 +172,11 @@ func TestDecryptAuthorizer(t *testing.T) {
 		})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "name1", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "name1", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "name2", []string{"identity"}, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "name2", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 	})
@@ -185,7 +185,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 	})
@@ -194,7 +194,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 	})
@@ -203,7 +203,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "name", []string{}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "name", []string{}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 	})
@@ -212,7 +212,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity1", "identity2", "identity3"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity1", "identity2", "identity3"}, nil)
 		require.Equal(t, "identity1", identity)
 		require.True(t, allowed)
 	})
@@ -226,7 +226,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 			},
 		})
 
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
 			{
 				APIVersion: "test.grafana.app/v1",
 				Kind:       "Test",
@@ -246,7 +246,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 			},
 		})
 
-		_, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+		_, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
 			{
 				APIVersion: "test.grafana.app/v1",
 				Kind:       "Test",
@@ -265,7 +265,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 			},
 		})
 
-		_, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
+		_, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{}, []metav1.OwnerReference{
 			{
 				APIVersion: "test.grafana.app/v1",
 				Kind:       "Test",
@@ -278,17 +278,17 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"SECRET.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/SECUREVALUES:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 
 		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:DECRYPT"})
-		identity, allowed = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
+		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 	})
@@ -297,7 +297,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		ctx := createAuthContext(context.Background(), "namespace1", "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, "namespace2", "", []string{"identity"}, nil)
+		identity, allowed, _ := authorizer.Authorize(ctx, "namespace2", "", []string{"identity"}, nil)
 		require.Empty(t, identity)
 		require.False(t, allowed)
 	})

@@ -17,12 +17,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       width: '100%',
       height: '100%',
       opacity: 0,
-      transition: 'all 0.8s',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'all 0.8s',
+      },
     },
     '&:active:after': {
       margin: 0,
       opacity: 0.3,
-      transition: '0s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: '0s',
+      },
     },
   }),
 });

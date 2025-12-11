@@ -18,16 +18,21 @@ import {
 } from '@grafana/data';
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import {
+  CloseExtensionSidebarEvent,
+  OpenExtensionSidebarEvent,
+  ShowModalReactEvent,
+  ToggleExtensionSidebarEvent,
+} from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
+import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -414,6 +419,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
         text: truncateTitle(extension.title, 25),
         href: extension.path,
         onClick: extension.onClick,
+        iconClassName: extension.icon,
       });
       continue;
     }
@@ -426,6 +432,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       text: truncateTitle(extension.title, 25),
       href: extension.path,
       onClick: extension.onClick,
+      iconClassName: extension.icon,
     });
   }
 
@@ -467,12 +474,14 @@ export function getLinkExtensionOverrides(
       return undefined;
     }
 
+    // Only allowing to override the following properties
     let {
       title = config.title,
       description = config.description,
       path = config.path,
       icon = config.icon,
       category = config.category,
+      openInNewTab = config.openInNewTab,
       ...rest
     } = overrides;
 
@@ -481,7 +490,6 @@ export function getLinkExtensionOverrides(
       `The configure() function for "${config.title}" returned a promise, skipping updates.`
     );
 
-    path && assertLinkPathIsValid(pluginId, path);
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
@@ -498,6 +506,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      openInNewTab,
     };
   } catch (error) {
     if (error instanceof Error) {
@@ -537,6 +546,7 @@ export function getLinkExtensionOnClick(
 
       const helpers: PluginExtensionEventHelpers = {
         context,
+        extensionPointId,
         openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
           appEvents.publish(
@@ -549,6 +559,15 @@ export function getLinkExtensionOnClick(
         },
         closeSidebar: () => {
           appEvents.publish(new CloseExtensionSidebarEvent());
+        },
+        toggleSidebar: (componentTitle, context) => {
+          appEvents.publish(
+            new ToggleExtensionSidebarEvent({
+              props: context,
+              pluginId,
+              componentTitle,
+            })
+          );
         },
       };
 

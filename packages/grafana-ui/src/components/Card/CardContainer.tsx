@@ -49,6 +49,7 @@ export interface CardContainerProps extends HTMLAttributes<HTMLOrSVGElement>, Ca
   className?: string;
   /** Remove the bottom margin */
   noMargin?: boolean;
+  hasDescriptionComponent?: boolean;
 }
 
 /** @deprecated Using `CardContainer` directly is discouraged and should be replaced with `Card` */
@@ -60,12 +61,14 @@ export const CardContainer = ({
   className,
   href,
   noMargin,
+  hasDescriptionComponent = false,
   ...props
 }: CardContainerProps) => {
   const { oldContainer } = useStyles2(
     getCardContainerStyles,
     disableEvents,
     disableHover,
+    hasDescriptionComponent,
     isSelected,
     undefined,
     noMargin
@@ -82,6 +85,7 @@ export const getCardContainerStyles = (
   theme: GrafanaTheme2,
   disabled = false,
   disableHover = false,
+  hasDescriptionComponent: boolean,
   isSelected?: boolean,
   isCompact?: boolean,
   noMargin = false
@@ -92,15 +96,20 @@ export const getCardContainerStyles = (
     container: css({
       display: 'grid',
       position: 'relative',
-      gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateRows: '1fr auto auto auto',
-      gridAutoColumns: '1fr',
-      gridAutoFlow: 'row',
-      gridTemplateAreas: `
+      gridTemplate: hasDescriptionComponent
+        ? `
         "Figure Heading Tags"
         "Figure Meta Tags"
-        "Figure Description Tags"
-        "Figure Actions Secondary"`,
+        "Figure Description Tags" 1fr
+        "Figure Actions Secondary" / auto 1fr auto
+      `
+        : `
+        "Figure Heading Tags" 1fr
+        "Figure Meta Tags"
+        "Figure Actions Secondary" / auto 1fr auto
+      `,
+      gridAutoColumns: '1fr',
+      gridAutoFlow: 'row',
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
       background: theme.colors.background.secondary,

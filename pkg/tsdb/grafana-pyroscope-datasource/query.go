@@ -542,7 +542,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 	if len(annotations) > 0 {
 		frame, err := annotation.CreateAnnotationFrame(annotations)
 		if err != nil {
-			return nil, err
+			return nil, backend.DownstreamError(fmt.Errorf("error creating annotation frame: %w", err))
 		}
 		frames = append(frames, frame)
 	}

@@ -6,4 +6,5 @@ generate: install-app-sdk update-app-sdk
 		--source=./kinds/ \
 		--gogenpath=./pkg/apis \
 		--grouping=group \
+		--genoperatorstate=false \
 		--defencoding=none

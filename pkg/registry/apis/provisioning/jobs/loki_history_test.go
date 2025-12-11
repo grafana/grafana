@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 )
 
 func TestLokiJobHistory_WriteJob(t *testing.T) {
@@ -86,16 +86,16 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 			Errors:   []string{"warning: deprecated field used"},
 			Progress: 100.0,
 			Summary: []*provisioning.JobResourceSummary{{
-				Group:    "dashboard.grafana.app",
-				Resource: "dashboards",
-				Total:    10,
-				Create:   3,
-				Update:   5,
-				Delete:   1,
-				Write:    8,
-				Error:    1,
-				Noop:     0,
-				Errors:   []string{"failed to process dashboard-x"},
+				Group:  "dashboard.grafana.app",
+				Kind:   "Dashboard",
+				Total:  10,
+				Create: 3,
+				Update: 5,
+				Delete: 1,
+				Write:  8,
+				Error:  1,
+				Noop:   0,
+				Errors: []string{"failed to process dashboard-x"},
 			}},
 		},
 	}
@@ -178,7 +178,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		require.Len(t, deserializedJob.Status.Summary, 1)
 		summary := deserializedJob.Status.Summary[0]
 		assert.Equal(t, "dashboard.grafana.app", summary.Group)
-		assert.Equal(t, "dashboards", summary.Resource)
+		assert.Equal(t, "Dashboard", summary.Kind)
 		assert.Equal(t, int64(10), summary.Total)
 		assert.Equal(t, int64(3), summary.Create)
 		assert.Equal(t, int64(5), summary.Update)

@@ -34,7 +34,7 @@ import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Co
 import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 
-import appEvents from '../../../core/app_events';
+import { appEvents } from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { isInfinityActionWithAuth } from '../../actions/utils';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
@@ -370,7 +370,7 @@ export class Scene {
     }
   };
 
-  render() {
+  renderElement() {
     const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
     const hasActions =
       this.tooltipPayload?.element?.options.actions &&
@@ -388,8 +388,8 @@ export class Scene {
 
     const sceneDiv = (
       <>
-        {this.connections.render()}
-        {this.root.render()}
+        {this.connections.renderElement()}
+        {this.root.renderElement()}
         {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu

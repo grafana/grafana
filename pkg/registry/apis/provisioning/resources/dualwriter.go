@@ -100,7 +100,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// HACK: manual set to the provided branch so that the parser can possible read the file
-	if r.shouldUpdateGrafanaDB(opts, nil) {
+	if !r.shouldUpdateGrafanaDB(opts, nil) {
 		file.Ref = opts.Ref
 	}
 
@@ -515,9 +515,8 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		Resource:  parsed.GVR.Resource,
 		Namespace: id.GetNamespace(),
 		Name:      name,
-		Folder:    parsed.Meta.GetFolder(),
 		Verb:      verb,
-	})
+	}, parsed.Meta.GetFolder())
 	if err != nil || !rsp.Allowed {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
 			fmt.Errorf("no access to read the embedded file"))

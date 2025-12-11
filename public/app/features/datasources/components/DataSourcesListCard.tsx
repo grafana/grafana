@@ -21,7 +21,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
   const styles = useStyles2(getStyles);
 
   return (
-    <Card href={hasWriteRights ? dsLink : undefined}>
+    <Card noMargin href={hasWriteRights ? dsLink : undefined}>
       <Card.Heading>{dataSource.name}</Card.Heading>
       <Card.Figure>
         <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
@@ -80,7 +80,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
 function DataSourcesListCardSkeleton({ hasExploreRights }: Pick<Props, 'hasExploreRights'>) {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>

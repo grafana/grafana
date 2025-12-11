@@ -4,12 +4,15 @@ TeamBindingSpec: {
 	#Subject: {
 		// uid of the identity
 		name: string
-		// permission of the identity in the team
-		permission: TeamPermission
 	}
 
-	subjects: [...#Subject]
+	subject: #Subject
 	teamRef: TeamRef
+
+	// permission of the identity in the team
+	permission: TeamPermission
+
+	external: bool
 }
 
 TeamRef:{

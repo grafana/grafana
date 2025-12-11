@@ -9,9 +9,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
-import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
@@ -63,6 +64,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
+      ),
+    },
+    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
+      path: DASHBOARD_LIBRARY_ROUTES.Template,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Template,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
     {
@@ -128,12 +138,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/correlations',
-      component: SafeDynamicImport(() =>
-        config.featureToggles.correlations
-          ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
-          : import(
-              /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
-            )
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
       ),
     },
     {
@@ -365,20 +371,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/featuretoggles',
-      component: config.featureToggles.featureToggleAdminPage
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
-          )
-        : () => <Navigate replace to="/admin" />,
-    },
-    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
     },
-    config.featureToggles.onPremToCloudMigrations && {
+    config.cloudMigrationEnabled && {
       path: '/admin/migrate-to-cloud',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
       component: SafeDynamicImport(
@@ -526,6 +524,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/bookmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
+    },
+    {
+      path: '/theme-playground',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
     config.featureToggles.restoreDashboards && {

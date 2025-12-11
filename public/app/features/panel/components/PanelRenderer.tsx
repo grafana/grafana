@@ -12,7 +12,7 @@ import {
 import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
@@ -92,7 +92,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const PanelComponent = plugin.panel;
 
   return (
-    <ErrorBoundaryAlert dependencies={[plugin, data]}>
+    <ErrorBoundaryAlert boundaryName="panel-renderer" dependencies={[plugin, data]}>
       <PluginContextProvider meta={plugin.meta}>
         <PanelComponent
           id={1}

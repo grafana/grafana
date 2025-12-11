@@ -58,7 +58,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: true
@@ -78,6 +78,7 @@ jobs:
         # We don't need more than this since it has to wait for the other tests.
         shard: [
           1/4, 2/4, 3/4, 4/4,
+          profiled,
         ]
       fail-fast: false
 
@@ -91,17 +92,79 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: true
       - name: Run tests
+        if: matrix.shard != 'profiled'
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+          SKIP_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/dashboard
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          # Build regex pattern like: pkg1$|pkg2$|pkg3$
+          SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Run profiled tests
+        id: run-profiled-tests
+        if: matrix.shard == 'profiled'
+        env:
+          CGO_ENABLED: 0
+          PROFILED_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/dashboard
+        run: |
+          set -euo pipefail
+          # Build regex pattern line: pkg1$|pkg2$|pkg3$
+          PROFILE_PATTERN=$(echo "$PROFILED_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | grep -E "($PROFILE_PATTERN)")"
+          if [ ${#PACKAGES[@]} -eq 0 ]; then
+            echo "⚠️  No profiled packages found"
+            exit 0
+          fi
+          mkdir -p profiles
+          EXIT_CODE=0
+          # Run each profiled package sequentially
+          for full_pkg in "${PACKAGES[@]}"; do
+            # Build valid file name
+            pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
+            echo "📦 Running $full_pkg"
+            set +e
+            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
+              -outputdir=profiles \
+              -cpuprofile="cpu_${pkg_name}.prof" \
+              -memprofile="mem_${pkg_name}.prof" \
+              -trace="trace_${pkg_name}.out" \
+              "$full_pkg" 2>&1 | tee "profiles/test_${pkg_name}.log"
+            TEST_EXIT=$?
+            set -e
+            if [ $TEST_EXIT -ne 0 ]; then
+              echo "❌ $full_pkg failed with exit code $TEST_EXIT"
+              EXIT_CODE=1
+            else
+              echo "✅ $full_pkg passed"
+            fi
+          done
+          # Set output for artifact upload
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "upload_artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
+          exit $EXIT_CODE
+      - name: Output test profiles and traces
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
+        if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
+        with:
+          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
+          path: profiles/
+          retention-days: 7
+          if-no-files-found: ignore
   mysql:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -139,7 +202,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: true
@@ -188,7 +251,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: true

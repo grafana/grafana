@@ -48,8 +48,9 @@ export const flows = {
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
+    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       .click();
@@ -97,12 +98,18 @@ export async function checkRepeatedPanelTitles(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  expectHidden = false
 ) {
   for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`${title}${option}`))
-    ).toBeVisible();
+    const titleLocator = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title(`${title}${option}`)
+    );
+    if (expectHidden) {
+      await expect(titleLocator).toBeHidden();
+    } else {
+      await expect(titleLocator).toBeVisible();
+    }
   }
 }
 
@@ -185,5 +192,50 @@ export async function goToEmbeddedPanel(page: Page) {
   const baseUrl = currentUrl.match(baseUrlRegex)?.[0];
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
-  page.goto(soloPanelUrl!);
+  await page.goto(soloPanelUrl!);
+}
+
+export async function moveTab(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  sourceTab: string,
+  targetTab: string
+) {
+  // Get target panel position
+  const targetTabElement = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(targetTab)).first();
+
+  // Get source panel element
+  const sourceTabElement = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(sourceTab)).first();
+
+  const targetBox = await targetTabElement.boundingBox();
+
+  // Perform drag and drop (dragTo() did not work in this case)
+  await sourceTabElement.hover();
+  await page.mouse.down();
+  // move to adjusted target position (relative to top left)
+  await page.mouse.move((targetBox?.x || 0) + (targetBox?.width || 0), targetBox?.y || 0, { steps: 5 });
+  await page.mouse.up();
+}
+
+export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
+  await page.getByText('Group into tab').click();
+}
+
+export async function checkRepeatedTabTitles(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  title: string,
+  options: Array<string | number>
+) {
+  for (const option of options) {
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
+  }
+}
+
+export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
+  const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
+  const boundingBox = await tab.boundingBox();
+  return boundingBox;
 }

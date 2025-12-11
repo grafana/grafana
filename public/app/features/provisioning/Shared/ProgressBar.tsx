@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 interface ProgressBarProps {
@@ -24,7 +25,14 @@ const ProgressBar = ({ progress, topBottomSpacing }: ProgressBarProps) => {
   }
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      aria-label={t('provisioning.shared.progress-bar.aria-label', 'Progress Bar')}
+      role="progressbar"
+      aria-valuenow={progress}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div className={shouldAnimate ? styles.fillerAnimated : styles.filler} style={{ width: `${progress}%` }} />
     </div>
   );

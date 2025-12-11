@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -886,7 +886,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			description: "Invalid ODBC URL",
 			url:         `localhost\instance::1433`,
 			err: datasource.URLValidationError{
-				Err: errors.New(`unrecognized MSSQL URL format: "localhost\\instance::1433"`),
+				Err: errors.New(`unrecognized URL format: "localhost\\instance::1433"`),
 				URL: `localhost\instance::1433`,
 			},
 		},

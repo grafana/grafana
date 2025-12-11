@@ -10,7 +10,7 @@ interface FilterStatusProps {
 
 export function FilterStatus({ state, numberOfRules, onCancel }: FilterStatusProps) {
   return (
-    <Card>
+    <Card noMargin>
       <Text color="secondary">
         {/* done searching everything and found some results */}
         {state === 'done' && (

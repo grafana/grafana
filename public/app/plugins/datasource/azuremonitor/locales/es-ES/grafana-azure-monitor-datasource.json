@@ -13,7 +13,7 @@
       "label-resource-group": "Grupo de recursos",
       "label-resource-name": "Nombre del recurso",
       "label-resource-number": "Recurso {{resourceNum}}",
-      "label-resource-uri": "URI(s) de recursos ",
+      "label-resource-uri": "",
       "label-subscription": "Suscripción",
       "placeholder-resource-name": "nombre",
       "tooltip-region": "La región de código del recurso. Opcional para un recurso, pero obligatorio al seleccionar varios.",

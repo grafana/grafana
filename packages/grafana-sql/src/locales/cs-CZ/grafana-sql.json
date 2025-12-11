@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Auto. max. nečinný",
-        "content-auto-max-idle": "Pokud je tato možnost povolena, automaticky nastaví počet <1>Maximálních nečinných připojení</1> na stejnou hodnotu jako<3> Maximální otevřená připojení</3>. Pokud není nastaven počet maximálních otevřených připojení, bude nastaven na výchozí hodnotu ({{defaultMaxIdle}}).",
-        "content-max-idle": "Maximální počet připojení v nečinném připojovacím souboru. Pokud je <1>Maximální počet otevřených připojení</1> větší než 0, ale menší než <3>Maximální počet nečinných připojení</3>, pak bude <5>Maximální počet nečinných připojení</5> snížen tak, aby odpovídal limitu pro <8>Maximální počet otevřených připojení</8>. Pokud je nastaveno na 0, nejsou zachována žádná nečinná připojení.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "Maximální doba v sekundách, po kterou může být připojení znovu použito. Pokud je nastaveno na 0, připojení jsou znovu používána opakovaně.",
-        "content-max-open": "Maximální počet otevřených připojení k databázi. Pokud je <1>Maximální počet nečinných připojení</1> větší než 0 a <3>Maximální počet otevřených připojení</3> je menší než <5>Maximální počet nečinných připojení</5>, pak bude <7>Maximální počet nečinných připojení</7> snížen tak, aby odpovídal limitu pro <9>Maximální počet otevřených připojení</9>. Pokud je nastaveno na 0, počet otevřených připojení není omezen.",
+        "content-max-open": "",
         "max-idle": "Max. nečinný",
         "max-lifetime": "Max. životnost",
         "max-open": "Max. otevřený",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Váš dotaz je neplatný. Podrobnosti najdete níže. <1></1>Tento dotaz však můžete stále spustit.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Nástroj pro tvorbu",
           "label-code": "Kód"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formátovat dotaz"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Tento dotaz zpracuje <2>{{bytes}}</2> při spuštění.",
+        "query-will-process": "",
         "validating-query": "Ověřování dotazu…"
       },
       "raw-editor": {

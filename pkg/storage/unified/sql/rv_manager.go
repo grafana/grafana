@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -66,7 +66,6 @@ const (
 type resourceVersionManager struct {
 	dialect    sqltemplate.Dialect
 	db         db.DB
-	tracer     trace.Tracer
 	batchMu    sync.RWMutex
 	batchChMap map[string]chan *writeOp
 
@@ -98,7 +97,6 @@ type ResourceManagerOptions struct {
 	DB               db.DB               // The database to use
 	MaxBatchSize     int                 // The maximum number of operations to batch together
 	MaxBatchWaitTime time.Duration       // The maximum time to wait for a batch to be ready
-	Tracer           trace.Tracer        // The tracer to use for tracing
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -109,9 +107,6 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 	if opts.MaxBatchWaitTime == 0 {
 		opts.MaxBatchWaitTime = defaultMaxBatchWaitTime
 	}
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("resource-version-manager")
-	}
 	if opts.Dialect == nil {
 		return nil, errors.New("dialect is required")
 	}
@@ -121,7 +116,6 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 	return &resourceVersionManager{
 		dialect:          opts.Dialect,
 		db:               opts.DB,
-		tracer:           opts.Tracer,
 		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
@@ -143,7 +137,7 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.ExecWithRV")
+	ctx, span := tracer.Start(ctx, "sql.resourceVersionManager.ExecWithRV")
 	defer span.End()
 
 	span.SetAttributes(
@@ -223,7 +217,7 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 }
 
 func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
-	ctx, span := m.tracer.Start(ctx, "sql.rvmanager.execBatch")
+	ctx, span := tracer.Start(ctx, "sql.resourceVersionManager.execBatch")
 	defer span.End()
 
 	// Add batch size attribute
@@ -247,6 +241,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 	defer cancel()
 
 	guidToRV := make(map[string]int64, len(batch))
+	guidToSnowflakeRV := make(map[string]int64, len(batch))
 	guids := make([]string, len(batch)) // The GUIDs of the created resources in the same order as the batch
 	rvs := make([]int64, len(batch))    // The RVs of the created resources in the same order as the batch
 
@@ -263,7 +258,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 					attribute.Int("operation_index", i),
 					attribute.String("error", err.Error()),
 				))
-				return fmt.Errorf("failed to execute function: %w", err)
+				return err
 			}
 			guids[i] = guid
 		}
@@ -292,6 +287,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
+			guidToSnowflakeRV[guid] = snowflakeFromRv(rv)
 			rvs[i] = rv
 			rv++
 		}
@@ -308,8 +304,9 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		span.AddEvent("resource_versions_updated")
 
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate: sqltemplate.New(m.dialect),
-			GUIDToRV:    guidToRV,
+			SQLTemplate:       sqltemplate.New(m.dialect),
+			GUIDToRV:          guidToRV,
+			GUIDToSnowflakeRV: guidToSnowflakeRV,
 		}); err != nil {
 			span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
 				attribute.String("error", err.Error()),
@@ -345,6 +342,12 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 			batchTraceLink: trace.LinkFromContext(ctx),
 		}
 	}
+}
+
+// takes a unix microsecond rv and transforms into a snowflake format. The timestamp is converted from microsecond to
+// millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
+func snowflakeFromRv(rv int64) int64 {
+	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
 }
 
 // lock locks the resource version for the given key

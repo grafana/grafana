@@ -2,7 +2,7 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';

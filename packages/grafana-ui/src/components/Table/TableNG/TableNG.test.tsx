@@ -451,6 +451,19 @@ describe('TableNG', () => {
       expect(screen.getByText('A1')).toBeInTheDocument();
       expect(screen.getByText('1')).toBeInTheDocument();
     });
+
+    it('shows full column name in title attribute for truncated headers', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const firstHeaderSpan = headers[0].querySelector('span');
+      const secondHeaderSpan = headers[1].querySelector('span');
+
+      expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
+      expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');
+    });
   });
 
   describe('Footer options', () => {

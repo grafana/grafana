@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -2023,7 +2023,16 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 
 		exportRaw, err := receiverExportResponses.ReadFile(p)
 		require.NoError(t, err)
-		require.Equal(t, string(exportRaw), string(actualBody))
+		switch tc.exportType {
+		case "json":
+			require.JSONEq(t, string(exportRaw), string(actualBody))
+		case "yaml":
+			require.YAMLEq(t, string(exportRaw), string(actualBody))
+		case "hcl":
+			require.Equal(t, string(exportRaw), string(actualBody))
+		default:
+			t.Fatalf("unknown export type %q", tc.exportType)
+		}
 	}
 
 	t.Run("contact point export for all known configs", func(t *testing.T) {
@@ -2032,11 +2041,11 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 			t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
 				for _, redacted := range []bool{true, false} {
 					t.Run(fmt.Sprintf("redacted=%t", redacted), func(t *testing.T) {
-						allIntegrations := make([]models.Integration, 0, len(alertingNotify.AllKnownConfigsForTesting))
-						for integrationType := range alertingNotify.AllKnownConfigsForTesting {
+						allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+						for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 							integration := models.IntegrationGen(
 								models.IntegrationMuts.WithName(allIntegrationsName),
-								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", integrationType)),
+								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
 								models.IntegrationMuts.WithValidConfig(integrationType),
 							)()
 							integration.DisableResolveMessage = redacted
@@ -2215,6 +2224,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
 		tracer,
+		false,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,

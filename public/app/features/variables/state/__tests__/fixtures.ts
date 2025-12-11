@@ -11,6 +11,7 @@ import {
   OrgVariableModel,
   QueryVariableModel,
   SnapshotVariableModel,
+  SwitchVariableModel,
   TextBoxVariableModel,
   UserVariableModel,
   VariableHide,
@@ -206,6 +207,31 @@ export function createSnapshotVariable(input: Partial<SnapshotVariableModel> = {
     query: '',
     current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [],
+    ...input,
+  };
+}
+
+export function createSwitchVariable(input: Partial<SwitchVariableModel> = {}): SwitchVariableModel {
+  return {
+    ...createBaseVariableModel('switch'),
+    current: {
+      value: 'true',
+      text: 'true',
+      selected: true,
+    },
+    options: [
+      {
+        value: 'true',
+        text: 'true',
+        selected: true,
+      },
+      {
+        value: 'false',
+        text: 'false',
+        selected: false,
+      },
+    ],
+    query: '',
     ...input,
   };
 }

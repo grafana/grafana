@@ -21,3 +21,8 @@ export const shouldAllowRecoveringDeletedRules = () =>
 
 export const shouldAllowPermanentlyDeletingRules = () =>
   (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;
+
+export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUseBackendFilters ?? false;
+
+export const shouldUseFullyCompatibleBackendFilters = () =>
+  config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;

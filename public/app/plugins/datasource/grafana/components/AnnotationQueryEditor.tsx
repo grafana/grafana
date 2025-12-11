@@ -6,7 +6,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { getAnnotationTags } from 'app/features/annotations/api';
+import { annotationServer } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -146,7 +146,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
                   allowCustomValue
                   inputId="grafana-annotations__tags"
                   onChange={onTagsChange}
-                  tagOptions={getAnnotationTags}
+                  tagOptions={annotationServer().tags}
                   tags={tags ?? []}
                 />
               </Field>

@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultQueryGroupKind,

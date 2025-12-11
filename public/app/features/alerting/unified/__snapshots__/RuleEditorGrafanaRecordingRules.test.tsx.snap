@@ -78,9 +78,7 @@ exports[`RuleEditor grafana recording rules can create new grafana recording rul
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -208,9 +206,7 @@ exports[`RuleEditor grafana recording rules can create new grafana recording rul
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],

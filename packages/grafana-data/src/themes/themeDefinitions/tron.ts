@@ -48,9 +48,6 @@ const tronTheme: NewThemeOptions = {
     hoverFactor: 0.05,
     tonalOffset: 0.2,
   },
-  shape: {
-    borderRadius: 6,
-  },
 };
 
 export default tronTheme;

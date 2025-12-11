@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Bar gauge",
   "id": "bargauge",
-
+  "suggestions": true,
   "info": {
     "description": "Horizontal and vertical gauges",
     "author": {

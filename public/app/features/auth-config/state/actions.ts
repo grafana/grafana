@@ -1,13 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { Settings, UpdateSettingsQuery } from 'app/types/settings';
 import { ThunkResult } from 'app/types/store';
 
-import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
-import { AuthProviderStatus, SettingsError } from '../types';
+import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
+import { AuthProviderStatus, SettingsError, SSOProvider } from '../types';
 
 import {
   loadingBegin,

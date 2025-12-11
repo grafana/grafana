@@ -76,7 +76,7 @@ func (c *DashboardClient) Patch(ctx context.Context, identifier resource.Identif
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *DashboardClient) UpdateStatus(ctx context.Context, newStatus DashboardStatus, opts resource.UpdateOptions) (*Dashboard, error) {
+func (c *DashboardClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus DashboardStatus, opts resource.UpdateOptions) (*Dashboard, error) {
 	return c.client.Update(ctx, &Dashboard{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       DashboardKind().Kind(),
@@ -84,6 +84,8 @@ func (c *DashboardClient) UpdateStatus(ctx context.Context, newStatus DashboardS
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

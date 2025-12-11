@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
@@ -20,11 +19,11 @@ func TestBleveSearchBackend(t *testing.T) {
 		backend, err := NewBleveBackend(BleveOptions{
 			Root:          tempDir,
 			FileThreshold: 5,
-		}, tracing.NewNoopTracerService(), nil)
+		}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
-		t.Cleanup(backend.CloseAllIndexes)
+		t.Cleanup(backend.Stop)
 
 		return backend
 	}, &unitest.TestOptions{
@@ -45,11 +44,11 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
 		Root: tempDir,
-	}, tracing.NewNoopTracerService(), nil)
+	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
 }

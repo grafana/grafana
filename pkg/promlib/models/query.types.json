@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1725885733879",
+        "resourceVersion": "1759831574256",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -21,7 +21,6 @@
               "description": "Additional Ad-hoc filters that take precedence over Scope on conflict.",
               "items": {
                 "additionalProperties": false,
-                "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
                 "properties": {
                   "key": {
                     "type": "string"
@@ -33,7 +32,6 @@
                     "type": "string"
                   },
                   "values": {
-                    "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
                     "items": {
                       "type": "string"
                     },
@@ -103,18 +101,16 @@
               "description": "A set of filters applied to apply to the query",
               "items": {
                 "additionalProperties": false,
-                "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix).",
                 "properties": {
-                  "category": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
+                  "defaultPath": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "filters": {
                     "items": {
                       "additionalProperties": false,
-                      "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
                       "properties": {
                         "key": {
                           "type": "string"
@@ -126,7 +122,6 @@
                           "type": "string"
                         },
                         "values": {
-                          "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
                           "items": {
                             "type": "string"
                           },
@@ -142,24 +137,12 @@
                     },
                     "type": "array"
                   },
-                  "name": {
-                    "description": "This is the identifier from metadata.name of the scope model.",
-                    "type": "string"
-                  },
                   "title": {
-                    "type": "string"
-                  },
-                  "type": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "name",
-                  "title",
-                  "type",
-                  "description",
-                  "category",
-                  "filters"
+                  "title"
                 ],
                 "type": "object"
               },

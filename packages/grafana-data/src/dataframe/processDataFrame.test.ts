@@ -348,11 +348,11 @@ describe('SeriesData backwards compatibility', () => {
     expect(isDataFrame(timeseries)).toBeFalsy();
     expect(isDataFrame(series)).toBeTruthy();
 
-    const roundtrip = toLegacyResponseData(series) as any;
+    const roundtrip = toLegacyResponseData(series);
     expect(isDataFrame(roundtrip)).toBeFalsy();
-    expect(roundtrip.type).toBe('docs');
-    expect(roundtrip.target).toBe('docs');
-    expect(roundtrip.filterable).toBeTruthy();
+    expect('type' in roundtrip && roundtrip.type).toBe('docs');
+    expect('target' in roundtrip && roundtrip.target).toBe('docs');
+    expect('filterable' in roundtrip && roundtrip.filterable).toBeTruthy();
   });
 });
 
@@ -365,6 +365,7 @@ describe('sorted DataFrame', () => {
       { name: 'fourth', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
     ],
   });
+
   it('Should sort numbers', () => {
     const sorted = sortDataFrame(frame, 0, true);
     expect(sorted.length).toEqual(3);
@@ -385,6 +386,17 @@ describe('sorted DataFrame', () => {
     expect(sorted.fields[1].nanos).toBeUndefined();
     expect(sorted.fields[3].values).toEqual([3, 2, 1]);
     expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
+  });
+
+  it('Should handle arrays with empty values correctly', () => {
+    // Create a sparse array with empty slots (undefined values)
+    const values = ['502', '502', , '500', '500', '200', '404']; // Note the empty slot at index 2
+    const frame = toDataFrame({
+      fields: [{ name: 'status', type: FieldType.string, values }],
+    });
+    const sorted = sortDataFrame(frame, 0, false);
+
+    expect(sorted.fields[0].values).toEqual(['200', '404', '500', '500', '502', '502', undefined]);
   });
 });
 

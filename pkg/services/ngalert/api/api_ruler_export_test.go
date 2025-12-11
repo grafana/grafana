@@ -201,6 +201,33 @@ func TestExportFromPayload(t *testing.T) {
 			require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
 		})
 	})
+
+	t.Run("hcl body with simplified routing is as expected", func(t *testing.T) {
+		requestFile := "post-rulegroup-simplified-routing.json"
+
+		rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
+		require.NoError(t, err)
+
+		var buf bytes.Buffer
+		require.NoError(t, json.Compact(&buf, rawBody))
+
+		var body apimodels.PostableRuleGroupConfig
+		require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
+
+		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.hcl", 1)))
+		require.NoError(t, err)
+
+		rc := createRequest()
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
+
+		response := srv.ExportFromPayload(rc, body, folder.UID)
+		response.WriteTo(rc)
+
+		require.Equal(t, 200, response.Status())
+		require.Equal(t, string(expectedResponse), string(response.Body()))
+		require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
+	})
 }
 
 func TestExportRules(t *testing.T) {

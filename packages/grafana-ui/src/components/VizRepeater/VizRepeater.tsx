@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import { PureComponent, CSSProperties } from 'react';
+import { PureComponent, CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
 import { VizOrientation } from '@grafana/data';
@@ -139,7 +139,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
       }
     }
 
-    return <div style={{ position: 'relative' }}>{items}</div>;
+    return <div style={{ position: 'relative', width: '100%', height: '100%' }}>{items}</div>;
   }
 
   render() {

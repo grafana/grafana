@@ -72,6 +72,8 @@ const LABEL_WIDTH = 26;
 
 /**
  * @deprecated Use components from `@grafana/plugin-ui` instead, according to the [migration guide](https://github.com/grafana/plugin-ui/blob/main/src/components/ConfigEditor/migrating-from-datasource-http-settings.md).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-datasourcehttpsettings--docs
  */
 export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   const {

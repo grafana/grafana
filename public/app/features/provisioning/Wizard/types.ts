@@ -24,9 +24,9 @@ export interface ModeOption {
   label: string;
   description: string;
   subtitle: string;
+  disabled: boolean;
+  disabledReason?: string;
 }
-
-export type StepStatus = 'idle' | 'running' | 'error' | 'success';
 
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',

@@ -20,8 +20,7 @@ func TestValidateCreate(t *testing.T) {
 	tests := []struct {
 		name        string
 		folder      *folders.Folder
-		getter      *folders.FolderInfoList
-		getterError error
+		mockFolders map[string]*folders.Folder
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
 	}{
@@ -36,10 +35,23 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3"},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "p3",
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
 				},
 			},
 		},
@@ -94,12 +106,41 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3", Parent: "p4"},
-					{Name: "p4", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p3",
+						Annotations: map[string]string{"grafana.app/folder": "p4"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
+				},
+				"p4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p4",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p4 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
 				},
 			},
 			maxDepth:    2,
@@ -116,16 +157,94 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "4", Parent: "3"},
-					{Name: "3", Parent: "2"},
-					{Name: "2", Parent: "1"},
-					{Name: "1", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "4",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "4 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": "2"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "1",
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
 				},
 			},
 			maxDepth: folder.MaxNestedFolderDepth,
+		},
+		{
+			name: "cannot create a circular reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "3",
+					Annotations: map[string]string{"grafana.app/folder": "2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			expectedErr: "cyclic folder references found",
+			mockFolders: map[string]*folders.Folder{
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "1",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
+				},
+			},
 		},
 	}
 
@@ -135,10 +254,16 @@ func TestValidateCreate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			err := validateOnCreate(context.Background(), tt.folder,
-				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
-					return tt.getter, tt.getterError
-				}, maxDepth)
+
+			mockStorage := grafanarest.NewMockStorage(t)
+			for name, f := range tt.mockFolders {
+				f.Name = name
+				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+			}
+
+			getter := newParentsGetter(mockStorage, maxDepth)
+
+			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -203,7 +328,7 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
-			name: "no error when moving to max depth",
+			name: "can move a folder to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -230,11 +355,10 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
-			expectedErr: "[folder.maximum-depth-reached]",
+			maxDepth: folder.MaxNestedFolderDepth,
 		},
 		{
-			name: "error when moving too deep",
+			name: "error when moving exceeds max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -264,6 +388,71 @@ func TestValidateUpdate(t *testing.T) {
 			},
 			maxDepth:    folder.MaxNestedFolderDepth,
 			expectedErr: "[folder.maximum-depth-reached]",
+		},
+		{
+			name: "error when moving folder under its own descendant (direct child)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "parent",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "parent folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "parent",
+				},
+				Spec: folders.FolderSpec{
+					Title: "parent folder",
+				},
+			},
+			// When querying parents of "child", we get the chain: child -> parent -> root
+			// This means "parent" is an ancestor of "child", so we can't move "parent" under "child"
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "child", Parent: "parent"},
+					{Name: "parent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			expectedErr: "cannot move folder under its own descendant",
+		},
+		{
+			name: "error when moving folder under its grandchild",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "grandparent",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "grandchild",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "grandparent folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "grandparent",
+				},
+				Spec: folders.FolderSpec{
+					Title: "grandparent folder",
+				},
+			},
+			// When querying parents of "grandchild", we get: grandchild -> child -> grandparent -> root
+			// This means "grandparent" is in the ancestry, so we can't move it under "grandchild"
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "grandchild", Parent: "child"},
+					{Name: "child", Parent: "grandparent"},
+					{Name: "grandparent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			expectedErr: "cannot move folder under its own descendant",
 		},
 	}
 
@@ -321,7 +510,7 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
-		name: "stats error",
+		name: "stats error - nil stats",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -332,7 +521,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "could not verify if folder is empty",
 	}, {
-		name: "stats error",
+		name: "stats error - search error",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -343,7 +532,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "error running stats",
 	}, {
-		name: "stats error",
+		name: "stats error - error result",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -358,7 +547,64 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "could not verify if folder is empty",
 	}, {
-		name: "folder not empty",
+		name: "folder not empty - contains dashboards",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    10, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains alertrules",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "alerting.grafana.app",
+						Resource: "alertrules",
+						Count:    5, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains library_elements",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "library.grafana.app",
+						Resource: "library_elements",
+						Count:    3, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -370,7 +616,54 @@ func TestValidateDelete(t *testing.T) {
 					{
 						Group:    "folders.grafana.app",
 						Resource: "folders",
-						Count:    10, // not empty
+						Count:    2, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder can be deleted when it only contains non-validated resource types",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "playlist.grafana.app",
+						Resource: "playlists",
+						Count:    10, // has content but not a validated resource type
+					},
+					{
+						Group:    "other.grafana.app",
+						Resource: "other",
+						Count:    5, // has content but not a validated resource type
+					},
+				},
+			},
+		},
+	}, {
+		name: "folder not empty - mixed resources with validated types",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    10, // now validated
+					},
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    2, // validated and has content
 					},
 				},
 			},
@@ -412,4 +705,9 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	return m.search, m.searchErr
+}
+
+// RebuildIndexes implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
 }

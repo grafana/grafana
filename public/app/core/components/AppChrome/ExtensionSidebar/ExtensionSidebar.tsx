@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { css as cssReact, Global } from '@emotion/react';
 
 import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
@@ -41,6 +42,11 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
+        {/* When the sidebar is open, we don't want the body to scroll */}
+        {/* Need type assertion here due to the use of !important */}
+        {/* see https://github.com/frenic/csstype/issues/114#issuecomment-697201978 */}
+        {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
+        <Global styles={[cssReact({ body: { overflowY: 'unset !important' as 'unset' } })]} />
         <ExtensionComponent {...props} />
       </div>
     </div>
@@ -55,10 +61,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      padding: theme.spacing(1),
       width: '100%',
       height: '100%',
       overflow: 'auto',
+      // Temp fix for AI assistant, remove in a 1-2 months
+      ' > div > div': {
+        margin: 0,
+      },
     }),
     content: css({
       flex: 1,

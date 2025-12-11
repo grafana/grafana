@@ -1,4 +1,4 @@
-import { HTMLAttributes, PropsWithChildren } from 'react';
+import { HTMLAttributes, PropsWithChildren, type JSX } from 'react';
 import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
@@ -9,6 +9,11 @@ export interface RenderUserContentAsHTMLProps<T = HTMLSpanElement>
   content: string;
 }
 
+/**
+ * Abstraction layer component for sanitizing and rendering an html content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-renderusercontentashtml--docs
+ */
 export function RenderUserContentAsHTML<T>({
   component,
   content,

@@ -406,6 +406,14 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamRolesCommand"
+            }
           }
         ],
         "responses": {
@@ -997,7 +1005,7 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
@@ -1154,7 +1162,8 @@
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
@@ -2877,7 +2886,7 @@
           },
           {
             "type": "string",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "in": "header"
           },
           {
@@ -3167,7 +3176,7 @@
           },
           {
             "type": "string",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "in": "header"
           },
           {
@@ -3338,59 +3347,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/searchDashboardSnapshotsResponse"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/calculate-diff": {
-      "post": {
-        "produces": [
-          "application/json",
-          "text/html"
-        ],
-        "tags": [
-          "dashboards"
-        ],
-        "summary": "Perform diff on two dashboards.",
-        "operationId": "calculateDashboardDiff",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "base": {
-                  "$ref": "#/definitions/CalculateDiffTarget"
-                },
-                "diffType": {
-                  "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                  "type": "string",
-                  "enum": [
-                    "basic",
-                    "json"
-                  ]
-                },
-                "new": {
-                  "$ref": "#/definitions/CalculateDiffTarget"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/calculateDashboardDiffResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -3661,6 +3617,32 @@
           },
           "412": {
             "$ref": "#/responses/preconditionFailedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/interpolate": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.",
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           },
           "422": {
             "$ref": "#/responses/unprocessableEntityError"
@@ -9905,6 +9887,17 @@
             "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
             "name": "query",
             "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "name": "accesscontrol",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -10125,6 +10118,12 @@
             "name": "team_id",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "name": "accesscontrol",
+            "in": "query"
           }
         ],
         "responses": {
@@ -12724,6 +12723,9 @@
     },
     "AddTeamMemberCommand": {
       "type": "object",
+      "required": [
+        "userId"
+      ],
       "properties": {
         "userId": {
           "type": "integer",
@@ -13707,6 +13709,10 @@
         },
         "name": {
           "description": "Name of annotation.",
+          "type": "string"
+        },
+        "placement": {
+          "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
           "type": "string"
         },
         "target": {
@@ -14916,6 +14922,9 @@
     },
     "CreateTeamCommand": {
       "type": "object",
+      "required": [
+        "name"
+      ],
       "properties": {
         "email": {
           "type": "string"
@@ -15267,6 +15276,20 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
         }
       }
     },
@@ -16474,6 +16497,12 @@
             "$ref": "#/definitions/MSTeamsConfig"
           }
         },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -16644,6 +16673,10 @@
         },
         "is_paused": {
           "type": "boolean"
+        },
+        "message": {
+          "description": "Field is only populated when listing alert rule versions.",
+          "type": "string"
         },
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
@@ -17283,6 +17316,32 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "IntegrationStatus": {
+      "type": "object",
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the integration.",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "Whether the integration is configured to send resolved notifications.",
+          "type": "boolean"
+        }
+      }
+    },
     "InternalDataLink": {
       "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
       "type": "object",
@@ -17680,6 +17739,29 @@
         }
       }
     },
+    "MSTeamsV2Config": {
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
+        }
+      }
+    },
     "ManagerKind": {
       "description": "It can be a user or a tool or a generic API client.\n+enum",
       "type": "string",
@@ -17998,7 +18080,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -18149,6 +18231,28 @@
         "TLSConfig": {
           "$ref": "#/definitions/TLSConfig"
         },
+        "audience": {
+          "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+          "type": "string"
+        },
+        "claims": {
+          "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "client_certificate_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "client_certificate_key_file": {
+          "type": "string"
+        },
+        "client_certificate_key_id": {
+          "type": "string"
+        },
+        "client_certificate_key_ref": {
+          "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
+          "type": "string"
+        },
         "client_id": {
           "type": "string"
         },
@@ -18167,6 +18271,14 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "grant_type": {
+          "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
+          "type": "string"
+        },
+        "iss": {
+          "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+          "type": "string"
         },
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
@@ -18187,6 +18299,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "signature_algorithm": {
+          "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
+          "type": "string"
         },
         "token_url": {
           "type": "string"
@@ -18607,8 +18723,8 @@
       }
     },
     "Permission": {
+      "description": "Permission is the model for access control permissions",
       "type": "object",
-      "title": "Permission is the model for access control permissions.",
       "properties": {
         "action": {
           "type": "string"
@@ -18901,6 +19017,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
           }
         },
         "name": {
@@ -19986,6 +20108,12 @@
             "$ref": "#/definitions/MSTeamsConfig"
           }
         },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -20066,6 +20194,26 @@
           "type": "string"
         },
         "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "ReceiverStatus": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "Whether the receiver is used in a route or not.",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "Integrations configured for this receiver.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IntegrationStatus"
+          }
+        },
+        "name": {
+          "description": "Name of the receiver.",
           "type": "string"
         }
       }
@@ -20518,6 +20666,16 @@
     },
     "RoleDTO": {
       "type": "object",
+      "required": [
+        "version",
+        "uid",
+        "name",
+        "displayName",
+        "description",
+        "group",
+        "updated",
+        "created"
+      ],
       "properties": {
         "created": {
           "type": "string",
@@ -21405,6 +21563,20 @@
         }
       }
     },
+    "SetTeamRolesCommand": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "roleUids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -21841,6 +22013,14 @@
     },
     "TeamDTO": {
       "type": "object",
+      "required": [
+        "id",
+        "uid",
+        "orgId",
+        "name",
+        "isProvisioned",
+        "memberCount"
+      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -21858,6 +22038,7 @@
           "type": "string"
         },
         "id": {
+          "description": "@deprecated Use UID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -21896,6 +22077,9 @@
         "teamId": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -21971,6 +22155,9 @@
           "format": "int64"
         },
         "teamUID": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -22984,17 +23171,10 @@
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "ExternalUID": {
-          "type": "string"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Name": {
+        "name": {
           "type": "string"
         }
       }
@@ -24491,10 +24671,7 @@
     "dashboardVersionsResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {
@@ -25139,6 +25316,10 @@
         "$ref": "#/definitions/publicError"
       }
     },
+    "interpolateDashboardResponse": {
+      "description": "(empty)",
+      "schema": {}
+    },
     "jwksResponse": {
       "description": "(empty)",
       "schema": {
@@ -25402,7 +25583,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/Receiver"
+          "$ref": "#/definitions/ReceiverStatus"
         }
       }
     },

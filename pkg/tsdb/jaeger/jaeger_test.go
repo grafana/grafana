@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,7 +86,7 @@ func TestDataSourceInstanceSettings_TraceIdTimeEnabled(t *testing.T) {
 
 			// Verify the client's traceIdTimeEnabled parameter
 
-			var jsonData SettingsJSONData
+			var jsonData types.SettingsJSONData
 			if err := json.Unmarshal(dsInfo.JaegerClient.settings.JSONData, &jsonData); err != nil {
 				t.Fatalf("failed to parse settings JSON data: %v", err)
 			}

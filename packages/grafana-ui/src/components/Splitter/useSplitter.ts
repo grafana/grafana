@@ -49,6 +49,11 @@ const propsForDirection = {
   },
 } as const;
 
+/**
+ * The splitter creates two resizable panes, either horizontally or vertically.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-usesplitter--docs
+ */
 export function useSplitter(options: UseSplitterOptions) {
   const {
     direction,

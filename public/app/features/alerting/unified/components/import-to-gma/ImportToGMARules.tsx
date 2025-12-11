@@ -150,7 +150,6 @@ const ImportToGMARules = () => {
                 label={t('alerting.import-to-gma.additional-settings', 'Additional settings')}
                 isOpen={optionsShowing}
                 onToggle={toggleOptions}
-                collapsible={true}
               >
                 <Box marginLeft={1}>
                   <Box marginBottom={2}>

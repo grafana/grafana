@@ -1,34 +1,34 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ScopesContextValue } from '@grafana/runtime';
-import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
+import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
-import { enrichHelpItem } from '../MegaMenu/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
+import { HelpTopBarButton } from './HelpTopBarButton';
 import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
-import { TopNavBarMenu } from './TopNavBarMenu';
+import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
@@ -57,14 +57,13 @@ export const SingleTopBar = memo(function SingleTopBar({
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
-  const navIndex = useSelector((state) => state.navIndex);
-  const helpNode = cloneDeep(navIndex['help']);
-  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
-  const profileNode = navIndex['profile'];
+  const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
   return (
     <>
@@ -78,11 +77,12 @@ export const SingleTopBar = memo(function SingleTopBar({
               tooltip={t('navigation.megamenu.open', 'Open menu')}
             >
               <Stack gap={0} alignItems="center">
-                <Branding.MenuLogo className={styles.img} />
-                <Icon size="sm" name="angle-down" />
+                <Icon name="bars" size="xl" />
               </Stack>
             </ToolbarButton>
           )}
+          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
+          {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
         </Stack>
@@ -95,14 +95,11 @@ export const SingleTopBar = memo(function SingleTopBar({
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
           minWidth={{ xs: 'unset', lg: 0 }}
         >
+          <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
-          {enrichedHelpNode && (
-            <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-              <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
-            </Dropdown>
-          )}
+          <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}

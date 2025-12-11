@@ -1,10 +1,12 @@
 import { useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Box } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -19,6 +21,21 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const isGridLayout = layoutManager.descriptor.isGridLayout;
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
 
+  const disableTabs = useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return false;
+    }
+    let parent = layoutManager.parent;
+    while (parent) {
+      if (parent instanceof TabsLayoutManager) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+
+    return false;
+  }, [layoutManager]);
+
   const onChangeLayout = useCallback(
     (newLayout: LayoutRegistryItem) => {
       const layoutParent = layoutManager.parent;
@@ -30,37 +47,45 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     [layoutManager]
   );
 
-  const radioOptions = options.map((opt) => ({
-    value: opt,
-    label: opt.name,
-    icon: opt.icon,
-    description: opt.description,
-    ariaLabel: `layout-selection-option-${opt.name}`,
-  }));
+  const disabledOptions: LayoutRegistryItem[] = [];
+
+  const radioOptions = options.map((opt) => {
+    let description = opt.description;
+    if (disableTabs && opt.id === TabsLayoutManager.descriptor.id) {
+      description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+      disabledOptions.push(opt);
+    }
+
+    return {
+      value: opt,
+      label: opt.name,
+      icon: opt.icon,
+      description,
+      ariaLabel: `layout-selection-option-${opt.name}`,
+    };
+  });
 
   return (
-    <Box paddingBottom={2} display="flex" grow={1} alignItems="center">
-      <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
+    <Box paddingBottom={2} display="flex" grow={1} alignItems="stretch" gap={2} direction={'column'}>
+      <RadioButtonGroup
+        fullWidth
+        value={layoutManager.descriptor}
+        options={radioOptions}
+        onChange={onChangeLayout}
+        disabledOptions={disabledOptions}
+      />
     </Box>
   );
 }
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    const isGridLayout = layoutManager.descriptor.isGridLayout;
-
-    const groupLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.group-layout', 'Group layout'),
-      id: 'dash-group-layout',
-      isOpenDefault: false,
+    const layout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.layout', 'Layout'),
+      id: 'layout',
+      isOpenDefault: true,
     });
 
-    const gridLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
-      id: 'dash-grid-layout',
-      isOpenDefault: false,
-    });
-
-    gridLayout.addItem(
+    layout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
         id: 'dash-grid-layout-option',
@@ -69,33 +94,12 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       })
     );
 
-    if (isGridLayout) {
-      groupLayout.props.disabledText = t(
-        'dashboard.layout.common.group-layout-disabled',
-        'No groups exists on this level'
-      );
-    } else {
-      groupLayout.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: 'dash-group-layout-option',
-          skipField: true,
-          render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
-        })
-      );
-
-      gridLayout.props.disabledText = t(
-        'dashboard.layout.common.panel-layout-disabled',
-        'Select a row or tab to change panel layout options'
-      );
-    }
-
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
-        gridLayout.addItem(option);
+        layout.addItem(option);
       }
     }
 
-    return [groupLayout, gridLayout];
+    return [layout];
   }, [layoutManager]);
 }

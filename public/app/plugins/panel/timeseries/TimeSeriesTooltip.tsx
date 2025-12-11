@@ -1,7 +1,15 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  InterpolateFunction,
+  LinkModel,
+  usePluginContext,
+} from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -10,6 +18,7 @@ import {
   getContentItems,
   VizTooltipItem,
   AdHocFilterModel,
+  FilterByGroupedLabelsModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
@@ -42,6 +51,7 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
 }
@@ -62,7 +72,10 @@ export const TimeSeriesTooltip = ({
   adHocFilters,
   canExecuteActions,
   compareDiffMs,
+  filterByGroupedLabels,
 }: TimeSeriesTooltipProps) => {
+  const pluginContext = usePluginContext();
+
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
 
@@ -91,11 +104,20 @@ export const TimeSeriesTooltip = ({
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
     if (isPinned || hasOneClickLink) {
+      const visualizationType = pluginContext?.meta?.id ?? 'timeseries';
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = canExecuteActions ? getFieldActions(series, field, replaceVariables, dataIdx) : [];
+      const actions = canExecuteActions
+        ? getFieldActions(series, field, replaceVariables, dataIdx, visualizationType)
+        : [];
 
       footer = (
-        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          adHocFilters={adHocFilters}
+          filterByGroupedLabels={filterByGroupedLabels}
+        />
       );
     }
   }

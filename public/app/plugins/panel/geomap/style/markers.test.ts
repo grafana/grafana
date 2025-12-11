@@ -8,7 +8,10 @@ import {
   opacityExpression,
   rotationExpression,
   offsetExpression,
+  getMarkerMaker,
+  circleMarker,
 } from './markers';
+import { defaultStyleConfig } from './types';
 
 // Mock dependencies
 jest.mock('app/features/dimensions/resource', () => ({
@@ -99,5 +102,30 @@ describe('getWebGLStyle', () => {
 
     // Clean up the spy
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe('Icon Path Consistency', () => {
+  const circleIconPath = 'img/icons/marker/circle.svg';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should use consistent paths between default and selected circle icons', () => {
+    expect(defaultStyleConfig.symbol.fixed).toBe(circleIconPath);
+  });
+
+  it('should handle default and explicitly selected circle icons the same way for WebGL style', async () => {
+    const defaultStyle = await getWebGLStyle(); // No symbol
+    const explicitCircleStyle = await getWebGLStyle(circleIconPath);
+
+    expect(explicitCircleStyle).toEqual(defaultStyle);
+  });
+
+  it('should create valid marker maker for default icon', async () => {
+    const defaultMaker = await getMarkerMaker(); // No symbol
+
+    expect(defaultMaker).toBe(circleMarker);
   });
 });

@@ -66,3 +66,9 @@ func (m *MockLogEvents) GetLogEvents(ctx context.Context, input *cloudwatchlogs.
 
 	return args.Get(0).(*cloudwatchlogs.GetLogEventsOutput), args.Error(1)
 }
+
+func (m *MockLogEvents) ListAnomalies(ctx context.Context, input *cloudwatchlogs.ListAnomaliesInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.ListAnomaliesOutput, error) {
+	args := m.Called(ctx, input, optFns)
+
+	return args.Get(0).(*cloudwatchlogs.ListAnomaliesOutput), args.Error(1)
+}

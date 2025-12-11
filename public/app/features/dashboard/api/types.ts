@@ -33,6 +33,7 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     canStar?: boolean;
     canAdmin?: boolean;
     annotationsPermissions?: AnnotationsPermissions;
+    isPublic?: boolean;
   }; // TODO...
 }
 

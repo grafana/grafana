@@ -16,6 +16,7 @@ import {
   computeColWidths,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
+  IS_SAFARI_26,
 } from './utils';
 
 // Helper function to get displayed value
@@ -468,7 +469,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
   useLayoutEffect(() => {
     const el = ref.current?.element;
 
-    if (!el) {
+    if (!el || IS_SAFARI_26) {
       return;
     }
 

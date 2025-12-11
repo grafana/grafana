@@ -33,7 +33,7 @@ func newShadowClientMetrics(reg prometheus.Registerer) *metrics {
 		),
 		compileSeconds: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name:      "compile_seconds",
+				Name:      "engine_compile_seconds",
 				Help:      "Histogram for item checker compilation time for the specific access control engine (RBAC and zanzana).",
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,

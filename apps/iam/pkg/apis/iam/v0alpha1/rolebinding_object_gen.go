@@ -21,8 +21,12 @@ type RoleBinding struct {
 
 	// Spec is the spec of the RoleBinding
 	Spec RoleBindingSpec `json:"spec" yaml:"spec"`
+}
 
-	Status RoleBindingStatus `json:"status" yaml:"status"`
+func NewRoleBinding() *RoleBinding {
+	return &RoleBinding{
+		Spec: *NewRoleBindingSpec(),
+	}
 }
 
 func (o *RoleBinding) GetSpec() any {
@@ -39,15 +43,11 @@ func (o *RoleBinding) SetSpec(spec any) error {
 }
 
 func (o *RoleBinding) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *RoleBinding) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +55,6 @@ func (o *RoleBinding) GetSubresource(name string) (any, bool) {
 
 func (o *RoleBinding) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(RoleBindingStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type RoleBindingStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +226,6 @@ func (o *RoleBinding) DeepCopyInto(dst *RoleBinding) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +295,5 @@ func (s *RoleBindingSpec) DeepCopy() *RoleBindingSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *RoleBindingSpec) DeepCopyInto(dst *RoleBindingSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of RoleBindingStatus
-func (s *RoleBindingStatus) DeepCopy() *RoleBindingStatus {
-	cpy := &RoleBindingStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies RoleBindingStatus into another RoleBindingStatus object
-func (s *RoleBindingStatus) DeepCopyInto(dst *RoleBindingStatus) {
 	resource.CopyObjectInto(dst, s)
 }

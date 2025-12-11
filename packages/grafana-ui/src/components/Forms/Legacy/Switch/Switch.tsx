@@ -108,7 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '2px',
       top: '2px',
       background: theme.components.input.background,
-      transition: '0.4s',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.4s',
+      },
       borderRadius: theme.shape.radius.circle,
       boxShadow: theme.shadows.z1,
     },

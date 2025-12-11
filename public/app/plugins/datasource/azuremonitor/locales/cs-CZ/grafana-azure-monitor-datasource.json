@@ -13,7 +13,7 @@
       "label-resource-group": "Skupina zdrojů",
       "label-resource-name": "Název zdroje",
       "label-resource-number": "Zdroj {{resourceNum}}",
-      "label-resource-uri": "URI zdroje ",
+      "label-resource-uri": "",
       "label-subscription": "Předplatné",
       "placeholder-resource-name": "název",
       "tooltip-region": "Oblast kódu zdroje. Volitelné pro jeden zdroj, ale povinné při výběru více zdrojů.",

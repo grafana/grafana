@@ -20,20 +20,22 @@ import {
   QueryVariableKind,
   TabsLayoutTabKind,
   DataQueryKind,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
+import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -70,12 +72,14 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
-    // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -110,6 +114,9 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
@@ -118,6 +125,9 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       }),
     ],
     extendPanelContext: setDashboardPanelContext,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
     options: {},
@@ -138,7 +148,12 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
 
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
   const panel = panelKind.spec;
-  const targets = panel.data?.spec.queries ?? [];
+
+  const targets =
+    // Default to an array with an empty data query with a `refId` already assigned
+    Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
+      ? panel.data?.spec.queries
+      : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
   if (!targets?.length) {
     return undefined;
@@ -178,51 +193,101 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
+/**
+ * Get panel-level datasource for a v2beta1 panel.
+ *
+ * In v2beta1 schema, there's NO panel-level datasource concept - each query has its own.
+ * However, we still need to set panel-level datasource to "mixed" when queries use
+ * different datasources, so the Scene can properly handle mixed datasource mode.
+ *
+ * This function returns:
+ * - Mixed datasource if queries use different datasources
+ * - undefined otherwise (each query has its own datasource)
+ *
+ * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
+ * which does NOT add panel-level datasource for non-mixed panels.
+ */
 function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   if (!panel.spec.data?.spec.queries?.length) {
     return undefined;
   }
 
-  let datasource: DataSourceRef | undefined = undefined;
+  let firstDatasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
   panel.spec.data.spec.queries.forEach((query) => {
-    if (!datasource) {
-      if (!query.spec.query.datasource?.name) {
-        datasource = getRuntimePanelDataSource(query.spec.query);
-      } else {
-        datasource = {
-          uid: query.spec.query.datasource?.name,
-          type: query.spec.query.group,
-        };
-      }
-    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
+    const queryDs = query.spec.query.datasource?.name
+      ? { uid: query.spec.query.datasource.name, type: query.spec.query.group }
+      : getRuntimePanelDataSource(query.spec.query);
+
+    if (!firstDatasource) {
+      firstDatasource = queryDs;
+    } else if (firstDatasource.uid !== queryDs?.uid || firstDatasource.type !== queryDs?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
-}
-
-export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  const ds: DataSourceRef = {
-    uid: variable.spec.query.datasource?.name,
-    type: variable.spec.query.group,
-  };
-  return getDataSourceForQuery(ds, variable.spec.query.group);
-}
-
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
-  const ds: DataSourceRef = {
-    uid: query.datasource?.name,
-    type: query.group,
-  };
-  return getDataSourceForQuery(ds, query.group);
+  // Only return mixed datasource - for non-mixed panels, each query already has its own datasource
+  // This matches the Go backend behavior which doesn't add panel.datasource for non-mixed panels
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
 }
 
 /**
+ * Get runtime datasource for a query variable.
+ * For V2→V1 conversion consistency:
+ * - If V2 has explicit UID (datasource.name): return {uid, type}
+ * - If V2 has only type (group): return {type} only (no UID resolution)
+ * - If V2 has neither: return undefined
+ * @param variable - The query variable
+ */
+export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
+  const explicitUid = variable.spec.query.datasource?.name;
+  const queryType = variable.spec.query.group;
+
+  // If explicit UID provided, resolve fully
+  if (explicitUid) {
+    return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
+  if (queryType) {
+    return { type: queryType };
+  }
+
+  // Neither UID nor type - no datasource
+  return undefined;
+}
+
+/**
+ * Get runtime datasource for a panel query or annotation.
+ * For V2→V1 conversion consistency:
+ * - If V2 has explicit UID (datasource.name): return {uid, type}
+ * - If V2 has only type (group): return {type} only (no UID resolution)
+ * - If V2 has neither: return undefined (caller should handle default)
+ * @param query - The data query
+ */
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
+  const explicitUid = query.datasource?.name;
+  const queryType = query.group;
+
+  // If explicit UID provided, resolve fully
+  if (explicitUid) {
+    return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
+  if (queryType) {
+    return { type: queryType };
+  }
+
+  // Neither UID nor type - no datasource
+  return undefined;
+}
+
+/**
+ * Resolves a datasource reference for a query.
  * @param querySpecDS - The datasource specified in the query
- * @param queryKind - The kind of query being performed
+ * @param queryKind - The kind of query being performed (datasource type)
  * @returns The resolved DataSourceRef
  */
 export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
@@ -277,10 +342,16 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+  // Add datasource to match Go backend V2→V1 conversion:
+  // - If explicit UID (datasource.name) exists → add { uid, type }
+  // - If only type (group) exists → add { type } only
+  // - If neither → no datasource
+  const datasource = getRuntimePanelDataSource(query.spec.query);
+
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query.spec.query),
     hide: query.spec.hidden,
+    ...(datasource ? { datasource } : {}),
     ...query.spec.query.spec,
   };
 }

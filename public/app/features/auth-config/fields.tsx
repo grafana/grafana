@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
@@ -906,7 +906,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
       description: t(
         'auth-config.fields.domain-hint-description',
-        'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
+        'Parameter to indicate the realm of the user in the Entra ID tenant and streamline the login process.'
       ),
       type: 'text',
       validation: {

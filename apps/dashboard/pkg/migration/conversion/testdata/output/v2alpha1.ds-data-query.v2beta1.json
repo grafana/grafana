@@ -976,8 +976,8 @@
         "spec": {
           "name": "variable-ds-prometheus",
           "current": {
-            "text": null,
-            "value": null
+            "text": "",
+            "value": ""
           },
           "hide": "dontHide",
           "refresh": "",
@@ -1006,8 +1006,8 @@
         "spec": {
           "name": "variable-no-ds",
           "current": {
-            "text": null,
-            "value": null
+            "text": "",
+            "value": ""
           },
           "hide": "dontHide",
           "refresh": "",
@@ -1034,8 +1034,8 @@
         "spec": {
           "name": "variable-no-ds-empty-query",
           "current": {
-            "text": null,
-            "value": null
+            "text": "",
+            "value": ""
           },
           "hide": "dontHide",
           "refresh": "",
@@ -1059,8 +1059,8 @@
         "spec": {
           "name": "variable-no-default-ds",
           "current": {
-            "text": null,
-            "value": null
+            "text": "",
+            "value": ""
           },
           "hide": "dontHide",
           "refresh": "",

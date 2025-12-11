@@ -5,13 +5,7 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 import { getFeatureToggle } from '../../utils/featureToggle';
 import { getFocusStyles } from '../mixins';
 
-export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: boolean) {
-  // in case the sidebar is closed, we want the body to scroll
-  // react select tries prevent scrolling by setting overflow/padding-right on the body
-  // Need type assertion here due to the use of !important
-  // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const bodyOverflow = isExtensionSidebarOpen ? {} : { overflowY: 'auto !important' as 'auto' };
+export function getElementStyles(theme: GrafanaTheme2) {
   return css({
     '*, *::before, *::after': {
       boxSizing: 'inherit',
@@ -56,12 +50,16 @@ export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: 
         size: 'auto',
         padding: 0,
       },
+      // react select tries prevent scrolling by setting overflow/padding-right on the body
+      // Need type assertion here due to the use of !important
+      // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      overflowY: 'auto !important' as 'auto',
       // disable contextual font ligatures. otherwise, in firefox and safari,
       // an "x" between 2 numbers is replaced by a multiplication ligature
       // see https://github.com/rsms/inter/issues/222
       fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
-      ...bodyOverflow,
       fontVariantNumeric: getFeatureToggle('tabularNumbers') ? 'tabular-nums' : 'initial',
     },
 

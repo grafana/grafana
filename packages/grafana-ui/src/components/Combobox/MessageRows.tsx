@@ -22,6 +22,12 @@ export const NotFoundError = () => (
   </MessageRow>
 );
 
+export const LoadingOptions = () => (
+  <MessageRow>
+    <Trans i18nKey="combobox.options.loading">Loading options...</Trans>
+  </MessageRow>
+);
+
 const MessageRow = ({ children }: { children: ReactNode }) => {
   return (
     <Box padding={2}>

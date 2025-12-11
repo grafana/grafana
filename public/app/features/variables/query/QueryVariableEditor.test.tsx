@@ -29,7 +29,12 @@ ds.variables = {
 };
 
 const setupTestContext = async (options: Partial<Props>) => {
-  const variableDefaults: Partial<QueryVariableModel> = { rootStateKey: 'key' };
+  const variableDefaults: Partial<QueryVariableModel> = {
+    rootStateKey: 'key',
+    // adds a default datasource in old arch tests so they continue passing
+    // in new scenes arch the datasource will be calculated if not provided
+    datasource: { uid: 'uid', type: 'type' },
+  };
   const extended = {
     VariableQueryEditor: LegacyVariableQueryEditor,
     dataSource: ds,

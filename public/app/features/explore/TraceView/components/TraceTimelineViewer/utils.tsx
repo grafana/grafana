@@ -122,5 +122,3 @@ export const isKindClient = (span: TraceSpan): Boolean => {
   }
   return span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
 };
-
-export { formatDuration } from '../utils/date';

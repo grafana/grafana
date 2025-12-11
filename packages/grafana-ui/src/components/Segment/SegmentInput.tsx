@@ -20,6 +20,9 @@ export interface SegmentInputProps
 
 const FONT_SIZE = 14;
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segmentinput--docs
+ */
 export function SegmentInput({
   value: initialValue,
   onChange,

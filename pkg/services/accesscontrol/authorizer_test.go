@@ -24,7 +24,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Resource:  "dashboards",
 			Namespace: "default",
 			Name:      "1",
-		})
+		}, "")
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)
 	})
@@ -47,7 +47,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		})
+		}, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)
@@ -70,7 +70,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Verb:      "list",
 			Namespace: "default",
 			Resource:  "dashboards",
-		})
+		}, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
@@ -94,7 +94,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		})
+		}, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
@@ -119,7 +119,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		})
+		}, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
@@ -129,7 +129,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		})
+		}, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)

@@ -1,8 +1,10 @@
+import type { JSX } from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountDTO } from 'app/types/serviceaccount';

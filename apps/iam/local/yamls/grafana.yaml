@@ -1,0 +1,197 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: default
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Jaeger
+        type: jaeger
+        uid: local-jaeger
+        access: proxy
+        url: http://jaeger-agent.jaeger.svc.cluster.local:16686
+        editable: true
+        isDefault: true
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: 'local-loki'
+            customQuery: false
+            filterByTraceID: true
+            filterBySpanID: true
+          nodeGraph:
+            enabled: true
+          search:
+            hide: false
+          spanBar:
+            type: 'Duration'
+      - name: Pyroscope
+        type: grafana-pyroscope-datasource
+        uid: local-pyroscope
+        access: proxy
+        url: http://pyroscope.default.svc.cluster.local:4040
+        editable: true
+        isDefault: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: default
+data:
+  grafana.ini: |
+    app_mode = development
+
+    [paths]
+    data = /var/lib/grafana
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+
+    [server]
+    http_port = 3000
+
+    [database]
+    type = sqlite3
+    path = grafana.db
+
+    [session]
+    provider = file
+    provider_config = sessions
+
+    [analytics]
+    reporting_enabled = false
+    check_for_updates = false
+
+    [security]
+    admin_user = admin
+    admin_password = admin
+    disable_gravatar = true
+
+    [snapshots]
+    external_enabled = false
+
+    [users]
+    allow_sign_up = false
+    allow_org_create = false
+    auto_assign_org = true
+    auto_assign_org_role = Viewer
+
+    [plugin.grafana-pyroscope-app]
+    app_enabled = true
+
+    [auth.anonymous]
+    enabled = true
+    org_name = Main Org.
+    org_role = Editor
+
+    [log]
+    mode = console
+    level = info
+
+    [explore]
+    enabled = true
+
+    [feature_toggles]
+    enable = traceqlStreaming,correlations,traceToMetrics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: default
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http-grafana
+              protocol: TCP
+          env:
+            - name: GF_PATHS_CONFIG
+              value: /etc/grafana/grafana.ini
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+          resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: grafana-storage
+            - mountPath: /etc/grafana
+              name: grafana-config
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-datasources
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            httpGet:
+              path: /api/health
+              port: 3000
+            timeoutSeconds: 1
+      volumes:
+        - name: grafana-storage
+          emptyDir: {}
+        - name: grafana-config
+          configMap:
+            name: grafana-config
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+            items:
+              - key: datasources.yaml
+                path: datasources.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: default
+  labels:
+    app: grafana
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: http-grafana
+      nodePort: 30000
+      name: grafana-http
+  selector:
+    app: grafana
+---

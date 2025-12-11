@@ -1,7 +1,4 @@
 import {
-  DisplayValue,
-  FALLBACK_COLOR,
-  FieldColorModeId,
   FieldConfig,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
@@ -51,13 +48,8 @@ export function calculateGaugeAutoProps(
 export function getFormattedThresholds(
   decimals: number,
   field: FieldConfig,
-  value: DisplayValue,
   theme: GrafanaTheme | GrafanaTheme2
 ): Threshold[] {
-  if (field.color?.mode !== FieldColorModeId.Thresholds) {
-    return [{ value: field.min ?? GAUGE_DEFAULT_MINIMUM, color: value.color ?? FALLBACK_COLOR }];
-  }
-
   const thresholds = field.thresholds ?? DEFAULT_THRESHOLDS;
   const isPercent = thresholds.mode === ThresholdsMode.Percentage;
   const steps = thresholds.steps;

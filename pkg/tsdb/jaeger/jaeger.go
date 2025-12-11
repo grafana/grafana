@@ -59,6 +59,10 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		logger := logger.FromContext(ctx)
 		jaegerClient, err := New(httpClient, logger, settings)
+		if err != nil {
+			return nil, fmt.Errorf("error creating jaeger client: %w", err)
+		}
+
 		return &datasourceInfo{JaegerClient: jaegerClient}, err
 	}
 }
@@ -79,6 +83,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	client, err := s.getDSInfo(ctx, backend.PluginConfigFromContext(ctx))
+	cfg := backend.GrafanaConfigFromContext(ctx)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -86,10 +91,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if _, err = client.JaegerClient.Services(); err != nil {
+	var servicesErr error
+	if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
+		_, servicesErr = client.JaegerClient.GrpcServices()
+	} else {
+		_, servicesErr = client.JaegerClient.Services()
+	}
+
+	if servicesErr != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: err.Error(),
+			Message: servicesErr.Error(),
 		}, nil
 	}
 

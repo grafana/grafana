@@ -5,15 +5,17 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { floatingUtils, useStyles2 } from '@grafana/ui';
+import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 
 interface AnnoBoxProps {
+  frame: DataFrame;
   annoVals: Record<string, any[]>;
   annoIdx: number;
   style: React.CSSProperties | null;
@@ -21,6 +23,8 @@ interface AnnoBoxProps {
   timeZone: TimeZone;
   exitWipEdit?: null | (() => void);
   portalRoot: HTMLElement;
+  canExecuteActions: boolean;
+  replaceVariables: InterpolateFunction;
 }
 
 const STATE_DEFAULT = 0;
@@ -28,6 +32,7 @@ const STATE_EDITING = 1;
 const STATE_HOVERED = 2;
 
 export const AnnotationMarker2 = ({
+  frame,
   annoVals,
   annoIdx,
   className,
@@ -35,6 +40,8 @@ export const AnnotationMarker2 = ({
   exitWipEdit,
   timeZone,
   portalRoot,
+  replaceVariables,
+  canExecuteActions,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
@@ -48,6 +55,19 @@ export const AnnotationMarker2 = ({
     strategy: 'fixed',
   });
 
+  const links: LinkModel[] = [];
+  const actions: ActionModel[] = [];
+
+  if (STATE_HOVERED) {
+    frame.fields.forEach((field) => {
+      links.push(...getDataLinks(field, annoIdx));
+
+      if (canExecuteActions) {
+        actions.push(...getFieldActions(frame, field, replaceVariables, annoIdx));
+      }
+    });
+  }
+
   const contents =
     state === STATE_HOVERED ? (
       <AnnotationTooltip2
@@ -55,6 +75,8 @@ export const AnnotationMarker2 = ({
         annoVals={annoVals}
         timeZone={timeZone}
         onEdit={() => setState(STATE_EDITING)}
+        links={links}
+        actions={actions}
       />
     ) : state === STATE_EDITING ? (
       <AnnotationEditor2

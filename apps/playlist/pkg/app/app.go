@@ -50,8 +50,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "playlist",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					klog.ErrorS(err, "Informer processing error")
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{

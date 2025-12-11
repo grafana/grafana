@@ -1,8 +1,7 @@
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, userEvent } from 'test/test-utils';
 
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
@@ -12,14 +11,14 @@ import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
 import { FolderActionsButton } from './FolderActionsButton';
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
-
 // Mock out the Permissions component for now
-jest.mock('app/core/components/AccessControl', () => ({
+jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: () => <div>Hello!</div>,
 }));
+
+const managePermissionsLabel = /Manage permissions/i;
+const moveMenuItemLabel = /Move this folder/i;
+const deleteMenuItemLabel = /Delete this folder/i;
 
 describe('browse-dashboards FolderActionsButton', () => {
   const mockFolder = mockFolderDTO();
@@ -62,12 +61,12 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('renders all the options if the user has full permissions', async () => {
-    render(<FolderActionsButton folder={mockFolder} />);
+    const { user } = render(<FolderActionsButton folder={mockFolder} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    expect(screen.getByRole('menuitem', { name: 'Manage permissions' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 
   it('does not render the "Manage permissions" option if the user does not have permission to view permissions', async () => {
@@ -80,9 +79,9 @@ describe('browse-dashboards FolderActionsButton', () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    expect(screen.queryByRole('menuitem', { name: 'Manage permissions' })).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: managePermissionsLabel })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 
   it('does not render the "Move" option if the user does not have permission to edit', async () => {
@@ -95,9 +94,9 @@ describe('browse-dashboards FolderActionsButton', () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    expect(screen.getByRole('menuitem', { name: 'Manage permissions' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Move' })).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 
   it('does not render the "Delete" option if the user does not have permission to delete', async () => {
@@ -110,16 +109,16 @@ describe('browse-dashboards FolderActionsButton', () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    expect(screen.getByRole('menuitem', { name: 'Manage permissions' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: deleteMenuItemLabel })).not.toBeInTheDocument();
   });
 
   it('clicking the "Manage permissions" option opens the permissions drawer', async () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Manage permissions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: managePermissionsLabel }));
     expect(screen.getByRole('dialog', { name: 'Drawer title Manage permissions' })).toBeInTheDocument();
   });
 
@@ -128,7 +127,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Move' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: moveMenuItemLabel }));
     expect(appEvents.publish).toHaveBeenCalledWith(
       new ShowModalReactEvent(
         expect.objectContaining({
@@ -143,7 +142,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     render(<FolderActionsButton folder={mockFolder} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
     expect(appEvents.publish).toHaveBeenCalledWith(
       new ShowModalReactEvent(
         expect.objectContaining({
@@ -151,5 +150,48 @@ describe('browse-dashboards FolderActionsButton', () => {
         })
       )
     );
+  });
+
+  // Git sync related tests
+  it('does not render the "Manage permissions" option if folder is provisioned', async () => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+        canViewPermissions: false,
+      };
+    });
+    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.queryByRole('menuitem', { name: managePermissionsLabel })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
+  });
+
+  it('does not render the "Move" option if folder is provisioned and is root repo folder', async () => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+        canViewPermissions: false,
+      };
+    });
+    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
+  });
+
+  it('does render the "Move" option if folder is provisioned and is NOT root repo folder', async () => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+        canViewPermissions: false,
+      };
+    });
+    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 });

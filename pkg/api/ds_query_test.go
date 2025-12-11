@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
@@ -86,6 +87,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.QuotaService = quotatest.New(false, nil)
+		hs.log = log.New("test-logger")
 	})
 
 	t.Run("Status code is 400 when data source response has an error", func(t *testing.T) {
@@ -252,6 +254,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
+				hs.log = log.New("test-logger")
 				hs.queryDataService = query.ProvideService(
 					cfg,
 					&fakeDatasources.FakeCacheService{},

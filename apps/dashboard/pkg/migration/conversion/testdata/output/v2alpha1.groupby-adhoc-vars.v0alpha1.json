@@ -4,11 +4,90 @@
   "metadata": {
     "name": "test-v2alpha1-groupby-adhoc-vars"
   },
-  "spec": null,
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "text7",
+            "value": "value7"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "description": "A group by variable",
+          "hide": 0,
+          "label": "Group By Variable",
+          "multi": false,
+          "name": "",
+          "options": [],
+          "skipUrlSync": false,
+          "type": "groupby"
+        },
+        {
+          "allowCustomValue": true,
+          "baseFilters": [
+            {
+              "condition": "AND",
+              "key": "key1",
+              "operator": "=",
+              "value": "value1"
+            },
+            {
+              "condition": "OR",
+              "key": "key2",
+              "operator": "=",
+              "value": "value2"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "datasource-3"
+          },
+          "defaultKeys": [
+            {
+              "expandable": true,
+              "group": "defaultGroup1",
+              "text": "defaultKey1",
+              "value": "defaultKey1"
+            }
+          ],
+          "description": "An adhoc variable",
+          "filters": [
+            {
+              "condition": "AND",
+              "key": "key3",
+              "operator": "=",
+              "value": "value3"
+            }
+          ],
+          "hide": 0,
+          "label": "Adhoc Variable",
+          "name": "adhocVar",
+          "skipUrlSync": false,
+          "type": "adhoc"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "title": "Test: V2alpha1 dashboard with group by and adhoc variables"
+  },
   "status": {
     "conversion": {
-      "failed": true,
-      "error": "backend conversion not yet implemented",
+      "failed": false,
       "storedVersion": "v2alpha1"
     }
   }

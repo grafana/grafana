@@ -4,7 +4,7 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Icon, Label, Select, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   publicDashboardApi,
   useUpdatePublicDashboardAccessMutation,

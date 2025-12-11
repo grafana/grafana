@@ -18,7 +18,7 @@ const (
 )
 
 var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"repositories", "repository", "Repositories",
+	"repositories", "repository", "Repository",
 	func() runtime.Object { return &Repository{} },     // newObj
 	func() runtime.Object { return &RepositoryList{} }, // newList
 	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.

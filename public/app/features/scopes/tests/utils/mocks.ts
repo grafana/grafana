@@ -2,14 +2,13 @@ import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
+import { ScopeNavigation } from '../../dashboards/types';
+
 export const mocksScopes: Scope[] = [
   {
     metadata: { name: 'cloud' },
     spec: {
       title: 'Cloud',
-      type: 'indexHelper',
-      description: 'redundant label filter but makes queries faster',
-      category: 'indexHelpers',
       filters: [{ key: 'cloud', value: '.*', operator: 'regex-match' }],
     },
   },
@@ -17,9 +16,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'dev' },
     spec: {
       title: 'Dev',
-      type: 'cloud',
-      description: 'Dev',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'dev', operator: 'equals' }],
     },
   },
@@ -27,9 +23,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'ops' },
     spec: {
       title: 'Ops',
-      type: 'cloud',
-      description: 'Ops',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'ops', operator: 'equals' }],
     },
   },
@@ -37,9 +30,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'prod' },
     spec: {
       title: 'Prod',
-      type: 'cloud',
-      description: 'Prod',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'prod', operator: 'equals' }],
     },
   },
@@ -47,9 +37,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'grafana' },
     spec: {
       title: 'Grafana',
-      type: 'app',
-      description: 'Grafana',
-      category: 'apps',
       filters: [{ key: 'app', value: 'grafana', operator: 'equals' }],
     },
   },
@@ -57,9 +44,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'mimir' },
     spec: {
       title: 'Mimir',
-      type: 'app',
-      description: 'Mimir',
-      category: 'apps',
       filters: [{ key: 'app', value: 'mimir', operator: 'equals' }],
     },
   },
@@ -67,9 +51,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'loki' },
     spec: {
       title: 'Loki',
-      type: 'app',
-      description: 'Loki',
-      category: 'apps',
       filters: [{ key: 'app', value: 'loki', operator: 'equals' }],
     },
   },
@@ -77,10 +58,21 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'tempo' },
     spec: {
       title: 'Tempo',
-      type: 'app',
-      description: 'Tempo',
-      category: 'apps',
       filters: [{ key: 'app', value: 'tempo', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'dev-env' },
+    spec: {
+      title: 'Development',
+      filters: [{ key: 'environment', value: 'dev', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'prod-env' },
+    spec: {
+      title: 'Production',
+      filters: [{ key: 'environment', value: 'prod', operator: 'equals' }],
     },
   },
 ] as const;
@@ -365,6 +357,38 @@ export const mocksNodes: ScopeNode[] = [
       parentName: 'cloud-applications',
     },
   },
+  {
+    metadata: { name: 'environments' },
+    spec: {
+      nodeType: 'container',
+      title: 'Environments',
+      description: 'Environment Scopes',
+      disableMultiSelect: true,
+      parentName: '',
+    },
+  },
+  {
+    metadata: { name: 'environments-dev' },
+    spec: {
+      nodeType: 'container',
+      title: 'Development',
+      description: 'Development Environment',
+      linkType: 'scope',
+      linkId: 'dev-env',
+      parentName: 'environments',
+    },
+  },
+  {
+    metadata: { name: 'environments-prod' },
+    spec: {
+      nodeType: 'container',
+      title: 'Production',
+      description: 'Production Environment',
+      linkType: 'scope',
+      linkId: 'prod-env',
+      parentName: 'environments',
+    },
+  },
 ] as const;
 
 export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
@@ -388,11 +412,35 @@ export const getMock = jest
         return mocksScopes.find((scope) => scope.metadata.name.toLowerCase() === name.toLowerCase()) ?? {};
       }
 
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopenodes/')) {
+        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopenodes/', '');
+
+        return mocksNodes.find((node) => node.metadata.name === name);
+      }
+
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
         return {
           items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
             params.scope.includes(bindingScope)
           ),
+        };
+      }
+
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_navigations')) {
+        // Handle subScope fetch requests
+        if (params.scope && params.scope.includes('mimir')) {
+          return {
+            items: subScopeMimirItems,
+          };
+        }
+        if (params.scope && params.scope.includes('loki')) {
+          return {
+            items: subScopeLokiItems,
+          };
+        }
+        // Return empty for other scopes
+        return {
+          items: [],
         };
       }
 
@@ -447,6 +495,99 @@ export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = gene
   'With root folder and other folder',
   ['', 'Folder 3']
 );
+
+// Mock subScope navigation items
+export const navigationWithSubScope: ScopeNavigation = {
+  metadata: { name: 'subscope-nav-1' },
+  spec: {
+    scope: 'grafana',
+    subScope: 'mimir',
+    url: '/d/subscope-dashboard-1',
+  },
+  status: {
+    title: 'Mimir Dashboards',
+    groups: [], // subScope items ignore groups
+  },
+};
+
+export const navigationWithSubScope2: ScopeNavigation = {
+  metadata: { name: 'subscope-nav-2' },
+  spec: {
+    scope: 'grafana',
+    subScope: 'mimir',
+    url: '/d/subscope-dashboard-2',
+  },
+  status: {
+    title: 'Mimir Overview',
+    groups: [],
+  },
+};
+
+export const navigationWithSubScopeDifferent: ScopeNavigation = {
+  metadata: { name: 'subscope-nav-3' },
+  spec: {
+    scope: 'grafana',
+    subScope: 'loki',
+    url: '/d/subscope-dashboard-3',
+  },
+  status: {
+    title: 'Loki Dashboards',
+    groups: [],
+  },
+};
+
+export const navigationWithSubScopeAndGroups: ScopeNavigation = {
+  metadata: { name: 'subscope-nav-groups' },
+  spec: {
+    scope: 'grafana',
+    subScope: 'mimir',
+    url: '/d/subscope-dashboard-groups',
+  },
+  status: {
+    title: 'Mimir with Groups',
+    groups: ['Group1', 'Group2'], // Should be ignored for subScope items
+  },
+};
+
+// Mock items that will be loaded when subScope folder is expanded
+export const subScopeMimirItems: ScopeNavigation[] = [
+  {
+    metadata: { name: 'mimir-item-1' },
+    spec: {
+      scope: 'mimir',
+      url: '/d/mimir-dashboard-1',
+    },
+    status: {
+      title: 'Mimir Dashboard 1',
+      groups: ['General'],
+    },
+  },
+  {
+    metadata: { name: 'mimir-item-2' },
+    spec: {
+      scope: 'mimir',
+      url: '/d/mimir-dashboard-2',
+    },
+    status: {
+      title: 'Mimir Dashboard 2',
+      groups: ['Observability'],
+    },
+  },
+];
+
+export const subScopeLokiItems: ScopeNavigation[] = [
+  {
+    metadata: { name: 'loki-item-1' },
+    spec: {
+      scope: 'loki',
+      url: '/d/loki-dashboard-1',
+    },
+    status: {
+      title: 'Loki Dashboard 1',
+      groups: ['General'],
+    },
+  },
+];
 
 export const getDatasource = async (ref: DataSourceRef) => {
   if (ref.uid === '-- Grafana --') {

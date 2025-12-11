@@ -132,6 +132,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 	if parent != "" {
 		meta.SetFolder(parent)
+	} else {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
@@ -171,6 +173,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
+	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 // ReplicateTree replicates the folder tree to the repository.

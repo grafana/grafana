@@ -1,5 +1,7 @@
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isFreeTierLicense } from './isFreeTierLicense';
+
 type syncState = {
   instanceConnected: boolean;
   folderConnected: boolean;
@@ -16,10 +18,14 @@ export function checkSyncSettings(repos?: Repository[]): syncState {
       maxReposReached: false,
     };
   }
+
+  const repoCount = repos.length;
+  const maxReposReached = isFreeTierLicense() ? repoCount >= 1 : false;
+
   return {
     instanceConnected: repos.some((item) => item.spec?.sync.target === 'instance'),
     folderConnected: repos.some((item) => item.spec?.sync.target === 'folder'),
-    maxReposReached: Boolean((repos ?? []).length >= 10),
-    repoCount: repos.length,
+    maxReposReached,
+    repoCount,
   };
 }

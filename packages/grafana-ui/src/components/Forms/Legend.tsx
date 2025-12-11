@@ -21,6 +21,11 @@ export const getLegendStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+/**
+ * Legend should be used to add a caption to a group of related form elements that have been grouped toegheter into a `FieldSet`.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-legend--docs
+ */
 export const Legend = ({ children, className, ...legendProps }: LabelProps) => {
   const styles = useStyles2(getLegendStyles);
 

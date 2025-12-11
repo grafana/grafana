@@ -51,6 +51,7 @@ type UpdateExternalSessionCommand struct {
 
 type ListExternalSessionQuery struct {
 	ID        int64
+	UserID    int64
 	NameID    string
 	SessionID string
 }

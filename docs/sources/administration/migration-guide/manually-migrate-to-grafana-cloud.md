@@ -54,7 +54,7 @@ Ensure you have the following:
 
 ## Upgrade Grafana OSS/Enterprise to the latest version
 
-Grafana Cloud stacks generally run the latest version of Grafana. In order to avoid issues during migration, upgrade Grafana by following our guides [here](https://grafana.com/docs/grafana/latest/upgrade-guide/).
+Grafana Cloud stacks generally run the latest version of Grafana. In order to avoid issues during migration, upgrade Grafana by following our guides [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/).
 
 ## Migrate Grafana resources
 
@@ -275,28 +275,28 @@ Grizzly does not currently support Reports and Playlists as a resource, so you c
 
 ### Migrate single sign-on configuration
 
-Grafana Cloud stacks support all of the same authentication and authorization options as Grafana OSS/Enterprise, except for [anonymous authentication](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/anonymous-auth/) and use of the [Auth proxy](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy/). However, single sign-on settings cannot be exported and imported like dashboards, alerts, and other resources.
+Grafana Cloud stacks support all of the same authentication and authorization options as Grafana OSS/Enterprise, except for [anonymous authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/anonymous-auth/) and use of the [Auth proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/auth-proxy/). However, single sign-on settings cannot be exported and imported like dashboards, alerts, and other resources.
 
-To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml-ui/) to Configure SAML authentication in Grafana.
+To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-ui/) to Configure SAML authentication in Grafana.
 
 LDAP and OIDC/OAuth2 can only be configured in Grafana Cloud by the Grafana Labs support team. Follow [these instructions](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/) to request SSO configuration from the support team.
 
 ### Migrate custom Grafana configuration
 
-You may have customized the [configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) of your Grafana OSS/Enterprise instance, for example with feature toggles, custom auth, or embedding options. Since Grafana configuration is stored in environment variables or the filesystem where Grafana runs, Grafana Cloud users do not have access to it. However, you can open a support ticket to ask a Grafana Labs support engineer for customizations.
+You may have customized the [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) of your Grafana OSS/Enterprise instance, for example with feature toggles, custom auth, or embedding options. Since Grafana configuration is stored in environment variables or the filesystem where Grafana runs, Grafana Cloud users do not have access to it. However, you can open a support ticket to ask a Grafana Labs support engineer for customizations.
 
 The following customizations are available via support:
 
-- Enabling [feature toggles](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
-- [Single sign-on and team sync using SAML, LDAP, or OAuth](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication).
-- Enable [embedding Grafana dashboards in other applications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#allow_embedding) for Grafana Cloud contracted customers.
-- [Audit logging](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in select Grafana Cloud paid accounts).
+- Enabling [feature toggles](http://www.grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
+- [Single sign-on and team sync using SAML, LDAP, or OAuth](http://www.grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication).
+- Enable [embedding Grafana dashboards in other applications](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_embedding) for Grafana Cloud contracted customers.
+- [Audit logging](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in select Grafana Cloud paid accounts).
 
 Note that the following custom configurations are not supported in Grafana Cloud:
 
-- [Anonymous user access](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/anonymous-auth/).
-- [Auth proxy](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy/).
-- [Third-party database encryption](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/) and the [Hashicorp Vault](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/) integration.
+- [Anonymous user access](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/anonymous-auth/).
+- [Auth proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/auth-proxy/).
+- [Third-party database encryption](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-database-encryption/) and the [Hashicorp Vault](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/) integration.
 - Running self-signed plugins, like custom-built data sources or visualizations. For more information on plugin signing, refer to our [developer documentation](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
 
 If you have a custom configuration in Grafana OSS/Enterprise that is not listed here, reach out to our support team to find out whether they can help you set it up.

@@ -13,7 +13,7 @@
       "label-resource-group": "Группа ресурсов",
       "label-resource-name": "Имя ресурса",
       "label-resource-number": "Ресурс {{resourceNum}}",
-      "label-resource-uri": "URI ресурса ",
+      "label-resource-uri": "",
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
@@ -189,11 +189,13 @@ const FlameGraphContainer = ({
 
   const onSymbolClick = useCallback(
     (symbol: string) => {
-      if (search === symbol) {
+      const anchored = `^${escapeStringForRegex(symbol)}$`;
+
+      if (search === anchored) {
         setSearch('');
       } else {
         onTableSymbolClick?.(symbol);
-        setSearch(symbol);
+        setSearch(anchored);
         resetFocus();
       }
     },
@@ -241,7 +243,13 @@ const FlameGraphContainer = ({
       matchedLabels={matchedLabels}
       sandwichItem={sandwichItem}
       onSandwich={setSandwichItem}
-      onSearch={setSearch}
+      onSearch={(str) => {
+        if (!str) {
+          setSearch('');
+          return;
+        }
+        setSearch(`^${escapeStringForRegex(str)}$`);
+      }}
       onTableSort={onTableSort}
       colorScheme={colorScheme}
     />

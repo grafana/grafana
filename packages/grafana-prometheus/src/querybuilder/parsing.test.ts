@@ -200,49 +200,13 @@ describe('buildVisualQueryFromString', () => {
   });
 
   describe('nested binary operation errors in visual query editor', () => {
-    // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
-    it('throws error when visual query parse is ambiguous', () => {
+    it('does not throw error when visual query contains binary ops in function argument', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
       ).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 68,
-          },
-        ],
+        errors: [],
       });
     });
-
-    it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
-      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 13,
-          },
-        ],
-      });
-    });
-
-    it('throws error when visual query parse with functionCall is ambiguous', () => {
-      expect(
-        buildVisualQueryFromString(
-          'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
-        )
-      ).toMatchObject({
-        errors: [
-          {
-            from: 10,
-            text: 'Query parsing is ambiguous.',
-            to: 87,
-          },
-        ],
-      });
-    });
-
     it('does not throw error when visual query parse is unambiguous', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
@@ -963,6 +927,29 @@ describe('buildVisualQueryFromString', () => {
             id: 'topk',
             params: ['$custom'],
           },
+        ],
+      })
+    );
+  });
+
+  it('parses query with functions and binary operations', () => {
+    expect(
+      buildVisualQueryFromString(
+        'clamp(sum(rate(loki_distributor_bytes_received_total{cluster="loki", tenant="kubernetes"}[5m])) / 1024 / 55, 5, 30)'
+      )
+    ).toEqual(
+      noErrors({
+        metric: 'loki_distributor_bytes_received_total',
+        labels: [
+          { label: 'cluster', op: '=', value: 'loki' },
+          { label: 'tenant', op: '=', value: 'kubernetes' },
+        ],
+        operations: [
+          { id: 'rate', params: ['5m'] },
+          { id: 'sum', params: [] },
+          { id: '__divide_by', params: [1024] },
+          { id: '__divide_by', params: [55] },
+          { id: 'clamp', params: [5, 30] },
         ],
       })
     );

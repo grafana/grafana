@@ -5,12 +5,12 @@ import * as React from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 
+import { AzureMonitorResource } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorResource } from '../../types/query';
 import { AzureQueryEditorFieldProps } from '../../types/types';
-import ResourcePicker from '../ResourcePicker';
+import ResourcePicker from '../ResourcePicker/ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';

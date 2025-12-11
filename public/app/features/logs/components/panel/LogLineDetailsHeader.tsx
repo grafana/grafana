@@ -9,6 +9,7 @@ import { IconButton, Input, useStyles2 } from '@grafana/ui';
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -22,14 +23,11 @@ interface Props {
 
 export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
   const {
-    closeDetails,
-    detailsMode,
     displayedFields,
     getRowContextQuery,
     logOptionsStorageKey,
     logSupportsContext,
     noInteractions,
-    setDetailsMode,
     onClickHideField,
     onClickShowField,
     onOpenContext,
@@ -40,6 +38,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
+  const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -236,6 +235,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
             tabIndex={0}
           />
         )}
+        <div className={`${styles.divider} ${styles.dividerMargin}`} />
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -245,9 +245,11 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           }
           onClick={toggleDetailsMode}
         />
+        <div className={styles.divider} />
         <IconButton
           name="times"
           tooltip={t('logs.log-line-details.close', 'Close log details')}
+          variant="primary"
           onClick={closeDetails}
         />
       </div>
@@ -281,6 +283,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     display: 'flex',
     gap: theme.spacing(1),
     paddingLeft: theme.spacing(1),
+    alignContent: 'center',
   }),
   copyLogButton: css({
     padding: 0,
@@ -293,5 +296,13 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+  }),
+  divider: css({
+    width: 1,
+    borderRight: `solid 1px ${theme.colors.border.medium}`,
+    height: theme.spacing(2.25),
+  }),
+  dividerMargin: css({
+    marginRight: theme.spacing(0.5),
   }),
 });

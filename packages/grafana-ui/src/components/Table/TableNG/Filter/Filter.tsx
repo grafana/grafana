@@ -14,9 +14,9 @@ import { FilterPopup } from './FilterPopup';
 
 interface Props {
   name: string;
-  rows: any[];
+  rows: TableRow[];
   filter: FilterType;
-  setFilter: (value: FilterType) => void;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   field?: Field;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };

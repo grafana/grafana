@@ -22,6 +22,8 @@ export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement
 }
 
 /**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-pluginsignaturebadge--docs
+ *
  * @public
  */
 export const PluginSignatureBadge = ({

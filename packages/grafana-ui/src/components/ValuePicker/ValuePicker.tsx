@@ -37,6 +37,11 @@ export interface ValuePickerProps<T> {
   buttonCss?: string;
 }
 
+/**
+ * A component that looks like a button but transforms into a select when clicked.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-valuepicker--docs
+ */
 export function ValuePicker<T>({
   'aria-label': ariaLabel,
   label,

@@ -12,7 +12,7 @@ jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     user: { orgId: 1 },
     hasPermission: () => false,

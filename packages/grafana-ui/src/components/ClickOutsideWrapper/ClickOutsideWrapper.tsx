@@ -13,6 +13,11 @@ export interface Props {
   children: React.ReactNode;
 }
 
+/**
+ * A wrapper component that detects clicks outside of the elements by attaching event listener to `window` or `document` objects. Useful for components that require an action being triggered when a click outside has occurred, for example closing an overlay or popup.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-clickoutsidewrapper--docs
+ */
 export function ClickOutsideWrapper({
   includeButtonPress = true,
   parent = window,

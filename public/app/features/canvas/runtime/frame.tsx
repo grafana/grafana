@@ -244,10 +244,10 @@ export class FrameState extends ElementState {
     }
   };
 
-  render() {
+  renderElement() {
     return (
       <div key={this.UID} ref={this.initElement}>
-        {this.elements.map((v) => v.render())}
+        {this.elements.map((v) => v.renderElement())}
       </div>
     );
   }

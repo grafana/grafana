@@ -31,6 +31,9 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   disabled?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
   (
     {

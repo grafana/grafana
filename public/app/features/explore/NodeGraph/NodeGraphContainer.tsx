@@ -10,7 +10,7 @@ import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 import { StoreState } from 'app/types/store';
 
-import { NodeGraph } from '../../../plugins/panel/nodeGraph';
+import { NodeGraph } from '../../../plugins/panel/nodeGraph/NodeGraph';
 import { LayoutAlgorithm } from '../../../plugins/panel/nodeGraph/panelcfg.gen';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
 import { useLinks } from '../utils/links';

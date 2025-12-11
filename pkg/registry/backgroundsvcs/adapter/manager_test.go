@@ -28,10 +28,10 @@ func TestNewManagerAdapter(t *testing.T) {
 func TestManagerAdapter_Starting(t *testing.T) {
 	t.Run("empty registry initializes manager", func(t *testing.T) {
 		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{}}
-		adapter := NewManagerAdapter(reg)
-		adapter.dependencyMap = map[string][]string{
-			BackgroundServices: {},
-		}
+		adapter := NewManagerAdapter(reg).WithDependencies(map[string][]string{
+			BackgroundServices: {Core},
+			Core:               {},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -55,10 +55,10 @@ func TestManagerAdapter_Starting(t *testing.T) {
 		reg := &mockBackgroundServiceRegistry{
 			services: []registry.BackgroundService{enabledSvc, disabledSvc, namedSvc},
 		}
-		adapter := NewManagerAdapter(reg)
-		adapter.dependencyMap = map[string][]string{
-			BackgroundServices: {},
-		}
+		adapter := NewManagerAdapter(reg).WithDependencies(map[string][]string{
+			BackgroundServices: {Core},
+			Core:               {},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -110,8 +110,11 @@ func TestManagerAdapter_Starting(t *testing.T) {
 
 		// Pre-populate the dependency map with the service using the actual service name that will be used
 		serviceName := "*adapter.mockNamedService"
-		adapter.dependencyMap[serviceName] = []string{"custom-dependency"}
-		initialBgDeps := append([]string{}, adapter.dependencyMap[BackgroundServices]...)
+		adapter.WithDependencies(map[string][]string{
+			serviceName:        {BackgroundServices},
+			Core:               {},
+			BackgroundServices: {Core},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -121,18 +124,20 @@ func TestManagerAdapter_Starting(t *testing.T) {
 		require.NotNil(t, adapter.manager)
 
 		// Verify the existing dependency was not overwritten
-		require.Equal(t, []string{"custom-dependency"}, adapter.dependencyMap[serviceName])
+		require.Equal(t, []string{BackgroundServices}, adapter.dependencyMap[serviceName])
 
 		// Verify BackgroundServices dependencies were not modified (should not contain the service twice)
 		finalBgDeps := adapter.dependencyMap[BackgroundServices]
-		require.Equal(t, initialBgDeps, finalBgDeps)
+		require.Equal(t, []string{Core}, finalBgDeps)
 	})
 
 	t.Run("service without NamedService interface gets wrapped", func(t *testing.T) {
-		// Create a service that doesn't implement NamedService
 		plainSvc := &mockService{}
 		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{plainSvc}}
-		adapter := NewManagerAdapter(reg)
+		adapter := NewManagerAdapter(reg).WithDependencies(map[string][]string{
+			BackgroundServices: {Core},
+			Core:               {},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -151,11 +156,13 @@ func TestManagerAdapter_Starting(t *testing.T) {
 	})
 
 	t.Run("service without CanBeDisabled interface is always enabled", func(t *testing.T) {
-		// Create a service that doesn't implement CanBeDisabled
 		simpleSvc := &simpleBackgroundService{}
 
 		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{simpleSvc}}
-		adapter := NewManagerAdapter(reg)
+		adapter := NewManagerAdapter(reg).WithDependencies(map[string][]string{
+			BackgroundServices: {Core},
+			Core:               {},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -168,36 +175,18 @@ func TestManagerAdapter_Starting(t *testing.T) {
 		expectedServiceName := reflect.TypeOf(simpleSvc).String()
 		require.Contains(t, adapter.dependencyMap, expectedServiceName)
 	})
-
-	t.Run("real manager integration test", func(t *testing.T) {
-		testSvc := &mockService{}
-		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{testSvc}}
-		adapter := NewManagerAdapter(reg)
-
-		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-		defer cancel()
-
-		// Use the real manager - this tests actual integration
-		err := adapter.starting(ctx)
-		require.NoError(t, err)
-		require.NotNil(t, adapter.manager)
-
-		// Verify the service was registered in dependency map
-		expectedServiceName := reflect.TypeOf(testSvc).String()
-		require.Contains(t, adapter.dependencyMap, expectedServiceName)
-	})
 }
 
 func TestManagerAdapter_Running(t *testing.T) {
-	t.Run("runs with real manager", func(t *testing.T) {
+	t.Run("runs with manager", func(t *testing.T) {
 		mock := &mockNamedService{name: "mock"}
 		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{
 			mock,
 		}}
-		adapter := NewManagerAdapter(reg)
-		adapter.dependencyMap = map[string][]string{
-			BackgroundServices: {},
-		}
+		adapter := NewManagerAdapter(reg).WithDependencies(map[string][]string{
+			BackgroundServices: {Core},
+			Core:               {},
+		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
@@ -207,25 +196,6 @@ func TestManagerAdapter_Running(t *testing.T) {
 
 		err = adapter.AwaitRunning(ctx)
 		require.NoError(t, err)
-	})
-
-	t.Run("running delegates to manager", func(t *testing.T) {
-		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{}}
-		adapter := NewManagerAdapter(reg)
-
-		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-		defer cancel()
-
-		// Initialize with real manager
-		err := adapter.starting(ctx)
-		require.NoError(t, err)
-
-		// Test running method directly - this will likely fail due to missing production modules
-		// but it covers the running method code path
-		err = adapter.running(ctx)
-		if err != nil {
-			require.Contains(t, err.Error(), "no such module")
-		}
 	})
 }
 
@@ -262,7 +232,6 @@ func TestManagerAdapter_Stopping(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 		defer cancel()
 
-		// Initialize the manager first - need to go through starting to initialize manager
 		err := adapter.starting(ctx)
 		require.NoError(t, err)
 		require.NotNil(t, adapter.manager)

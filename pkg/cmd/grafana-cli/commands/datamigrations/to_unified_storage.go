@@ -24,10 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -52,7 +53,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
 		},
-		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
 			const minInterval = time.Second
 			shouldPrint := count < 1 || time.Since(last) > minInterval
@@ -69,50 +69,54 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	}
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 
-	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
+	provisioning, err := provisioning.ProvideStubProvisioningService(cfg)
 	if err != nil {
 		return err
 	}
 
-	migrator := legacy.NewDashboardAccess(
+	grpcClient, err := newUnifiedClient(cfg, sqlStore, featureToggles)
+	if err != nil {
+		return err
+	}
+
+	dashboardAccess := legacy.ProvideMigratorDashboardAccessor(
 		legacysql.NewDatabaseProvider(sqlStore),
-		authlib.OrgNamespaceFormatter,
-		nil, // no dashboards.Store
 		provisioning,
-		nil, // no librarypanels.Service
-		sort.ProvideService(),
-		nil, // we don't delete during migration, and this is only need to delete permission.
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		featureToggles,
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore, featureToggles)
-	if err != nil {
-		return err
-	}
-
 	if c.Bool("non-interactive") {
-		opts.Store = client
-		opts.BlobStore = client
-		opts.WithHistory = true // always include history in non-interactive mode
-		rsp, err := migrator.Migrate(ctx, opts)
-		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
-			return exitErr
-		}
-
-		logger.Info("Migrated legacy resources successfully in", time.Since(start))
-		if rsp != nil {
-			jj, _ := json.MarshalIndent(rsp, "", "  ")
-			logger.Info("Migration summary:", string(jj))
-		}
-		return nil
+		return runNonInteractiveMigration(ctx, opts, dashboardAccess, grpcClient, start)
 	}
 
+	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
+}
+
+func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
+	migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
+
+	opts.WithHistory = true // always include history in non-interactive mode
+	rsp, err := migrator.Migrate(ctx, opts)
+	if exitErr := handleMigrationError(err, rsp); exitErr != nil {
+		return exitErr
+	}
+
+	logger.Info("Migrated legacy resources successfully in", time.Since(start))
+	if rsp != nil {
+		jj, _ := json.MarshalIndent(rsp, "", "  ")
+		logger.Info("Migration summary:", string(jj))
+	}
+	return nil
+}
+
+func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
 		return err
 	}
 	if yes {
+		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, nil) // no need for grpc client for counting
+
 		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
@@ -141,12 +145,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		if err != nil {
 			return err
 		}
-		start = time.Now()
-		last = time.Now()
-		opts.Store, err = newParquetClient(file)
+		parquetClient, err := newParquetClient(file)
 		if err != nil {
 			return err
 		}
+		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient)
+		start = time.Now()
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
@@ -172,7 +176,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			req.Kinds = append(req.Kinds, fmt.Sprintf("%s/%s", r.Group, r.Resource))
 		}
 
-		stats, err := client.GetStats(ctx, req)
+		stats, err := grpcClient.GetStats(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -188,10 +192,8 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			return err
 		}
 		if yes {
+			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 			start = time.Now()
-			last = time.Now()
-			opts.Store = client
-			opts.BlobStore = client
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
 				return err

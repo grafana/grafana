@@ -2,7 +2,7 @@ import { chain } from 'lodash';
 
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
-import type { ContactPoint } from '../../../api/v0alpha1/types';
+import type { ContactPoint } from '../../../api/notifications/v0alpha1/types';
 import { useListContactPoints } from '../../hooks/v0alpha1/useContactPoints';
 import { getContactPointDescription } from '../../utils';
 

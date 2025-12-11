@@ -77,6 +77,18 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
 }));
 
+// Mock the new hooks that depend on router context
+jest.mock('../../hooks/usePRBranch', () => ({
+  usePRBranch: jest.fn().mockReturnValue(undefined),
+}));
+
+jest.mock('../../hooks/useLastBranch', () => ({
+  useLastBranch: jest.fn().mockReturnValue({
+    getLastBranch: jest.fn().mockReturnValue(undefined),
+    setLastBranch: jest.fn(),
+  }),
+}));
+
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {
@@ -400,5 +412,37 @@ describe('SaveProvisionedDashboardForm', () => {
 
     // Branch field is not shown
     expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
+  });
+
+  it('enables save button when only the comment changes', async () => {
+    const { user } = setup({
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        setManager: jest.fn(),
+      } as unknown as DashboardScene,
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    const saveButton = screen.getByRole('button', { name: /save/i });
+
+    expect(saveButton).toBeDisabled();
+
+    await user.type(commentInput, 'Comment-only change');
+
+    await waitFor(() => {
+      expect(saveButton).toBeEnabled();
+    });
   });
 });

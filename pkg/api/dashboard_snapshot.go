@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -25,6 +25,7 @@ import (
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +34,8 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
-			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.GetOrgID()) + "/dashboardsnapshots/create"
+			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+				namespaceMapper(user.GetOrgID()) + "/snapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -84,7 +85,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 		}
 	}
 
-	dashboardsnapshots.CreateDashboardSnapshot(c, dashboardsnapshot.SnapshotSharingOptions{
+	dashboardsnapshots.CreateDashboardSnapshot(c, snapshot.SnapshotSharingOptions{
 		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
 		ExternalEnabled:      hs.Cfg.ExternalEnabled,
 		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
@@ -266,7 +267,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 1000
 	}
 

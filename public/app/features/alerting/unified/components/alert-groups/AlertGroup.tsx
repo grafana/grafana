@@ -82,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
     backgroundColor: theme.colors.background.secondary,
     width: '100%',

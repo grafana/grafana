@@ -5,9 +5,11 @@ import (
 	"errors"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -43,7 +45,9 @@ type RBACSync struct {
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncPermissionsHook")
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncPermissionsHook", trace.WithAttributes(
+		attribute.String("ident_uid", ident.UID),
+	))
 	defer span.End()
 
 	if !ident.ClientParams.SyncPermissions {

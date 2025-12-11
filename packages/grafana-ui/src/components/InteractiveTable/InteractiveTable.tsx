@@ -14,6 +14,7 @@ import {
 } from 'react-table';
 
 import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -172,7 +173,13 @@ interface WithoutExpandableRow<TableData extends object> extends BaseProps<Table
 
 type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExpandableRow<TableData>;
 
-/** @alpha */
+/**
+ * The InteractiveTable is used to display and select data efficiently. It allows for the display and modification of detailed information.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-interactivetable--docs
+ *
+ * @alpha
+ */
 export function InteractiveTable<TableData extends object>({
   className,
   columns,
@@ -339,7 +346,7 @@ const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
 });
 
 function ColumnHeader<T extends object>({
-  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps },
+  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps, Header, id },
   headerTooltip,
 }: {
   column: HeaderGroup<T>;
@@ -370,7 +377,13 @@ function ColumnHeader<T extends object>({
 
   if (canSort) {
     return (
-      <button type="button" onClick={onClick}>
+      <button
+        aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', {
+          columnName: typeof Header === 'string' ? Header : id,
+        })}
+        type="button"
+        onClick={onClick}
+      >
         {children}
       </button>
     );

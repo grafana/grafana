@@ -20,6 +20,7 @@ type BleveIndexMetrics struct {
 	UpdateLatency        prometheus.Histogram
 	UpdatedDocuments     prometheus.Summary
 	SearchUpdateWaitTime *prometheus.HistogramVec
+	RebuildQueueLength   prometheus.Gauge
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -84,6 +85,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"reason"}),
+		RebuildQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "index_server_rebuild_queue_length",
+			Help: "Number of indexes waiting for rebuild",
+		}),
 	}
 
 	// Initialize labels.

@@ -105,7 +105,7 @@ describe('AnnoListPanel', () => {
           tags: ['tag A', 'tag B'],
           type: 'annotation',
         },
-        'anno-list-panel-1'
+        expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
       );
     });
   });
@@ -268,7 +268,7 @@ describe('AnnoListPanel', () => {
             tags: ['tag A', 'tag B', 'Result tag B'],
             type: 'annotation',
           },
-          'anno-list-panel-1'
+          expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
         expect(screen.getByText(/filter:/i)).toBeInTheDocument();
         expect(screen.getAllByText(/result tag b/i)).toHaveLength(2);
@@ -293,7 +293,7 @@ describe('AnnoListPanel', () => {
             type: 'annotation',
             userId: 1,
           },
-          'anno-list-panel-1'
+          expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
         expect(screen.getByText(/filter:/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /result email/i })).toBeInTheDocument();

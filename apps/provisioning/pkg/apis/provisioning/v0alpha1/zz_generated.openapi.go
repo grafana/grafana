@@ -846,7 +846,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
-					"resource": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1587,6 +1587,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"),
 						},
 					},
+					"deleteError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Error information during repository deletion (if any)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health", "sync", "webhook"},
 			},
@@ -1679,6 +1686,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					"branch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target URL",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target path",
 							Type:        []string{"string"},
 							Format:      "",
 						},

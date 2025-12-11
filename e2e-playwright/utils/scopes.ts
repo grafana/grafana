@@ -105,3 +105,42 @@ export const testScopes = (scopeBindingSetting?: { uid: string; title: string })
     },
   ];
 };
+
+export const testScopesWithRedirect = (): TestScope[] => {
+  return [
+    {
+      name: 'sn-redirect-custom',
+      title: 'Custom Redirect',
+      redirectPath: '/d/cuj-dashboard-2', // Use existing dashboard
+      filters: [{ key: 'namespace', operator: 'equals', value: 'custom-redirect' }],
+      addLinks: true,
+    },
+    {
+      name: 'sn-redirect-fallback',
+      title: 'Fallback Navigation',
+      // No redirectPath - should fall back to scope navigation
+      filters: [{ key: 'namespace', operator: 'equals', value: 'fallback-nav' }],
+      dashboardUid: 'cuj-dashboard-2', // Use existing dashboard
+      dashboardTitle: 'CUJ Dashboard 2',
+      addLinks: true,
+    },
+    {
+      name: 'sn-redirect-setup',
+      title: 'Setup Navigation',
+      // No redirectPath - used to set up scope navigation to dashboard-1
+      filters: [{ key: 'namespace', operator: 'equals', value: 'setup-nav' }],
+      dashboardUid: 'cuj-dashboard-1', // Creates scope navigation to this dashboard
+      dashboardTitle: 'CUJ Dashboard 1',
+      addLinks: true,
+    },
+    {
+      name: 'sn-redirect-with-navigation',
+      title: 'Redirect With Navigation',
+      redirectPath: '/d/cuj-dashboard-3', // Redirect target
+      filters: [{ key: 'namespace', operator: 'equals', value: 'redirect-with-nav' }],
+      dashboardUid: 'cuj-dashboard-1', // Creates scope navigation to this dashboard
+      dashboardTitle: 'CUJ Dashboard 1',
+      addLinks: true,
+    },
+  ];
+};

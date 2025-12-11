@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/grafana/loki/v3/pkg/logql/syntax"
@@ -21,8 +22,8 @@ type SuggestionRequest struct {
 
 	Query string `json:"query"`
 
-	Scopes       []models.ScopeFilter `json:"scopes"`
-	AdhocFilters []models.ScopeFilter `json:"adhocFilters"`
+	Scopes       []scope.ScopeFilter `json:"scopes"`
+	AdhocFilters []scope.ScopeFilter `json:"adhocFilters"`
 
 	// Start and End are proxied directly to the prometheus endpoint (which is rfc3339 | unix_timestamp)
 	Start string `json:"start"`
@@ -79,7 +80,7 @@ func GetSuggestions(ctx context.Context, lokiAPI *LokiAPI, req *backend.CallReso
 }
 
 // ApplyScopes applies the given scope filters to the given raw expression.
-func ApplyScopes(rawExpr string, scopeFilters []models.ScopeFilter) (string, error) {
+func ApplyScopes(rawExpr string, scopeFilters []scope.ScopeFilter) (string, error) {
 	if len(scopeFilters) == 0 {
 		return rawExpr, nil
 	}

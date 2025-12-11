@@ -211,11 +211,19 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
-    const { activeLabel } = this.state;
+
+    const selectionStart = e.currentTarget.selectionStart;
+    const selectionEnd = e.currentTarget.selectionEnd;
+    let inputValue = e.currentTarget.value;
+
+    if (selectionStart !== selectionEnd) {
+      inputValue = inputValue.substring(0, selectionStart ?? 0) + inputValue.substring(selectionEnd ?? 0);
+    }
+
     this.setState({
       focusCascade: false,
       isSearching: true,
-      inputValue: activeLabel,
+      inputValue: inputValue,
     });
   };
 
@@ -280,6 +288,9 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}
                 value={activeLabel}
+                onFocus={(e) => {
+                  e.currentTarget.select();
+                }}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
@@ -310,4 +321,9 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
   }
 }
 
+/**
+ * The cascader component is a Select with a cascading flyout menu. When you have lots of options in your select, they can be hard to navigate from a regular dropdown list. In that case you can use the cascader to organize your options into groups hierarchically. Just like in the Select component, the cascader input doubles as a search field to quickly jump to a selection without navigating the list.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
+ */
 export const Cascader = withTheme2(UnthemedCascader);

@@ -10,9 +10,9 @@ export function useRouteGroupsMatcher() {
     return routeGroupsMatcher.getRouteGroupsMap(route, groups);
   }, []);
 
-  const matchInstancesToRoute = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
-    return routeGroupsMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+  const matchInstancesToRoutes = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
+    return routeGroupsMatcher.matchInstancesToRoutes(rootRoute, instancesToMatch);
   }, []);
 
-  return { getRouteGroupsMap, matchInstancesToRoute };
+  return { getRouteGroupsMap, matchInstancesToRoutes };
 }

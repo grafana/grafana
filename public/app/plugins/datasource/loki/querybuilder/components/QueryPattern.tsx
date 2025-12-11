@@ -25,7 +25,7 @@ export const QueryPattern = (props: Props) => {
   const lang = { grammar: logqlGrammar, name: 'logql' };
 
   return (
-    <Card className={styles.card}>
+    <Card noMargin className={styles.card}>
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery

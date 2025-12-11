@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
+import { EMPTY, from, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
@@ -390,7 +390,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             const useStreaming =
               this.isStreamingMetricsEnabled() &&
               options.app !== CoreApp.CloudAlerting &&
-              options.app !== CoreApp.UnifiedAlerting;
+              options.app !== CoreApp.UnifiedAlerting &&
+              options.app !== 'grafana-assistant-app';
 
             reportInteraction('grafana_traces_traceql_metrics_queried', {
               datasourceType: 'tempo',
@@ -405,6 +406,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql, queryValue));
             }
           } else {
+            const useStreaming = this.isStreamingSearchEnabled() && options.app !== 'grafana-assistant-app';
+
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
               app: options.app ?? '',
@@ -413,7 +416,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               streaming: this.isStreamingSearchEnabled(),
             });
 
-            if (this.isStreamingSearchEnabled()) {
+            if (useStreaming) {
               return this.handleStreamingQuery(options, targets.traceql, queryValue);
             }
 
@@ -629,7 +632,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
-  handleTraceQlQuery = (options: DataQueryRequest<TempoQuery>, targets: { [type: string]: TempoQuery[] }) => {
+  handleTraceQlQuery(options: DataQueryRequest<TempoQuery>, targets: { [type: string]: TempoQuery[] }) {
     const startTime = performance.now();
     const traceqlSearchTargets = targets.traceqlSearch || targets.traceql;
     const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
@@ -707,7 +710,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
       })
     );
-  };
+  }
 
   // this is just a short term function, we will remove once we have rolled
   // out the backend migration and are happy with the stability of the feature
@@ -931,86 +934,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async testDatasource(): Promise<TestDataSourceResponse> {
-    const observables = [];
-
-    const options: BackendSrvRequest = {
-      headers: {},
-      method: 'GET',
-      url: `${this.instanceSettings.url}/api/echo`,
-    };
-    observables.push(
-      getBackendSrv()
-        .fetch(options)
-        .pipe(
-          mergeMap(() => {
-            return of({ status: 'success', message: 'Health check succeeded' });
-          }),
-          catchError((err) => {
-            return of({
-              status: 'error',
-              message: getErrorMessage(err?.data?.message, 'Unable to connect with Tempo'),
-            });
-          })
-        )
-    );
-
-    if (this.streamingEnabled?.search) {
-      const now = new Date();
-      const from = new Date(now);
-      from.setMinutes(from.getMinutes() - 15);
-      observables.push(
-        this.handleStreamingQuery(
-          {
-            range: {
-              from: dateTime(from),
-              to: dateTime(now),
-              raw: { from: 'now-15m', to: 'now' },
-            },
-            requestId: '',
-            interval: '',
-            intervalMs: 0,
-            scopedVars: {},
-            targets: [],
-            timezone: '',
-            app: '',
-            startTime: 0,
-          },
-          [
-            {
-              datasource: this.instanceSettings,
-              limit: 1,
-              query: '{}',
-              queryType: 'traceql',
-              refId: 'A',
-              tableType: SearchTableType.Traces,
-              filters: [],
-            },
-          ],
-          '{}'
-        ).pipe(
-          mergeMap(() => {
-            return of({ status: 'success', message: 'Streaming test succeeded.' });
-          }),
-          catchError((err) => {
-            return of({
-              status: 'error',
-              message: getErrorMessage(err?.data?.message, 'Test for streaming failed, consider disabling streaming'),
-            });
-          })
-        )
-      );
-    }
-
-    return await lastValueFrom(
-      forkJoin(observables).pipe(
-        mergeMap((observableResults) => {
-          const erroredResult = observableResults.find((result) => result.status !== 'success');
-          return erroredResult
-            ? of(erroredResult)
-            : of({ status: 'success', message: 'Successfully connected to Tempo data source.' });
-        })
-      )
-    );
+    return await super.testDatasource();
   }
 
   getQueryDisplayText(query: TempoQuery) {

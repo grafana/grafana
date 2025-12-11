@@ -407,6 +407,43 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
+	t.Run("GetDataSourceInGroup", func(t *testing.T) {
+		t.Run("Only returns datasource of specified type", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db, logger: log.NewNopLogger()}
+
+			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:    10,
+				Name:     "Elasticsearch",
+				Type:     datasources.DS_ES,
+				Access:   datasources.DS_ACCESS_DIRECT,
+				URL:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			ds2, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:    10,
+				Name:     "Graphite",
+				Type:     datasources.DS_GRAPHITE,
+				Access:   datasources.DS_ACCESS_DIRECT,
+				URL:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, datasources.DS_ES)
+			require.NoError(t, err)
+			require.Equal(t, ds.UID, dataSource.UID)
+
+			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds2.UID, datasources.DS_ES)
+			require.Error(t, err)
+			require.IsType(t, datasources.ErrDataSourceNotFound, err)
+		})
+	})
+
 	t.Run("GetDataSourcesByType", func(t *testing.T) {
 		t.Run("Only returns datasources of specified type", func(t *testing.T) {
 			db := db.InitTestDB(t)

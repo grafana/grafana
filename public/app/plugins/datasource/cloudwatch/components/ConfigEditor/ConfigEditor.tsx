@@ -12,7 +12,7 @@ import {
   DataSourceTestFailed,
   GrafanaTheme2,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/plugin-ui';
+import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
 import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
@@ -94,6 +94,11 @@ export const ConfigEditor = (props: Props) => {
           {warning}
         </Alert>
       )}
+      <DataSourceDescription
+        dataSourceName="Amazon CloudWatch"
+        docsLink="https://grafana.com/docs/plugins/cloudwatch/latest/"
+      />
+      <Divider />
       <ConnectionConfig
         {...props}
         loadRegions={

@@ -46,7 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -629,16 +629,19 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakeDashboardStore := &dashboards.FakeDashboardStore{}
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
 		publicDashboardService: fakePublicDashboardService,
+		dashboardStore:         fakeDashboardStore,
 		log:                    log.NewNopLogger(),
 	}
 
 	t.Run("Should delete across all orgs, but only delete file based provisioned dashboards", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -783,6 +786,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -790,6 +794,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
@@ -876,6 +881,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -883,6 +889,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
@@ -1656,6 +1663,13 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
 	k8sCliMock.AssertExpectations(t)
+
+	// 0 should return error
+	_, err = service.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{
+		ID: 0,
+	})
+	require.Error(t, err)
+	require.Equal(t, dashboards.ErrDashboardNotFound, err)
 }
 
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
@@ -1938,6 +1952,33 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "dash-db", query.Type) // query type should be added
 	})
 
+	t.Run("search will try and match all included tags", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+			Tags:  []string{"tag1", "tag2"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// make sure we use AND logic with multiple tags
+			for _, field := range req.Options.Fields {
+				if field.Key == "tags" {
+					return field.Operator == "="
+				}
+			}
+			return false
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			}}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
 		k8sCliMock := new(client.MockK8sHandler)
@@ -1978,6 +2019,26 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 				},
 			},
 			TotalHits: 1,
+		}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
+	t.Run("search will request legacy dashboard ID", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			ManagedBy: utils.ManagerKindClassicFP, //nolint:staticcheck
+			OrgId:     1,
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return slices.Contains(req.Fields, "grafana.app/deprecatedInternalID") &&
+				slices.Contains(req.Fields, "labels.grafana.app/deprecatedInternalID")
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
 		}, nil)
 		_, err := service.searchDashboardsThroughK8s(ctx, query)
 		require.NoError(t, err)
@@ -2100,6 +2161,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 			name                        string
 			rootFolder                  bool
 			featureKubernetesDashboards bool
+			User                        *user.SignedInUser
 			expectedPermission          []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
@@ -2118,6 +2180,19 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				featureKubernetesDashboards: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
+				rootFolder:                  true,
+				featureKubernetesDashboards: true,
+				User: &user.SignedInUser{
+					IsAnonymous: true,
+					UserID:      0,
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
@@ -2144,6 +2219,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					OrgID:   1,
 					OrgRole: "Admin",
 					UserID:  1,
+				}
+				if tc.User != nil {
+					user = tc.User
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
 				ctx = identity.WithRequester(ctx, user)
@@ -2603,7 +2681,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return len(req.Options.Fields) == 1 &&
-			req.Options.Fields[0].Key == search.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
+			req.Options.Fields[0].Key == builders.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 

@@ -1,6 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
 import {
@@ -304,9 +303,7 @@ test.describe(
 
       const repeatedPanelUrl = page.url();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))

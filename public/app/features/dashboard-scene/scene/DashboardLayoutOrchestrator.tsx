@@ -1,13 +1,21 @@
 import { PointerEvent as ReactPointerEvent } from 'react';
 
-import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { logWarning } from '@grafana/runtime';
+import {
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
+  SceneGridItemLike,
+} from '@grafana/scenes';
 import { createPointerDistance } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { DashboardDropTarget, isDashboardDropTarget } from './types/DashboardDropTarget';
 
 interface DashboardLayoutOrchestratorState extends SceneObjectState {
-  draggingPanel?: SceneObjectRef<VizPanel>;
+  draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
 }
 
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
@@ -32,11 +40,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     };
   }
 
-  public startDraggingSync(evt: ReactPointerEvent, panel: VizPanel): void {
+  public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
     this._pointerDistance.set(evt);
     this._isSelectedObject = false;
 
-    const dropTarget = sceneGraph.findObject(panel, isDashboardDropTarget);
+    const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
       return;
@@ -48,32 +56,42 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.addEventListener('pointermove', this._onPointerMove);
     document.body.addEventListener('pointerup', this._stopDraggingSync);
 
-    this.setState({ draggingPanel: panel.getRef() });
+    this.setState({ draggingGridItem: gridItem.getRef() });
   }
 
   private _stopDraggingSync(_evt: PointerEvent) {
-    const panel = this.state.draggingPanel?.resolve();
+    const gridItem = this.state.draggingGridItem?.resolve();
 
     if (this._sourceDropTarget !== this._lastDropTarget) {
       // Wrapped in setTimeout to ensure that any event handlers are called
       // Useful for allowing react-grid-layout to remove placeholders, etc.
       setTimeout(() => {
-        this._sourceDropTarget?.draggedPanelOutside?.(panel!);
-        this._lastDropTarget?.draggedPanelInside?.(panel!);
+        if (gridItem) {
+          // Always use grid item dragging
+          this._sourceDropTarget?.draggedGridItemOutside?.(gridItem);
+          this._lastDropTarget?.draggedGridItemInside?.(gridItem);
+        } else {
+          const warningMessage = 'No grid item to drag';
+          console.warn(warningMessage);
+          logWarning(warningMessage);
+        }
       });
     }
 
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync);
 
-    this.setState({ draggingPanel: undefined });
+    this.setState({ draggingGridItem: undefined });
   }
 
   private _onPointerMove(evt: PointerEvent) {
-    if (!this._isSelectedObject && this.state.draggingPanel && this._pointerDistance.check(evt)) {
+    if (!this._isSelectedObject && this.state.draggingGridItem && this._pointerDistance.check(evt)) {
       this._isSelectedObject = true;
-      const panel = this.state.draggingPanel?.resolve();
-      this._getDashboard().state.editPane.selectObject(panel, panel.state.key!, { force: true, multi: false });
+      const gridItem = this.state.draggingGridItem?.resolve();
+      if (gridItem && 'state' in gridItem && 'body' in gridItem.state && gridItem.state.body instanceof VizPanel) {
+        const panel = gridItem.state.body;
+        this._getDashboard().state.editPane.selectObject(panel, panel.state.key!, { force: true, multi: false });
+      }
     }
 
     const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;

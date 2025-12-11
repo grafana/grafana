@@ -29,6 +29,11 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   interactive?: boolean;
 }
 
+/**
+ * A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinefield--docs
+ */
 export const InlineField = ({
   children,
   label,

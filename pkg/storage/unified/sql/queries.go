@@ -58,6 +58,10 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
+
+	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
+	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
+	sqlResourceLastImportTimeDelete = mustTemplate("resource_last_import_time_delete.sql")
 )
 
 // TxOptions.
@@ -80,6 +84,7 @@ type sqlResourceRequest struct {
 	WriteEvent resource.WriteEvent
 	Generation int64
 	Folder     string
+	KeyPath    string
 
 	// Useful when batch writing
 	ResourceVersion int64
@@ -364,11 +369,28 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
-	GUIDToRV map[string]int64
+	GUIDToRV          map[string]int64
+	GUIDToSnowflakeRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r sqlResourceUpdateRVRequest) SlashFunc() string {
+	if r.DialectName() == "postgres" {
+		return "CHR(47)"
+	}
+
+	return "CHAR(47)"
+}
+
+func (r sqlResourceUpdateRVRequest) TildeFunc() string {
+	if r.DialectName() == "postgres" {
+		return "CHR(126)"
+	}
+
+	return "CHAR(126)"
 }
 
 // resource_version table requests.
@@ -452,5 +474,46 @@ func (r sqlResourceListModifiedSinceRequest) Validate() error {
 	if r.LatestRv < r.SinceRv {
 		return fmt.Errorf("latest resource version must be greater or equal to since resource version")
 	}
+	return nil
+}
+
+type sqlResourceLastImportTimeInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace      string
+	Group          string
+	Resource       string
+	LastImportTime time.Time
+}
+
+func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.LastImportTime.IsZero() {
+		return fmt.Errorf("last import time cannot be zero")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeQueryRequest struct {
+	sqltemplate.SQLTemplate
+}
+
+func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
+	return nil
+}
+
+type sqlResourceLastImportTimeDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Threshold time.Time
+}
+
+func (r *sqlResourceLastImportTimeDeleteRequest) Validate() error {
 	return nil
 }

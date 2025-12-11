@@ -15,7 +15,7 @@ import (
 	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -63,6 +63,9 @@ const (
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
 	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
 	defaultConfigIdentifier = "default"
+
+	// versionMessageHeader is the header that specifies an optional message for rule versions.
+	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
 
 var (
@@ -407,6 +410,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		return errorToResponse(err)
 	}
 
+	versionMessage, err := parseVersionMessageHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse version message header", "error", err)
+		return errorToResponse(err)
+	}
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -444,12 +452,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
 			}
+
 			grafanaGroups = append(grafanaGroups, grafanaGroup)
 		}
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance)
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
@@ -568,6 +577,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
@@ -605,6 +615,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
@@ -650,6 +661,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
@@ -851,6 +863,16 @@ func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, er
 func parseExtraLabelsHeader(c *contextmodel.ReqContext) (map[string]string, error) {
 	labelsStr := strings.TrimSpace(c.Req.Header.Get(extraLabelsHeader))
 	return parseKeyValuePairs(labelsStr, extraLabelsHeader)
+}
+
+// parseVersionMessageHeader obtains and validates the message header value.
+func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
+	str := strings.TrimSpace(c.Req.Header.Get(versionMessageHeader))
+	// Limit message to the same as the dashboards message.
+	if len(str) > 500 {
+		return "", errInvalidHeaderValue(versionMessageHeader, errors.New("must be less than 500 characters"))
+	}
+	return str, nil
 }
 
 func formatMergeMatchers(matchers amconfig.Matchers) string {

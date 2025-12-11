@@ -61,7 +61,6 @@ type Service struct {
 
 	isSyncSnapshotStatusFromGMSRunning int32
 
-	features      featuremgmt.FeatureToggles
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
 
@@ -119,7 +118,7 @@ func ProvideService(
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
 ) (cloudmigration.Service, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+	if !cfg.CloudMigration.Enabled {
 		return &NoopServiceImpl{}, nil
 	}
 
@@ -131,7 +130,6 @@ func ProvideService(
 		store:                  &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
 		log:                    log.New(LogPrefix),
 		cfg:                    cfg,
-		features:               features,
 		dsService:              dsService,
 		tracer:                 tracer,
 		metrics:                newMetrics(),

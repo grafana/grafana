@@ -115,6 +115,7 @@ func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureT
 		return false, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	res := features != nil &&
 		features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) &&
 		!unifiedIsMainStorage &&
@@ -208,6 +209,11 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 	}
 
 	return client.Search(ctx, in, opts...)
+}
+
+func (s *searchWrapper) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest,
+	opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return s.unifiedClient.RebuildIndexes(ctx, in, opts...)
 }
 
 // compareSearchResults compares legacy and unified search results and logs/metrics the outcome

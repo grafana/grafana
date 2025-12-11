@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -13,9 +12,9 @@ import PageCard from '../components/PageCard/PageCard';
 export default function ConnectionsHomePage() {
   const styles = useStyles2(getStyles);
 
-  const isOSS = config.buildInfo.edition === GrafanaEdition.OpenSource;
+  const isOnPrem = !config.pluginAdminExternalManageEnabled;
 
-  let cardsData = isOSS ? getOssCardData() : getCloudCardData();
+  let cardsData = isOnPrem ? getOssCardData() : getCloudCardData();
 
   return (
     <Page
@@ -31,7 +30,7 @@ export default function ConnectionsHomePage() {
             <Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans>
           </h1>
           <p className={styles.subTitle}>
-            {isOSS ? (
+            {isOnPrem ? (
               <Trans i18nKey="connections.oss.connections-home-page.subtitle">
                 Manage your data source connections in one place. Use this page to add a new data source or manage your
                 existing connections.

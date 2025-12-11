@@ -7,8 +7,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	alertingmodels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
@@ -53,12 +57,12 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	}
 
 	// use the configs for testing because they have all fields supported by integrations
-	for integrationType, cfg := range notify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
+	for integrationType, cfg := range notifytest.AllKnownV1ConfigsForTesting {
+		t.Run(string(integrationType), func(t *testing.T) {
 			recCfg := &notify.APIReceiver{
 				ConfigReceiver: notify.ConfigReceiver{Name: "test-receiver"},
-				GrafanaIntegrations: notify.GrafanaIntegrations{
-					Integrations: []*notify.GrafanaIntegrationConfig{
+				ReceiverConfig: alertingmodels.ReceiverConfig{
+					Integrations: []*alertingmodels.IntegrationConfig{
 						cfg.GetRawNotifierConfig("test"),
 					},
 				},
@@ -87,8 +91,14 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 			if integrationType != "webhook" {
 				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
-				//TODO: Remove this once HTTPClientConfig is added to other schemas.
+				// TODO: Remove this once HTTPClientConfig is added to other schemas.
 				pathFilters = append(pathFilters, "HTTPClientConfig")
+			}
+			if integrationType == line.Type {
+				for _, l := range actual.LineConfigs {
+					assert.Equal(t, "line", l.Type)
+					l.Type = string(line.Type)
+				}
 			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
 				for _, filter := range pathFilters {

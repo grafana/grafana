@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
 import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
-import { buildScaleKey } from '@grafana/ui/internal';
+import { AdHocFilterItem } from '@grafana/ui';
+import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
 
 import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
@@ -176,12 +177,12 @@ export function prepareGraphableFields(
             ...field.config,
             max: 1,
             min: 0,
-            custom,
+            custom: { ...custom },
           };
 
           // smooth and linear do not make sense
-          if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
-            custom.lineInterpolation = LineInterpolation.StepAfter;
+          if (config.custom.lineInterpolation !== LineInterpolation.StepBefore) {
+            config.custom.lineInterpolation = LineInterpolation.StepAfter;
           }
 
           copy = {
@@ -329,3 +330,28 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
 export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
   return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
 };
+
+export function getGroupedFilters(
+  frame: DataFrame,
+  seriesIdx: number,
+  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
+) {
+  const groupingFilters: AdHocFilterItem[] = [];
+  const xField = frame.fields[seriesIdx];
+
+  if (xField && xField.labels && xField.config.filterable) {
+    const seriesFilters: AdHocFilterItem[] = [];
+
+    Object.entries(xField.labels).forEach(([key, value]) => {
+      seriesFilters.push({
+        key,
+        operator: FILTER_FOR_OPERATOR,
+        value,
+      });
+    });
+
+    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
+  }
+
+  return groupingFilters;
+}

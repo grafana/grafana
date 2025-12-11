@@ -45,8 +45,9 @@ type gPRCServerService struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:         cfg.GRPCServer,
-		logger:      log.New("grpc-server"),
+		cfg:    cfg.GRPCServer,
+		logger: log.New("grpc-server"),
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
 		startedChan: make(chan struct{}),
 	}

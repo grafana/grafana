@@ -40,9 +40,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('md')]: {
         width: '100%',
       },
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
     }),
     sticky: css({
       position: 'sticky',
@@ -492,6 +489,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const loadingStateAbove = context.above.loadingState;
   const loadingStateBelow = context.below.loadingState;
+  const timeRange = getFullTimeRange();
 
   return (
     <Modal
@@ -552,6 +550,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -575,6 +574,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
                   scrollElement={null}
+                  timeRange={timeRange}
                 />
               </td>
             </tr>
@@ -594,6 +594,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                     scrollElement={null}
+                    timeRange={timeRange}
                   />
                 </>
               </td>
@@ -637,7 +638,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               dispatch(
                 splitOpen({
                   queries: [contextQuery],
-                  range: getFullTimeRange(),
+                  range: timeRange,
                   datasourceUid: contextQuery.datasource!.uid!,
                   panelsState: {
                     logs: {

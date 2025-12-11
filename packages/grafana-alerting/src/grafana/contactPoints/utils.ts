@@ -1,7 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { Receiver } from '../api/v0alpha1/api.gen';
-import { ContactPoint } from '../api/v0alpha1/types';
+import { Receiver } from '../api/notifications/v0alpha1/notifications.api.gen';
+import { ContactPoint } from '../api/notifications/v0alpha1/types';
 
 /**
  * Generates a human-readable description of a ContactPoint by summarizing its integrations.

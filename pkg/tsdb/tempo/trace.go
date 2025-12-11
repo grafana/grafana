@@ -35,19 +35,19 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	err := json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return result, err
+		return result, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	if model.Query == nil || *model.Query == "" {
 		err := fmt.Errorf("trace id is required")
 		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
-		return result, err
+		return result, backend.DownstreamErrorf("failed to validate model query: %w", err)
 	}
 
 	var apiVersion = TraceRequestApiVersionV2
@@ -69,10 +69,16 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to get trace", "error", err, "function", logEntrypoint())
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(traceBody))
-		span.RecordError(result.Error)
-		span.SetStatus(codes.Error, result.Error.Error())
-		return result, nil
+		err := fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(traceBody))
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+
+		return nil, err
 	}
 
 	var frame *data.Frame
@@ -116,10 +122,10 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 		if frame == nil {
 			result.Status = http.StatusNotFound
-			result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s", *model.Query, result.Status)
-			span.RecordError(result.Error)
-			span.SetStatus(codes.Error, result.Error.Error())
-			return result, nil
+			err := fmt.Errorf("failed to get trace with id: %s Status: %s", *model.Query, result.Status)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, backend.DownstreamError(err)
 		}
 
 		frame.Meta.Custom = map[string]interface{}{
@@ -143,7 +149,7 @@ func (s *Service) performTraceRequest(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, nil, backend.DownstreamErrorf("failed to create request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(request)
@@ -151,6 +157,9 @@ func (s *Service) performTraceRequest(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to send request to Tempo", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, nil, backend.DownstreamError(err)
+		}
 		return nil, nil, fmt.Errorf("failed get to tempo: %w", err)
 	}
 

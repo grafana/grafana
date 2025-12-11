@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import type { JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -23,7 +24,11 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   onDismiss?: () => void;
 }
 
-/** @deprecated use Alert with severity info */
+/**
+ * @deprecated use Alert with severity info.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-deprecated-infobox--docs
+ * */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
     ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {

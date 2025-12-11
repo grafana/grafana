@@ -1,12 +1,11 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"net"
 	"testing"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/proxy"
 )
@@ -25,15 +24,17 @@ func TestPostgresProxyDriver(t *testing.T) {
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
 
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
-		connector, err := pq.NewConnector(cnnstr)
+		config, err := pgxpool.ParseConfig(cnnstr)
 		require.NoError(t, err)
-		dialer := newPostgresProxyDialer(&testDialer{})
 
-		connector.Dialer(dialer)
+		config.ConnConfig.DialFunc = newDialFunc(&testDialer{})
 
-		db := sql.OpenDB(connector)
-		err = db.Ping()
+		pool, err := pgxpool.NewWithConfig(t.Context(), config)
+		require.NoError(t, err)
+		defer pool.Close()
 
+		err = pool.Ping(t.Context())
+		require.Error(t, err)
 		require.Contains(t, err.Error(), "test-dialer is not functional")
 	})
 }

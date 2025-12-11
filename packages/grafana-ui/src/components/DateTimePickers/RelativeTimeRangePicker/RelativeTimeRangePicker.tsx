@@ -41,6 +41,7 @@ type InputState = {
 };
 
 /**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-relativetimerangepicker--docs
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {

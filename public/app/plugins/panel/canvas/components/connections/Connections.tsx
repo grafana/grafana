@@ -679,7 +679,7 @@ export class Connections {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
-  render() {
+  renderElement() {
     return (
       <>
         <ConnectionAnchors

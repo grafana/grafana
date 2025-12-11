@@ -160,21 +160,41 @@ describe('NavToolbarActions', () => {
       it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: true,
+        });
       });
 
       it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
         localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: true,
+        });
       });
 
       it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
         localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: false,
+        });
+      });
+    });
+
+    describe('where dashboard is not editable', () => {
+      it('should set dashboard to editable on make editable button press', async () => {
+        const { dashboard } = setup({}, true);
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+
+        expect(dashboard.state.editable).toBe(true);
+        expect(dashboard.state.meta.canEdit).toBe(true);
+        expect(dashboard.state.meta.canSave).toBe(true);
       });
     });
   });
@@ -205,7 +225,7 @@ describe('NavToolbarActions', () => {
   });
 });
 
-function setup(meta?: DashboardMeta) {
+function setup(meta?: DashboardMeta, editable?: boolean) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -220,6 +240,7 @@ function setup(meta?: DashboardMeta) {
       ...meta,
     },
     title: 'hello',
+    editable: editable || true,
     uid: 'dash-1',
     body: DefaultGridLayoutManager.fromVizPanels([
       new VizPanel({

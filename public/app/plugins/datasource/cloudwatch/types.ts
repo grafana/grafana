@@ -4,12 +4,11 @@ import { DataQuery } from '@grafana/schema';
 
 import * as raw from './dataquery.gen';
 
-export * from './dataquery.gen';
-
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
   | raw.CloudWatchAnnotationQuery
+  | raw.CloudWatchLogsAnomaliesQuery
   | CloudWatchDefaultQuery;
 
 // We want to allow setting defaults for both Logs and Metrics queries

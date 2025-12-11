@@ -72,6 +72,7 @@ const (
 	TestDataQueryTypeNodeGraph                    TestDataQueryType = "node_graph"
 	TestDataQueryTypePredictableCsvWave           TestDataQueryType = "predictable_csv_wave"
 	TestDataQueryTypePredictablePulse             TestDataQueryType = "predictable_pulse"
+	TestDataQueryTypeQueryMeta                    TestDataQueryType = "query_meta"
 	TestDataQueryTypeRandomWalk                   TestDataQueryType = "random_walk"
 	TestDataQueryTypeRandomWalkTable              TestDataQueryType = "random_walk_table"
 	TestDataQueryTypeRandomWalkWithError          TestDataQueryType = "random_walk_with_error"

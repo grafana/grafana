@@ -2,11 +2,14 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -15,10 +18,15 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// Needed until https://github.com/grafana/grafana-app-sdk/pull/1077
+	if cfg.KubeConfig.APIPath == "" {
+		cfg.KubeConfig.APIPath = "apis"
+	}
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
@@ -44,12 +52,24 @@ func New(cfg app.Config) (app.App, error) {
 		checkMap[c.ID()] = c
 	}
 
+	ctr, err := checktyperegisterer.New(cfg, log)
+	if err != nil {
+		return nil, err
+	}
+
+	csch, err := checkscheduler.New(cfg, log)
+	if err != nil {
+		return nil, err
+	}
+
 	simpleConfig := simple.AppConfig{
 		Name:       "advisor",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				log.WithContext(ctx).Error("Informer processing error", "error", err)
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					log.WithContext(ctx).Error("Informer processing error", "error", err)
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
@@ -66,12 +86,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
@@ -82,12 +102,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)
@@ -103,6 +123,37 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: advisorv0alpha1.CheckTypeKind(),
 			},
 		},
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v0alpha1": {
+				{
+					Namespaced: true,
+					Path:       "register",
+					Method:     "POST",
+				}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+					logger := log.WithContext(ctx)
+					namespace := req.ResourceIdentifier.Namespace
+
+					// Register check types for the namespace
+					err := ctr.RegisterCheckTypesInNamespace(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Failed to register check types", "namespace", namespace, "error", err)
+						w.WriteHeader(http.StatusInternalServerError)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+						return err
+					}
+
+					// Return typed response matching the manifest
+					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegister{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
+						},
+						CreateRegisterBody: advisorv0alpha1.CreateRegisterBody{
+							Message: "Check types registered successfully",
+						},
+					})
+				},
+			},
+		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -116,17 +167,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	// Save check types as resources
-	ctr, err := checktyperegisterer.New(cfg, log)
-	if err != nil {
-		return nil, err
-	}
 	a.AddRunnable(ctr)
 
 	// Start scheduler
-	csch, err := checkscheduler.New(cfg, log)
-	if err != nil {
-		return nil, err
-	}
 	a.AddRunnable(csch)
 
 	return a, nil

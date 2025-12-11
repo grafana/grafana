@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { Trans, t } from '@grafana/i18n';
-import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { ButtonGroup, ToolbarButton } from '@grafana/ui';
 
 type LiveTailButtonProps = {
   splitted: boolean;
@@ -24,31 +24,21 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <ButtonGroup>
-      <Tooltip
-        content={
-          isLive && !isPaused ? (
-            <>
-              <Trans i18nKey="explore.live-tail-button.pause-the-live-stream">Pause the live stream</Trans>
-            </>
-          ) : (
-            <>
-              <Trans i18nKey="explore.live-tail-button.start-live-stream-your-logs">Start live stream your logs</Trans>
-            </>
-          )
+      <ToolbarButton
+        iconOnly={splitted}
+        variant={buttonVariant}
+        icon={!isLive || isPaused ? 'play' : 'pause'}
+        onClick={onClickMain}
+        tooltip={
+          !isLive || isPaused
+            ? t('explore.live-tail-button.start-live-stream-your-logs', 'Start live stream your logs')
+            : t('explore.live-tail-button.pause-the-live-stream', 'Pause the live stream')
         }
-        placement="bottom"
       >
-        <ToolbarButton
-          iconOnly={splitted}
-          variant={buttonVariant}
-          icon={!isLive || isPaused ? 'play' : 'pause'}
-          onClick={onClickMain}
-        >
-          {isLive && isPaused
-            ? t('explore.live-tail-button.paused', 'Paused')
-            : t('explore.live-tail-button.live', 'Live')}
-        </ToolbarButton>
-      </Tooltip>
+        {isLive && isPaused
+          ? t('explore.live-tail-button.paused', 'Paused')
+          : t('explore.live-tail-button.live', 'Live')}
+      </ToolbarButton>
 
       <CSSTransition
         mountOnEnter={true}
@@ -63,18 +53,13 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         }}
         nodeRef={transitionRef}
       >
-        <Tooltip
-          content={
-            <>
-              <Trans i18nKey="explore.live-tail-button.stop-and-exit-the-live-stream">
-                Stop and exit the live stream
-              </Trans>
-            </>
-          }
-          placement="bottom"
-        >
-          <ToolbarButton ref={transitionRef} variant={buttonVariant} onClick={stop} icon="square-shape" />
-        </Tooltip>
+        <ToolbarButton
+          tooltip={t('explore.live-tail-button.stop-and-exit-the-live-stream', 'Stop and exit the live stream')}
+          ref={transitionRef}
+          variant={buttonVariant}
+          onClick={stop}
+          icon="square-shape"
+        />
       </CSSTransition>
     </ButtonGroup>
   );

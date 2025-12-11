@@ -2,11 +2,11 @@ import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 
-const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
+export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
   if (data.readOnly) {
     return [];
   }
-  const workflows: RepositorySpec['workflows'] = ['write'];
+  const workflows: RepositorySpec['workflows'] = data.enablePushToConfiguredBranch ? ['write'] : [];
 
   if (!data.prWorkflow) {
     return workflows;
@@ -69,6 +69,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
+    enablePushToConfiguredBranch: spec.workflows.includes('write'),
   });
 };
 

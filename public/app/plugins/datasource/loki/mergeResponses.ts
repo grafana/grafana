@@ -7,29 +7,70 @@ import {
   Field,
   FieldType,
   LoadingState,
+  QueryResultMetaNotice,
   QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
 
 import { LOADING_FRAME_NAME } from './querySplitting';
 
+function getFrameKey(frame: DataFrame): string | undefined {
+  // Metric range query data
+  if (frame.meta?.type === DataFrameType.TimeSeriesMulti) {
+    const field = frame.fields.find((f) => f.type === FieldType.number);
+    if (!field) {
+      throw new Error(`Unable to find number field on sharded dataframe!`);
+    }
+    let key = '';
+    if (frame.refId) {
+      key += frame.refId;
+    }
+    if (frame.name) {
+      key += frame.name;
+    }
+    if (field.labels) {
+      key += JSON.stringify(field.labels);
+    }
+    return key !== '' ? key : undefined;
+  }
+  return frame.refId ?? frame.name;
+}
+
+/**
+ * @todo test new response is error, current response is not
+ * @param currentResponse
+ * @param newResponse
+ */
 export function combineResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
   if (!currentResponse) {
     return cloneQueryResponse(newResponse);
   }
 
-  newResponse.data.forEach((newFrame) => {
-    const currentFrame = currentResponse.data.find((frame) => shouldCombine(frame, newFrame));
-    if (!currentFrame) {
-      currentResponse.data.push(cloneDataFrame(newFrame));
-      return;
+  const currentResponseLabelsMap = new Map<string, DataFrame>();
+  currentResponse.data.forEach((frame: DataFrame) => {
+    const key = getFrameKey(frame);
+    // It is expected that all frames contain a refId or a name, but since the type allows for it
+    // we need to account for possibly undefined cases.
+    if (key) {
+      currentResponseLabelsMap.set(key, frame);
     }
-    mergeFrames(currentFrame, newFrame);
+  });
+
+  newResponse.data.forEach((newFrame: DataFrame) => {
+    let currentFrame: DataFrame | undefined = undefined;
+    const key = getFrameKey(newFrame);
+    if (key !== undefined && currentResponseLabelsMap.has(key)) {
+      currentFrame = currentResponseLabelsMap.get(key);
+      mergeFrames(currentFrame!, newFrame);
+    } else {
+      currentResponse.data.push(cloneDataFrame(newFrame));
+    }
   });
 
   const mergedErrors = [...(currentResponse.errors ?? []), ...(newResponse.errors ?? [])];
   if (mergedErrors.length > 0) {
     currentResponse.errors = mergedErrors;
+    currentResponse.state = LoadingState.Error;
   }
 
   // the `.error` attribute is obsolete now,
@@ -40,6 +81,7 @@ export function combineResponses(currentResponse: DataQueryResponse | null, newR
   const mergedError = currentResponse.error ?? newResponse.error;
   if (mergedError != null) {
     currentResponse.error = mergedError;
+    currentResponse.state = LoadingState.Error;
   }
 
   const mergedTraceIds = [...(currentResponse.traceIds ?? []), ...(newResponse.traceIds ?? [])];
@@ -163,6 +205,7 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
   dest.meta = {
     ...dest.meta,
     stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+    notices: getCombinedNotices(dest.meta?.notices ?? [], source.meta?.notices ?? []),
   };
 }
 
@@ -252,6 +295,27 @@ function getCombinedMetadataStats(
     }
   }
   return stats;
+}
+
+function getCombinedNotices(
+  destNotices: QueryResultMetaNotice[],
+  sourceNotices: QueryResultMetaNotice[]
+): QueryResultMetaNotice[] {
+  // Combine notices from both frames and filter out null/undefined values
+  const allNotices = [...destNotices, ...sourceNotices].filter(
+    (notice): notice is QueryResultMetaNotice => notice != null
+  );
+
+  // Deduplicate notices based on text to avoid showing the same warning twice
+  const uniqueNotices = allNotices.reduce((acc: QueryResultMetaNotice[], notice) => {
+    const exists = acc.some((n) => n.severity === notice.severity && n.text === notice.text);
+    if (!exists) {
+      acc.push(notice);
+    }
+    return acc;
+  }, []);
+
+  return uniqueNotices;
 }
 
 /**

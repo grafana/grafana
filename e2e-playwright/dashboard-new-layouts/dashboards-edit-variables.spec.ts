@@ -20,46 +20,6 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const variable: Variable = {
-        type: 'custom',
-        name: 'foo',
-        label: 'Foo',
-        value: 'one,two,three',
-      };
-
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
-
-      // set the custom variable value
-      const customValueInput = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput
-      );
-      await customValueInput.fill(variable.value);
-      await customValueInput.blur();
-
-      // assert the dropdown for the variable is visible and has the correct values
-      const variableLabel = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!)
-      );
-      await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText(variable.label!);
-
-      const values = variable.value.split(',');
-      const firstValueLink = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(values[0])
-      );
-      await expect(firstValueLink).toBeVisible();
-
-      // check that variable deletion works
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
-      await expect(variableLabel).toBeHidden();
-    });
-
     test('can add a new constant variable', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();

@@ -29,6 +29,11 @@ export interface Props {
   isOnCanvas?: boolean;
 }
 
+/**
+ * This component is used on dashboards to refresh visualizations.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-refreshpicker--docs
+ */
 export class RefreshPicker extends PureComponent<Props> {
   static offOption = {
     label: 'Off',

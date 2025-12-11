@@ -5,7 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
+	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
@@ -13,9 +16,11 @@ type requestHandler struct {
 	router *mux.Router
 }
 
-func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder, metricsRegistry prometheus.Registerer, apiResourceConfig *serverstorage.ResourceConfig) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
+
+	metrics := NewCustomRouteMetrics(metricsRegistry)
 
 	for _, builder := range builders {
 		provider, ok := builder.(APIGroupRouteProvider)
@@ -24,6 +29,12 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 		}
 
 		for _, gv := range GetGroupVersions(builder) {
+			// filter out api groups that are disabled in APIEnablementOptions
+			gvr := gv.WithResource("")
+			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
+				klog.InfoS("Skipping custom route handler for disabled group version", "gv", gv.String())
+				continue
+			}
 			routes := provider.GetAPIRoutes(gv)
 			if routes == nil {
 				continue
@@ -44,7 +55,15 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 				if err != nil {
 					return nil, err
 				}
-				sub.HandleFunc("/"+route.Path, route.Handler).
+
+				instrumentedHandler := metrics.InstrumentHandler(
+					gv.Group,
+					gv.Version,
+					route.Path, // Use path as resource identifier
+					route.Handler,
+				)
+
+				sub.HandleFunc("/"+route.Path, instrumentedHandler).
 					Methods(methods...)
 			}
 
@@ -62,7 +81,15 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 				if err != nil {
 					return nil, err
 				}
-				sub.HandleFunc("/"+route.Path, route.Handler).
+
+				instrumentedHandler := metrics.InstrumentHandler(
+					gv.Group,
+					gv.Version,
+					route.Path, // Use path as resource identifier
+					route.Handler,
+				)
+
+				sub.HandleFunc("/"+route.Path, instrumentedHandler).
 					Methods(methods...)
 			}
 		}

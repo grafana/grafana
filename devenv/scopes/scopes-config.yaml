@@ -1,0 +1,238 @@
+scopes:
+  shoe-org:
+    title: Shoe organization
+    filters:
+      - key: organization
+        operator: equals
+        value: shoe
+
+  shoes:
+    title: Shoes
+    filters:
+      - key: product
+        operator: equals
+        value: shoes
+
+  apparel:
+    title: Apparel
+    filters:
+      - key: product
+        operator: equals
+        value: apparel
+
+  frontend:
+    title: Frontend
+    filters:
+      - key: team
+        operator: equals
+        value: frontend
+
+  database:
+    title: Database
+    filters:
+      - key: team
+        operator: equals
+        value: database
+
+  main-app:
+    title: Main App
+    filters:
+      - key: app
+        operator: equals
+        value: main
+
+  kids-app:
+    title: Kids App
+    filters:
+      - key: app
+        operator: equals
+        value: kids
+
+tree:
+  gdev-scopes:
+    title: gdev-scopes
+    nodeType: container
+    disableMultiSelect: true
+    children:
+      production:
+        title: Production
+        nodeType: container
+        children:
+          app1-prod:
+            title: Application 1
+            nodeType: leaf
+            linkId: app1
+            linkType: scope
+          app2-prod:
+            title: Application 2
+            nodeType: leaf
+            linkId: app2
+            linkType: scope
+      test-cases:
+        title: Test cases
+        nodeType: container
+        disableMultiSelect: true
+        children:
+          test-case-1:
+            title: Test case 1
+            nodeType: leaf
+            linkId: test-case-1
+            linkType: scope
+          test-case-2:
+            title: Test case 2
+            nodeType: leaf
+            linkId: test-case-2
+            linkType: scope
+          test-case-redirect:
+            title: Test case with redirect
+            nodeType: leaf
+            linkId: shoe-org
+            linkType: scope
+            redirectPath: /d/dcb9f5e9-8066-4397-889e-864b99555dbb #Reliability dashboard
+      clusters:
+        title: Clusters
+        nodeType: container
+        linkId: cluster1
+        linkType: scope
+        children:
+          cluster1-node:
+            title: Cluster 1
+            nodeType: leaf
+            linkId: cluster1
+            linkType: scope
+      shoe-org-root:
+        title: Shoe organization
+        subTitle: Nested scopes navigation
+        nodeType: leaf
+        linkId: shoe-org
+        linkType: scope
+
+navigationTree:
+  - name: global-overview
+    title: Global overview
+    url: /d/TkZXxlNG3
+    scope: shoe-org
+
+  - name: reliability-placeholder
+    title: Reliability
+    url: /d/dcb9f5e9-8066-4397-889e-864b99555dbb
+    scope: shoe-org
+    groups:
+      - Reliability
+
+  - name: shoes
+    title: Shoes
+    url: /d/_5rDmaQiz
+    scope: shoe-org
+    subScope: shoes
+    children:
+      - name: shoes-overview
+        title: Overview
+        url: /d/5SdHCadmz
+        scope: shoes
+
+      - name: shoes-team-overview
+        title: Team Overview
+        url: /d/EJ8_d9jZk
+        scope: shoes
+
+      - name: shoes-frontend
+        title: Frontend
+        url: /d/edediimbjhdz4b
+        scope: shoes
+        subScope: frontend
+        children:
+          - name: frontend-api
+            title: API Metrics
+            url: /d/5Y0jv6pVz
+            scope: frontend
+
+          - name: frontend-ui
+            title: UI Performance
+            url: /d/2xuwrgV7z
+            scope: frontend
+          - name: frontend-shoes
+            title: Nested shoes
+            url: /d/5SdHCadmz
+            scope: frontend
+            subScope: shoes # This should be filtered out since 'shoes' is already in the path
+
+      - name: shoes-database
+        title: Database
+        url: /d/lVE-2YFMz
+        scope: shoes
+        subScope: database
+        children:
+          - name: database-connections
+            title: Database Connections
+            url: /d/mIJjFy8Kz
+            scope: database
+
+          - name: database-replication
+            title: Database Replication
+            url: /d/fdn48fmz8f94wc
+            scope: database
+
+      - name: shoes-main-app
+        title: Main App
+        url: /d/WZ7AhQiVz
+        scope: shoes
+        subScope: main-app
+        children:
+          - name: main-app-users
+            title: User Analytics
+            url: /d/a6801696-cc53-4196-b1f9-2403e3909185
+            scope: main-app
+
+          - name: main-app-revenue
+            title: Revenue Metrics
+            url: /d/imQX6j-Gz
+            scope: main-app
+
+      - name: shoes-kids-app
+        title: Kids App
+        url: /d/bds35fot3cv7kb
+        scope: shoes
+        subScope: kids-app
+        children:
+          - name: kids-app-features
+            title: Feature Usage
+            url: /d/16f11TZWk
+            scope: kids-app
+
+          - name: kids-app-engagement
+            title: User Engagement
+            url: /d/c01bf42b-b783-4447-a304-8554cee1843b
+            scope: kids-app
+
+  - name: apparel
+    title: Apparel
+    url: /d/UTv--wqMk
+    scope: shoe-org
+    subScope: apparel
+    children:
+      - name: apparel-product-overview
+        title: Product Overview
+        url: /d/Kp9Z0hTik
+        scope: apparel
+
+  - name: all-teams-placeholder
+    title: All Teams
+    url: /d/b36b5576-2e3d-4b0c-8dce-e79514d99345
+    scope: shoe-org
+    groups:
+      - Discovered dashboards
+    children:
+      - name: others-placeholder
+        title: Others
+        url: /d/xtY_uCAiz
+        scope: shoe-org
+        groups:
+          - All Teams
+        children:
+          - name: latency-and-errors
+            title: Latency and Errors
+            url: /d/ZqZnVvFZz
+            scope: shoe-org
+            groups:
+              - Others

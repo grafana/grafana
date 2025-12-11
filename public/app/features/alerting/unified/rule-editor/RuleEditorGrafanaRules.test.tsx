@@ -12,7 +12,12 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
-import { grafanaRulerGroup, grafanaRulerGroup2, grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import {
+  grafanaRulerGroup,
+  grafanaRulerGroup2,
+  grafanaRulerRule,
+  mockPreviewApiResponse,
+} from '../mocks/grafanaRulerApi';
 import { setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
@@ -25,7 +30,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-setupMswServer();
+const server = setupMswServer();
 
 const dataSources = {
   default: mockDataSource(
@@ -62,6 +67,8 @@ describe('RuleEditor grafana managed rules', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
+
+    mockPreviewApiResponse(server, []);
   });
 
   it('can create new grafana managed alert', async () => {
