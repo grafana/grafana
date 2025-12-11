@@ -90,6 +90,7 @@ export const PopoverMenu = ({
               }}
             />
           )}
+          <Menu.Divider />
           {onClickSearchString && (
             <Menu.Item
               label={t('logs.popover-menu.search-text', 'Search in results')}
