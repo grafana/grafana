@@ -8,18 +8,24 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/client-go/rest"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -187,4 +193,46 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
+}
+
+func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
+	checkRegistry checkregistry.CheckService,
+	cfg *setting.Cfg,
+	orgService org.Service,
+) (*AdvisorAppInstaller, error) {
+	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, New)
+	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
+	specificConfig := checkregistry.AdvisorAppConfig{
+		CheckRegistry: checkRegistry,
+		PluginConfig:  pluginConfig,
+		StackID:       cfg.StackID,
+		OrgService:    orgService,
+	}
+	appCfg := app.Config{
+		KubeConfig:     rest.Config{},
+		ManifestData:   *advisorapi.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
+	}
+
+	defaultInstaller, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, advisorapi.NewGoTypeAssociator())
+	if err != nil {
+		return nil, err
+	}
+
+	installer := &AdvisorAppInstaller{
+		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
+	}
+
+	return installer, nil
+}
+
+type AdvisorAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	authorizer authorizer.Authorizer
+}
+
+func (a *AdvisorAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return a.authorizer
 }

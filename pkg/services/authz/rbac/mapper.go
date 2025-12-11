@@ -301,6 +301,11 @@ func NewMapperRegistry() MapperRegistry {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
 		},
+		"advisor.grafana.app": {
+			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
+			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
+			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
+		},
 	})
 
 	return mapper
