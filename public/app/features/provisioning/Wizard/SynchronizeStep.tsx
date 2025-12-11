@@ -111,20 +111,19 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
         <Alert
           title={t(
             'provisioning.wizard.alert-title',
-            'Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.'
+            'Important: No data or configuration will be lost. Dashboards remain accessible during migration, but changes made during this process may not be exported.'
           )}
           severity={'info'}
         >
           <ul style={{ marginLeft: '16px' }}>
             <li>
               <Trans i18nKey="provisioning.wizard.alert-point-1">
-                Resources won&#39;t be able to be created, edited, or deleted during this process. In the last step,
-                they will disappear.
+                Resources can still be created, edited, or deleted during this process, but changes may not be exported.
               </Trans>
             </li>
             <li>
               <Trans i18nKey="provisioning.wizard.alert-point-2">
-                Once provisioning is complete, resources will reappear and be managed through external storage.
+                Once provisioning is complete, resources will be marked as managed through external storage.
               </Trans>
             </li>
             <li>
@@ -134,7 +133,8 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
             </li>
             <li>
               <Trans i18nKey="provisioning.wizard.alert-point-4">
-                Enterprise instance administrators can display an announcement banner to users. See{' '}
+                Enterprise instance administrators can display an announcement banner to notify users that migration is
+                in progress. See{' '}
                 <TextLink external href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/">
                   this guide
                 </TextLink>{' '}

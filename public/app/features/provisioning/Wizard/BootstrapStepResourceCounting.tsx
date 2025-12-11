@@ -12,29 +12,16 @@ export function BootstrapStepResourceCounting({
   fileCountString: string;
   resourceCountString: string;
 }) {
-  if (target === 'instance') {
-    return (
-      <Stack direction="row" gap={3}>
-        <Stack gap={1}>
-          <Trans i18nKey="provisioning.bootstrap-step.external-storage-label">External storage</Trans>
-          <Text color="primary">{fileCountString}</Text>
-        </Stack>
-        <Stack gap={1}>
-          <Trans i18nKey="provisioning.bootstrap-step.unmanaged-resources-label">Unmanaged resources</Trans>{' '}
-          <Text color="primary">{resourceCountString}</Text>
-        </Stack>
-      </Stack>
-    );
-  }
-
-  if (target === 'folder') {
-    return (
+  return (
+    <Stack direction="row" gap={3}>
       <Stack gap={1}>
-        <Trans i18nKey="provisioning.bootstrap-step.external-storage-label">External storage</Trans>{' '}
+        <Trans i18nKey="provisioning.bootstrap-step.external-storage-label">External storage</Trans>
         <Text color="primary">{fileCountString}</Text>
       </Stack>
-    );
-  }
-
-  return null;
+      <Stack gap={1}>
+        <Trans i18nKey="provisioning.bootstrap-step.unmanaged-resources-label">Unmanaged resources</Trans>{' '}
+        <Text color="primary">{resourceCountString}</Text>
+      </Stack>
+    </Stack>
+  );
 }

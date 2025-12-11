@@ -148,7 +148,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                 <Field
                   description={t(
                     'provisioning.bootstrap-step.description-migrate-existing-resources',
-                    'Migrate all existing resources into the repository and pull everything from there.'
+                    'Additionally migrate all existing unmanaged resources to this repository and pull everything from there.'
                   )}
                   noMargin
                 >
@@ -159,7 +159,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
                     label={t(
                       'provisioning.bootstrap-step.label-migrate-existing-resources',
-                      'Migrate all existing resources into this folder'
+                      'Additionally migrate all existing unmanaged resources to this folder'
                     )}
                   />
                 </Field>

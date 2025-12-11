@@ -11675,7 +11675,7 @@
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
-      "description-migrate-existing-resources": "Migrate all existing resources into the repository and pull everything from there.",
+      "description-migrate-existing-resources": "Additionally migrate all existing unmanaged resources to this repository and pull everything from there.",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "external-storage-label": "External storage",
@@ -11684,7 +11684,7 @@
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
-      "label-migrate-existing-resources": "Migrate all existing resources into this folder",
+      "label-migrate-existing-resources": "Additionally migrate all existing unmanaged resources to this folder",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
       "unavailable-options": {

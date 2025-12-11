@@ -54,7 +54,7 @@ export function useCreateSyncJob({
         return null;
       }
 
-      setStepStatusInfo?.({ status: 'success' });
+      // Job status will be tracked by JobStatus component, keep status as 'running'
       return response;
     } catch (error) {
       setStepStatusInfo?.({
