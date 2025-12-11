@@ -58,7 +58,7 @@ You have the option to customize the display of logs and choose which columns to
 | Option                                | Description                             |
 | ------------------------------------- | --------------------------------------- |
 | Expand / Collapse                     | Expand or collapse the controls toolbar. |
-| Scroll to bottom                      | Scroll to the bottom of the logs table.  |
+| Scroll to bottom                      | Jump to the bottom of the logs table.  |
 | Oldest Logs First / Newest logs first | Sort direction (ascending or descending).|
 | Search logs / Close search            | Click to open/close the client side string search of the displayed logs result. |
 | Deduplication                         | **None** does not perform any deduplication, **Exact** matches are done on the whole line except for date fields. **Numbers** matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. **Signature** is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. |
