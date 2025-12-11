@@ -35,7 +35,6 @@ export function shouldUseDrilldownLayout(variables: SceneVariable[]): boolean {
 
 /**
  * DrilldownControls renders the first two variables (AdHoc + GroupBy) in a single row
- * with 70%/30% width distribution.
  */
 export function DrilldownControls({ adHocVar, groupByVar }: DrilldownControlsProps) {
   const styles = useStyles2(getStyles);
@@ -57,13 +56,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexWrap: 'wrap',
     gap: theme.spacing(0, 1),
+    width: '100%',
   }),
   adHocContainer: css({
-    minWidth: '380px',
-    maxWidth: '60%',
+    maxWidth: '600px',
   }),
   groupByContainer: css({
-    minWidth: '260px',
-    maxWidth: '40%',
+    maxWidth: '400px',
   }),
 });

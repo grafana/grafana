@@ -35,12 +35,18 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <>
-      {useDrilldownLayout && <DrilldownControls adHocVar={firstVar} groupByVar={secondVar} />}
+      {useDrilldownLayout && (
+        <div className={styles.drilldownControlsWrapper}>
+          <DrilldownControls adHocVar={firstVar} groupByVar={secondVar} />
+        </div>
+      )}
 
-      {variablesToRender.length > 0 &&
-        variablesToRender.map((variable) => (
-          <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
-        ))}
+      <div>
+        {variablesToRender.length > 0 &&
+          variablesToRender.map((variable) => (
+            <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+          ))}
+      </div>
 
       {config.featureToggles.dashboardNewLayouts ? (
         <div className={styles.addButton}>
@@ -214,5 +220,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   allowShrinkForDrilldownInputs: css({
     minWidth: 0,
     maxWidth: '100%',
+  }),
+  drilldownControlsWrapper: css({
+    display: 'inline-flex',
   }),
 });
