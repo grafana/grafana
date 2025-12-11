@@ -357,7 +357,12 @@ type dummyTransport struct {
 	name string
 }
 
+var (
+	_ centrifuge.Transport = (*dummyTransport)(nil)
+)
+
 func (t *dummyTransport) Name() string                      { return t.name }
+func (t *dummyTransport) AcceptProtocol() string            { return "" }
 func (t *dummyTransport) Protocol() centrifuge.ProtocolType { return centrifuge.ProtocolTypeJSON }
 func (t *dummyTransport) ProtocolVersion() centrifuge.ProtocolVersion {
 	return centrifuge.ProtocolVersion2
