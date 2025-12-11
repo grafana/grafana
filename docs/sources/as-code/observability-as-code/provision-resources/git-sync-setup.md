@@ -35,12 +35,11 @@ This guide shows you how to set up Git Sync to synchronize your Grafana dashboar
 
 Before you begin, ensure you have the following:
 
+-  A Grafana instance (Cloud, OSS, or Enterprise)
+  - If you're using webhooks or image rendering, a public instance with external access 
 - Administration rights in your Grafana organization
-- A GitHub access token. The Grafana UI will prompt you during setup.
-  - If you're using the [Grafana CLI to set up Git Sync](#set-up-git-sync-using-grafana-cli), your token needs the scopes `repo`, `pull_requests`, and `webhooks`
+- A GitHub private access token
 - A GitHub repository to store your dashboards in
-- Optional: A public Grafana instance
-  - If you're using the Grafana CLI, your Grafana instance needs external access, either a public URL or a webhook endpoint
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
 ### Known limitations
@@ -55,21 +54,18 @@ When Git Sync is enabled, the database load might increase, especially for insta
 
 Git Sync is under continuous development. Reporting any issues you encounter can help us improve Git Sync.
 
-## Set up Git Sync using Grafana UI 
+## Set up Git Sync 
 
 To set up Git Sync and synchronize with a GitHub repository, follow these steps:
 
 1. [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time setup)
 1. [Create a GitHub access token](#create-a-github-access-token)
-1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github)
-1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
+1. [Set up Git Sync using the UI](#set-up-git-sync-using-grafana-ui) or [configure Git Sync as code](#configure-git-sync-as-code)
+1. [Choose additional settings](#choose-additional-settings)
 
-Optionally, you can [extend Git Sync](#configure-webhooks-and-image-rendering) by enabling pull request notifications and image previews of dashboard changes.
+After setup, you can [verify your dashboards](#verify-your-dashboards-in-grafana).
 
-| Capability                                            | Benefit                                                                        | Requires                               |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
-| Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub                       | Webhooks configured                    |
-| Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana | Image renderer and webhooks configured |
+Optionally, you can also [extend Git Sync with webhooks and image rendering](#extend-git-sync-with-webhooks-and-image-rendering).
 
 {{< admonition type="note" >}}
 
@@ -77,7 +73,7 @@ Alternatively, you can configure a local file system instead of using GitHub. Re
 
 {{< /admonition >}}
 
-### Enable required feature toggles
+## Enable required feature toggles
 
 To activate Git Sync in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles. For more information about feature toggles, refer to [Configure feature toggles](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
 
@@ -94,7 +90,7 @@ To enable the required feature toggles:
 
 1. Save the changes to the file and restart Grafana.
 
-### Create a GitHub access token
+## Create a GitHub access token
 
 Whenever you connect to a GitHub repository, you need to create a GitHub access token with specific repository permissions. This token needs to be added to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
 
@@ -114,17 +110,18 @@ To create a GitHub access token:
 
 GitHub Apps aren't currently supported.
 
+## Set up Git Sync using Grafana UI 
+
+1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github)
+1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
+
 ### Set up the connection to GitHub
 
-Use **Provisioning** to guide you through setting up Git Sync to use a GitHub repository.
-
-To configure Git Sync:
+Use **Provisioning** to guide you through setting up Git Sync to use a GitHub repository:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration** in the left-side menu and then **Provisioning**.
 1. Select **Configure Git Sync**.
-
-#### Connect to external storage
 
 To connect your GitHub repository:
 
@@ -147,17 +144,6 @@ To set up synchronization:
 - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
 Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
-
-### Choose additional settings
-
-Finally, you can set up how often your configured storage is polled for updates.
-
-To configure additional settings:
-
-1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
-1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
-1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering isn't available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
-1. Select **Finish** to proceed.
 
 ## Configure Git Sync as code
 
@@ -305,15 +291,31 @@ grafanactl resources get repositories
 # Navigate to: Administration → Provisioning → Git Sync
 ```
 
+## Choose additional settings
+
+Finally, you can set up how often your configured storage is polled for updates.
+
+To configure additional settings:
+
+1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
+1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
+1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering isn't available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
+1. Select **Finish** to proceed.
+
 ## Verify your dashboards in Grafana
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
 
 Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/) for more information.
 
-## Configure webhooks and image rendering
+## Extend Git Sync with webhooks and image rendering
 
-You can extend Git Sync by getting instant updates and pull requests using webhooks and add dashboard previews in pull requests.
+Optionally, you can extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
+
+| Capability                                            | Benefit                                                                        | Requires                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
+| Adds a table summarizing changes to your pull request | Provides a convenient way to save changes back to GitHub                       | Webhooks configured                    |
+| Add a dashboard preview image to a PR                 | View a snapshot of dashboard changes to a pull request without opening Grafana | Image renderer and webhooks configured |
 
 ### Set up webhooks for realtime notification and pull request integration
 
