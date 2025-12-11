@@ -498,7 +498,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 
 			if tc.expectedUnhealthyMessage {
 				assert.True(t, hasUnhealthyOp, tc.description+": expected unhealthy message operation")
-			} else if tc.repo.Status.Sync.Message != nil && len(tc.repo.Status.Sync.Message) > 0 && tc.healthStatus.Healthy {
+			} else if len(tc.repo.Status.Sync.Message) > 0 && tc.healthStatus.Healthy {
 				assert.True(t, hasClearUnhealthyOp, tc.description+": expected clear unhealthy message operation")
 			}
 		})
