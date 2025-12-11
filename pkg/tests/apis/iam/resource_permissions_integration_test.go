@@ -79,7 +79,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			continue
 		}
 		t.Run(fmt.Sprintf("ResourcePermission CRUD with dual writer mode %d", mode), func(t *testing.T) {
-			// Disable authorization cache to avoid caching issues since we change permissions on the fly and reissue the same queries multiple times
+			// Turn off authorization cache so permission changes apply right away in tests
 			t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -105,6 +105,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 			})
 
+			// Work around the default permissions applied on root folders
+			// so we can test the ResourcePermission APIs without the default permissions interfering
 			parentFolder := createRootFolderWithoutDefaultPermissions(t, helper)
 			parentUID := parentFolder.GetName()
 
