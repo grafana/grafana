@@ -182,7 +182,7 @@ func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string,
 		return fmt.Errorf("failed to get existing resource permission: %w", err)
 	}
 
-	k8sPermissions := make([]interface{}, 0, len(permissions))
+	k8sPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(permissions))
 	for _, perm := range permissions {
 		if perm.Permission == "" {
 			continue
@@ -195,10 +195,10 @@ func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string,
 			continue
 		}
 
-		k8sPermissions = append(k8sPermissions, map[string]interface{}{
-			"kind": kind,
-			"name": name,
-			"verb": perm.Permission,
+		k8sPermissions = append(k8sPermissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
+			Name: name,
+			Verb: cases.Lower(language.Und).String(perm.Permission),
 		})
 	}
 
@@ -212,33 +212,39 @@ func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string,
 		return nil
 	}
 
-	resourcePerm := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			"kind":       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-			"metadata": map[string]interface{}{
-				"name":      resourcePermName,
-				"namespace": namespace,
+	resourcePerm := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resourcePermName,
+			Namespace: namespace,
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{
+				ApiGroup: a.getAPIGroup(),
+				Resource: a.service.options.Resource,
+				Name:     resourceID,
 			},
-			"spec": map[string]interface{}{
-				"resource": map[string]interface{}{
-					"apiGroup": a.getAPIGroup(),
-					"resource": a.service.options.Resource,
-					"name":     resourceID,
-				},
-				"permissions": k8sPermissions,
-			},
+			Permissions: k8sPermissions,
 		},
 	}
 
-	if err == nil && existing != nil {
-		resourcePerm.SetResourceVersion(existing.GetResourceVersion())
-		_, err = resourcePermResource.Update(ctx, resourcePerm, metav1.UpdateOptions{})
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resourcePerm)
+	if err != nil {
+		return fmt.Errorf("failed to convert resource permission to unstructured: %w", err)
+	}
+	unstructuredPerm := &unstructured.Unstructured{Object: unstructuredObj}
+
+	if existing != nil {
+		unstructuredPerm.SetResourceVersion(existing.GetResourceVersion())
+		_, err = resourcePermResource.Update(ctx, unstructuredPerm, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to update resource permission in k8s: %w", err)
 		}
 	} else {
-		_, err = resourcePermResource.Create(ctx, resourcePerm, metav1.CreateOptions{})
+		_, err = resourcePermResource.Create(ctx, unstructuredPerm, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to create resource permission in k8s: %w", err)
 		}
@@ -274,34 +280,27 @@ func (a *api) setSinglePermissionToK8s(ctx context.Context, namespace string, re
 		return fmt.Errorf("failed to get existing resource permission: %w", err)
 	}
 
-	var existingPermissions []interface{}
+	var existingResourcePerm iamv0.ResourcePermission
 	if existing != nil {
-		existingPermissions, _, _ = unstructured.NestedSlice(existing.Object, "spec", "permissions")
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(existing.Object, &existingResourcePerm); err != nil {
+			return fmt.Errorf("failed to convert existing resource permission: %w", err)
+		}
 	}
 
-	newPermissions := make([]interface{}, 0)
+	newPermissions := make([]iamv0.ResourcePermissionspecPermission, 0)
 
-	for _, permRaw := range existingPermissions {
-		permMap, ok := permRaw.(map[string]interface{})
-		if !ok {
+	for _, perm := range existingResourcePerm.Spec.Permissions {
+		if string(perm.Kind) == kind && perm.Name == name {
 			continue
 		}
-
-		existingKind, _, _ := unstructured.NestedString(permMap, "kind")
-		existingName, _, _ := unstructured.NestedString(permMap, "name")
-
-		if existingKind == kind && existingName == name {
-			continue
-		}
-
-		newPermissions = append(newPermissions, permMap)
+		newPermissions = append(newPermissions, perm)
 	}
 
 	if permission != "" {
-		newPermissions = append(newPermissions, map[string]interface{}{
-			"kind": kind,
-			"name": name,
-			"verb": permission,
+		newPermissions = append(newPermissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
+			Name: name,
+			Verb: cases.Lower(language.Und).String(permission),
 		})
 	}
 
@@ -315,33 +314,39 @@ func (a *api) setSinglePermissionToK8s(ctx context.Context, namespace string, re
 		return nil
 	}
 
-	resourcePerm := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			"kind":       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-			"metadata": map[string]interface{}{
-				"name":      resourcePermName,
-				"namespace": namespace,
+	resourcePerm := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resourcePermName,
+			Namespace: namespace,
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{
+				ApiGroup: a.getAPIGroup(),
+				Resource: a.service.options.Resource,
+				Name:     resourceID,
 			},
-			"spec": map[string]interface{}{
-				"resource": map[string]interface{}{
-					"apiGroup": a.getAPIGroup(),
-					"resource": a.service.options.Resource,
-					"name":     resourceID,
-				},
-				"permissions": newPermissions,
-			},
+			Permissions: newPermissions,
 		},
 	}
 
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resourcePerm)
+	if err != nil {
+		return fmt.Errorf("failed to convert resource permission to unstructured: %w", err)
+	}
+	unstructuredPerm := &unstructured.Unstructured{Object: unstructuredObj}
+
 	if existing != nil {
-		resourcePerm.SetResourceVersion(existing.GetResourceVersion())
-		_, err = resourcePermResource.Update(ctx, resourcePerm, metav1.UpdateOptions{})
+		unstructuredPerm.SetResourceVersion(existing.GetResourceVersion())
+		_, err = resourcePermResource.Update(ctx, unstructuredPerm, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to update resource permission in k8s: %w", err)
 		}
 	} else if permission != "" {
-		_, err = resourcePermResource.Create(ctx, resourcePerm, metav1.CreateOptions{})
+		_, err = resourcePermResource.Create(ctx, unstructuredPerm, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to create resource permission in k8s: %w", err)
 		}
