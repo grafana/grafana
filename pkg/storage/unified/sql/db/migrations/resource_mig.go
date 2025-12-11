@@ -201,13 +201,13 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}
 	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
 
-	mg.AddMigration("resource_history key_path backfill", &ResourceHistoryKeyPathBackfillMigration{})
-
 	mg.AddMigration("Add IDX_resource_history_key_path index", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
 		Cols: []string{"key_path"},
 		Type: migrator.IndexType,
 		Name: "IDX_resource_history_key_path",
 	}))
+
+	mg.AddMigration("resource_history key_path backfill", &ResourceHistoryKeyPathBackfillMigration{})
 
 	return marker
 }
@@ -336,6 +336,7 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 		SELECT %s
 		FROM resource_history
 		WHERE (resource_version > %d OR (resource_version = %d AND guid > '%s'))
+		AND key_path = ''
 		ORDER BY resource_version ASC, guid ASC
 		LIMIT 1000;
 	`, cols, continueRow.ResourceVersion, continueRow.ResourceVersion, continueRow.GUID)
