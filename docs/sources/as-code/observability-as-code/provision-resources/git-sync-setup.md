@@ -312,8 +312,6 @@ grafanactl resources get repositories
 # Navigate to: Administration → Provisioning → Git Sync
 ```
 
-
-
 ## Verify your dashboards in Grafana
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
@@ -361,8 +359,6 @@ The necessary paths required to be exposed are, in RegExp:
 Set up image rendering to add visual previews of dashboard updates directly in pull requests. Image rendering also requires webhooks.
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
-
-
 
 ## Next steps
 
