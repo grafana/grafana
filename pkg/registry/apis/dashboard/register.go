@@ -782,11 +782,6 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 var defaultDashboardPermissions = []map[string]any{
 	{
 		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
-	{
-		"kind": "BasicRole",
 		"name": "Editor",
 		"verb": "edit",
 	},
