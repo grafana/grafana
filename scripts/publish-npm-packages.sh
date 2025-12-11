@@ -102,7 +102,8 @@ if (( CHANGES_COUNT > 0 )); then
                         echo "::add-mask::$NPM_AUTH_TOKEN"
                         echo "Configuring npm auth via NPM_TOKEN env var"
                         export NPM_TOKEN="$NPM_AUTH_TOKEN"
-                        # Reference the env var in npmrc (single quotes to prevent shell expansion)
+                        # Reference the env var in npmrc (single quotes intentional - npm expands it at runtime)
+                        # shellcheck disable=SC2016
                         echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> ~/.npmrc
                     else
                         echo "Warning: No token in response, dist-tag operation may fail"
