@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { getSidebarWidth } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
@@ -22,12 +22,13 @@ export interface Props {
   timeRange: TimeRange;
   timeZone: string;
   showControls: boolean;
+  showFieldSelector: boolean | undefined;
 }
 
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = memo(
-  ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls }: Props) => {
+  ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls, showFieldSelector }: Props) => {
     const { noInteractions, logOptionsStorageKey } = useLogListContext();
     const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
     const styles = useStyles2(getStyles, 'sidebar', showControls);
@@ -48,7 +49,10 @@ export const LogLineDetails = memo(
       }
     }, [noInteractions]);
 
-    const maxWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey) - LOG_LIST_MIN_WIDTH;
+    const maxWidth =
+      containerElement.clientWidth -
+      (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0) -
+      LOG_LIST_MIN_WIDTH;
 
     return (
       <Resizable
