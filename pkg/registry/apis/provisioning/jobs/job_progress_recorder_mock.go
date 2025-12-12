@@ -71,6 +71,98 @@ func (_c *MockJobProgressRecorder_Complete_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
+// HasFailedDeletionsUnder provides a mock function with given fields: folderPath
+func (_m *MockJobProgressRecorder) HasFailedDeletionsUnder(folderPath string) bool {
+	ret := _m.Called(folderPath)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasFailedDeletionsUnder")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(folderPath)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_HasFailedDeletionsUnder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasFailedDeletionsUnder'
+type MockJobProgressRecorder_HasFailedDeletionsUnder_Call struct {
+	*mock.Call
+}
+
+// HasFailedDeletionsUnder is a helper method to define mock.On call
+//   - folderPath string
+func (_e *MockJobProgressRecorder_Expecter) HasFailedDeletionsUnder(folderPath interface{}) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+	return &MockJobProgressRecorder_HasFailedDeletionsUnder_Call{Call: _e.mock.On("HasFailedDeletionsUnder", folderPath)}
+}
+
+func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) Return(_a0 bool) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsNestedUnderFailedCreation provides a mock function with given fields: path
+func (_m *MockJobProgressRecorder) IsNestedUnderFailedCreation(path string) bool {
+	ret := _m.Called(path)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsNestedUnderFailedCreation")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(path)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_IsNestedUnderFailedCreation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsNestedUnderFailedCreation'
+type MockJobProgressRecorder_IsNestedUnderFailedCreation_Call struct {
+	*mock.Call
+}
+
+// IsNestedUnderFailedCreation is a helper method to define mock.On call
+//   - path string
+func (_e *MockJobProgressRecorder_Expecter) IsNestedUnderFailedCreation(path interface{}) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+	return &MockJobProgressRecorder_IsNestedUnderFailedCreation_Call{Call: _e.mock.On("IsNestedUnderFailedCreation", path)}
+}
+
+func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) Run(run func(path string)) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) Return(_a0 bool) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Record provides a mock function with given fields: ctx, result
 func (_m *MockJobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	_m.Called(ctx, result)

@@ -73,7 +73,11 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-			return fmt.Errorf("ensure folder exists: %w", err)
+			// Wrap in PathCreationError to indicate which path failed
+			return &PathCreationError{
+				Path: f.Path,
+				Err:  fmt.Errorf("ensure folder exists: %w", err),
+			}
 		}
 
 		fm.tree.Add(f, parent)

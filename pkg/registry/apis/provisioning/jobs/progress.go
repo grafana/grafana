@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // maybeNotifyProgress will only notify if a certain amount of time has passed
@@ -58,6 +61,8 @@ type jobProgressRecorder struct {
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
+	failedCreations     []string // Tracks folder paths that failed to be created
+	failedDeletions     []string // Tracks resource paths that failed to be deleted
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -84,10 +89,26 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	if result.Error != nil {
 		shouldLogError = true
 		logErr = result.Error
-		if len(r.errors) < 20 {
-			r.errors = append(r.errors, result.Error.Error())
+
+		// Don't count ignored actions as errors in error count or error list
+		if result.Action != repository.FileActionIgnored {
+			if len(r.errors) < 20 {
+				r.errors = append(r.errors, result.Error.Error())
+			}
+			r.errorCount++
 		}
-		r.errorCount++
+
+		// Automatically track failed operations based on error type and action
+		// Check if this is a PathCreationError (folder creation failure)
+		var pathErr *resources.PathCreationError
+		if errors.As(result.Error, &pathErr) {
+			r.failedCreations = append(r.failedCreations, pathErr.Path)
+		}
+
+		// Track failed deletions
+		if result.Action == repository.FileActionDeleted {
+			r.failedDeletions = append(r.failedDeletions, result.Path)
+		}
 	}
 
 	r.updateSummary(result)
@@ -112,6 +133,8 @@ func (r *jobProgressRecorder) ResetResults() {
 	r.errorCount = 0
 	r.errors = nil
 	r.summaries = make(map[string]*provisioning.JobResourceSummary)
+	r.failedCreations = nil
+	r.failedDeletions = nil
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -308,4 +331,30 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	return jobStatus
+}
+
+// IsNestedUnderFailedCreation checks if a path is nested under any failed folder creation
+func (r *jobProgressRecorder) IsNestedUnderFailedCreation(path string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(path, failedCreation) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasFailedDeletionsUnder checks if any resource deletions failed under a folder path
+func (r *jobProgressRecorder) HasFailedDeletionsUnder(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedDeletion := range r.failedDeletions {
+		if safepath.InDir(failedDeletion, folderPath) {
+			return true
+		}
+	}
+	return false
 }
