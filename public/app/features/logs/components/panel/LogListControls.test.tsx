@@ -223,7 +223,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
@@ -237,7 +237,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(DEDUPE_LABEL_COPY));
     await userEvent.click(screen.getByText('Numbers'));
@@ -290,7 +290,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(SHOW_TIMESTAMP_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
@@ -304,7 +304,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
@@ -326,7 +326,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
 
     await userEvent.click(screen.getByLabelText('Wrap disabled'));
@@ -363,7 +363,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
 
     await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
@@ -393,7 +393,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    // Clear any initial calls (e.g., from defaultDisplayedFields)
+
     onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
