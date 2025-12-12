@@ -34,6 +34,7 @@ Use a primary Grafana instance and one or more replicas synchronized with the sa
 ### Configuration parameters
 
 Primary and replica:
+
 - Repository: `your-org/grafana-manifests`
 - Branch: `main`
 - Path: `shared/`
@@ -79,6 +80,7 @@ Run multiple active Grafana instances behind a load balancer. All instances sync
 ### Configuration parameters
 
 All instances:
+
 - Repository: `your-org/grafana-manifests`
 - Branch: `main`
 - Path: `shared/`
@@ -96,9 +98,3 @@ All instances:
 - Concurrent edits can cause conflicts.
 - Share the same backend database for sessions and annotations.
 - Favor stateless design to maximize load balancing.
-
-
-
-
-
-

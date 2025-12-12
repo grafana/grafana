@@ -31,11 +31,13 @@ Use separate Grafana instances for development and production. Each syncs with d
 ## Configuration parameters
 
 Development:
+
 - Repository: `your-org/grafana-manifests`
 - Branch: `main`
 - Path: `dev/`
 
 Production:
+
 - Repository: `your-org/grafana-manifests`
 - Branch: `main`
 - Path: `prod/`
@@ -53,5 +55,7 @@ Production:
 
 - Use branches: `develop` for development, `main` for production, both with `grafana/`.
 - Use separate repositories for stricter isolation.
+
 ```
 
+```

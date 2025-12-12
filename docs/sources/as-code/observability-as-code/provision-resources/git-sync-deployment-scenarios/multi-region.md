@@ -32,6 +32,7 @@ Deploy multiple Grafana instances across regions. Synchronize them with the same
 ## Configuration parameters
 
 All regions:
+
 - Repository: `your-org/grafana-manifests`
 - Branch: `main`
 - Path: `shared/`

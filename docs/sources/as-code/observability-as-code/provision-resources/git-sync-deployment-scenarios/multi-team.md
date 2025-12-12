@@ -32,11 +32,13 @@ Use a single Grafana instance with multiple Repository resources, one per team. 
 ## Configuration parameters
 
 Platform team:
+
 - Repository: `your-org/platform-dashboards`
 - Branch: `main`
 - Path: `grafana/`
 
 Data team:
+
 - Repository: `your-org/data-dashboards`
 - Branch: `main`
 - Path: `grafana/`
