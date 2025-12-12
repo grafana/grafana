@@ -38,6 +38,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 }
 
 func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	//nolint:staticcheck // not yet migrated to Resource Authorizer
 	return roleauthorizer.NewRoleAuthorizer()
 }
 
