@@ -178,10 +178,24 @@ jobs:
       run: |
         extract_error_message='ERROR! API client generation failed!'
         yarn generate-apis || (echo "${extract_error_message}" && false)
+    - name: Generate Enterprise API clients
+      run: |
+        extract_error_message='ERROR! API client generation failed!'
+        yarn generate-enterprise-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+    - name: Verify generated enterprise clients
+      run: |
+        uncommited_error_message="ERROR! Enterprise API client generation has not been committed. Please run 'yarn generate-enterprise-apis', commit the changes and push again."
+        cd ../grafana-enterprise
+        file_diff="$(git diff)"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
