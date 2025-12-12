@@ -39,7 +39,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. Verify that the InfluxDB URL is correct in the data source configuration.
 1. Check that InfluxDB is running and accessible from the Grafana server.
 1. Ensure the URL includes the protocol (`http://` or `https://`).
-1. Verify the port is correct (InfluxDB's default API port is `8086`).
+1. Verify the port is correct (the InfluxDB default API port is `8086`).
 1. Ensure there are no firewall rules blocking the connection.
 1. For Grafana Cloud, ensure you have configured [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your InfluxDB instance is not publicly accessible.
 
@@ -106,9 +106,9 @@ The following errors occur when the data source is not configured correctly.
    - InfluxQL: InfluxDB 1.x and 2.x (with DBRP mapping)
    - SQL: InfluxDB 3.x only
 
-### Invalid datasource info received
+### Invalid data source info received
 
-**Error message:** "invalid datasource info received"
+**Error message:** "invalid data source info received"
 
 **Cause:** The data source configuration is incomplete or corrupted.
 
@@ -167,9 +167,9 @@ The following errors occur when there are issues with query syntax or execution.
 1. Increase the query timeout setting in InfluxDB if you have admin access.
 1. Optimize your query to reduce complexity.
 
-### Too many series or datapoints
+### Too many series or data points
 
-**Error message:** "max-series-per-database limit exceeded" or "A query returned too many datapoints and the results have been truncated"
+**Error message:** "max-series-per-database limit exceeded" or "A query returned too many data points and the results have been truncated"
 
 **Cause:** The query is returning more data than the configured limits allow.
 
@@ -178,7 +178,7 @@ The following errors occur when there are issues with query syntax or execution.
 1. Reduce the time range of your query.
 1. Add filters to limit the number of series returned.
 1. Increase the **Max series** setting in the data source configuration under **Advanced Database Settings**.
-1. Use aggregation functions to reduce the number of datapoints.
+1. Use aggregation functions to reduce the number of data points.
 1. For Flux, use `aggregateWindow()` to downsample data.
 
 ### No time column found
@@ -210,9 +210,9 @@ The following errors occur when testing the data source connection.
 1. Check that the organization ID is correct.
 1. Ensure InfluxDB is running and accessible.
 
-### Error connecting influxDB influxQL
+### Error connecting InfluxDB influxQL
 
-**Error message:** "error connecting influxDB influxQL"
+**Error message:** "error connecting InfluxDB influxQL"
 
 **Cause:** The health check query `SHOW MEASUREMENTS` failed.
 
@@ -225,7 +225,7 @@ The following errors occur when testing the data source connection.
 
 ### 0 measurements found
 
-**Error message:** "datasource is working. 0 measurements found"
+**Error message:** "data source is working. 0 measurements found"
 
 **Cause:** The connection is successful, but the database contains no measurements.
 
