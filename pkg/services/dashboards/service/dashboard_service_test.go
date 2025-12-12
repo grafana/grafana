@@ -779,7 +779,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil).Twice()
 
 		err := service.DeleteOrphanedProvisionedDashboards(context.Background(), &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			ReaderNames: []string{"test"},
+			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
 		})
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
@@ -874,7 +874,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil).Once()
 
 		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			ReaderNames: []string{"test"},
+			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
 		})
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
@@ -906,7 +906,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil)
 
 		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			ReaderNames: []string{"test"},
+			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
 		})
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
