@@ -187,6 +187,15 @@ func (hs *HTTPServer) registerRoutes() {
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,
 		)
+
+		r.Get("/bootdata/:accessToken",
+			reqNoAuth,
+			hs.PublicDashboardsApi.Middleware.HandleView,
+			publicdashboardsapi.SetPublicDashboardAccessToken,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.GetBootdata,
+		)
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
