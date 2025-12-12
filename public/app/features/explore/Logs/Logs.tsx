@@ -364,7 +364,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const currentDisplayedFields = displayedFields;
 
     // Use migration utility to parse and transform legacy columns
-    const mergedFields = migrateLegacyColumns(urlPane.panelsState.logs, currentDisplayedFields);
+    const mergedFields = migrateLegacyColumns(urlPane.panelsState.logs, currentDisplayedFields, visualisationType);
     if (!mergedFields) {
       return;
     }

@@ -1,4 +1,8 @@
-import { LOG_LINE_BODY_FIELD_NAME, TABLE_LINE_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
+import {
+  LOG_LINE_BODY_FIELD_NAME,
+  TABLE_LINE_FIELD_NAME,
+  TABLE_TIME_FIELD_NAME,
+} from 'app/features/logs/components/LogDetailsBody';
 
 /**
  * Migration utility for converting legacy 'columns' URL parameter to 'displayedFields'.
@@ -45,15 +49,23 @@ export function parseLegacyColumns(columnsValue: unknown): string[] | null {
 
 /**
  * Maps legacy field names to their new equivalents.
- * Currently maps 'Line' to the LOG_LINE_BODY_FIELD_NAME constant.
+ * Maps: 'Line' -> LOG_LINE_BODY_FIELD_NAME, 'timestamp' -> 'Time', 'body' -> LOG_LINE_BODY_FIELD_NAME
  *
  * @param columns - Array of column names
  * @returns Array with mapped column names
  */
 export function mapLegacyFieldNames(columns: string[]): string[] {
   return columns.map((column) => {
-    // Map 'Line' to LOG_LINE_BODY_FIELD_NAME (typically 'body')
+    // Map 'Line' to LOG_LINE_BODY_FIELD_NAME
     if (column === TABLE_LINE_FIELD_NAME) {
+      return LOG_LINE_BODY_FIELD_NAME;
+    }
+    // Map 'timestamp' to TABLE_TIME_FIELD_NAME ('Time')
+    if (column === 'timestamp') {
+      return TABLE_TIME_FIELD_NAME;
+    }
+    // Map 'body' to LOG_LINE_BODY_FIELD_NAME
+    if (column === 'body') {
       return LOG_LINE_BODY_FIELD_NAME;
     }
     return column;
@@ -106,30 +118,70 @@ export function extractColumnsValue(logsState: object): unknown {
 }
 
 /**
+ * Extracts the displayedFields value from logs state using safe property access.
+ *
+ * @param logsState - The logs panel state from URL
+ * @returns The displayedFields value, or undefined if not present
+ */
+export function extractDisplayedFields(logsState: object): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(logsState, 'displayedFields');
+  return descriptor?.value;
+}
+
+/**
  * Main migration function - orchestrates the full migration process.
  * Returns the migrated and merged fields, or null if no migration is needed.
  *
+ * For table visualization: merges defaults with legacy 'columns' from URL
+ * For logs visualization: merges defaults with 'displayedFields' from URL
+ *
  * @param logsState - The logs panel state from URL
  * @param defaultDisplayedFields - Default fields to merge with
+ * @param visualisationType - The current visualization type ('table' or 'logs')
  * @returns Merged displayed fields array, or null if no migration needed
  */
-export function migrateLegacyColumns(logsState: unknown, defaultDisplayedFields: string[]): string[] | null {
-  // Check if migration is needed (type guard narrows logsState to object)
-  if (!hasLegacyColumns(logsState)) {
+export function migrateLegacyColumns(
+  logsState: unknown,
+  defaultDisplayedFields: string[],
+  visualisationType?: string
+): string[] | null {
+  console.log('logsState', logsState);
+  // Ensure logsState is an object
+  if (!logsState || typeof logsState !== 'object') {
     return null;
   }
 
-  // Extract and parse the columns value
-  const columnsValue = extractColumnsValue(logsState);
-  const parsedColumns = parseLegacyColumns(columnsValue);
+  // For table visualization: only use columns from URL and map the old field names to the new ones
+  if (visualisationType === 'table') {
+    if (!hasLegacyColumns(logsState)) {
+      return null;
+    }
 
-  if (!parsedColumns) {
-    return null;
+    const columnsValue = extractColumnsValue(logsState);
+    const parsedColumns = parseLegacyColumns(columnsValue);
+
+    if (!parsedColumns) {
+      return null;
+    }
+
+    // Map legacy field names to new names
+    const mappedColumns = mapLegacyFieldNames(parsedColumns);
+
+    return mappedColumns;
   }
 
-  // Map legacy field names to new names
-  const mappedColumns = mapLegacyFieldNames(parsedColumns);
+  // For logs visualization only use displayedFields from URL
+  if (visualisationType === 'logs') {
+    const displayedFieldsValue = extractDisplayedFields(logsState);
 
-  // Merge with defaults
-  return mergeWithDefaults(mappedColumns, defaultDisplayedFields);
+    // displayedFields should already be an array of strings
+    if (!Array.isArray(displayedFieldsValue) || displayedFieldsValue.length === 0) {
+      return null;
+    }
+
+    return displayedFieldsValue;
+  }
+
+  // No visualisationType specified or unknown type - return null
+  return null;
 }
