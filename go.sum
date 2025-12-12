@@ -1654,13 +1654,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b h1:6Bo65etvjQ4tStkaA5+N3A3ENbO4UAWj53TxF6g2Hdk=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b/go.mod h1:6+wASOCN8LWt6FJ8dc0oODUBIEY5XHaE6ABi8g0mR+k=
-<<<<<<< Updated upstream
-github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2 h1:rDPMdshj3QMvpXn+wK4T8awF9n2sd8i4YRiGqX2xTvg=
-github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
-=======
 github.com/grafana/grafana/apps/quotas v0.0.0-20251212093413-296fe610ba13 h1:WqOLbDdrZlQElOTXdun2+Yig428nLV8cwm9N36HojG0=
 github.com/grafana/grafana/apps/quotas v0.0.0-20251212093413-296fe610ba13/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
->>>>>>> Stashed changes
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 h1:A65jWgLk4Re28gIuZcpC0aTh71JZ0ey89hKGE9h543s=
