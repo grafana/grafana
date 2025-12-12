@@ -86,11 +86,11 @@ Alert queries must return numeric data that Grafana can evaluate against a thres
 
 Alerting and recording rules run as background processes without a user context. This means they require service-level authentication and don't work with all authentication methods.
 
-| Authentication method            | Supported                            |
-| -------------------------------- | ------------------------------------ |
-| App Registration (client secret) | ✓                                    |
-| Managed Identity                 | ✓                                    |
-| Workload Identity                | ✓                                    |
+| Authentication method            | Supported                             |
+| -------------------------------- | ------------------------------------- |
+| App Registration (client secret) | ✓                                     |
+| Managed Identity                 | ✓                                     |
+| Workload Identity                | ✓                                     |
 | Current User                     | ✓ (with fallback service credentials) |
 
 {{< admonition type="note" >}}

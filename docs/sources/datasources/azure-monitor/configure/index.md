@@ -125,11 +125,11 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 The Azure Monitor data source supports four authentication methods. Choose based on where Grafana is hosted and your security requirements:
 
-| Authentication method | Best for                                   | Requirements                                         |
-| --------------------- | ------------------------------------------ | ---------------------------------------------------- |
-| **App Registration**  | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret |
-| **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource       |
-| **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured              |
+| Authentication method | Best for                                   | Requirements                                                   |
+| --------------------- | ------------------------------------------ | -------------------------------------------------------------- |
+| **App Registration**  | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret         |
+| **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource                 |
+| **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured                        |
 | **Current User**      | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login |
 
 ## Configure authentication
@@ -157,7 +157,7 @@ Use a Microsoft Entra ID app registration (service principal) to authenticate. T
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Authentication**          | Select **App Registration**.                                                                                                               |
 | **Azure Cloud**             | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
-| **Directory (tenant) ID**   | The GUID that identifies your Microsoft Entra ID tenant.                                                                                             |
+| **Directory (tenant) ID**   | The GUID that identifies your Microsoft Entra ID tenant.                                                                                   |
 | **Application (client) ID** | The GUID for the app registration you created.                                                                                             |
 | **Client secret**           | The secret key for the app registration. Keep this secure and rotate periodically.                                                         |
 | **Default Subscription**    | Click **Load Subscriptions** to populate available subscriptions, then select your default.                                                |
