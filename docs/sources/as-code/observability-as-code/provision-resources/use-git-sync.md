@@ -14,7 +14,7 @@ labels:
     - cloud
 title: Manage provisioned repositories with Git Sync
 menuTitle: Manage repositories with Git Sync
-weight: 120
+weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/use-git-sync/
 aliases:
   - ../../../observability-as-code/provision-resources/use-git-sync/ # /docs/grafana/next/observability-as-code/provision-resources/use-git-sync/

@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/audit"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -113,6 +114,9 @@ type service struct {
 	appInstallers                     []appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
 	dualWriterMetrics                 *grafanarest.DualWriterMetrics
+
+	auditBackend             audit.Backend
+	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator
 }
 
 func ProvideService(
@@ -137,6 +141,8 @@ func ProvideService(
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
+	auditBackend audit.Backend,
+	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -167,6 +173,8 @@ func ProvideService(
 		appInstallers:                     appInstallers,
 		builderMetrics:                    builderMetrics,
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
+		auditBackend:                      auditBackend,
+		auditPolicyRuleEvaluator:          auditPolicyRuleEvaluator,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -354,6 +362,10 @@ func (s *service) start(ctx context.Context) error {
 	defGetters := []common.GetOpenAPIDefinitions{
 		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
 	}
+
+	// Auditing Options
+	serverConfig.AuditBackend = s.auditBackend
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleEvaluator
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
