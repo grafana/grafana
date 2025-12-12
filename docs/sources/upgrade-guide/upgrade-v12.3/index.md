@@ -21,24 +21,26 @@ weight: 497
 
 ## Technical notes
 
-### PostgreSQL annotation table migration
+### Annotation table migration
 
 **Plan for increased disk usage when upgrading from Grafana v11.x**
 
-Upgrading from Grafana v11.x to Grafana v12.x triggers a full-table rewrite of the PostgreSQL `annotation` table. The migration populates the new `dashboard_uid` column, which causes PostgreSQL to rewrite the entire table and rebuild its indexes.
+Upgrading from Grafana v11.x to Grafana v12.x triggers a full-table rewrite of the `annotation` table. The migration populates the new `dashboard_uid` column, which causes the database to rewrite the entire table and rebuild its indexes.
 
 Environments with large annotation datasets can experience significant temporary disk usage increase, which may lead to:
 
-- Rapid disk consumption on the PostgreSQL data volume
+- Rapid disk consumption on the database data volume
 - Database migration failures (for example, "could not extend file: No space left on device")
 - Grafana startup failures
 - Extended downtime during the upgrade process
 
 #### How do I know if I'm affected?
 
-You're affected if you're upgrading from Grafana v11.x to v12.x and you have a large `annotation` table in your PostgreSQL database.
+You're affected if you're upgrading from Grafana v11.x to v12.x and you have a large `annotation` table in your database.
 
-To check your annotation table size, connect to your PostgreSQL database and run the following query:
+To check your annotation table size, connect to your database and check the table size.
+
+For PostgreSQL, run the following query:
 
 ```sql
 SELECT
@@ -47,13 +49,25 @@ SELECT
     pg_size_pretty(pg_total_relation_size('annotation')) AS total_size;
 ```
 
+For MySQL or MariaDB, run the following query:
+
+```sql
+SELECT 
+    ROUND(data_length / 1024 / 1024, 2) AS table_size_mb,
+    ROUND(index_length / 1024 / 1024, 2) AS indexes_size_mb,
+    ROUND((data_length + index_length) / 1024 / 1024, 2) AS total_size_mb
+FROM information_schema.tables
+WHERE table_schema = DATABASE()
+    AND table_name = 'annotation';
+```
+
 If your total size is several gigabytes or more, you should plan accordingly before upgrading.
 
 #### What should I do before upgrading?
 
 Before you upgrade, take the following steps:
 
-1. **Verify available disk space**: Ensure you have at least 2-3 times the current `annotation` table size available as free disk space on your PostgreSQL data volume.
+1. **Verify available disk space**: Ensure you have at least 2-3 times the current `annotation` table size available as free disk space on your database data volume.
 
 2. **Review your annotation data**: Consider whether you need to retain all historical annotations.
 
@@ -63,10 +77,18 @@ Before you upgrade, take the following steps:
 
 #### What should I do after upgrading?
 
-After successfully upgrading to Grafana v12.x, you can reclaim disk space by running a `VACUUM FULL` operation on the `annotation` table during a maintenance window:
+After successfully upgrading to Grafana v12.x, you can reclaim disk space by performing database maintenance operations during a maintenance window.
+
+For PostgreSQL, run a `VACUUM FULL` operation on the `annotation` table:
 
 ```sql
 VACUUM FULL annotation;
 ```
 
-This operation requires a lock on the table and may take significant time depending on the table size. Plan to run this during a low-traffic period.
+For MySQL or MariaDB, run an `OPTIMIZE TABLE` operation on the `annotation` table:
+
+```sql
+OPTIMIZE TABLE annotation;
+```
+
+These operations require a lock on the table and may take significant time depending on the table size. Plan to run this during a low-traffic period.
