@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,6 +20,10 @@ export interface InlineRenameInputProps {
   excludeId: string;
 }
 
+interface FormValues {
+  name: string;
+}
+
 export function InlineRenameInput({
   initialValue,
   onSave,
@@ -27,10 +32,16 @@ export function InlineRenameInput({
   excludeId,
 }: InlineRenameInputProps) {
   const styles = useStyles2(getStyles);
-  const [value, setValue] = useState(initialValue);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    defaultValues: { name: initialValue },
+  });
 
   // Focus and select input on mount
   useEffect(() => {
@@ -40,81 +51,79 @@ export function InlineRenameInput({
     }
   }, []);
 
-  // Clear error when value changes
-  useEffect(() => {
-    setError(null);
-  }, [value]);
-
-  const handleSubmit = async () => {
-    const validationError = validateSearchName(value, savedSearches, excludeId);
+  const onSubmit = async (data: FormValues) => {
+    const validationError = validateSearchName(data.name, savedSearches, excludeId);
     if (validationError) {
-      setError(validationError);
+      setError('name', { message: validationError });
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const result = await onSave(value.trim());
-      if (result?.message) {
-        setError(result.message);
-      }
-    } finally {
-      setIsSubmitting(false);
+    const result = await onSave(data.name.trim());
+    if (result?.message) {
+      setError('name', { message: result.message });
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       e.preventDefault();
       onCancel();
     }
   };
 
+  // Get the register props and merge with our ref
+  const { ref: registerRef, ...registerProps } = register('name');
+
   return (
     <Stack direction="column" gap={0.5}>
-      <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-        {/* Input area - flex=1 like the name area in list items */}
-        <Box flex={1} marginRight={2}>
-          <Input
-            ref={inputRef}
-            value={value}
-            onChange={(e) => setValue(e.currentTarget.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('alerting.saved-searches.name-placeholder', 'Enter a name...')}
-            invalid={!!error}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack direction="row" alignItems="center" gap={1} wrap={false}>
+          {/* Input area - flex=1 like the name area in list items */}
+          <Box flex={1} marginRight={2}>
+            <Input
+              {...registerProps}
+              ref={(e) => {
+                registerRef(e);
+                // Store ref for focus management
+                if (inputRef && 'current' in inputRef) {
+                  inputRef.current = e;
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={t('alerting.saved-searches.name-placeholder', 'Enter a name...')}
+              invalid={!!errors.name}
+              disabled={isSubmitting}
+            />
+          </Box>
+
+          {/* X icon - cancel */}
+          <IconButton
+            name="times"
+            aria-label={t('alerting.saved-searches.cancel', 'Cancel')}
+            onClick={onCancel}
             disabled={isSubmitting}
+            tooltip={t('alerting.saved-searches.cancel', 'Cancel')}
+            size="md"
+            variant="secondary"
+            type="button"
           />
-        </Box>
 
-        {/* X icon - cancel */}
-        <IconButton
-          name="times"
-          aria-label={t('alerting.saved-searches.cancel', 'Cancel')}
-          onClick={onCancel}
-          disabled={isSubmitting}
-          tooltip={t('alerting.saved-searches.cancel', 'Cancel')}
-          size="md"
-          variant="secondary"
-        />
-
-        {/* Check icon - confirm rename */}
-        <IconButton
-          name="check"
-          aria-label={t('alerting.saved-searches.rename-button', 'Rename')}
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          size="md"
-          tooltip={t('alerting.saved-searches.rename-button', 'Rename')}
-          className={styles.successIcon}
-          variant="secondary"
-        />
-      </Stack>
-      {error && (
+          {/* Check icon - confirm rename */}
+          <IconButton
+            name="check"
+            aria-label={t('alerting.saved-searches.rename-button', 'Rename')}
+            disabled={isSubmitting}
+            size="md"
+            tooltip={t('alerting.saved-searches.rename-button', 'Rename')}
+            className={styles.successIcon}
+            variant="secondary"
+            type="submit"
+          />
+        </Stack>
+      </form>
+      {errors.name?.message && (
         <Text color="error" variant="bodySmall">
-          {error}
+          {errors.name.message}
         </Text>
       )}
     </Stack>

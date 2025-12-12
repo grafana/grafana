@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExtensionTypes } from '@grafana/data';
@@ -14,6 +14,35 @@ import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
+
+// In-memory storage for UserStorage mock (allows real useSavedSearches hook to run)
+// This approach catches bugs in the hook logic, unlike mocking the entire hook.
+let mockStorageData: Record<string, string> = {};
+
+// Mock UserStorage class directly (same pattern as useFavoriteDatasources.test.ts)
+// This avoids issues with MSW not intercepting requests due to config.namespace
+// being evaluated at module load time before jest.mock takes effect
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  UserStorage: jest.fn().mockImplementation((_service: string) => ({
+    getItem: jest.fn(async (key: string): Promise<string | null> => {
+      return mockStorageData[key] ?? null;
+    }),
+    setItem: jest.fn(async (key: string, value: string): Promise<void> => {
+      mockStorageData[key] = value;
+    }),
+  })),
+}));
+
+// Mock contextSrv for user ID (required by useSavedSearches)
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: {
+      id: 123,
+    },
+    hasPermission: jest.fn().mockReturnValue(true),
+  },
+}));
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
@@ -54,16 +83,6 @@ jest.spyOn(analytics, 'trackFilterButtonClearClick');
 jest.spyOn(analytics, 'trackAlertRuleFilterEvent');
 jest.spyOn(analytics, 'trackRulesSearchInputCleared');
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: jest.fn().mockReturnValue([
-      { name: 'Prometheus', uid: 'prometheus-uid' },
-      { name: 'Loki', uid: 'loki-uid' },
-    ]),
-  }),
-}));
-
 jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
   const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
   return {
@@ -83,17 +102,17 @@ jest.mock('../../plugins/useAlertingHomePageExtensions', () => ({
   }),
 }));
 
-jest.mock('./useSavedSearches', () => ({
-  useSavedSearches: jest.fn(() => ({
-    savedSearches: [],
-    isLoading: false,
-    saveSearch: jest.fn(),
-    renameSearch: jest.fn(),
-    deleteSearch: jest.fn(),
-    setDefaultSearch: jest.fn(),
-    getAutoApplySearch: jest.fn(() => null),
-  })),
-  trackSavedSearchApplied: jest.fn(),
+// Note: useSavedSearches is NOT mocked here - the real hook runs with UserStorage mocked above.
+// This ensures that issues inside the useSavedSearches hook are caught by these tests.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(), // Silence analytics calls from useSavedSearches
+  getDataSourceSrv: () => ({
+    getList: jest.fn().mockReturnValue([
+      { name: 'Prometheus', uid: 'prometheus-uid' },
+      { name: 'Loki', uid: 'loki-uid' },
+    ]),
+  }),
 }));
 
 setupPluginsExtensionsHook();
@@ -126,6 +145,9 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
+
+  // Reset mock storage for useSavedSearches
+  mockStorageData = {};
 
   mockFilterState = {
     ruleName: '',
@@ -198,10 +220,13 @@ describe('RulesFilter Feature Flag', () => {
 });
 
 describe('RulesFilterV2', () => {
-  it('Should render component without crashing', () => {
+  it('Should render component without crashing', async () => {
     render(<RulesFilterV2 />);
 
-    expect(ui.searchInput.get()).toBeInTheDocument();
+    // Wait for async hook operations (useSavedSearches) to complete
+    await waitFor(() => {
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
     expect(ui.filterButton.get()).toBeInTheDocument();
   });
 

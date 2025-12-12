@@ -45,9 +45,11 @@ export function SavedSearchItem({
   const styles = useStyles2(getStyles);
 
   // Rename mode - inline form matching the save form
+  // Stop propagation to prevent parent Dropdown from closing when interacting with form
   if (isRenaming) {
     return (
-      <div className={styles.item} role="listitem">
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+      <div className={styles.item} role="listitem" onClick={(e) => e.stopPropagation()}>
         <InlineRenameInput
           initialValue={search.name}
           onSave={onRenameComplete}
@@ -60,9 +62,11 @@ export function SavedSearchItem({
   }
 
   // Delete confirm mode - inline with name visible
+  // Stop propagation to prevent parent Dropdown from closing when interacting with delete confirmation
   if (isDeleting) {
     return (
-      <div className={styles.item} role="listitem">
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+      <div className={styles.item} role="listitem" onClick={(e) => e.stopPropagation()}>
         <Stack direction="row" alignItems="center" gap={1} wrap={false}>
           {/* Name remains visible */}
           <Stack direction="row" alignItems="center" gap={0.5} flex={1}>

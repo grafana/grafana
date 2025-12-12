@@ -80,30 +80,7 @@ describe('SavedSearches', () => {
     jest.clearAllMocks();
   });
 
-  describe('Rendering', () => {
-    it('renders the Saved searches button', () => {
-      setup();
-      expect(ui.savedSearchesButton.get()).toBeInTheDocument();
-    });
-
-    it('opens dropdown when button is clicked', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      expect(ui.dropdown.get()).toBeInTheDocument();
-    });
-
-    it('displays saved searches in alphabetical order with default first', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      const listItems = await ui.applyButtons.findAll();
-      // Default Search should be first (isDefault: true), then alphabetically: Critical Alerts, My Firing Rules
-      expect(listItems).toHaveLength(3);
-    });
-
+  describe('Displaying saved searches', () => {
     it('shows empty state when no saved searches exist', async () => {
       const { user } = setup({ savedSearches: [] });
 
@@ -112,29 +89,32 @@ describe('SavedSearches', () => {
       expect(ui.emptyStateMessage.get()).toBeInTheDocument();
     });
 
-    it('shows star icon for default search', async () => {
+    it('displays saved searches with default search marked with star icon', async () => {
       const { user } = setup();
 
       await user.click(ui.savedSearchesButton.get());
 
-      // Find the default search item
-      const defaultSearchName = screen.getByText('Default Search');
-      expect(defaultSearchName).toBeInTheDocument();
+      // Verify searches are displayed
+      const applyButtons = await ui.applyButtons.findAll();
+      expect(applyButtons).toHaveLength(3);
 
-      // Verify the star icon (favorite icon) is present for the default search
-      // The icon has title="Default search" which makes it accessible
-      const starIcon = screen.getByTitle('Default search');
-      expect(starIcon).toBeInTheDocument();
+      // Verify the default search has a star icon
+      expect(screen.getByText('Default Search')).toBeInTheDocument();
+      expect(screen.getByTitle('Default search')).toBeInTheDocument();
     });
   });
 
-  describe('Save functionality', () => {
-    it('shows save button when currentSearchQuery is provided', async () => {
-      const { user } = setup({ currentSearchQuery: 'state:pending' });
+  describe('Saving a search', () => {
+    it('saves current search with the provided name', async () => {
+      const { user, props } = setup({ currentSearchQuery: 'state:pending' });
+      props.onSave.mockResolvedValue(undefined);
 
       await user.click(ui.savedSearchesButton.get());
+      await user.click(await ui.saveButton.find());
+      await user.type(await ui.saveInput.find(), 'My New Search');
+      await user.click(ui.saveConfirmButton.get());
 
-      expect(await ui.saveButton.find()).toBeInTheDocument();
+      expect(props.onSave).toHaveBeenCalledWith('My New Search', 'state:pending');
     });
 
     it('disables save button when currentSearchQuery is empty', async () => {
@@ -150,28 +130,6 @@ describe('SavedSearches', () => {
       expect(saveButton).toBeDisabled();
     });
 
-    it('switches to save mode when save button is clicked', async () => {
-      const { user } = setup({ currentSearchQuery: 'state:pending' });
-
-      await user.click(ui.savedSearchesButton.get());
-      await user.click(await ui.saveButton.find());
-
-      expect(await ui.saveInput.find()).toBeInTheDocument();
-      expect(ui.saveConfirmButton.get()).toBeInTheDocument();
-    });
-
-    it('calls onSave with name and query when save is confirmed', async () => {
-      const { user, props } = setup({ currentSearchQuery: 'state:pending' });
-      props.onSave.mockResolvedValue(undefined);
-
-      await user.click(ui.savedSearchesButton.get());
-      await user.click(await ui.saveButton.find());
-      await user.type(await ui.saveInput.find(), 'My New Search');
-      await user.click(ui.saveConfirmButton.get());
-
-      expect(props.onSave).toHaveBeenCalledWith('My New Search', 'state:pending');
-    });
-
     it('shows validation error when name is empty', async () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
@@ -182,7 +140,7 @@ describe('SavedSearches', () => {
       expect(await ui.nameRequiredError.find()).toBeInTheDocument();
     });
 
-    it('shows validation error from onSave callback (duplicate name)', async () => {
+    it('shows validation error for duplicate name', async () => {
       const { user, props } = setup({ currentSearchQuery: 'state:pending' });
       props.onSave.mockResolvedValue({
         field: 'name',
@@ -197,39 +155,37 @@ describe('SavedSearches', () => {
       expect(await ui.duplicateNameError.find()).toBeInTheDocument();
     });
 
-    it('returns to list mode after successful save', async () => {
+    it('trims whitespace from search name before saving', async () => {
       const { user, props } = setup({ currentSearchQuery: 'state:pending' });
       props.onSave.mockResolvedValue(undefined);
 
       await user.click(ui.savedSearchesButton.get());
       await user.click(await ui.saveButton.find());
-      await user.type(await ui.saveInput.find(), 'New Search');
+      await user.type(await ui.saveInput.find(), '  My Search  ');
       await user.click(ui.saveConfirmButton.get());
 
-      await waitFor(() => {
-        expect(ui.saveInput.query()).not.toBeInTheDocument();
-      });
+      expect(props.onSave).toHaveBeenCalledWith('My Search', 'state:pending');
     });
 
-    it('cancels save mode when cancel button is clicked', async () => {
-      const { user } = setup({ currentSearchQuery: 'state:pending' });
+    it('cancels save when cancel button is clicked', async () => {
+      const { user, props } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(ui.savedSearchesButton.get());
       await user.click(await ui.saveButton.find());
       await user.click(await ui.cancelButton.find());
 
+      expect(props.onSave).not.toHaveBeenCalled();
       expect(ui.saveInput.query()).not.toBeInTheDocument();
     });
   });
 
-  describe('Apply functionality', () => {
-    it('calls onApply when apply button is clicked', async () => {
+  describe('Applying a search', () => {
+    it('applies the selected search and closes dropdown', async () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-      // Click the apply button (search icon) - uses tooltip as accessible name
       const applyButtons = await ui.applyButtons.findAll();
-      // Find the button for "My Firing Rules" (third in sorted list: Default, Critical, My Firing)
+      // Click the apply button for "My Firing Rules" (third in sorted list: Default, Critical, My Firing)
       await user.click(applyButtons[2]);
 
       expect(props.onApply).toHaveBeenCalledWith(
@@ -239,15 +195,6 @@ describe('SavedSearches', () => {
           query: 'state:firing',
         })
       );
-    });
-
-    it('closes dropdown after applying a search', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-      // Click the apply button (search icon) - uses tooltip as accessible name
-      const applyButtons = await ui.applyButtons.findAll();
-      await user.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(ui.dropdown.query()).not.toBeInTheDocument();
@@ -255,84 +202,38 @@ describe('SavedSearches', () => {
     });
   });
 
-  describe('Action menu', () => {
-    it('opens action menu when three-dot button is clicked', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      // Find the action menu buttons - menuButtons[0] is Default Search (shows "Remove default")
-      // Use menuButtons[1] (a non-default search) to see "Set as default"
-      const menuButtons = await ui.actionMenuButtons.findAll();
-      await user.click(menuButtons[1]);
-
-      expect(await ui.setAsDefaultMenuItem.find()).toBeInTheDocument();
-      expect(ui.renameMenuItem.get()).toBeInTheDocument();
-      expect(ui.deleteMenuItem.get()).toBeInTheDocument();
-    });
-
-    it('shows "Remove default" option for default search', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      // Find the Default Search item's menu button (it should be the first one after sorting)
-      const menuButtons = await ui.actionMenuButtons.findAll();
-      await user.click(menuButtons[0]); // Default Search is first
-
-      expect(await ui.removeDefaultMenuItem.find()).toBeInTheDocument();
-    });
-  });
-
-  describe('Set default functionality', () => {
-    it('calls onSetDefault with search id when "Set as default" is clicked', async () => {
+  describe('Setting default search', () => {
+    it('sets a search as default', async () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-
-      // Find a non-default search's menu button
+      // Use a non-default search's menu (second item after sorting)
       const menuButtons = await ui.actionMenuButtons.findAll();
-      await user.click(menuButtons[1]); // Second item (not default)
-
+      await user.click(menuButtons[1]);
       await user.click(await ui.setAsDefaultMenuItem.find());
 
       expect(props.onSetDefault).toHaveBeenCalled();
     });
 
-    it('calls onSetDefault with null when "Remove default" is clicked', async () => {
+    it('removes default from a search', async () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-
-      // Find the Default Search's menu button (first item)
+      // Default Search is first item
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
-
       await user.click(await ui.removeDefaultMenuItem.find());
 
       expect(props.onSetDefault).toHaveBeenCalledWith(null);
     });
   });
 
-  describe('Rename functionality', () => {
-    it('shows rename input when "Rename" is clicked', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      const menuButtons = await ui.actionMenuButtons.findAll();
-      await user.click(menuButtons[0]);
-      await user.click(await ui.renameMenuItem.find());
-
-      expect(await screen.findByDisplayValue('Default Search')).toBeInTheDocument();
-    });
-
-    it('calls onRename with new name when rename is confirmed', async () => {
+  describe('Renaming a search', () => {
+    it('renames a search successfully', async () => {
       const { user, props } = setup();
       props.onRename.mockResolvedValue(undefined);
 
       await user.click(ui.savedSearchesButton.get());
-
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
       await user.click(await ui.renameMenuItem.find());
@@ -340,14 +241,12 @@ describe('SavedSearches', () => {
       const input = await screen.findByDisplayValue('Default Search');
       await user.clear(input);
       await user.type(input, 'Renamed Search');
-
-      // Press Enter to confirm
       await user.keyboard('{Enter}');
 
       expect(props.onRename).toHaveBeenCalledWith('2', 'Renamed Search');
     });
 
-    it('shows validation error when renamed to duplicate name', async () => {
+    it('shows validation error for duplicate name when renaming', async () => {
       const { user, props } = setup();
       props.onRename.mockResolvedValue({
         field: 'name',
@@ -355,7 +254,6 @@ describe('SavedSearches', () => {
       });
 
       await user.click(ui.savedSearchesButton.get());
-
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
       await user.click(await ui.renameMenuItem.find());
@@ -371,34 +269,18 @@ describe('SavedSearches', () => {
     });
   });
 
-  describe('Delete functionality', () => {
-    it('shows delete confirmation when "Delete" is clicked', async () => {
-      const { user } = setup();
-
-      await user.click(ui.savedSearchesButton.get());
-
-      const menuButtons = await ui.actionMenuButtons.findAll();
-      await user.click(menuButtons[0]);
-      await user.click(await ui.deleteMenuItem.find());
-
-      // Delete confirmation shows the item name with cancel and confirm buttons
-      expect(await screen.findByText('Default Search')).toBeInTheDocument();
-      expect(ui.cancelButton.get()).toBeInTheDocument();
-      expect(ui.deleteButton.get()).toBeInTheDocument();
-    });
-
-    it('calls onDelete when delete is confirmed', async () => {
+  describe('Deleting a search', () => {
+    it('deletes a search after confirmation', async () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
       await user.click(await ui.deleteMenuItem.find());
 
-      // Confirm delete by clicking trash button
+      // Confirm delete
       const deleteButtons = await ui.deleteButton.findAll();
-      await user.click(deleteButtons[deleteButtons.length - 1]); // The confirm delete button
+      await user.click(deleteButtons[deleteButtons.length - 1]);
 
       expect(props.onDelete).toHaveBeenCalledWith('2');
     });
@@ -407,16 +289,13 @@ describe('SavedSearches', () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
       await user.click(await ui.deleteMenuItem.find());
 
-      // Cancel delete
       await user.click(await ui.cancelButton.find());
 
       expect(props.onDelete).not.toHaveBeenCalled();
-      // Item should be back in normal display mode
       expect(screen.getByText('Default Search')).toBeInTheDocument();
     });
   });
@@ -435,12 +314,11 @@ describe('SavedSearches', () => {
       });
     });
 
-    it('cancels save mode when Escape is pressed', async () => {
+    it('cancels save mode when Escape is pressed without closing dropdown', async () => {
       const { user } = setup({ currentSearchQuery: 'state:pending' });
 
       await user.click(ui.savedSearchesButton.get());
       await user.click(await ui.saveButton.find());
-
       expect(await ui.saveInput.find()).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
@@ -448,7 +326,7 @@ describe('SavedSearches', () => {
       await waitFor(() => {
         expect(ui.saveInput.query()).not.toBeInTheDocument();
       });
-      // Dropdown should still be open (just back to list mode)
+      // Dropdown should still be open
       expect(ui.dropdown.get()).toBeInTheDocument();
     });
   });
@@ -471,23 +349,5 @@ describe('SavedSearches', () => {
 
       expect(await screen.findByText('Empty Search')).toBeInTheDocument();
     });
-
-    it('trims whitespace from search name before saving', async () => {
-      const { user, props } = setup({ currentSearchQuery: 'state:pending' });
-      props.onSave.mockResolvedValue(undefined);
-
-      await user.click(ui.savedSearchesButton.get());
-      await user.click(await ui.saveButton.find());
-      await user.type(await ui.saveInput.find(), '  My Search  ');
-      await user.click(ui.saveConfirmButton.get());
-
-      expect(props.onSave).toHaveBeenCalledWith('My Search', 'state:pending');
-    });
   });
-});
-
-describe('useSavedSearches hook', () => {
-  // These tests would require mocking UserStorage
-  // For now, we test the integration through component tests above
-  // Additional unit tests for the hook can be added separately
 });
