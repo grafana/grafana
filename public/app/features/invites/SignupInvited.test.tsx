@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -103,7 +103,9 @@ describe('SignupInvitedPage', () => {
         get: { email: '', invitedBy: '', name: '', username: '', orgName: '' },
       });
 
-      await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /sign up/i })));
 
       await waitFor(() => expect(screen.getByText(/email is required/i)).toBeInTheDocument());
       expect(screen.getByText(/username is required/i)).toBeInTheDocument();
