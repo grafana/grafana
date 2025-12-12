@@ -72,19 +72,19 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
     const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
 
-    // Ensure the panel image render URL uses the solo route + panelId, and forces scenes.
-    // Also hide the branding in rendered images.
+    // the image panel solo route uses panelId instead of viewPanel
+    let imageQueryParams = urlParamsUpdate;
     if (panel) {
-      delete urlParamsUpdate.viewPanel;
-      urlParamsUpdate.panelId = panel.getPathId();
-      urlParamsUpdate['__feature.dashboardSceneSolo'] = true;
+      delete imageQueryParams.viewPanel;
+      imageQueryParams.panelId = panel.getPathId();
+      // force solo route to use scenes
+      imageQueryParams['__feature.dashboardSceneSolo'] = true;
     }
-    urlParamsUpdate.hideLogo = 'true';
 
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
-      updateQuery: { ...urlParamsUpdate, ...queryOptions },
+      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId(), hideLogo: 'true' },
       absolute: true,
       soloRoute: true,
       render: true,
