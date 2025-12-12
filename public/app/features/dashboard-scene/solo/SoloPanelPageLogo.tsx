@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -7,14 +8,50 @@ import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
 import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 
 interface SoloPanelPageLogoProps {
-  scale: number;
+  containerRef: React.RefObject<HTMLDivElement>;
   isHovered: boolean;
 }
 
-export function SoloPanelPageLogo({ scale, isHovered }: SoloPanelPageLogoProps) {
+export function SoloPanelPageLogo({ containerRef, isHovered }: SoloPanelPageLogoProps) {
+  const [scale, setScale] = useState(1);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const grafanaLogo = theme.isDark ? grafanaTextLogoLightSvg : grafanaTextLogoDarkSvg;
+
+  // Calculate responsive scale based on panel dimensions
+  useEffect(() => {
+    const updateScale = () => {
+      if (!containerRef.current) {
+        return;
+      }
+
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      // Use the smaller dimension to ensure it scales appropriately for both wide and tall panels
+      const minDimension = Math.min(width, height);
+
+      // Base scale calculation: scale between 0.6 (for small panels ~200px) and 1.0 (for large panels ~800px+)
+      // Allow scaling up to 1.0 for larger panels
+      const baseScale = Math.max(0.6, Math.min(1.0, 0.6 + (minDimension - 200) / 600));
+
+      // Also consider width specifically for very wide but short panels
+      const widthScale = Math.max(0.6, Math.min(1.0, 0.6 + (width - 200) / 800));
+
+      // Use the average of both for balanced scaling, ensuring we reach 1.0 for large panels
+      const finalScale = Math.min(1.0, (baseScale + widthScale) / 2);
+      setScale(finalScale);
+    };
+
+    updateScale();
+
+    const resizeObserver = new ResizeObserver(updateScale);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [containerRef]);
 
   return (
     <div
