@@ -9926,8 +9926,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -9971,8 +9970,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -10013,8 +10011,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true

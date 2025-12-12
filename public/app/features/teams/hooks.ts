@@ -11,6 +11,9 @@ import {
   useGetTeamByIdQuery,
   useUpdateTeamMutation,
   UpdateTeamCommand,
+  useGetTeamGroupsApiQuery,
+  useAddTeamGroupApiMutation,
+  useRemoveTeamGroupApiQueryMutation,
 } from 'app/api/clients/legacy';
 import { updateNavIndex } from 'app/core/actions';
 import { addFilteredDisplayName } from 'app/core/components/RolePicker/utils';
@@ -151,4 +154,29 @@ export const useCreateTeam = () => {
   };
 
   return [trigger, response] as const;
+};
+
+export const useGetTeamGroups = (teamUid: string) => {
+  const { data, refetch } = useGetTeamGroupsApiQuery({ teamId: teamUid });
+  return { value: data, retry: refetch };
+};
+
+export const useAddTeamGroup = () => {
+  const [addTeamGroup, result] = useAddTeamGroupApiMutation();
+
+  const trigger = async (teamUid: string, groupId: string) => {
+    return addTeamGroup({ teamId: teamUid, teamGroupMapping: { groupId } });
+  };
+
+  return [trigger, result] as const;
+};
+
+export const useRemoveTeamGroup = () => {
+  const [removeTeamGroup, result] = useRemoveTeamGroupApiQueryMutation();
+
+  const trigger = async (teamUid: string, groupId: string) => {
+    return removeTeamGroup({ teamId: teamUid, groupId });
+  };
+
+  return [trigger, result] as const;
 };
