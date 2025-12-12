@@ -7,19 +7,36 @@
  * - useSavedSearches.ts (hook)
  */
 
+import z from 'zod';
+
 import { t } from '@grafana/i18n';
+
+// ============================================================================
+// Schemas
+// ============================================================================
+
+/**
+ * Zod schema for validating a saved search object.
+ * Used to validate data loaded from storage.
+ */
+export const savedSearchSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  isDefault: z.boolean(),
+  query: z.string(),
+  createdAt: z.number().optional(),
+});
+
+/**
+ * Zod schema for validating an array of saved searches.
+ */
+export const savedSearchesArraySchema = z.array(savedSearchSchema);
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface SavedSearch {
-  id: string;
-  name: string;
-  isDefault: boolean;
-  query: string;
-  createdAt?: number;
-}
+export type SavedSearch = z.infer<typeof savedSearchSchema>;
 
 export interface ValidationError {
   field: 'name';

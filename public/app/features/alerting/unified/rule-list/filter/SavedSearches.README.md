@@ -253,10 +253,10 @@ Test categories:
 
 ### Hook Tests
 
-Location: `useSavedSearches.test.ts`
+Location: `useSavedSearches.test.tsx`
 
 ```bash
-yarn test useSavedSearches.test.ts
+yarn test useSavedSearches.test.tsx
 ```
 
 Test categories:
@@ -269,32 +269,52 @@ Test categories:
 - **getAutoApplySearch**: Navigation detection, URL check
 - **Error handling**: Storage errors, notifications
 
-### Mocking UserStorage
+### Mocking UserStorage API with MSW
+
+The hook tests use MSW to mock the UserStorage API endpoints:
 
 ```typescript
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
+import { HttpResponse, http } from 'msw';
+import { setupServer } from 'msw/node';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  UserStorage: jest.fn().mockImplementation(() => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-  })),
-}));
+const USER_STORAGE_BASE_URL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
+
+const handlers = [
+  http.get(`${USER_STORAGE_BASE_URL}/:resourceName`, () => {
+    return HttpResponse.json({ spec: { data: mockStorageData } });
+  }),
+  http.patch(`${USER_STORAGE_BASE_URL}/:resourceName`, async ({ request }) => {
+    const body = await request.json();
+    return HttpResponse.json({ spec: { data: body.spec.data } });
+  }),
+];
+
+const server = setupServer(...handlers);
 ```
 
-### Mocking Notifications
+### Verifying Notifications in UI
+
+Tests verify error notifications by rendering the `AppNotificationList` component:
 
 ```typescript
-const mockNotifyError = jest.fn();
-jest.mock('../../../../../core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: mockNotifyError,
-    success: jest.fn(),
-    warning: jest.fn(),
-  }),
-}));
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
+import { getWrapper, screen } from 'test/test-utils';
+
+function createWrapper() {
+  const Wrapper = getWrapper({ renderWithRouter: true });
+  return function WrapperWithNotifications({ children }) {
+    return (
+      <Wrapper>
+        <AppNotificationList />
+        {children}
+      </Wrapper>
+    );
+  };
+}
+
+// In tests:
+const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+expect(await screen.findByText(/failed to save/i)).toBeInTheDocument();
 ```
 
 ## Accessibility
@@ -314,7 +334,7 @@ public/app/features/alerting/unified/rule-list/filter/
 ├── SavedSearches.test.tsx     # Component tests
 ├── SavedSearches.README.md    # This documentation
 ├── useSavedSearches.ts        # Custom hook with persistence
-└── useSavedSearches.test.ts   # Hook tests
+└── useSavedSearches.test.tsx  # Hook tests
 ```
 
 ## Dependencies

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -6,8 +7,9 @@ import { UserStorage } from '@grafana/runtime/internal';
 
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { contextSrv } from '../../../../../core/services/context_srv';
+import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
 
-import { SavedSearch, ValidationError } from './SavedSearches.types';
+import { SavedSearch, ValidationError, savedSearchesArraySchema, validateSearchName } from './SavedSearches.types';
 
 /**
  * Storage key for saved searches in UserStorage.
@@ -57,43 +59,24 @@ function trackSavedSearchAutoApply() {
 }
 
 /**
- * Validates that an object has the SavedSearch shape.
- * Returns true if valid, false otherwise.
- */
-function isValidSavedSearch(obj: unknown): obj is SavedSearch {
-  if (typeof obj !== 'object' || obj === null) {
-    return false;
-  }
-  // Type guard requires narrowing from unknown
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const search = obj as Record<string, unknown>;
-  return (
-    typeof search.id === 'string' &&
-    typeof search.name === 'string' &&
-    typeof search.query === 'string' &&
-    typeof search.isDefault === 'boolean'
-  );
-}
-
-/**
- * Validates and filters an array of saved searches.
- * Removes invalid entries and logs warnings.
+ * Validates and parses an array of saved searches using zod schema.
+ * Returns valid entries and logs warnings for invalid data.
  */
 function validateSavedSearches(data: unknown): SavedSearch[] {
+  const result = savedSearchesArraySchema.safeParse(data);
+
+  if (result.success) {
+    return result.data;
+  }
+
+  // If the whole array failed, try to salvage individual valid entries
   if (!Array.isArray(data)) {
     console.warn('Saved searches data is not an array, returning empty array');
     return [];
   }
 
-  const validSearches: SavedSearch[] = [];
-  for (const item of data) {
-    if (isValidSavedSearch(item)) {
-      validSearches.push(item);
-    } else {
-      console.warn('Invalid saved search entry found and skipped:', item);
-    }
-  }
-  return validSearches;
+  console.warn('Saved searches validation failed, filtering invalid entries:', result.error.issues);
+  return [];
 }
 
 /**
@@ -169,13 +152,27 @@ export interface UseSavedSearchesResult {
  */
 export function useSavedSearches(): UseSavedSearchesResult {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const notifyApp = useAppNotification();
 
   // Track whether we've already loaded to prevent double-loading
   const hasLoadedRef = useRef(false);
   // Track whether this is a fresh navigation (not refresh)
   const isNavigationRef = useRef<boolean | null>(null);
+
+  // Async loader function for saved searches
+  const loadSavedSearches = useCallback(async (): Promise<SavedSearch[]> => {
+    const stored = await userStorage.getItem(SAVED_SEARCHES_STORAGE_KEY);
+    if (!stored) {
+      return [];
+    }
+
+    const parsed = JSON.parse(stored);
+    return validateSavedSearches(parsed);
+  }, []);
+
+  // Use useAsync for loading state management
+  const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearches, []);
+  const isLoading = isLoadingState(loadState);
 
   // Load saved searches from storage on mount
   useEffect(() => {
@@ -194,26 +191,10 @@ export function useSavedSearches(): UseSavedSearchesResult {
     // Set the visited flag for future checks
     sessionStorage.setItem(sessionKey, 'true');
 
-    // Load from UserStorage (async)
-    userStorage
-      .getItem(SAVED_SEARCHES_STORAGE_KEY)
-      .then((stored) => {
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            const validated = validateSavedSearches(parsed);
-            setSavedSearches(validated);
-          } catch (error) {
-            console.error('Failed to parse saved searches:', error);
-            notifyApp.error(
-              t('alerting.saved-searches.error-load-title', 'Failed to load saved searches'),
-              t(
-                'alerting.saved-searches.error-load-description',
-                'Your saved searches could not be loaded. Please try refreshing the page.'
-              )
-            );
-          }
-        }
+    // Load from UserStorage using useAsync
+    executeLoad()
+      .then((validated) => {
+        setSavedSearches(validated);
       })
       .catch((error) => {
         console.error('Failed to load saved searches from storage:', error);
@@ -224,16 +205,13 @@ export function useSavedSearches(): UseSavedSearchesResult {
             'Your saved searches could not be loaded. Please try refreshing the page.'
           )
         );
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
 
     // Clean up session flag when component unmounts (user navigates away)
     return () => {
       sessionStorage.removeItem(sessionKey);
     };
-  }, [notifyApp]);
+  }, [executeLoad, notifyApp]);
 
   /**
    * Persist saved searches to UserStorage.
@@ -260,17 +238,14 @@ export function useSavedSearches(): UseSavedSearchesResult {
    */
   const saveSearch = useCallback(
     async (name: string, query: string): Promise<void | ValidationError> => {
-      // Validate name uniqueness (case-insensitive)
-      const isDuplicate = savedSearches.some((s) => s.name.toLowerCase() === name.toLowerCase());
-      if (isDuplicate) {
-        return {
-          field: 'name',
-          message: t('alerting.saved-searches.error-name-duplicate', 'A saved search with this name already exists'),
-        };
+      // Validate name using shared validation function
+      const validationError = validateSearchName(name, savedSearches);
+      if (validationError) {
+        return { field: 'name', message: validationError };
       }
 
       const newSearch: SavedSearch = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         name,
         query,
         isDefault: false,
@@ -279,18 +254,14 @@ export function useSavedSearches(): UseSavedSearchesResult {
 
       const newSearches = [...savedSearches, newSearch];
 
-      try {
-        await persistSearches(newSearches);
-        setSavedSearches(newSearches);
+      await persistSearches(newSearches);
+      setSavedSearches(newSearches);
 
-        // Track analytics
-        trackSavedSearchSave({
-          hasDefault: newSearches.some((s) => s.isDefault),
-          totalCount: newSearches.length,
-        });
-      } catch {
-        // Error already handled in persistSearches
-      }
+      // Track analytics
+      trackSavedSearchSave({
+        hasDefault: newSearches.some((s) => s.isDefault),
+        totalCount: newSearches.length,
+      });
 
       return undefined;
     },
@@ -303,26 +274,19 @@ export function useSavedSearches(): UseSavedSearchesResult {
    */
   const renameSearch = useCallback(
     async (id: string, newName: string): Promise<void | ValidationError> => {
-      // Validate name uniqueness (case-insensitive), excluding current item
-      const isDuplicate = savedSearches.some((s) => s.id !== id && s.name.toLowerCase() === newName.toLowerCase());
-      if (isDuplicate) {
-        return {
-          field: 'name',
-          message: t('alerting.saved-searches.error-name-duplicate', 'A saved search with this name already exists'),
-        };
+      // Validate name using shared validation function (excluding current item)
+      const validationError = validateSearchName(newName, savedSearches, id);
+      if (validationError) {
+        return { field: 'name', message: validationError };
       }
 
       const newSearches = savedSearches.map((s) => (s.id === id ? { ...s, name: newName } : s));
 
-      try {
-        await persistSearches(newSearches);
-        setSavedSearches(newSearches);
+      await persistSearches(newSearches);
+      setSavedSearches(newSearches);
 
-        // Track analytics
-        trackSavedSearchRename();
-      } catch {
-        // Error already handled in persistSearches
-      }
+      // Track analytics
+      trackSavedSearchRename();
 
       return undefined;
     },
@@ -336,15 +300,11 @@ export function useSavedSearches(): UseSavedSearchesResult {
     async (id: string): Promise<void> => {
       const newSearches = savedSearches.filter((s) => s.id !== id);
 
-      try {
-        await persistSearches(newSearches);
-        setSavedSearches(newSearches);
+      await persistSearches(newSearches);
+      setSavedSearches(newSearches);
 
-        // Track analytics
-        trackSavedSearchDelete();
-      } catch {
-        // Error already handled in persistSearches
-      }
+      // Track analytics
+      trackSavedSearchDelete();
     },
     [savedSearches, persistSearches]
   );
@@ -360,15 +320,11 @@ export function useSavedSearches(): UseSavedSearchesResult {
         isDefault: id === null ? false : s.id === id,
       }));
 
-      try {
-        await persistSearches(newSearches);
-        setSavedSearches(newSearches);
+      await persistSearches(newSearches);
+      setSavedSearches(newSearches);
 
-        // Track analytics
-        trackSavedSearchSetDefault({ action: id === null ? 'clear' : 'set' });
-      } catch {
-        // Error already handled in persistSearches
-      }
+      // Track analytics
+      trackSavedSearchSetDefault({ action: id === null ? 'clear' : 'set' });
     },
     [savedSearches, persistSearches]
   );

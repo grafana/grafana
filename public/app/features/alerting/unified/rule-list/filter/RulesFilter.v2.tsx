@@ -105,6 +105,9 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     getAutoApplySearch,
   } = useSavedSearches();
 
+  // Track whether we've already attempted to auto-apply default search (prevents double-apply)
+  const hasAttemptedAutoApplyRef = useRef(false);
+
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
@@ -116,40 +119,32 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     setValue('query', searchQuery);
   }, [searchQuery, setValue]);
 
-  // Apply saved search - updates search input, triggers filtering, and updates URL
+  // Apply saved search - triggers filtering (which updates search input and URL)
   const handleApplySearch = useCallback(
     (search: SavedSearch) => {
-      // Update the search input
-      setValue('query', search.query);
-
-      // Trigger the filtering mechanism
       const parsedFilter = getSearchFilterFromQuery(search.query);
       updateFilters(parsedFilter);
-
-      // Update URL with the search query for shareability
-      const currentParams = locationService.getSearchObject();
-      locationService.partial({ ...currentParams, search: search.query || undefined });
 
       // Track analytics
       trackSavedSearchApplied(search);
     },
-    [setValue, updateFilters]
+    [updateFilters]
   );
 
-  // Auto-apply default search on navigation (not refresh)
-  // The getAutoApplySearch() hook handles its own state to prevent double-apply
+  // Auto-apply default search on first load (navigation, not refresh)
+  // We use a ref to ensure this only runs once, preventing re-application when dependencies change
   useEffect(() => {
-    if (!savedSearchesEnabled || savedSearchesLoading) {
+    // Skip if feature is disabled, still loading, or we've already attempted
+    if (!savedSearchesEnabled || savedSearchesLoading || hasAttemptedAutoApplyRef.current) {
       return;
     }
 
+    // Mark as attempted immediately to prevent any possibility of double-apply
+    hasAttemptedAutoApplyRef.current = true;
+
     const defaultSearch = getAutoApplySearch();
     if (defaultSearch) {
-      try {
-        handleApplySearch(defaultSearch);
-      } catch (error) {
-        console.error('Failed to auto-apply default search:', error);
-      }
+      handleApplySearch(defaultSearch);
     }
   }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, handleApplySearch]);
 
