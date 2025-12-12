@@ -84,7 +84,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
-      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
+      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId(), hideLogo: 'true' },
       absolute: true,
       soloRoute: true,
       render: true,
