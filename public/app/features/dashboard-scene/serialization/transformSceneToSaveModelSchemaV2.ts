@@ -301,7 +301,6 @@ export function getVizPanelQueries(
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
 
-  // For snapshots, embed the panel data frames into a Grafana snapshot query
   if (isSnapshot) {
     const dataProvider = vizPanel.state.$data;
     if (!dataProvider) {
@@ -310,11 +309,9 @@ export function getVizPanelQueries(
 
     let snapshotData = getPanelDataFrames(dataProvider.state.data);
     if (dataProvider instanceof SceneDataTransformer) {
-      // For transformations the non-transformed data is snapshoted
       snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
     }
 
-    // Create a Grafana snapshot query
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',
       version: defaultDataQueryKind().version,
