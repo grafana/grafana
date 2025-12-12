@@ -46,7 +46,7 @@ export function RadialArcPath({
   const largeArc = arcLengthDeg > 180 ? 1 : 0;
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
-  const dotRadius = (barWidth / 2) * 0.4;
+  const dotRadius = (barWidth / 2) * 0.3;
 
   return (
     <>
