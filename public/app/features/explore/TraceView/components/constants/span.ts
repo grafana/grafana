@@ -5,3 +5,4 @@ export const LIBRARY_NAME = 'library.name';
 export const LIBRARY_VERSION = 'library.version';
 export const TRACE_STATE = 'trace.state';
 export const ID = 'id';
+export const SPAN_NAME = 'span.name';

@@ -16,7 +16,16 @@ import { SpanStatusCode } from '@opentelemetry/api';
 
 import { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
 
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
+import {
+  KIND,
+  LIBRARY_NAME,
+  LIBRARY_VERSION,
+  STATUS,
+  STATUS_MESSAGE,
+  TRACE_STATE,
+  ID,
+  SPAN_NAME,
+} from '../constants/span';
 import TNil from '../types/TNil';
 import { TraceSpan, CriticalPathSection } from '../types/trace';
 
@@ -47,12 +56,12 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
       }
 
       // Special handling for serviceName
-      if (key === 'serviceName') {
+      if (key === 'service.name') {
         return matchField(span.process.serviceName, operator, value);
       }
 
-      // Special handling for spanName (operationName)
-      if (key === 'spanName') {
+      // Special handling for span.name (operationName)
+      if (key === SPAN_NAME) {
         return matchField(span.operationName, operator, value);
       }
 
