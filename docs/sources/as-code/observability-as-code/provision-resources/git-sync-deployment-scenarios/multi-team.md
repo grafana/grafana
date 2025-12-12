@@ -1,11 +1,11 @@
 ---
 title: Multiple team Git Sync
-menuTitle: Multiple team
+menuTitle: Shared instance
 description: Use multiple Git repositories with one Grafana instance, one repository per team
 weight: 60
 ---
 
-# Multi-team Git Sync
+# Git Sync in a Grafana instance shared by multiple teams
 
 Use a single Grafana instance with multiple Repository resources, one per team. Each team manages its own dashboards while sharing Grafana.
 

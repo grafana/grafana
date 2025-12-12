@@ -1,11 +1,11 @@
 ---
-title: Development and production Git Sync
-menuTitle: Dev and prod
+title: Git Sync for development and production environments
+menuTitle: Across environments
 description: Use separate Grafana instances for development and production with Git-controlled promotion
 weight: 20
 ---
 
-# Development and production Git Sync
+# Git Sync for development and production environments
 
 Use separate Grafana instances for development and production. Each syncs with different Git locations to test dashboards before production.
 
