@@ -248,13 +248,13 @@ export function createAggregationOperationWithParam(
 
 export function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} by(${model.params.map(x => isString(x) && !isValidLegacyName(x) ? `"${x}"` : x).join(', ')}) (${innerExpr})`;
+    return `${aggregation} by(${model.params.map((x) => (isString(x) && !isValidLegacyName(x) ? `"${x}"` : x)).join(', ')}) (${innerExpr})`;
   };
 }
 
 function getAggregationWithoutRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} without(${model.params.map(x => isString(x) && !isValidLegacyName(x) ? `"${x}"` : x).join(', ')}) (${innerExpr})`;
+    return `${aggregation} without(${model.params.map((x) => (isString(x) && !isValidLegacyName(x) ? `"${x}"` : x)).join(', ')}) (${innerExpr})`;
   };
 }
 
@@ -295,7 +295,7 @@ function getAggregationByRendererWithParameter(aggregation: string) {
     const params = model.params.slice(0, restParamIndex);
     const restParams = model.params.slice(restParamIndex);
 
-    return `${aggregation} by(${restParams.map(x => isString(x) && !isValidLegacyName(x) ? `"${x}"` : x).join(', ')}) (${params
+    return `${aggregation} by(${restParams.map((x) => (isString(x) && !isValidLegacyName(x) ? `"${x}"` : x)).join(', ')}) (${params
       .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
       .join(', ')}, ${innerExpr})`;
   };
