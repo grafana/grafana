@@ -94,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
   adHocContainer: css({
-    maxWidth: '600px',
+    maxWidth: '700px',
     // Override the inner container's alignItems to keep label at top
     '& > div': {
       alignItems: 'flex-start',
