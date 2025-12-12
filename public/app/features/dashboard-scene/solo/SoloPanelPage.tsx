@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, useStyles2 } from '@grafana/ui';
+import { Alert, Box, useStyles2, useTheme2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
-import grafanaIconSvg from 'img/grafana_icon.svg';
+import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
+import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -64,8 +65,11 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const soloPanelContext = useDefineSoloPanelContext(panelId)!;
   const [isHovered, setIsHovered] = useState(false);
+
+  const grafanaLogo = theme.isDark ? grafanaTextLogoLightSvg : grafanaTextLogoDarkSvg;
 
   useEffect(() => {
     const dashDeactivate = dashboard.activate();
@@ -80,7 +84,10 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   return (
     <div className={styles.container} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <div className={cx(styles.logoContainer, isHovered && styles.logoHidden)}>
-        <img src={grafanaIconSvg} alt="Grafana" className={styles.logo} />
+        <span className={styles.text}>
+          <Trans i18nKey="embedded-panel.powered-by">Powered by</Trans>
+        </span>
+        <img src={grafanaLogo} alt="Grafana" className={styles.logo} />
       </div>
       {renderHiddenVariables(dashboard)}
       <div className={styles.panelWrapper}>
@@ -119,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     position: 'absolute',
     top: theme.spacing(1),
     right: theme.spacing(1),
-    padding: theme.spacing(1, 1.5),
+    padding: theme.spacing(0.75, 1),
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
     opacity: 0.9,
@@ -127,7 +134,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     zIndex: 1000,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     boxShadow: theme.shadows.z3,
     border: `1px solid ${theme.colors.border.weak}`,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
@@ -139,9 +145,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     opacity: 0,
   });
 
+  const text = css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.body.fontSize,
+  });
+
   const logo = css({
-    width: theme.spacing(4),
-    height: theme.spacing(4),
+    height: '16px',
+    marginLeft: theme.spacing(0.5),
     display: 'block',
   });
 
@@ -164,6 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     panelWrapper,
     logoContainer,
     logoHidden,
+    text,
     logo,
   };
 };
