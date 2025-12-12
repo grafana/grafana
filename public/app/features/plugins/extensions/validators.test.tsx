@@ -8,7 +8,6 @@ import {
   PluginType,
 } from '@grafana/data';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { getAppPluginMetas } from '@grafana/runtime/unstable';
 
 import { createLogMock } from './logs/testUtils';
 import {
@@ -224,7 +223,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isAddedLinkMetaInfoMissing()', () => {
-    const originalApps = getAppPluginMetas();
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
       id: pluginId,
@@ -262,7 +260,7 @@ describe('Plugin Extension Validators', () => {
     });
 
     afterEach(() => {
-      setAppPluginMetas(originalApps);
+      setAppPluginMetas({});
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
@@ -373,7 +371,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
-    const originalApps = getAppPluginMetas();
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
       id: pluginId,
@@ -412,7 +409,7 @@ describe('Plugin Extension Validators', () => {
     });
 
     afterEach(() => {
-      setAppPluginMetas(originalApps);
+      setAppPluginMetas({});
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
@@ -522,7 +519,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isExposedComponentMetaInfoMissing()', () => {
-    const originalApps = getAppPluginMetas();
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
       id: pluginId,
@@ -561,7 +557,7 @@ describe('Plugin Extension Validators', () => {
     });
 
     afterEach(() => {
-      setAppPluginMetas(originalApps);
+      setAppPluginMetas({});
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {

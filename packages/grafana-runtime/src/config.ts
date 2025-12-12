@@ -86,7 +86,7 @@ export class GrafanaBootConfig {
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
-  /** @deprecated it will be removed in a future release, use getAppPluginMetas() function instead */
+  /** @deprecated it will be removed in a future release, use getAppPluginMetas function or useAppPluginMetas hook instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';

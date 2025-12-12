@@ -2,7 +2,7 @@ import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime/unstable';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -30,7 +30,6 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedLinksRegistry', () => {
-  const originalApps = getAppPluginMetas();
   const pluginId = 'grafana-basic-app';
   const appPluginConfig = {
     id: pluginId,
@@ -65,7 +64,7 @@ describe('AddedLinksRegistry', () => {
   });
 
   afterEach(() => {
-    setAppPluginMetas(originalApps);
+    setAppPluginMetas({});
   });
 
   it('should return empty registry when no extensions registered', async () => {

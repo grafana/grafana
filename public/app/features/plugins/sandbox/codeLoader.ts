@@ -1,6 +1,6 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetas } from '@grafana/runtime/unstable';
+import { getAppPluginConfig } from '@grafana/runtime/unstable';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
@@ -122,7 +122,7 @@ export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvi
   );
 }
 
-export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
+export async function getPluginLoadData(pluginId: string): Promise<SandboxPluginMeta> {
   // find it in datasources
   for (const datasource of Object.values(config.datasources)) {
     if (datasource.type === pluginId) {
@@ -139,16 +139,15 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
 
   //find it in apps
   //the information inside the apps object is more limited
-  for (const app of Object.values(getAppPluginMetas())) {
-    if (app.id === pluginId) {
-      return {
-        id: pluginId,
-        type: PluginType.app,
-        module: app.path,
-        moduleHash: app.moduleHash,
-      };
-    }
+  const app = await getAppPluginConfig(pluginId);
+  if (!app) {
+    throw new Error(`Could not find plugin ${pluginId}`);
   }
 
-  throw new Error(`Could not find plugin ${pluginId}`);
+  return {
+    id: pluginId,
+    type: PluginType.app,
+    module: app.path,
+    moduleHash: app.moduleHash,
+  };
 }

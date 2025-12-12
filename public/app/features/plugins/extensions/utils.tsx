@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
+  type AppPluginConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionOpenModalOptions,
   isDateTime,
@@ -16,8 +17,8 @@ import {
   PluginExtensionPoints,
   ExtensionInfo,
 } from '@grafana/data';
-import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
-import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime/unstable';
+import { reportInteraction, config } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -33,6 +34,7 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { UseLoadAppPluginsPredicate } from './useLoadAppPlugins';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -607,9 +609,6 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
 // Can be set with the `GF_DEFAULT_APP_MODE` environment variable
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
-export const getAppPluginConfigs = (pluginIds: string[] = []) =>
-  Object.values(getAppPluginMetas()).filter((app) => pluginIds.includes(app.id));
-
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
   return exposedComponentId.split('/')[0];
 };
@@ -617,8 +616,11 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // Returns a list of app plugin ids that are registering extensions to this extension point.
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
-export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  return Object.values(getAppPluginMetas())
+export const getExtensionPointPluginDependencies: UseLoadAppPluginsPredicate = (
+  apps: AppPluginConfig[],
+  extensionPointId: string
+): string[] => {
+  return apps
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
@@ -626,7 +628,7 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
-      return [...acc, id, ...getAppPluginDependencies(id)];
+      return [...acc, id, ...getAppPluginDependencies(apps, id)];
     }, []);
 };
 
@@ -643,9 +645,12 @@ export type ExtensionPointPluginMeta = Map<
  * @param extensionPointId - The id of the extension point.
  * @returns A map of plugin ids and their addedComponents and addedLinks to the extension point.
  */
-export const getExtensionPointPluginMeta = (extensionPointId: string): ExtensionPointPluginMeta => {
+export const getExtensionPointPluginMeta = (
+  apps: AppPluginConfig[],
+  extensionPointId: string
+): ExtensionPointPluginMeta => {
   return new Map(
-    getExtensionPointPluginDependencies(extensionPointId)
+    getExtensionPointPluginDependencies(apps, extensionPointId)
       .map((pluginId) => {
         const app = getAppPluginMeta(pluginId);
         // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
@@ -672,19 +677,26 @@ export const getExtensionPointPluginMeta = (extensionPointId: string): Extension
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
 // (It is first the plugin that exposes the component, and then the ones that it depends on.)
-export const getExposedComponentPluginDependencies = (exposedComponentId: string) => {
+export const getExposedComponentPluginDependencies: UseLoadAppPluginsPredicate = (
+  apps: AppPluginConfig[],
+  exposedComponentId: string
+) => {
   const pluginId = getAppPluginIdFromExposedComponentId(exposedComponentId);
 
   return [pluginId].reduce((acc: string[], pluginId: string) => {
-    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
+    return [...acc, pluginId, ...getAppPluginDependencies(apps, pluginId)];
   }, []);
 };
 
 // Returns a list of app plugin ids that are necessary to be loaded, based on the `dependencies.extensions`
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
-export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
-  const app = getAppPluginMeta(pluginId);
+export const getAppPluginDependencies = (
+  apps: AppPluginConfig[],
+  pluginId: string,
+  visited: string[] = []
+): string[] => {
+  const app = apps.find((a) => a.id === pluginId);
   if (!app) {
     return [];
   }
@@ -699,7 +711,7 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
   return (
     pluginIdDependencies
       .reduce((acc, _pluginId) => {
-        return [...acc, ...getAppPluginDependencies(_pluginId, [...visited, pluginId])];
+        return [...acc, ...getAppPluginDependencies(apps, _pluginId, [...visited, pluginId])];
       }, pluginIdDependencies)
       // We don't want the plugin to "depend on itself"
       .filter((id) => id !== pluginId)
@@ -707,23 +719,26 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
 };
 
 // Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
-export const getAppPluginsToAwait = () => {
+export const getAppPluginsToAwait = (apps: AppPluginConfig[]) => {
   const pluginIds = [
     // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
     'cloud-home-app',
   ];
 
-  return Object.values(getAppPluginMetas()).filter((app) => pluginIds.includes(app.id));
+  return apps.filter((app) => pluginIds.includes(app.id));
 };
 
 // Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
-export const getAppPluginsToPreload = () => {
+export const getAppPluginsToPreload = (apps: AppPluginConfig[]) => {
   // The DashboardPanelMenu extension point is using the `getPluginExtensions()` API in scenes at the moment, which means that it cannot yet benefit from dynamic plugin loading.
-  const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(PluginExtensionPoints.DashboardPanelMenu);
-  const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
+  const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(
+    apps,
+    PluginExtensionPoints.DashboardPanelMenu
+  );
+  const awaitedPluginIds = getAppPluginsToAwait(apps).map((app) => app.id);
   const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
-  return Object.values(getAppPluginMetas()).filter((app) => {
+  return apps.filter((app) => {
     return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
 };

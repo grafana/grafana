@@ -51,6 +51,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -265,8 +266,9 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
+        const apps = await getAppPluginMetas();
+        const appPluginsToAwait = getAppPluginsToAwait(apps);
+        const appPluginsToPreload = getAppPluginsToPreload(apps);
 
         preloadPlugins(appPluginsToPreload);
         await preloadPlugins(appPluginsToAwait);

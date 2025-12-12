@@ -5,6 +5,7 @@ import { computeInheritedTree } from '@grafana/alerting';
 import { t } from '@grafana/i18n';
 import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { UseIsIrmConfig } from 'app/features/gops/configuration-tracker/irmHooks';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
@@ -116,6 +117,7 @@ type EnhanceContactPointsArgs = {
   onCallIntegrations?: OnCallIntegrationDTO[] | undefined | null;
   contactPoints: Receiver[];
   alertmanagerConfiguration?: AlertManagerCortexConfig;
+  irmConfig: UseIsIrmConfig;
 };
 
 /**
@@ -132,6 +134,7 @@ export function enhanceContactPointsWithMetadata({
   onCallIntegrations,
   contactPoints,
   alertmanagerConfiguration,
+  irmConfig,
 }: EnhanceContactPointsArgs): ContactPointWithMetadata[] {
   // compute the entire inherited tree before finding what notification policies are using a particular contact point
   const fullyInheritedTree = computeInheritedTree(
@@ -162,7 +165,7 @@ export function enhanceContactPointsWithMetadata({
           [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
           // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
           [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
-            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration))
+            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration), irmConfig)
             : undefined,
         };
       }),

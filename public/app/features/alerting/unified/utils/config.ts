@@ -1,8 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetas } from '@grafana/runtime/unstable';
-
-import { SupportedPlugin } from '../types/pluginBridges';
 
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
@@ -28,16 +25,4 @@ export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: str
   const exceedsLimit = evaluateEveryGlobalLimitMs > evaluateEveryMs && evaluateEveryMs > 0;
 
   return { globalLimit: evaluateEveryGlobalLimitMs, exceedsLimit };
-}
-
-export function getIsIrmPluginPresent() {
-  return SupportedPlugin.Irm in getAppPluginMetas();
-}
-
-export function getIrmIfPresentOrIncidentPluginId() {
-  return getIsIrmPluginPresent() ? SupportedPlugin.Irm : SupportedPlugin.Incident;
-}
-
-export function getIrmIfPresentOrOnCallPluginId() {
-  return getIsIrmPluginPresent() ? SupportedPlugin.Irm : SupportedPlugin.OnCall;
 }

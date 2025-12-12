@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
-import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+import { useIrmConfig } from 'app/features/gops/configuration-tracker/irmHooks';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
@@ -39,16 +39,20 @@ enum OnCallIntegrationStatus {
 
 function useOnCallPluginStatus() {
   const {
+    irmConfig: { onCallPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
-  } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
+  } = usePluginBridge(onCallPluginId);
 
   const {
     data: onCallFeatures = [],
     error: onCallFeaturesError,
     isLoading: isOnCallFeaturesLoading,
-  } = onCallApi.endpoints.features.useQuery(undefined, { skip: !isOnCallEnabled });
+  } = onCallApi(onCallPluginId).endpoints.features.useQuery(undefined, { skip: !isOnCallEnabled });
 
   const integrationStatus = useMemo((): OnCallIntegrationStatus => {
     if (!isOnCallEnabled) {
@@ -70,19 +74,22 @@ function useOnCallPluginStatus() {
     isOnCallEnabled,
     integrationStatus,
     isAlertingV2IntegrationEnabled,
-    isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
+    isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading || isIrmConfigLoading,
     onCallError: pluginError ?? onCallFeaturesError,
   };
 }
 
 export function useOnCallIntegration() {
   const notifyApp = useAppNotification();
-
+  const {
+    irmConfig: { onCallPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
   const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
     useOnCallPluginStatus();
 
   const { useCreateIntegrationMutation, useGrafanaOnCallIntegrationsQuery, useLazyValidateIntegrationNameQuery } =
-    onCallApi;
+    onCallApi(onCallPluginId);
 
   const [validateIntegrationNameQuery, { isFetching: isValidating }] = useLazyValidateIntegrationNameQuery();
   const [createIntegrationMutation] = useCreateIntegrationMutation();
@@ -271,7 +278,7 @@ export function useOnCallIntegration() {
     extendOnCallReceivers,
     createOnCallIntegrations,
     onCallFormValidators,
-    isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,
+    isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading || isIrmConfigLoading,
     isValidating,
     hasOnCallError: Boolean(onCallError) || isIntegrationsQueryError,
   };

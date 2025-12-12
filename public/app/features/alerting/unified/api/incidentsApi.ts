@@ -1,4 +1,4 @@
-import { getIrmIfPresentOrIncidentPluginId } from '../utils/config';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
@@ -7,17 +7,18 @@ interface IncidentsPluginConfigDto {
   isIncidentCreated: boolean;
 }
 
-const getProxyApiUrl = (path: string) => `/api/plugins/${getIrmIfPresentOrIncidentPluginId()}/resources${path}`;
+const getProxyApiUrl = (path: string, pluginId: SupportedPlugin) => `/api/plugins/${pluginId}/resources${path}`;
 
-export const incidentsApi = alertingApi.injectEndpoints({
-  endpoints: (build) => ({
-    getIncidentsPluginConfig: build.query<IncidentsPluginConfigDto, void>({
-      query: () => ({
-        url: getProxyApiUrl('/api/ConfigurationTrackerService.GetConfigurationTracker'),
-        data: {},
-        method: 'POST',
-        showErrorAlert: false,
+export const incidentsApi = (pluginId: SupportedPlugin) =>
+  alertingApi.injectEndpoints({
+    endpoints: (build) => ({
+      getIncidentsPluginConfig: build.query<IncidentsPluginConfigDto, void>({
+        query: () => ({
+          url: getProxyApiUrl('/api/ConfigurationTrackerService.GetConfigurationTracker', pluginId),
+          data: {},
+          method: 'POST',
+          showErrorAlert: false,
+        }),
       }),
     }),
-  }),
-});
+  });

@@ -1,29 +1,44 @@
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+
+import { useIrmConfig } from '../irmHooks';
 
 export function useGetOnCallIntegrations() {
-  const { installed: onCallPluginInstalled } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
+  const {
+    irmConfig: { onCallPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const { installed: onCallPluginInstalled } = usePluginBridge(onCallPluginId);
 
-  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-    skip: !onCallPluginInstalled,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: onCallIntegrations } = onCallApi(onCallPluginId).endpoints.grafanaOnCallIntegrations.useQuery(
+    undefined,
+    {
+      skip: !onCallPluginInstalled || isIrmConfigLoading,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
   return onCallIntegrations ?? [];
 }
 
 function useGetOnCallConfigurationChecks() {
-  const { data: onCallConfigChecks, isLoading } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
+  const {
+    irmConfig: { onCallPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const { data: onCallConfigChecks, isLoading } = onCallApi(onCallPluginId).endpoints.onCallConfigChecks.useQuery(
+    undefined,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
   return {
-    isLoading,
+    isLoading: isLoading || isIrmConfigLoading,
     onCallConfigChecks: onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false },
   };
 }

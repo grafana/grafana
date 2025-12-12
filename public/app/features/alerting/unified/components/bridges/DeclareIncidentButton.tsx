@@ -1,8 +1,8 @@
 import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
+import { useIrmConfig } from 'app/features/gops/configuration-tracker/irmHooks';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { getIrmIfPresentOrIncidentPluginId } from '../../utils/config';
 import { createBridgeURL } from '../PluginBridge';
 
 interface Props {
@@ -11,16 +11,19 @@ interface Props {
   url?: string;
 }
 
-const pluginId = getIrmIfPresentOrIncidentPluginId();
-
 export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: Props) => {
-  const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
+  const {
+    irmConfig: { incidentPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const bridgeURL = createBridgeURL(incidentPluginId, '/incidents/declare', {
     title,
     severity,
     url,
   });
 
-  const { loading, installed, settings } = usePluginBridge(pluginId);
+  const { loading: isPluginBridgeLoading, installed, settings } = usePluginBridge(incidentPluginId);
+  const loading = isIrmConfigLoading || isPluginBridgeLoading;
 
   return (
     <>
@@ -51,13 +54,18 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
 };
 
 export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }: Props) => {
-  const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
+  const {
+    irmConfig: { incidentPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const bridgeURL = createBridgeURL(incidentPluginId, '/incidents/declare', {
     title,
     severity,
     url,
   });
 
-  const { loading, installed, settings } = usePluginBridge(pluginId);
+  const { loading: isPluginBridgeLoading, installed, settings } = usePluginBridge(incidentPluginId);
+  const loading = isIrmConfigLoading || isPluginBridgeLoading;
 
   return (
     <>

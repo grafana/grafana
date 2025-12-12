@@ -1,7 +1,5 @@
 import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { getAppPluginMetas } from '@grafana/runtime/unstable';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -11,10 +9,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import {
-  getDisabledPluginHandler,
-  getPluginMissingHandler,
-} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import { getDisabledPluginHandler } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import {
   ALERTING_API_SERVER_BASE_URL,
   getK8sResponse,
@@ -212,14 +207,6 @@ export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[
 export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
-
-/** Make a given plugin ID respond with a 404, as if it isn't installed at all */
-export const removePlugin = (pluginId: string) => {
-  const apps = getAppPluginMetas();
-  delete apps[pluginId];
-  setAppPluginMetas(apps);
-  server.use(getPluginMissingHandler(pluginId));
-};
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {

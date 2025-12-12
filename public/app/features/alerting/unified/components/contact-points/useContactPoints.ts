@@ -12,6 +12,7 @@ import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/t
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { useIrmConfig } from 'app/features/gops/configuration-tracker/irmHooks';
 import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
@@ -21,7 +22,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
-import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -41,7 +42,7 @@ const {
   useGrafanaNotifiersQuery,
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
-const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+
 const {
   useListNamespacedReceiverQuery,
   useReadNamespacedReceiverQuery,
@@ -61,8 +62,14 @@ const defaultOptions = {
  * Otherwise, returns no data
  */
 const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
-  const { installed, loading } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
+  const {
+    irmConfig: { onCallPluginId },
+    isIrmConfigLoading,
+  } = useIrmConfig();
+  const { installed, loading: isPluginBridgeLoading } = usePluginBridge(onCallPluginId);
+  const { useGrafanaOnCallIntegrationsQuery } = onCallApi(onCallPluginId);
   const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
+  const loading = isIrmConfigLoading || isPluginBridgeLoading;
 
   return useMemo(() => {
     if (installed) {
@@ -138,9 +145,11 @@ export const useGrafanaContactPoints = ({
   const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(GRAFANA_RULES_SOURCE_NAME, {
     skip: skip || !fetchPolicies,
   });
+  const { irmConfig, isIrmConfigLoading } = useIrmConfig();
 
   return useMemo(() => {
-    const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
+    const isLoading =
+      onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading || isIrmConfigLoading;
 
     if (isLoading) {
       return {
@@ -160,6 +169,7 @@ export const useGrafanaContactPoints = ({
       onCallIntegrations: onCallResponse?.data,
       contactPoints: contactPointsListResponse.data || [],
       alertmanagerConfiguration: alertmanagerConfigResponse.data,
+      irmConfig,
     });
 
     return {
@@ -172,6 +182,8 @@ export const useGrafanaContactPoints = ({
     contactPointsListResponse,
     contactPointsStatusResponse,
     onCallResponse,
+    isIrmConfigLoading,
+    irmConfig,
   ]);
 };
 
@@ -238,9 +250,10 @@ export function useContactPointsWithStatus({
   fetchPolicies,
   skip,
 }: GrafanaFetchOptions & BaseAlertmanagerArgs & Skippable) {
+  const { irmConfig, isIrmConfigLoading } = useIrmConfig();
   const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
   const grafanaResponse = useGrafanaContactPoints({
-    skip: skip || !isGrafanaAlertmanager,
+    skip: skip || !isGrafanaAlertmanager || isIrmConfigLoading,
     fetchStatuses,
     fetchPolicies,
   });
@@ -254,6 +267,7 @@ export function useContactPointsWithStatus({
             notifiers: cloudNotifierTypes,
             contactPoints: result.data.alertmanager_config.receivers ?? [],
             alertmanagerConfiguration: result.data,
+            irmConfig,
           })
         : [],
     }),
