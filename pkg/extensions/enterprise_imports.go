@@ -46,6 +46,7 @@ import (
 	_ "sigs.k8s.io/randfill"
 	_ "xorm.io/builder"
 
+	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/grafana/authlib/authn"
 	_ "github.com/grafana/authlib/authz"
 	_ "github.com/grafana/authlib/cache"
