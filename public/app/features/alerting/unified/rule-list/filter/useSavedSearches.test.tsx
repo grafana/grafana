@@ -1,70 +1,42 @@
-import { HttpResponse, http } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
 import { PropsWithChildren } from 'react';
 import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
-import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
-
-// In-memory storage for MSW handlers
+// In-memory storage for UserStorage mock
 let mockStorageData: Record<string, string> = {};
 let shouldFailOnGet = false;
 let shouldFailOnSet = false;
 
-// MSW handlers for UserStorage API
-// Use regex patterns to match any namespace and user UID, since UserStorage
-// reads config values from internal imports that aren't affected by jest.mock
-const handlers = [
-  // GET - fetch user storage (match any namespace and user)
-  http.get(/\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage\/alerting:.+/, () => {
-    if (shouldFailOnGet) {
-      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
-    }
-    if (Object.keys(mockStorageData).length === 0) {
-      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
-    }
-    return HttpResponse.json({
-      spec: { data: mockStorageData },
-    });
-  }),
-
-  // POST - create user storage (match any namespace)
-  http.post(/\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage/, async ({ request }) => {
-    if (shouldFailOnSet) {
-      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
-    }
-    const body = (await request.json()) as { spec: { data: Record<string, string> } };
-    mockStorageData = { ...mockStorageData, ...body.spec.data };
-    return HttpResponse.json({ spec: { data: mockStorageData } });
-  }),
-
-  // PATCH - update user storage (match any namespace and user)
-  http.patch(
-    /\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage\/alerting:.+/,
-    async ({ request }) => {
-      if (shouldFailOnSet) {
-        return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+// Mock UserStorage class directly (same pattern as useFavoriteDatasources.test.ts)
+// This avoids issues with MSW not intercepting requests due to config.namespace
+// being evaluated at module load time before jest.mock takes effect
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  UserStorage: jest.fn().mockImplementation((_service: string) => ({
+    getItem: jest.fn(async (key: string): Promise<string | null> => {
+      if (shouldFailOnGet) {
+        throw new Error('Storage error');
       }
-      const body = (await request.json()) as { spec: { data: Record<string, string> } };
-      mockStorageData = { ...mockStorageData, ...body.spec.data };
-      return HttpResponse.json({ spec: { data: mockStorageData } });
-    }
-  ),
-];
+      return mockStorageData[key] ?? null;
+    }),
+    setItem: jest.fn(async (key: string, value: string): Promise<void> => {
+      if (shouldFailOnSet) {
+        throw new Error('Storage error');
+      }
+      mockStorageData[key] = value;
+    }),
+  })),
+}));
 
-// Setup MSW server
-const server: SetupServer = setupServer(...handlers);
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterEach(() => {
-  server.resetHandlers();
   mockStorageData = {};
   shouldFailOnGet = false;
   shouldFailOnSet = false;
 });
-afterAll(() => server.close());
 
 // Helper functions for tests
 function setMockStorageData(key: string, value: string) {
