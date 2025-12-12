@@ -25,6 +25,7 @@ func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
 	return notifier, eventStore
 }
 
+// nolint:unused
 func setupTestNotifierSqlKv(t *testing.T) (*notifier, *eventStore) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)

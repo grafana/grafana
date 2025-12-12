@@ -53,6 +53,7 @@ func TestSQLKVStorageBackend(t *testing.T) {
 		backend, err := resource.NewKVStorageBackend(kvOpts)
 		require.NoError(t, err)
 		db, err := eDB.Init(ctx)
+		require.NoError(t, err)
 		return backend, db
 	}
 

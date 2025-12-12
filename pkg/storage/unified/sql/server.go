@@ -132,7 +132,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Diagnostics = backend
 			serverOptions.Lifecycle = backend
 		}
-
 	}
 
 	serverOptions.Search = opts.SearchOptions

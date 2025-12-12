@@ -29,6 +29,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+// nolint:unused
 func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)

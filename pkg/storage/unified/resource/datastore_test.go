@@ -27,6 +27,7 @@ func TestNewDataStore(t *testing.T) {
 	require.NotNil(t, ds)
 }
 
+// nolint:unused
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
