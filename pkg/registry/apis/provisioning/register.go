@@ -281,6 +281,7 @@ func RegisterAPIService(
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
 // so that things are not spread out all over the place.
+// nolint: gocyclo
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
