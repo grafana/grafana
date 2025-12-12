@@ -145,18 +145,14 @@ export function migrateLegacyColumns(
   defaultDisplayedFields: string[],
   visualisationType?: string
 ): string[] | null {
-  console.log('logsState', logsState);
   // Ensure logsState is an object
-  if (!logsState || typeof logsState !== 'object') {
+  // Only run this migration if legacy columns are present
+  if (!logsState || typeof logsState !== 'object' || !hasLegacyColumns(logsState)) {
     return null;
   }
 
   // For table visualization: only use columns from URL and map the old field names to the new ones
   if (visualisationType === 'table') {
-    if (!hasLegacyColumns(logsState)) {
-      return null;
-    }
-
     const columnsValue = extractColumnsValue(logsState);
     const parsedColumns = parseLegacyColumns(columnsValue);
 
