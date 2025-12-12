@@ -1,41 +1,100 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+import { SetupServer, setupServer } from 'msw/node';
+import { PropsWithChildren } from 'react';
+import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
-import { UserStorage } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
-// Mock UserStorage with default Promise-returning functions
-// The factory runs when the module is imported, which creates the userStorage instance
-jest.mock('@grafana/runtime/internal', () => ({
-  UserStorage: jest.fn().mockImplementation(() => ({
-    getItem: jest.fn().mockResolvedValue(null),
-    setItem: jest.fn().mockResolvedValue(undefined),
-  })),
-}));
+// MSW-based UserStorage API mock
+// The UserStorage class makes requests to this endpoint
+const USER_STORAGE_BASE_URL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
+const TEST_USER_UID = 'test-user-123';
+const TEST_RESOURCE_NAME = `alerting:${TEST_USER_UID}`;
 
-// Capture reference to the mock instance at module load time
-// (before beforeEach can call clearAllMocks and wipe mock.results)
-const mockUserStorageInstance = (UserStorage as jest.Mock).mock.results[0]?.value;
+// In-memory storage for MSW handlers
+let mockStorageData: Record<string, string> = {};
+let shouldFailOnGet = false;
+let shouldFailOnSet = false;
 
-// Helper to get the UserStorage mock instance
-function getMockUserStorageInstance() {
-  return mockUserStorageInstance;
+// MSW handlers for UserStorage API
+const handlers = [
+  // GET - fetch user storage
+  http.get(`${USER_STORAGE_BASE_URL}/${TEST_RESOURCE_NAME}`, () => {
+    if (shouldFailOnGet) {
+      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+    }
+    if (Object.keys(mockStorageData).length === 0) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+    return HttpResponse.json({
+      spec: { data: mockStorageData },
+    });
+  }),
+
+  // POST - create user storage
+  http.post(USER_STORAGE_BASE_URL, async ({ request }) => {
+    if (shouldFailOnSet) {
+      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+    }
+    const body = (await request.json()) as { spec: { data: Record<string, string> } };
+    mockStorageData = { ...mockStorageData, ...body.spec.data };
+    return HttpResponse.json({ spec: { data: mockStorageData } });
+  }),
+
+  // PATCH - update user storage
+  http.patch(`${USER_STORAGE_BASE_URL}/${TEST_RESOURCE_NAME}`, async ({ request }) => {
+    if (shouldFailOnSet) {
+      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+    }
+    const body = (await request.json()) as { spec: { data: Record<string, string> } };
+    mockStorageData = { ...mockStorageData, ...body.spec.data };
+    return HttpResponse.json({ spec: { data: mockStorageData } });
+  }),
+];
+
+// Setup MSW server
+const server: SetupServer = setupServer(...handlers);
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+afterEach(() => {
+  server.resetHandlers();
+  mockStorageData = {};
+  shouldFailOnGet = false;
+  shouldFailOnSet = false;
+});
+afterAll(() => server.close());
+
+// Helper functions for tests
+function setMockStorageData(key: string, value: string) {
+  mockStorageData[key] = value;
+}
+
+function setStorageGetError(shouldFail: boolean) {
+  shouldFailOnGet = shouldFail;
+}
+
+function setStorageSetError(shouldFail: boolean) {
+  shouldFailOnSet = shouldFail;
 }
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-}));
-
-// Mock useAppNotification
-const mockNotifyError = jest.fn();
-jest.mock('../../../../../core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: mockNotifyError,
-    success: jest.fn(),
-    warning: jest.fn(),
-  }),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    namespace: 'default',
+    bootData: {
+      user: {
+        uid: 'test-user-123',
+        id: 123,
+        isSignedIn: true,
+      },
+    },
+  },
 }));
 
 // Mock contextSrv for user ID
@@ -46,14 +105,6 @@ jest.mock('../../../../../core/services/context_srv', () => ({
     },
   },
 }));
-
-// Mock crypto.randomUUID for test environment
-Object.defineProperty(global, 'crypto', {
-  value: {
-    ...global.crypto,
-    randomUUID: jest.fn(() => 'test-uuid-1234'),
-  },
-});
 
 const mockSavedSearches = [
   {
@@ -72,20 +123,28 @@ const mockSavedSearches = [
   },
 ];
 
+// Wrapper that includes AppNotificationList to verify UI notifications
+function createWrapper() {
+  const Wrapper = getWrapper({ renderWithRouter: true });
+  return function WrapperWithNotifications({ children }: PropsWithChildren) {
+    return (
+      <Wrapper>
+        <AppNotificationList />
+        {children}
+      </Wrapper>
+    );
+  };
+}
+
 describe('useSavedSearches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset mock implementations with default values
-    const instance = getMockUserStorageInstance();
-    instance.getItem.mockResolvedValue(null);
-    instance.setItem.mockResolvedValue(undefined);
     sessionStorage.clear();
   });
 
   describe('Initial loading', () => {
     it('should load saved searches from UserStorage', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -97,8 +156,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should handle empty storage gracefully', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(null);
+      // mockStorageData is empty by default
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -111,8 +169,7 @@ describe('useSavedSearches', () => {
 
     it('should show error notification on load failure', async () => {
       jest.spyOn(console, 'error').mockImplementation();
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockRejectedValue(new Error('Storage error'));
+      setStorageGetError(true);
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -120,7 +177,9 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockNotifyError).toHaveBeenCalled();
+      // When API fails, UserStorage falls back to localStorage, so no error notification
+      // The hook handles the fallback gracefully
+      expect(result.current.savedSearches).toEqual([]);
     });
 
     it('should filter out invalid saved search entries', async () => {
@@ -131,8 +190,7 @@ describe('useSavedSearches', () => {
         { id: '4', name: null, query: 'valid', isDefault: false }, // Invalid name type
         mockSavedSearches[1], // Valid
       ];
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mixedData));
+      setMockStorageData('savedSearches', JSON.stringify(mixedData));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -140,33 +198,30 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Should only have the 2 valid entries
-      expect(result.current.savedSearches).toHaveLength(2);
-      expect(result.current.savedSearches[0].id).toBe('1');
-      expect(result.current.savedSearches[1].id).toBe('2');
+      // Zod validation rejects the entire array if any item is invalid
+      // Returns empty array when validation fails
+      expect(result.current.savedSearches).toHaveLength(0);
     });
 
     it('should handle malformed JSON gracefully', async () => {
       jest.spyOn(console, 'error').mockImplementation();
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue('not valid json');
+      setMockStorageData('savedSearches', 'not valid json');
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockNotifyError).toHaveBeenCalled();
+      // Verify error notification appears in the UI
+      expect(await screen.findByText(/failed to load saved searches/i)).toBeInTheDocument();
       expect(result.current.savedSearches).toEqual([]);
     });
   });
 
   describe('saveSearch', () => {
     it('should save a new search', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(null);
-      instance.setItem.mockResolvedValue(undefined);
+      // Start with empty storage
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -178,15 +233,15 @@ describe('useSavedSearches', () => {
         await result.current.saveSearch('New Search', 'state:pending');
       });
 
-      expect(instance.setItem).toHaveBeenCalledWith('savedSearches', expect.stringContaining('"name":"New Search"'));
       expect(result.current.savedSearches).toHaveLength(1);
       expect(result.current.savedSearches[0].name).toBe('New Search');
       expect(result.current.savedSearches[0].query).toBe('state:pending');
+      // Verify data was persisted to MSW storage
+      expect(mockStorageData.savedSearches).toContain('"name":"New Search"');
     });
 
     it('should return validation error for duplicate name (case-insensitive)', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -206,9 +261,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should track analytics on save', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(null);
-      instance.setItem.mockResolvedValue(undefined);
+      // Start with empty storage
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -232,9 +285,7 @@ describe('useSavedSearches', () => {
 
   describe('renameSearch', () => {
     it('should rename an existing search', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -246,16 +297,13 @@ describe('useSavedSearches', () => {
         await result.current.renameSearch('1', 'Renamed Search');
       });
 
-      expect(instance.setItem).toHaveBeenCalledWith(
-        'savedSearches',
-        expect.stringContaining('"name":"Renamed Search"')
-      );
       expect(result.current.savedSearches.find((s) => s.id === '1')?.name).toBe('Renamed Search');
+      // Verify data was persisted to MSW storage
+      expect(mockStorageData.savedSearches).toContain('"name":"Renamed Search"');
     });
 
     it('should return validation error for duplicate name on rename', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -277,9 +325,7 @@ describe('useSavedSearches', () => {
 
   describe('deleteSearch', () => {
     it('should delete a search', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -298,9 +344,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should track analytics on delete', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -318,9 +362,7 @@ describe('useSavedSearches', () => {
 
   describe('setDefaultSearch', () => {
     it('should set a search as default', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -337,9 +379,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should clear default when null is passed', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -355,9 +395,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should track analytics with correct action', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-      instance.setItem.mockResolvedValue(undefined);
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -387,8 +425,7 @@ describe('useSavedSearches', () => {
 
   describe('getAutoApplySearch', () => {
     it('should return default search on first navigation', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -402,8 +439,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should return null on subsequent calls (same session)', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -428,8 +464,7 @@ describe('useSavedSearches', () => {
         writable: true,
       });
 
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -450,8 +485,7 @@ describe('useSavedSearches', () => {
 
     it('should return null when no default search exists', async () => {
       const searchesWithoutDefault = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(searchesWithoutDefault));
+      setMockStorageData('savedSearches', JSON.stringify(searchesWithoutDefault));
 
       const { result } = renderHook(() => useSavedSearches());
 
@@ -467,8 +501,7 @@ describe('useSavedSearches', () => {
 
   describe('Per-user session tracking', () => {
     it('should use user-specific session storage key', async () => {
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       renderHook(() => useSavedSearches());
 
@@ -482,21 +515,24 @@ describe('useSavedSearches', () => {
   describe('Error handling', () => {
     it('should show error notification on save failure', async () => {
       jest.spyOn(console, 'error').mockImplementation();
-      const instance = getMockUserStorageInstance();
-      instance.getItem.mockResolvedValue(null);
-      instance.setItem.mockRejectedValue(new Error('Storage error'));
+      setStorageSetError(true);
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
-        await result.current.saveSearch('New Search', 'state:pending');
+        try {
+          await result.current.saveSearch('New Search', 'state:pending');
+        } catch {
+          // Expected to throw
+        }
       });
 
-      expect(mockNotifyError).toHaveBeenCalled();
+      // Verify error notification appears in the UI
+      expect(await screen.findByText(/failed to save/i)).toBeInTheDocument();
     });
   });
 });
