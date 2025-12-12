@@ -22,7 +22,7 @@ export interface Props {
   timeRange: TimeRange;
   timeZone: string;
   showControls: boolean;
-  showFieldSelector: boolean;
+  showFieldSelector: boolean | undefined;
 }
 
 export type LogLineDetailsMode = 'inline' | 'sidebar';
@@ -49,7 +49,10 @@ export const LogLineDetails = memo(
       }
     }, [noInteractions]);
 
-    const maxWidth = containerElement.clientWidth - (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0) - LOG_LIST_MIN_WIDTH;
+    const maxWidth =
+      containerElement.clientWidth -
+      (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0) -
+      LOG_LIST_MIN_WIDTH;
 
     return (
       <Resizable

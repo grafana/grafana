@@ -169,7 +169,10 @@ export const LogDetailsContextProvider = ({
         return;
       }
 
-      const maxWidth = containerElement.clientWidth - getFieldSelectorWidth(logOptionsStorageKey) - LOG_LIST_MIN_WIDTH;
+      const maxWidth =
+        containerElement.clientWidth -
+        (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0) -
+        LOG_LIST_MIN_WIDTH;
       if (width > maxWidth) {
         return;
       }
@@ -177,7 +180,7 @@ export const LogDetailsContextProvider = ({
       store.set(`${logOptionsStorageKey}.detailsWidth`, width);
       setDetailsWidthState(width);
     },
-    [containerElement, logOptionsStorageKey]
+    [containerElement, logOptionsStorageKey, showFieldSelector]
   );
 
   return (
