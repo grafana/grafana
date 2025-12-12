@@ -271,7 +271,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = () => {
     // Save this state
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
@@ -384,10 +384,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.setState({ ...this._initialState, isEditing: false, isDirty: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.setState({ isEditing: false, isDirty: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
