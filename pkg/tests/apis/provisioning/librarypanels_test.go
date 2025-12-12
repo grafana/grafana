@@ -82,6 +82,7 @@ func TestIntegrationLibraryPanels(t *testing.T) {
 		libraryElementURL := "/api/library-elements"
 		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
 
 		res := libraryElementData["result"].(map[string]interface{})
