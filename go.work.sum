@@ -459,6 +459,7 @@ github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2 h1:vlYXbindmagyVA3RS
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2/go.mod h1:yGhDiLKguA3iFJYxbrQkQiNzuy+ddxesSZYWVeeEH5Q=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 h1:d+mnMa4JbJlooSbYQfrJpit/YINaB30JEVgrhtjZneA=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7/go.mod h1:1X1NotbcGHH7PCQJ98PsExSxsJj/VWzz8MfFz43+02M=
+github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1/go.mod h1:c6Vg0BRiU7v0MVhHupw90RyL120QBwAMLbDCzptGeMk=
 github.com/aws/aws-sdk-go-v2/service/sns v1.31.3 h1:eSTEdxkfle2G98FE+Xl3db/XAXXVTJPNQo9K/Ar8oAI=
 github.com/aws/aws-sdk-go-v2/service/sns v1.31.3/go.mod h1:1dn0delSO3J69THuty5iwP0US2Glt0mx2qBBlI13pvw=
 github.com/aws/aws-sdk-go-v2/service/sns v1.34.2 h1:PajtbJ/5bEo6iUAIGMYnK8ljqg2F1h4mMCGh1acjN30=
@@ -873,7 +874,6 @@ github.com/grafana/grafana-app-sdk v0.41.0 h1:SYHN3U7B1myRKY3UZZDkFsue9TDmAOap0U
 github.com/grafana/grafana-app-sdk v0.41.0/go.mod h1:Wg/3vEZfok1hhIWiHaaJm+FwkosfO98o8KbeLFEnZpY=
 github.com/grafana/grafana-app-sdk v0.46.0/go.mod h1:LCTrqR1SwBS13XGVYveBmM7giJDDjzuXK+M9VzPuPWc=
 github.com/grafana/grafana-app-sdk v0.47.0/go.mod h1:kywXmkppq0oReUMzkjTW8Fq2EBzyN7v914jttTWnWxA=
-github.com/grafana/grafana-app-sdk v0.48.4/go.mod h1:HJsMOSBmt/D/Ihs1SvagOwmXKi0coBMVHlfvdd+qe9Y=
 github.com/grafana/grafana-app-sdk/logging v0.38.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-app-sdk/logging v0.39.0 h1:3GgN5+dUZYqq74Q+GT9/ET+yo+V54zWQk/Q2/JsJQB4=
 github.com/grafana/grafana-app-sdk/logging v0.39.0/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
@@ -1555,8 +1555,6 @@ github.com/xitongsys/parquet-go v1.6.2/go.mod h1:IulAQyalCm0rPiZVNnCgm/PCL64X2td
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d h1:VVWj8KWdzpebBaXpTVpOaQW32y2UCWy3JXJ5lVDa/e8=
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d/go.mod h1:HaLl1OAA7RAuQURU3Enxn7aRAI9yezsPPaxiGrbzxW4=
 github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778/go.mod h1:2MuV+tbUrU1zIOPMxZ5EncGwgmMJsa+9ucAQZXxsObs=
-github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
-github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJuqunuUZ/Dhy/avygyECGrLceyNeo4LiM=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwYZvkeru3RtdrYueztKhOBCSAAzS4Gf+k0tEow=
 github.com/yashtewari/glob-intersection v0.1.0/go.mod h1:LK7pIC3piUjovexikBbJ26Yml7g8xa5bsjfx2v1fwok=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20241112172322-ea1f63298f77 h1:LY6cI8cP4B9rrpTleZk95+08kl2gF4rixG7+V/dwL6Q=
@@ -1593,7 +1591,6 @@ go.mongodb.org/mongo-driver v1.11.4/go.mod h1:PTSz5yu21bkT/wXpkS7WR5f0ddqw5queth
 go.mongodb.org/mongo-driver v1.14.0/go.mod h1:Vzb0Mk/pa7e6cWw85R4F/endUC3u0U9jGcNU603k65c=
 go.mongodb.org/mongo-driver v1.17.3/go.mod h1:Hy04i7O2kC4RS06ZrhPRqj/u4DTYkFDAAccj+rVKqgQ=
 go.opencensus.io v0.24.0 h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=
-go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
 go.opentelemetry.io/collector v0.121.0/go.mod h1:M4TlnmkjIgishm2DNCk9K3hMKTmAsY9w8cNFsp9EchM=
 go.opentelemetry.io/collector v0.124.0/go.mod h1:QzERYfmHUedawjr8Ph/CBEEkVqWS8IlxRLAZt+KHlCg=
 go.opentelemetry.io/collector/client v1.29.0/go.mod h1:LCUoEV2KCTKA1i+/txZaGsSPVWUcqeOV6wCfNsAippE=
@@ -2134,7 +2131,6 @@ google.golang.org/grpc v1.73.0/go.mod h1:50sbHOUqWoCQGI8V2HQLJM0B+LMlIUjNSZmow7E
 google.golang.org/grpc v1.74.2/go.mod h1:CtQ+BGjaAIXHs/5YS3i473GqwBBa1zGQNevxdeBEXrM=
 google.golang.org/grpc v1.75.0/go.mod h1:JtPAzKiq4v1xcAB2hydNlWI2RnF85XXcV0mhKXr2ecQ=
 google.golang.org/grpc v1.75.1/go.mod h1:JtPAzKiq4v1xcAB2hydNlWI2RnF85XXcV0mhKXr2ecQ=
-google.golang.org/grpc v1.77.0/go.mod h1:z0BY1iVj0q8E1uSQCjL9cppRj+gnZjzDnzV0dHhrNig=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 h1:M1YKkFIboKNieVO5DLUEVzQfGwJD30Nv2jfUgzb5UcE=
 google.golang.org/grpc/examples v0.0.0-20230224211313-3775f633ce20 h1:MLBCGN1O7GzIx+cBiwfYPwtmZ41U3Mn/cotLJciaArI=
 google.golang.org/grpc/examples v0.0.0-20230224211313-3775f633ce20/go.mod h1:Nr5H8+MlGWr5+xX/STzdoEqJrO+YteqFbMyCsrb6mH0=
@@ -2249,7 +2245,6 @@ sigs.k8s.io/structured-merge-diff/v4 v4.2.3/go.mod h1:qjx8mGObPmV2aSZepjQjbmb2ih
 sigs.k8s.io/structured-merge-diff/v4 v4.5.0 h1:nbCitCK2hfnhyiKo6uf2HxUPTCodY6Qaf85SbDIaMBk=
 sigs.k8s.io/structured-merge-diff/v4 v4.5.0/go.mod h1:N8f93tFZh9U6vpxwRArLiikrE5/2tiu1w1AGfACIGE4=
 sigs.k8s.io/structured-merge-diff/v6 v6.2.0/go.mod h1:M3W8sfWvn2HhQDIbGWj3S099YozAsymCo/wrT5ohRUE=
-sigs.k8s.io/structured-merge-diff/v6 v6.3.1/go.mod h1:M3W8sfWvn2HhQDIbGWj3S099YozAsymCo/wrT5ohRUE=
 sigs.k8s.io/yaml v1.3.0/go.mod h1:GeOyir5tyXNByN85N/dRIT9es5UQNerPYEKK56eTBm8=
 sigs.k8s.io/yaml v1.4.0/go.mod h1:Ejl7/uTz7PSA4eKMyQCUTnhZYNmLIl+5c2lQPGR2BPY=
 sigs.k8s.io/yaml v1.5.0/go.mod h1:wZs27Rbxoai4C0f8/9urLZtZtF3avA3gKvGyPdDqTO4=
