@@ -115,6 +115,41 @@ var HistoricJobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	})
 
+var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"connections", "connection", "Connection",
+	func() runtime.Object { return &Connection{} },     // newObj
+	func() runtime.Object { return &ConnectionList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Type", Type: "string"},
+			{Name: "AppID", Type: "string"},
+			{Name: "InstallationID", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Connection)
+			if !ok {
+				return nil, errors.New("expected Repository")
+			}
+
+			var appID, installationID string
+			switch m.Spec.Type {
+			case GithubConnectionType:
+				appID = m.Spec.GitHub.AppID
+				installationID = m.Spec.GitHub.InstallationID
+			}
+
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Type,
+				appID,
+				installationID,
+			}, nil
+		},
+	})
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion   = schema.GroupVersion{Group: GROUP, Version: VERSION}
@@ -154,6 +189,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&RefList{},
 		&HistoricJob{},
 		&HistoricJobList{},
+		&Connection{},
+		&ConnectionList{},
 	)
 	return nil
 }
