@@ -56,6 +56,11 @@ describe('SoloPanelPageLogo', () => {
       expect(shouldHideSoloPanelLogo(' FALSE ')).toBe(false);
     });
 
+    it('treats boolean true as true and boolean false as false', () => {
+      expect(shouldHideSoloPanelLogo(true)).toBe(true);
+      expect(shouldHideSoloPanelLogo(false)).toBe(false);
+    });
+
     it('treats undefined as false', () => {
       expect(shouldHideSoloPanelLogo(undefined)).toBe(false);
     });

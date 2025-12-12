@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
@@ -20,7 +20,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/So
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 
 export interface Props
-  extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: string }> {}
+  extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: UrlQueryValue }> {}
 
 /**
  * Used for iframe embedding and image rendering of single panels
@@ -69,7 +69,7 @@ export function SoloPanelRenderer({
 }: {
   dashboard: DashboardScene;
   panelId: string;
-  hideLogo?: string;
+  hideLogo?: UrlQueryValue;
 }) {
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;

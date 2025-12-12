@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
@@ -10,13 +10,24 @@ import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 interface SoloPanelPageLogoProps {
   containerRef: React.RefObject<HTMLDivElement>;
   isHovered: boolean;
-  hideLogo?: string;
+  hideLogo?: UrlQueryValue;
 }
 
-export function shouldHideSoloPanelLogo(hideLogo?: string): boolean {
-  if (hideLogo === undefined) {
+export function shouldHideSoloPanelLogo(hideLogo?: UrlQueryValue): boolean {
+  if (hideLogo === undefined || hideLogo === null) {
     return false;
   }
+
+  // React-router / locationSearchToObject can represent a "present but no value" query param as boolean true.
+  if (hideLogo === true) {
+    return true;
+  }
+
+  if (hideLogo === false) {
+    return false;
+  }
+
+  const value = Array.isArray(hideLogo) ? String(hideLogo[0] ?? '') : String(hideLogo);
 
   // Treat presence as "true", except explicit disable values.
   // Examples:
@@ -25,7 +36,7 @@ export function shouldHideSoloPanelLogo(hideLogo?: string): boolean {
   // - ?hideLogo=1         => hide
   // - ?hideLogo=false     => show
   // - ?hideLogo=0         => show
-  const normalized = hideLogo.trim().toLowerCase();
+  const normalized = value.trim().toLowerCase();
   return normalized !== 'false' && normalized !== '0';
 }
 

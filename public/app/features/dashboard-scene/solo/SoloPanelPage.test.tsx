@@ -24,16 +24,38 @@ jest.mock('../scene/SoloPanelContext', () => ({
 }));
 
 jest.mock('./SoloPanelPageLogo', () => ({
-  shouldHideSoloPanelLogo: (hideLogo?: string) => {
+  shouldHideSoloPanelLogo: (hideLogo?: unknown) => {
     if (hideLogo === undefined) {
       return false;
     }
-    const normalized = hideLogo.trim().toLowerCase();
+    if (hideLogo === true) {
+      return true;
+    }
+    if (hideLogo === false) {
+      return false;
+    }
+    if (Array.isArray(hideLogo)) {
+      hideLogo = hideLogo[0] ?? '';
+    }
+    const normalized = String(hideLogo).trim().toLowerCase();
     return normalized !== 'false' && normalized !== '0';
   },
-  SoloPanelPageLogo: ({ isHovered, hideLogo }: { isHovered: boolean; hideLogo?: string }) => {
+  SoloPanelPageLogo: ({ isHovered, hideLogo }: { isHovered: boolean; hideLogo?: unknown }) => {
+    if (hideLogo === true) {
+      return null;
+    }
+    if (hideLogo === false) {
+      return (
+        <div data-testid="solo-panel-logo" data-hovered={String(isHovered)}>
+          Logo
+        </div>
+      );
+    }
+    if (Array.isArray(hideLogo)) {
+      hideLogo = hideLogo[0] ?? '';
+    }
     if (hideLogo !== undefined) {
-      const normalized = hideLogo.trim().toLowerCase();
+      const normalized = String(hideLogo).trim().toLowerCase();
       if (normalized !== 'false' && normalized !== '0') {
         return null;
       }
