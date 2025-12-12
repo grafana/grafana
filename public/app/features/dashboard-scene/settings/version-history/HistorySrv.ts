@@ -19,6 +19,7 @@ export interface RevisionsModel {
   data: Dashboard;
 }
 
+// TODO: this should be removed entirely
 export class HistorySrv {
   getHistoryList(dashboardUID: string, options: HistoryListOpts) {
     if (typeof dashboardUID !== 'string') {
@@ -36,6 +37,8 @@ export class HistorySrv {
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
   }
 
+  // restore should not be needed -- each result has the full dashboard data,
+  // so just update the dashboard with the data from the version you want to restore
   restoreDashboard(dashboardUID: string, version: number) {
     if (typeof dashboardUID !== 'string') {
       return Promise.resolve({});

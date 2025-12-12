@@ -56,6 +56,24 @@ export class UnifiedDashboardAPI
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
   }
 
+  async listDashboardHistory(uid: string) {
+    const v1Response = await this.v1Client.listDashboardHistory(uid);
+    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+
+    if (filteredV1Items.length === v1Response.items.length) {
+      return v1Response;
+    }
+
+    const v2Response = await this.v2Client.listDashboardHistory(uid);
+    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+
+    return {
+      ...v2Response,
+      // Make sure we display only valid resources
+      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
+    };
+  }
+
   /**
    * List deleted dashboards handling mixed v1/v2 versions or pure v2 dashboards.
    *
