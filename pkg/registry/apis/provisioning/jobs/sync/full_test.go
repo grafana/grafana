@@ -779,9 +779,9 @@ func TestFullSync_HierarchicalErrorHandling_FailedFolderCreation(t *testing.T) {
 	folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 	repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/").Return("", folderErr).Once()
 
-	progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "folder1/subfolder/").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path == "folder1/" && r.Error != nil
@@ -848,7 +848,7 @@ func TestFullSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing.T) {
 		return r.Path == "folder1/file1.json" && r.Error != nil
 	})).Return().Once()
 
-	progress.On("HasFailedDeletionsUnder", "folder1/").Return(true).Once()
+	progress.On("HasDirPathFailedDeletion", "folder1/").Return(true).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path == "folder1/" && r.Action == repository.FileActionIgnored
@@ -901,7 +901,7 @@ func TestFullSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure
 		return r.Path == "folder1/" && r.Error != nil
 	})).Return().Once()
 
-	// Deletion should proceed (not check IsNestedUnderFailedCreation)
+	// Deletion should proceed (not check HasDirPathFailedCreation)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path == "folder1/file1.json" && r.Action == repository.FileActionDeleted && r.Error == nil
 	})).Return().Once()
@@ -938,9 +938,9 @@ func TestFullSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.T) {
 	folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
 	repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/").Return("", folderErr).Once()
 
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/level3/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/level3/file.json").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "level1/level2/").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "level1/level2/level3/").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "level1/level2/level3/file.json").Return(true).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path == "level1/" && r.Error != nil
@@ -1000,8 +1000,8 @@ func TestFullSync_HierarchicalErrorHandling_MultipleFolderDeletionFailures(t *te
 		})).Return().Once()
 	}
 
-	progress.On("HasFailedDeletionsUnder", "folder1/").Return(true).Once()
-	progress.On("HasFailedDeletionsUnder", "folder2/").Return(true).Once()
+	progress.On("HasDirPathFailedDeletion", "folder1/").Return(true).Once()
+	progress.On("HasDirPathFailedDeletion", "folder2/").Return(true).Once()
 
 	for _, path := range []string{"folder1/", "folder2/"} {
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -1045,8 +1045,8 @@ func TestFullSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *testing.T)
 	folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
 	repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/").Return("", folderErr).Once()
 
-	progress.On("IsNestedUnderFailedCreation", "success/file1.json").Return(false).Once()
-	progress.On("IsNestedUnderFailedCreation", "failure/file2.json").Return(true).Once()
+	progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
+	progress.On("HasDirPathFailedCreation", "failure/file2.json").Return(true).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path == "success/" && r.Error == nil
@@ -1110,8 +1110,8 @@ func TestFullSync_HierarchicalErrorHandling_NestedSubfolderDeletionFailure(t *te
 		return r.Path == "parent/subfolder/file.json" && r.Error != nil
 	})).Return().Once()
 
-	progress.On("HasFailedDeletionsUnder", "parent/subfolder/").Return(true).Once()
-	progress.On("HasFailedDeletionsUnder", "parent/").Return(true).Once()
+	progress.On("HasDirPathFailedDeletion", "parent/subfolder/").Return(true).Once()
+	progress.On("HasDirPathFailedDeletion", "parent/").Return(true).Once()
 
 	for _, path := range []string{"parent/subfolder/", "parent/"} {
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {

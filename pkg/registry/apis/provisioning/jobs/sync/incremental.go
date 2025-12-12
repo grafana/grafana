@@ -87,7 +87,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		// Check if this resource is nested under a failed folder creation
 		// This only applies to creation/update/rename operations, not deletions
-		if change.Action != repository.FileActionDeleted && progress.IsNestedUnderFailedCreation(change.Path) {
+		if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
 			// Skip this resource since its parent folder failed to be created
 			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
 			progress.Record(skipCtx, jobs.JobResourceResult{
@@ -112,6 +112,18 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
+
+					// If this is a PathCreationError, record it as ignored and continue processing
+					// This allows nested resources to be skipped via HasDirPathFailedCreation
+					var pathErr *resources.PathCreationError
+					if errors.As(err, &pathErr) {
+						progress.Record(ensureFolderCtx, jobs.JobResourceResult{
+							Path:   change.Path,
+							Action: repository.FileActionIgnored,
+							Error:  err,
+						})
+						continue
+					}
 
 					return nil, tracing.Error(span, fmt.Errorf("unable to create empty file folder: %w", err))
 				}
@@ -147,7 +159,6 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			if err != nil {
 				writeSpan.RecordError(err)
 				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
-
 			}
 			result.Name = name
 			result.Kind = gvk.Kind
@@ -216,7 +227,7 @@ func cleanupOrphanedFolders(
 		span.SetAttributes(attribute.String("folder", folderName))
 
 		// Check if any resources under this folder failed to delete
-		if progress.HasFailedDeletionsUnder(path) {
+		if progress.HasDirPathFailedDeletion(path) {
 			span.AddEvent("skipping folder deletion: child resource deletions failed")
 			continue
 		}

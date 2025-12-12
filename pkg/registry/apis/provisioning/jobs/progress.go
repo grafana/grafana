@@ -316,8 +316,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	return jobStatus
 }
 
-// IsNestedUnderFailedCreation checks if a path is nested under any failed folder creation
-func (r *jobProgressRecorder) IsNestedUnderFailedCreation(path string) bool {
+// HasDirPathFailedCreation checks if a path is nested under any failed folder creation
+func (r *jobProgressRecorder) HasDirPathFailedCreation(path string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -329,8 +329,8 @@ func (r *jobProgressRecorder) IsNestedUnderFailedCreation(path string) bool {
 	return false
 }
 
-// HasFailedDeletionsUnder checks if any resource deletions failed under a folder path
-func (r *jobProgressRecorder) HasFailedDeletionsUnder(folderPath string) bool {
+// HasDirPathFailedDeletion checks if any resource deletions failed under a folder path
+func (r *jobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

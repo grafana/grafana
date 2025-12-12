@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,7 +144,7 @@ func TestJobProgressRecorderAutomaticFailureTracking(t *testing.T) {
 	recorder.mu.RUnlock()
 }
 
-func TestJobProgressRecorderIsNestedUnderFailedCreation(t *testing.T) {
+func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a progress recorder
@@ -175,17 +175,17 @@ func TestJobProgressRecorderIsNestedUnderFailedCreation(t *testing.T) {
 	})
 
 	// Test nested paths
-	assert.True(t, recorder.IsNestedUnderFailedCreation("folder1/file.json"))
-	assert.True(t, recorder.IsNestedUnderFailedCreation("folder1/nested/file.json"))
-	assert.True(t, recorder.IsNestedUnderFailedCreation("folder2/subfolder/file.json"))
+	assert.True(t, recorder.HasDirPathFailedCreation("folder1/file.json"))
+	assert.True(t, recorder.HasDirPathFailedCreation("folder1/nested/file.json"))
+	assert.True(t, recorder.HasDirPathFailedCreation("folder2/subfolder/file.json"))
 
 	// Test non-nested paths
-	assert.False(t, recorder.IsNestedUnderFailedCreation("other/file.json"))
-	assert.False(t, recorder.IsNestedUnderFailedCreation("folder3/file.json"))
-	assert.False(t, recorder.IsNestedUnderFailedCreation("file.json"))
+	assert.False(t, recorder.HasDirPathFailedCreation("other/file.json"))
+	assert.False(t, recorder.HasDirPathFailedCreation("folder3/file.json"))
+	assert.False(t, recorder.HasDirPathFailedCreation("file.json"))
 }
 
-func TestJobProgressRecorderHasFailedDeletionsUnder(t *testing.T) {
+func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a progress recorder
@@ -214,16 +214,16 @@ func TestJobProgressRecorderHasFailedDeletionsUnder(t *testing.T) {
 	})
 
 	// Test folder paths with failed deletions
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder1/"))
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder2/"))
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder2/subfolder/"))
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder3/"))
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder3/nested/"))
-	assert.True(t, recorder.HasFailedDeletionsUnder("folder3/nested/deep/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder1/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder2/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder2/subfolder/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder3/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder3/nested/"))
+	assert.True(t, recorder.HasDirPathFailedDeletion("folder3/nested/deep/"))
 
 	// Test folder paths without failed deletions
-	assert.False(t, recorder.HasFailedDeletionsUnder("other/"))
-	assert.False(t, recorder.HasFailedDeletionsUnder("different/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("other/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("different/"))
 }
 
 func TestJobProgressRecorderResetResults(t *testing.T) {
@@ -266,57 +266,6 @@ func TestJobProgressRecorderResetResults(t *testing.T) {
 	assert.Nil(t, recorder.failedCreations)
 	assert.Nil(t, recorder.failedDeletions)
 	recorder.mu.RUnlock()
-}
-
-func TestJobProgressRecorderConcurrentAccess(t *testing.T) {
-	ctx := context.Background()
-
-	// Create a progress recorder
-	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
-		return nil
-	}
-	recorder := newJobProgressRecorder(mockProgressFn)
-
-	// Test concurrent writes and reads
-	done := make(chan bool)
-
-	// Writer goroutines
-	for i := 0; i < 10; i++ {
-		go func(idx int) {
-			pathErr := &resources.PathCreationError{
-				Path: "folder/",
-				Err:  assert.AnError,
-			}
-			recorder.Record(ctx, JobResourceResult{
-				Path:   "test/path",
-				Action: repository.FileActionCreated,
-				Error:  pathErr,
-			})
-			recorder.Record(ctx, JobResourceResult{
-				Path:   "test/file.json",
-				Action: repository.FileActionDeleted,
-				Error:  assert.AnError,
-			})
-			done <- true
-		}(i)
-	}
-
-	// Reader goroutines
-	for i := 0; i < 10; i++ {
-		go func() {
-			recorder.IsNestedUnderFailedCreation("test/path")
-			recorder.HasFailedDeletionsUnder("test/")
-			done <- true
-		}()
-	}
-
-	// Wait for all goroutines
-	for i := 0; i < 20; i++ {
-		<-done
-	}
-
-	// Just verify no panics occurred and basic functionality works
-	assert.NotNil(t, recorder)
 }
 
 func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {

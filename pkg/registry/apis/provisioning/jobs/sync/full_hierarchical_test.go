@@ -32,7 +32,7 @@ FOLDER CREATION FAILURES:
 
 FOLDER DELETION FAILURES:
 - When a file deletion fails, it's tracked in failedDeletions
-- When cleaning up folders, we check HasFailedDeletionsUnder()
+- When cleaning up folders, we check HasDirPathFailedDeletion()
 - If children failed to delete, folder deletion is skipped with FileActionIgnored
 - This prevents orphaning resources that still exist
 
@@ -63,7 +63,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First, check if nested under failed creation - not yet
-				progress.On("IsNestedUnderFailedCreation", "folder1/file.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file.json").Return(false).Once()
 
 				// WriteResourceFromFile fails with PathCreationError for folder1/
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -86,7 +86,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers folder creation failure
-				progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -96,7 +96,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Subsequent files in same folder are skipped
-				progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "folder1/subfolder/file2.json" &&
 						r.Action == repository.FileActionIgnored &&
@@ -104,7 +104,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 						r.Error.Error() == "skipped: parent folder creation failed"
 				})).Return().Once()
 
-				progress.On("IsNestedUnderFailedCreation", "folder1/file3.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "folder1/file3.json" &&
 						r.Action == repository.FileActionIgnored &&
@@ -165,7 +165,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				// Creation fails
-				progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -174,7 +174,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 					return r.Path == "folder1/file1.json" && r.Error != nil
 				})).Return().Once()
 
-				// Deletion proceeds (NOT checking IsNestedUnderFailedCreation for deletions)
+				// Deletion proceeds (NOT checking HasDirPathFailedCreation for deletions)
 				// Note: deletion will fail because resource doesn't exist, but that's fine for this test
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
@@ -201,7 +201,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers level1/ failure
-				progress.On("IsNestedUnderFailedCreation", "level1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "level1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "level1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -212,7 +212,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 
 				// All nested files are skipped
 				for _, path := range []string{"level1/level2/file2.json", "level1/level2/level3/file3.json"} {
-					progress.On("IsNestedUnderFailedCreation", path).Return(true).Once()
+					progress.On("HasDirPathFailedCreation", path).Return(true).Once()
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 						return r.Path == path && r.Action == repository.FileActionIgnored
 					})).Return().Once()
@@ -229,7 +229,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// Success path works
-				progress.On("IsNestedUnderFailedCreation", "success/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "").
 					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -237,7 +237,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Failure path fails
-				progress.On("IsNestedUnderFailedCreation", "failure/file2.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "failure/file2.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -246,7 +246,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Nested file in failure path is skipped
-				progress.On("IsNestedUnderFailedCreation", "failure/nested/file3.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "failure/nested/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "failure/nested/file3.json" && r.Action == repository.FileActionIgnored
 				})).Return().Once()

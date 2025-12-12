@@ -82,7 +82,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 	// Check if this resource is nested under a failed folder creation
 	// This only applies to creation/update operations, not deletions
-	if change.Action != repository.FileActionDeleted && progress.IsNestedUnderFailedCreation(change.Path) {
+	if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
 		// Skip this resource since its parent folder failed to be created
 		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_nested_resource")
 		progress.Record(skipCtx, jobs.JobResourceResult{
@@ -140,7 +140,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		// Check if this is a folder deletion - need to ensure no children failed to delete
 		if change.Action == repository.FileActionDeleted {
 			// Check if any resources under this folder failed to delete
-			if progress.HasFailedDeletionsUnder(change.Path) {
+			if progress.HasDirPathFailedDeletion(change.Path) {
 				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_folder_with_failed_deletions")
 				progress.Record(skipCtx, jobs.JobResourceResult{
 					Path:   change.Path,
@@ -191,7 +191,6 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
-
 	}
 
 	progress.Record(writeCtx, result)
