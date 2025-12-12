@@ -145,4 +145,3 @@ Refer to the following documents to learn more:
 - [Git Sync setup guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-setup/)
 - [Dashboard provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/)
 - [Observability as Code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/)
-

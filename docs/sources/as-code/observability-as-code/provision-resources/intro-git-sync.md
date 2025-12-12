@@ -129,7 +129,7 @@ An instance can be in one of the following Git Sync states:
 
 {{< admonition type="note" >}}
 
-Refer to [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios) for sample scenarios, including architecture and configuration details. 
+Refer to [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios) for sample scenarios, including architecture and configuration details.
 
 {{< /admonition >}}
 
