@@ -160,6 +160,8 @@ describe('DashboardScenePage', () => {
   beforeEach(() => {
     locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
+    getDashboardScenePageStateManager().clearSceneCache();
+    getDashboardScenePageStateManager().clearState();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
@@ -287,7 +289,7 @@ describe('DashboardScenePage', () => {
 
       await waitForDashboardToRender();
 
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
       const dashboardScenesCache = getDashboardScenePageStateManager().getCache();
@@ -297,7 +299,7 @@ describe('DashboardScenePage', () => {
       act(() => {
         dashboard.removePanel(panels[0]);
       });
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       act(() => {
         dashboard.removePanel(panels[1]);
@@ -309,7 +311,7 @@ describe('DashboardScenePage', () => {
       });
 
       expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
     });
   });
 
