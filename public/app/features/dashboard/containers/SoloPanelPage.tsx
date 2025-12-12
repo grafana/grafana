@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -119,7 +119,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
   return (
     <div className={styles.container}>
       <AutoSizer>
-        {({ width, height }) => {
+        {({ width, height }: Size) => {
           if (width === 0) {
             return null;
           }
