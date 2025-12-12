@@ -61,18 +61,22 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 			errs = append(errs, field.Required(field.NewPath("spec", "aws", "region"), "region must be present"))
 		}
 
-		if keeper.Spec.Aws.AccessKey == nil && keeper.Spec.Aws.AssumeRole == nil {
-			errs = append(errs, field.Required(field.NewPath("spec", "aws"), "one of `accessKey` or or `assumeRole` must be present"))
-		}
+		switch {
+		case keeper.Spec.Aws.AccessKey == nil && keeper.Spec.Aws.AssumeRole == nil:
+			errs = append(errs, field.Required(field.NewPath("spec", "aws"), "one of `accessKey` or `assumeRole` must be present"))
 
-		if keeper.Spec.Aws.AccessKey != nil {
+		case keeper.Spec.Aws.AccessKey != nil && keeper.Spec.Aws.AssumeRole != nil:
+			errs = append(errs, field.Required(field.NewPath("spec", "aws"), "only one of `accessKey` or `assumeRole` can be present"))
+
+		case keeper.Spec.Aws.AccessKey != nil:
 			if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "accessKeyID"), keeper.Spec.Aws.AccessKey.AccessKeyID); err != nil {
 				errs = append(errs, err)
 			}
 			if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "secretAccessKey"), keeper.Spec.Aws.AccessKey.SecretAccessKey); err != nil {
 				errs = append(errs, err)
 			}
-		} else if keeper.Spec.Aws.AssumeRole != nil {
+
+		case keeper.Spec.Aws.AssumeRole != nil:
 			if keeper.Spec.Aws.AssumeRole.AssumeRoleArn == "" {
 				errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "assumeRoleArn"), "arn of the role to assume must be present"))
 			}

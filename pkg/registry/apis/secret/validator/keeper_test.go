@@ -104,6 +104,22 @@ func TestValidateKeeper(t *testing.T) {
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.aws.accessKey.secretAccessKey", errs[0].Field)
 			})
+
+			t.Run("only one of accessKey or assumeRole can be present", func(t *testing.T) {
+				keeper := validKeeperAWS.DeepCopy()
+				keeper.Spec.Aws.AccessKey.SecretAccessKey = secretv1beta1.KeeperCredentialValue{
+					SecureValueName: "a",
+				}
+				keeper.Spec.Aws.AssumeRole = &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRoleArn: "arn",
+					ExternalID:    "id",
+				}
+
+				errs := validator.Validate(keeper, nil, admission.Create)
+				require.Len(t, errs, 1)
+				require.Equal(t, "spec.aws", errs[0].Field)
+				require.Equal(t, "only one of `accessKey` or `assumeRole` can be present", errs[0].Detail)
+			})
 		})
 	})
 
