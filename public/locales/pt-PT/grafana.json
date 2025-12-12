@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5091,6 +5093,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5473,12 @@
         "label": "Editar",
         "tooltip": "Entrar no modo de edição"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Tornar editável",
         "tooltip": "Este painel de controlo foi marcado como apenas de leitura"
@@ -5483,14 +5499,6 @@
         "discard-panel-new": "Descartar painel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema do painel de controlo v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar no modo de edição"
-          },
-          "exit": {
-            "label": "Sair do modo de edição"
-          }
         },
         "enter-edit-mode": {
           "label": "Tornar editável",
@@ -11838,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar as funcionalidades necessárias",
       "step-description-copy-url": "A partir da saída do ngrok, copie o URL de encaminhamento https:// que tem o seguinte aspeto:",
-      "step-description-enable-feature-toggles": "Adicione estas definições ao seu ficheiro custom.ini para ativar as funcionalidades necessárias:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para a sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isto ao seu ficheiro custom.ini, substituindo o URL pelo seu URL ngrok atual:",
       "step-title-copy-url": "Copie o seu URL público",

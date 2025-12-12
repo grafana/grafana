@@ -119,6 +119,16 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'continuous-greens';
     case FieldColorModeIdV1.ContinuousPurples:
       return 'continuous-purples';
+    case FieldColorModeIdV1.ContinuousViridis:
+      return 'continuous-viridis';
+    case FieldColorModeIdV1.ContinuousMagma:
+      return 'continuous-magma';
+    case FieldColorModeIdV1.ContinuousPlasma:
+      return 'continuous-plasma';
+    case FieldColorModeIdV1.ContinuousInferno:
+      return 'continuous-inferno';
+    case FieldColorModeIdV1.ContinuousCividis:
+      return 'continuous-cividis';
     case FieldColorModeIdV1.Fixed:
       return 'fixed';
     case FieldColorModeIdV1.Shades:

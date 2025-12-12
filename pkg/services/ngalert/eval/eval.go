@@ -204,7 +204,7 @@ func IsNonRetryableError(err error) bool {
 	return false
 }
 
-// HasErrors returns true when Results contains at least one element and all elements are errors
+// IsError returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
 		if r.State != Error {
