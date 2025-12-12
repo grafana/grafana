@@ -7,7 +7,7 @@ weight: 50
 
 # Git Sync for high availability environments
 
-## Primary–replica Git Sync scenario
+## Primary–replica scenario
 
 Use a primary Grafana instance and one or more replicas synchronized with the same Git location to enable failover.
 
@@ -177,12 +177,12 @@ Dashboards
     └── Logs Dashboard
 ```
 
-- All instances show identical folder structure
-- All instances sync from the same `shared/` path
-- Load balancer distributes requests across all active instances
-- Any instance can serve read requests
-- Any instance can accept dashboard modifications
-- Changes propagate to all instances through Git
+- All instances show identical folder structure.
+- All instances sync from the same `shared/` path.
+- Load balancer distributes requests across all active instances.
+- Any instance can serve read requests.
+- Any instance can accept dashboard modifications.
+- Changes propagate to all instances through Git.
 
 ### Configuration parameters
 
