@@ -25,6 +25,7 @@ type QuotasAppInstaller struct {
 }
 
 func (a *QuotasAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	//nolint:staticcheck // not yet migrated to Resource Authorizer
 	return roleauthorizer.NewRoleAuthorizer()
 }
 

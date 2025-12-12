@@ -67,6 +67,7 @@ func RegisterAppInstaller(
 }
 
 func (p *PlaylistAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	//nolint:staticcheck // not yet migrated to Resource Authorizer
 	return roleauthorizer.NewRoleAuthorizer()
 }
 
