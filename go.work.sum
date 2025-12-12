@@ -419,6 +419,7 @@ github.com/aws/aws-msk-iam-sasl-signer-go v1.0.1 h1:nMp7diZObd4XEVUR0pEvn7/E13JI
 github.com/aws/aws-msk-iam-sasl-signer-go v1.0.1/go.mod h1:MVYeeOhILFFemC/XlYTClvBjYZrg/EPd3ts885KrNTI=
 github.com/aws/aws-sdk-go-v2 v1.36.5/go.mod h1:EYrzvCCN9CMUTa5+6lf6MM4tq3Zjp8UhSGR/cBsjai0=
 github.com/aws/aws-sdk-go-v2 v1.38.1/go.mod h1:9Q0OoGQoboYIAJyslFyF1f5K1Ryddop8gqMhWx/n4Wg=
+github.com/aws/aws-sdk-go-v2 v1.39.1/go.mod h1:sDioUELIUO9Znk23YVmIk86/9DOpkbyyVb1i/gUNFXY=
 github.com/aws/aws-sdk-go-v2/config v1.29.17/go.mod h1:9P4wwACpbeXs9Pm9w1QTh6BwWwJjwYvJ1iCt5QbCXh8=
 github.com/aws/aws-sdk-go-v2/config v1.31.2/go.mod h1:17ft42Yb2lF6OigqSYiDAiUcX4RIkEMY6XxEMJsrAes=
 github.com/aws/aws-sdk-go-v2/credentials v1.17.70/go.mod h1:M+lWhhmomVGgtuPOhO85u4pEa3SmssPTdcYpP/5J/xc=
@@ -432,8 +433,10 @@ github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.4/go.mod h1:9xzb8/SV62W6gHQG
 github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.69/go.mod h1:GJj8mmO6YT6EqgduWocwhMoxTLFitkhIrK+owzrYL2I=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.36/go.mod h1:Q1lnJArKRXkenyog6+Y+zr7WDpk4e6XlR6gs20bbeNo=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.4/go.mod h1:l4bdfCD7XyyZA9BolKBo1eLqgaJxl0/x91PL4Yqe0ao=
+github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.8/go.mod h1:KcGkXFVU8U28qS4KvLEcPxytPZPBcRawaH2Pf/0jptE=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.36/go.mod h1:UdyGa7Q91id/sdyHPwth+043HhmP6yP9MBHgbZM0xo8=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.4/go.mod h1:yDmJgqOiH4EA8Hndnv4KwAo8jCGTSnM5ASG1nBI+toA=
+github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.8/go.mod h1:JnA+hPWeYAVbDssp83tv+ysAG8lTfLVXvSsyKg/7xNA=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.34/go.mod h1:zf7Vcd1ViW7cPqYWEHLHJkS50X0JS2IKz9Cgaj6ugrs=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0 h1:A99gjqZDbdhjtjJVZrmVzVKO2+p3MSg35bDWtbMQVxw=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0/go.mod h1:mWB0GE1bqcVSvpW7OtFA0sKuHk52+IqtnsYU2jUfYAs=
@@ -459,7 +462,6 @@ github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2 h1:vlYXbindmagyVA3RS
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2/go.mod h1:yGhDiLKguA3iFJYxbrQkQiNzuy+ddxesSZYWVeeEH5Q=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 h1:d+mnMa4JbJlooSbYQfrJpit/YINaB30JEVgrhtjZneA=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7/go.mod h1:1X1NotbcGHH7PCQJ98PsExSxsJj/VWzz8MfFz43+02M=
-github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1/go.mod h1:c6Vg0BRiU7v0MVhHupw90RyL120QBwAMLbDCzptGeMk=
 github.com/aws/aws-sdk-go-v2/service/sns v1.31.3 h1:eSTEdxkfle2G98FE+Xl3db/XAXXVTJPNQo9K/Ar8oAI=
 github.com/aws/aws-sdk-go-v2/service/sns v1.31.3/go.mod h1:1dn0delSO3J69THuty5iwP0US2Glt0mx2qBBlI13pvw=
 github.com/aws/aws-sdk-go-v2/service/sns v1.34.2 h1:PajtbJ/5bEo6iUAIGMYnK8ljqg2F1h4mMCGh1acjN30=
@@ -488,6 +490,7 @@ github.com/aws/smithy-go v1.22.4/go.mod h1:t1ufH5HMublsJYulve2RKmHDC15xu1f26kHCp
 github.com/aws/smithy-go v1.22.5 h1:P9ATCXPMb2mPjYBgueqJNCA5S9UfktsW0tTxi+a7eqw=
 github.com/aws/smithy-go v1.22.5/go.mod h1:t1ufH5HMublsJYulve2RKmHDC15xu1f26kHCp/HgceI=
 github.com/aws/smithy-go v1.23.0/go.mod h1:t1ufH5HMublsJYulve2RKmHDC15xu1f26kHCp/HgceI=
+github.com/aws/smithy-go v1.23.1/go.mod h1:LEj2LM3rBRQJxPZTB4KuzZkaZYnZPnvgIhb4pu07mx0=
 github.com/awslabs/aws-lambda-go-api-proxy v0.16.2 h1:CJyGEyO1CIwOnXTU40urf0mchf6t3voxpvUDikOU9LY=
 github.com/awslabs/aws-lambda-go-api-proxy v0.16.2/go.mod h1:vxxjwBHe/KbgFeNlAP/Tvp4SsVRL3WQamcWRxqVh0z0=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
@@ -1555,6 +1558,8 @@ github.com/xitongsys/parquet-go v1.6.2/go.mod h1:IulAQyalCm0rPiZVNnCgm/PCL64X2td
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d h1:VVWj8KWdzpebBaXpTVpOaQW32y2UCWy3JXJ5lVDa/e8=
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d/go.mod h1:HaLl1OAA7RAuQURU3Enxn7aRAI9yezsPPaxiGrbzxW4=
 github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778/go.mod h1:2MuV+tbUrU1zIOPMxZ5EncGwgmMJsa+9ucAQZXxsObs=
+github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
+github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJuqunuUZ/Dhy/avygyECGrLceyNeo4LiM=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwYZvkeru3RtdrYueztKhOBCSAAzS4Gf+k0tEow=
 github.com/yashtewari/glob-intersection v0.1.0/go.mod h1:LK7pIC3piUjovexikBbJ26Yml7g8xa5bsjfx2v1fwok=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20241112172322-ea1f63298f77 h1:LY6cI8cP4B9rrpTleZk95+08kl2gF4rixG7+V/dwL6Q=
