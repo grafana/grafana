@@ -62,6 +62,6 @@ The table includes default and other fields:
 | targetBlank | bool. If true, the link will be opened in a new tab. Default is `false`. |
 | includeVars | bool. If true, includes current template variables values in the link as query params. Default is `false`. |
 | keepTime    | bool. If true, includes current time range in the link as query params. Default is `false`. |
-| placement?  | string. Placement can be used to display the link somewhere else on the dashboard other than above the visualizations. Accepted value: `inControlsMenu` - renders the link in the dashboard controls dropdown menu. |
+| placement?  | string. Use placement to display the link somewhere else on the dashboard other than above the visualizations. Use  the `inControlsMenu` parameter to render the link in the dashboard controls dropdown menu. |
 
 <!-- prettier-ignore-end -->
