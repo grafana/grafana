@@ -6141,7 +6141,10 @@
       "no-data-found": "No data found"
     },
     "inspect-json-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "error-invalid-json": "Invalid JSON",
+      "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "validation-error": "Validation error"
     },
     "interval-variable-form": {
       "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified",
