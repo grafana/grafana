@@ -16,6 +16,7 @@ type JobStatusApplyConfiguration struct {
 	Finished *int64                                     `json:"finished,omitempty"`
 	Message  *string                                    `json:"message,omitempty"`
 	Errors   []string                                   `json:"errors,omitempty"`
+	Warnings []string                                   `json:"warnings,omitempty"`
 	Progress *float64                                   `json:"progress,omitempty"`
 	Summary  []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
 	URLs     *RepositoryURLsApplyConfiguration          `json:"url,omitempty"`
@@ -65,6 +66,16 @@ func (b *JobStatusApplyConfiguration) WithMessage(value string) *JobStatusApplyC
 func (b *JobStatusApplyConfiguration) WithErrors(values ...string) *JobStatusApplyConfiguration {
 	for i := range values {
 		b.Errors = append(b.Errors, values[i])
+	}
+	return b
+}
+
+// WithWarnings adds the given value to the Warnings field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Warnings field.
+func (b *JobStatusApplyConfiguration) WithWarnings(values ...string) *JobStatusApplyConfiguration {
+	for i := range values {
+		b.Warnings = append(b.Warnings, values[i])
 	}
 	return b
 }
