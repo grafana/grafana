@@ -3707,6 +3707,10 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "recently-viewed": {
+      "empty": "Nothing viewed yet",
+      "title": "Recently viewed"
+    },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard",
       "all-failed_other": "Failed to restore {{count}} dashboards",
@@ -10724,7 +10728,6 @@
       "title": "New"
     },
     "new-dashboard": {
-      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -11868,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
     },
     "getting-started-page": {
-      "header": "Provisioning",
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
     "git": {
@@ -12634,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",
