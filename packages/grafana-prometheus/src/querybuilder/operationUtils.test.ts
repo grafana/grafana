@@ -191,13 +191,10 @@ describe('createAggregationOperationWithParams', () => {
   });
 
   it('returns correct query string using aggregation definitions with overrides and dot label', () => {
-    const def = createAggregationOperation(
-      'test_aggregation',
-      {
-        params: [{ name: 'Identifier', type: 'string' }],
-        defaultParams: ['count'],
-      }
-    );
+    const def = createAggregationOperation('test_aggregation', {
+      params: [{ name: 'Identifier', type: 'string' }],
+      defaultParams: ['count'],
+    });
 
     const countValueDefinition = def[1];
     expect(
