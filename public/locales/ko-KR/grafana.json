@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5072,6 +5074,14 @@
         "layout": "레이아웃"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5453,12 @@
         "label": "편집",
         "tooltip": "편집 모드 진입"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "편집 가능하게 설정",
         "tooltip": "이 대시보드는 읽기 전용으로 표시되었습니다."
@@ -5463,14 +5479,6 @@
         "discard-panel-new": "패널 삭제",
         "edit-dashboard-v2-schema": {
           "tooltip": "대시보드 v2 스키마 편집"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "편집 모드 진입"
-          },
-          "exit": {
-            "label": "편집 모드 종료"
-          }
         },
         "enter-edit-mode": {
           "label": "편집 가능하게 설정",
@@ -11787,7 +11795,7 @@
       "modal-title-set-up-public-access": "공개 액세스 설정",
       "modal-title-set-up-required-features": "필수 기능 설정",
       "step-description-copy-url": "ngrok 출력에서 다음과 같은 https:// 전달 URL을 복사합니다.",
-      "step-description-enable-feature-toggles": "필요한 기능을 활성화하려면 다음 설정을 custom.ini 파일에 추가하세요.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "이 명령을 실행하여 로컬 Grafana에 대한 보안 터널을 생성합니다.",
       "step-description-update-grafana-config": "이것을 custom.ini 파일에 추가하여, URL을 다음과 같은 실제 ngrok URL로 교체합니다.",
       "step-title-copy-url": "공개 URL 복사",

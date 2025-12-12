@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5091,6 +5093,14 @@
         "layout": "Mise en page"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5473,12 @@
         "label": "Modifier",
         "tooltip": "Entrer dans le mode édition"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendre modifiable",
         "tooltip": "Ce tableau de bord a été marqué comme étant en lecture seule"
@@ -5483,14 +5499,6 @@
         "discard-panel-new": "Ignorer le panneau",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifier le schéma du tableau de bord v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrer dans le mode édition"
-          },
-          "exit": {
-            "label": "Quitter le mode d’édition"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendre modifiable",
@@ -11838,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configurer l’accès public",
       "modal-title-set-up-required-features": "Configurer les fonctionnalités requises",
       "step-description-copy-url": "À partir de la sortie ngrok, copiez l’URL de redirection https:// qui ressemble à ceci :",
-      "step-description-enable-feature-toggles": "Ajoutez ces paramètres à votre fichier custom.ini pour activer les fonctionnalités nécessaires :",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Exécutez cette commande pour créer un tunnel sécurisé vers votre Grafana local :",
       "step-description-update-grafana-config": "Ajoutez ceci à votre fichier custom.ini, en remplaçant l’URL par votre URL ngrok réelle :",
       "step-title-copy-url": "Copier l’URL publique",

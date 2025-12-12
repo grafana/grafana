@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5072,6 +5074,14 @@
         "layout": "レイアウト"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5453,12 @@
         "label": "編集",
         "tooltip": "編集モードに入る"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "編集可能にする",
         "tooltip": "このダッシュボードは読み取り専用に設定されています"
@@ -5463,14 +5479,6 @@
         "discard-panel-new": "パネルを破棄",
         "edit-dashboard-v2-schema": {
           "tooltip": "ダッシュボードv2スキーマを編集"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "編集モードに入る"
-          },
-          "exit": {
-            "label": "編集モードを終了"
-          }
         },
         "enter-edit-mode": {
           "label": "編集可能にする",
@@ -11787,7 +11795,7 @@
       "modal-title-set-up-public-access": "公開アクセスを設定",
       "modal-title-set-up-required-features": "必要な機能を設定",
       "step-description-copy-url": "ngrokの出力から、https://ではじまる転送URLをコピーしてください。",
-      "step-description-enable-feature-toggles": "必要な機能を有効にするには、これらの設定をcustom.iniファイルに追加してください。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "このコマンドを実行して、ローカルのGrafanaへの安全なトンネルを作成します。",
       "step-description-update-grafana-config": "これをcustom.iniファイルに追加し、URLを実際のngrok URLに置き換えてください。",
       "step-title-copy-url": "公開URLをコピー",

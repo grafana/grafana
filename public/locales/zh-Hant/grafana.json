@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5072,6 +5074,14 @@
         "layout": "版面配置"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5453,12 @@
         "label": "編輯",
         "tooltip": "進入編輯模式"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "使其可編輯",
         "tooltip": "此儀表板已標記為唯讀"
@@ -5463,14 +5479,6 @@
         "discard-panel-new": "捨棄面板",
         "edit-dashboard-v2-schema": {
           "tooltip": "編輯儀表板 v2 結構"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "進入編輯模式"
-          },
-          "exit": {
-            "label": "結束編輯模式"
-          }
         },
         "enter-edit-mode": {
           "label": "使其可編輯",
@@ -11787,7 +11795,7 @@
       "modal-title-set-up-public-access": "設定公共存取",
       "modal-title-set-up-required-features": "設定所需的功能",
       "step-description-copy-url": "從 ngrok 輸出中，複製以下的 https:// 轉送網址：",
-      "step-description-enable-feature-toggles": "將這些設定新增至您的 custom.ini 檔案，以啟用必要的功能：",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "執行此命令，以建立通往本機 Grafana 的安全通道：",
       "step-description-update-grafana-config": "將此新增至您的 custom.ini 檔案，並使用您實際的 ngrok 網址來取代網址：",
       "step-title-copy-url": "複製您的公共網址",
