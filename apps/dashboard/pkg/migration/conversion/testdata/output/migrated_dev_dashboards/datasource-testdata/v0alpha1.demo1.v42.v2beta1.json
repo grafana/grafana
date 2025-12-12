@@ -1745,5 +1745,10 @@
     "title": "TestData - Demo Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

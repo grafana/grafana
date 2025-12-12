@@ -2949,6 +2949,23 @@
     },
     {
       "metadata": {
+        "name": "recentlyViewedDashboards",
+        "resourceVersion": "1765227168175",
+        "creationTimestamp": "2025-12-08T20:44:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-12-08 20:52:48.175129 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables recently viewed dashboards section in the browsing dashboard page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "refactorVariablesTimeRange",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-06-06T13:12:09Z"

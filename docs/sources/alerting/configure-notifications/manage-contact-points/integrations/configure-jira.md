@@ -49,14 +49,14 @@ For more details on contact points, including how to test them and enable notifi
 
 ### Required Settings
 
-| Key                 | Description                                                                                                                                                                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](ref:configure-contact-points#protected-fields) from modification in Grafana Cloud. |
-| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                                |
-| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                                     |
-| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information.              |
-| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                                            |
-| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                                 |
+| Key                 | Description                                                                                                                                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URL                 | The URL of the REST API of your Jira instance. Supported versions: `2` and `3` (e.g., `https://your-domain.atlassian.net/rest/api/3`). This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud.     |
+| Basic Auth User     | Username for authentication. For Jira Cloud, use your email address.                                                                                                                                                                   |
+| Basic Auth Password | Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens) and use it as the password.                                                        |
+| API Token           | An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information. |
+| Project Key         | The project key identifying the project where issues will be created. Project keys are unique identifiers for a project.                                                                                                               |
+| Issue Type          | The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project.                                                                                                    |
 
 ### Optional Settings
 

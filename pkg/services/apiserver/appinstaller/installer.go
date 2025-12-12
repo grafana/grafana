@@ -108,9 +108,14 @@ func RegisterAuthorizers(
 		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
 			authorizer := authorizerProvider.GetAuthorizer()
 			for _, gv := range installer.GroupVersions() {
+				if authorizer == nil {
+					panic("authorizer cannot be nil for api group: " + gv.String())
+				}
 				registrar.Register(gv, authorizer)
 				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
 			}
+		} else {
+			panic("authorizer cannot be nil for api group: " + installer.GroupVersions()[0].Group)
 		}
 	}
 }
