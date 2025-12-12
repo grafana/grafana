@@ -234,13 +234,11 @@ Export a Grafana JSON file that contains everything you need, including layout, 
    The **Export dashboard** drawer opens.
 
 1. Select the dashboard JSON model that you to export:
-
    - **Classic** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
    - **V1 Resource** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1). Choose between **JSON** and **YAML** format.
    - **V2 Resource** - Export dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1). Choose between **JSON** and **YAML** format.
 
 1. Do one of the following:
-
    - Toggle the **Export for sharing externally** switch to generate the JSON with a different data source UID.
    - Toggle the **Remove deployment details** switch to make the dashboard externally shareable.
 
