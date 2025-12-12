@@ -19,7 +19,8 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/So
 
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {}
+export interface Props
+  extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: string }> {}
 
 /**
  * Used for iframe embedding and image rendering of single panels
@@ -28,6 +29,11 @@ export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, loadError } = stateManager.useState();
   const { uid = '', type, slug } = useParams();
+
+  // Check if logo should be hidden via URL query parameter
+  // Hide if hideLogo is present (even without a value), or if explicitly set to 'true' or '1'
+  const hideLogo =
+    queryParams.hideLogo !== undefined || queryParams.hideLogo === 'true' || queryParams.hideLogo === '1';
 
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
@@ -54,14 +60,22 @@ export function SoloPanelPage({ queryParams }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard}>
-      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />
+      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={hideLogo} />
     </UrlSyncContextProvider>
   );
 }
 
 export default SoloPanelPage;
 
-export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
+export function SoloPanelRenderer({
+  dashboard,
+  panelId,
+  hideLogo,
+}: {
+  dashboard: DashboardScene;
+  panelId: string;
+  hideLogo: boolean;
+}) {
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
@@ -86,7 +100,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} />
+      {!hideLogo && <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} />}
       {renderHiddenVariables(dashboard)}
       <div className={styles.panelWrapper}>
         <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
