@@ -8982,6 +8982,9 @@
     "drawer": {
       "close": "Close"
     },
+    "drilldown-controls": {
+      "clear-all": "Clear all"
+    },
     "error-boundary": {
       "title": "An unexpected error happened"
     },
