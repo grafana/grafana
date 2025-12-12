@@ -7,6 +7,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails
@@ -96,6 +97,40 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 	if opts.Path != "" {
 		if err := safepath.IsSafe(opts.Path); err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "push", "path"), opts.Path, err.Error()))
+		}
+	}
+
+	// Validate resources if specified
+	if len(opts.Resources) > 0 {
+		for i, r := range opts.Resources {
+			resourcePath := field.NewPath("spec", "push", "resources").Index(i)
+
+			// Validate required fields
+			if r.Name == "" {
+				list = append(list, field.Required(resourcePath.Child("name"), "resource name is required"))
+			}
+			if r.Kind == "" {
+				list = append(list, field.Required(resourcePath.Child("kind"), "resource kind is required"))
+			}
+			if r.Group == "" {
+				list = append(list, field.Required(resourcePath.Child("group"), "resource group is required"))
+			}
+
+			// Validate that folders are not allowed
+			if r.Kind == resources.FolderKind.Kind || r.Group == resources.FolderResource.Group {
+				list = append(list, field.Invalid(resourcePath, r, "folders are not supported for export"))
+				continue // Skip further validation for folders
+			}
+
+			// Validate that only supported resources are allowed
+			// Currently only Dashboard resources are supported (folders are rejected above)
+			if r.Kind != "" && r.Group != "" {
+				// Check if it's a Dashboard resource
+				isDashboard := r.Group == resources.DashboardResource.Group && r.Kind == "Dashboard"
+				if !isDashboard {
+					list = append(list, field.Invalid(resourcePath, r, "resource type is not supported for export"))
+				}
+			}
 		}
 	}
 

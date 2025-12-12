@@ -167,30 +167,40 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		title = name
 	}
 
-	folder := meta.GetFolder()
-	// Get the absolute path of the folder
-	rootFolder := RootFolder(r.repo.Config())
+	fileName := slugify.Slugify(title) + ".json"
 
-	// If no folder is specified in the file, set it to the root to ensure everything is written under it
-	var fid Folder
-	if folder == "" {
-		fid = Folder{ID: rootFolder}
-		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
-	} else {
-		var ok bool
-		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
-		if !ok {
-			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+	// Build the full path: start with options.Path, then add folder path, then filename
+	basePath := options.Path
+
+	// If options.Path is provided, use it directly (it already includes folder structure from export).
+	// Otherwise, resolve folder path from the repository tree.
+	if basePath == "" {
+		folder := meta.GetFolder()
+		// Get the absolute path of the folder
+		rootFolder := RootFolder(r.repo.Config())
+
+		if folder == "" {
+			// If no folder is specified and no path is provided, set it to the root to ensure everything is written under it
+			meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
+		} else {
+			var ok bool
+			var fid Folder
+			fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
+			if !ok {
+				// Fallback: try without rootFolder (for instance targets where rootFolder is empty)
+				fid, ok = r.folders.Tree().DirPath(folder, "")
+				if !ok {
+					return "", fmt.Errorf("folder %s NOT found in tree", folder)
+				}
+			}
+			if fid.Path != "" {
+				basePath = fid.Path
+			}
 		}
 	}
 
-	fileName := slugify.Slugify(title) + ".json"
-	if fid.Path != "" {
-		fileName = safepath.Join(fid.Path, fileName)
-	}
-
-	if options.Path != "" {
-		fileName = safepath.Join(options.Path, fileName)
+	if basePath != "" {
+		fileName = safepath.Join(basePath, fileName)
 	}
 
 	parsed := ParsedResource{

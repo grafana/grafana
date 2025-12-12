@@ -288,18 +288,18 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, filePath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath := safepath.Join(r.path, filepath)
+	fpath := safepath.Join(r.path, filePath)
 	_, err := os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
 		}
-		return apierrors.NewAlreadyExists(schema.GroupResource{}, filepath)
+		return apierrors.NewAlreadyExists(schema.GroupResource{}, filePath)
 	}
 
 	if safepath.IsDir(fpath) {
@@ -314,7 +314,7 @@ func (r *localRepository) Create(ctx context.Context, filepath string, ref strin
 		return nil
 	}
 
-	if err := os.MkdirAll(path.Dir(fpath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fpath), 0700); err != nil {
 		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 	}
 
@@ -352,7 +352,7 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 		return os.MkdirAll(fpath, 0700)
 	}
 
-	if err := os.MkdirAll(path.Dir(fpath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fpath), 0700); err != nil {
 		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 	}
 
