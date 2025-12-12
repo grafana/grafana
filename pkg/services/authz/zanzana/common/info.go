@@ -4,8 +4,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -44,7 +48,8 @@ func getTypeInfo(group, resource string) (typeInfo, bool) {
 
 func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
-	return newResource(
+
+	resource := newResource(
 		typ,
 		r.GetGroup(),
 		r.GetResource(),
@@ -53,6 +58,17 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		r.GetSubresource(),
 		relations,
 	)
+
+	// Special case for creating folders and resources in the root folder
+	if r.GetVerb() == utils.VerbCreate {
+		if resource.IsFolderResource() {
+			resource.name = accesscontrol.GeneralFolderUID
+		} else if resource.HasFolderSupport() {
+			resource.folder = accesscontrol.GeneralFolderUID
+		}
+	}
+
+	return resource
 }
 
 func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
@@ -163,4 +179,16 @@ func (r ResourceInfo) IsValidRelation(relation string) bool {
 
 func (r ResourceInfo) HasSubresource() bool {
 	return r.subresource != ""
+}
+
+var resourcesWithFolderSupport = map[string]bool{
+	dashboardV1.DashboardResourceInfo.GroupResource().Group: true,
+}
+
+func (r ResourceInfo) HasFolderSupport() bool {
+	return resourcesWithFolderSupport[r.group]
+}
+
+func (r ResourceInfo) IsFolderResource() bool {
+	return r.group == folders.FolderResourceInfo.GroupResource().Group
 }

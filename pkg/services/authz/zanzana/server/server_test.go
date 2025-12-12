@@ -49,6 +49,8 @@ func setup(t *testing.T, srv *Server) *Server {
 	tuples := []*openfgav1.TupleKey{
 		common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
 		common.NewResourceTuple("user:1", common.RelationUpdate, dashboardGroup, dashboardResource, "", "1"),
+		common.NewFolderTuple("user:1", common.RelationCreate, "general"),
+		common.NewFolderResourceTuple("user:1", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
 		common.NewGroupResourceTuple("user:2", common.RelationGet, dashboardGroup, dashboardResource, ""),
 		common.NewGroupResourceTuple("user:2", common.RelationUpdate, dashboardGroup, dashboardResource, ""),
 		common.NewResourceTuple("user:3", common.RelationSetView, dashboardGroup, dashboardResource, "", "1"),
