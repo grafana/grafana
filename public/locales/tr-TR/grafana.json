@@ -4781,6 +4781,8 @@
       "remove": "{{typeName}} ögesini kaldır",
       "row-title": "",
       "switch-layout": "Düzeni değiştir",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5887,6 +5889,17 @@
       "label-value": "Değer",
       "placeholder-your-metric-prefix": "Metrik ön ekiniz"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Özel seçenekler",
       "name-values-separated-comma": "Virgülle ayrılmış değerler",
@@ -6258,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "İsteğe bağlıdır, bir seri adının veya metrik düğüm parçasının bir kısmını çıkarmak istiyorsanız kullanılır.",
+      "description-regex-apply-to": "",
       "label-data-source": "Veri kaynağı",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statik seçenekleri sırala",
       "label-target-data-source": "Hedef veri kaynağı",
       "label-use-static-options": "Statik seçenekleri kullan",
       "name-regex": "Düzenli İfade",
       "query-options": "Sorgu seçenekleri",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Seçim ayarları",
       "static-options-legend": "Statik seçenekler"
     },
@@ -8806,6 +8827,13 @@
       "aria-label-default": "Bir renk seçin",
       "aria-label-selected-color": "{{colorLabel}} rengi"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Sil",
       "cancel": "İptal",
@@ -9003,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Tüm satırları daralt",
       "aria-label-expand-all": "Tüm satırları genişlet",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
       "tooltip-collapse-all": "Tüm satırları daralt",
       "tooltip-expand-all": "Tüm satırları genişlet"
@@ -12404,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

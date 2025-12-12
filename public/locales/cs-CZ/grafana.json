@@ -4819,6 +4819,8 @@
       "remove": "Odebrat {{typeName}}",
       "row-title": "",
       "switch-layout": "Přepnout rozvržení",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5929,6 +5931,17 @@
       "label-value": "Hodnota",
       "placeholder-your-metric-prefix": "Předpona metriky"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Vlastní možnosti",
       "name-values-separated-comma": "Hodnoty oddělené čárkou",
@@ -6302,12 +6315,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
+      "description-regex-apply-to": "",
       "label-data-source": "Zdroj dat",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statické možnosti třídění",
       "label-target-data-source": "Cílový zdroj dat",
       "label-use-static-options": "Použít statické možnosti",
       "name-regex": "Regulární výraz",
       "query-options": "Možnosti dotazu",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Možnosti výběru",
       "static-options-legend": "Statické možnosti"
     },
@@ -8876,6 +8897,13 @@
       "aria-label-default": "Vyberte barvu",
       "aria-label-selected-color": "{{colorLabel}} barva"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Odstranit",
       "cancel": "Zrušit",
@@ -9073,6 +9101,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Sbalit všechny řádky",
       "aria-label-expand-all": "Rozbalit všechny řádky",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Řádek přepnutí rozbalen",
       "tooltip-collapse-all": "Sbalit všechny řádky",
       "tooltip-expand-all": "Rozbalit všechny řádky"
@@ -12508,13 +12538,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

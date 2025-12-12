@@ -4781,6 +4781,8 @@
       "remove": "Supprimer {{typeName}}",
       "row-title": "",
       "switch-layout": "Changer la disposition",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5887,6 +5889,17 @@
       "label-value": "Valeur",
       "placeholder-your-metric-prefix": "Votre préfixe de métrique"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
       "name-values-separated-comma": "Valeurs séparées par des virgules",
@@ -6258,12 +6271,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Facultatif, si vous souhaitez extraire une partie d’un nom de série ou d’un segment de nœud de métrique.",
+      "description-regex-apply-to": "",
       "label-data-source": "Source de données",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Tri des options statiques",
       "label-target-data-source": "Source de données cible",
       "label-use-static-options": "Utiliser des options statiques",
       "name-regex": "Expression régulière",
       "query-options": "Options de recherche",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Options de sélection",
       "static-options-legend": "Options statiques"
     },
@@ -8806,6 +8827,13 @@
       "aria-label-default": "Choisir une couleur",
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Supprimer",
       "cancel": "Annuler",
@@ -9003,6 +9031,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Réduire toutes les lignes",
       "aria-label-expand-all": "Développer toutes les lignes",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Basculer la ligne développée",
       "tooltip-collapse-all": "Réduire toutes les lignes",
       "tooltip-expand-all": "Développer toutes les lignes"
@@ -12404,13 +12434,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

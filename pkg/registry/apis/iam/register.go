@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
@@ -76,6 +77,7 @@ func RegisterAPIService(
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
+	orgService org.Service,
 	userService legacyuser.Service,
 	teamService teamservice.Service,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -90,11 +92,11 @@ func RegisterAPIService(
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
-		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation),
-		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation),
-		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
-		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation),
-		ssoLegacyStore:              sso.NewLegacyStore(ssoService),
+		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation, tracing),
+		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
+		ssoLegacyStore:              sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:            coreRolesStorage,
 		rolesStorage:                rolesStorage,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
@@ -114,9 +116,11 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(userService), features),
+			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
+
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
@@ -510,10 +514,18 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	routes := b.teamSearch.GetAPIRoutes(defs)
-	routes.Namespace = append(routes.Namespace, b.display.GetAPIRoutes(defs).Namespace...)
+	searchRoutes := make([]*builder.APIRoutes, 0, 2)
+	if b.userSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
+	}
 
-	return routes
+	if b.teamSearch != nil {
+		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
+	}
+
+	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}
+	routes = append(routes, searchRoutes...)
+	return mergeAPIRoutes(routes...)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -620,4 +632,16 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err
+}
+
+func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
+	merged := &builder.APIRoutes{}
+	for _, r := range routes {
+		if r == nil {
+			continue
+		}
+		merged.Root = append(merged.Root, r.Root...)
+		merged.Namespace = append(merged.Namespace, r.Namespace...)
+	}
+	return merged
 }

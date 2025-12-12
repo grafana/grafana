@@ -2041,6 +2041,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUnifiedStorageQuotas",
+        "resourceVersion": "1764965198011",
+        "creationTimestamp": "2025-12-05T20:06:38Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes unified storage quotas",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-03-31T13:59:07Z"
@@ -2257,6 +2270,19 @@
         "description": "Enable support for Machine Learning in server-side expressions",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "multiPropsVariables",
+        "resourceVersion": "1765293230587",
+        "creationTimestamp": "2025-12-09T15:13:50Z"
+      },
+      "spec": {
+        "description": "Enables support for variables whose values can have multiple properties",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -2905,6 +2931,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "recentlyViewedDashboards",
+        "resourceVersion": "1765227168175",
+        "creationTimestamp": "2025-12-08T20:44:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-12-08 20:52:48.175129 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables recently viewed dashboards section in the browsing dashboard page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {

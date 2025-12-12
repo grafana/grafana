@@ -1,4 +1,4 @@
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -240,9 +240,14 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ...options,
           // nested frames can be `undefined` in certain situations, like after `merge` transform due to padding the value array.
           // let's replace them with empty frames to avoid errors applying overrides
-          data: field.values.map(
-            (nestedFrame: DataFrame | undefined): DataFrame => nestedFrame ?? createDataFrame({ fields: [] })
-          ),
+          data: field.values.map((nestedFrame: DataFrame | undefined): DataFrame => {
+            const result = nestedFrame ?? createDataFrame({ fields: [] });
+            result.fields = result.fields.map((newField) => {
+              newField.config = defaultsDeep(newField.config || {}, config);
+              return newField;
+            });
+            return result;
+          }),
         });
       }
     }
@@ -256,7 +261,7 @@ function calculateRange(
   field: Field,
   globalRange: NumericRange | undefined,
   data: DataFrame[]
-): { range?: { min?: number | null; max?: number | null; delta: number }; newGlobalRange: NumericRange | undefined } {
+): { range?: NumericRange; newGlobalRange?: NumericRange } {
   // If range is defined with min/max, use it
   if (isNumber(config.min) && isNumber(config.max)) {
     const range = { min: config.min, max: config.max, delta: config.max - config.min };

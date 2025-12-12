@@ -4819,6 +4819,8 @@
       "remove": "Удалить {{typeName}}",
       "row-title": "",
       "switch-layout": "Переключить макет",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5929,6 +5931,17 @@
       "label-value": "Значение",
       "placeholder-your-metric-prefix": "Префикс метрик"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
       "name-values-separated-comma": "Значения, разделенные запятыми",
@@ -6302,12 +6315,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Дополнительно, если вы хотите извлечь часть имени ряда или сегмента узла метрики.",
+      "description-regex-apply-to": "",
       "label-data-source": "Источник данных",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Сортировка статических параметров",
       "label-target-data-source": "Целевой источник данных",
       "label-use-static-options": "Использовать статические параметры",
       "name-regex": "Регулярное выражение",
       "query-options": "Параметры запросов",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Параметры выбора",
       "static-options-legend": "Статические параметры"
     },
@@ -8876,6 +8897,13 @@
       "aria-label-default": "Выбрать цвет",
       "aria-label-selected-color": "{{colorLabel}} цвет"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Удалить",
       "cancel": "Отмена",
@@ -9073,6 +9101,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Свернуть все строки",
       "aria-label-expand-all": "Развернуть все строки",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Развернута строка переключения",
       "tooltip-collapse-all": "Свернуть все строки",
       "tooltip-expand-all": "Развернуть все строки"
@@ -12508,13 +12538,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

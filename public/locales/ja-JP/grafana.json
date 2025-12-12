@@ -4762,6 +4762,8 @@
       "remove": "{{typeName}}を削除",
       "row-title": "",
       "switch-layout": "レイアウトを切り替え",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5866,6 +5868,17 @@
       "label-value": "値",
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "カスタムオプション",
       "name-values-separated-comma": "カンマ区切りの値",
@@ -6236,12 +6249,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "シリーズ名やメトリックノードセグメントの一部を抽出したい場合の任意設定です。",
+      "description-regex-apply-to": "",
       "label-data-source": "データソース",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "スタティックオプションの並び替え",
       "label-target-data-source": "ターゲットデータソース",
       "label-use-static-options": "スタティックオプションを使用",
       "name-regex": "正規表現",
       "query-options": "クエリオプション",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "選択オプション",
       "static-options-legend": "スタティックオプション"
     },
@@ -8771,6 +8792,13 @@
       "aria-label-default": "色を選択",
       "aria-label-selected-color": "{{colorLabel}}色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "削除",
       "cancel": "キャンセル",
@@ -8968,6 +8996,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "すべての行を折りたたむ",
       "aria-label-expand-all": "すべての行を広げる",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "行の展開を切り替える",
       "tooltip-collapse-all": "すべての行を折りたたむ",
       "tooltip-expand-all": "すべての行を広げる"
@@ -12352,13 +12382,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

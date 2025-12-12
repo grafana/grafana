@@ -102,19 +102,39 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <div className={styles.switchMenuContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
+      <div
+        className={cx(
+          styles.switchMenuContainer,
+          isSelected && 'dashboard-selected-element',
+          isSelectable && !isSelected && 'dashboard-selectable-element'
+        )}
+        onPointerDown={onPointerDown}
+        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+      >
         <div className={styles.switchControl}>
           <variable.Component model={variable} />
         </div>
-        <VariableLabel variable={variable} layout={'vertical'} className={styles.switchLabel} />
+        <VariableLabel
+          variable={variable}
+          layout={'vertical'}
+          className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
+        />
       </div>
     );
   }
 
   if (inMenu) {
     return (
-      <div className={styles.verticalContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
-        <VariableLabel variable={variable} layout={'vertical'} />
+      <div
+        className={cx(
+          styles.verticalContainer,
+          isSelected && 'dashboard-selected-element',
+          isSelectable && !isSelected && 'dashboard-selectable-element'
+        )}
+        onPointerDown={onPointerDown}
+        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+      >
+        <VariableLabel variable={variable} layout={'vertical'} className={cx(isSelectable && styles.labelSelectable)} />
         <variable.Component model={variable} />
       </div>
     );
@@ -185,11 +205,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   verticalContainer: css({
     display: 'flex',
     flexDirection: 'column',
+    padding: theme.spacing(1),
   }),
   switchMenuContainer: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
   switchControl: css({
     '& > div': {

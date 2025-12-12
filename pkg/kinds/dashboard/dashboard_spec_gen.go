@@ -834,6 +834,8 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Determine whether regex applies to variable value or display text
+	RegexApplyTo *VariableRegexApplyTo `json:"regexApplyTo,omitempty"`
 	// Additional static options for query variable
 	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
 	// Ordering of static options in relation to options returned from data source for query variable
@@ -940,6 +942,15 @@ const (
 	VariableSortAlphabeticalCaseInsensitiveDesc VariableSort = 6
 	VariableSortNaturalAsc                      VariableSort = 7
 	VariableSortNaturalDesc                     VariableSort = 8
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+type VariableRegexApplyTo string
+
+const (
+	VariableRegexApplyToValue VariableRegexApplyTo = "value"
+	VariableRegexApplyToText  VariableRegexApplyTo = "text"
 )
 
 // Contains the list of annotations that are associated with the dashboard.

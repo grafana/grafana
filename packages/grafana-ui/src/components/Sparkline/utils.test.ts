@@ -114,6 +114,13 @@ describe('Get y range', () => {
     config: {},
     state: { range: { min: -2, max: -2, delta: 0 } },
   };
+  const decimalsCloseYField: Field = {
+    name: 'y',
+    values: [2, 1.999999999999999, 2.000000000000001, 2, 2],
+    type: FieldType.number,
+    config: {},
+    state: { range: { min: 1.999999999999999, max: 2.000000000000001, delta: 0 } },
+  };
   const xField: Field = {
     name: 'x',
     values: [1000, 2000, 3000, 4000, 5000],
@@ -154,12 +161,12 @@ describe('Get y range', () => {
     {
       description: 'straight line',
       field: straightLineYField,
-      expected: [0, 4],
+      expected: [2, 4],
     },
     {
       description: 'straight line, negative values',
       field: straightLineNegYField,
-      expected: [-4, 0],
+      expected: [-4, -2],
     },
     {
       description: 'straight line with config min and max',
@@ -171,8 +178,13 @@ describe('Get y range', () => {
       field: { ...straightLineYField, config: { noValue: '0' } },
       expected: [0, 2],
     },
+    {
+      description: 'long decimals which are nearly equal and result in a functional delta of 0',
+      field: decimalsCloseYField,
+      expected: [2, 4],
+    },
   ])(`should return correct range for $description`, ({ field, expected }) => {
-    const actual = getYRange(field, getAlignedFrame(field));
+    const actual = getYRange(getAlignedFrame(field));
     expect(actual).toEqual(expected);
     expect(actual[0]).toBeLessThan(actual[1]!);
   });
