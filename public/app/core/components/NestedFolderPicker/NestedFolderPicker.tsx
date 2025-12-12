@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
@@ -35,6 +36,9 @@ export interface NestedFolderPickerProps {
 
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
+
+  /* Exclude managed folders (e.g., Git-synced folders) from the picker */
+  excludeManaged?: boolean;
 
   /* Start tree from this folder instead of root */
   rootFolderUID?: string;
@@ -75,6 +79,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
+  excludeManaged = false,
   rootFolderUID,
   rootFolderItem,
   permission = 'edit',
@@ -231,7 +236,7 @@ export function NestedFolderPicker({
 
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal
-    if (!showRootFolder || excludeUIDs?.length) {
+    if (!showRootFolder || excludeUIDs?.length || excludeManaged) {
       flatTree = flatTree.filter((item) => {
         if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
           return false;
@@ -241,12 +246,16 @@ export function NestedFolderPicker({
           return false;
         }
 
+        if (excludeManaged && 'managedBy' in item.item && item.item.managedBy === ManagerKind.Repo) {
+          return false;
+        }
+
         return true;
       });
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, excludeManaged, isBrowsing, searchResults?.items, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

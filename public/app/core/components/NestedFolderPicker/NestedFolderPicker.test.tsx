@@ -122,6 +122,30 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
   });
 
+  it('hides managed folders when excludeManaged is true', async () => {
+    const { user } = render(<NestedFolderPicker excludeManaged={true} onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await user.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    // Managed folders (Git-synced) should not be visible
+    expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
+  });
+
+  it('shows managed folders when excludeManaged is false', async () => {
+    const { user } = render(<NestedFolderPicker excludeManaged={false} onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await user.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    // All folders should be visible when excludeManaged is false
+    expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
+  });
+
   it('by default only shows items the user can edit', async () => {
     const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
 
