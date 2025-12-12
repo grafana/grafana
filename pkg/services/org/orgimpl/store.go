@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -53,6 +54,7 @@ type sqlStore struct {
 	//TODO: moved to service
 	log     log.Logger
 	deletes []string
+	cfg     *setting.Cfg
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -558,6 +560,21 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			}
 			whereConditions = append(whereConditions, acFilter.Where)
 			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.ExcludeHiddenUsers && (query.User == nil || !query.User.GetIsGrafanaAdmin()) {
+			hiddenUsers := make([]any, 0)
+			for user := range ss.cfg.HiddenUsers {
+				if query.User != nil && user == query.User.GetLogin() {
+					continue
+				}
+				hiddenUsers = append(hiddenUsers, user)
+			}
+
+			if len(hiddenUsers) > 0 {
+				whereConditions = append(whereConditions, "u.login NOT IN (?"+strings.Repeat(",?", len(hiddenUsers)-1)+")")
+				whereParams = append(whereParams, hiddenUsers...)
+			}
 		}
 
 		if query.Query != "" {
