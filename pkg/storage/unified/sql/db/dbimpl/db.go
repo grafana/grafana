@@ -79,20 +79,46 @@ func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) 
 
 	// once we have a connection, begin the transaction
 	tx, err = conn.BeginTx(ctx, opts)
-	if err == nil {
-		return sqlTx{tx}, nil
+	if err != nil {
+		if closeErr := conn.Close(); closeErr != nil {
+			d.log.Error("Failed to close connection after BeginTx error", "error", closeErr)
+		}
+		return nil, err
 	}
 
-	return nil, err
+	return sqlTx{Tx: tx, conn: conn}, nil
 }
 
+// sqlTx wraps sql.Tx to add connection management
+// since we are manually acquiring the connection in BeginTx() we need to also manually close it after Commit/Rollback
 type sqlTx struct {
 	*sql.Tx
+	conn *sql.Conn
 }
 
 // NewTx wraps an existing *sql.Tx with sqlTx
 func NewTx(tx *sql.Tx) db.Tx {
-	return sqlTx{tx}
+	return sqlTx{Tx: tx}
+}
+
+func (tx sqlTx) Commit() error {
+	err := tx.Tx.Commit()
+	if tx.conn != nil {
+		if err = tx.conn.Close(); err != nil {
+			return err
+		}
+	}
+	return err
+}
+
+func (tx sqlTx) Rollback() error {
+	err := tx.Tx.Rollback()
+	if tx.conn != nil {
+		if err = tx.conn.Close(); err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
