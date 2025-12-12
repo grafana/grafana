@@ -9,12 +9,6 @@ weight: 60
 
 Use a single Grafana instance with multiple Repository resources, one per team. Each team manages its own dashboards while sharing Grafana.
 
-## Architecture
-
-```text
-...existing diagram from Scenario 6...
-```
-
 ## Use it for
 
 - **Team autonomy**: Different teams manage their own dashboards independently.
@@ -22,6 +16,12 @@ Use a single Grafana instance with multiple Repository resources, one per team. 
 - **Resource efficiency**: Multiple teams share Grafana infrastructure.
 - **Cost optimization**: You reduce infrastructure costs while maintaining team separation.
 - **Collaboration**: Teams can view each other’s dashboards while managing their own.
+
+## Architecture
+
+```text
+...existing diagram from Scenario 6...
+```
 
 ## Repository structure
 

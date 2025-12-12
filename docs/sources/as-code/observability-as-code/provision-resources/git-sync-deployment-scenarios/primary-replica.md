@@ -9,12 +9,6 @@ weight: 40
 
 Use a primary Grafana instance and one or more replicas synchronized with the same Git location to enable failover.
 
-## Architecture
-
-```text
-...existing diagram from Scenario 4...
-```
-
 ## Use it for
 
 - **Automatic failover**: You need service continuity when the primary instance fails.
@@ -22,6 +16,12 @@ Use a primary Grafana instance and one or more replicas synchronized with the sa
 - **Simple HA setup**: You want high availability without the complexity of active–active.
 - **Maintenance windows**: You perform updates while another instance serves traffic.
 - **Business continuity**: Dashboard access can't tolerate downtime.
+
+## Architecture
+
+```text
+...existing diagram from Scenario 4...
+```
 
 ## Repository structure
 

@@ -9,12 +9,6 @@ weight: 30
 
 Deploy multiple Grafana instances across regions. Synchronize them with the same Git location to ensure consistent dashboards everywhere.
 
-## Architecture
-
-```text
-...existing diagram from Scenario 3...
-```
-
 ## Use it for
 
 - **Geographic distribution**: You deploy Grafana close to users in different regions.
@@ -22,6 +16,12 @@ Deploy multiple Grafana instances across regions. Synchronize them with the same
 - **Data sovereignty**: You keep dashboard data in specific regions.
 - **High availability**: You need dashboard availability across regions.
 - **Consistent experience**: All users see the same dashboards regardless of region.
+
+## Architecture
+
+```text
+...existing diagram from Scenario 3...
+```
 
 ## Repository structure
 

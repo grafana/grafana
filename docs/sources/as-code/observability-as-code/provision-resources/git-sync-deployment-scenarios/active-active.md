@@ -9,12 +9,6 @@ weight: 50
 
 Run multiple active Grafana instances behind a load balancer. All instances sync from the same Git location.
 
-## Architecture
-
-```text
-...existing diagram from Scenario 5...
-```
-
 ## Use it for
 
 - **High traffic**: Your deployment needs to handle significant user load.
@@ -22,6 +16,12 @@ Run multiple active Grafana instances behind a load balancer. All instances sync
 - **Maximum availability**: You need service continuity during maintenance or failures.
 - **Scalability**: You want to add instances as load increases.
 - **Performance**: Users need fast response times under heavy load.
+
+## Architecture
+
+```text
+...existing diagram from Scenario 5...
+```
 
 ## Repository structure
 

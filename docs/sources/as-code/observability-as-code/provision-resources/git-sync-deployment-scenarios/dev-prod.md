@@ -9,18 +9,18 @@ weight: 20
 
 Use separate Grafana instances for development and production. Each syncs with different Git locations to test dashboards before production.
 
-## Architecture
-
-```text
-...existing code block diagram from Scenario 2...
-```
-
 ## Use it for
 
 - **Staged deployments**: You need to test dashboard changes before production deployment.
 - **Change control**: You require approvals before dashboards reach production.
 - **Quality assurance**: You verify dashboard functionality in a non-production environment.
 - **Risk mitigation**: You minimize the risk of breaking production dashboards.
+
+## Architecture
+
+```text
+...existing code block diagram from Scenario 2...
+```
 
 ## Repository structure
 
