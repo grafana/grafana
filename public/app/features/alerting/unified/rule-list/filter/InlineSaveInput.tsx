@@ -24,7 +24,7 @@ interface FormValues {
 
 export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveInputProps) {
   const styles = useStyles2(getStyles);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -99,6 +99,7 @@ export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveI
           />
 
           {/* Check icon - aligned with action menu */}
+          {/* Note: IconButton doesn't forward type="submit", so we use onClick with handleSubmit */}
           <IconButton
             name="check"
             aria-label={t('alerting.saved-searches.save-button', 'Save')}
@@ -107,7 +108,7 @@ export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveI
             className={styles.successIcon}
             size="md"
             variant="secondary"
-            type="submit"
+            onClick={handleSubmit(onSubmit)}
           />
         </Stack>
       </form>

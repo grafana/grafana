@@ -128,14 +128,17 @@ export function SavedSearchItem({
           disabled={isDisabled}
         />
 
-        {/* Action menu */}
-        <ActionMenu
-          isDefault={search.isDefault}
-          isDisabled={isDisabled}
-          onSetDefault={onSetDefault}
-          onRename={onStartRename}
-          onDelete={onStartDelete}
-        />
+        {/* Action menu - stop propagation to prevent parent Dropdown from closing */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <ActionMenu
+            isDefault={search.isDefault}
+            isDisabled={isDisabled}
+            onSetDefault={onSetDefault}
+            onRename={onStartRename}
+            onDelete={onStartDelete}
+          />
+        </div>
       </Stack>
     </div>
   );

@@ -177,6 +177,7 @@ export function SavedSearches({
 
   // Refs
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Sort saved searches: default first, then alphabetically
   const sortedSearches = useMemo(() => {
@@ -188,25 +189,33 @@ export function SavedSearches({
     return defaultSearch ? [defaultSearch, ...others] : others;
   }, [savedSearches]);
 
-  // Focus "Save current search" button when dropdown opens
+  // Focus dialog when dropdown opens to enable keyboard navigation
   useEffect(() => {
-    if (isOpen && activeAction === 'idle' && saveButtonRef.current) {
+    if (isOpen && activeAction === 'idle') {
       // Small delay to ensure the dropdown is rendered
       const timer = setTimeout(() => {
-        saveButtonRef.current?.focus();
+        // Focus the dialog to capture keyboard events (like Escape)
+        // We focus the dialog instead of the save button because the button may be disabled
+        dialogRef.current?.focus();
       }, 50);
       return () => clearTimeout(timer);
     }
     return undefined;
   }, [isOpen, activeAction]);
 
-  // Handle Escape key: cancel active action first, then let Dropdown close
+  // Handle Escape key: cancel active action first, or close dropdown if no action is active
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape' && activeAction !== 'idle') {
-        // Cancel the active action and prevent Dropdown from closing
-        event.stopPropagation();
-        dispatch({ type: 'CANCEL_ACTION' });
+      if (event.key === 'Escape') {
+        if (activeAction !== 'idle') {
+          // Cancel the active action and prevent Dropdown from closing
+          event.stopPropagation();
+          dispatch({ type: 'CANCEL_ACTION' });
+        } else {
+          // No active action - close the dropdown
+          // (Grafana UI Dropdown may not handle Escape in all environments)
+          dispatch({ type: 'CLOSE' });
+        }
       }
     },
     [activeAction]
@@ -301,6 +310,7 @@ export function SavedSearches({
   const overlay = (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
+      ref={dialogRef}
       className={styles.dropdown}
       role="dialog"
       aria-label={t('alerting.saved-searches.dropdown-aria-label', 'Saved searches')}
