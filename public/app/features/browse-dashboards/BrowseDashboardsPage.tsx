@@ -178,9 +178,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       }
     >
       <Page.Contents className={styles.pageContents}>
+        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         {/* only show recently viewed dashboards when in root */}
         {!folderUID && <RecentlyViewedDashboards />}
-        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
