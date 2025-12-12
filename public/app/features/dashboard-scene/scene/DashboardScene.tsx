@@ -384,10 +384,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false, isDirty: false });
+      this.setState({ ...this._initialState, isEditing: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false, isDirty: false });
+      this.setState({ isEditing: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
