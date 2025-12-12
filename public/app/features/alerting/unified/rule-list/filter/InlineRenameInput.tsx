@@ -32,7 +32,7 @@ export function InlineRenameInput({
   excludeId,
 }: InlineRenameInputProps) {
   const styles = useStyles2(getStyles);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -109,6 +109,7 @@ export function InlineRenameInput({
           />
 
           {/* Check icon - confirm rename */}
+          {/* Note: IconButton doesn't forward type="submit", so we use onClick with handleSubmit */}
           <IconButton
             name="check"
             aria-label={t('alerting.saved-searches.rename-button', 'Rename')}
@@ -117,7 +118,7 @@ export function InlineRenameInput({
             tooltip={t('alerting.saved-searches.rename-button', 'Rename')}
             className={styles.successIcon}
             variant="secondary"
-            type="submit"
+            onClick={handleSubmit(onSubmit)}
           />
         </Stack>
       </form>
