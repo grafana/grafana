@@ -17,7 +17,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
-import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -27,6 +27,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { buildVizPanel } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
@@ -37,6 +38,7 @@ import {
   getQueryRunnerFor,
   isLibraryPanel,
 } from '../utils/utils';
+import { isPanelKindV2 } from '../v2schema/validation';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -45,6 +47,7 @@ export interface InspectJsonTabState extends SceneObjectState {
   source: ShowContent;
   jsonText: string;
   onClose: () => void;
+  error?: string;
 }
 
 export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
@@ -102,38 +105,65 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   }
 
   public onChangeSource = (value: SelectableValue<ShowContent>) => {
-    this.setState({ source: value.value!, jsonText: getJsonText(value.value!, this.state.panelRef.resolve()) });
+    this.setState({
+      source: value.value!,
+      jsonText: getJsonText(value.value!, this.state.panelRef.resolve()),
+      error: undefined,
+    });
   };
 
   public onApplyChange = () => {
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(panel);
-    const jsonObj = JSON.parse(this.state.jsonText);
-
-    const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
-    const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-    if (!(panel.parent instanceof DashboardGridItem)) {
-      console.error('Cannot update state of panel', panel, gridItem);
+    let jsonObj: unknown;
+    try {
+      jsonObj = JSON.parse(this.state.jsonText);
+    } catch (e) {
+      this.setState({
+        error: t('dashboard-scene.inspect-json-tab.error-invalid-json', 'Invalid JSON'),
+      });
       return;
     }
 
-    this.state.onClose();
+    if (isDashboardV2Spec(dashboard.getSaveModel())) {
+      if (!isPanelKindV2(jsonObj)) {
+        this.setState({
+          error: t(
+            'dashboard-scene.inspect-json-tab.error-invalid-v2-panel',
+            'Panel JSON did not pass validation. Please check the JSON and try again.'
+          ),
+        });
+        return;
+      }
+      const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
+      panel.setState(vizPanel.state);
+      this.state.onClose();
+    } else {
+      const panelModel = new PanelModel(jsonObj);
+      const gridItem = buildGridItemForPanel(panelModel);
+      const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+      if (!(panel.parent instanceof DashboardGridItem)) {
+        console.error('Cannot update state of panel', panel, gridItem);
+        return;
+      }
+
+      this.state.onClose();
+
+      if (!dashboard.state.isEditing) {
+        dashboard.onEnterEditMode();
+      }
+
+      panel.parent.setState(newState);
+
+      //Report relevant updates
+      reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+        panel_type_changed: panel.state.pluginId !== panelModel.type,
+        panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
+        panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
+        panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
+      });
     }
-
-    panel.parent.setState(newState);
-
-    //Report relevant updates
-    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
-      panel_type_changed: panel.state.pluginId !== panelModel.type,
-      panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
-      panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
-      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
-    });
   };
 
   public onCodeEditorBlur = (value: string) => {
@@ -152,11 +182,6 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return false;
     }
 
-    // V2 dashboard panels are not editable from the inspect
-    if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
-      return false;
-    }
-
     // Only support normal grid items for now and not repeated items
     if (panel.parent instanceof DashboardGridItem && panel.parent.isRepeated()) {
       return false;
@@ -170,14 +195,14 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 }
 
 function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>) {
-  const { source: show, jsonText } = model.useState();
+  const { source: show, jsonText, error } = model.useState();
   const styles = useStyles2(getPanelInspectorStyles2);
   const options = model.getOptions();
 
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
           <Select
             inputId="select-source-dropdown"
             options={options}
@@ -191,6 +216,12 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
           </Button>
         )}
       </div>
+
+      {error && (
+        <Alert severity="error" title={t('dashboard-scene.inspect-json-tab.validation-error', 'Validation error')}>
+          <p>{error}</p>
+        </Alert>
+      )}
 
       <div className={styles.content}>
         <AutoSizer disableWidth>

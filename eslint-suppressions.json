@@ -1835,11 +1835,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
