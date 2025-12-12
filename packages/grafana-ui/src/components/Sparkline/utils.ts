@@ -8,6 +8,7 @@ import {
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
+  guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
   roundDecimals,
@@ -76,8 +77,6 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   min = Math.min(min!, field.config.min ?? Infinity);
   max = Math.max(max!, field.config.max ?? -Infinity);
 
-  // console.log({ min, max });
-
   // if noValue is set, ensure that it is included in the range as well
   const noValue = +field.config?.noValue!;
   if (!Number.isNaN(noValue)) {
@@ -85,9 +84,11 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
     max = Math.max(max, noValue);
   }
 
+  const decimals = field.config.decimals ?? Math.max(guessDecimals(min), guessDecimals(max));
+
   // call roundDecimals to mirror what is going to eventually happen in uplot
-  let roundedMin = roundDecimals(min, field.config.decimals ?? 0);
-  let roundedMax = roundDecimals(max, field.config.decimals ?? 0);
+  let roundedMin = roundDecimals(min, decimals);
+  let roundedMax = roundDecimals(max, decimals);
 
   // if the rounded min and max are different,
   // we can return the real min and max.
@@ -102,11 +103,9 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
     roundedMax = 1;
   } else if (roundedMin < 0) {
     // both are negative
-    // max = 0;
     roundedMin *= 2;
   } else {
     // both are positive
-    // min = 0;
     roundedMax *= 2;
   }
 

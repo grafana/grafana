@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -1287,5 +1288,65 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		updatedRules := getRecordedUpdatedRules(ruleStore)
 		require.Empty(t, updatedRules)
+	})
+
+	t.Run("should reject update when folder is managed by ManagerKindRepo", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		// Create a managed folder
+		managedFolder := randFolder()
+		managedFolder.ManagedBy = utils.ManagerKindRepo
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], managedFolder)
+
+		// Create some rules in the managed folder
+		ruleGen := models.RuleGen.With(
+			models.RuleGen.WithOrgID(orgID),
+			models.RuleGen.WithNamespaceUID(managedFolder.UID),
+		)
+		rules := ruleGen.GenerateManyRef(2)
+		ruleStore.PutRule(context.Background(), rules...)
+
+		permissions := createPermissionsForRules(rules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, managedFolder.UID)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
+
+		// Verify no rules were updated
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
+}
+
+func TestRoutePostNameRulesConfig(t *testing.T) {
+	t.Run("should reject creation when folder is managed by ManagerKindRepo", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+
+		// Create a managed folder
+		managedFolder := randFolder()
+		managedFolder.ManagedBy = utils.ManagerKindRepo
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], managedFolder)
+
+		permissions := map[int64]map[string][]string{
+			orgID: {
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {dashboards.ActionFoldersRead},
+			},
+		}
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createService(ruleStore, nil)
+		response := svc.RoutePostNameRulesConfig(requestCtx, apimodels.PostableRuleGroupConfig{
+			Name: "test-group",
+		}, managedFolder.UID)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
 	})
 }

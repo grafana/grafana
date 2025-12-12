@@ -8,16 +8,17 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
-import { isCurrentPath, normalizePath } from './scopeNavgiationUtils';
+import { isCurrentPath, normalizePath, serializeFolderPath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
   subScope?: string;
   to: string;
   title: string;
   id: string;
+  subScopePath?: string[];
 }
 
-export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
@@ -25,7 +26,7 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (subScope) {
       e.preventDefault(); // Prevent default Link navigation
 
@@ -39,11 +40,18 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
       const searchParams = new URLSearchParams(url.search);
       if (!currentNavigationScope && currentScope) {
         searchParams.set('navigation_scope', currentScope);
-        services?.scopesDashboardsService?.setNavigationScope(currentScope);
+        await services?.scopesDashboardsService?.setNavigationScope(
+          currentScope,
+          undefined,
+          subScopePath && subScopePath.length > 0 ? subScopePath : undefined
+        );
       }
 
       // Update query params with the new subScope
       searchParams.set('scopes', subScope);
+
+      // Set nav_scope_path to the subScopePath
+      searchParams.set('nav_scope_path', subScopePath ? serializeFolderPath(subScopePath) : '');
       // Remove scope_node and scope_parent since we're changing to a subScope
       searchParams.delete('scope_node');
       searchParams.delete('scope_parent');

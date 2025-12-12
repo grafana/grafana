@@ -27,7 +27,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getSidebarState } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
@@ -245,7 +245,7 @@ export const LogListContextProvider = ({
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
-      fieldSelectorOpen: getSidebarState(logOptionsStorageKey),
+      fieldSelectorOpen: getFieldSelectorState(logOptionsStorageKey),
       showTime,
       showUniqueLabels,
       syntaxHighlighting,

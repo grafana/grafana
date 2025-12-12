@@ -84,6 +84,11 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top"><code>grafanactl</code></td>
+    <td>
+      A command-line tool that enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana's REST API. 
+  </tr>
+  <tr>
     <td style="vertical-align: top">mixin</td>
     <td>
       A mixin is a set of Grafana dashboards and Prometheus rules and alerts, written in Jsonnet and packaged together in a bundle.
