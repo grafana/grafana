@@ -74,17 +74,16 @@ Alternatively, you can configure a local file system instead of using GitHub. Re
 
 ## Enable required feature toggles
 
-To activate Git Sync in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+To activate Git Sync in Grafana, you need to enable the `provisioning` feature toggle. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
-To enable the required feature toggles:
+To enable the required feature toggle:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
-1. Locate or add a `[feature_toggles]` section. Add these values:
+1. Locate or add a `[feature_toggles]` section. Add this value:
 
    ```ini
    [feature_toggles]
    provisioning = true
-   kubernetesDashboards = true ; use k8s from browser
    ```
 
 1. Save the changes to the file and restart Grafana.
@@ -368,5 +367,6 @@ To learn more about using Git Sync:
 
 - [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
 - [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
 - [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 - [grafanactl documentation](https://grafana.github.io/grafanactl/)

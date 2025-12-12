@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
@@ -238,4 +239,13 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
+  await page.getByLabel('layout-selection-option-Auto grid').click();
+  // confirm layout change if applicable
+  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
+  if (confirmModal) {
+    await confirmModal.click();
+  }
 }
