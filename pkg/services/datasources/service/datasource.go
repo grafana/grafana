@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -817,13 +818,15 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 
 func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) (sdkhttpclient.TLSOptions, error) {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
-	var serverName string
+	var serverName, tlsClientCertFile, tlsClientKeyFile string
 
 	if ds.JsonData != nil {
 		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
 		serverName = ds.JsonData.Get("serverName").MustString()
+		tlsClientCertFile = ds.JsonData.Get("tlsClientCertFile").MustString()
+		tlsClientKeyFile = ds.JsonData.Get("tlsClientKeyFile").MustString()
 	}
 
 	opts := sdkhttpclient.TLSOptions{
@@ -843,6 +846,16 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) 
 		}
 
 		if tlsClientAuth {
+			if tlsClientCertFile != "" && tlsClientKeyFile != "" {
+				opts.GetClientCertificate = func(cri *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+					cert, err := tls.LoadX509KeyPair(tlsClientCertFile, tlsClientKeyFile)
+					if err != nil {
+						return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
+					}
+					return &cert, nil
+				}
+			}
+
 			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
 				if exists && len(val) > 0 {
 					opts.ClientCertificate = val
