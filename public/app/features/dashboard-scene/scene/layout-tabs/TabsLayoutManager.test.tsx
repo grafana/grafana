@@ -262,4 +262,57 @@ describe('TabsLayoutManager', () => {
       expect(manager.getVizPanels().length).toBe(1);
     });
   });
+
+  describe('createFromLayout', () => {
+    it('should convert rows with titles to tabs', () => {
+      const rowsLayout = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row 1' }), new RowItem({ title: 'Row 2' })],
+      });
+
+      const tabsManager = TabsLayoutManager.createFromLayout(rowsLayout);
+
+      expect(tabsManager.state.tabs).toHaveLength(2);
+      expect(tabsManager.state.tabs[0].state.title).toBe('Row 1');
+      expect(tabsManager.state.tabs[1].state.title).toBe('Row 2');
+    });
+
+    it('should use default title when row has empty title', () => {
+      const rowsLayout = new RowsLayoutManager({
+        rows: [new RowItem({ title: '' })],
+      });
+
+      const tabsManager = TabsLayoutManager.createFromLayout(rowsLayout);
+
+      expect(tabsManager.state.tabs).toHaveLength(1);
+      expect(tabsManager.state.tabs[0].state.title).toBe('New tab');
+    });
+
+    it('should generate unique titles for multiple rows with empty titles', () => {
+      const rowsLayout = new RowsLayoutManager({
+        rows: [new RowItem({ title: '' }), new RowItem({ title: '' }), new RowItem({ title: '' })],
+      });
+
+      const tabsManager = TabsLayoutManager.createFromLayout(rowsLayout);
+
+      expect(tabsManager.state.tabs).toHaveLength(3);
+      expect(tabsManager.state.tabs[0].state.title).toBe('New tab');
+      expect(tabsManager.state.tabs[1].state.title).toBe('New tab 1');
+      expect(tabsManager.state.tabs[2].state.title).toBe('New tab 2');
+    });
+
+    it('should generate unique titles when mixing empty and existing titles', () => {
+      const rowsLayout = new RowsLayoutManager({
+        rows: [
+          new RowItem({ title: 'New row' }), // existing title that matches default
+          new RowItem({ title: '' }), // empty, should get unique title
+        ],
+      });
+
+      const tabsManager = TabsLayoutManager.createFromLayout(rowsLayout);
+
+      expect(tabsManager.state.tabs).toHaveLength(2);
+      expect(tabsManager.state.tabs[0].state.title).toBe('New row');
+      expect(tabsManager.state.tabs[1].state.title).toBe('New tab');
+    });
+  });
 });
