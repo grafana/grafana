@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/go-kit/log v0.2.1
-	github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba
+	github.com/grafana/alerting v0.0.0-20251212143239-491433b332b7
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4
 	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
