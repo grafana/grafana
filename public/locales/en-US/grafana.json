@@ -7137,6 +7137,9 @@
       "time-range-label": "Lock time range"
     }
   },
+  "embedded-panel": {
+    "powered-by": "Powered by"
+  },
   "empty-list-cta": {
     "pro-tip": "ProTip: {{proTip}}"
   },
