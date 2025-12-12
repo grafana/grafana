@@ -147,10 +147,7 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
           <EmptyListCTA
             onClick={onToggleAdding}
             buttonIcon="users-alt"
-            title={t(
-              'teams.team-group-sync.title-there-external-groups',
-              'There are no external groups to sync with'
-            )}
+            title={t('teams.team-group-sync.title-there-external-groups', 'There are no external groups to sync with')}
             buttonTitle="Add group"
             proTip={headerTooltip}
             proTipLinkTitle="Learn more"

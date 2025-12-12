@@ -21,9 +21,9 @@ const setup = (groups: TeamGroup[] = []) => {
   const retry = jest.fn();
   mockUseGetTeamGroups.mockReturnValue({ value: groups, retry });
   const addTeamGroup = jest.fn();
-  mockUseAddTeamGroup.mockReturnValue([{}, addTeamGroup]);
+  mockUseAddTeamGroup.mockReturnValue([addTeamGroup, {}]);
   const removeTeamGroup = jest.fn();
-  mockUseRemoveTeamGroup.mockReturnValue([{}, removeTeamGroup]);
+  mockUseRemoveTeamGroup.mockReturnValue([removeTeamGroup, {}]);
 
   return {
     ...render(<TeamGroupSync teamUid="team-1" isReadOnly={false} />),
