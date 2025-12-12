@@ -1663,7 +1663,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",
