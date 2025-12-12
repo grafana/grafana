@@ -39,7 +39,12 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
   // - hideFromTabs is false, OR
   // - Interactive learning plugin is not installed, OR
   // - Interactive learning component is not registered (plugin may exist but chose not to register)
-  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined || componentId === undefined) {
+  if (
+    isSmallScreen ||
+    !enrichedHelpNode.hideFromTabs ||
+    interactiveLearningPluginId === undefined ||
+    componentId === undefined
+  ) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <ToolbarButton
