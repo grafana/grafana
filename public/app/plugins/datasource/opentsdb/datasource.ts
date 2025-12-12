@@ -13,7 +13,7 @@ import {
   map as _map,
   toPairs,
 } from 'lodash';
-import { lastValueFrom, merge, Observable, of } from 'rxjs';
+import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
@@ -290,6 +290,10 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
   }
 
   _performSuggestQuery(query: string, type: string) {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('api/suggest', { type, q: query, max: this.lookupLimit }));
+    }
+
     return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).pipe(
       map((result) => {
         return result.data;
