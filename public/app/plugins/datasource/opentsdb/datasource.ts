@@ -306,6 +306,10 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
       return of([]);
     }
 
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('/api/search/lookup', { type: 'keyvalue', metric, keys }));
+    }
+
     const keysArray = keys.split(',').map((key) => {
       return key.trim();
     });
@@ -335,6 +339,10 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
   _performMetricKeyLookup(metric: string) {
     if (!metric) {
       return of([]);
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('/api/search/lookup', { type: 'key', metric }));
     }
 
     return this._get('/api/search/lookup', { m: metric, limit: 1000 }).pipe(
@@ -450,6 +458,11 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
       return this.aggregatorsPromise;
     }
 
+    if (config.featureToggles.opentsdbBackendMigration) {
+      this.aggregatorsPromise = this.getResource('/api/aggregators');
+      return this.aggregatorsPromise;
+    }
+
     this.aggregatorsPromise = lastValueFrom(
       this._get('/api/aggregators').pipe(
         map((result) => {
@@ -465,6 +478,11 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
 
   getFilterTypes() {
     if (this.filterTypesPromise) {
+      return this.filterTypesPromise;
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      this.filterTypesPromise = this.getResource('/api/config/filters');
       return this.filterTypesPromise;
     }
 
