@@ -566,7 +566,6 @@ export const LogsPanel = ({
           logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
-          onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
