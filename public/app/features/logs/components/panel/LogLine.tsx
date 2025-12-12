@@ -17,7 +17,7 @@ import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange 
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_TIME_FIELD_NAME } from '../LogDetailsBody';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
@@ -391,6 +391,10 @@ const DisplayedFields = ({
   return displayedFields.map((field) => {
     if (field === LOG_LINE_BODY_FIELD_NAME) {
       return <LogLineBody log={log} key={field} styles={styles} />;
+    }
+    // Hide Time field - it's already rendered via showTime in the parent Log component
+    if (field === TABLE_TIME_FIELD_NAME) {
+      return null;
     }
     if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
