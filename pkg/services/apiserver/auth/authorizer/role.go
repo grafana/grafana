@@ -19,6 +19,7 @@ var orgRoleNoneAsViewerAPIGroups = []string{
 
 type roleAuthorizer struct{}
 
+// Deprecated: NewRoleAuthorizer exists for apps that were launched with simplistic authorization requirements. Consider using NewResourceAuthorizer instead.
 func NewRoleAuthorizer() *roleAuthorizer {
 	return &roleAuthorizer{}
 }
