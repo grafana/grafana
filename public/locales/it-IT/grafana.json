@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Origini tenant"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Mostra {{visibleItems}} di {{totalItems}} istanze",
-      "button-show-all_one": "Mostra tutte le {{totalItems}} istanze di avviso",
-      "button-show-all_other": "Mostra tutte le {{totalItems}} istanze di avviso"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "Rimuovi {{typeName}}",
       "row-title": "",
       "switch-layout": "Cambia layout",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5462,6 +5473,12 @@
         "label": "Modifica",
         "tooltip": "Entra in modalità di modifica"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendi modificabile",
         "tooltip": "Questo dashboard è stato contrassegnato come di sola lettura"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Annulla il pannello",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifica lo schema v2 della dashboard"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entra in modalità di modifica"
-          },
-          "exit": {
-            "label": "Esci dalla modalità di modifica"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendi modificabile",
@@ -5888,6 +5897,17 @@
       "label-value": "Valore",
       "placeholder-your-metric-prefix": "Il tuo prefisso della metrica"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
       "name-values-separated-comma": "Valori separati da virgola",
@@ -6259,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Facoltativo, se desideri estrarre parte di un nome di serie o di un segmento di nodo della metrica.",
+      "description-regex-apply-to": "",
       "label-data-source": "Sorgente dati",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Ordinamento opzioni statiche",
       "label-target-data-source": "Origine dati di destinazione",
       "label-use-static-options": "Usa opzioni statiche",
       "name-regex": "Regex",
       "query-options": "Opzioni query",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Seleziona opzioni",
       "static-options-legend": "Opzioni statiche"
     },
@@ -8252,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8835,13 @@
       "aria-label-default": "Scegli un colore",
       "aria-label-selected-color": "Colore {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Elimina",
       "cancel": "Annulla",
@@ -8998,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ridurre tutte le righe",
       "aria-label-expand-all": "Espandi tutte le righe",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Attiva/disattiva riga espansa",
       "tooltip-collapse-all": "Ridurre tutte le righe",
       "tooltip-expand-all": "Espandi tutte le righe"
@@ -9252,6 +9295,8 @@
       "actions-confirmation-label": "Messaggio di conferma",
       "actions-confirmation-message": "Fornisci un prompt descrittivo per confermare o annullare l'azione.",
       "footer-add-annotation": "Aggiungi annotazione",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Fai clic per {{actionTitle}}",
       "footer-click-to-navigate": "Fai clic per aprire {{linkTitle}}",
       "footer-filter-for-value": "Filtra per \"{{value}}\"",
@@ -11801,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configura l'accesso pubblico",
       "modal-title-set-up-required-features": "Configura le funzionalità necessarie",
       "step-description-copy-url": "Dall'output di ngrok, copia l'URL di inoltro https:// simile al seguente:",
-      "step-description-enable-feature-toggles": "Aggiungi queste impostazioni al tuo file custom.ini per abilitare le funzionalità necessarie:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Esegui questo comando per creare un tunnel sicuro per il tuo Grafana locale:",
       "step-description-update-grafana-config": "Aggiungi questo al tuo file custom.ini, sostituendo l'URL con il tuo URL ngrok effettivo:",
       "step-title-copy-url": "Copia il tuo URL pubblico",
@@ -12397,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

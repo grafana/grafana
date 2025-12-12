@@ -2326,8 +2326,10 @@
       "label-tenant-sources": "租户源"
     },
     "rule-details-matching-instances": {
-      "showing-count": "显示 {{visibleItems}} 个实例，共 {{totalItems}} 个",
-      "button-show-all_other": "显示所有 {{totalItems}} 个警报实例"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4762,6 +4764,8 @@
       "remove": "移除{{typeName}}",
       "row-title": "",
       "switch-layout": "切换布局",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5070,6 +5074,14 @@
         "layout": "布局"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5441,6 +5453,12 @@
         "label": "编辑",
         "tooltip": "进入编辑模式"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "设为可编辑",
         "tooltip": "此数据面板已被标记为只读"
@@ -5461,14 +5479,6 @@
         "discard-panel-new": "丢弃面板",
         "edit-dashboard-v2-schema": {
           "tooltip": "编辑数据面板 v2 架构"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "进入编辑模式"
-          },
-          "exit": {
-            "label": "退出编辑模式"
-          }
         },
         "enter-edit-mode": {
           "label": "设为可编辑",
@@ -5866,6 +5876,17 @@
       "label-value": "值",
       "placeholder-your-metric-prefix": "您的指标前缀"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "自定义选项",
       "name-values-separated-comma": "以逗号分隔的值",
@@ -6236,12 +6257,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "可选，如果您想要提取序列名称或指标节点段的一部分。",
+      "description-regex-apply-to": "",
       "label-data-source": "数据源",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "静态选项排序",
       "label-target-data-source": "目标数据源",
       "label-use-static-options": "使用静态选项",
       "name-regex": "正则表达式",
       "query-options": "查询选项",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "选择内容选项",
       "static-options-legend": "静态选项"
     },
@@ -8216,6 +8245,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8765,6 +8800,13 @@
       "aria-label-default": "选择颜色",
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "删除",
       "cancel": "取消",
@@ -8962,6 +9004,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "折叠所有行",
       "aria-label-expand-all": "展开所有行",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "切换行展开",
       "tooltip-collapse-all": "折叠所有行",
       "tooltip-expand-all": "展开所有行"
@@ -9216,6 +9260,8 @@
       "actions-confirmation-label": "确认消息",
       "actions-confirmation-message": "提供描述性提示以确认或取消操作。",
       "footer-add-annotation": "添加注释",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "点击以 {{actionTitle}}",
       "footer-click-to-navigate": "点击打开 {{linkTitle}}",
       "footer-filter-for-value": "筛选“{{value}}”",
@@ -11749,7 +11795,7 @@
       "modal-title-set-up-public-access": "设置公共访问",
       "modal-title-set-up-required-features": "设置所需功能",
       "step-description-copy-url": "从 ngrok 输出中，复制 https:// 转发 URL，如下所示：",
-      "step-description-enable-feature-toggles": "将这些设置添加到您的 custom.ini 文件以启用必要的功能：",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "运行此命令以创建指向本地 Grafana 的安全隧道：",
       "step-description-update-grafana-config": "将此添加到您的 custom.ini 文件，并将 URL 替换为您的实际 ngrok URL：",
       "step-title-copy-url": "复制您的公共 URL",
@@ -12344,13 +12390,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

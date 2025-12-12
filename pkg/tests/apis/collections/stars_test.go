@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -160,7 +161,7 @@ func TestIntegrationStars(t *testing.T) {
 							{
 								"group": "dashboard.grafana.app",
 								"kind":  "Dashboard",
-								"names": []string{"test-2", "aaa", "bbb"},
+								"names": []string{"test-2", "aaa", "aaa", "bbb"},
 							},
 						},
 					},
@@ -174,13 +175,17 @@ func TestIntegrationStars(t *testing.T) {
 			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
 			require.Equal(t, "Dashboard", resources[0].Kind)
 			require.ElementsMatch(t,
-				[]string{"aaa", "bbb", "test-2"}, // NOTE 2 stays, 3 removed, added aaa+bbb (and sorted!)
+				[]string{"test-2", "aaa", "bbb"}, // keeps the requested order, removing duplicates
 				resources[0].Names)
 
 			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.NoError(t, err)
 
 			after = typed(t, rspObj, &collections.Stars{})
+
+			// FIXME: when we remove legacy support this should not sort!
+			slices.Sort(after.Spec.Resource[0].Names)
+
 			jj, err := json.MarshalIndent(after.Spec, "", "  ")
 			require.NoError(t, err)
 			require.JSONEq(t, `{

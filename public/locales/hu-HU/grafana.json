@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Bérlői források"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{totalItems}}/{{visibleItems}} példány megjelenítése",
-      "button-show-all_one": "Mind a(z) {{totalItems}} riasztáspéldány megjelenítése",
-      "button-show-all_other": "Mind a(z) {{totalItems}} riasztáspéldány megjelenítése"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "{{typeName}} eltávolítása",
       "row-title": "",
       "switch-layout": "Kiosztás váltása",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Elrendezés"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5462,6 +5473,12 @@
         "label": "Szerkesztés",
         "tooltip": "Belépés a szerkesztési módba"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Legyen szerkeszthető",
         "tooltip": "Ez az irányítópult csak olvashatóként van megjelölve"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Panel elvetése",
         "edit-dashboard-v2-schema": {
           "tooltip": "Irányítópult v2 sémájának szerkesztése"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Belépés a szerkesztési módba"
-          },
-          "exit": {
-            "label": "Kilépés a szerkesztési módból"
-          }
         },
         "enter-edit-mode": {
           "label": "Legyen szerkeszthető",
@@ -5888,6 +5897,17 @@
       "label-value": "Érték",
       "placeholder-your-metric-prefix": "Az Ön metrikaelőtagja"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
@@ -6259,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opcionális, ha egy sorozatnév vagy metrikai csomópontszegmens egy részét szeretné kinyerni.",
+      "description-regex-apply-to": "",
       "label-data-source": "Adatforrás",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statikus opciók rendezése",
       "label-target-data-source": "Céladatforrás",
       "label-use-static-options": "Statikus opciók használata",
       "name-regex": "Reguláris kifejezés",
       "query-options": "Lekérdezési beállítások",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Kijelölés beállításai",
       "static-options-legend": "Statikus opciók"
     },
@@ -8252,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8835,13 @@
       "aria-label-default": "Válasszon színt",
       "aria-label-selected-color": "{{colorLabel}} szín"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Törlés",
       "cancel": "Mégse",
@@ -8998,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Minden sor összecsukása",
       "aria-label-expand-all": "Minden sor kibontása",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Sorkibontás váltása",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
@@ -9252,6 +9295,8 @@
       "actions-confirmation-label": "Megerősítési üzenet",
       "actions-confirmation-message": "Adjon meg egy leíró kérdést a művelet megerősítéséhez vagy visszavonásához.",
       "footer-add-annotation": "Jegyzet hozzáadása",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Kattintson ehhez: {{actionTitle}}",
       "footer-click-to-navigate": "Kattintson a következő megnyitásához: {{linkTitle}}",
       "footer-filter-for-value": "Szűrés „{{value}}” szerint",
@@ -11801,7 +11846,7 @@
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
       "modal-title-set-up-required-features": "Kötelező funkciók beállítása",
       "step-description-copy-url": "Az ngrok kimenetéből másolja ki a https:// átirányítási URL-címet, amely így néz ki:",
-      "step-description-enable-feature-toggles": "A szükséges funkciók engedélyezéséhez adja hozzá ezeket a beállításokat a custom.ini fájlhoz:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Futtassa ezt a parancsot egy biztonságos alagút létrehozásához a helyi Grafanához:",
       "step-description-update-grafana-config": "Adja hozzá ezt a custom.ini fájlhoz, lecserélve az URL-t a tényleges ngrok URL-címre:",
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
@@ -12397,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

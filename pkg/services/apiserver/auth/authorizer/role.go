@@ -19,7 +19,7 @@ var orgRoleNoneAsViewerAPIGroups = []string{
 
 type roleAuthorizer struct{}
 
-func newRoleAuthorizer() *roleAuthorizer {
+func NewRoleAuthorizer() *roleAuthorizer {
 	return &roleAuthorizer{}
 }
 

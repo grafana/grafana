@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -259,7 +258,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-	}, tracing.NewNoopTracerService(), nil)
+	}, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)

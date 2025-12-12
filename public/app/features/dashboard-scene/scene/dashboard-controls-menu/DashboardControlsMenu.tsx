@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
@@ -17,8 +17,6 @@ interface DashboardControlsMenuProps {
 }
 
 export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
-  const styles = useStyles2(getStyles);
-
   return (
     <Box
       minWidth={32}
@@ -29,7 +27,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       direction={'column'}
       borderRadius={'default'}
       backgroundColor={'primary'}
-      padding={1.5}
+      padding={1}
       gap={0.5}
       onClick={(e) => {
         // Normally, clicking the overlay closes the dropdown.
@@ -39,7 +37,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
     >
       {/* Variables */}
       {variables.map((variable, index) => (
-        <div className={cx({ [styles.menuItem]: index > 0 })} key={variable.state.key}>
+        <div key={variable.state.key}>
           <VariableValueSelectWrapper variable={variable} inMenu />
         </div>
       ))}
@@ -47,7 +45,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {/* Annotation layers */}
       {annotations.length > 0 &&
         annotations.map((layer, index) => (
-          <div className={cx({ [styles.menuItem]: variables.length > 0 || index > 0 })} key={layer.state.key}>
+          <div key={layer.state.key}>
             <DataLayerControl layer={layer} inMenu />
           </div>
         ))}
@@ -79,10 +77,7 @@ function MenuDivider() {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   divider: css({
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(1),
     padding: theme.spacing(0, 0.5),
-  }),
-  menuItem: css({
-    marginTop: theme.spacing(2),
   }),
 });

@@ -447,6 +447,7 @@ const (
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
+	ActionAlertingNotificationsTemplatesTest   = "alert.notifications.templates.test:write"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"

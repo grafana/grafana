@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Sources du locataire"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Affichage de {{visibleItems}} sur {{totalItems}} instances",
-      "button-show-all_one": "Afficher toutes les {{totalItems}} instances d’alerte",
-      "button-show-all_other": "Afficher toutes les {{totalItems}} instances d’alerte"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "Supprimer {{typeName}}",
       "row-title": "",
       "switch-layout": "Changer la disposition",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Mise en page"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5462,6 +5473,12 @@
         "label": "Modifier",
         "tooltip": "Entrer dans le mode édition"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendre modifiable",
         "tooltip": "Ce tableau de bord a été marqué comme étant en lecture seule"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Ignorer le panneau",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifier le schéma du tableau de bord v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrer dans le mode édition"
-          },
-          "exit": {
-            "label": "Quitter le mode d’édition"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendre modifiable",
@@ -5888,6 +5897,17 @@
       "label-value": "Valeur",
       "placeholder-your-metric-prefix": "Votre préfixe de métrique"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
       "name-values-separated-comma": "Valeurs séparées par des virgules",
@@ -6259,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Facultatif, si vous souhaitez extraire une partie d’un nom de série ou d’un segment de nœud de métrique.",
+      "description-regex-apply-to": "",
       "label-data-source": "Source de données",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Tri des options statiques",
       "label-target-data-source": "Source de données cible",
       "label-use-static-options": "Utiliser des options statiques",
       "name-regex": "Expression régulière",
       "query-options": "Options de recherche",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Options de sélection",
       "static-options-legend": "Options statiques"
     },
@@ -8252,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8835,13 @@
       "aria-label-default": "Choisir une couleur",
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Supprimer",
       "cancel": "Annuler",
@@ -8998,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Réduire toutes les lignes",
       "aria-label-expand-all": "Développer toutes les lignes",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Basculer la ligne développée",
       "tooltip-collapse-all": "Réduire toutes les lignes",
       "tooltip-expand-all": "Développer toutes les lignes"
@@ -9252,6 +9295,8 @@
       "actions-confirmation-label": "Message de confirmation",
       "actions-confirmation-message": "Fournissez une invite descriptive pour confirmer ou annuler l'action.",
       "footer-add-annotation": "Ajouter une annotation",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Cliquez pour {{actionTitle}}",
       "footer-click-to-navigate": "Cliquez pour ouvrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrer par « {{value}} »",
@@ -11801,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configurer l’accès public",
       "modal-title-set-up-required-features": "Configurer les fonctionnalités requises",
       "step-description-copy-url": "À partir de la sortie ngrok, copiez l’URL de redirection https:// qui ressemble à ceci :",
-      "step-description-enable-feature-toggles": "Ajoutez ces paramètres à votre fichier custom.ini pour activer les fonctionnalités nécessaires :",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Exécutez cette commande pour créer un tunnel sécurisé vers votre Grafana local :",
       "step-description-update-grafana-config": "Ajoutez ceci à votre fichier custom.ini, en remplaçant l’URL par votre URL ngrok réelle :",
       "step-title-copy-url": "Copier l’URL publique",
@@ -12397,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
