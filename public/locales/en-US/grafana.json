@@ -10724,7 +10724,6 @@
       "title": "New"
     },
     "new-dashboard": {
-      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -12634,7 +12633,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",
