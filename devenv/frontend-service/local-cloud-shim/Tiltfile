@@ -1,35 +1,17 @@
-# --- Frontend Build (One-time)
+# --- Frontend Build (One-time, no watch)
 local_resource(
   'frontend-assets',
   cmd='yarn install && yarn dev',
   dir='../../..',
-  deps=[
-    '../../../public/app',
-    '../../../packages',
-    '../../../scripts/webpack',
-    '../../../tsconfig.json',
-    '../../../package.json',
-    '../../../yarn.lock',
-  ],
+  allow_parallel=True,
   labels=["local"]
 )
 
-# --- Backend Build
+# --- Backend Build (One-time, no watch)
 local_resource(
   'backend-build',
   cmd='mkdir -p build && bash ./build-grafana.sh',
   dir='..',
-  deps=[
-    '../../../pkg',
-    '../../../apps',
-    '../../../kinds',
-    '../../../kindsv2',
-    '../../../local',
-    '../../../scripts',
-    '../../../conf',
-    '../../../go.sum',
-    '../../../go.mod',
-  ],
   allow_parallel=True,
   labels=["local"]
 )
@@ -45,5 +27,6 @@ dc_resource("proxy",
 dc_resource("frontend-service",
   resource_deps=["frontend-assets", "backend-build"],
   labels=["services"],
+  trigger_mode = TRIGGER_MODE_MANUAL
 )
 

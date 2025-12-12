@@ -22,7 +22,14 @@
     "helpFlags1": 0,
     "hasEditPermissionInFolders": false,
     "authenticatedBy": "",
-    "permissions": {},
+    "permissions": {
+      "datasources:explore": true,
+      "datasources:query": true,
+      "datasources:read": true,
+      "datasources:create": true,
+      "datasources:write": true,
+      "datasources:delete": true
+    },
     "analytics": {
       "identifier": ""
     }
@@ -88,7 +95,7 @@
     "http2Enabled": false,
     "pluginCatalogURL": "https://grafana.com/grafana/plugins/",
     "pluginAdminEnabled": true,
-    "pluginAdminExternalManageEnabled": false,
+    "pluginAdminExternalManageEnabled": true,
     "pluginCatalogHiddenPlugins": [],
     "expressionsEnabled": true,
     "awsAllowedAuthProviders": ["keys"],
@@ -133,6 +140,75 @@
       "icon": "home-alt",
       "url": "/",
       "sortWeight": -4000
+    },
+    {
+      "id": "dashboards/browse",
+      "text": "Dashboards",
+      "subTitle": "Create and manage dashboards to visualize your data",
+      "icon": "apps",
+      "url": "/dashboards",
+      "sortWeight": -3700,
+      "children": [
+        {
+          "id": "dashboards/playlists",
+          "text": "Playlists",
+          "subTitle": "Groups of dashboards that are displayed in a sequence",
+          "icon": "presentation-play",
+          "url": "/playlists"
+        },
+        {
+          "id": "dashboards/snapshots",
+          "text": "Snapshots",
+          "subTitle": "Interactive, publically available, parsing of data",
+          "icon": "camera",
+          "url": "/dashboard/snapshots"
+        },
+        {
+          "id": "dashboards/library-panels",
+          "text": "Library panels",
+          "subTitle": "Reusable panels that can be added to multiple dashboards",
+          "icon": "library-panel",
+          "url": "/library-panels"
+        },
+        {
+          "id": "dashboards/public",
+          "text": "Public dashboards",
+          "subTitle": "Manage public dashboards",
+          "url": "/public-dashboards"
+        },
+        {
+          "id": "dashboards/new",
+          "text": "New dashboard",
+          "icon": "plus",
+          "url": "/dashboard/new",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        },
+        {
+          "id": "dashboards/folder/new",
+          "text": "New folder",
+          "icon": "plus",
+          "url": "/dashboards/folder/new",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        },
+        {
+          "id": "dashboards/import",
+          "text": "Import dashboard",
+          "icon": "plus",
+          "url": "/dashboard/import",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        }
+      ]
+    },
+    {
+      "id": "explore",
+      "text": "Explore",
+      "subTitle": "Explore your data",
+      "icon": "compass",
+      "url": "/explore",
+      "sortWeight": -3600
     }
   ]
 }
