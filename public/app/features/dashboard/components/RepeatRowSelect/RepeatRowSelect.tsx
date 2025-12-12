@@ -2,12 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
+import { LocalValueVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
-import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
-import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
-import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -65,7 +61,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
 
   const variableOptions = useMemo(() => {
     const options: ComboboxOption[] = variables
-      .filter((item) => item.state.name !== existingRepeat)
+      .filter((item) => !existingRepeat.has(item.state.name))
       .map((item) => ({
         label: item.state.name,
         value: item.state.name,
@@ -103,42 +99,40 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
 };
 
 function useExistingRepeat(sceneContext: SceneObject) {
-  return useMemo(() => {
-    // find repeated ancestor
-    let p = sceneContext.parent;
+  return useMemo<Set<string>>(() => {
+    const repeats = new Set<string>();
 
-    while (p) {
-      if ((p instanceof RowItem || p instanceof TabItem) && p.state.repeatByVariable) {
-        return p.state.repeatByVariable;
-      }
-      p = p.parent;
-    }
+    findRepeatedAncestors(sceneContext, repeats);
+    findRepeatedDescendent(sceneContext, repeats);
 
-    return findRepeatedDescendent(sceneContext);
+    return repeats;
   }, [sceneContext]);
 }
 
-function findRepeatedDescendent(o: SceneObject) {
-  let variableName: string | undefined;
+function findRepeatedAncestors(o: SceneObject, repeats: Set<string>) {
+  let p = o.parent;
 
+  while (p) {
+    const localVar = p.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
+    if (localVar) {
+      repeats.add(localVar.state.name);
+    }
+    p = p.parent;
+  }
+}
+
+function findRepeatedDescendent(o: SceneObject, repeats: Set<string>, tab = '') {
   o.forEachChild((c) => {
-    if (c instanceof VizPanel) {
-      return false;
+    // skip clones
+    if ('repeatSourceKey' in c.state && c.state.repeatSourceKey) {
+      return;
     }
 
-    if (c instanceof DashboardGridItem || c instanceof AutoGridItem) {
-      variableName = c.state.variableName;
-      return false;
+    const localVar = c.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
+    if (localVar) {
+      repeats.add(localVar.state.name);
     }
 
-    if ((c instanceof RowItem || c instanceof TabItem) && c.state.repeatByVariable) {
-      variableName = c.state.repeatByVariable;
-      return false;
-    }
-
-    variableName = findRepeatedDescendent(c);
-    return variableName === undefined; // continue if not found
+    findRepeatedDescendent(c, repeats, tab + '  ');
   });
-
-  return variableName;
 }
