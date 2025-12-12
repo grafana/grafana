@@ -647,6 +647,19 @@
     },
     {
       "metadata": {
+        "name": "assistantStreaming",
+        "resourceVersion": "1765555492103",
+        "creationTimestamp": "2025-12-12T16:04:52Z"
+      },
+      "spec": {
+        "description": "Enables streaming functionality for Grafana Assistant",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-06-13T09:41:35Z"

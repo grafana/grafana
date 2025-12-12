@@ -614,6 +614,10 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
+	// FlagAssistantStreaming
+	// Enables streaming functionality for Grafana Assistant
+	FlagAssistantStreaming = "assistantStreaming"
+
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"

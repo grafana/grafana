@@ -937,6 +937,11 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
+  * Enables streaming functionality for Grafana Assistant
+  * @default true
+  */
+  assistantStreaming?: boolean;
+  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;

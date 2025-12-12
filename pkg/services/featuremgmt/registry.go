@@ -1547,6 +1547,13 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:        "assistantStreaming",
+			Description: "Enables streaming functionality for Grafana Assistant",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
