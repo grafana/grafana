@@ -3696,7 +3696,7 @@
             "format": "int64"
           },
           "errors": {
-            "description": "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+            "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
             "type": "array",
             "items": {
               "type": "string",
@@ -3721,6 +3721,18 @@
           "update": {
             "type": "integer",
             "format": "int64"
+          },
+          "warning": {
+            "description": "The error count",
+            "type": "integer",
+            "format": "int64"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           },
           "write": {
             "type": "integer",
@@ -3849,6 +3861,13 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs"
               }
             ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           }
         }
       },

@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5072,6 +5074,14 @@
         "layout": "布局"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5453,12 @@
         "label": "编辑",
         "tooltip": "进入编辑模式"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "设为可编辑",
         "tooltip": "此数据面板已被标记为只读"
@@ -5463,14 +5479,6 @@
         "discard-panel-new": "丢弃面板",
         "edit-dashboard-v2-schema": {
           "tooltip": "编辑数据面板 v2 架构"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "进入编辑模式"
-          },
-          "exit": {
-            "label": "退出编辑模式"
-          }
         },
         "enter-edit-mode": {
           "label": "设为可编辑",
@@ -11787,7 +11795,7 @@
       "modal-title-set-up-public-access": "设置公共访问",
       "modal-title-set-up-required-features": "设置所需功能",
       "step-description-copy-url": "从 ngrok 输出中，复制 https:// 转发 URL，如下所示：",
-      "step-description-enable-feature-toggles": "将这些设置添加到您的 custom.ini 文件以启用必要的功能：",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "运行此命令以创建指向本地 Grafana 的安全隧道：",
       "step-description-update-grafana-config": "将此添加到您的 custom.ini 文件，并将 URL 替换为您的实际 ngrok URL：",
       "step-title-copy-url": "复制您的公共 URL",

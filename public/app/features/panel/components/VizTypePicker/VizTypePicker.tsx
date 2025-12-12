@@ -41,16 +41,16 @@ export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: 
 
   return (
     <div className={styles.grid}>
-      {filteredPluginTypes.map((plugin) => (
+      {filteredPluginTypes.map((plugin, idx) => (
         <VizTypePickerPlugin
           disabled={false}
           key={plugin.id}
           isCurrent={plugin.id === pluginId}
           plugin={plugin}
-          onClick={(e) =>
+          onSelect={(withModKey) =>
             onChange({
               pluginId: plugin.id,
-              withModKey: e.metaKey || e.ctrlKey || e.altKey,
+              withModKey,
             })
           }
         />

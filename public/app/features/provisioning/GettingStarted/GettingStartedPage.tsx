@@ -15,13 +15,10 @@ export default function GettingStartedPage({ items }: Props) {
   return (
     <Page
       navId="provisioning"
-      pageNav={{
-        text: t('provisioning.getting-started-page.header', 'Provisioning'),
-        subTitle: t(
-          'provisioning.getting-started-page.subtitle-provisioning-feature',
-          'View and manage your provisioning connections'
-        ),
-      }}
+      subTitle={t(
+        'provisioning.getting-started-page.subtitle-provisioning-feature',
+        'View and manage your provisioning connections'
+      )}
     >
       <Page.Contents>
         <Stack direction="column" gap={3}>

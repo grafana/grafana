@@ -29,6 +29,9 @@ userv0alpha1: userKind & {
 	// }
 	schema: {
 		spec: v0alpha1.UserSpec
+		status: {
+			lastSeenAt: int64 | 0
+		}
 	}
 	// TODO: Uncomment when the custom routes implementation is done
 	// routes: {
