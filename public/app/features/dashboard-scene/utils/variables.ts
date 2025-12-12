@@ -163,6 +163,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      collapsible: config.featureToggles.newDashboardWithFiltersAndGroupBy,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
