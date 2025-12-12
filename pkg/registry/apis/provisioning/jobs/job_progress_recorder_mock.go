@@ -71,12 +71,12 @@ func (_c *MockJobProgressRecorder_Complete_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// HasFailedDeletionsUnder provides a mock function with given fields: folderPath
-func (_m *MockJobProgressRecorder) HasFailedDeletionsUnder(folderPath string) bool {
+// HasDirPathFailedDeletion provides a mock function with given fields: folderPath
+func (_m *MockJobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
 	ret := _m.Called(folderPath)
 
 	if len(ret) == 0 {
-		panic("no return value specified for HasFailedDeletionsUnder")
+		panic("no return value specified for HasDirPathFailedDeletion")
 	}
 
 	var r0 bool
@@ -89,40 +89,40 @@ func (_m *MockJobProgressRecorder) HasFailedDeletionsUnder(folderPath string) bo
 	return r0
 }
 
-// MockJobProgressRecorder_HasFailedDeletionsUnder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasFailedDeletionsUnder'
-type MockJobProgressRecorder_HasFailedDeletionsUnder_Call struct {
+// MockJobProgressRecorder_HasDirPathFailedDeletion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasDirPathFailedDeletion'
+type MockJobProgressRecorder_HasDirPathFailedDeletion_Call struct {
 	*mock.Call
 }
 
-// HasFailedDeletionsUnder is a helper method to define mock.On call
+// HasDirPathFailedDeletion is a helper method to define mock.On call
 //   - folderPath string
-func (_e *MockJobProgressRecorder_Expecter) HasFailedDeletionsUnder(folderPath interface{}) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
-	return &MockJobProgressRecorder_HasFailedDeletionsUnder_Call{Call: _e.mock.On("HasFailedDeletionsUnder", folderPath)}
+func (_e *MockJobProgressRecorder_Expecter) HasDirPathFailedDeletion(folderPath interface{}) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
+	return &MockJobProgressRecorder_HasDirPathFailedDeletion_Call{Call: _e.mock.On("HasDirPathFailedDeletion", folderPath)}
 }
 
-func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) Return(_a0 bool) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Return(_a0 bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_HasFailedDeletionsUnder_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasFailedDeletionsUnder_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// IsNestedUnderFailedCreation provides a mock function with given fields: path
-func (_m *MockJobProgressRecorder) IsNestedUnderFailedCreation(path string) bool {
+// HasDirPathFailedCreation provides a mock function with given fields: path
+func (_m *MockJobProgressRecorder) HasDirPathFailedCreation(path string) bool {
 	ret := _m.Called(path)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IsNestedUnderFailedCreation")
+		panic("no return value specified for HasDirPathFailedCreation")
 	}
 
 	var r0 bool
@@ -135,30 +135,30 @@ func (_m *MockJobProgressRecorder) IsNestedUnderFailedCreation(path string) bool
 	return r0
 }
 
-// MockJobProgressRecorder_IsNestedUnderFailedCreation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsNestedUnderFailedCreation'
-type MockJobProgressRecorder_IsNestedUnderFailedCreation_Call struct {
+// MockJobProgressRecorder_HasDirPathFailedCreation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasDirPathFailedCreation'
+type MockJobProgressRecorder_HasDirPathFailedCreation_Call struct {
 	*mock.Call
 }
 
-// IsNestedUnderFailedCreation is a helper method to define mock.On call
+// HasDirPathFailedCreation is a helper method to define mock.On call
 //   - path string
-func (_e *MockJobProgressRecorder_Expecter) IsNestedUnderFailedCreation(path interface{}) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
-	return &MockJobProgressRecorder_IsNestedUnderFailedCreation_Call{Call: _e.mock.On("IsNestedUnderFailedCreation", path)}
+func (_e *MockJobProgressRecorder_Expecter) HasDirPathFailedCreation(path interface{}) *MockJobProgressRecorder_HasDirPathFailedCreation_Call {
+	return &MockJobProgressRecorder_HasDirPathFailedCreation_Call{Call: _e.mock.On("HasDirPathFailedCreation", path)}
 }
 
-func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) Run(run func(path string)) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedCreation_Call) Run(run func(path string)) *MockJobProgressRecorder_HasDirPathFailedCreation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) Return(_a0 bool) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedCreation_Call) Return(_a0 bool) *MockJobProgressRecorder_HasDirPathFailedCreation_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_IsNestedUnderFailedCreation_Call {
+func (_c *MockJobProgressRecorder_HasDirPathFailedCreation_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasDirPathFailedCreation_Call {
 	_c.Call.Return(run)
 	return _c
 }
