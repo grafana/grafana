@@ -13,8 +13,10 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableRefresh } from '@grafana/schema';
+import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import {
   Spec as DashboardV2Spec,
@@ -127,7 +129,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(scene, dsReferencesMapping),
+    elements: getElements(scene, dsReferencesMapping, isSnapshot),
     // EOF elements
 
     // annotations
@@ -170,17 +172,18 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping) {
+function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
   const panelsArray = panels.map((vizPanel) => {
-    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
   });
   return createElements(panelsArray, scene);
 }
 
 export function vizPanelToSchemaV2(
   vizPanel: VizPanel,
-  dsReferencesMapping?: DSReferencesMapping
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
 ): PanelKind | LibraryPanelKind {
   if (isLibraryPanel(vizPanel)) {
     const behavior = getLibraryPanelBehavior(vizPanel)!;
@@ -216,7 +219,7 @@ export function vizPanelToSchemaV2(
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries: getVizPanelQueries(vizPanel, dsReferencesMapping),
+          queries: getVizPanelQueries(vizPanel, dsReferencesMapping, isSnapshot),
           transformations: getVizPanelTransformations(vizPanel),
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
@@ -290,9 +293,54 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
+export function getVizPanelQueries(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
+): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
+
+  // For snapshots, embed the panel data frames into a Grafana snapshot query
+  if (isSnapshot) {
+    const dataProvider = vizPanel.state.$data;
+    if (!dataProvider) {
+      return queries;
+    }
+
+    let snapshotData = getPanelDataFrames(dataProvider.state.data);
+    if (dataProvider instanceof SceneDataTransformer) {
+      // For transformations the non-transformed data is snapshoted
+      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
+    }
+
+    // Create a Grafana snapshot query
+    const snapshotQuery: DataQueryKind = {
+      kind: 'DataQuery',
+      version: defaultDataQueryKind().version,
+      group: 'grafana',
+      datasource: {
+        name: 'grafana',
+      },
+      spec: {
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: snapshotData,
+      },
+    };
+
+    queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        query: snapshotQuery,
+        refId: 'A',
+        hidden: false,
+      },
+    });
+
+    return queries;
+  }
+
+  // Regular query handling (non-snapshot)
   const vizPanelQueries = queryRunner?.state.queries;
 
   if (vizPanelQueries) {
@@ -631,15 +679,16 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 
   if (spec.variables) {
     spec.variables.forEach((variable) => {
-      if ('query' in variable) {
-        variable.query = '';
+      if ('query' in variable.spec) {
+        variable.spec.query = '';
       }
-      if ('options' in variable && 'current' in variable) {
-        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      if ('options' in variable.spec && 'current' in variable.spec) {
+        variable.spec.options =
+          variable.spec.current && !isEmptyObject(variable.spec.current) ? [variable.spec.current] : [];
       }
 
-      if ('refresh' in variable) {
-        variable.refresh = VariableRefresh.never;
+      if ('refresh' in variable.spec) {
+        variable.spec.refresh = 'never';
       }
     });
   }
