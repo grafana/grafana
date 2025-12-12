@@ -143,7 +143,11 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
 
     const defaultSearch = getAutoApplySearch();
     if (defaultSearch) {
-      handleApplySearch(defaultSearch);
+      try {
+        handleApplySearch(defaultSearch);
+      } catch (error) {
+        console.error('Failed to auto-apply default search:', error);
+      }
     }
   }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, handleApplySearch]);
 
