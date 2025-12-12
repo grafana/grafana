@@ -89,7 +89,10 @@
       "licenseUrl": "",
       "edition": "Open Source"
     },
-    "featureToggles": {},
+    "featureToggles": {
+      "unifiedStorageSearch": true,
+      "unifiedStorageSearchUI": true
+    },
     "anonymousEnabled": false,
     "rendererAvailable": false,
     "http2Enabled": false,
