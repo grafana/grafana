@@ -47,6 +47,8 @@ export function RadialBar({
           color={colorDefs.getMainBarColor()}
           roundedBars={roundedBars}
           glowFilter={glowFilter}
+          showGuideDots={roundedBars}
+          guideDotColor={colorDefs.getGuideDotColor()}
         />
         {spotlightStroke && angle > 8 && (
           <SpotlightSquareEffect

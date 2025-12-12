@@ -135,6 +135,12 @@ export class RadialColorDefs {
     return this.getColor(this.options.fieldDisplay.display.color ?? FALLBACK_COLOR);
   }
 
+  getGuideDotColor(): string {
+    return this.getColor(
+      this.options.theme.colors.getContrastText(this.options.fieldDisplay.display.color ?? FALLBACK_COLOR)
+    );
+  }
+
   getDefs(): React.ReactNode[] {
     return this.defs;
   }
