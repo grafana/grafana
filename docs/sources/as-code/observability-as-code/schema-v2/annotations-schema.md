@@ -53,18 +53,18 @@ The configuration for the list of annotations that are associated with the dashb
 
 ## `AnnotationQuerySpec`
 
-| Name       | Type/Definition                                                   |
-| ---------- | ----------------------------------------------------------------- |
-| datasource | [`DataSourceRef`](#datasourceref)                                 |
-| query      | [`DataQueryKind`](#dataquerykind)                                 |
-| enable     | bool                                                              |
-| hide       | bool                                                              |
-| iconColor  | string                                                            |
-| name       | string                                                            |
-| builtIn    | bool. Default is `false`.                                         |
-| filter     | [`AnnotationPanelFilter`](#annotationpanelfilter)                 |
+| Name       | Type/Definition                                                                                                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| datasource | [`DataSourceRef`](#datasourceref)                                                                                                                                                                                                       |
+| query      | [`DataQueryKind`](#dataquerykind)                                                                                                                                                                                                       |
+| enable     | bool                                                                                                                                                                                                                                    |
+| hide       | bool                                                                                                                                                                                                                                    |
+| iconColor  | string                                                                                                                                                                                                                                  |
+| name       | string                                                                                                                                                                                                                                  |
+| builtIn    | bool. Default is `false`.                                                                                                                                                                                                               |
+| filter     | [`AnnotationPanelFilter`](#annotationpanelfilter)                                                                                                                                                                                       |
 | placement? | string. Placement can be used to display the annotation query somewhere else on the dashboard other than the default location. Accepted value: `inControlsMenu` - renders the annotation query in the dashboard controls dropdown menu. |
-| options    | `[string]`: A catch-all field for datasource-specific properties. |
+| options    | `[string]`: A catch-all field for datasource-specific properties.                                                                                                                                                                       |
 
 ### `DataSourceRef`
 
