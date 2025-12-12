@@ -1,5 +1,4 @@
 import { ScopedVars } from '@grafana/data';
-import config from 'app/core/config';
 
 import InfluxDatasource from './datasource';
 import { buildMetadataQuery } from './influxql_query_builder';
@@ -38,12 +37,7 @@ const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ t
     rawQuery: true,
     refId: 'metadataQuery',
   };
-  if (config.featureToggles.influxdbBackendMigration) {
-    return datasource.runMetadataQuery(target);
-  } else {
-    const options = { policy: target.policy };
-    return datasource.metricFindQuery({ refId: 'run-explore-query', query }, options);
-  }
+  return datasource.runMetadataQuery(target);
 };
 
 export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {

@@ -97,11 +97,6 @@ export interface FeatureToggles {
   */
   individualCookiePreferences?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   */
   starsFromAPIServer?: boolean;
