@@ -1,6 +1,6 @@
 ---
-title: Multi-region Git Sync
-menuTitle: Multi-region
+title: Regional replication Git Sync
+menuTitle: Regional replication
 description: Synchronize multiple regional Grafana instances from a shared Git location
 weight: 30
 ---

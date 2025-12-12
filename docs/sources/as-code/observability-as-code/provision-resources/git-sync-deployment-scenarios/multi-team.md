@@ -1,6 +1,6 @@
 ---
-title: Multi-team Git Sync
-menuTitle: Multi-team
+title: Multiple team Git Sync
+menuTitle: Multiple team
 description: Use multiple Git repositories with one Grafana instance, one repository per team
 weight: 60
 ---
