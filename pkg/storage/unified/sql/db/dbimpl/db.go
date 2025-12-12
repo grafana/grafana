@@ -3,7 +3,7 @@ package dbimpl
 import (
 	"context"
 	"database/sql"
-	"strings"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,27 +58,29 @@ func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) 
 		conn, err = d.DB.Conn(connCtx)
 		cancel()
 
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
+		if err == nil {
+			break
 		}
 
-		if !isTransientConnError(err) {
+		// retry if connection deadline exceeded and attempts remain
+		if errors.Is(err, context.DeadlineExceeded) && attempt < defaultConnMaxRetries {
+			d.log.Warn("Timeout when acquiring database connection, retrying", "attempt", attempt, "max_retries", defaultConnMaxRetries)
+			time.Sleep(defaultConnRetryBackoff)
+			continue
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			d.log.Error("Timeout exceeded while trying to acquire database connection", "attempt", attempt, "max_retries", defaultConnMaxRetries)
 			return nil, err
 		}
 
-		d.log.Warn("Transient database connection error, retrying", "attempt", attempt, "max_retries", defaultConnMaxRetries, "error", err)
-
-		if attempt < defaultConnMaxRetries {
-			time.Sleep(defaultConnRetryBackoff)
-		}
+		return nil, err
 	}
 
 	// once we have a connection, begin the transaction
+	tx, err = conn.BeginTx(ctx, opts)
 	if err == nil {
-		tx, err = conn.BeginTx(ctx, opts)
-		if err == nil {
-			return sqlTx{tx}, nil
-		}
+		return sqlTx{tx}, nil
 	}
 
 	return nil, err
@@ -103,38 +105,4 @@ func (tx sqlTx) QueryRowContext(ctx context.Context, query string, args ...any) 
 	// // codeql-suppress go/sql-query-built-from-user-controlled-sources "The query comes from a safe template source
 	// and the parameters are passed as arguments."
 	return tx.Tx.QueryRowContext(ctx, query, args...)
-}
-
-// isTransientConnError checks if an error is a transient connection error that should be retried.
-// This includes TCP timeouts, connection refused, and other network-related errors that can occur
-// during Cloud SQL proxy pod churn or similar infrastructure events.
-func isTransientConnError(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	errStr := err.Error()
-
-	// TCP/network errors
-	if strings.Contains(errStr, "i/o timeout") ||
-		strings.Contains(errStr, "connection refused") ||
-		strings.Contains(errStr, "connection reset") ||
-		strings.Contains(errStr, "broken pipe") ||
-		strings.Contains(errStr, "no such host") ||
-		strings.Contains(errStr, "network is unreachable") {
-		return true
-	}
-
-	// Context deadline exceeded from our attempt timeout
-	if strings.Contains(errStr, "context deadline exceeded") {
-		return true
-	}
-
-	// MySQL specific errors
-	if strings.Contains(errStr, "bad connection") ||
-		strings.Contains(errStr, "invalid connection") {
-		return true
-	}
-
-	return false
 }
