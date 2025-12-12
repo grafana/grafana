@@ -59,6 +59,7 @@ jest.mock('@grafana/runtime', () => ({
     namespace: 'default',
     bootData: {
       ...jest.requireActual('@grafana/runtime').config.bootData,
+      navTree: [],
       user: {
         uid: 'test-user-123',
         id: 123,
