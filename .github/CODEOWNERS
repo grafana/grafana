@@ -1084,7 +1084,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
-/public/img/icons/unicons/ @grafana/design-system
+/public/img/icons/unicons/ @grafana/product-design-engineering
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
