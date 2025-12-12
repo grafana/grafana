@@ -3328,15 +3328,6 @@ Configure settings for the Grafana Cloud Migration Assistant.
 Enable the cloud migration feature.
 Default is `true`.
 
-#### `is_target`
-
-Set to `true` to enable target-side migration UI.
-Default is `false`.
-
-#### `gcom_api_token`
-
-Token used to send requests to Grafana Cloud.
-
 #### `start_snapshot_timeout`
 
 Timeout for requests to start a snapshot.
@@ -3381,11 +3372,6 @@ Default is `5s`.
 
 Timeout for requests to delete an access policy.
 Default is `5s`.
-
-#### `domain`
-
-Domain name used to access the cloud migration service.
-Default is `grafana.net`.
 
 #### `snapshot_folder`
 
