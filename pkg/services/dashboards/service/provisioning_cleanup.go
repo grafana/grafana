@@ -41,7 +41,7 @@ type deleteProvisionedResource struct {
 	UID  string
 }
 
-// cleanupStep computes the sequence of steps to be performed in order to cleanup the
+// cleanupSteps computes the sequence of steps to be performed in order to cleanup the
 // provisioning resources and allow the process to start from scratch when duplication
 // is detected. The sequence of steps will dictate the order in which dashboards and folders
 // are to be deleted.

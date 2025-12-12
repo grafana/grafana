@@ -59,7 +59,7 @@ func Test_canBeAutomaticallyCleanedUp(t *testing.T) {
 			expectedSkip: "dashboards provisioned in different folders",
 		},
 		{
-			name: "can be skipped otherwise",
+			name: "can be skipped when all conditions are met",
 			configs: []dashboards.ProvisioningConfig{
 				{Name: "1", Folder: "f1"},
 				{Name: "2", Folder: "f1"},
