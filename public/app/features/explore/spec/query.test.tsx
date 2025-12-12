@@ -50,7 +50,7 @@ describe('Explore: handle running/not running query', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
-    await screen.findByText(/^Logs$/);
+    await screen.findByRole('heading', { name: /^Logs$/ });
 
     // Make sure we render the log line
     await screen.findByText(/custom log line/i);
