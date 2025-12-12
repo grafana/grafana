@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -80,4 +81,15 @@ func TestAlertRuleVersionToAlertRule(t *testing.T) {
 			require.Equal(t, r, r2)
 		}
 	})
+}
+
+func BenchmarkAlertRuleToModelsAlertRule(b *testing.B) {
+	r := ngmodels.RuleGen.Generate()
+	ar, err := alertRuleFromModelsAlertRule(r)
+	require.NoError(b, err)
+	l := log.NewNopLogger()
+
+	for range b.N {
+		alertRuleToModelsAlertRuleCompact(ar, l)
+	}
 }
