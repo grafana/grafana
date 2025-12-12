@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"fmt"
-	"os"
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -42,15 +41,8 @@ func ProvideAppInstaller(
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
-	grafanaComAPIURL := os.Getenv("GRAFANA_COM_API_URL")
-	if grafanaComAPIURL == "" {
-		grafanaComAPIURL = "https://grafana.com/api/plugins"
-	}
-
-	coreProvider := meta.NewCoreProvider()
-	cloudProvider := meta.NewCatalogProvider(grafanaComAPIURL)
 	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
-	metaProviderManager := meta.NewProviderManager(localProvider, coreProvider, cloudProvider)
+	metaProviderManager := meta.NewProviderManager(localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
 	if err != nil {
