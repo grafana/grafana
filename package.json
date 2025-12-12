@@ -448,7 +448,8 @@
     "gitconfiglocal": "2.1.0",
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
-    "js-yaml@npm:=4.1.0": "^4.1.0"
+    "js-yaml@npm:=4.1.0": "^4.1.0",
+    "nodemailer": "7.0.7"
   },
   "workspaces": {
     "packages": [
