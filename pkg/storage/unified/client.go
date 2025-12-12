@@ -224,7 +224,6 @@ func newClient(opts options.StorageOptions,
 			serverOptions.OverridesService = overridesSvc
 		}
 
-		// instantiate here sqlkv alternatively for ST grafana
 		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
