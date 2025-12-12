@@ -51,7 +51,7 @@ Production:
 
 ## Alternatives
 
-- Use branches: `develop` for dev, `main` for prod, both with `grafana/`.
+- Use branches: `develop` for development, `main` for production, both with `grafana/`.
 - Use separate repositories for stricter isolation.
 ```
 

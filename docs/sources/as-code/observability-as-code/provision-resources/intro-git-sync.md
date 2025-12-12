@@ -127,7 +127,13 @@ An instance can be in one of the following Git Sync states:
 
 ## Common use cases
 
-You can use Git Sync in the following scenarios.
+{{< admonition type="note" >}}
+
+Refer to [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios) for sample scenarios, including architecture and configuration details. 
+
+{{< /admonition >}}
+
+You can use Git Sync for the following use cases:
 
 ### Version control and auditing
 

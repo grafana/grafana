@@ -55,7 +55,7 @@ A repository resource is a Grafana configuration object that defines:
 
 Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
-### How does repository sync behave?
+## How does repository sync behave?
 
 With Git Sync you configure a repository resource to sync with your Grafana instance:
 
@@ -68,7 +68,7 @@ With Git Sync you configure a repository resource to sync with your Grafana inst
 
 You can find the provisioned dashboards organized in folders under **Dashboards**.
 
-### Example: Relationship between repository, branch, and path
+## Example: Relationship between repository, branch, and path
 
 Here's a concrete example showing how the three parameters work together:
 
@@ -131,12 +131,12 @@ Git Sync repositories support different combinations of repository URL, branch, 
 
 Use these deployment scenarios to plan your Git Sync setup:
 
-- [Single instance](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/single-instance/)
-- [Development and production](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/dev-prod/)
-- [Multi-region](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/multi-region/)
-- [Primary–replica high availability](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/primary-replica/)
-- [Active–active high availability](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/active-active/)
-- [Multi-team](/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/multi-team/)
+- [Single instance](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/single-instance/)
+- [Development and production](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/dev-prod/)
+- [Multi-region](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/multi-region/)
+- [Primary–replica high availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/primary-replica/)
+- [Active–active high availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/active-active/)
+- [Multi-team](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/scenarios/multi-team/)
 
 ## Learn more
 
