@@ -13,6 +13,7 @@ import * as common from '@grafana/schema';
 export const pluginVersion = "12.4.0-pre";
 
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {
+  disableKeyboardEvents?: boolean;
   legend: common.VizLegendOptions;
   orientation?: common.VizOrientation;
   timeCompare?: common.TimeCompareOptions;

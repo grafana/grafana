@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -13,7 +13,7 @@ import (
 type FakeUserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	SearchFunc func(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
-	Users      []*user.UserSearchHitDTO
+	Users      []*org.OrgUserDTO
 }
 
 // Search calls the underlying SearchFunc or simulates a search over the Users slice.
@@ -23,7 +23,7 @@ func (c *FakeUserLegacySearchClient) Search(ctx context.Context, req *resourcepb
 	}
 
 	// Basic filtering for testing purposes
-	var filteredUsers []*user.UserSearchHitDTO
+	var filteredUsers []*org.OrgUserDTO
 	var queryValue string
 
 	for _, field := range req.Options.Fields {
@@ -43,7 +43,7 @@ func (c *FakeUserLegacySearchClient) Search(ctx context.Context, req *resourcepb
 	for _, u := range filteredUsers {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(u, req.Options.Key.Namespace),
-			Cells: createBaseCells(u, req.Fields),
+			Cells: createCells(u, req.Fields),
 		})
 	}
 

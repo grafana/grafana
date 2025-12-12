@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -397,6 +398,9 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		burst = config.Burst
 	}
 
+	// Add a default scheme to handle K8s API error responses
+	scheme := runtime.NewScheme()
+
 	restConfig := &rest.Config{
 		Host:            config.URL,
 		TLSClientConfig: config.TLSClientConfig,
@@ -407,7 +411,7 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
 			GroupVersion:         &settingGroupVersion,
-			NegotiatedSerializer: serializer.NewCodecFactory(nil).WithoutConversion(),
+			NegotiatedSerializer: serializer.NewCodecFactory(scheme).WithoutConversion(),
 		},
 	}
 

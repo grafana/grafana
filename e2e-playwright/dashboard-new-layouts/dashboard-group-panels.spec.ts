@@ -419,6 +419,9 @@ test.describe(
       // Select tabs layout
       await page.getByLabel('layout-selection-option-Tabs').click();
 
+      // confirm layout change
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row'))).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row 1'))).toBeVisible();
       await expect(
@@ -756,6 +759,9 @@ test.describe(
 
       // Select rows layout
       await page.getByLabel('layout-selection-option-Rows').click();
+
+      // confirm layout change
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'))
