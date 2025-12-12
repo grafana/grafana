@@ -196,7 +196,7 @@ The following errors occur when the data source is not configured correctly.
 
 1. Check your Prometheus configuration file for the `scrape_interval` setting.
 1. Update the **Scrape interval** in the Grafana data source configuration under **Interval behavior** to match.
-1. If the Grafana interval is higher than the Prometheus interval, you may see fewer data points than expected.
+1. If the Grafana interval is higher than the Prometheus interval, you may see less data points than expected.
 
 ## TLS and certificate errors
 
@@ -217,7 +217,7 @@ The following errors occur when there are issues with TLS configuration.
 
 ### TLS handshake error
 
-**Error message:** "tls: handshake failure" or "connection reset"
+**Error message:** "TLS: handshake failure" or "connection reset"
 
 **Cause:** The TLS handshake between Grafana and Prometheus failed.
 
