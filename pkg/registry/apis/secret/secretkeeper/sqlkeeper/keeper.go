@@ -108,7 +108,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 }
 
 func (s *SQLKeeper) RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
-	return "", fmt.Errorf("Reference is not implemented by the SQLKeeper")
+	return "", fmt.Errorf("reference is not implemented by the SQLKeeper")
 }
 
 func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
