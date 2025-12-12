@@ -199,7 +199,12 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
 
   if (useLinearScale) {
     // Linear mode: use numeric bucket values and calculate proportional heights
-    bucketBounds = Array.from({ length: yFields.length }, (v, i) => Number(custom.yOrdinalDisplay?.[i] ?? '0'));
+    bucketBounds = yFields.map((field) => {
+      const labelKey = custom.yMatchWithLabel;
+      const labelValue = labelKey ? field.labels?.[labelKey] : undefined;
+      const valueStr = labelValue ?? field.name;
+      return Number(valueStr);
+    });
     bucketBoundsMax = bucketBounds.slice();
     bucketBoundsMax.shift();
 
