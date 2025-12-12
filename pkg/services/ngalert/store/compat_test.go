@@ -82,14 +82,3 @@ func TestAlertRuleVersionToAlertRule(t *testing.T) {
 		}
 	})
 }
-
-func BenchmarkAlertRuleToModelsAlertRule(b *testing.B) {
-	r := ngmodels.RuleGen.Generate()
-	ar, err := alertRuleFromModelsAlertRule(r)
-	require.NoError(b, err)
-	l := log.NewNopLogger()
-
-	for range b.N {
-		alertRuleToModelsAlertRuleCompact(ar, l)
-	}
-}
