@@ -29,6 +29,10 @@ type JobProgressRecorder interface {
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
+	// IsNestedUnderFailedCreation checks if a path is nested under any failed folder creation
+	IsNestedUnderFailedCreation(path string) bool
+	// HasFailedDeletionsUnder checks if any resource deletions failed under a folder path
+	HasFailedDeletionsUnder(folderPath string) bool
 }
 
 // Worker is a worker that can process a job

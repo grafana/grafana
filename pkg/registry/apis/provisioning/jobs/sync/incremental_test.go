@@ -522,3 +522,249 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 		})
 	}
 }
+
+// TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation tests nested resource skipping
+func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "unsupported/file.txt", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "unsupported/subfolder/file2.txt", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "unsupported/file3.json", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "other/file.json", Ref: "new-ref"},
+	}
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 4).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	folderErr := &resources.PathCreationError{Path: "unsupported/", Err: fmt.Errorf("permission denied")}
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/").Return("", folderErr).Once()
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "unsupported/file.txt" && r.Action == repository.FileActionIgnored && r.Error != nil
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "unsupported/subfolder/file2.txt").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "unsupported/subfolder/file2.txt" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "unsupported/file3.json").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "unsupported/file3.json" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "other/file.json").Return(false).Once()
+	repoResources.On("WriteResourceFromFile", mock.Anything, "other/file.json", "new-ref").
+		Return("test-resource", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "other/file.json" && r.Action == repository.FileActionCreated && r.Error == nil
+	})).Return().Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+}
+
+// TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion tests folder cleanup prevention
+func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing.T) {
+	mockVersioned := repository.NewMockVersioned(t)
+	mockReader := repository.NewMockReader(t)
+	repo := &compositeRepo{MockVersioned: mockVersioned, MockReader: mockReader}
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionDeleted, Path: "dashboards/file1.json", PreviousRef: "old-ref"},
+	}
+
+	mockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	progress.On("IsNestedUnderFailedCreation", "dashboards/file1.json").Return(false).Once()
+	repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
+		Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, fmt.Errorf("permission denied")).Once()
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "dashboards/file1.json" && r.Action == repository.FileActionDeleted &&
+			r.Error != nil && r.Error.Error() == "removing resource from file dashboards/file1.json: permission denied"
+	})).Return().Once()
+
+	progress.On("HasFailedDeletionsUnder", "dashboards/").Return(true).Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+}
+
+// TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure tests deletions proceed despite creation failures
+func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "folder1/file.json", Ref: "new-ref"},
+		{Action: repository.FileActionDeleted, Path: "folder1/old.json", PreviousRef: "old-ref"},
+	}
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 2).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	// Creation fails
+	progress.On("IsNestedUnderFailedCreation", "folder1/file.json").Return(false).Once()
+	repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "new-ref").
+		Return("", schema.GroupVersionKind{}, &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}).Once()
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "folder1/file.json" && r.Error != nil
+	})).Return().Once()
+
+	// Deletion should NOT be skipped (not checking IsNestedUnderFailedCreation for deletions)
+	progress.On("IsNestedUnderFailedCreation", "folder1/old.json").Return(false).Once()
+	repoResources.On("RemoveResourceFromFile", mock.Anything, "folder1/old.json", "old-ref").
+		Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "folder1/old.json" && r.Action == repository.FileActionDeleted && r.Error == nil
+	})).Return().Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+}
+
+// TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting tests multi-level cascade
+func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "level1/file.txt", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "level1/level2/file.txt", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "level1/level2/level3/file.txt", Ref: "new-ref"},
+	}
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 3).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/").Return("", folderErr).Once()
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "level1/file.txt" && r.Action == repository.FileActionIgnored
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "level1/level2/file.txt").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "level1/level2/file.txt" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "level1/level2/level3/file.txt").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "level1/level2/level3/file.txt" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+}
+
+// TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure tests partial failures
+func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "success/file1.json", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "success/nested/file2.json", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "failure/file3.txt", Ref: "new-ref"},
+		{Action: repository.FileActionCreated, Path: "failure/nested/file4.txt", Ref: "new-ref"},
+	}
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 4).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	progress.On("IsNestedUnderFailedCreation", "success/file1.json").Return(false).Once()
+	repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
+		Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "success/file1.json" && r.Action == repository.FileActionCreated && r.Error == nil
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "success/nested/file2.json").Return(false).Once()
+	repoResources.On("WriteResourceFromFile", mock.Anything, "success/nested/file2.json", "new-ref").
+		Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "success/nested/file2.json" && r.Action == repository.FileActionCreated && r.Error == nil
+	})).Return().Once()
+
+	folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
+	progress.On("IsNestedUnderFailedCreation", "failure/file3.txt").Return(false).Once()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/").Return("", folderErr).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "failure/file3.txt" && r.Action == repository.FileActionIgnored
+	})).Return().Once()
+
+	progress.On("IsNestedUnderFailedCreation", "failure/nested/file4.txt").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "failure/nested/file4.txt" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+	repoResources.AssertExpectations(t)
+}
+
+// TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreation tests rename operations affected by folder failures
+func TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreation(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionRenamed, Path: "newfolder/file.json", PreviousPath: "oldfolder/file.json", Ref: "new-ref", PreviousRef: "old-ref"},
+	}
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	progress.On("TooManyErrors").Return(nil).Maybe()
+
+	progress.On("IsNestedUnderFailedCreation", "newfolder/file.json").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path == "newfolder/file.json" && r.Action == repository.FileActionIgnored &&
+			r.Error != nil && r.Error.Error() == "skipped: parent folder creation failed"
+	})).Return().Once()
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+	progress.AssertExpectations(t)
+}

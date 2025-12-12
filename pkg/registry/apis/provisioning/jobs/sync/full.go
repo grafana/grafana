@@ -80,6 +80,20 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		return
 	}
 
+	// Check if this resource is nested under a failed folder creation
+	// This only applies to creation/update operations, not deletions
+	if change.Action != repository.FileActionDeleted && progress.IsNestedUnderFailedCreation(change.Path) {
+		// Skip this resource since its parent folder failed to be created
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_nested_resource")
+		progress.Record(skipCtx, jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: repository.FileActionIgnored,
+			Error:  fmt.Errorf("skipped: parent folder creation failed"),
+		})
+		skipSpan.End()
+		return
+	}
+
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
 		result := jobs.JobResourceResult{
@@ -123,6 +137,23 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 	// Handle folders based on action type
 	if safepath.IsDir(change.Path) {
+		// Check if this is a folder deletion - need to ensure no children failed to delete
+		if change.Action == repository.FileActionDeleted {
+			// Check if any resources under this folder failed to delete
+			if progress.HasFailedDeletionsUnder(change.Path) {
+				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_folder_with_failed_deletions")
+				progress.Record(skipCtx, jobs.JobResourceResult{
+					Path:   change.Path,
+					Action: repository.FileActionIgnored,
+					Group:  resources.FolderKind.Group,
+					Kind:   resources.FolderKind.Kind,
+					Error:  fmt.Errorf("skipped: child resource deletions failed"),
+				})
+				skipSpan.End()
+				return
+			}
+		}
+
 		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		result := jobs.JobResourceResult{
@@ -138,6 +169,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
 			progress.Record(ctx, result)
+
 			return
 		}
 
@@ -159,6 +191,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+
 	}
 
 	progress.Record(writeCtx, result)
