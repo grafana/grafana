@@ -3707,8 +3707,7 @@
     },
     "recently-viewed": {
       "empty": "Nothing viewed yet",
-      "error": "Error loading recently viewed dashboards",
-      "title": "Recently Viewed"
+      "title": "Recently viewed"
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard",
