@@ -35,20 +35,20 @@ Grafana has three types of roles for managing access:
 
 The following table summarizes the default alerting permissions for each basic role.
 
-| Capability                              | Admin | Editor | Viewer |
-| --------------------------------------- | :---: | :----: | :----: |
-| View alert rules                        |   ✓   |   ✓    |   ✓    |
-| Create, edit, and delete alert rules    |   ✓   |   ✓    |        |
-| View silences                           |   ✓   |   ✓    |   ✓    |
-| Create, edit, and expire silences       |   ✓   |   ✓    |        |
-| View contact points and templates       |   ✓   |   ✓    |   ✓    |
-| Create, edit, and delete contact points |   ✓   |   ✓    |        |
-| View notification policies              |   ✓   |   ✓    |   ✓    |
-| Create, edit, and delete policies       |   ✓   |   ✓    |        |
-| View mute timings                       |   ✓   |   ✓    |   ✓    |
-| Create, edit, and delete mute timings   |   ✓   |   ✓    |        |
-| Access provisioning API                 |   ✓   |        |        |
-| Export with decrypted secrets           |   ✓   |        |        |
+| Capability                                | Admin | Editor | Viewer |
+| ----------------------------------------- | :---: | :----: | :----: |
+| View alert rules                          |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete alert rules      |   ✓   |   ✓    |        |
+| View silences                             |   ✓   |   ✓    |   ✓    |
+| Create, edit, and expire silences         |   ✓   |   ✓    |        |
+| View contact points and templates         |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete contact points   |   ✓   |   ✓    |        |
+| View notification policies                |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete policies         |   ✓   |   ✓    |        |
+| View mute timings                         |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete timing intervals |   ✓   |   ✓    |        |
+| Access provisioning API                   |   ✓   |   ✓    |        |
+| Export with decrypted secrets             |   ✓   |        |        |
 
 {{< admonition type="note" >}}
 Access to alert rules also requires permission to read the folder containing the rules and permission to query the data sources used in the rules.
