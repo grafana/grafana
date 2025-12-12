@@ -2351,7 +2351,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5129,6 +5131,14 @@
         "layout": "Расположение"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5503,6 +5513,12 @@
         "label": "Редактировать",
         "tooltip": "Войти в режим редактирования"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Сделать доступным для редактирования",
         "tooltip": "Дашборд был помечен как «только для чтения»"
@@ -5523,14 +5539,6 @@
         "discard-panel-new": "Отменить панель",
         "edit-dashboard-v2-schema": {
           "tooltip": "Редактировать дашборд схемы v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Войти в режим редактирования"
-          },
-          "exit": {
-            "label": "Выйти из режима редактирования"
-          }
         },
         "enter-edit-mode": {
           "label": "Сделать доступным для редактирования",
@@ -11940,7 +11948,7 @@
       "modal-title-set-up-public-access": "Настройка общего доступа",
       "modal-title-set-up-required-features": "Настройка необходимых функций",
       "step-description-copy-url": "Из вывода ngrok скопируйте URL-адрес переадресации https://, который выглядит следующим образом:",
-      "step-description-enable-feature-toggles": "Добавьте параметры в свой файл custom.ini, чтобы включить необходимые функции:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Выполните эту команду, чтобы создать защищенный туннель к вашей локальной версии Grafana:",
       "step-description-update-grafana-config": "Добавьте данные в свой файл custom.ini, заменив URL-адрес на фактический URL-адрес ngrok:",
       "step-title-copy-url": "Копирование общедоступного URL-адреса",
