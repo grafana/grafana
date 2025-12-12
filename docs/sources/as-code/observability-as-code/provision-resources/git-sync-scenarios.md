@@ -245,7 +245,7 @@ Use two separate Grafana instances for development and production. Each synchron
 └─────────────────────┘          └─────────────────────┘
 ```
 
-### When to use
+### Use it for
 
 - **Staged deployments**: You need to test dashboard changes before production deployment.
 - **Change control**: You require approvals before dashboards reach production.
@@ -381,7 +381,7 @@ Deploy multiple Grafana instances across different geographic regions. All synch
 └────────────────────┘          └────────────────────┘
 ```
 
-### When to use
+### Use it for
 
 - **Geographic distribution**: You deploy Grafana close to users in different regions.
 - **Latency reduction**: Users need fast dashboard access from their location.
@@ -483,7 +483,7 @@ Use a high availability configuration with a primary Grafana instance and one or
           └──────────────────────┘
 ```
 
-### When to use
+### Use it for
 
 - **Automatic failover**: You need service continuity when the primary instance fails.
 - **High availability**: Your organization requires guaranteed dashboard availability.
@@ -589,7 +589,7 @@ Run multiple Grafana instances that actively serve traffic at the same time. A l
           └──────────────────────┘
 ```
 
-### When to use
+### Use it for
 
 - **High traffic**: Your deployment needs to handle significant user load.
 - **Load distribution**: You want to distribute user requests across instances.
@@ -690,7 +690,7 @@ Use a single Grafana instance with multiple Repository resources for different t
         └──────────────────────────────────────┘
 ```
 
-### When to use
+### Use it for
 
 - **Team autonomy**: Different teams manage their own dashboards independently.
 - **Organizational structure**: Dashboard organization aligns with team structure.
