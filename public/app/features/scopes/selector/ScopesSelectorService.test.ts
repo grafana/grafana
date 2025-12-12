@@ -444,7 +444,7 @@ describe('ScopesSelectorService', () => {
       await service.selectScope('test-scope-node');
       await service.apply();
       await service.removeAllScopes();
-      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined);
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined, undefined, undefined);
     });
   });
 

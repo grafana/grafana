@@ -2334,8 +2334,10 @@
       "label-tenant-sources": "Tenant sources"
     },
     "rule-details-matching-instances": {
-      "button-show-all": "Show all {{totalItemsCount}} alert instances",
-      "showing-count": "Showing {{visibleItemsCount}} out of {{totalItemsCount}} instances"
+      "button-show-all": "Show all",
+      "button-show-all-instances": "Show all {{totalItemsCount}} alert instances",
+      "showing-count": "Showing {{visibleItemsCount}} out of {{totalItemsCount}} instances",
+      "showing-count-with-state": "Showing {{visibleItemsCount}} {{alertState}} out of {{totalItemsCount}} instances"
     },
     "rule-editor": {
       "get-content": {
@@ -5091,6 +5093,14 @@
         "layout": "Layout"
       },
       "continue": "Continue",
+      "panel": {
+        "modal": {
+          "body": "Changing the layout will reset all panel positions and sizes.",
+          "confirm": "Change layout",
+          "dismiss": "Cancel",
+          "title": "Change layout"
+        }
+      },
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
@@ -5463,6 +5473,12 @@
         "label": "Edit",
         "tooltip": "Enter edit mode"
       },
+      "edit-button": {
+        "enter": "Edit",
+        "enter-tooltip": "Enter edit mode",
+        "exit": "Exit edit",
+        "exit-tooltip": "Exit edit mode"
+      },
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -5483,14 +5499,6 @@
         "discard-panel-new": "Discard panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit dashboard v2 schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Enter edit mode"
-          },
-          "exit": {
-            "label": "Exit edit mode"
-          }
         },
         "enter-edit-mode": {
           "label": "Make editable",
@@ -5942,13 +5950,25 @@
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "Cancel",
+        "discard": "Discard",
+        "save": "Save",
+        "text": {
+          "save-changes-question": "Do you want to save your changes?"
+        },
+        "title": {
+          "unsaved-changes": "Unsaved changes"
+        }
+      },
       "text": {
         "edit-panel": "Edit panel",
         "view-panel": "View panel"
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Discard changes to dashboard?"
+        "discard-changes-to-dashboard": "Discard changes to dashboard?",
+        "unsaved-changes-question": "You have unsaved changes to this dashboard. Are you sure you want to discard them?"
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10704,7 +10724,6 @@
       "title": "New"
     },
     "new-dashboard": {
-      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -11838,7 +11857,7 @@
       "modal-title-set-up-public-access": "Set up public access",
       "modal-title-set-up-required-features": "Set up required features",
       "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
-      "step-description-enable-feature-toggles": "Add these settings to your custom.ini file to enable necessary features:",
+      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.",
       "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
       "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
       "step-title-copy-url": "Copy your public URL",
@@ -12614,7 +12633,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",

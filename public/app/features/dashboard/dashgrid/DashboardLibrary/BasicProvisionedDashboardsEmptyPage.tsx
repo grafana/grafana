@@ -39,6 +39,17 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
     }
 
     const dashboards = await fetchProvisionedDashboards(ds.type);
+
+    if (dashboards.length > 0) {
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: dashboards.length,
+        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+        datasourceTypes: [ds.type],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      });
+    }
+
     return dashboards;
   }, [datasourceUid]);
 

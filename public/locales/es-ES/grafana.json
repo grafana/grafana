@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5091,6 +5093,14 @@
         "layout": "Diseño"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5473,12 @@
         "label": "Editar",
         "tooltip": "Entrar en modo de edición"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Hacer editable",
         "tooltip": "Este panel de control se ha marcado como de solo lectura"
@@ -5483,14 +5499,6 @@
         "discard-panel-new": "Descartar panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema del dashboard v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar en modo de edición"
-          },
-          "exit": {
-            "label": "Salir del modo de edición"
-          }
         },
         "enter-edit-mode": {
           "label": "Hacer editable",
@@ -8827,6 +8835,13 @@
       "aria-label-default": "Elegir un color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -9024,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Contraer todas las filas",
       "aria-label-expand-all": "Expandir todas las filas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar fila expandida",
       "tooltip-collapse-all": "Contraer todas las filas",
       "tooltip-expand-all": "Expandir todas las filas"
@@ -11829,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade estos ajustes a tu archivo custom.ini para habilitar las funciones necesarias:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -12425,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

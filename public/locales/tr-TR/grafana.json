@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -5091,6 +5093,14 @@
         "layout": "Düzen"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5473,12 @@
         "label": "Düzenle",
         "tooltip": "Düzenleme kipine gir"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Düzenlenebilir hâle getir",
         "tooltip": "Bu pano salt okunur olarak işaretlendi"
@@ -5483,14 +5499,6 @@
         "discard-panel-new": "Paneli at",
         "edit-dashboard-v2-schema": {
           "tooltip": "Pano v2 şemasını düzenle"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Düzenleme kipine gir"
-          },
-          "exit": {
-            "label": "Düzenleme modundan çık"
-          }
         },
         "enter-edit-mode": {
           "label": "Düzenlenebilir yap",
@@ -8827,6 +8835,13 @@
       "aria-label-default": "Bir renk seçin",
       "aria-label-selected-color": "{{colorLabel}} rengi"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Sil",
       "cancel": "İptal",
@@ -9024,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Tüm satırları daralt",
       "aria-label-expand-all": "Tüm satırları genişlet",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
       "tooltip-collapse-all": "Tüm satırları daralt",
       "tooltip-expand-all": "Tüm satırları genişlet"
@@ -11829,7 +11846,7 @@
       "modal-title-set-up-public-access": "Herkese açık erişimi ayarla",
       "modal-title-set-up-required-features": "Gerekli özellikleri ayarla",
       "step-description-copy-url": "Ngrok çıktısından https:// ile başlayan yönlendirme URL'sini kopyalayın:",
-      "step-description-enable-feature-toggles": "Gerekli özellikleri etkinleştirmek için bu ayarları custom.ini dosyanıza ekleyin:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Yerel Grafana'nıza güvenli bir tünel oluşturmak için bu komutu çalıştırın:",
       "step-description-update-grafana-config": "Bunu custom.ini dosyanıza ekleyin ve URL'yi kendi ngrok URL'nizle değiştirin:",
       "step-title-copy-url": "Herkese açık URL'nizi kopyalayın",
@@ -12425,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

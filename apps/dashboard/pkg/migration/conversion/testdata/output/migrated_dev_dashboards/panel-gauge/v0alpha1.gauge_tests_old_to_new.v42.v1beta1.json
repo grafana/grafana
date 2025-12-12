@@ -961,9 +961,9 @@
           "effects": {
             "barGlow": false,
             "centerGlow": false,
+            "gradient": false,
             "rounded": false,
-            "spotlight": false,
-            "gradient": false
+            "spotlight": false
           },
           "orientation": "auto",
           "reduceOptions": {
