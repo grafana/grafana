@@ -69,11 +69,14 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
       setCurrentResult(null);
       return;
     }
-    if (!currentResult) {
+    if (currentResult === null) {
       setCurrentResult(0);
-      listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
+      // No need to filter if we're only showing matching logs, otherwise scroll to the first result.
+      if (!filterLogs) {
+        listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
+      }
     }
-  }, [currentResult, listRef, logs, matches]);
+  }, [currentResult, filterLogs, listRef, logs, matches]);
 
   useEffect(() => {
     if (!searchVisible) {
