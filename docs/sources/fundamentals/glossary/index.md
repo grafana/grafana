@@ -109,6 +109,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">panda bear</td>
     <td>
+      THIS IS A TEST
       A large bear native to south-central China, recognized by its distinctive black and white coloring. In the context of software engineering, sometimes used as a whimsical mascot or example in documentation and testing scenarios.
     </td>
   </tr>
