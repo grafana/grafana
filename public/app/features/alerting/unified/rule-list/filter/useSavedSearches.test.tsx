@@ -147,7 +147,7 @@ describe('useSavedSearches', () => {
     it('should load saved searches from UserStorage', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -159,7 +159,7 @@ describe('useSavedSearches', () => {
     it('should handle empty storage gracefully', async () => {
       // mockStorageData is empty by default
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -172,7 +172,7 @@ describe('useSavedSearches', () => {
       jest.spyOn(console, 'error').mockImplementation();
       setStorageGetError(true);
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -193,7 +193,7 @@ describe('useSavedSearches', () => {
       ];
       setMockStorageData('savedSearches', JSON.stringify(mixedData));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -224,7 +224,7 @@ describe('useSavedSearches', () => {
     it('should save a new search', async () => {
       // Start with empty storage
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -244,7 +244,7 @@ describe('useSavedSearches', () => {
     it('should return validation error for duplicate name (case-insensitive)', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -264,7 +264,7 @@ describe('useSavedSearches', () => {
     it('should track analytics on save', async () => {
       // Start with empty storage
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -288,7 +288,7 @@ describe('useSavedSearches', () => {
     it('should rename an existing search', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -306,7 +306,7 @@ describe('useSavedSearches', () => {
     it('should return validation error for duplicate name on rename', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -328,7 +328,7 @@ describe('useSavedSearches', () => {
     it('should delete a search', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -347,7 +347,7 @@ describe('useSavedSearches', () => {
     it('should track analytics on delete', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -365,7 +365,7 @@ describe('useSavedSearches', () => {
     it('should set a search as default', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -382,7 +382,7 @@ describe('useSavedSearches', () => {
     it('should clear default when null is passed', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -398,7 +398,7 @@ describe('useSavedSearches', () => {
     it('should track analytics with correct action', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -428,7 +428,7 @@ describe('useSavedSearches', () => {
     it('should return default search on first navigation', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -442,7 +442,7 @@ describe('useSavedSearches', () => {
     it('should return null on subsequent calls (same session)', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -467,7 +467,7 @@ describe('useSavedSearches', () => {
 
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -488,7 +488,7 @@ describe('useSavedSearches', () => {
       const searchesWithoutDefault = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
       setMockStorageData('savedSearches', JSON.stringify(searchesWithoutDefault));
 
-      const { result } = renderHook(() => useSavedSearches());
+      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
