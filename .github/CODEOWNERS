@@ -77,11 +77,11 @@
 /.air.toml @macabu
 
 # Git Sync / App Platform Provisioning
-/apps/provisioning/ @grafana/grafana-git-ui-sync-team
-/pkg/operators @grafana/grafana-git-ui-sync-team
-/public/app/features/provisioning @grafana/grafana-git-ui-sync-team
-/pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
-/pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
+/apps/provisioning/ @grafana/grafana-app-platform-squad
+/pkg/operators @grafana/grafana-app-platform-squad
+/public/app/features/provisioning @grafana/grafana-app-platform-squad
+/pkg/registry/apis/provisioning @grafana/grafana-app-platform-squad
+/pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
@@ -753,7 +753,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
 /packages/grafana-api-clients/src/clients/rtkq/logsdrilldown/ @grafana/observability-logs
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/plugins-platform-frontend
-/packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-git-ui-sync-team
+/packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-search-navigate-organise
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # root files, mostly frontend
@@ -1325,7 +1325,7 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
-/conf/provisioning/sample/ @grafana/grafana-git-ui-sync-team
+/conf/provisioning/sample/ @grafana/grafana-app-platform-squad
 
 # Security
 /relyance.yaml @grafana/security-team
