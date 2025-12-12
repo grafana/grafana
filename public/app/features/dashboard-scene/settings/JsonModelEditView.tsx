@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -27,6 +27,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardSchemaEditor } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
@@ -105,13 +106,27 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEditView>) {
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
 
   const dashboard = model.getDashboard();
   const isProvisionedNG = useIsProvisionedNG(dashboard);
+  const saveModel = model.getSaveModel();
+  const isV2Dashboard = isDashboardV2Spec(saveModel);
 
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
+
+  const handleValidationChange = useCallback((hasErrors: boolean) => {
+    setHasValidationErrors(hasErrors);
+  }, []);
+
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      model.onCodeEditorBlur(value);
+    },
+    [model]
+  );
 
   const onSave = async (overwrite: boolean) => {
     if (isProvisionedNG) {
@@ -138,13 +153,14 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     }
   };
 
-  const saveButton = (overwrite: boolean) => (
+  const saveButton = (overwrite: boolean, disabled = false) => (
     <Button
       type="submit"
       onClick={() => {
         onSave(overwrite);
       }}
       variant={overwrite ? 'destructive' : 'primary'}
+      disabled={disabled}
     >
       {overwrite ? (
         <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">Save and overwrite</Trans>
@@ -161,7 +177,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   );
   const styles = useStyles2(getStyles);
 
-  function renderSaveButtonAndError(error?: Error) {
+  function renderSaveButtonAndError(error?: Error, disabled = false) {
     if (error && isSaving) {
       if (isVersionMismatchError(error)) {
         return (
@@ -180,7 +196,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             <Box paddingTop={2}>
               <Stack alignItems="center">
                 {cancelButton}
-                {saveButton(true)}
+                {saveButton(true, disabled)}
               </Stack>
             </Box>
           </Alert>
@@ -207,7 +223,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
               </Trans>
             </p>
             <Box paddingTop={2}>
-              <Stack alignItems="center">{saveButton(true)}</Stack>
+              <Stack alignItems="center">{saveButton(true, disabled)}</Stack>
             </Box>
           </Alert>
         );
@@ -227,10 +243,13 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             <p>{error.message}</p>
           </Alert>
         )}
-        <Stack alignItems="center">{saveButton(false)}</Stack>
+        <Stack alignItems="center">{saveButton(false, disabled)}</Stack>
       </>
     );
   }
+  // For v2 dashboards, disable save if there are validation errors
+  const isSaveDisabled = isV2Dashboard && hasValidationErrors;
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
@@ -239,16 +258,25 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
           The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
           settings, layout, queries, and so on.
         </Trans>
-        <CodeEditor
-          width="100%"
-          value={jsonText}
-          language="json"
-          showLineNumbers={true}
-          showMiniMap={true}
-          containerStyles={styles.codeEditor}
-          onBlur={model.onCodeEditorBlur}
-        />
-        {canSave && <Box paddingTop={2}>{renderSaveButtonAndError(state.error)}</Box>}
+        {isV2Dashboard ? (
+          <DashboardSchemaEditor
+            value={jsonText}
+            onChange={handleEditorChange}
+            onValidationChange={handleValidationChange}
+            containerStyles={styles.codeEditor}
+          />
+        ) : (
+          <CodeEditor
+            width="100%"
+            value={jsonText}
+            language="json"
+            showLineNumbers={true}
+            showMiniMap={true}
+            containerStyles={styles.codeEditor}
+            onBlur={model.onCodeEditorBlur}
+          />
+        )}
+        {canSave && <Box paddingTop={2}>{renderSaveButtonAndError(state.error, isSaveDisabled)}</Box>}
       </div>
     </Page>
   );
@@ -263,5 +291,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   codeEditor: css({
     flexGrow: 1,
+    minHeight: 0,
   }),
 });
