@@ -61,11 +61,13 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
-		if resource.IsFolderResource() {
+		if resource.IsFolderResource() && resource.name == "" {
 			resource.name = accesscontrol.GeneralFolderUID
-		} else if resource.HasFolderSupport() {
+		} else if resource.HasFolderSupport() && resource.folder == "" {
 			resource.folder = accesscontrol.GeneralFolderUID
 		}
+
+		return resource
 	}
 
 	return resource
