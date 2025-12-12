@@ -107,6 +107,12 @@ type mockAppInstaller struct {
 	groupVersions                []schema.GroupVersion
 }
 
+func (m *mockAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
 func (m *mockAppInstaller) GroupVersions() []schema.GroupVersion {
 	return m.groupVersions
 }
