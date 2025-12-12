@@ -631,7 +631,13 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+			var converted ngmodels.AlertRule
+			if query.Compact {
+				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
+			} else {
+				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
+			}
+
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
 				continue

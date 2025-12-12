@@ -1007,6 +1007,7 @@ type ListAlertRulesExtendedQuery struct {
 	Limit         int64
 	RuleLimit     int64
 	ContinueToken string
+	Compact       bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
