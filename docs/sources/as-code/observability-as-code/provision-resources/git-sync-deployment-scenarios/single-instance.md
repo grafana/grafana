@@ -84,4 +84,3 @@ Configure your Grafana instance to synchronize with:
 
 1. **From Grafana to Git**: When users create or modify dashboards in Grafana, Git Sync commits changes to the `grafana/` directory on the `main` branch.
 2. **From Git to Grafana**: When dashboard JSON files are added or modified in the `grafana/` directory, Git Sync pulls these changes into Grafana.
-

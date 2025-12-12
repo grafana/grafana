@@ -209,7 +209,6 @@ All instances use identical parameters:
 5. All other instances pull the updated dashboard during their next sync cycle, or instantly if webhooks are configured.
 6. If one instance fails, load balancer stops routing traffic to it and remaining instances continue serving.
 
-
 ### Important considerations
 
 - **Eventually consistent**: Due to sync intervals, instances may briefly have different dashboard versions.
