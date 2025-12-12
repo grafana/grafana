@@ -3707,6 +3707,10 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "recently-viewed": {
+      "empty": "Nothing viewed yet",
+      "title": "Recently viewed"
+    },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard",
       "all-failed_other": "Failed to restore {{count}} dashboards",
