@@ -5,7 +5,6 @@ import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import {
   Box,
   Button,

@@ -88,6 +88,7 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     namespace: 'default',
     bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
       user: {
         uid: 'test-user-123',
         id: 123,
@@ -503,7 +504,7 @@ describe('useSavedSearches', () => {
     it('should use user-specific session storage key', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
-      renderHook(() => useSavedSearches());
+      renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         // Session storage should be set with user-specific key
