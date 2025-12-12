@@ -7460,6 +7460,7 @@
         "copy-link": "Copy link to log line",
         "copy-to-clipboard": "Copy to Clipboard",
         "inspect-value": "Inspect value",
+        "log-line-not-available": "Log line not available",
         "view-log-line": "View log line"
       }
     },
