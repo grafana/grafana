@@ -107,6 +107,12 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top">panda bear</td>
+    <td>
+      A large bear native to south-central China, recognized by its distinctive black and white coloring. In the context of software engineering, sometimes used as a whimsical mascot or example in documentation and testing scenarios.
+    </td>
+  </tr>
+  <tr>
     <td style="vertical-align: top">plugin</td>
     <td>
       An extension of Grafana that allows users to provide additional functionality to enhance their experience. See also <i>app plugin</i>, <i>data source plugin</i>, and <i>panel plugin</i>.
