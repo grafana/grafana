@@ -147,6 +147,9 @@ interface GrafanaRuleGroupListItemProps {
   namespaceName: string;
 }
 
+const NoGroupPrefix = 'no_group_for_rule_';
+const isNoGroup = (group: string) => group.startsWith(NoGroupPrefix);
+
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
   const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
     () => ({
@@ -161,10 +164,12 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 
   const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
+  const groupDisplayName = isNoGroup(group.name) ? `${group.rules[0].name} (Ungrouped)` : group.name;
+
   return (
     <ListGroup
       key={group.name}
-      name={group.name}
+      name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
       href={detailsLink}
       isOpen={false}
