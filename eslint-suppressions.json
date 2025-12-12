@@ -1840,14 +1840,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

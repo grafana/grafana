@@ -18,6 +18,7 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
+  hideLogo?: string | true;
   scenes?: boolean;
   shareView?: string;
   ref?: string; // used for repo preview

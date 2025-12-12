@@ -9,6 +9,7 @@ import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -20,6 +21,25 @@ import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+
+const KIOSK_DASHBOARD_FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard';
+
+function shouldHideDashboardKioskFooter(hideLogo?: string | true): boolean {
+  if (hideLogo === undefined || hideLogo === null) {
+    return false;
+  }
+
+  if (hideLogo === true || hideLogo === '1') {
+    return true;
+  }
+
+  const normalized = String(hideLogo).trim().toLowerCase();
+  if (normalized === '') {
+    return true;
+  }
+
+  return normalized !== 'false' && normalized !== '0';
+}
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -33,7 +53,32 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
-  const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  const routeReloadCounter = (() => {
+    const state = location.state;
+    if (state && typeof state === 'object') {
+      const value = Reflect.get(state, 'routeReloadCounter');
+      return typeof value === 'number' ? value : undefined;
+    }
+
+    return undefined;
+  })();
+
+  const dashboardRoute = (() => {
+    switch (route.routeName) {
+      case DashboardRoutes.Home:
+      case DashboardRoutes.New:
+      case DashboardRoutes.Template:
+      case DashboardRoutes.Normal:
+      case DashboardRoutes.Provisioning:
+      case DashboardRoutes.Scripted:
+      case DashboardRoutes.Public:
+      case DashboardRoutes.Embedded:
+      case DashboardRoutes.Report:
+        return route.routeName;
+      default:
+        return DashboardRoutes.Normal;
+    }
+  })();
   const prevParams = useRef<Params<string>>(params);
 
   useEffect(() => {
@@ -44,7 +89,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
         type,
         slug,
-        route: route.routeName as DashboardRoutes,
+        route: dashboardRoute,
         urlFolderUid: queryParams.folderUid,
       });
     }
@@ -106,12 +151,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return null;
   }
 
+  const showKioskFooter = queryParams.kiosk === '1' || queryParams.kiosk === true;
+  const hideKioskFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
+
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
+      {showKioskFooter && !hideKioskFooter && (
+        <PublicDashboardFooter paddingX={2} useMinHeight linkUrl={KIOSK_DASHBOARD_FOOTER_URL} />
+      )}
     </UrlSyncContextProvider>
   );
 }
