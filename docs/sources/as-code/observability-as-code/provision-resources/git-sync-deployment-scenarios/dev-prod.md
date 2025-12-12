@@ -18,15 +18,72 @@ Use separate Grafana instances for development and production. Each syncs with d
 
 ## Architecture
 
-```text
-...existing code block diagram from Scenario 2...
+```
+┌────────────────────────────────────────────────────────────┐
+│              GitHub Repository                             │
+│   Repository: your-org/grafana-manifests                 │
+│   Branch: main                                             │
+│                                                            │
+│   grafana-manifests/                                     │
+│   ├── dev/                                                │
+│   │   ├── dashboard-new.json    ← Development dashboards │
+│   │   └── dashboard-test.json                            │
+│   │                                                       │
+│   └── prod/                                               │
+│       ├── dashboard-stable.json  ← Production dashboards │
+│       └── dashboard-approved.json                        │
+└────────────────────────────────────────────────────────────┘
+           ↕                                 ↕
+    Git Sync (dev/)              Git Sync (prod/)
+           ↕                                 ↕
+┌─────────────────────┐          ┌─────────────────────┐
+│  Dev Grafana        │          │  Prod Grafana       │
+│                     │          │                     │
+│  Repository:        │          │  Repository:        │
+│  - path: dev/       │          │  - path: prod/      │
+│                     │          │                     │
+│  Creates folder:    │          │  Creates folder:    │
+│  "grafana-manifests"│         │  "grafana-manifests"│
+└─────────────────────┘          └─────────────────────┘
 ```
 
 ## Repository structure
 
-```text
-...existing structure block from Scenario 2...
+**In Git:**
+
 ```
+your-org/grafana-manifests
+├── dev/
+│   ├── dashboard-new.json
+│   └── dashboard-test.json
+└── prod/
+    ├── dashboard-stable.json
+    └── dashboard-approved.json
+```
+
+**In Grafana Dashboards view:**
+
+**Dev instance:**
+
+```
+Dashboards
+└── 📁 grafana-manifests/
+    ├── New Dashboard
+    └── Test Dashboard
+```
+
+**Prod instance:**
+
+```
+Dashboards
+└── 📁 grafana-manifests/
+    ├── Stable Dashboard
+    └── Approved Dashboard
+```
+
+- Both instances create a folder named "grafana-manifests" (from repository name)
+- Each instance only shows dashboards from its configured path (`dev/` or `prod/`)
+- Dashboards appear with their titles from the JSON files
 
 ## Configuration parameters
 
@@ -51,11 +108,40 @@ Production:
 5. Production syncs from `prod/`.
 6. Production dashboards update.
 
-## Alternatives
+## Alternative: Use branches
 
-- Use branches: `develop` for development, `main` for production, both with `grafana/`.
-- Use separate repositories for stricter isolation.
+Instead of using different paths, you can configure instances to use different branches:
 
-```
+**Development instance:**
 
-```
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `develop`
+- **Path**: `grafana/`
+
+**Production instance:**
+
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `main`
+- **Path**: `grafana/`
+
+With this approach:
+
+- Development changes go to the `develop` branch
+- Use Git merge or pull request workflows to promote changes from `develop` to `main`
+- Production automatically syncs from the `main` branch
+
+## Alternative: Use separate repositories for stricter isolation
+
+For stricter isolation, use completely separate repositories:
+
+**Development instance:**
+
+- **Repository**: `your-org/grafana-manifests-dev`
+- **Branch**: `main`
+- **Path**: `grafana/`
+
+**Production instance:**
+
+- **Repository**: `your-org/grafana-manifests-prod`
+- **Branch**: `main`
+- **Path**: `grafana/`

@@ -19,15 +19,56 @@ Deploy multiple Grafana instances across regions. Synchronize them with the same
 
 ## Architecture
 
-```text
-...existing diagram from Scenario 3...
+```
+┌─────────────────────────────────────────────────────┐
+│           GitHub Repository                         │
+│   Repository: your-org/grafana-manifests          │
+│   Branch: main                                      │
+│                                                     │
+│   grafana-manifests/                              │
+│   └── shared/                                      │
+│       ├── dashboard-global.json                    │
+│       ├── dashboard-metrics.json                   │
+│       └── dashboard-logs.json                      │
+└─────────────────────────────────────────────────────┘
+              ↕                           ↕
+       Git Sync (shared/)         Git Sync (shared/)
+              ↕                           ↕
+┌────────────────────┐          ┌────────────────────┐
+│  US Region         │          │  EU Region         │
+│  Grafana           │          │  Grafana           │
+│                    │          │                    │
+│  Repository:       │          │  Repository:       │
+│  - path: shared/   │          │  - path: shared/   │
+└────────────────────┘          └────────────────────┘
 ```
 
 ## Repository structure
 
-```text
-...existing structure from Scenario 3...
+**In Git:**
+
 ```
+your-org/grafana-manifests
+└── shared/
+    ├── dashboard-global.json
+    ├── dashboard-metrics.json
+    └── dashboard-logs.json
+```
+
+**In Grafana Dashboards view (all regions):**
+
+```
+Dashboards
+└── 📁 grafana-manifests/
+    ├── Global Dashboard
+    ├── Metrics Dashboard
+    └── Logs Dashboard
+```
+
+- All regional instances (US, EU, etc.) show identical folder structure
+- Same folder name "grafana-manifests" in every region
+- Same dashboards synced from the `shared/` path appear everywhere
+- Users in any region see the exact same dashboards with the same titles
 
 ## Configuration parameters
 
@@ -46,6 +87,7 @@ All regions:
 
 ## Considerations
 
-- Write conflicts use last-write-wins.
-- Consider a primary region for edits.
-- Ensure reliable connectivity to Git.
+- **Write conflicts**: If users in different regions modify the same dashboard simultaneously, Git uses last-write-wins.
+- **Primary region**: Consider designating one region as the primary location for making dashboard changes.
+- **Propagation time**: Changes propagate to all regions within the configured sync interval, or instantly if webhooks are configured.
+- **Network reliability**: Ensure all regions have reliable connectivity to the Git repository.

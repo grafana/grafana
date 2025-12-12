@@ -21,23 +21,80 @@ Use a primary Grafana instance and one or more replicas synchronized with the sa
 
 ### Architecture
 
-```text
-...existing diagram from Scenario 4...
+```
+┌─────────────────────────────────────────────────────┐
+│           GitHub Repository                         │
+│   Repository: your-org/grafana-manifests          │
+│   Branch: main                                      │
+│                                                     │
+│   grafana-manifests/                              │
+│   └── shared/                                      │
+│       ├── dashboard-metrics.json                   │
+│       ├── dashboard-alerts.json                    │
+│       └── dashboard-logs.json                      │
+└─────────────────────────────────────────────────────┘
+              ↕                           ↕
+        Git Sync (shared/)        Git Sync (shared/)
+              ↕                           ↕
+┌────────────────────┐          ┌────────────────────┐
+│  Master Grafana    │          │  Replica Grafana   │
+│    (Active)        │          │    (Standby)       │
+│                    │          │                    │
+│  Repository:       │          │  Repository:       │
+│  - path: shared/   │          │  - path: shared/   │
+└────────────────────┘          └────────────────────┘
+         │                               │
+         └───────────┬───────────────────┘
+                     ↓
+          ┌──────────────────────┐
+          │  Reverse Proxy       │
+          │  (Failover)          │
+          └──────────────────────┘
 ```
 
 ### Repository structure
 
-```text
-...existing structure from Scenario 4...
+**In Git:**
+
 ```
+your-org/grafana-manifests
+└── shared/
+    ├── dashboard-metrics.json
+    ├── dashboard-alerts.json
+    └── dashboard-logs.json
+```
+
+**In Grafana Dashboards view (both instances):**
+
+```
+Dashboards
+└── 📁 grafana-manifests/
+    ├── Metrics Dashboard
+    ├── Alerts Dashboard
+    └── Logs Dashboard
+```
+
+- Master and replica instances show identical folder structure.
+- Both sync from the same `shared/` path.
+- Reverse proxy routes traffic to master (active) instance.
+- If master fails, proxy automatically fails over to replica (standby).
+- Users see the same dashboards regardless of which instance is serving traffic.
 
 ### Configuration parameters
 
-Primary and replica:
+Both master and replica instances use identical parameters:
 
-- Repository: `your-org/grafana-manifests`
-- Branch: `main`
-- Path: `shared/`
+**Master instance:**
+
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `main`
+- **Path**: `shared/`
+
+**Replica instance:**
+
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `main`
+- **Path**: `shared/`
 
 ### How it works
 
@@ -67,34 +124,95 @@ Run multiple active Grafana instances behind a load balancer. All instances sync
 
 ### Architecture
 
-```text
-...existing diagram from Scenario 5...
+```
+┌─────────────────────────────────────────────────────┐
+│           GitHub Repository                         │
+│   Repository: your-org/grafana-manifests          │
+│   Branch: main                                      │
+│                                                     │
+│   grafana-manifests/                              │
+│   └── shared/                                      │
+│       ├── dashboard-metrics.json                   │
+│       ├── dashboard-alerts.json                    │
+│       └── dashboard-logs.json                      │
+└─────────────────────────────────────────────────────┘
+              ↕                           ↕
+        Git Sync (shared/)        Git Sync (shared/)
+              ↕                           ↕
+┌────────────────────┐          ┌────────────────────┐
+│  Grafana Instance 1│          │  Grafana Instance 2│
+│    (Active)        │          │    (Active)        │
+│                    │          │                    │
+│  Repository:       │          │  Repository:       │
+│  - path: shared/   │          │  - path: shared/   │
+└────────────────────┘          └────────────────────┘
+         │                               │
+         └───────────┬───────────────────┘
+                     ↓
+          ┌──────────────────────┐
+          │  Load Balancer       │
+          │  (Round Robin)       │
+          └──────────────────────┘
 ```
 
 ### Repository structure
 
-```text
-...existing structure from Scenario 5...
+**In Git:**
+
 ```
+your-org/grafana-manifests
+└── shared/
+    ├── dashboard-metrics.json
+    ├── dashboard-alerts.json
+    └── dashboard-logs.json
+```
+
+**In Grafana Dashboards view (all instances):**
+
+```
+Dashboards
+└── 📁 grafana-manifests/
+    ├── Metrics Dashboard
+    ├── Alerts Dashboard
+    └── Logs Dashboard
+```
+
+- All instances show identical folder structure
+- All instances sync from the same `shared/` path
+- Load balancer distributes requests across all active instances
+- Any instance can serve read requests
+- Any instance can accept dashboard modifications
+- Changes propagate to all instances through Git
 
 ### Configuration parameters
 
-All instances:
+All instances use identical parameters:
 
-- Repository: `your-org/grafana-manifests`
-- Branch: `main`
-- Path: `shared/`
+**Instance 1:**
+
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `main`
+- **Path**: `shared/`
+
+**Instance 2:**
+
+- **Repository**: `your-org/grafana-manifests`
+- **Branch**: `main`
+- **Path**: `shared/`
 
 ### How it works
 
-1. Instances stay synchronized through Git.
-2. Load balancer distributes traffic.
-3. Any instance can serve reads and accept modifications.
-4. Changes propagate to all instances via Git (sync interval or webhooks).
+1. All instances stay synchronized through Git.
+2. Load balancer distributes incoming traffic across all active instances.
+3. Users can view dashboards from any instance.
+4. When a user modifies a dashboard on any instance, Git Sync commits the change.
+5. All other instances pull the updated dashboard during their next sync cycle, or instantly if webhooks are configured.
+6. If one instance fails, load balancer stops routing traffic to it and remaining instances continue serving.
+
 
 ### Important considerations
 
-- Eventual consistency across sync intervals.
-- Concurrent edits can cause conflicts.
-- Share the same backend database for sessions and annotations.
-- Favor stateless design to maximize load balancing.
+- **Eventually consistent**: Due to sync intervals, instances may briefly have different dashboard versions.
+- **Concurrent edits**: Multiple users editing the same dashboard on different instances can cause conflicts.
+- **Database sharing**: Instances should share the same backend database for user sessions, preferences, and annotations.
+- **Stateless design**: Design for stateless operation where possible to maximize load balancing effectiveness.
