@@ -32,7 +32,7 @@ interface Props {
 }
 
 // Constants for community dashboard pagination and API params
-const COMMUNITY_PAGE_SIZE = 51;
+const COMMUNITY_PAGE_SIZE = 6;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';

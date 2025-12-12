@@ -121,26 +121,16 @@ interface UseCommunityDashboardParams {
  * Check if a panel contains JavaScript code. This is not a perfect check, but good enough
  */
 function canPanelContainJS(panel: PanelModel): boolean {
-  const candidates: Array<{ keyPath: string; value: string }> = [];
+  // Create a copy of the panel without title and description, as they are already sanitized
+  // This reduces false positives while still checking all other properties for JavaScript code
+  const { title, description, ...panelWithoutSanitizedFields } = panel;
 
-  function collect(obj: Object, path: string[]) {
-    if (!obj || typeof obj !== 'object') {
-      return;
-    }
-    for (const [key, value] of Object.entries(obj)) {
-      const nextPath = [...path, key];
-      if (typeof value === 'string') {
-        if (value.trim().length >= 4) {
-          candidates.push({ keyPath: nextPath.join('.'), value });
-        }
-      } else if (value && typeof value === 'object') {
-        collect(value, nextPath);
-      }
-    }
-  }
-
-  if (panel.options) {
-    collect(panel.options, ['options']);
+  let panelJson: string;
+  try {
+    panelJson = JSON.stringify(panelWithoutSanitizedFields);
+  } catch (e) {
+    console.warn('Failed to stringify panel', e);
+    return true;
   }
 
   const valuePatterns = [
@@ -155,7 +145,6 @@ function canPanelContainJS(panel: PanelModel): boolean {
   ];
   const keyPatterns = [
     /\bscript\b/i,
-    /\bcode\b/i,
     /\bjavascript\b/i,
     /\bjs\b/i,
     /\bonclick\b/i,
@@ -164,17 +153,23 @@ function canPanelContainJS(panel: PanelModel): boolean {
     /\bhandler\b/i,
   ];
 
-  return candidates.some(({ keyPath, value }) => {
-    if (valuePatterns.some((re) => re.test(value))) {
-      console.warn('Panel contains JavaScript code in value', value);
-      return true;
-    }
-    if (keyPatterns.some((re) => re.test(keyPath))) {
-      console.warn('Panel contains JavaScript code', keyPath);
+  const hasSuspiciousValue = valuePatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in value');
       return true;
     }
     return false;
   });
+
+  const hasSuspiciousKey = keyPatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in key');
+      return true;
+    }
+    return false;
+  });
+
+  return hasSuspiciousValue || hasSuspiciousKey;
 }
 
 /**

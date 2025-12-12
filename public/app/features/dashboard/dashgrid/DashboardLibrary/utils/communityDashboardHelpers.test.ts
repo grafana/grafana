@@ -73,7 +73,7 @@ describe('communityDashboardHelpers', () => {
     it('should build a valid URL', () => {
       const gnetDashboard = createMockGnetDashboard({
         id: 1,
-        name: 'Test',
+        slug: 'test',
       });
 
       expect(buildGrafanaComUrl(gnetDashboard)).toBe('https://grafana.com/grafana/dashboards/1-test/');
@@ -85,6 +85,7 @@ describe('communityDashboardHelpers', () => {
       const gnetDashboard = createMockGnetDashboard({
         id: 1,
         name: 'Test',
+        slug: 'test',
         datasource: 'Test',
         orgName: 'Org',
         updatedAt: '2025-11-05T16:55:41.000Z',
@@ -316,19 +317,297 @@ describe('communityDashboardHelpers', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should throw an error if the dashboard contains JavaScript code', async () => {
-      const dashboardJson = createMockDashboardJson({
-        // The function only checks for 'options' property, so a partial object is sufficient
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        panels: [{ type: 'panel', options: { template: '{{ javascript:alert("XSS") }}' } } as any],
+    describe('when the dashboard contains JavaScript code', () => {
+      it('should throw an error if the dashboard contains JavaScript code in options', async () => {
+        const dashboardJson = createMockDashboardJson({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          panels: [{ type: 'panel', options: { template: '{{ javascript:alert("XSS") }}' } } as any],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
       });
 
-      await expect(setup({ dashboardJson })).rejects.toThrow(
-        'Community dashboard 123 Test Dashboard contains JavaScript code'
-      );
+      it('should throw an error if the dashboard contains JavaScript code in targets/queries', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              targets: [
+                {
+                  expr: 'function() { return bad(); }',
+                  refId: 'A',
+                },
+              ],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
-      expect(locationServicePushSpy).not.toHaveBeenCalled();
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains JavaScript code in transformations', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              transformations: [
+                {
+                  id: 'calculateField',
+                  options: {
+                    mode: 'binary',
+                    binary: {
+                      reducer: 'sum',
+                      left: 'A',
+                      right: 'B',
+                    },
+                    replaceFields: false,
+                    alias: 'function() { alert("XSS"); }',
+                  },
+                },
+              ],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains JavaScript code in fieldConfig', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              fieldConfig: {
+                defaults: {
+                  custom: {
+                    displayMode: 'function() { return "bad"; }',
+                  },
+                },
+                overrides: [],
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains javascript: URLs in links', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              links: [
+                {
+                  title: 'Bad Link',
+                  url: 'javascript:alert("XSS")',
+                  targetBlank: false,
+                },
+              ],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains <script> tags in any property', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {
+                content: '<script>alert("XSS")</script>',
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains arrow functions', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {
+                customCode: '() => { alert("XSS"); }',
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains setTimeout or setInterval', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {
+                handler: 'setTimeout(() => alert("XSS"), 1000)',
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains suspicious key names like beforeRender', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              beforeRender: 'alert("XSS")',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains suspicious key names like afterRender', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              afterRender: 'alert("XSS")',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains suspicious key names like handler', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {},
+              handler: 'alert("XSS")',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains return statements', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {
+                customLogic: 'function test() { return malicious(); }',
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
+
+      it('should throw an error if the dashboard contains event handlers like onclick', async () => {
+        const dashboardJson = createMockDashboardJson({
+          panels: [
+            {
+              type: 'panel',
+              options: {
+                html: '<div onclick="alert(\'XSS\')">Click me</div>',
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+          ],
+        });
+
+        await expect(setup({ dashboardJson })).rejects.toThrow(
+          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+        expect(locationServicePushSpy).not.toHaveBeenCalled();
+      });
     });
   });
 });

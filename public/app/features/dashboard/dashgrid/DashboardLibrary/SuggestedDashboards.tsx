@@ -43,8 +43,8 @@ type SuggestedDashboardsResult = {
 };
 
 // Constants for suggested dashboards API params
-const SUGGESTED_COMMUNITY_PAGE_SIZE = 2;
-const COMMUNITY_PAGE_SIZE = 51;
+const MAX_SUGGESTED_DASHBOARDS_PREVIEW = 2;
+const COMMUNITY_PAGE_SIZE = 6;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_SCREENSHOTS = true;
@@ -131,7 +131,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
 
       // Determine if there are more dashboards available beyond what we're showing
       // Show "View all" if: more than 1 provisioned exists OR we got the full page size of community dashboards
-      const hasMoreDashboards = provisioned.length > 1 || community.length >= SUGGESTED_COMMUNITY_PAGE_SIZE;
+      const hasMoreDashboards = provisioned.length > 1 || community.length > MAX_SUGGESTED_DASHBOARDS_PREVIEW;
 
       return { dashboards: mixed, hasMoreDashboards };
     } catch (error) {
