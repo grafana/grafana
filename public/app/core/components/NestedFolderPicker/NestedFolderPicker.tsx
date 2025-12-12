@@ -37,8 +37,8 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Exclude managed folders (e.g., Git-synced folders) from the picker */
-  excludeManaged?: boolean;
+  /* Disable managed folders (e.g., Git-synced folders) in the picker  */
+  disableManaged?: boolean;
 
   /* Start tree from this folder instead of root */
   rootFolderUID?: string;
@@ -79,7 +79,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
-  excludeManaged = false,
+  disableManaged = false,
   rootFolderUID,
   rootFolderItem,
   permission = 'edit',
@@ -236,26 +236,30 @@ export function NestedFolderPicker({
 
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal
-    if (!showRootFolder || excludeUIDs?.length || excludeManaged) {
-      flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
-          return false;
-        }
+    if (!showRootFolder || excludeUIDs?.length || disableManaged) {
+      flatTree = flatTree
+        .filter((item) => {
+          if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
+            return false;
+          }
 
-        if (excludeUIDs?.includes(item.item.uid)) {
-          return false;
-        }
+          if (excludeUIDs?.includes(item.item.uid)) {
+            return false;
+          }
 
-        if (excludeManaged && 'managedBy' in item.item && item.item.managedBy === ManagerKind.Repo) {
-          return false;
-        }
-
-        return true;
-      });
+          return true;
+        })
+        .map((item) => {
+          // Mark managed folders as disabled if disableManaged is true
+          if (disableManaged && 'managedBy' in item.item && item.item.managedBy === ManagerKind.Repo) {
+            return { ...item, disabled: true };
+          }
+          return item;
+        });
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, excludeManaged, isBrowsing, searchResults?.items, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, disableManaged, isBrowsing, searchResults?.items, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

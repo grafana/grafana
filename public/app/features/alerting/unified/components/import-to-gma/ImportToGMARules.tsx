@@ -412,7 +412,7 @@ function TargetFolderField() {
               <NestedFolderPicker
                 permission="view"
                 showRootFolder={false}
-                excludeManaged={true}
+                disableManaged={true}
                 invalid={!!errors.targetFolder?.message}
                 {...field}
                 value={field.value?.uid}

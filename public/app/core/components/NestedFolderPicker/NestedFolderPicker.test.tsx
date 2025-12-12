@@ -7,7 +7,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 
-const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
+const [_, { folderA, folderB, folderC, folderD, folderA_folderA, folderA_folderB, folderA_folderC }] =
+  getFolderFixtures();
 
 setupMockServer();
 setBackendSrv(backendSrv);
@@ -122,28 +123,47 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
   });
 
-  it('hides managed folders when excludeManaged is true', async () => {
-    const { user } = render(<NestedFolderPicker excludeManaged={true} onChange={mockOnChange} />);
+  it('shows managed folders as disabled when disableManaged is true', async () => {
+    const { user } = render(<NestedFolderPicker disableManaged={true} onChange={mockOnChange} />);
 
     const button = await screen.findByRole('button', { name: 'Select folder' });
     await user.click(button);
     await screen.findByLabelText(folderA.item.title);
 
-    // Managed folders (Git-synced) should not be visible
-    expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
-    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
+    // Regular folders should be visible and not disabled
+    const folderAElement = screen.getByLabelText(folderA.item.title);
+    expect(folderAElement).toBeInTheDocument();
+    expect(folderAElement).not.toHaveAttribute('aria-disabled', 'true');
+
+    const folderCElement = screen.getByLabelText(folderC.item.title);
+    expect(folderCElement).toBeInTheDocument();
+    expect(folderCElement).not.toHaveAttribute('aria-disabled', 'true');
+
+    // folderD is managed (git-synced) and should be disabled
+    const folderDElement = screen.getByLabelText(folderD.item.title);
+    expect(folderDElement).toBeInTheDocument();
+    expect(folderDElement).toHaveAttribute('aria-disabled', 'true');
+
+    // Try to click on disabled folder - should not trigger onChange
+    await user.click(folderDElement);
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 
-  it('shows managed folders when excludeManaged is false', async () => {
-    const { user } = render(<NestedFolderPicker excludeManaged={false} onChange={mockOnChange} />);
+  it('allows managed folders to be selected when disableManaged is false', async () => {
+    const { user } = render(<NestedFolderPicker disableManaged={false} onChange={mockOnChange} />);
 
     const button = await screen.findByRole('button', { name: 'Select folder' });
     await user.click(button);
     await screen.findByLabelText(folderA.item.title);
 
-    // All folders should be visible when excludeManaged is false
-    expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
-    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
+    // folderD is managed (git-synced) but should NOT be disabled when disableManaged is false
+    const folderDElement = screen.getByLabelText(folderD.item.title);
+    expect(folderDElement).toBeInTheDocument();
+    expect(folderDElement).not.toHaveAttribute('aria-disabled', 'true');
+
+    // Clicking on managed folder should trigger onChange
+    await user.click(folderDElement);
+    expect(mockOnChange).toHaveBeenCalledWith(folderD.item.uid, folderD.item.title);
   });
 
   it('by default only shows items the user can edit', async () => {
