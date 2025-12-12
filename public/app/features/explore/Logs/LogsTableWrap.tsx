@@ -27,7 +27,6 @@ import {
 } from 'app/features/logs/components/LogDetailsBody';
 import {
   getFieldSelectorWidth,
-  getSidebarWidth,
   LogsTableFieldSelector,
   MIN_WIDTH,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -599,7 +598,7 @@ export function LogsTableWrap(props: Props) {
           <LogsTableFieldSelector
             clear={clearSelection}
             columnsWithMeta={columnsWithMeta}
-            dataFrames={memoizedDataFrames}
+            dataFrames={[currentDataFrame]}
             logs={[]}
             reorder={reorderColumn}
             setSidebarWidth={setSidebarWidth}
