@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 )
 
 // returns the current implementation version
@@ -115,6 +116,23 @@ func NewFromAny(data any) *Json {
 // Interface returns the underlying data
 func (j *Json) Interface() any {
 	return j.data
+}
+
+// Check if the underlying data is empty
+func (j *Json) IsEmpty() bool {
+	if j.data == nil {
+		return true
+	}
+	v := reflect.ValueOf(j.data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map, reflect.String:
+		if v.Len() == 0 {
+			return true
+		}
+	default:
+		return false
+	}
+	return false
 }
 
 // Encode returns its marshaled data as `[]byte`

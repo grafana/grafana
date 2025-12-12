@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -45,6 +46,7 @@ type DataSourceAPIBuilder struct {
 	contextProvider      PluginContextWrapper
 	accessControl        accesscontrol.AccessControl
 	queryTypes           *queryV0.QueryTypeDefinitionList
+	schemaProvider       func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	configCrudUseNewApis bool
 }
 
@@ -58,8 +60,17 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
+	//nolint:staticcheck
+	useQueryTypes := features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes)
+
+	//nolint:staticcheck
+	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections)
+
+	//nolint:staticcheck
+	isExperimental := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !configCrudUseNewApis && !isExperimental {
 		return nil, nil
 	}
 
@@ -71,25 +82,30 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	for _, pluginJSON := range pluginJSONs {
-		client, ok := pluginClient.(PluginClient)
-		if !ok {
-			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
-		}
+	// For the ST runner, the client can talk to any plugin
+	client, ok := pluginClient.(PluginClient)
+	if !ok {
+		return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
+	}
 
+	for _, pluginJSON := range pluginJSONs {
 		builder, err = NewDataSourceAPIBuilder(
 			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+			useQueryTypes,        // Exposes the query type OpenAPI schema
+			configCrudUseNewApis, // Enables the new connections-based datasource config CRUD APIs
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Hardcoded schemas for testdata
+		// NOTE: this will be driven by the pluginJSON/manifest soon
+		if pluginJSON.ID == "grafana-testdata-datasource" {
+			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)
@@ -235,6 +251,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	} else {
+		// Read-only access to datasource connection info
 		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
