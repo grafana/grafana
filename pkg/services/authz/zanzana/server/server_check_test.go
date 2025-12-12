@@ -212,4 +212,16 @@ func testCheck(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 6")
 	})
+
+	t.Run("user:18 should be able to create folder in root folder", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:18", utils.VerbCreate, folderGroup, folderResource, "", "", ""))
+		require.NoError(t, err)
+		assert.Equal(t, true, res.GetAllowed())
+	})
+
+	t.Run("user:18 should be able to create dashboard in root folder", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:18", utils.VerbCreate, dashboardGroup, dashboardResource, "", "", ""))
+		require.NoError(t, err)
+		assert.Equal(t, true, res.GetAllowed())
+	})
 }
