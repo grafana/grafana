@@ -199,10 +199,7 @@ export class LogListModel implements LogRowModel {
       }
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedLogAttributesTokens = Prism.tokenize(attributes, {
-        ...extraGrammar,
-        ...this._grammar,
-      });
+      this._highlightedLogAttributesTokens = Prism.tokenize(attributes, { ...extraGrammar, ...this._grammar });
     }
     return this._highlightedLogAttributesTokens;
   }

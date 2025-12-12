@@ -9,7 +9,6 @@ import {
   DataFrame,
   EventBus,
   EventBusSrv,
-  ExploreLogsPanelState,
   GrafanaTheme2,
   LogLevel,
   LogRowModel,
@@ -77,8 +76,6 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  panelState?: ExploreLogsPanelState;
-  onPanelStateChange?: (panelState: ExploreLogsPanelState) => void;
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
