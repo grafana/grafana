@@ -28,7 +28,18 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
 
   const interactiveLearningPluginId = getInteractiveLearningPluginId(availableComponents);
 
-  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined) {
+  // Check if the component is actually registered, not just if the plugin exists
+  // This allows plugins to conditionally register their sidebar component (e.g., for A/B testing)
+  const componentId = interactiveLearningPluginId
+    ? getComponentIdFromComponentMeta(interactiveLearningPluginId, 'Interactive learning')
+    : undefined;
+
+  // Show native help dropdown if:
+  // - Screen is small (mobile/responsive), OR
+  // - hideFromTabs is false, OR
+  // - Interactive learning plugin is not installed, OR
+  // - Interactive learning component is not registered (plugin may exist but chose not to register)
+  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined || componentId === undefined) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <ToolbarButton
@@ -41,7 +52,6 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
     );
   }
 
-  const componentId = getComponentIdFromComponentMeta(interactiveLearningPluginId, 'Interactive learning');
   const isOpen = dockedComponentId === componentId;
 
   return (
