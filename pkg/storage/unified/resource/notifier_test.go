@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,29 +49,18 @@ func TestDefaultWatchOptions(t *testing.T) {
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
 }
 
-func runNotifierTestWith(t *testing.T, storeName string, testFn func(*testing.T, context.Context, *notifier, *eventStore)) {
-	switch storeName {
-	case "badger":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			notifier, eventStore := setupTestNotifier(t)
-			testFn(t, ctx, notifier, eventStore)
-		})
-	case "sqlkv":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			notifier, eventStore := setupTestNotifierSqlKv(t)
-			testFn(t, ctx, notifier, eventStore)
-		})
-	default:
-		panic("bad storeName. Should be one of: \"badger\" or \"sqlkv\"")
-	}
+func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) (*notifier, *eventStore), testFn func(*testing.T, context.Context, *notifier, *eventStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		notifier, eventStore := newStoreFn(t)
+		testFn(t, ctx, notifier, eventStore)
+	})
 }
 
 func TestNotifier_lastEventResourceVersion(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierLastEventResourceVersion)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierLastEventResourceVersion)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierLastEventResourceVersion)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierLastEventResourceVersion)
 }
 
 func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -121,9 +110,9 @@ func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, not
 }
 
 func TestNotifier_cachekey(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierCachekey)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierCachekey)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierCachekey)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierCachekey)
 }
 
 func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -176,9 +165,9 @@ func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *notifier,
 }
 
 func TestNotifier_Watch_NoEvents(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierWatchNoEvents)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchNoEvents)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierWatchNoEvents)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchNoEvents)
 }
 
 func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -218,9 +207,9 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *noti
 }
 
 func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierWatchWithExistingEvents)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchWithExistingEvents)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierWatchWithExistingEvents)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchWithExistingEvents)
 }
 
 func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -293,9 +282,9 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 }
 
 func TestNotifier_Watch_EventDeduplication(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierWatchEventDeduplication)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchEventDeduplication)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierWatchEventDeduplication)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchEventDeduplication)
 }
 
 func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -360,9 +349,9 @@ func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, noti
 }
 
 func TestNotifier_Watch_ContextCancellation(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierWatchContextCancellation)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchContextCancellation)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierWatchContextCancellation)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchContextCancellation)
 }
 
 func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
@@ -407,9 +396,9 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 }
 
 func TestNotifier_Watch_MultipleEvents(t *testing.T) {
-	runNotifierTestWith(t, "badger", testNotifierWatchMultipleEvents)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchMultipleEvents)
 	// enable this when sqlkv is ready
-	// runNotifierTestWith(t, "sqlkv", testNotifierWatchMultipleEvents)
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchMultipleEvents)
 }
 
 func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {

@@ -197,29 +197,18 @@ func TestEventStore_ParseEventKey(t *testing.T) {
 	assert.Equal(t, originalKey, parsedKey)
 }
 
-func runEventStoreTestWith(t *testing.T, storeName string, testFn func(*testing.T, context.Context, *eventStore)) {
-	switch storeName {
-	case "badger":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			store := setupTestEventStore(t)
-			testFn(t, ctx, store)
-		})
-	case "sqlkv":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			store := setupTestEventStoreSqlKv(t)
-			testFn(t, ctx, store)
-		})
-	default:
-		panic("bad storeName. Should be one of: \"badger\" or \"sqlkv\"")
-	}
+func runEventStoreTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) *eventStore, testFn func(*testing.T, context.Context, *eventStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		store := newStoreFn(t)
+		testFn(t, ctx, store)
+	})
 }
 
 func TestEventStore_Save_Get(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreSaveGet)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreSaveGet)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreSaveGet)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreSaveGet)
 }
 
 func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore) {
@@ -255,9 +244,9 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 }
 
 func TestEventStore_Get_NotFound(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreGetNotFound)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreGetNotFound)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreGetNotFound)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreGetNotFound)
 }
 
 func testEventStoreGetNotFound(t *testing.T, ctx context.Context, store *eventStore) {
@@ -275,9 +264,9 @@ func testEventStoreGetNotFound(t *testing.T, ctx context.Context, store *eventSt
 }
 
 func TestEventStore_LastEventKey(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreLastEventKey)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreLastEventKey)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreLastEventKey)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreLastEventKey)
 }
 
 func testEventStoreLastEventKey(t *testing.T, ctx context.Context, store *eventStore) {
@@ -337,9 +326,9 @@ func testEventStoreLastEventKey(t *testing.T, ctx context.Context, store *eventS
 }
 
 func TestEventStore_ListKeysSince(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreListKeysSince)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListKeysSince)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreListKeysSince)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListKeysSince)
 }
 
 func testEventStoreListKeysSince(t *testing.T, ctx context.Context, store *eventStore) {
@@ -397,9 +386,9 @@ func testEventStoreListKeysSince(t *testing.T, ctx context.Context, store *event
 }
 
 func TestEventStore_ListSince(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreListSince)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListSince)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreListSince)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListSince)
 }
 
 func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStore) {
@@ -455,9 +444,9 @@ func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStor
 }
 
 func TestEventStore_ListSince_Empty(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreListSinceEmpty)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListSinceEmpty)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreListSinceEmpty)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListSinceEmpty)
 }
 
 func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
@@ -513,9 +502,9 @@ func TestEventKey_Struct(t *testing.T) {
 }
 
 func TestEventStore_Save_InvalidJSON(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreSaveInvalidJSON)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreSaveInvalidJSON)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreSaveInvalidJSON)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreSaveInvalidJSON)
 }
 
 func testEventStoreSaveInvalidJSON(t *testing.T, ctx context.Context, store *eventStore) {
@@ -534,9 +523,9 @@ func testEventStoreSaveInvalidJSON(t *testing.T, ctx context.Context, store *eve
 }
 
 func TestEventStore_CleanupOldEvents(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreCleanupOldEvents)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEvents)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreCleanupOldEvents)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEvents)
 }
 
 func testEventStoreCleanupOldEvents(t *testing.T, ctx context.Context, store *eventStore) {
@@ -625,9 +614,9 @@ func testEventStoreCleanupOldEvents(t *testing.T, ctx context.Context, store *ev
 }
 
 func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreCleanupOldEventsNoOldEvents)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEventsNoOldEvents)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreCleanupOldEventsNoOldEvents)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEventsNoOldEvents)
 }
 
 func testEventStoreCleanupOldEventsNoOldEvents(t *testing.T, ctx context.Context, store *eventStore) {
@@ -666,9 +655,9 @@ func testEventStoreCleanupOldEventsNoOldEvents(t *testing.T, ctx context.Context
 }
 
 func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreCleanupOldEventsEmptyStore)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEventsEmptyStore)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreCleanupOldEventsEmptyStore)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEventsEmptyStore)
 }
 
 func testEventStoreCleanupOldEventsEmptyStore(t *testing.T, ctx context.Context, store *eventStore) {
@@ -679,9 +668,9 @@ func testEventStoreCleanupOldEventsEmptyStore(t *testing.T, ctx context.Context,
 }
 
 func TestEventStore_BatchDelete(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testEventStoreBatchDelete)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreBatchDelete)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testEventStoreBatchDelete)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreBatchDelete)
 }
 
 func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventStore) {
@@ -791,9 +780,9 @@ func TestSnowflakeFromTime(t *testing.T) {
 }
 
 func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
-	runEventStoreTestWith(t, "badger", testListKeysSinceWithSnowflakeTime)
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testListKeysSinceWithSnowflakeTime)
 	// enable this when sqlkv is ready
-	// runTestWith(t, "sqlkv", testListKeysSinceWithSnowflakeTime)
+	// runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testListKeysSinceWithSnowflakeTime)
 }
 
 func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store *eventStore) {

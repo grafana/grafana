@@ -691,29 +691,18 @@ func TestParseKey(t *testing.T) {
 	}
 }
 
-func runDataStoreTestWith(t *testing.T, storeName string, testFn func(*testing.T, context.Context, *dataStore)) {
-	switch storeName {
-	case "badger":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			store := setupTestDataStore(t)
-			testFn(t, ctx, store)
-		})
-	case "sqlkv":
-		t.Run(storeName, func(t *testing.T) {
-			ctx := context.Background()
-			store := setupTestDataStoreSqlKv(t)
-			testFn(t, ctx, store)
-		})
-	default:
-		panic("bad storeName. Should be one of: \"badger\" or \"sqlkv\"")
-	}
+func runDataStoreTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) *dataStore, testFn func(*testing.T, context.Context, *dataStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		store := newStoreFn(t)
+		testFn(t, ctx, store)
+	})
 }
 
 func TestDataStore_Save_And_Get(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreSaveAndGet)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreSaveAndGet)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "badger", testDataStoreSaveAndGet)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreSaveAndGet)
 }
 
 func testDataStoreSaveAndGet(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -778,9 +767,9 @@ func testDataStoreSaveAndGet(t *testing.T, ctx context.Context, ds *dataStore) {
 }
 
 func TestDataStore_Delete(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreDelete)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreDelete)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreDelete)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreDelete)
 }
 
 func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -832,9 +821,9 @@ func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
 }
 
 func TestDataStore_List(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreList)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreList)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreList)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreList)
 }
 
 func testDataStoreList(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -959,9 +948,9 @@ func testDataStoreList(t *testing.T, ctx context.Context, ds *dataStore) {
 }
 
 func TestDataStore_Integration(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreIntegration)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreIntegration)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreIntegration)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreIntegration)
 }
 
 func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1050,9 +1039,9 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 }
 
 func TestDataStore_Keys(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreKeys)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreKeys)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreKeys)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
 }
 
 func testDataStoreKeys(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1200,9 +1189,9 @@ func testDataStoreKeys(t *testing.T, ctx context.Context, ds *dataStore) {
 }
 
 func TestDataStore_ValidationEnforced(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreValidationEnforced)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreValidationEnforced)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreValidationEnforced)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreValidationEnforced)
 }
 
 func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1532,9 +1521,9 @@ func TestListRequestKey_Prefix(t *testing.T) {
 }
 
 func TestDataStore_LastResourceVersion(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreLastResourceVersion)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreLastResourceVersion)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreLastResourceVersion)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreLastResourceVersion)
 }
 
 func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1637,9 +1626,9 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 }
 
 func TestDataStore_GetLatestResourceKey(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetLatestResourceKey)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKey)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetLatestResourceKey)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKey)
 }
 
 func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1703,9 +1692,9 @@ func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *da
 }
 
 func TestDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetLatestResourceKeyDeleted)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyDeleted)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetLatestResourceKeyDeleted)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyDeleted)
 }
 
 func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1734,9 +1723,9 @@ func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context,
 }
 
 func TestDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetLatestResourceKeyNotFound)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyNotFound)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetLatestResourceKeyNotFound)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyNotFound)
 }
 
 func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1752,9 +1741,9 @@ func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context
 }
 
 func TestDataStore_GetResourceKeyAtRevision(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetResourceKeyAtRevision)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceKeyAtRevision)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetResourceKeyAtRevision)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceKeyAtRevision)
 }
 
 func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1830,9 +1819,9 @@ func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds
 }
 
 func TestDataStore_ListLatestResourceKeys(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListLatestResourceKeys)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeys)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListLatestResourceKeys)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeys)
 }
 
 func testDataStoreListLatestResourceKeys(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1886,9 +1875,9 @@ func testDataStoreListLatestResourceKeys(t *testing.T, ctx context.Context, ds *
 }
 
 func TestDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListLatestResourceKeysDeleted)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysDeleted)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListLatestResourceKeysDeleted)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysDeleted)
 }
 
 func testDataStoreListLatestResourceKeysDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1939,9 +1928,9 @@ func testDataStoreListLatestResourceKeysDeleted(t *testing.T, ctx context.Contex
 }
 
 func TestDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListLatestResourceKeysMultiple)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysMultiple)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListLatestResourceKeysMultiple)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysMultiple)
 }
 
 func testDataStoreListLatestResourceKeysMultiple(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2013,9 +2002,9 @@ func testDataStoreListLatestResourceKeysMultiple(t *testing.T, ctx context.Conte
 }
 
 func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListResourceKeysAtRevision)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevision)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListResourceKeysAtRevision)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevision)
 }
 
 func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2228,9 +2217,9 @@ func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, 
 }
 
 func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListResourceKeysAtRevisionValidationErrors)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionValidationErrors)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListResourceKeysAtRevisionValidationErrors)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionValidationErrors)
 }
 
 func testDataStoreListResourceKeysAtRevisionValidationErrors(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2273,9 +2262,9 @@ func testDataStoreListResourceKeysAtRevisionValidationErrors(t *testing.T, ctx c
 }
 
 func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListResourceKeysAtRevisionEmptyResults)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionEmptyResults)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListResourceKeysAtRevisionEmptyResults)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionEmptyResults)
 }
 
 func testDataStoreListResourceKeysAtRevisionEmptyResults(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2295,9 +2284,9 @@ func testDataStoreListResourceKeysAtRevisionEmptyResults(t *testing.T, ctx conte
 }
 
 func TestDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
 }
 
 func testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2766,9 +2755,9 @@ func TestGetRequestKey_Prefix(t *testing.T) {
 }
 
 func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetResourceStatsComprehensive)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsComprehensive)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetResourceStatsComprehensive)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsComprehensive)
 }
 
 func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -2976,9 +2965,9 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 }
 
 func TestDataStore_getGroupResources(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetGroupResources)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetGroupResources)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetGroupResources)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetGroupResources)
 }
 
 func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -3042,9 +3031,9 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 }
 
 func TestDataStore_BatchDelete(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreBatchDelete)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchDelete)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreBatchDelete)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchDelete)
 }
 
 func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -3081,9 +3070,9 @@ func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) 
 }
 
 func TestDataStore_BatchGet(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreBatchGet)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchGet)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreBatchGet)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchGet)
 }
 
 func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -3229,9 +3218,9 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 }
 
 func TestDataStore_GetLatestAndPredecessor(t *testing.T) {
-	runDataStoreTestWith(t, "badger", testDataStoreGetLatestAndPredecessor)
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestAndPredecessor)
 	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", testDataStoreGetLatestAndPredecessor)
+	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestAndPredecessor)
 }
 
 func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds *dataStore) {
