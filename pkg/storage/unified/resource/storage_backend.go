@@ -132,7 +132,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 }
 
 func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	// TODO should we add Ping() to the KV interface?
 	type pinger interface {
 		Ping(context.Context) error
 	}
