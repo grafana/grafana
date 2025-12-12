@@ -21,6 +21,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -142,6 +143,8 @@ func NewAPIService(
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
+	tokenExchanger authn.TokenExchanger,
+	authorizerDialConfigs map[schema.GroupResource]iamauthorizer.DialConfig,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
@@ -150,9 +153,8 @@ func NewAPIService(
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 
-	// TODO: in a follow up PR, make this configurable
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
-		iamauthorizer.NewRemoteConfigProvider(map[schema.GroupResource]iamauthorizer.DialConfig{}, nil),
+		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
 		iamauthorizer.Versions,
 	)
 
