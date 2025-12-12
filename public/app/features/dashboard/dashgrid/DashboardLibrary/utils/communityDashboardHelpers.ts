@@ -172,13 +172,21 @@ function canPanelContainJS(panel: PanelModel): boolean {
   return hasSuspiciousValue || hasSuspiciousKey;
 }
 
+function isPanelModel(panel: unknown): panel is PanelModel {
+  if (!panel || typeof panel !== 'object') {
+    return false;
+  }
+  return 'options' in panel && 'type' in panel;
+}
+
 /**
  * Check if a dashboard contains JavaScript code. This is not a perfect check, but good enough
  * Used as a second filter after the first filter of panel types (see api/dashboardLibraryApi.ts)
  */
 const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
   return dashboard.panels?.some((panel) => {
-    if (panel && typeof panel === 'object' && 'options' in panel) {
+    // Skip library panels - they don't have options/type and are already validated
+    if (isPanelModel(panel)) {
       return canPanelContainJS(panel);
     }
     return false;
