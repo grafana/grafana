@@ -4,16 +4,9 @@ import { PropsWithChildren } from 'react';
 import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
-import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
-
-// MSW-based UserStorage API mock
-// The UserStorage class makes requests to this endpoint
-const USER_STORAGE_BASE_URL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
-const TEST_USER_UID = 'test-user-123';
-const TEST_RESOURCE_NAME = `alerting:${TEST_USER_UID}`;
 
 // In-memory storage for MSW handlers
 let mockStorageData: Record<string, string> = {};
@@ -21,9 +14,11 @@ let shouldFailOnGet = false;
 let shouldFailOnSet = false;
 
 // MSW handlers for UserStorage API
+// Use regex patterns to match any namespace and user UID, since UserStorage
+// reads config values from internal imports that aren't affected by jest.mock
 const handlers = [
-  // GET - fetch user storage
-  http.get(`${USER_STORAGE_BASE_URL}/${TEST_RESOURCE_NAME}`, () => {
+  // GET - fetch user storage (match any namespace and user)
+  http.get(/\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage\/alerting:.+/, () => {
     if (shouldFailOnGet) {
       return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
     }
@@ -35,8 +30,8 @@ const handlers = [
     });
   }),
 
-  // POST - create user storage
-  http.post(USER_STORAGE_BASE_URL, async ({ request }) => {
+  // POST - create user storage (match any namespace)
+  http.post(/\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage/, async ({ request }) => {
     if (shouldFailOnSet) {
       return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
     }
@@ -45,15 +40,18 @@ const handlers = [
     return HttpResponse.json({ spec: { data: mockStorageData } });
   }),
 
-  // PATCH - update user storage
-  http.patch(`${USER_STORAGE_BASE_URL}/${TEST_RESOURCE_NAME}`, async ({ request }) => {
-    if (shouldFailOnSet) {
-      return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+  // PATCH - update user storage (match any namespace and user)
+  http.patch(
+    /\/apis\/userstorage\.grafana\.app\/v0alpha1\/namespaces\/[^/]+\/user-storage\/alerting:.+/,
+    async ({ request }) => {
+      if (shouldFailOnSet) {
+        return HttpResponse.json({ message: 'Storage error' }, { status: 500 });
+      }
+      const body = (await request.json()) as { spec: { data: Record<string, string> } };
+      mockStorageData = { ...mockStorageData, ...body.spec.data };
+      return HttpResponse.json({ spec: { data: mockStorageData } });
     }
-    const body = (await request.json()) as { spec: { data: Record<string, string> } };
-    mockStorageData = { ...mockStorageData, ...body.spec.data };
-    return HttpResponse.json({ spec: { data: mockStorageData } });
-  }),
+  ),
 ];
 
 // Setup MSW server
