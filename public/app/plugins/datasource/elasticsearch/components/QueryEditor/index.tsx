@@ -114,12 +114,14 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           <QueryTypeSelector />
         </div>
       </div>
-      <div className={styles.root}>
-        <InlineLabel width={17}>Editor type</InlineLabel>
-        <div className={styles.queryItem}>
-          <EditorTypeSelector />
+      {rawDSLFeatureEnabled && (
+        <div className={styles.root}>
+          <InlineLabel width={17}>Editor type</InlineLabel>
+          <div className={styles.queryItem}>
+            <EditorTypeSelector />
+          </div>
         </div>
-      </div>
+      )}
 
       {isCodeEditor && rawDSLFeatureEnabled && (
         <RawQueryEditor
