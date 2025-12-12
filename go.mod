@@ -96,6 +96,7 @@ require (
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.48.5 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.48.3 // @grafana/grafana-app-platform-squad
@@ -661,7 +662,6 @@ require (
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
 require (
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
 	github.com/containerd/log v0.1.0 // indirect
