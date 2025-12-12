@@ -296,7 +296,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
 		// only add namespaces that the user has access to rules in
-		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.NewNamespace(folder))
 		if err != nil {
 			ruleResponse.Status = "error"
 			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
