@@ -1,13 +1,17 @@
 import { HttpResponse, http } from 'msw';
 
+import {
+  API_GROUP,
+  API_VERSION,
+  DeletecollectionReceiverApiResponse,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
-import { DeletecollectionReceiverApiResponse } from '../../../../v0alpha1/notifications.api.gen';
-import { GROUP, VERSION } from '../../../const';
 
 export function deletecollectionReceiverHandler(
   data: DeletecollectionReceiverApiResponse | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Response)
 ) {
-  return http.delete(getAPIBaseURLForMocks(GROUP, VERSION, '/receivers'), function handler(info) {
+  return http.delete(getAPIBaseURLForMocks(API_GROUP, API_VERSION, '/receivers'), function handler(info) {
     if (typeof data === 'function') {
       return data(info);
     }
