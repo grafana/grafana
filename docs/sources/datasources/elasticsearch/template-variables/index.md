@@ -22,6 +22,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  add-template-variables-add-ad-hoc-filters:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
   add-template-variables-multi-value-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#multi-value-variables
@@ -37,10 +42,28 @@ refs:
 # Elasticsearch template variables
 
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana lists these variables in drop-down select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
+
+## Use ad hoc filters
+
+Elasticsearch supports the **Ad hoc filters** variable type.
+You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Elasticsearch queries.
+
+Ad hoc filters support the following operators:
+
+| Operator | Description                                                   |
+| -------- | ------------------------------------------------------------- |
+| `=`      | Equals. Adds `AND field:"value"` to the query.                |
+| `!=`     | Not equals. Adds `AND -field:"value"` to the query.           |
+| `=~`     | Matches regex. Adds `AND field:/value/` to the query.         |
+| `!~`     | Does not match regex. Adds `AND -field:/value/` to the query. |
+| `>`      | Greater than. Adds `AND field:>value` to the query.           |
+| `<`      | Less than. Adds `AND field:<value` to the query.              |
+
+For more information, refer to [Add ad hoc filters](ref:add-template-variables-add-ad-hoc-filters).
 
 ## Choose a variable syntax
 
@@ -50,34 +73,35 @@ The Elasticsearch data source supports two variable syntaxes for use in the **Qu
 - `[[varname]]`, such as `hostname:[[hostname]]`
 
 When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a Lucene-compatible condition.
-For details, see the [Multi-value variables](ref:add-template-variables-multi-value-variables) documentation.
+For details, refer to the [Multi-value variables](ref:add-template-variables-multi-value-variables) documentation.
 
 ## Use variables in queries
 
-You can use other variables inside the query.
-This example is used to define a variable named `$host`:
+You can use variables in the Lucene query field, metric aggregation fields, bucket aggregation fields, and the alias field.
+
+### Variables in Lucene queries
+
+Use variables to filter your Elasticsearch queries dynamically:
 
 ```
-{"find": "terms", "field": "hostname", "query": "source:$source"}
+hostname:$hostname AND level:$level
 ```
 
-This uses another variable named `$source` inside the query definition.
-Whenever you change the value of the `$source` variable via the dropdown, Grafana triggers an update of the `$host` variable to contain only hostnames filtered by, in this case, the `source` document property.
+### Chain or nest variables
 
-These queries by default return results in term order (which can then be sorted alphabetically or numerically as for any variable).
-To produce a list of terms sorted by doc count (a top-N values list), add an `orderBy` property of "doc_count".
-This automatically selects a descending sort.
+You can create nested variables, where one variable's values depend on another variable's selection.
 
-{{< admonition type="note" >}}
-To use an ascending sort (`asc`) with doc_count (a bottom-N list), set `order: "asc"`. However, Elasticsearch [discourages this](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) because sorting by ascending doc count can return inaccurate results.
-{{< /admonition >}}
+This example defines a variable named `$host` that only shows hosts matching the selected `$environment`:
 
-To keep terms in the doc count order, set the variable's Sort dropdown to **Disabled**.
-You can alternatively use other sorting criteria, such as **Alphabetical**, to re-sort them.
-
+```json
+{ "find": "terms", "field": "hostname", "query": "environment:$environment" }
 ```
-{"find": "terms", "field": "hostname", "orderBy": "doc_count"}
-```
+
+Whenever you change the value of the `$environment` variable via the drop-down, Grafana triggers an update of the `$host` variable to contain only hostnames filtered by the selected environment.
+
+### Variables in aggregations
+
+You can use variables in bucket aggregation fields to dynamically change how data is grouped. For example, use a variable in the **Terms** group by field to let users switch between grouping by `hostname`, `service`, or `datacenter`.
 
 ## Template variable examples
 
@@ -92,11 +116,36 @@ Write the query using a custom JSON string, with the field mapped as a [keyword]
 
 If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
 
-| Query                                                               | Description                                                                                                                                                                   |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{"find": "fields", "type": "keyword"}`                             | Returns a list of field names with the index type `keyword`.                                                                                                                  |
-| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`      | Returns a list of values for a keyword using term aggregation. Query will use current dashboard time range as time range query.                                               |
-| `{"find": "terms", "field": "hostname", "query": '<Lucene query>'}` | Returns a list of values for a keyword field using term aggregation and a specified Lucene query filter. Query will use current dashboard time range as time range for query. |
+| Query                                                                          | Description                                                                                            |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `{"find": "fields", "type": "keyword"}`                                        | Returns a list of field names with the index type `keyword`.                                           |
+| `{"find": "fields", "type": "number"}`                                         | Returns a list of numeric field names (includes `float`, `double`, `integer`, `long`, `scaled_float`). |
+| `{"find": "fields", "type": "date"}`                                           | Returns a list of date field names.                                                                    |
+| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`                 | Returns a list of values for a keyword field. Uses the current dashboard time range.                   |
+| `{"find": "terms", "field": "hostname", "query": "<Lucene query>"}`            | Returns a list of values filtered by a Lucene query. Uses the current dashboard time range.            |
+| `{"find": "terms", "field": "status", "orderBy": "doc_count"}`                 | Returns values sorted by document count (descending by default).                                       |
+| `{"find": "terms", "field": "status", "orderBy": "doc_count", "order": "asc"}` | Returns values sorted by document count in ascending order.                                            |
 
-Queries of `terms` have a 500-result limit by default.
-To set a custom limit, set the `size` property in your query.
+Queries of `terms` have a 500-result limit by default. To set a custom limit, set the `size` property in your query.
+
+### Sort query results
+
+By default, queries return results in term order (which can then be sorted alphabetically or numerically using the variable's Sort setting).
+
+To produce a list of terms sorted by document count (a top-N values list), add an `orderBy` property of `doc_count`. This automatically selects a descending sort:
+
+```json
+{ "find": "terms", "field": "status", "orderBy": "doc_count" }
+```
+
+You can also use the `order` property to explicitly set ascending or descending sort:
+
+```json
+{ "find": "terms", "field": "hostname", "orderBy": "doc_count", "order": "asc" }
+```
+
+{{< admonition type="note" >}}
+Elasticsearch [discourages](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) sorting by ascending doc count because it can return inaccurate results.
+{{< /admonition >}}
+
+To keep terms in the document count order, set the variable's Sort drop-down to **Disabled**. You can alternatively use other sorting criteria, such as **Alphabetical**, to re-sort them.

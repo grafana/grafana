@@ -124,7 +124,6 @@
     "@types/eslint": "9.6.1",
     "@types/eslint-scope": "^8.0.0",
     "@types/file-saver": "2.0.7",
-    "@types/glob": "^9.0.0",
     "@types/google.analytics": "^0.0.46",
     "@types/gtag.js": "^0.0.20",
     "@types/history": "4.7.11",
@@ -460,7 +459,8 @@
     "gitconfiglocal": "2.1.0",
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
-    "js-yaml@npm:=4.1.0": "^4.1.0"
+    "js-yaml@npm:=4.1.0": "^4.1.0",
+    "nodemailer": "7.0.7"
   },
   "workspaces": {
     "packages": [
