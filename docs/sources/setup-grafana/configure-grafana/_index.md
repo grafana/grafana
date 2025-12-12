@@ -2144,7 +2144,7 @@ Default is `true`.
 
 #### `backend`
 
-Select which pluggable state history backend to use.
+Select which state history backend to use.
 Options are `annotations`, `loki`, `prometheus`, or `multiple`.
 
 - `annotations`: Store state history as Grafana annotations (default)
@@ -2172,13 +2172,13 @@ Either `loki_remote_url`, or both `loki_remote_read_url` and `loki_remote_write_
 #### `loki_remote_read_url`
 
 For `loki` backend only.
-URL of the external Loki's read path.
+URL of the external Loki read path.
 Use in configurations where Loki has separated read and write URLs.
 
 #### `loki_remote_write_url`
 
 For `loki` backend only.
-URL of the external Loki's write path.
+URL of the external Loki write path.
 Use in configurations where Loki has separated read and write URLs.
 
 #### `loki_tenant_id`
@@ -2224,7 +2224,7 @@ Default is `GRAFANA_ALERTS`.
 #### `prometheus_write_timeout`
 
 For `prometheus` backend only.
-Timeout for writing GRAFANA_ALERTS metrics to the target datasource.
+Timeout for writing GRAFANA_ALERTS metrics to the target data source.
 Default is `10s`.
 
 <hr />
@@ -3354,7 +3354,7 @@ Default is `5s`.
 
 #### `create_upload_url_timeout`
 
-Timeout for requests to create a presigned upload URL.
+Timeout for requests to create a pre-signed upload URL.
 Default is `5s`.
 
 #### `report_event_timeout`
