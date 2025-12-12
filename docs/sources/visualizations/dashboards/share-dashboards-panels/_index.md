@@ -223,9 +223,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click the **X** at the top-right corner to close the share drawer.
 
-### Export a dashboard as JSON
-
-<!-- ### Export a dashboard as code -->
+### Export a dashboard as code
 
 Export a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard. To export a JSON file, follow these steps:
 
@@ -237,11 +235,15 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 1. Select the dashboard JSON model that you to export:
 
-   - **Classic** - For dashboards created using [current dashboard schema] 
-   - V1 Resource
-   - V2 Resource
+   - **Classic** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
+   - **V1 Resource** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1). Choose between **JSON** and **YAML** format.
+   - **V2 Resource** - Export dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1). Choose between **JSON** and **YAML** format.
 
-1. Toggle the **Export the dashboard to use in another instance** switch to generate the JSON with a different data source UID.
+1. Do one of the following:
+
+   - Toggle the **Export for sharing externally** switch to generate the JSON with a different data source UID.
+   - Toggle the **Remove deployment details** switch to make the dashboard externally shareable.
+
 1. Click **Download file** or **Copy to clipboard**.
 1. Click the **X** at the top-right corner to close the share drawer.
 
