@@ -691,7 +691,7 @@ export const frameToRecords = (frame: DataFrame, nestedFramesFieldName?: string)
       rowCount++;
 
       if (hasNestedFrames) {
-        const childFrame = rows[rowCount-1]['${nestedFramesFieldName}'];
+        const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
         if (childFrame){
           rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
           rowCount++;
