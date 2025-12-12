@@ -225,13 +225,21 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 ### Export a dashboard as JSON
 
+<!-- ### Export a dashboard as code -->
+
 Export a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard. To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the top-right corner and select **Export as JSON**.
+1. Click the **Export** drop-down list in the top-right corner and select **Export as code**.
 
-   The **Export dashboard JSON** drawer opens.
+   The **Export dashboard** drawer opens.
+
+1. Select the dashboard JSON model that you to export:
+
+   - **Classic** - For dashboards created using [current dashboard schema] 
+   - V1 Resource
+   - V2 Resource
 
 1. Toggle the **Export the dashboard to use in another instance** switch to generate the JSON with a different data source UID.
 1. Click **Download file** or **Copy to clipboard**.
