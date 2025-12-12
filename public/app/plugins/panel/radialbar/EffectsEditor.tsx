@@ -45,11 +45,6 @@ export function EffectsEditor(props: StandardEditorProps<GaugePanelEffects>) {
         onChange={(e) => props.onChange({ ...props.value, gradient: e.currentTarget.checked })}
       />
       <EffectsEditorInput
-        label={t('radialbar.config.effects.rounded-bars', 'Rounded bars')}
-        value={!!props.value?.rounded}
-        onChange={(e) => props.onChange({ ...props.value, rounded: e.currentTarget.checked })}
-      />
-      <EffectsEditorInput
         label={t('radialbar.config.effects.bar-glow', 'Bar glow')}
         value={!!props.value?.barGlow}
         onChange={(e) => props.onChange({ ...props.value, barGlow: e.currentTarget.checked })}
@@ -58,12 +53,6 @@ export function EffectsEditor(props: StandardEditorProps<GaugePanelEffects>) {
         label={t('radialbar.config.effects.center-glow', 'Center glow')}
         value={!!props.value?.centerGlow}
         onChange={(e) => props.onChange({ ...props.value, centerGlow: e.currentTarget.checked })}
-      />
-      <EffectsEditorInput
-        label={t('radialbar.config.effects.spotlight', 'Spotlight')}
-        tooltip={t('radialbar.config.effects.spotlight-tooltip', 'Only visible in dark themes')}
-        value={!!props.value?.spotlight}
-        onChange={(e) => props.onChange({ ...props.value, spotlight: e.currentTarget.checked })}
       />
     </Grid>
   );

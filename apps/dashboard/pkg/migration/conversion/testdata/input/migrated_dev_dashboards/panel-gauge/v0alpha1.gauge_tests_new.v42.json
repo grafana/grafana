@@ -75,10 +75,10 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": true,
-          "spotlight": false,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -154,10 +154,10 @@
         "effects": {
           "barGlow": false,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": false,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -233,10 +233,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": false,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -312,10 +312,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -391,10 +391,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -470,10 +470,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": false,
-          "spotlight": true,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -549,10 +548,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": false,
-          "spotlight": true,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -641,10 +639,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -720,10 +718,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -799,10 +797,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -878,10 +876,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": false
         },
+        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -974,10 +972,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1053,10 +1050,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1132,10 +1128,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": true
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1211,10 +1206,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1290,10 +1284,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1386,10 +1379,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": true
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1469,10 +1461,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": true
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1552,10 +1543,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": true
         },
+        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1644,10 +1634,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": true
         },
+        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1662,8 +1652,7 @@
         "shape": "circle",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
+        "sparkline": false
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [
@@ -1730,10 +1719,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": true
         },
+        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1748,8 +1737,7 @@
         "shape": "gauge",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": true,
-        "spotlight": true
+        "sparkline": true
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [
@@ -1830,10 +1818,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": true
         },
+        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1848,8 +1836,7 @@
         "shape": "circle",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
+        "sparkline": false
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [
@@ -1917,9 +1904,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "sparkline": false,
-          "spotlight": true,
           "gradient": true
         },
         "glow": "both",
@@ -1934,10 +1918,10 @@
         "segmentCount": 12,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "barShape": "rounded",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
+        "sparkline": false
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [
@@ -2004,10 +1988,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": true
         },
+        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -2022,8 +2006,7 @@
         "shape": "circle",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
+        "sparkline": false
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [
@@ -2090,10 +2073,10 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-          "rounded": true,
-          "spotlight": true,
+
           "gradient": true
         },
+        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -2108,8 +2091,7 @@
         "shape": "circle",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
+        "sparkline": false
       },
       "pluginVersion": "13.0.0-pre",
       "targets": [

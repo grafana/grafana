@@ -34,7 +34,6 @@ const meta: Meta<StoryProps> = {
   },
   args: {
     barWidthFactor: 0.2,
-    spotlight: false,
     glowBar: false,
     glowCenter: false,
     sparkline: false,
@@ -56,7 +55,6 @@ const meta: Meta<StoryProps> = {
     width: { control: { type: 'range', min: 50, max: 600 } },
     height: { control: { type: 'range', min: 50, max: 600 } },
     value: { control: { type: 'range', min: 0, max: 110 } },
-    spotlight: { control: 'boolean' },
     roundedBars: { control: 'boolean' },
     sparkline: { control: 'boolean' },
     thresholdsBar: { control: 'boolean' },
@@ -133,26 +131,10 @@ export const Examples: StoryFn<StoryProps> = (args) => {
       </Stack>
       <div>Effects</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={args.value ?? 30} spotlight glowBar glowCenter color="blue" gradient="auto" />
-        <RadialGaugeExample value={args.value ?? 40} spotlight glowBar glowCenter color="green" gradient="auto" />
-        <RadialGaugeExample
-          value={args.value ?? 60}
-          spotlight
-          glowBar
-          glowCenter
-          color="red"
-          gradient="auto"
-          roundedBars
-        />
-        <RadialGaugeExample
-          value={args.value ?? 70}
-          spotlight
-          glowBar
-          glowCenter
-          color="purple"
-          gradient="auto"
-          roundedBars
-        />
+        <RadialGaugeExample value={args.value ?? 30} glowBar glowCenter color="blue" gradient="auto" />
+        <RadialGaugeExample value={args.value ?? 40} glowBar glowCenter color="green" gradient="auto" />
+        <RadialGaugeExample value={args.value ?? 60} glowBar glowCenter color="red" gradient="auto" roundedBars />
+        <RadialGaugeExample value={args.value ?? 70} glowBar glowCenter color="purple" gradient="auto" roundedBars />
       </Stack>
       <div>Shape: Gauge & color scale</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
@@ -185,7 +167,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           shape="gauge"
           gradient="auto"
           sparkline={true}
-          spotlight
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.2}
@@ -196,7 +177,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           shape="gauge"
           gradient="auto"
           sparkline={true}
-          spotlight
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.8}
@@ -208,7 +188,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           width={250}
           gradient="auto"
           sparkline={true}
-          spotlight
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.2}
@@ -220,7 +199,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           shape="gauge"
           gradient="auto"
           sparkline={true}
-          spotlight
           glowBar={true}
           glowCenter={true}
           barWidthFactor={0.8}
@@ -260,7 +238,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
         <RadialGaugeExample
           value={args.value ?? 80}
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
-          spotlight
           glowBar={true}
           glowCenter={true}
           segmentCount={20}
@@ -270,7 +247,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           value={args.value ?? 80}
           width={250}
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
-          spotlight
           shape="gauge"
           gradient="auto"
           glowBar={true}
@@ -288,7 +264,6 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           gradient="auto"
           thresholdsBar={true}
           roundedBars={false}
-          spotlight
           glowCenter={true}
           barWidthFactor={0.7}
         />
@@ -347,7 +322,6 @@ export const Temp: StoryFn<StoryProps> = (args) => {
         shape="gauge"
         roundedBars={false}
         barWidthFactor={0.8}
-        spotlight
       />
     </Stack>
   );
@@ -363,7 +337,6 @@ interface ExampleProps {
   max?: number;
   width?: number;
   height?: number;
-  spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
   barWidthFactor?: number;
@@ -390,7 +363,6 @@ export function RadialGaugeExample({
   max = 100,
   width = 200,
   height = 200,
-  spotlight = false,
   glowBar = false,
   glowCenter = false,
   barWidthFactor = 0.4,
@@ -480,7 +452,6 @@ export function RadialGaugeExample({
       barWidthFactor={barWidthFactor}
       gradient={gradient}
       shape={shape}
-      spotlight={spotlight}
       glowBar={glowBar}
       glowCenter={glowCenter}
       textMode={textMode}

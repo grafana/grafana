@@ -8,15 +8,19 @@ export interface RadialArcPathPropsBase {
   arcLengthDeg: number;
   roundedBars?: boolean;
   showGuideDots?: boolean;
-  guideDotColor?: string;
+  guideDotStartColor?: string;
+  guideDotEndColor?: string;
 }
 
 interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
   showGuideDots: true;
-  guideDotColor: string;
+  guideDotStartColor: string;
+  guideDotEndColor: string;
 }
 
 type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDot;
+
+const MAX_DOT_RADIUS = 8;
 
 export function RadialArcPath({
   startAngle: angle,
@@ -26,7 +30,8 @@ export function RadialArcPath({
   arcLengthDeg,
   roundedBars,
   showGuideDots,
-  guideDotColor,
+  guideDotStartColor,
+  guideDotEndColor,
 }: RadialArcPathProps) {
   const { radius, centerX, centerY, barWidth } = dimensions;
 
@@ -46,7 +51,7 @@ export function RadialArcPath({
   const largeArc = arcLengthDeg > 180 ? 1 : 0;
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
-  const dotRadius = (barWidth / 2) * 0.3;
+  const dotRadius = Math.min((barWidth / 2) * 0.4, MAX_DOT_RADIUS);
 
   return (
     <>
@@ -63,8 +68,8 @@ export function RadialArcPath({
       />
       {showGuideDots && (
         <>
-          {arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColor} opacity={0.75} />}
-          <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColor} opacity={0.75} />
+          {arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotStartColor} />}
+          <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotEndColor} />
         </>
       )}
     </>

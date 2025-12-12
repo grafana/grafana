@@ -12,6 +12,7 @@ import {
   lighten,
   asRgbString,
   onBackground,
+  colorAtGradientPercent,
 } from './colorManipulator';
 
 describe('utils/colorManipulator', () => {
@@ -434,6 +435,51 @@ describe('utils/colorManipulator', () => {
       expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,255,0,0.5)').toRgbString()).toBe('rgba(170, 85, 0, 0.75)');
       expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,0,255,1)').toRgbString()).toBe('rgb(128, 0, 128)');
       expect(onBackground('rgba(0,0,255,1)', 'rgba(0,0,0,0.5)').toRgbString()).toBe('rgb(0, 0, 255)');
+    });
+  });
+
+  describe('colorAtGradientPercent', () => {
+    it('should calculate the color at a given percent in a gradient of two colors', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, 0).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 0.25).toHexString()).toBe('#bf0040');
+      expect(colorAtGradientPercent(gradient, 0.5).toHexString()).toBe('#800080');
+      expect(colorAtGradientPercent(gradient, 0.75).toHexString()).toBe('#4000bf');
+      expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
+    });
+
+    it('should calculate the color at a given percent in a gradient of multiple colors', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, 0).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 0.25).toHexString()).toBe('#808000');
+      expect(colorAtGradientPercent(gradient, 0.5).toHexString()).toBe('#00ff00');
+      expect(colorAtGradientPercent(gradient, 0.75).toHexString()).toBe('#008080');
+      expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
+    });
+
+    it('should not throw an error when percent is outside 0-1 range', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, -0.5).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 1.5).toHexString()).toBe('#0000ff');
+    });
+
+    it('should throw an error when less than two stops are provided', () => {
+      expect(() => {
+        colorAtGradientPercent([], 0.5);
+      }).toThrow('colorAtGradientPercent requires at least two color stops');
+      expect(() => {
+        colorAtGradientPercent([{ color: '#ff0000', percent: 0 }], 0.5);
+      }).toThrow('colorAtGradientPercent requires at least two color stops');
     });
   });
 });

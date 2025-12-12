@@ -38,10 +38,9 @@ export function RadialBarPanel({
         height={height}
         barWidthFactor={options.barWidthFactor}
         gradient={options.effects?.gradient ? 'auto' : 'none'}
-        spotlight={options.effects?.spotlight}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
-        roundedBars={options.effects?.rounded}
+        roundedBars={options.barShape === 'rounded'}
         vizCount={valueProps.count}
         shape={options.shape}
         segmentCount={options.segmentCount}

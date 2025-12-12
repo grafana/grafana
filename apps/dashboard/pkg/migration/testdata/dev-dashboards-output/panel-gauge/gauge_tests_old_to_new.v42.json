@@ -955,8 +955,6 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         },
         "orientation": "auto",
@@ -970,6 +968,7 @@
         "segmentCount": 70,
         "segmentSpacing": 0.3,
         "shape": "gauge",
+        "barShape": "flat",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
