@@ -1776,6 +1776,13 @@ Specify the frequency of polling for Alertmanager configuration changes. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
 
+#### `alertmanager_max_template_output_bytes`
+
+Maximum size in bytes that the expanded result of any single template expression (e.g. {{ .CommonAnnotations.description }}, {{ .ExternalURL }}, etc.) may reach during notification rendering. 
+The limit is checked after template execution for each templated field, but before the value is inserted into the final notification payload sent to the receiver.
+If exceeded, the notification will contain output truncated up to the limit and a warning will be logged.
+The default value is 10,485,760 bytes (10Mb).
+
 #### `ha_redis_address`
 
 Redis server address or addresses. It can be a single Redis address if using Redis standalone,

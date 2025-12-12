@@ -153,6 +153,9 @@ type UnifiedAlertingSettings struct {
 
 	// DeletedRuleRetention defines the maximum duration to retain deleted alerting rules before permanent removal.
 	DeletedRuleRetention time.Duration
+
+	// AlertmanagerMaxTemplateOutputSize specifies the maximum allowed size for rendered template output in bytes.
+	AlertmanagerMaxTemplateOutputSize int64
 }
 
 type RecordingRuleSettings struct {
@@ -581,6 +584,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
+	}
+
+	uaCfg.AlertmanagerMaxTemplateOutputSize = ua.Key("alertmanager_max_template_output_bytes").MustInt64(10485760)
+	if uaCfg.AlertmanagerMaxTemplateOutputSize < 0 {
+		return fmt.Errorf("setting 'alertmanager_max_template_output_bytes' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg
