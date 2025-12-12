@@ -887,7 +887,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 		err := service.UpdateRuleGroup(context.Background(), u, managedFolderUID, "some-group", 120)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
-		require.ErrorContains(t, err, "cannot store rules in folder")
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 
@@ -1210,7 +1210,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 
 		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
-		require.ErrorContains(t, err, "cannot store rules in folder")
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 
@@ -1390,7 +1390,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		existingRule.Title = "Updated Title"
 		_, err = service.UpdateAlertRule(context.Background(), u, existingRule, models.ProvenanceNone)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
-		require.ErrorContains(t, err, "cannot store rules in folder")
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 
@@ -2155,7 +2155,7 @@ func TestReplaceGroup(t *testing.T) {
 
 		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
-		require.ErrorContains(t, err, "cannot store rules in folder")
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 

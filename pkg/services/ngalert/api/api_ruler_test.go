@@ -1316,7 +1316,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		}, managedFolder.UID)
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "cannot store rules in folder")
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
 
 		// Verify no rules were updated
 		updatedRules := getRecordedUpdatedRules(ruleStore)
@@ -1347,6 +1347,6 @@ func TestRoutePostNameRulesConfig(t *testing.T) {
 		}, managedFolder.UID)
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "cannot store rules in folder")
+		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
 	})
 }

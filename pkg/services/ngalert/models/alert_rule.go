@@ -407,7 +407,7 @@ func (n Namespace) ValidateForRuleStorage() error {
 		return fmt.Errorf("cannot store rules in folder without UID")
 	}
 	if n.ManagedBy == utils.ManagerKindRepo {
-		return fmt.Errorf("cannot store rules in folder '%s' managed by %s", n.UID, n.ManagedBy)
+		return fmt.Errorf("cannot store rules in folder managed by Git Sync")
 	}
 	return nil
 }
