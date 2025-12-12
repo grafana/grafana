@@ -34,9 +34,6 @@ func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
 }
 
 func (k *sqlKV) Ping(ctx context.Context) error {
-	if k.db == nil {
-		return fmt.Errorf("database connection is nil")
-	}
 	return k.db.PingContext(ctx)
 }
 
