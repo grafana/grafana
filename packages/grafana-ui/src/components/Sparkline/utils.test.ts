@@ -191,7 +191,7 @@ describe('Get y range', () => {
       expected: [2, 4],
     },
     {
-      description: 'long decimals which are nearly equal and result in a functional delta of 0',
+      description: 'decimal values which are not close to equal should not be rounded out',
       field: decimalsNotCloseYField,
       expected: [0.0053, 0.0094],
     },
