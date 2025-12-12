@@ -7,16 +7,18 @@ package v0alpha1
 // JobResourceSummaryApplyConfiguration represents a declarative configuration of the JobResourceSummary type for use
 // with apply.
 type JobResourceSummaryApplyConfiguration struct {
-	Group  *string  `json:"group,omitempty"`
-	Kind   *string  `json:"kind,omitempty"`
-	Total  *int64   `json:"total,omitempty"`
-	Create *int64   `json:"create,omitempty"`
-	Update *int64   `json:"update,omitempty"`
-	Delete *int64   `json:"delete,omitempty"`
-	Write  *int64   `json:"write,omitempty"`
-	Error  *int64   `json:"error,omitempty"`
-	Noop   *int64   `json:"noop,omitempty"`
-	Errors []string `json:"errors,omitempty"`
+	Group    *string  `json:"group,omitempty"`
+	Kind     *string  `json:"kind,omitempty"`
+	Total    *int64   `json:"total,omitempty"`
+	Create   *int64   `json:"create,omitempty"`
+	Update   *int64   `json:"update,omitempty"`
+	Delete   *int64   `json:"delete,omitempty"`
+	Write    *int64   `json:"write,omitempty"`
+	Error    *int64   `json:"error,omitempty"`
+	Warning  *int64   `json:"warning,omitempty"`
+	Noop     *int64   `json:"noop,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 // JobResourceSummaryApplyConfiguration constructs a declarative configuration of the JobResourceSummary type for use with
@@ -89,6 +91,14 @@ func (b *JobResourceSummaryApplyConfiguration) WithError(value int64) *JobResour
 	return b
 }
 
+// WithWarning sets the Warning field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Warning field is set to the value of the last call.
+func (b *JobResourceSummaryApplyConfiguration) WithWarning(value int64) *JobResourceSummaryApplyConfiguration {
+	b.Warning = &value
+	return b
+}
+
 // WithNoop sets the Noop field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Noop field is set to the value of the last call.
@@ -103,6 +113,16 @@ func (b *JobResourceSummaryApplyConfiguration) WithNoop(value int64) *JobResourc
 func (b *JobResourceSummaryApplyConfiguration) WithErrors(values ...string) *JobResourceSummaryApplyConfiguration {
 	for i := range values {
 		b.Errors = append(b.Errors, values[i])
+	}
+	return b
+}
+
+// WithWarnings adds the given value to the Warnings field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Warnings field.
+func (b *JobResourceSummaryApplyConfiguration) WithWarnings(values ...string) *JobResourceSummaryApplyConfiguration {
+	for i := range values {
+		b.Warnings = append(b.Warnings, values[i])
 	}
 	return b
 }
