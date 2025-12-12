@@ -228,6 +228,9 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
 		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
