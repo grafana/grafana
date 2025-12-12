@@ -461,5 +461,10 @@
     "title": "v42 Migration Test - HideFrom Tooltip",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Bérlői források"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{totalItems}}/{{visibleItems}} példány megjelenítése",
-      "button-show-all_one": "Mind a(z) {{totalItems}} riasztáspéldány megjelenítése",
-      "button-show-all_other": "Mind a(z) {{totalItems}} riasztáspéldány megjelenítése"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "{{typeName}} eltávolítása",
       "row-title": "",
       "switch-layout": "Kiosztás váltása",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4811,7 +4814,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Értékek vesszővel elválasztva"
         },
@@ -5085,12 +5090,17 @@
         "copy-or-duplicate": "Másolás vagy duplikálás",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
-        "group-layout": "Csoport elrendezése",
-        "group-layout-disabled": "Ezen a szinten nincsenek csoportok",
-        "panel-layout": "Panel elrendezése",
-        "panel-layout-disabled": "Jelöljön ki egy sort vagy lapot a panel elrendezési beállításainak módosításához"
+        "layout": "Elrendezés"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5184,7 +5194,6 @@
       },
       "only-overrides-button-tooltip": "Csak a felülbírálások megjelenítése",
       "placeholder-search-options": "Keresési beállítások",
-      "visualization-button-label": "Vizualizáció",
       "visualization-button-tooltip": "Keresési beállítások"
     },
     "panel-editor-table-view": {
@@ -5464,6 +5473,12 @@
         "label": "Szerkesztés",
         "tooltip": "Belépés a szerkesztési módba"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Legyen szerkeszthető",
         "tooltip": "Ez az irányítópult csak olvashatóként van megjelölve"
@@ -5484,14 +5499,6 @@
         "discard-panel-new": "Panel elvetése",
         "edit-dashboard-v2-schema": {
           "tooltip": "Irányítópult v2 sémájának szerkesztése"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Belépés a szerkesztési módba"
-          },
-          "exit": {
-            "label": "Kilépés a szerkesztési módból"
-          }
         },
         "enter-edit-mode": {
           "label": "Legyen szerkeszthető",
@@ -5828,14 +5835,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Törlés",
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
-      "description-hidden": "A jegyzetlekérdezések be- és kikapcsolhatók az irányítópult tetején. Ha ez a lehetőség be van jelölve, ez a kapcsoló el lesz rejtve.",
+      "label-annotation-controls-display": "",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
       "label-enabled": "Engedélyezve",
-      "label-hidden": "Rejtett",
       "label-name": "Név",
       "label-show-in": "Megjelenítés itt:",
       "placeholder-choose-panels": "Válassza ki a paneleket",
@@ -5878,6 +5897,17 @@
       "label-value": "Érték",
       "placeholder-your-metric-prefix": "Az Ön metrikaelőtagja"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
@@ -5891,6 +5921,7 @@
       "label-open-link-in-new-tab": "Hivatkozás megnyitása új lapon",
       "label-options": "Beállítások",
       "label-show-as-dropdown": "Megjelenítés legördülő menüként",
+      "label-show-in-controls-menu": "",
       "label-title": "Cím",
       "label-tooltip": "Elemleírás",
       "label-type": "Típus",
@@ -6223,6 +6254,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Keresés a következőre…",
       "radio-options": {
         "label": {
@@ -6245,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opcionális, ha egy sorozatnév vagy metrikai csomópontszegmens egy részét szeretné kinyerni.",
+      "description-regex-apply-to": "",
       "label-data-source": "Adatforrás",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statikus opciók rendezése",
       "label-target-data-source": "Céladatforrás",
       "label-use-static-options": "Statikus opciók használata",
       "name-regex": "Reguláris kifejezés",
       "query-options": "Lekérdezési beállítások",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Kijelölés beállításai",
       "static-options-legend": "Statikus opciók"
     },
@@ -6449,6 +6491,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -6534,7 +6595,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Vizualizáció módosítása",
-      "tooltip-click-to-change-visualization": "Kattintson a vizualizáció módosításához"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
@@ -6557,7 +6618,7 @@
       "delete-button": "Törlés",
       "title": "Törlés"
     },
-    "delete-modal-restore-dashboards-text": "Ez a művelet 30 napon belüli törlésre jelöli meg az irányítópultot. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Biztosan törli ezt az irányítópultot?",
     "general": {
       "auto-refresh-description": "Határozza meg az automatikus frissítési intervallumokat, amelyeknek elérhetőnek kell lenniük az automatikus frissítési listában. Használja az „5s” formátumot a másodpercekhez, az „1m” formátumot a percekhez, az „1h” formátumot az órákhoz és az „1d” formátumot a napokhoz (pl.: „5s ,10s ,30s ,1m,5m,15m,30m,1h,2h,1d”).",
@@ -6763,8 +6824,8 @@
       "test": "Teszt"
     },
     "cloud-info-box": {
-      "body-alert": "Vagy hagyja ki a próbálkozást, és szerezze be a(z) {{mainDS}} adatforrást (és {{extraDS}}) a Grafana Labs teljes körűen felügyelt, skálázható és hosztolt adatforrásait az <6>örökre ingyenes Grafana Cloud-előfizetéssel</6>.",
-      "title-alert": "Konfigurálja {{mainDS}} adatforrását alább"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Irányítópult törlése",
@@ -7303,6 +7364,14 @@
       "title-failed-sample-query": "A lekérdezés naplómintájának betöltése nem sikerült",
       "tooltip": "A vizualizált metrikákhoz hozzájáruló naplósorok megjelenítése"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Nincsenek mezők"
     },
@@ -7330,7 +7399,8 @@
       "title-failed-volume-query": "A lekérdezés naplómennyiségének betöltése nem sikerült",
       "title-no-logs-volume-available": "Nincs rendelkezésre álló naplómennyiség",
       "title-showing-partial-data": "Részadatok megjelenítése",
-      "title-unable-to-show-log-volume": "Nem lehet megjeleníteni a naplómennyiséget"
+      "title-unable-to-show-log-volume": "Nem lehet megjeleníteni a naplómennyiséget",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nem áll rendelkezésre mennyiséginformáció az aktuális lekérdezésekhez és időtartományhoz."
@@ -8210,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8759,6 +8835,13 @@
       "aria-label-default": "Válasszon színt",
       "aria-label-selected-color": "{{colorLabel}} szín"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Törlés",
       "cancel": "Mégse",
@@ -8956,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Minden sor összecsukása",
       "aria-label-expand-all": "Minden sor kibontása",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Sorkibontás váltása",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
@@ -9210,6 +9295,8 @@
       "actions-confirmation-label": "Megerősítési üzenet",
       "actions-confirmation-message": "Adjon meg egy leíró kérdést a művelet megerősítéséhez vagy visszavonásához.",
       "footer-add-annotation": "Jegyzet hozzáadása",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Kattintson ehhez: {{actionTitle}}",
       "footer-click-to-navigate": "Kattintson a következő megnyitásához: {{linkTitle}}",
       "footer-filter-for-value": "Szűrés „{{value}}” szerint",
@@ -11088,6 +11175,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
@@ -11754,7 +11846,7 @@
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
       "modal-title-set-up-required-features": "Kötelező funkciók beállítása",
       "step-description-copy-url": "Az ngrok kimenetéből másolja ki a https:// átirányítási URL-címet, amely így néz ki:",
-      "step-description-enable-feature-toggles": "A szükséges funkciók engedélyezéséhez adja hozzá ezeket a beállításokat a custom.ini fájlhoz:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Futtassa ezt a parancsot egy biztonságos alagút létrehozásához a helyi Grafanához:",
       "step-description-update-grafana-config": "Adja hozzá ezt a custom.ini fájlhoz, lecserélve az URL-t a tényleges ngrok URL-címre:",
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
@@ -12350,12 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

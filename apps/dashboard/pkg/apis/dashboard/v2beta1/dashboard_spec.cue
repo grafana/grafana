@@ -79,10 +79,26 @@ LibraryPanelRef: {
 
 AnnotationPanelFilter: {
 	// Should the specified panels be included or excluded
-	exclude?: bool | *false
+	exclude?: bool | *false 
 
 	// Panel IDs that should be included or excluded
 	ids: [...uint32]
+} 
+
+// Annotation event field source. Defines how to obtain the value for an annotation event field.
+// - "field": Find the value with a matching key (default)
+// - "text": Write a constant string into the value
+// - "skip": Do not include the field
+AnnotationEventFieldSource: "field" | "text" | "skip" | *"field"
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+AnnotationEventFieldMapping: {
+	// Source type for the field value
+	source?: AnnotationEventFieldSource | *"field"
+	// Constant value to use when source is "text"
+	value?: string
+	// Regular expression to apply to the field value
+	regex?: string
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -454,7 +470,10 @@ AnnotationQuerySpec: {
 	filter?:     AnnotationPanelFilter
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
 	placement?:  AnnotationQueryPlacement
-	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?:   [string]: AnnotationEventFieldMapping
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	legacyOptions?:     [string]: _
 }
 
 AnnotationQueryKind: {
@@ -757,6 +776,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
 
@@ -791,6 +814,7 @@ QueryVariableSpec: {
 	description?: string
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]

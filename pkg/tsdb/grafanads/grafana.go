@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -31,7 +32,7 @@ const DatasourceID = -1
 
 // DatasourceUID is the fake datasource uid used in requests to identify it as a
 // Grafana DS command.
-const DatasourceUID = "grafana"
+const DatasourceUID = dashboard.GrafanaDatasourceUID
 
 // Make sure Service implements required interfaces.
 // This is important to do since otherwise we will only get a

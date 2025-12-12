@@ -415,6 +415,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesUnifiedStorageQuotas",
+			Description:     "Adds support for Kubernetes unified storage quotas",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
@@ -616,7 +623,14 @@ var (
 		},
 		{
 			Name:         "panelGroupBy",
-			Description:  "Enabled a group by action per panel",
+			Description:  "Enables a group by action per panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "perPanelFiltering",
+			Description:  "Enables filtering by grouping labels on the panel level through legend or tooltip",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -1625,6 +1639,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "recentlyViewedDashboards",
+			Description:  "Enables recently viewed dashboards section in the browsing dashboard page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -1969,6 +1991,14 @@ var (
 			Owner:        grafanaDataProSquad,
 		},
 		{
+			Name:            "opentsdbBackendMigration",
+			Description:     "Run queries through the data source backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
 			Name:         "ttlPluginInstanceManager",
 			Description:  "Enable TTL plugin instance manager",
 			Stage:        FeatureStageExperimental,
@@ -1998,6 +2028,21 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "useMTPlugins",
+			Description:  "Enables plugins decoupling from bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "multiPropsVariables",
+			Description:  "Enables support for variables whose values can have multiple properties",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )

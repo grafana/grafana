@@ -24,7 +24,7 @@ func TestV2beta1ToV2alpha1RoundTrip(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -107,7 +107,7 @@ func TestV2beta1ToV2alpha1FromOutputFiles(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -193,7 +193,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -584,6 +584,85 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 				row := v2alpha1.Spec.Layout.RowsLayoutKind.Spec.Rows[0]
 				assert.Equal(t, "Row 1", *row.Spec.Title)
 				assert.False(t, *row.Spec.Collapse)
+			},
+		},
+		{
+			name: "annotation query with mappings",
+			createV2beta1: func() *dashv2beta1.Dashboard {
+				sourceField := "field"
+				sourceText := "text"
+				valueService := "service"
+				valueConstant := "constant text"
+				regexPattern := "/(.*)/"
+				return &dashv2beta1.Dashboard{
+					Spec: dashv2beta1.DashboardSpec{
+						Title: "Test Dashboard",
+						Annotations: []dashv2beta1.DashboardAnnotationQueryKind{
+							{
+								Kind: "AnnotationQuery",
+								Spec: dashv2beta1.DashboardAnnotationQuerySpec{
+									Name:      "Test Annotation",
+									Enable:    true,
+									Hide:      false,
+									IconColor: "red",
+									Query: dashv2beta1.DashboardDataQueryKind{
+										Kind:    "DataQuery",
+										Group:   "prometheus",
+										Version: "v0",
+										Spec: map[string]interface{}{
+											"expr": "test_query",
+										},
+									},
+									Mappings: map[string]dashv2beta1.DashboardAnnotationEventFieldMapping{
+										"title": {
+											Source: &sourceField,
+											Value:  &valueService,
+										},
+										"text": {
+											Source: &sourceText,
+											Value:  &valueConstant,
+										},
+										"tags": {
+											Source: &sourceField,
+											Value:  &valueService,
+											Regex:  &regexPattern,
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Len(t, v2alpha1.Spec.Annotations, 1)
+				annotation := v2alpha1.Spec.Annotations[0]
+				assert.Equal(t, "Test Annotation", annotation.Spec.Name)
+
+				// Verify mappings are preserved
+				require.NotNil(t, annotation.Spec.Mappings)
+				assert.Len(t, annotation.Spec.Mappings, 3)
+
+				// Check title mapping
+				titleMapping, ok := annotation.Spec.Mappings["title"]
+				require.True(t, ok)
+				assert.Equal(t, "field", *titleMapping.Source)
+				assert.Equal(t, "service", *titleMapping.Value)
+				assert.Nil(t, titleMapping.Regex)
+
+				// Check text mapping
+				textMapping, ok := annotation.Spec.Mappings["text"]
+				require.True(t, ok)
+				assert.Equal(t, "text", *textMapping.Source)
+				assert.Equal(t, "constant text", *textMapping.Value)
+				assert.Nil(t, textMapping.Regex)
+
+				// Check tags mapping
+				tagsMapping, ok := annotation.Spec.Mappings["tags"]
+				require.True(t, ok)
+				assert.Equal(t, "field", *tagsMapping.Source)
+				assert.Equal(t, "service", *tagsMapping.Value)
+				assert.Equal(t, "/(.*)/", *tagsMapping.Regex)
 			},
 		},
 	}

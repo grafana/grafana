@@ -1,14 +1,21 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAsync, useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  PanelData,
+  PanelModel,
+  PanelPluginMeta,
+  PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
+import { getAllPanelPluginMeta } from '../../state/util';
+import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
@@ -21,18 +28,44 @@ export interface Props {
   panel?: PanelModel;
 }
 
-const MIN_COLUMN_SIZE = 260;
-
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions } = useAsync(async () => await getAllSuggestions(data), [data]);
+  const {
+    value: suggestions,
+    loading,
+    error,
+  } = useAsync(async () => {
+    if (!hasData(data)) {
+      return [];
+    }
+
+    return await getAllSuggestions(data);
+  }, [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
-
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
-
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
+
+  const suggestionsByVizType = useMemo(() => {
+    const meta = getAllPanelPluginMeta();
+    const record: Record<string, PanelPluginMeta> = {};
+    for (const m of meta) {
+      record[m.id] = m;
+    }
+
+    const result: Array<[PanelPluginMeta | undefined, PanelPluginVisualizationSuggestion[]]> = [];
+    let currentVizType: PanelPluginMeta | undefined = undefined;
+    for (const suggestion of suggestions || []) {
+      const vizType = record[suggestion.pluginId];
+      if (!currentVizType || currentVizType.id !== vizType?.id) {
+        currentVizType = vizType;
+        result.push([vizType, []]);
+      }
+      result[result.length - 1][1].push(suggestion);
+    }
+    return result;
+  }, [suggestions]);
 
   const applySuggestion = useCallback(
     (suggestion: PanelPluginVisualizationSuggestion, isPreview?: boolean) => {
@@ -66,48 +99,83 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
-  const renderEmptyState = () => (
-    <div className={styles.emptyStateWrapper}>
-      <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-      <Text element="p" textAlignment="center" color="secondary">
-        <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-          Run a query to start seeing suggested visualizations
-        </Trans>
-      </Text>
-    </div>
-  );
-
-  if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
-    return renderEmptyState();
+  if (loading || !data) {
+    return (
+      <div className={styles.loadingContainer}>
+        <Spinner size="xxl" />
+      </div>
+    );
   }
 
-  if (!data) {
-    return null;
+  if (error) {
+    return (
+      <Alert title={t('panel.visualization-suggestions.error-loading-suggestions.title', 'Error')} severity="error">
+        <Trans i18nKey="panel.visualization-suggestions.error-loading-suggestions.message">
+          An error occurred when loading visualization suggestions.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
+    return (
+      <div className={styles.emptyStateWrapper}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
+    );
   }
 
   return (
-    // This div is needed in some places to make AutoSizer work
-    <div>
-      <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
-        {() => (
-          <div>
-            <div className={styles.grid}>
-              {suggestions?.map((suggestion, index) => {
-                const isCardSelected = isNewVizSuggestionsEnabled && suggestionHash === suggestion.hash;
-
+    <div className={styles.grid}>
+      {isNewVizSuggestionsEnabled
+        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
+            <>
+              <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
+                <Text variant="body" weight="medium">
+                  {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
+                  {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
+                </Text>
+              </div>
+              {vizTypeSuggestions?.map((suggestion, index) => {
+                const isCardSelected = suggestionHash === suggestion.hash;
                 return (
-                  <div key={index} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+                  <div
+                    key={suggestion.hash}
+                    className={styles.cardContainer}
+                    tabIndex={0}
+                    role="button"
+                    aria-pressed={isCardSelected}
+                    onKeyDown={(ev) => {
+                      if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
+                      }
+                    }}
+                    ref={index === 0 ? firstCardRef : undefined}
+                  >
                     {isCardSelected && (
                       <Button
+                        // rather than allow direct focus, we handle ketboard events in the card.
+                        tabIndex={-1}
                         variant="primary"
                         size={'md'}
-                        onClick={() => applySuggestion(suggestion)}
                         className={styles.applySuggestionButton}
                         aria-label={t(
                           'panel.visualization-suggestions.apply-suggestion-aria-label',
                           'Apply {{suggestionName}} visualization',
                           { suggestionName: suggestion.name }
                         )}
+                        onClick={() =>
+                          onChange({
+                            pluginId: suggestion.pluginId,
+                            withModKey: false,
+                          })
+                        }
                       >
                         {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
                       </Button>
@@ -117,21 +185,38 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       suggestion={suggestion}
                       width={width}
                       isSelected={isCardSelected}
-                      onClick={() => applySuggestion(suggestion, isNewVizSuggestionsEnabled)}
+                      onClick={() => applySuggestion(suggestion, true)}
                     />
                   </div>
                 );
               })}
+            </>
+          ))
+        : suggestions?.map((suggestion, index) => (
+            <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+              <VisualizationSuggestionCard
+                key={index}
+                data={data}
+                suggestion={suggestion}
+                width={width}
+                tabIndex={index}
+                onClick={() => applySuggestion(suggestion)}
+              />
             </div>
-          </div>
-        )}
-      </AutoSizer>
+          ))}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    loadingContainer: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: theme.spacing(6),
+    }),
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
@@ -147,7 +232,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     grid: css({
       display: 'grid',
       gridGap: theme.spacing(1),
-      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_COLUMN_SIZE}px, 1fr))`,
+      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
@@ -167,13 +252,29 @@ const getStyles = (theme: GrafanaTheme2) => {
     cardContainer: css({
       position: 'relative',
     }),
+    vizTypeHeader: css({
+      gridColumn: '1 / -1',
+      marginBottom: theme.spacing(0.5),
+      marginTop: theme.spacing(2),
+      '&:first-of-type': {
+        marginTop: 0,
+      },
+    }),
+    vizTypeLogo: css({
+      filter: 'grayscale(100%)',
+      maxHeight: `${theme.typography.body.lineHeight}em`,
+      width: `${theme.typography.body.lineHeight}em`,
+      alignItems: 'center',
+      display: 'inline-block',
+      marginRight: theme.spacing(1),
+    }),
     applySuggestionButton: css({
       position: 'absolute',
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
       zIndex: 10,
-      padding: '0 16px',
+      padding: theme.spacing(0, 2),
     }),
   };
 };

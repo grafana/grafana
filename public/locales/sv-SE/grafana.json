@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Klientkällor"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Visar {{visibleItems}} av {{totalItems}} instanser",
-      "button-show-all_one": "Visa alla {{totalItems}} larminstanser",
-      "button-show-all_other": "Visa alla {{totalItems}} larminstanser"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "Ta bort {{typeName}}",
       "row-title": "",
       "switch-layout": "Byt layout",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4811,7 +4814,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Värden åtskilda med kommatecken"
         },
@@ -5085,12 +5090,17 @@
         "copy-or-duplicate": "Kopiera eller duplicera",
         "delete": "Ta bort",
         "duplicate": "Dubblett",
-        "group-layout": "Grupplayout",
-        "group-layout-disabled": "Det finns inga grupper på den här nivån",
-        "panel-layout": "Panellayout",
-        "panel-layout-disabled": "Välj en rad eller flik för att ändra alternativ för panellayout"
+        "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5184,7 +5194,6 @@
       },
       "only-overrides-button-tooltip": "Visa endast åsidosättningar",
       "placeholder-search-options": "Sökalternativ",
-      "visualization-button-label": "Visualisering",
       "visualization-button-tooltip": "Sökalternativ"
     },
     "panel-editor-table-view": {
@@ -5464,6 +5473,12 @@
         "label": "Redigera",
         "tooltip": "Gå till redigeringsläge"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Gör redigerbar",
         "tooltip": "Den här instrumentpanelen markerades som skrivskyddad"
@@ -5484,14 +5499,6 @@
         "discard-panel-new": "Kassera panelen",
         "edit-dashboard-v2-schema": {
           "tooltip": "Redigera instrumentpanel v2-schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Gå till redigeringsläge"
-          },
-          "exit": {
-            "label": "Avsluta redigeringsläge"
-          }
         },
         "enter-edit-mode": {
           "label": "Gör redigerbar",
@@ -5828,14 +5835,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Tillbaka till listan",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Ta bort",
       "description-color-annotation-event-markers": "Färg som ska användas för kommentarshändelsemarkörer",
       "description-enabled-annotation-query-issued-every-dashboard": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
-      "description-hidden": "Frågor om kommentarer kan aktiveras eller inaktiveras högst upp på instrumentpanelen. Med det här alternativet markerat kommer denna växel att döljas.",
+      "label-annotation-controls-display": "",
       "label-color": "Färg",
       "label-data-source": "Datakälla",
       "label-enabled": "Aktiverad",
-      "label-hidden": "Dolt",
       "label-name": "Namn",
       "label-show-in": "Visa i",
       "placeholder-choose-panels": "Välj paneler",
@@ -5878,6 +5897,17 @@
       "label-value": "Värde",
       "placeholder-your-metric-prefix": "Ditt metrikprefix"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Anpassade alternativ",
       "name-values-separated-comma": "Värden åtskilda med kommatecken",
@@ -5891,6 +5921,7 @@
       "label-open-link-in-new-tab": "Öppna länken i en ny flik",
       "label-options": "Alternativ",
       "label-show-as-dropdown": "Visa som rullgardinsmeny",
+      "label-show-in-controls-menu": "",
       "label-title": "Titel",
       "label-tooltip": "Verktygstips",
       "label-type": "Typ",
@@ -6223,6 +6254,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Sök efter …",
       "radio-options": {
         "label": {
@@ -6245,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Valfritt, om du vill extrahera en del av ett serienamn eller metriskt nodsegment.",
+      "description-regex-apply-to": "",
       "label-data-source": "Datakälla",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Sortering av statiska alternativ",
       "label-target-data-source": "Måldatakälla",
       "label-use-static-options": "Använd statiska alternativ",
       "name-regex": "Regex",
       "query-options": "Frågealternativ",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Urvalsalternativ",
       "static-options-legend": "Statiska alternativ"
     },
@@ -6449,6 +6491,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulär för variabelsredigering",
       "back-to-list": "Tillbaka till listan",
@@ -6534,7 +6595,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ändra visualisering",
-      "tooltip-click-to-change-visualization": "Klicka för att ändra visualisering"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Öppna frågefönstret",
@@ -6557,7 +6618,7 @@
       "delete-button": "Ta bort",
       "title": "Ta bort"
     },
-    "delete-modal-restore-dashboards-text": "Denna åtgärd markerar instrumentpanelen för radering om 30 dagar. Din organisationsadministratör kan återställa den när som helst innan de 30 dagarna löper ut. ",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Vill du radera denna instrumentpanel?",
     "general": {
       "auto-refresh-description": "Definiera de automatiska uppdateringsintervallen som ska vara tillgängliga i listan över automatiska uppdateringar. Använd formatet ”5s” för sekunder, ”1m” för minuter, ”1h” för timmar och ”1d” för dagar (t.ex.: ”5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”).",
@@ -6763,8 +6824,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Eller hoppa över ansträngningen och få {{mainDS}} (och {{extraDS}}) som fullt hanterade, skalbara och värdbaserade datakällor från Grafana Labs med <6>Grafana Cloud-prenumerationen gratis för alltid</6>.",
-      "title-alert": "Konfigurera din {{mainDS}}-datakälla nedan"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Ta bort instrumentpanel",
@@ -7303,6 +7364,14 @@
       "title-failed-sample-query": "Det gick inte att ladda loggprov för denna fråga",
       "tooltip": "Visa loggrader som bidrog till visualiserade mätvärden"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Inga fält"
     },
@@ -7330,7 +7399,8 @@
       "title-failed-volume-query": "Det gick inte att ladda loggvolym för denna fråga",
       "title-no-logs-volume-available": "Ingen loggvolym tillgänglig",
       "title-showing-partial-data": "Visar partiella data",
-      "title-unable-to-show-log-volume": "Det gick inte att visa loggvolym"
+      "title-unable-to-show-log-volume": "Det gick inte att visa loggvolym",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Ingen volyminformation tillgänglig för de aktuella frågorna och tidsintervallet."
@@ -8210,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8759,6 +8835,13 @@
       "aria-label-default": "Välj en färg",
       "aria-label-selected-color": "{{colorLabel}} färg"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Radera",
       "cancel": "Avbryt",
@@ -8956,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Dölj alla rader",
       "aria-label-expand-all": "Expandera alla rader",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Växla rad utökad",
       "tooltip-collapse-all": "Dölj alla rader",
       "tooltip-expand-all": "Expandera alla rader"
@@ -9210,6 +9295,8 @@
       "actions-confirmation-label": "Bekräftelsemeddelande",
       "actions-confirmation-message": "Tillhandahåll en beskrivande prompt för att bekräfta eller avbryta åtgärden.",
       "footer-add-annotation": "Lägg till kommentar",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klicka för att {{actionTitle}}",
       "footer-click-to-navigate": "Klicka för att öppna {{linkTitle}}",
       "footer-filter-for-value": "Filtrera för ”{{value}}”",
@@ -11088,6 +11175,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
@@ -11754,7 +11846,7 @@
       "modal-title-set-up-public-access": "Konfigurera offentlig åtkomst",
       "modal-title-set-up-required-features": "Konfigurera obligatoriska funktioner",
       "step-description-copy-url": "Från ngroks utdata, kopiera den https://-vidarebefordringsadress som ser ut så här:",
-      "step-description-enable-feature-toggles": "Lägg till dessa inställningar i din custom.ini-fil för att aktivera nödvändiga funktioner:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Kör detta kommando för att skapa en säker tunnel till din lokala Grafana:",
       "step-description-update-grafana-config": "Lägg till detta i din custom.ini-fil och ersätt webbadressen med din faktiska ngrok-URL:",
       "step-title-copy-url": "Kopiera din offentliga webbadress",
@@ -12350,12 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

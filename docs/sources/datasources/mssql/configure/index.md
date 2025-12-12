@@ -153,10 +153,6 @@ If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, y
 
 **Authentication:**
 
-{{< admonition type="note" >}}
-In order to use Azure AD Authentication the toggle `auth.azure_auth_enabled` must be set to `true` in the Grafana configuration file.
-{{< /admonition >}}
-
 | Authentication Type                                   | Description                                                                                                                     | Credentials / Fields                                                                                                                                                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SQL Server Authentication**                         | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                  | - **Username**: SQL Server username<br>- **Password**: SQL Server password                                                                                                                |

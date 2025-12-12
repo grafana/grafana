@@ -148,6 +148,18 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderRelation = common.SubresourceRelation(relation)
 	)
 
+	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {
+		// Check if resource inherits permissions from the folder (like dashboards in a folder)
+		res, err := s.openfgaCheck(ctx, store, subject, relation, folderIdent, contextuals, resourceCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+		}
+	}
+
 	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
 		res, err := s.openfgaCheck(ctx, store, subject, folderRelation, folderIdent, contextuals, resourceCtx)
@@ -195,4 +207,12 @@ func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, re
 	}
 
 	return res, nil
+}
+
+var folderPermissionBasedResourceExceptions = map[string]bool{
+	// allow all resources to inherit permissions from the folder
+}
+
+func isFolderPermissionBasedResource(resource string) bool {
+	return !folderPermissionBasedResourceExceptions[resource]
 }

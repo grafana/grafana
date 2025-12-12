@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../types';
+import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
 
 import { CloudWatchDatasource } from './../datasource';
 

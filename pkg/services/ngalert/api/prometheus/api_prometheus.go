@@ -444,6 +444,7 @@ type paginationContext struct {
 	panelID         int64
 	ruleGroups      []string
 	receiverName    string
+	dataSourceUIDs  []string
 	title           string
 	searchRuleGroup string
 	ruleType        ngmodels.RuleTypeFilter
@@ -483,6 +484,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			PanelID:         ctx.panelID,
 			RuleGroups:      ctx.ruleGroups,
 			ReceiverName:    ctx.receiverName,
+			DataSourceUIDs:  ctx.dataSourceUIDs,
 			SearchTitle:     ctx.title,
 			SearchRuleGroup: ctx.searchRuleGroup,
 		},
@@ -737,6 +739,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 	span.SetAttributes(attribute.Bool("search_rule_group_set", searchRuleGroup != ""))
 
+	dataSourceUIDs := opts.Query["datasource_uid"]
+	span.SetAttributes(attribute.Bool("datasource_uid_set", len(dataSourceUIDs) > 0))
+
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
 	case ngmodels.RuleTypeAlerting:
@@ -792,6 +797,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleGroups:         ruleGroups,
 		receiverName:       receiverName,
 		title:              title,
+		dataSourceUIDs:     dataSourceUIDs,
 		searchRuleGroup:    searchRuleGroup,
 		ruleType:           ruleType,
 		ruleNamesSet:       ruleNamesSet,
@@ -899,6 +905,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	dataSourceUIDs := opts.Query["datasource_uid"]
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
@@ -911,6 +918,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ReceiverName:    receiverName,
 		SearchTitle:     title,
 		SearchRuleGroup: searchRuleGroup,
+		DataSourceUIDs:  dataSourceUIDs,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

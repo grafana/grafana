@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -232,7 +230,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -255,7 +253,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,

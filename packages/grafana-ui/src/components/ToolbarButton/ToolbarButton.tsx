@@ -206,7 +206,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'transparent',
       border: `1px solid transparent`,
 
-      '&:hover, &:focus': {
+      '&:hover': {
         color: theme.colors.text.primary,
         background: theme.colors.action.hover,
       },

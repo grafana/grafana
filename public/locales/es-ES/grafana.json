@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Fuentes de inquilinos"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Mostrando {{visibleItems}} de {{totalItems}} instancias",
-      "button-show-all_one": "Mostrar {{totalItems}} instancia de alerta",
-      "button-show-all_other": "Mostrar las {{totalItems}} instancias de alerta"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "Eliminar {{typeName}}",
       "row-title": "",
       "switch-layout": "Cambiar diseño",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4811,7 +4814,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Valores separados por coma"
         },
@@ -5085,12 +5090,17 @@
         "copy-or-duplicate": "Copiar o duplicar",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
-        "group-layout": "Diseño del grupo",
-        "group-layout-disabled": "No existen grupos en este nivel",
-        "panel-layout": "Diseño del panel",
-        "panel-layout-disabled": "Selecciona una fila o pestaña para cambiar las opciones de diseño del panel"
+        "layout": "Diseño"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5184,7 +5194,6 @@
       },
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
-      "visualization-button-label": "Visualización",
       "visualization-button-tooltip": "Opciones de búsqueda"
     },
     "panel-editor-table-view": {
@@ -5464,6 +5473,12 @@
         "label": "Editar",
         "tooltip": "Entrar en modo de edición"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Hacer editable",
         "tooltip": "Este panel de control se ha marcado como de solo lectura"
@@ -5484,14 +5499,6 @@
         "discard-panel-new": "Descartar panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema del dashboard v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar en modo de edición"
-          },
-          "exit": {
-            "label": "Salir del modo de edición"
-          }
         },
         "enter-edit-mode": {
           "label": "Hacer editable",
@@ -5828,14 +5835,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Regresar a la lista",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Eliminar",
       "description-color-annotation-event-markers": "Color que se utilizará para los marcadores de eventos de anotación",
       "description-enabled-annotation-query-issued-every-dashboard": "Cuando está habilitada, la consulta de anotación se emite cada vez que se actualiza el dashboard",
-      "description-hidden": "Las consultas de anotación se pueden activar o desactivar en la parte superior del dashboard. Con esta opción marcada, este conmutador se ocultará.",
+      "label-annotation-controls-display": "",
       "label-color": "Color",
       "label-data-source": "Fuente de datos",
       "label-enabled": "Activado",
-      "label-hidden": "Oculto",
       "label-name": "Nombre",
       "label-show-in": "Mostrar en",
       "placeholder-choose-panels": "Elegir paneles",
@@ -5878,6 +5897,17 @@
       "label-value": "Valor",
       "placeholder-your-metric-prefix": "Tu prefijo métrico"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
       "name-values-separated-comma": "Valores separados por comas",
@@ -5891,6 +5921,7 @@
       "label-open-link-in-new-tab": "Abrir enlace en pestaña nueva",
       "label-options": "Opciones",
       "label-show-as-dropdown": "Mostrar como desplegable",
+      "label-show-in-controls-menu": "",
       "label-title": "Título",
       "label-tooltip": "Descripción emergente",
       "label-type": "Tipo",
@@ -6223,6 +6254,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Buscar...",
       "radio-options": {
         "label": {
@@ -6245,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
+      "description-regex-apply-to": "",
       "label-data-source": "Fuente de datos",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Ordenar opciones estáticas",
       "label-target-data-source": "Fuente de datos de destino",
       "label-use-static-options": "Usar opciones estáticas",
       "name-regex": "RegEx",
       "query-options": "Opciones de consulta",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opciones de selección",
       "static-options-legend": "Opciones estáticas"
     },
@@ -6449,6 +6491,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulario del editor de variables",
       "back-to-list": "Regresar a la lista",
@@ -6534,7 +6595,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
-      "tooltip-click-to-change-visualization": "Haz clic para cambiar la visualización"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
@@ -6557,7 +6618,7 @@
       "delete-button": "Eliminar",
       "title": "Eliminar"
     },
-    "delete-modal-restore-dashboards-text": "Esta acción marcará el panel de control para su eliminación en 30 días. El administrador de tu organización puede restaurarlo en cualquier momento antes de que transcurran los 30 días.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "¿Quieres eliminar este panel de control?",
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
@@ -6763,8 +6824,8 @@
       "test": "Prueba"
     },
     "cloud-info-box": {
-      "body-alert": "O ahórrate el esfuerzo y consigue {{mainDS}} (y{{extraDS}}) como fuentes de datos totalmente gestionadas, escalables y alojadas de Grafana Labs con el <6>plan Grafana Cloud gratuito para siempre</6>.",
-      "title-alert": "Configura tu fuente de datos {{mainDS}} a continuación"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Eliminar panel de control",
@@ -7303,6 +7364,14 @@
       "title-failed-sample-query": "Error al cargar la muestra de logs para esta consulta",
       "tooltip": "Mostrar líneas de log que contribuyeron a las métricas visualizadas"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Ningún campo"
     },
@@ -7330,7 +7399,8 @@
       "title-failed-volume-query": "Error al cargar el volumen de logs para esta consulta",
       "title-no-logs-volume-available": "No hay volumen de logs disponible",
       "title-showing-partial-data": "Mostrando datos parciales",
-      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs"
+      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
@@ -8210,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8759,6 +8835,13 @@
       "aria-label-default": "Elegir un color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -8956,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Contraer todas las filas",
       "aria-label-expand-all": "Expandir todas las filas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar fila expandida",
       "tooltip-collapse-all": "Contraer todas las filas",
       "tooltip-expand-all": "Expandir todas las filas"
@@ -9210,6 +9295,8 @@
       "actions-confirmation-label": "Mensaje de confirmación",
       "actions-confirmation-message": "Proporciona un mensaje descriptivo para confirmar o cancelar la acción.",
       "footer-add-annotation": "Añadir anotación",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Haz clic para {{actionTitle}}",
       "footer-click-to-navigate": "Haz clic para abrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrar por «{{value}}»",
@@ -11088,6 +11175,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
@@ -11754,7 +11846,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade estos ajustes a tu archivo custom.ini para habilitar las funciones necesarias:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -12350,12 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

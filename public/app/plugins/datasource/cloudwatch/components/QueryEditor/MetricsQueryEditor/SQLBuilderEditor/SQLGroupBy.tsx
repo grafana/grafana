@@ -5,14 +5,14 @@ import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../../datasource';
 import {
+  CloudWatchMetricsQuery,
   QueryEditorExpressionType,
   QueryEditorGroupByExpression,
   QueryEditorPropertyType,
-} from '../../../../expressions';
+} from '../../../../dataquery.gen';
+import { CloudWatchDatasource } from '../../../../datasource';
 import { useDimensionKeys, useIsMonitoringAccount } from '../../../../hooks';
-import { CloudWatchMetricsQuery } from '../../../../types';
 
 import {
   getFlattenedGroupBys,
