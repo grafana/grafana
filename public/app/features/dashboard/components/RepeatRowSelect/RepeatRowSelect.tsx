@@ -121,7 +121,7 @@ function findRepeatedAncestors(o: SceneObject, repeats: Set<string>) {
   }
 }
 
-function findRepeatedDescendent(o: SceneObject, repeats: Set<string>, tab = '') {
+function findRepeatedDescendent(o: SceneObject, repeats: Set<string>) {
   o.forEachChild((c) => {
     // skip clones
     if ('repeatSourceKey' in c.state && c.state.repeatSourceKey) {
@@ -133,6 +133,6 @@ function findRepeatedDescendent(o: SceneObject, repeats: Set<string>, tab = '') 
       repeats.add(localVar.state.name);
     }
 
-    findRepeatedDescendent(c, repeats, tab + '  ');
+    findRepeatedDescendent(c, repeats);
   });
 }
