@@ -18,7 +18,6 @@ jest.mock('@grafana/ui', () => ({
 // Mock the logo images for dark and light modes
 jest.mock('img/grafana_text_logo_dark.svg', () => 'grafana-text-logo-dark.svg');
 jest.mock('img/grafana_text_logo_light.svg', () => 'grafana-text-logo-light.svg');
-jest.mock('img/grafana_text_logo_light.svg', () => 'grafana-text-logo-light.svg');
 
 // Mock ResizeObserver
 global.ResizeObserver = jest.fn().mockImplementation((callback) => {
