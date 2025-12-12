@@ -97,22 +97,42 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			return nil, err
 		}
 
-		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+		if opts.Cfg.EnableSQLKVBackend {
+			sqlkv, err := resource.NewSQLKV(eDB)
+			if err != nil {
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+			}
+
+			kvBackend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+				KvStore: sqlkv,
+				Tracer: opts.Tracer,
+				Reg:    opts.Reg,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+
+			serverOptions.Backend = kvBackend
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
 
-		backend, err := NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Reg:                  opts.Reg,
-			IsHA:                 isHA,
-			storageMetrics:       opts.StorageMetrics,
-			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
-		})
-		if err != nil {
-			return nil, err
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
 		}
-		serverOptions.Backend = backend
-		serverOptions.Diagnostics = backend
-		serverOptions.Lifecycle = backend
+
 	}
 
 	serverOptions.Search = opts.SearchOptions

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"iter"
 
@@ -11,13 +12,32 @@ import (
 var _ KV = &sqlKV{}
 
 type sqlKV struct {
-	db db.DBProvider
+	dbProvider db.DBProvider
+	db         db.DB
 }
 
 func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
+	if dbProvider == nil {
+		return nil, fmt.Errorf("dbProvider is required")
+	}
+
+	ctx := context.Background()
+	dbConn, err := dbProvider.Init(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing DB: %w", err)
+	}
+
 	return &sqlKV{
-		db: dbProvider,
+		dbProvider: dbProvider,
+		db:         dbConn,
 	}, nil
+}
+
+func (k *sqlKV) Ping(ctx context.Context) error {
+	if k.db == nil {
+		return fmt.Errorf("database connection is nil")
+	}
+	return k.db.PingContext(ctx)
 }
 
 func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {

@@ -70,7 +70,12 @@ type kvStorageBackend struct {
 	//reg           prometheus.Registerer
 }
 
-var _ StorageBackend = &kvStorageBackend{}
+var _ KVBackend = &kvStorageBackend{}
+
+type KVBackend interface {
+	StorageBackend
+	resourcepb.DiagnosticsServer
+}
 
 type KVBackendOptions struct {
 	KvStore                      KV
@@ -82,7 +87,7 @@ type KVBackendOptions struct {
 	Reg                          prometheus.Registerer // TODO add metrics
 }
 
-func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
+func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
 
@@ -124,6 +129,19 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 	go backend.runCleanupOldEvents(ctx)
 
 	return backend, nil
+}
+
+func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	// TODO should we add Ping() to the KV interface?
+	type pinger interface {
+		Ping(context.Context) error
+	}
+	if p, ok := k.kv.(pinger); ok {
+		if err := p.Ping(ctx); err != nil {
+			return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_NOT_SERVING}, fmt.Errorf("KV store health check failed: %w", err)
+		}
+	}
+	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
 // runCleanupOldEvents starts a background goroutine that periodically cleans up old events
