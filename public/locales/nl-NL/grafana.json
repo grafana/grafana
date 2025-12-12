@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Tenantbronnen"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{visibleItems}} van {{totalItems}} instanties worden weergegeven",
-      "button-show-all_one": "Alle {{totalItems}} waarschuwingsinstanties weergeven",
-      "button-show-all_other": "Alle {{totalItems}} waarschuwingsinstanties weergeven"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "{{typeName}} verwijderen",
       "row-title": "",
       "switch-layout": "Indeling wisselen",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Indeling"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5462,6 +5473,12 @@
         "label": "Bewerken",
         "tooltip": "Naar bewerkingsmodus"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Bewerkbaar maken",
         "tooltip": "Dit dashboard is gemarkeerd als alleen lezen"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Paneel verwijderen",
         "edit-dashboard-v2-schema": {
           "tooltip": "Dashboard v2-schema bewerken"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Naar bewerkingsmodus"
-          },
-          "exit": {
-            "label": "Bewerkingsmodus afsluiten"
-          }
         },
         "enter-edit-mode": {
           "label": "Bewerkbaar maken",
@@ -5888,6 +5897,17 @@
       "label-value": "Waarde",
       "placeholder-your-metric-prefix": "Je metrisch voorvoegsel"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Aangepaste opties",
       "name-values-separated-comma": "Waarden gescheiden door komma",
@@ -6259,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Optioneel, als je een deel van een serienaam of metrisch knooppuntsegment wilt extraheren.",
+      "description-regex-apply-to": "",
       "label-data-source": "Gegevensbron",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Statische opties sorteren",
       "label-target-data-source": "Doelgegevensbron",
       "label-use-static-options": "Statische opties gebruiken",
       "name-regex": "Regex",
       "query-options": "Opties voor query's",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Selectiemogelijkheden",
       "static-options-legend": "Statische opties"
     },
@@ -8252,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8835,13 @@
       "aria-label-default": "Kies een kleur",
       "aria-label-selected-color": "Kleur {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Verwijderen",
       "cancel": "Annuleren",
@@ -8998,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Alle rijen samenvouwen",
       "aria-label-expand-all": "Alle rijen uitvouwen",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
@@ -9252,6 +9295,8 @@
       "actions-confirmation-label": "Bevestigingsbericht",
       "actions-confirmation-message": "Geef een beschrijvende prompt om de actie te bevestigen of te annuleren.",
       "footer-add-annotation": "Annotatie toevoegen",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klik om te {{actionTitle}}",
       "footer-click-to-navigate": "Klik om {{linkTitle}} te openen",
       "footer-filter-for-value": "Filteren op '{{value}}'",
@@ -11801,7 +11846,7 @@
       "modal-title-set-up-public-access": "Openbare toegang instellen",
       "modal-title-set-up-required-features": "Vereiste functies instellen",
       "step-description-copy-url": "Kopieer vanuit de ngrok-uitvoer de https:// forwarding-URL die er als volgt uitziet:",
-      "step-description-enable-feature-toggles": "Voeg deze instellingen toe aan je custom.ini-bestand om de nodige functies in te schakelen:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Voer dit commando uit om een veilige tunnel naar je lokale Grafana te maken:",
       "step-description-update-grafana-config": "Voeg dit toe aan je custom.ini-bestand en vervang de URL door je werkelijke ngrok-URL:",
       "step-title-copy-url": "Kopieer je openbare URL",
@@ -12397,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

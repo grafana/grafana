@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaResourcePermission = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &ResourcePermission{}, &ResourcePermissionList{}, resource.WithKind("ResourcePermission"),
+	schemaResourcePermission = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewResourcePermission(), &ResourcePermissionList{}, resource.WithKind("ResourcePermission"),
 		resource.WithPlural("resourcepermissions"), resource.WithScope(resource.NamespacedScope))
 	kindResourcePermission = resource.Kind{
 		Schema: schemaResourcePermission,

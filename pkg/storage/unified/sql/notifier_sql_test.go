@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -30,7 +29,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -44,7 +42,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 			config: &pollingNotifierConfig{
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -60,7 +57,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 					return nil, nil
 				},
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -76,7 +72,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 					return nil, nil
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -86,22 +81,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 			expectedErr: errBulkLockRequired,
 		},
 		{
-			name: "missing tracer",
-			config: &pollingNotifierConfig{
-				historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
-					return nil, nil
-				},
-				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
-				bulkLock:        &bulkLock{},
-				log:             &logging.NoOpLogger{},
-				watchBufferSize: 10,
-				pollingInterval: time.Second,
-				done:            make(chan struct{}),
-				dialect:         sqltemplate.SQLite,
-			},
-			expectedErr: errTracerRequired,
-		},
-		{
 			name: "missing logger",
 			config: &pollingNotifierConfig{
 				historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
@@ -109,7 +88,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
 				done:            make(chan struct{}),
@@ -125,7 +103,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 0,
 				pollingInterval: time.Second,
@@ -142,7 +119,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: 0,
@@ -159,7 +135,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -175,7 +150,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 				},
 				listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 				bulkLock:        &bulkLock{},
-				tracer:          noop.NewTracerProvider().Tracer("test"),
 				log:             &logging.NoOpLogger{},
 				watchBufferSize: 10,
 				pollingInterval: time.Second,
@@ -255,7 +229,6 @@ func TestPollingNotifier(t *testing.T) {
 			pollingInterval: 10 * time.Millisecond,
 			watchBufferSize: 10,
 			log:             &logging.NoOpLogger{},
-			tracer:          noop.NewTracerProvider().Tracer("test"),
 			bulkLock:        &bulkLock{},
 			listLatestRVs:   listLatestRVs,
 			historyPoll:     historyPoll,
@@ -309,7 +282,6 @@ func TestPollingNotifier(t *testing.T) {
 			pollingInterval: 10 * time.Millisecond,
 			watchBufferSize: 10,
 			log:             &logging.NoOpLogger{},
-			tracer:          noop.NewTracerProvider().Tracer("test"),
 			bulkLock:        &bulkLock{},
 			listLatestRVs:   listLatestRVs,
 			historyPoll:     historyPoll,
@@ -343,7 +315,6 @@ func TestPollingNotifier(t *testing.T) {
 			pollingInterval: 10 * time.Millisecond,
 			watchBufferSize: 10,
 			log:             &logging.NoOpLogger{},
-			tracer:          noop.NewTracerProvider().Tracer("test"),
 			bulkLock:        &bulkLock{},
 			listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
@@ -380,7 +351,6 @@ func TestPollingNotifier(t *testing.T) {
 			pollingInterval: 10 * time.Millisecond,
 			watchBufferSize: 10,
 			log:             &logging.NoOpLogger{},
-			tracer:          noop.NewTracerProvider().Tracer("test"),
 			bulkLock:        &bulkLock{},
 			listLatestRVs:   func(ctx context.Context) (groupResourceRV, error) { return nil, nil },
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {

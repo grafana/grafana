@@ -2326,8 +2326,10 @@
       "label-tenant-sources": "Sumber tenant"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Menampilkan {{visibleItems}} dari {{totalItems}} instans",
-      "button-show-all_other": "Tampilkan semua {{totalItems}} instans peringatan"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4762,6 +4764,8 @@
       "remove": "Hapus {{typeName}}",
       "row-title": "",
       "switch-layout": "Ganti tata letak",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5070,6 +5074,14 @@
         "layout": "Tata Letak"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5441,6 +5453,12 @@
         "label": "Edit",
         "tooltip": "Masuk ke mode edit"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Jadikan dapat diedit",
         "tooltip": "Dasbor ini ditandai sebagai hanya baca"
@@ -5461,14 +5479,6 @@
         "discard-panel-new": "Buang panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit skema dasbor v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Masuk ke mode edit"
-          },
-          "exit": {
-            "label": "Keluar dari mode edit"
-          }
         },
         "enter-edit-mode": {
           "label": "Jadikan dapat diedit",
@@ -5866,6 +5876,17 @@
       "label-value": "Nilai",
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
@@ -6236,12 +6257,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
+      "description-regex-apply-to": "",
       "label-data-source": "Sumber data",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Urutan opsi statis",
       "label-target-data-source": "Sumber data target",
       "label-use-static-options": "Gunakan opsi statis",
       "name-regex": "Regex",
       "query-options": "Opsi kueri",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opsi pemilihan",
       "static-options-legend": "Opsi statis"
     },
@@ -8216,6 +8245,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8765,6 +8800,13 @@
       "aria-label-default": "Pilih warna",
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Hapus",
       "cancel": "Batalkan",
@@ -8962,6 +9004,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ciutkan semua baris",
       "aria-label-expand-all": "Perluas semua baris",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
@@ -9216,6 +9260,8 @@
       "actions-confirmation-label": "Pesan konfirmasi",
       "actions-confirmation-message": "Berikan petunjuk deskriptif untuk mengonfirmasi atau membatalkan tindakan.",
       "footer-add-annotation": "Tambahkan anotasi",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klik untuk {{actionTitle}} ",
       "footer-click-to-navigate": "Klik untuk membuka {{linkTitle}}",
       "footer-filter-for-value": "Filter untuk '{{value}}'",
@@ -11749,7 +11795,7 @@
       "modal-title-set-up-public-access": "Atur akses publik",
       "modal-title-set-up-required-features": "Atur fitur yang diwajibkan",
       "step-description-copy-url": "Dari output ngrok, salin URL penerusan https:// yang terlihat seperti ini:",
-      "step-description-enable-feature-toggles": "Tambahkan pengaturan ini ke file custom.ini Anda untuk mengaktifkan fitur yang diperlukan:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Jalankan perintah ini untuk membuat tunnel aman ke Grafana lokal Anda:",
       "step-description-update-grafana-config": "Tambahkan ini ke file custom.ini Anda, ganti URL dengan URL ngrok Anda yang sebenarnya:",
       "step-title-copy-url": "Salin URL publik Anda",
@@ -12344,13 +12390,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

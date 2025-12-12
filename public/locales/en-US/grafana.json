@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Tenant sources"
     },
     "rule-details-matching-instances": {
-      "button-show-all_one": "Show all {{totalItems}} alert instances",
-      "button-show-all_other": "Show all {{totalItems}} alert instances",
-      "showing-count": "Showing {{visibleItems}} out of {{totalItems}} instances"
+      "button-show-all": "Show all",
+      "button-show-all-instances": "Show all {{totalItemsCount}} alert instances",
+      "showing-count": "Showing {{visibleItemsCount}} out of {{totalItemsCount}} instances",
+      "showing-count-with-state": "Showing {{visibleItemsCount}} {{alertState}} out of {{totalItemsCount}} instances"
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
+      "switch-layout-row": "Switch layout",
+      "switch-layout-tab": "Switch layout",
       "tab-title": "Change tab title"
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Layout"
       },
       "continue": "Continue",
+      "panel": {
+        "modal": {
+          "body": "Changing the layout will reset all panel positions and sizes.",
+          "confirm": "Change layout",
+          "dismiss": "Cancel",
+          "title": "Change layout"
+        }
+      },
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
@@ -5462,6 +5473,12 @@
         "label": "Edit",
         "tooltip": "Enter edit mode"
       },
+      "edit-button": {
+        "enter": "Edit",
+        "enter-tooltip": "Enter edit mode",
+        "exit": "Exit edit",
+        "exit-tooltip": "Exit edit mode"
+      },
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Discard panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit dashboard v2 schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Enter edit mode"
-          },
-          "exit": {
-            "label": "Exit edit mode"
-          }
         },
         "enter-edit-mode": {
           "label": "Make editable",
@@ -5888,6 +5897,17 @@
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "Show/hide rules will not work",
+      "detail-grids": "All auto-grids will be shown as custom grids",
+      "detail-tabs": "All tabs and rows will appear as classic rows",
+      "details": "During this period, please be aware of the following:",
+      "message": "The Dynamic Dashboard feature is temporarily disabled",
+      "read-less": "Read less",
+      "read-more": "Read more",
+      "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
+      "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "name-values-separated-comma": "Values separated by comma",
@@ -5930,13 +5950,25 @@
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "Cancel",
+        "discard": "Discard",
+        "save": "Save",
+        "text": {
+          "save-changes-question": "Do you want to save your changes?"
+        },
+        "title": {
+          "unsaved-changes": "Unsaved changes"
+        }
+      },
       "text": {
         "edit-panel": "Edit panel",
         "view-panel": "View panel"
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Discard changes to dashboard?"
+        "discard-changes-to-dashboard": "Discard changes to dashboard?",
+        "unsaved-changes-question": "You have unsaved changes to this dashboard. Are you sure you want to discard them?"
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6259,12 +6291,20 @@
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
+      "description-regex-apply-to": "Choose whether to apply the regex pattern to the variable value or display text",
       "label-data-source": "Data source",
+      "label-regex-apply-to": "Apply regex to",
       "label-static-options-sort": "Static options sort",
       "label-target-data-source": "Target data source",
       "label-use-static-options": "Use static options",
       "name-regex": "Regex",
       "query-options": "Query options",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "Display text",
+          "value": "Variable value"
+        }
+      },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
     },
@@ -8252,6 +8292,12 @@
         "nextNYears_other": "Next {{count}} years"
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "Accessible",
+        "otherGroup": "Others"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8847,13 @@
       "aria-label-default": "Pick a color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": "Sparkline requires at least two values to render."
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Delete",
       "cancel": "Cancel",
@@ -8998,6 +9051,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Collapse all rows",
       "aria-label-expand-all": "Expand all rows",
+      "aria-label-sort-column": "Sort column {{columnName}}",
+      "expand-row-header": "Row expander",
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
@@ -9252,6 +9307,8 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
+      "footer-apply-series-as-filter": "Apply as filter",
+      "footer-apply-series-as-inverse-filter": "Apply as inverse filter",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "footer-filter-for-value": "Filter for '{{value}}'",
@@ -9909,7 +9966,7 @@
       "inline-mode": "Display inline",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
-      "log-attributes-field": "OTel attributes",
+      "log-attributes-field": "Log attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
       "move-displayed-field-down": "Move down",
@@ -11801,7 +11858,7 @@
       "modal-title-set-up-public-access": "Set up public access",
       "modal-title-set-up-required-features": "Set up required features",
       "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
-      "step-description-enable-feature-toggles": "Add these settings to your custom.ini file to enable necessary features:",
+      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.",
       "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
       "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
       "step-title-copy-url": "Copy your public URL",
@@ -12397,18 +12454,17 @@
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects",
         "rounded-bars": "Rounded bars",
         "spotlight": "Spotlight",
         "spotlight-tooltip": "Only visible in dark themes"
       },
-      "gradient": "Gradient",
-      "gradient-auto": "Auto",
-      "gradient-none": "None",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
-      "shape": "Shape",
+      "shape": "Style",
       "shape-circle": "Circle",
-      "shape-gauge": "Gauge",
+      "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"

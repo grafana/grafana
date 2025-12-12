@@ -85,6 +85,7 @@
 # Git Sync frontend owned by frontend team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
+/apps/quotas/ @grafana/grafana-search-and-storage
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad

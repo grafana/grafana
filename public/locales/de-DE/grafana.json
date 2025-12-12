@@ -2334,9 +2334,10 @@
       "label-tenant-sources": "Tenant-Quellen"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Angezeigt werden {{visibleItems}} von {{totalItems}} Instanzen",
-      "button-show-all_one": "Alle {{totalItems}} Warninstanzen anzeigen",
-      "button-show-all_other": "Alle {{totalItems}} Warninstanzen anzeigen"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4782,6 +4783,8 @@
       "remove": "{{typeName}} entfernen",
       "row-title": "",
       "switch-layout": "Layout wechseln",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -5090,6 +5093,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5462,6 +5473,12 @@
         "label": "Bearbeiten",
         "tooltip": "In den Bearbeitungsmodus wechseln"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Bearbeitbar machen",
         "tooltip": "Dieses Dashboard wurde als schreibgeschützt markiert"
@@ -5482,14 +5499,6 @@
         "discard-panel-new": "Panel verwerfen",
         "edit-dashboard-v2-schema": {
           "tooltip": "Dashboard-v2-Schema bearbeiten"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Bearbeitungsmodus aufrufen"
-          },
-          "exit": {
-            "label": "Bearbeitungsmodus beenden"
-          }
         },
         "enter-edit-mode": {
           "label": "Bearbeitbar machen",
@@ -5888,6 +5897,17 @@
       "label-value": "Wert",
       "placeholder-your-metric-prefix": "Ihr Metrik-Präfix"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Benutzerdefinierte Optionen",
       "name-values-separated-comma": "Werte werden durch Komma getrennt",
@@ -6259,12 +6279,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Optional, wenn Sie einen Teil eines Reihennamens oder eines metrischen Knotensegments extrahieren möchten.",
+      "description-regex-apply-to": "",
       "label-data-source": "Datenquelle",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Sortierung der statischen Optionen",
       "label-target-data-source": "Zieldatenquelle",
       "label-use-static-options": "Statische Optionen nutzen",
       "name-regex": "Regex",
       "query-options": "Abfrageoptionen",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Auswahloptionen",
       "static-options-legend": "Statische Optionen"
     },
@@ -8252,6 +8280,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8801,6 +8835,13 @@
       "aria-label-default": "Wählen Sie eine Farbe",
       "aria-label-selected-color": "{{colorLabel}} Farbe"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Löschen",
       "cancel": "Abbrechen",
@@ -8998,6 +9039,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Alle Zeilen einklappen",
       "aria-label-expand-all": "Alle Zeilen erweitern",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Zeile umschalten erweitert",
       "tooltip-collapse-all": "Alle Zeilen einklappen",
       "tooltip-expand-all": "Alle Zeilen erweitern"
@@ -9252,6 +9295,8 @@
       "actions-confirmation-label": "Bestätigungsnachricht",
       "actions-confirmation-message": "Geben Sie eine beschreibende Eingabeaufforderung an, um die Aktion zu bestätigen oder abzubrechen.",
       "footer-add-annotation": "Anmerkung hinzufügen",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Klicken, um zu {{actionTitle}}",
       "footer-click-to-navigate": "Zum Öffnen von {{linkTitle}} klicken",
       "footer-filter-for-value": "Filtern nach „{{value}}“",
@@ -11801,7 +11846,7 @@
       "modal-title-set-up-public-access": "Öffentlichen Zugriff einrichten",
       "modal-title-set-up-required-features": "Benötigte Funktionen einrichten",
       "step-description-copy-url": "Kopieren Sie von der ngrok-Ausgabe die https://-URL zur Weiterleitung, die wie folgt aussieht:",
-      "step-description-enable-feature-toggles": "Fügen Sie diese Einstellungen zu Ihrer custom.ini-Datei hinzu, um die erforderlichen Funktionen zu aktivieren:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Führen Sie diesen Befehl aus, um einen sicheren Tunnel zu Ihrer lokalen Grafana-Version zu erstellen:",
       "step-description-update-grafana-config": "Fügen Sie dies Ihrer custom.ini-Datei hinzu und ersetzen Sie die URL durch Ihre tatsächliche ngrok-URL:",
       "step-title-copy-url": "Kopieren Sie Ihre öffentliche URL",
@@ -12397,13 +12442,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

@@ -2683,7 +2683,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:0.22.1"
+    "@grafana/llm": "npm:1.0.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
     "@grafana/runtime": "npm:12.4.0-pre"
@@ -3353,11 +3353,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:0.22.1":
-  version: 0.22.1
-  resolution: "@grafana/llm@npm:0.22.1"
+"@grafana/llm@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@grafana/llm@npm:1.0.1"
   dependencies:
-    "@modelcontextprotocol/sdk": "npm:^1.11.3"
+    "@modelcontextprotocol/sdk": "npm:^1.24.3"
+    publint: "npm:^0.3.12"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
     uuid: "npm:^11.0.5"
@@ -3365,8 +3366,8 @@ __metadata:
     "@grafana/data": ^10.4.0 ||^11 || ^12
     "@grafana/runtime": ^10.4.0 || ^11 || ^12
     react: ^18
-    rxjs: ^7.8.1
-  checksum: 10/4c0c20becba18fb37c10da7e772713912be012f45099041cb9cd1f687c1e0ad016b0e8eae08879fc5a2ef0eae65c6ed67ed1ec19c0b6ed90f32464a406a3829b
+    rxjs: ^7.8.2
+  checksum: 10/29739ca477d0db9c3c2f5ede2eb032d411b379fcad12976677d24b27c2d38929f5916d1a7915f503d0e1080b06ccfd3f0663c2c90e52a22b170f9ebdbab01d7f
   languageName: node
   linkType: hard
 
@@ -3445,17 +3446,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "@grafana/plugin-e2e@npm:3.0.1"
+"@grafana/plugin-e2e@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@grafana/plugin-e2e@npm:3.0.3"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^12.2.0-255920"
+    "@grafana/e2e-selectors": "npm:^12.4.0-19890644192"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/1cd95c1e4365f93e884d7ae4d77961e038cd4fcc235e313dd9f96bd0e21090c5aa26a765bedf45cc13cc0dc913da79007172fd9680088b356ef485672ce34681
+  checksum: 10/d9247d52cc5b65c91983212790610b0c2470d705fa4e37178d04cbf681c4fc80bb08b2c39ea6f0061cb0d78242f108a5c8e6fa1ad2f2209d6f15d34000cb1d00
   languageName: node
   linkType: hard
 
@@ -3603,11 +3604,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.47.1":
-  version: 6.47.1
-  resolution: "@grafana/scenes-react@npm:6.47.1"
+"@grafana/scenes-react@npm:6.49.0":
+  version: 6.49.0
+  resolution: "@grafana/scenes-react@npm:6.49.0"
   dependencies:
-    "@grafana/scenes": "npm:6.47.1"
+    "@grafana/scenes": "npm:6.49.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3619,7 +3620,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/dc20f9ee80eaf648665f7449e3ccb3b640a931f8f4a1be89599dce17eb0f52e763e3a603a4d491d9886b3e6cdf2ad3634124252c223315917206200f7cd6da16
+  checksum: 10/0f9ba2ccaf2c8a703f3c4867320852c07f640aea85491e6c1a35d7fd25b48e69740f7782b52280ab4d423a6e87659de41cf66904acc865c9ea1f934ded6c7e64
   languageName: node
   linkType: hard
 
@@ -3649,9 +3650,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.47.1":
-  version: 6.47.1
-  resolution: "@grafana/scenes@npm:6.47.1"
+"@grafana/scenes@npm:6.49.0":
+  version: 6.49.0
+  resolution: "@grafana/scenes@npm:6.49.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3671,7 +3672,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/bc0c76258955058e7493b04e7cdd5d59dcc4159adf06da0837e992716ea15700b54f8403614df04326350363dc3344fb2602a2e8f7807724571659b4bd95aded
+  checksum: 10/0e873ceac0834879ade41df56ced5a3e8f6a10e5aba15a6f271327aa804729402bcf44845e54614dd0fb1541a28efbb9a5499acceae04cb8be3b11bcdc230347
   languageName: node
   linkType: hard
 
@@ -5398,22 +5399,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.11.3":
-  version: 1.12.2
-  resolution: "@modelcontextprotocol/sdk@npm:1.12.2"
+"@modelcontextprotocol/sdk@npm:^1.24.3":
+  version: 1.24.3
+  resolution: "@modelcontextprotocol/sdk@npm:1.24.3"
   dependencies:
-    ajv: "npm:^6.12.6"
+    ajv: "npm:^8.17.1"
+    ajv-formats: "npm:^3.0.1"
     content-type: "npm:^1.0.5"
     cors: "npm:^2.8.5"
     cross-spawn: "npm:^7.0.5"
     eventsource: "npm:^3.0.2"
+    eventsource-parser: "npm:^3.0.0"
     express: "npm:^5.0.1"
     express-rate-limit: "npm:^7.5.0"
+    jose: "npm:^6.1.1"
     pkce-challenge: "npm:^5.0.0"
     raw-body: "npm:^3.0.0"
-    zod: "npm:^3.23.8"
-    zod-to-json-schema: "npm:^3.24.1"
-  checksum: 10/1c2e1c2b3cddda6dd3ebe25732a3216feb1638f4fac94fdc491f5f7294a68bc642786aa08615c104ab57d7fff391b6c8e6ef94a38cfd2968da3a51582b62d16c
+    zod: "npm:^3.25 || ^4.0"
+    zod-to-json-schema: "npm:^3.25.0"
+  peerDependencies:
+    "@cfworker/json-schema": ^4.1.1
+    zod: ^3.25 || ^4.0
+  peerDependenciesMeta:
+    "@cfworker/json-schema":
+      optional: true
+    zod:
+      optional: false
+  checksum: 10/661aea493ee06674edc0d1409d5ff6e53053da2c3eb27d28ecdd5aa212d9d6bac8c00bec1cd18c1065f2d5774afef34e3cdcd19643056f954c14f611fee8cbc4
   languageName: node
   linkType: hard
 
@@ -9576,6 +9588,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -9588,6 +9601,7 @@ __metadata:
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     glob: "npm:10.5.0"
+    i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:^6.22.0"
@@ -9608,6 +9622,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -9620,6 +9635,41 @@ __metadata:
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     glob: "npm:10.4.1"
+    i18next-cli: "npm:^1.24.22"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-router-dom: "npm:^6.22.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.5.4"
+    webpack: "npm:5.95.0"
+    webpack-merge: "npm:5.10.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
+"@test-plugins/grafana-e2etest-panel@workspace:e2e-playwright/test-plugins/grafana-test-panel":
+  version: 0.0.0-use.local
+  resolution: "@test-plugins/grafana-e2etest-panel@workspace:e2e-playwright/test-plugins/grafana-test-panel"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/ui": "workspace:*"
+    "@types/lodash": "npm:4.17.7"
+    "@types/node": "npm:24.9.2"
+    "@types/prismjs": "npm:1.26.4"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/semver": "npm:7.5.8"
+    "@types/uuid": "npm:9.0.8"
+    glob: "npm:10.4.1"
+    i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:^6.22.0"
@@ -10380,15 +10430,6 @@ __metadata:
     "@types/minimatch": "npm:*"
     "@types/node": "npm:*"
   checksum: 10/6ae717fedfdfdad25f3d5a568323926c64f52ef35897bcac8aca8e19bc50c0bd84630bbd063e5d52078b2137d8e7d3c26eabebd1a2f03ff350fff8a91e79fc19
-  languageName: node
-  linkType: hard
-
-"@types/glob@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@types/glob@npm:9.0.0"
-  dependencies:
-    glob: "npm:*"
-  checksum: 10/a9ea3afe1eafbc8fb303d2d39cd786084aece75fd8eeae1bad8febbf6e0323b429145f31e779a3d68fa693b2a53648ec2c639ee4858fb29132f801c74678051c
   languageName: node
   linkType: hard
 
@@ -12136,6 +12177,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ajv-formats@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "ajv-formats@npm:3.0.1"
+  dependencies:
+    ajv: "npm:^8.0.0"
+  peerDependencies:
+    ajv: ^8.0.0
+  peerDependenciesMeta:
+    ajv:
+      optional: true
+  checksum: 10/5679b9f9ced9d0213a202a37f3aa91efcffe59a6de1a6e3da5c873344d3c161820a1f11cc29899661fee36271fd2895dd3851b6461c902a752ad661d1c1e8722
+  languageName: node
+  linkType: hard
+
 "ajv-keywords@npm:^3.5.2":
   version: 3.5.2
   resolution: "ajv-keywords@npm:3.5.2"
@@ -12156,7 +12211,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^6.12.4, ajv@npm:^6.12.5, ajv@npm:^6.12.6":
+"ajv@npm:^6.12.4, ajv@npm:^6.12.5":
   version: 6.12.6
   resolution: "ajv@npm:6.12.6"
   dependencies:
@@ -12177,6 +12232,18 @@ __metadata:
     require-from-string: "npm:^2.0.2"
     uri-js: "npm:^4.2.2"
   checksum: 10/b406f3b79b5756ac53bfe2c20852471b08e122bc1ee4cde08ae4d6a800574d9cd78d60c81c69c63ff81e4da7cd0b638fafbb2303ae580d49cf1600b9059efb85
+  languageName: node
+  linkType: hard
+
+"ajv@npm:^8.17.1":
+  version: 8.17.1
+  resolution: "ajv@npm:8.17.1"
+  dependencies:
+    fast-deep-equal: "npm:^3.1.3"
+    fast-uri: "npm:^3.0.1"
+    json-schema-traverse: "npm:^1.0.0"
+    require-from-string: "npm:^2.0.2"
+  checksum: 10/ee3c62162c953e91986c838f004132b6a253d700f1e51253b99791e2dbfdb39161bc950ebdc2f156f8568035bb5ed8be7bd78289cd9ecbf3381fe8f5b82e3f33
   languageName: node
   linkType: hard
 
@@ -17664,6 +17731,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventsource-parser@npm:^3.0.0":
+  version: 3.0.6
+  resolution: "eventsource-parser@npm:3.0.6"
+  checksum: 10/febf7058b9c2168ecbb33e92711a1646e06bd1568f60b6eb6a01a8bf9f8fcd29cc8320d57247059cacf657a296280159f21306d2e3ff33309a9552b2ef889387
+  languageName: node
+  linkType: hard
+
 "eventsource-parser@npm:^3.0.1":
   version: 3.0.2
   resolution: "eventsource-parser@npm:3.0.2"
@@ -18002,6 +18076,13 @@ __metadata:
   version: 1.0.0
   resolution: "fast-shallow-equal@npm:1.0.0"
   checksum: 10/ae89318ce43c0c46410d9511ac31520d59cfe675bad3d0b1cb5f900b2d635943d788b8370437178e91ae0d0412decc394229c03e69925ade929a8c02da241610
+  languageName: node
+  linkType: hard
+
+"fast-uri@npm:^3.0.1":
+  version: 3.1.0
+  resolution: "fast-uri@npm:3.1.0"
+  checksum: 10/818b2c96dc913bcf8511d844c3d2420e2c70b325c0653633f51821e4e29013c2015387944435cd0ef5322c36c9beecc31e44f71b257aeb8e0b333c1d62bb17c2
   languageName: node
   linkType: hard
 
@@ -19097,22 +19178,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:*, glob@npm:12.0.0":
-  version: 12.0.0
-  resolution: "glob@npm:12.0.0"
-  dependencies:
-    foreground-child: "npm:^3.3.1"
-    jackspeak: "npm:^4.1.1"
-    minimatch: "npm:^10.1.1"
-    minipass: "npm:^7.1.2"
-    package-json-from-dist: "npm:^1.0.0"
-    path-scurry: "npm:^2.0.0"
-  bin:
-    glob: dist/esm/bin.mjs
-  checksum: 10/6e21b3f1f1fa635836d45e54bbe50704884cc3e310e0cc011cfb5429db65a030e12936d99b07e66236370efe45dc8c8b26fa5334dbf555d6f8709e0315c77c30
-  languageName: node
-  linkType: hard
-
 "glob@npm:10.4.1":
   version: 10.4.1
   resolution: "glob@npm:10.4.1"
@@ -19157,6 +19222,22 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10/da4501819633daff8822c007bb3f93d5c4d2cbc7b15a8e886660f4497dd251a1fb4f53a85fba1e760b31704eff7164aeb2c7a82db10f9f2c362d12c02fe52cf3
+  languageName: node
+  linkType: hard
+
+"glob@npm:12.0.0":
+  version: 12.0.0
+  resolution: "glob@npm:12.0.0"
+  dependencies:
+    foreground-child: "npm:^3.3.1"
+    jackspeak: "npm:^4.1.1"
+    minimatch: "npm:^10.1.1"
+    minipass: "npm:^7.1.2"
+    package-json-from-dist: "npm:^1.0.0"
+    path-scurry: "npm:^2.0.0"
+  bin:
+    glob: dist/esm/bin.mjs
+  checksum: 10/6e21b3f1f1fa635836d45e54bbe50704884cc3e310e0cc011cfb5429db65a030e12936d99b07e66236370efe45dc8c8b26fa5334dbf555d6f8709e0315c77c30
   languageName: node
   linkType: hard
 
@@ -19396,15 +19477,15 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:0.22.1"
+    "@grafana/llm": "npm:1.0.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^3.0.1"
+    "@grafana/plugin-e2e": "npm:^3.0.3"
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.47.1"
-    "@grafana/scenes-react": "npm:6.47.1"
+    "@grafana/scenes": "npm:6.49.0"
+    "@grafana/scenes-react": "npm:6.49.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -19464,7 +19545,6 @@ __metadata:
     "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^8.0.0"
     "@types/file-saver": "npm:2.0.7"
-    "@types/glob": "npm:^9.0.0"
     "@types/google.analytics": "npm:^0.0.46"
     "@types/gtag.js": "npm:^0.0.20"
     "@types/history": "npm:4.7.11"
@@ -22562,6 +22642,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.1.1":
+  version: 6.1.3
+  resolution: "jose@npm:6.1.3"
+  checksum: 10/9626c51e8c3792b505e954f3094698c182208617b62dfb27269230f31e57560b083985ed8128b8a9753aa92daf18d3a2341cc826d149503f14569abe87d42389
+  languageName: node
+  linkType: hard
+
 "jpeg-js@npm:^0.4.4":
   version: 0.4.4
   resolution: "jpeg-js@npm:0.4.4"
@@ -25140,10 +25227,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:6.9.13":
-  version: 6.9.13
-  resolution: "nodemailer@npm:6.9.13"
-  checksum: 10/efbc6fc415ec1e1dc1b91530920b0bcfc648183003c3d79718cd54fc2efef4b7dd1917ddd3853ab127e4b5ebd7353903b5859f0ac3ccea487374b076d41ac8b8
+"nodemailer@npm:7.0.7":
+  version: 7.0.7
+  resolution: "nodemailer@npm:7.0.7"
+  checksum: 10/903d4e0a8320c0e4a2bede6737a9b4996048ddc2e010befc406c8953dcec96ef0e2c17e8b7639654e8bf46844cf7d26f017d8bf9fd629588637b699e09547222
   languageName: node
   linkType: hard
 
@@ -34822,12 +34909,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.24.1":
-  version: 3.24.5
-  resolution: "zod-to-json-schema@npm:3.24.5"
+"zod-to-json-schema@npm:^3.25.0":
+  version: 3.25.0
+  resolution: "zod-to-json-schema@npm:3.25.0"
   peerDependencies:
-    zod: ^3.24.1
-  checksum: 10/1af291b4c429945c9568c2e924bdb7c66ab8d139cbeb9a99b6e9fc9e1b02863f85d07759b9303714f07ceda3993dcaf0ebcb80d2c18bb2aaf5502b2c1016affd
+    zod: ^3.25 || ^4
+  checksum: 10/cb932e20b5b5e64c75b2c34a7e6dae74b727292eab9e014b93c2607378b8cb1b227f80b429053ceb77c8e0dddc338837f9e534b2a658540ff60c9e4ffdc7cc19
   languageName: node
   linkType: hard
 
@@ -34835,6 +34922,13 @@ __metadata:
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10/f0c963ec40cd96858451d1690404d603d36507c1fc9682f2dae59ab38b578687d542708a7fdbf645f77926f78c9ed558f57c3d3aa226c285f798df0c4da16995
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.25 || ^4.0":
+  version: 4.1.13
+  resolution: "zod@npm:4.1.13"
+  checksum: 10/0679190318928f69fcb07751063719de232c663b13955fcdb55db59839569d39f3f29b955cb0cba7af0b724233f88c06b3e84c550397ad4e68f8088fa6799d88
   languageName: node
   linkType: hard
 

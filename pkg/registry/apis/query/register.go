@@ -3,10 +3,11 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -62,6 +63,7 @@ func NewQueryAPIBuilder(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections DataSourceConnectionProvider,
+	concurrentQueryLimit int,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -80,7 +82,7 @@ func NewQueryAPIBuilder(
 	}
 
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: 4,
+		concurrentQueryLimit: concurrentQueryLimit,
 		log:                  log.New("query_apiserver"),
 		instanceProvider:     instanceProvider,
 		authorizer:           ar,
@@ -142,6 +144,7 @@ func RegisterAPIService(
 		tracer,
 		legacyDatasourceLookup,
 		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -151,7 +154,7 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return query.SchemeGroupVersion
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
@@ -165,7 +168,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	)
 }
 
-func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
 	addKnownTypes(scheme, query.SchemeGroupVersion)
 	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)

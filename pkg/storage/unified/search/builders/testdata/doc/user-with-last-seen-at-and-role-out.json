@@ -1,0 +1,16 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "with-last-seen-at-and-role"
+  },
+  "name": "with-last-seen-at-and-role",
+  "rv": 1234,
+  "fields": {
+    "email": "user.three@test.com",
+    "lastSeenAt": 1698321600,
+    "login": "user.three",
+    "role": "Editor"
+  }
+}

@@ -260,7 +260,7 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
@@ -312,6 +312,7 @@ func (s *service) starting(ctx context.Context) error {
 	resourcepb.RegisterManagedObjectIndexServer(srv, server)
 	resourcepb.RegisterBlobStoreServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
+	resourcepb.RegisterQuotasServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
