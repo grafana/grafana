@@ -24,11 +24,26 @@ jest.mock('../scene/SoloPanelContext', () => ({
 }));
 
 jest.mock('./SoloPanelPageLogo', () => ({
-  SoloPanelPageLogo: ({ isHovered }: { isHovered: boolean }) => (
-    <div data-testid="solo-panel-logo" data-hovered={String(isHovered)}>
-      Logo
-    </div>
-  ),
+  shouldHideSoloPanelLogo: (hideLogo?: string) => {
+    if (hideLogo === undefined) {
+      return false;
+    }
+    const normalized = hideLogo.trim().toLowerCase();
+    return normalized !== 'false' && normalized !== '0';
+  },
+  SoloPanelPageLogo: ({ isHovered, hideLogo }: { isHovered: boolean; hideLogo?: string }) => {
+    if (hideLogo !== undefined) {
+      const normalized = hideLogo.trim().toLowerCase();
+      if (normalized !== 'false' && normalized !== '0') {
+        return null;
+      }
+    }
+    return (
+      <div data-testid="solo-panel-logo" data-hovered={String(isHovered)}>
+        Logo
+      </div>
+    );
+  },
 }));
 
 describe('SoloPanelPage', () => {
@@ -67,10 +82,6 @@ describe('SoloPanelPage', () => {
 
       // Mock useState to return the dashboard state object with required properties
       dashboard.useState = jest.fn(() => ({
-        title: 'Test Dashboard',
-        links: [],
-        meta: {},
-        editPane: {},
         controls: {
           useState: jest.fn(() => ({
             refreshPicker: {
@@ -81,14 +92,14 @@ describe('SoloPanelPage', () => {
         body: {
           Component: () => <div data-testid="panel-content">Panel Content</div>,
         },
-      }));
+      })) as unknown as typeof dashboard.useState;
 
       return dashboard;
     };
 
     it('should render the panel', () => {
       const dashboard = createMockDashboard();
-      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={false} />);
+      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={undefined} />);
 
       // The panel should be rendered (we can't easily test the actual panel content without more setup)
       expect(screen.getByTestId('solo-panel-logo')).toBeInTheDocument();
@@ -96,21 +107,21 @@ describe('SoloPanelPage', () => {
 
     it('should render logo when hideLogo is false', () => {
       const dashboard = createMockDashboard();
-      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={false} />);
+      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={undefined} />);
 
       expect(screen.getByTestId('solo-panel-logo')).toBeInTheDocument();
     });
 
     it('should not render logo when hideLogo is true', () => {
       const dashboard = createMockDashboard();
-      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={true} />);
+      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo="true" />);
 
       expect(screen.queryByTestId('solo-panel-logo')).not.toBeInTheDocument();
     });
 
     it('should initialize with isHovered as false', () => {
       const dashboard = createMockDashboard();
-      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={false} />);
+      render(<SoloPanelRenderer dashboard={dashboard} panelId="panel-1" hideLogo={undefined} />);
 
       const logo = screen.getByTestId('solo-panel-logo');
       expect(logo).toHaveAttribute('data-hovered', 'false');

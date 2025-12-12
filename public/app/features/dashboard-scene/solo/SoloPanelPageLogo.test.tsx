@@ -3,7 +3,7 @@ import { createRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { SoloPanelPageLogo } from './SoloPanelPageLogo';
+import { shouldHideSoloPanelLogo, SoloPanelPageLogo } from './SoloPanelPageLogo';
 
 // Mock the theme hook
 const mockUseTheme2 = jest.fn();
@@ -40,6 +40,28 @@ function assignMockDivToRef(ref: React.RefObject<HTMLDivElement>, mockDiv: HTMLD
 }
 
 describe('SoloPanelPageLogo', () => {
+  describe('shouldHideSoloPanelLogo', () => {
+    it('treats presence (empty string) as true', () => {
+      expect(shouldHideSoloPanelLogo('')).toBe(true);
+    });
+
+    it('treats true/1 as true', () => {
+      expect(shouldHideSoloPanelLogo('true')).toBe(true);
+      expect(shouldHideSoloPanelLogo('1')).toBe(true);
+      expect(shouldHideSoloPanelLogo(' TRUE ')).toBe(true);
+    });
+
+    it('treats false/0 as false', () => {
+      expect(shouldHideSoloPanelLogo('false')).toBe(false);
+      expect(shouldHideSoloPanelLogo('0')).toBe(false);
+      expect(shouldHideSoloPanelLogo(' FALSE ')).toBe(false);
+    });
+
+    it('treats undefined as false', () => {
+      expect(shouldHideSoloPanelLogo(undefined)).toBe(false);
+    });
+  });
+
   const mockTheme = {
     isDark: false,
     colors: {
@@ -82,7 +104,7 @@ describe('SoloPanelPageLogo', () => {
 
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     expect(screen.getByText('Powered by')).toBeInTheDocument();
     expect(screen.getByAltText('Grafana')).toBeInTheDocument();
@@ -104,7 +126,7 @@ describe('SoloPanelPageLogo', () => {
     }));
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={true} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={true} hideLogo={undefined} />);
 
     // The logo should still be in the DOM but with reduced opacity
     const poweredByText = screen.getByText('Powered by');
@@ -128,7 +150,7 @@ describe('SoloPanelPageLogo', () => {
     }));
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     // The logo should be visible
     expect(screen.getByText('Powered by')).toBeInTheDocument();
@@ -156,7 +178,7 @@ describe('SoloPanelPageLogo', () => {
       isDark: true,
     });
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     const logo = screen.getByAltText('Grafana');
     expect(logo).toHaveAttribute('src', 'grafana-text-logo-light.svg');
@@ -186,7 +208,7 @@ describe('SoloPanelPageLogo', () => {
       isDark: false,
     });
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     const logo = screen.getByAltText('Grafana');
     // Verify logo is rendered (the exact src depends on theme, which is tested in other tests)
@@ -210,7 +232,7 @@ describe('SoloPanelPageLogo', () => {
     }));
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     // Find the logo container by looking for the "Powered by" text's parent
     const poweredByText = screen.getByText('Powered by');
@@ -238,7 +260,7 @@ describe('SoloPanelPageLogo', () => {
     }));
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} />);
+    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
 
     expect(ResizeObserver).toHaveBeenCalled();
     const resizeObserverInstance = (ResizeObserver as jest.Mock).mock.results[0].value;

@@ -30,11 +30,6 @@ export function SoloPanelPage({ queryParams }: Props) {
   const { dashboard, loadError } = stateManager.useState();
   const { uid = '', type, slug } = useParams();
 
-  // Check if logo should be hidden via URL query parameter
-  // Hide if hideLogo is present (even without a value), or if explicitly set to 'true' or '1'
-  const hideLogo =
-    queryParams.hideLogo !== undefined || queryParams.hideLogo === 'true' || queryParams.hideLogo === '1';
-
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
@@ -60,7 +55,7 @@ export function SoloPanelPage({ queryParams }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard}>
-      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={hideLogo} />
+      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={queryParams.hideLogo} />
     </UrlSyncContextProvider>
   );
 }
@@ -74,7 +69,7 @@ export function SoloPanelRenderer({
 }: {
   dashboard: DashboardScene;
   panelId: string;
-  hideLogo: boolean;
+  hideLogo?: string;
 }) {
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
@@ -100,7 +95,7 @@ export function SoloPanelRenderer({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {!hideLogo && <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} />}
+      <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} hideLogo={hideLogo} />
       {renderHiddenVariables(dashboard)}
       <div className={styles.panelWrapper}>
         <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>

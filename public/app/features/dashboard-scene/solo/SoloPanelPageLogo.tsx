@@ -10,9 +10,27 @@ import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 interface SoloPanelPageLogoProps {
   containerRef: React.RefObject<HTMLDivElement>;
   isHovered: boolean;
+  hideLogo?: string;
 }
 
-export function SoloPanelPageLogo({ containerRef, isHovered }: SoloPanelPageLogoProps) {
+export function shouldHideSoloPanelLogo(hideLogo?: string): boolean {
+  if (hideLogo === undefined) {
+    return false;
+  }
+
+  // Treat presence as "true", except explicit disable values.
+  // Examples:
+  // - ?hideLogo           => hide
+  // - ?hideLogo=true      => hide
+  // - ?hideLogo=1         => hide
+  // - ?hideLogo=false     => show
+  // - ?hideLogo=0         => show
+  const normalized = hideLogo.trim().toLowerCase();
+  return normalized !== 'false' && normalized !== '0';
+}
+
+export function SoloPanelPageLogo({ containerRef, isHovered, hideLogo }: SoloPanelPageLogoProps) {
+  const shouldHide = shouldHideSoloPanelLogo(hideLogo);
   const [scale, setScale] = useState(1);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -52,6 +70,10 @@ export function SoloPanelPageLogo({ containerRef, isHovered }: SoloPanelPageLogo
       resizeObserver.disconnect();
     };
   }, [containerRef]);
+
+  if (shouldHide) {
+    return null;
+  }
 
   return (
     <div
