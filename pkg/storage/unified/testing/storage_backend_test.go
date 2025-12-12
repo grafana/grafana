@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
@@ -80,7 +80,7 @@ func TestSQLKVStorageBackend(t *testing.T) {
 
 	RunSQLStorageBackendCompatibilityTest(t, newBackendFunc, &TestOptions{
 		NSPrefix: "sqlkvstorage-compatibility-test",
-		SkipTests: map[string]bool {
+		SkipTests: map[string]bool{
 			TestKeyPathGeneration: true,
 		},
 	})

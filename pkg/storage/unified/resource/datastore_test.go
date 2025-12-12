@@ -8,10 +8,10 @@ import (
 	"io"
 	"testing"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 )
 

@@ -105,8 +105,8 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 			kvBackend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 				KvStore: sqlkv,
-				Tracer: opts.Tracer,
-				Reg:    opts.Reg,
+				Tracer:  opts.Tracer,
+				Reg:     opts.Reg,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
@@ -116,7 +116,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Diagnostics = kvBackend
 		} else {
 			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+				opts.Cfg.SectionWithEnvOverrides("resource_api"))
 
 			backend, err := NewBackend(BackendOptions{
 				DBProvider:           eDB,
