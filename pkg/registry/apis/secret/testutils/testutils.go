@@ -216,7 +216,7 @@ type Sut struct {
 	KeeperService         contracts.KeeperService
 	KeeperMetadataStorage contracts.KeeperMetadataStorage
 	// A mock of AWS secrets manager that implements contracts.Keeper
-	ModelSecretsManager *ModelSecretsManager
+	ModelSecretsManager *ModelAWSSecretsManager
 }
 
 type CreateSvConfig struct {
@@ -299,10 +299,10 @@ func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig
 
 type keeperServiceWrapper struct {
 	sqlKeeper *sqlkeeper.SQLKeeper
-	awsKeeper *ModelSecretsManager
+	awsKeeper *ModelAWSSecretsManager
 }
 
-func newKeeperServiceWrapper(sqlKeeper *sqlkeeper.SQLKeeper, awsKeeper *ModelSecretsManager) *keeperServiceWrapper {
+func newKeeperServiceWrapper(sqlKeeper *sqlkeeper.SQLKeeper, awsKeeper *ModelAWSSecretsManager) *keeperServiceWrapper {
 	return &keeperServiceWrapper{sqlKeeper: sqlKeeper, awsKeeper: awsKeeper}
 }
 
@@ -435,7 +435,7 @@ func (e *NoopMigrationExecutor) Execute(ctx context.Context) (int, error) {
 }
 
 // A mock of AWS secrets manager, used for testing.
-type ModelSecretsManager struct {
+type ModelAWSSecretsManager struct {
 	secrets        map[string]entry
 	alreadyDeleted map[string]bool
 }
@@ -445,14 +445,14 @@ type entry struct {
 	externalID        string
 }
 
-func NewModelSecretsManager() *ModelSecretsManager {
-	return &ModelSecretsManager{
+func NewModelSecretsManager() *ModelAWSSecretsManager {
+	return &ModelAWSSecretsManager{
 		secrets:        make(map[string]entry),
 		alreadyDeleted: make(map[string]bool),
 	}
 }
 
-func (m *ModelSecretsManager) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
+func (m *ModelAWSSecretsManager) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
 	if exposedValueOrRef == "" {
 		return "", fmt.Errorf("failed to satisfy constraint: Member must have length greater than or equal to 1")
 	}
@@ -479,14 +479,14 @@ func (m *ModelSecretsManager) Store(ctx context.Context, cfg secretv1beta1.Keepe
 }
 
 // Used to simulate the creation of secrets in the 3rd party secret store
-func (m *ModelSecretsManager) Create(name, value string) {
+func (m *ModelAWSSecretsManager) Create(name, value string) {
 	m.secrets[name] = entry{
 		exposedValueOrRef: value,
 		externalID:        fmt.Sprintf("external_id_%+v", value),
 	}
 }
 
-func (m *ModelSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1beta1.ExposedSecureValue, err error) {
+func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1beta1.ExposedSecureValue, err error) {
 	versionID := buildVersionID(namespace, name, version)
 
 	if m.deleted(versionID) {
@@ -502,7 +502,7 @@ func (m *ModelSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.Keep
 }
 
 // TODO: this could be namespaced to make it more realistic
-func (m *ModelSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+func (m *ModelAWSSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
 	entry, ok := m.secrets[ref]
 	if !ok {
 		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
@@ -510,7 +510,7 @@ func (m *ModelSecretsManager) RetrieveReference(ctx context.Context, _ secretv1b
 	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
 }
 
-func (m *ModelSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
+func (m *ModelAWSSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
 	versionID := buildVersionID(namespace, name, version)
 
 	// Deleting a secret that existed at some point is idempotent
@@ -526,16 +526,16 @@ func (m *ModelSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.Keep
 	return nil
 }
 
-func (m *ModelSecretsManager) deleted(versionID string) bool {
+func (m *ModelAWSSecretsManager) deleted(versionID string) bool {
 	return m.alreadyDeleted[versionID]
 }
 
-func (m *ModelSecretsManager) exists(versionID string) bool {
+func (m *ModelAWSSecretsManager) exists(versionID string) bool {
 	_, ok := m.secrets[versionID]
 	return ok
 }
 
-func (m *ModelSecretsManager) delete(versionID string) {
+func (m *ModelAWSSecretsManager) delete(versionID string) {
 	m.alreadyDeleted[versionID] = true
 	delete(m.secrets, versionID)
 }

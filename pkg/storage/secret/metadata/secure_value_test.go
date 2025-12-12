@@ -37,10 +37,10 @@ type modelKeeper struct {
 type model struct {
 	secureValues        []*modelSecureValue
 	keepers             []*modelKeeper
-	modelSecretsManager *testutils.ModelSecretsManager
+	modelSecretsManager *testutils.ModelAWSSecretsManager
 }
 
-func newModel(modelSecretsManager *testutils.ModelSecretsManager) *model {
+func newModel(modelSecretsManager *testutils.ModelAWSSecretsManager) *model {
 	return &model{modelSecretsManager: modelSecretsManager}
 }
 
