@@ -29,7 +29,7 @@ func canBeAutomaticallyCleanedUp(configs []dashboards.ProvisioningConfig) string
 		}
 
 		if cfg.Folder != folderTitle {
-			return "dashboards provisioned in different folders"
+			return "dashboards provisioned across multiple folders"
 		}
 	}
 

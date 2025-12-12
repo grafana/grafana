@@ -993,7 +993,7 @@ func (dr *DashboardServiceImpl) searchExistingProvisionedData(
 // process to start from scratch after this function returns.
 func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) {
 	if skipReason := canBeAutomaticallyCleanedUp(configs); skipReason != "" {
-		dr.log.Info("skipping automatic cleanup attempt", "reason", skipReason)
+		dr.log.Info("not eligible for automated cleanup", "reason", skipReason)
 		return
 	}
 
@@ -1007,13 +1007,13 @@ func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs
 		ctx, user := identity.WithServiceIdentity(ctx, orgID)
 		provFolders, resources, err := dr.searchExistingProvisionedData(ctx, orgID, folderTitle)
 		if err != nil {
-			dr.log.Warn("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
+			dr.log.Error("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
 			continue
 		}
 
 		steps, err := cleanupSteps(provFolders, resources, provisionedNames)
 		if err != nil {
-			dr.log.Warn("not possible to perform automatic cleanup", "org", orgID, "error", err)
+			dr.log.Warn("not possible to perform automated duplicate cleanup", "org", orgID, "error", err)
 			continue
 		}
 
@@ -1036,7 +1036,7 @@ func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs
 					"type", step.Type, "uid", step.UID,
 				)
 			} else {
-				dr.log.Warn("failed to delete duplicated provisioned resource",
+				dr.log.Error("failed to delete duplicated provisioned resource",
 					"type", step.Type, "uid", step.UID, "error", err,
 				)
 			}
