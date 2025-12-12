@@ -4,8 +4,10 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
 
-// panel types that might contain JavaScript code
-// and we want to filter them out due to security reasons
+/**
+ * Panel types that might contain JavaScript code.
+ * We want to filter them out due to security reasons
+ */
 const PANEL_TYPE_FILTER_SLUGS = [
   'aceiot-svg-panel',
   'ae3e-plotly-panel',
@@ -15,9 +17,10 @@ const PANEL_TYPE_FILTER_SLUGS = [
   'volkovlabs-form-panel',
 ];
 
-// arbitrary value
+/**
+ * Arbitrary value for the minimum number of downloads to filter out dashboards as suggestions.
+ */
 const MIN_DOWNLOADS_FILTER = 10000;
-const MAX_PAGES_FILTER = 10;
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -88,10 +91,9 @@ export async function fetchCommunityDashboards(
   if (result && Array.isArray(result.items)) {
     const dashboards = filterNonSafeDashboards(result.items);
 
-    // We don't want to show more than MAX_PAGES_FILTER * PAGE_SIZE dashboards due to security reasons
     return {
       page: result.page || params.page,
-      pages: result.pages > MAX_PAGES_FILTER ? MAX_PAGES_FILTER : result.pages || 1,
+      pages: result.pages || 1,
       items: dashboards,
     };
   }

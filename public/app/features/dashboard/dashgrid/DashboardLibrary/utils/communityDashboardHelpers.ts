@@ -1,3 +1,4 @@
+import { PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
@@ -119,7 +120,7 @@ interface UseCommunityDashboardParams {
 /**
  * Check if a panel contains JavaScript code. This is not a perfect check, but good enough
  */
-function canPanelContainJS(panel: { options?: Record<string, unknown> }): boolean {
+function canPanelContainJS(panel: PanelModel): boolean {
   const candidates: Array<{ keyPath: string; value: string }> = [];
 
   function collect(obj: Object, path: string[]) {
@@ -142,7 +143,16 @@ function canPanelContainJS(panel: { options?: Record<string, unknown> }): boolea
     collect(panel.options, ['options']);
   }
 
-  const valuePatterns = [/<script\b/i, /\bon\w+="[^"]*"/i, /javascript:/i, /\bfunction\b/, /=>/, /\breturn\b/];
+  const valuePatterns = [
+    /<script\b/i,
+    /\bon\w+="[^"]*"/i,
+    /javascript:/i,
+    /\bfunction\b/,
+    /=>/,
+    /\breturn\b/,
+    /\bsetTimeout\b/i,
+    /\bsetInterval\b/i,
+  ];
   const keyPatterns = [
     /\bscript\b/i,
     /\bcode\b/i,
