@@ -46,13 +46,11 @@
  */
 
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-
-import { PopupCard } from '../../components/HoverCard';
+import { Box, Button, Dropdown, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
@@ -83,8 +81,78 @@ export interface SavedSearchesProps {
   className?: string;
 }
 
-// Internal state types - single active action to prevent conflicts
+// ============================================================================
+// State Management (Reducer)
+// ============================================================================
+
+// Active action type - represents the current action in progress
 type ActiveAction = 'idle' | { type: 'saving' } | { type: 'renaming'; id: string } | { type: 'deleting'; id: string };
+
+// Component state
+interface DropdownState {
+  isOpen: boolean;
+  activeAction: ActiveAction;
+}
+
+// Action types for the reducer
+type DropdownAction =
+  | { type: 'OPEN' }
+  | { type: 'CLOSE' }
+  | { type: 'SET_VISIBLE'; visible: boolean }
+  | { type: 'START_SAVE' }
+  | { type: 'START_RENAME'; id: string }
+  | { type: 'START_DELETE'; id: string }
+  | { type: 'CANCEL_ACTION' }
+  | { type: 'COMPLETE_ACTION' }
+  | { type: 'APPLY_AND_CLOSE' };
+
+const initialState: DropdownState = {
+  isOpen: false,
+  activeAction: 'idle',
+};
+
+/**
+ * Reducer for managing dropdown state and active actions.
+ * Centralizes all state transitions for easier reasoning and testing.
+ */
+function dropdownReducer(state: DropdownState, action: DropdownAction): DropdownState {
+  switch (action.type) {
+    case 'OPEN':
+      return { ...state, isOpen: true };
+
+    case 'CLOSE':
+      // Reset action when closing
+      return { isOpen: false, activeAction: 'idle' };
+
+    case 'SET_VISIBLE':
+      // When visibility changes, reset action if closing
+      return action.visible ? { ...state, isOpen: true } : { isOpen: false, activeAction: 'idle' };
+
+    case 'START_SAVE':
+      // Only start save if no action is active
+      return state.activeAction === 'idle' ? { ...state, activeAction: { type: 'saving' } } : state;
+
+    case 'START_RENAME':
+      // Only start rename if no action is active
+      return state.activeAction === 'idle' ? { ...state, activeAction: { type: 'renaming', id: action.id } } : state;
+
+    case 'START_DELETE':
+      // Only start delete if no action is active
+      return state.activeAction === 'idle' ? { ...state, activeAction: { type: 'deleting', id: action.id } } : state;
+
+    case 'CANCEL_ACTION':
+    case 'COMPLETE_ACTION':
+      // Return to idle state
+      return { ...state, activeAction: 'idle' };
+
+    case 'APPLY_AND_CLOSE':
+      // Only apply if no action is active, then close
+      return state.activeAction === 'idle' ? { isOpen: false, activeAction: 'idle' } : state;
+
+    default:
+      return state;
+  }
+}
 
 // ============================================================================
 // Main Component
@@ -101,12 +169,13 @@ export function SavedSearches({
   isLoading = false,
   className,
 }: SavedSearchesProps) {
-  // Dropdown state - single active action to prevent conflicts
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeAction, setActiveAction] = useState<ActiveAction>('idle');
+  const styles = useStyles2(getStyles);
+
+  // Centralized state management via reducer
+  const [state, dispatch] = useReducer(dropdownReducer, initialState);
+  const { isOpen, activeAction } = state;
 
   // Refs
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
 
   // Sort saved searches: default first, then alphabetically
@@ -118,13 +187,6 @@ export function SavedSearches({
 
     return defaultSearch ? [defaultSearch, ...others] : others;
   }, [savedSearches]);
-
-  // Reset internal state when dropdown closes
-  useEffect(() => {
-    if (!isOpen) {
-      setActiveAction('idle');
-    }
-  }, [isOpen]);
 
   // Focus "Save current search" button when dropdown opens
   useEffect(() => {
@@ -138,73 +200,36 @@ export function SavedSearches({
     return undefined;
   }, [isOpen, activeAction]);
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        isOpen &&
-        dropdownRef.current &&
-        event.target instanceof Node &&
-        !dropdownRef.current.contains(event.target)
-      ) {
-        // Check if click is on a portal element (menu dropdown)
-        if (event.target instanceof Element) {
-          const isPortalClick =
-            event.target.closest('[data-popper-placement]') || event.target.closest('[role="menu"]');
-
-          if (!isPortalClick) {
-            setIsOpen(false);
-          }
-        } else {
-          setIsOpen(false);
-        }
+  // Handle Escape key: cancel active action first, then let Dropdown close
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Escape' && activeAction !== 'idle') {
+        // Cancel the active action and prevent Dropdown from closing
+        event.stopPropagation();
+        dispatch({ type: 'CANCEL_ACTION' });
       }
-    };
+    },
+    [activeAction]
+  );
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  // Handle Escape key to close dropdown
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        // If an action is active, cancel it first
-        if (activeAction !== 'idle') {
-          setActiveAction('idle');
-        } else {
-          setIsOpen(false);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, activeAction]);
-
-  // Handlers
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
+  // Handlers - dispatch actions to the reducer
+  const handleVisibleChange = useCallback((visible: boolean) => {
+    dispatch({ type: 'SET_VISIBLE', visible });
   }, []);
 
   const handleStartSave = useCallback(() => {
-    setActiveAction({ type: 'saving' });
+    dispatch({ type: 'START_SAVE' });
   }, []);
 
   const handleCancelSave = useCallback(() => {
-    setActiveAction('idle');
+    dispatch({ type: 'CANCEL_ACTION' });
   }, []);
 
   const handleSaveComplete = useCallback(
     async (name: string): Promise<ValidationError | void> => {
       const result = await onSave(name, currentSearchQuery);
       if (!result) {
-        setActiveAction('idle');
+        dispatch({ type: 'COMPLETE_ACTION' });
       }
       return result;
     },
@@ -212,18 +237,18 @@ export function SavedSearches({
   );
 
   const handleStartRename = useCallback((id: string) => {
-    setActiveAction({ type: 'renaming', id });
+    dispatch({ type: 'START_RENAME', id });
   }, []);
 
   const handleCancelRename = useCallback(() => {
-    setActiveAction('idle');
+    dispatch({ type: 'CANCEL_ACTION' });
   }, []);
 
   const handleRenameComplete = useCallback(
     async (id: string, newName: string): Promise<ValidationError | void> => {
       const result = await onRename(id, newName);
       if (!result) {
-        setActiveAction('idle');
+        dispatch({ type: 'COMPLETE_ACTION' });
       }
       return result;
     },
@@ -231,29 +256,29 @@ export function SavedSearches({
   );
 
   const handleStartDelete = useCallback((id: string) => {
-    setActiveAction({ type: 'deleting', id });
+    dispatch({ type: 'START_DELETE', id });
   }, []);
 
   const handleCancelDelete = useCallback(() => {
-    setActiveAction('idle');
+    dispatch({ type: 'CANCEL_ACTION' });
   }, []);
 
   const handleDeleteConfirm = useCallback(
     async (id: string) => {
       await onDelete(id);
-      setActiveAction('idle');
+      dispatch({ type: 'COMPLETE_ACTION' });
     },
     [onDelete]
   );
 
   const handleApply = useCallback(
     (search: SavedSearch) => {
-      // Only allow apply when no action is active
+      // Only allow apply when no action is active (handled by reducer)
       if (activeAction !== 'idle') {
         return;
       }
       onApply(search);
-      setIsOpen(false);
+      dispatch({ type: 'APPLY_AND_CLOSE' });
     },
     [onApply, activeAction]
   );
@@ -273,52 +298,40 @@ export function SavedSearches({
   const hasSearches = sortedSearches.length > 0;
   const canSave = currentSearchQuery.trim().length > 0;
 
-  return (
-    <PopupCard
-      showOn="click"
-      placement="bottom-end"
-      disableBlur={true}
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      onToggle={handleToggle}
-      content={
-        <Box
-          ref={dropdownRef}
-          padding={1.5}
-          width="320px"
-          role="dialog"
-          aria-label={t('alerting.saved-searches.dropdown-aria-label', 'Saved searches')}
-          tabIndex={-1}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.stopPropagation();
-            }
-          }}
-        >
-          <ListMode
-            searches={sortedSearches}
-            hasSearches={hasSearches}
-            canSave={canSave}
-            activeAction={activeAction}
-            saveButtonRef={saveButtonRef}
-            isLoading={isLoading}
-            onStartSave={handleStartSave}
-            onSaveComplete={handleSaveComplete}
-            onCancelSave={handleCancelSave}
-            onApply={handleApply}
-            onStartRename={handleStartRename}
-            onCancelRename={handleCancelRename}
-            onRenameComplete={handleRenameComplete}
-            onStartDelete={handleStartDelete}
-            onCancelDelete={handleCancelDelete}
-            onDeleteConfirm={handleDeleteConfirm}
-            onSetDefault={handleSetDefault}
-            savedSearches={savedSearches}
-          />
-        </Box>
-      }
+  const overlay = (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <div
+      className={styles.dropdown}
+      role="dialog"
+      aria-label={t('alerting.saved-searches.dropdown-aria-label', 'Saved searches')}
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
     >
+      <ListMode
+        searches={sortedSearches}
+        hasSearches={hasSearches}
+        canSave={canSave}
+        activeAction={activeAction}
+        saveButtonRef={saveButtonRef}
+        isLoading={isLoading}
+        onStartSave={handleStartSave}
+        onSaveComplete={handleSaveComplete}
+        onCancelSave={handleCancelSave}
+        onApply={handleApply}
+        onStartRename={handleStartRename}
+        onCancelRename={handleCancelRename}
+        onRenameComplete={handleRenameComplete}
+        onStartDelete={handleStartDelete}
+        onCancelDelete={handleCancelDelete}
+        onDeleteConfirm={handleDeleteConfirm}
+        onSetDefault={handleSetDefault}
+        savedSearches={savedSearches}
+      />
+    </div>
+  );
+
+  return (
+    <Dropdown overlay={overlay} placement="bottom-end" onVisibleChange={handleVisibleChange}>
       <Button
         variant="secondary"
         icon="bookmark"
@@ -329,7 +342,7 @@ export function SavedSearches({
       >
         {buttonLabel}
       </Button>
-    </PopupCard>
+    </Dropdown>
   );
 }
 
@@ -396,8 +409,10 @@ function ListMode({
   return (
     <Stack direction="column" gap={1}>
       {/* Save current search - button or inline input */}
+      {/* Stop propagation to prevent Dropdown from closing when interacting with save form */}
       {isSaveMode ? (
-        <div className={styles.item}>
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+        <div className={styles.item} onClick={(e) => e.stopPropagation()}>
           <InlineSaveInput onSave={onSaveComplete} onCancel={onCancelSave} savedSearches={savedSearches} />
         </div>
       ) : (
@@ -406,7 +421,10 @@ function ListMode({
             ref={saveButtonRef}
             variant="secondary"
             icon="plus"
-            onClick={onStartSave}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent dropdown from closing
+              onStartSave();
+            }}
             disabled={!canSave || isActionActive}
             title={
               !canSave ? t('alerting.saved-searches.save-disabled-tooltip', 'Enter a search query first') : undefined
@@ -481,6 +499,14 @@ function EmptyState() {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    dropdown: css({
+      width: '320px',
+      padding: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
     list: css({
       maxHeight: '300px',
       overflowY: 'auto',
