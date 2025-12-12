@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -58,6 +60,10 @@ func RegisterAppInstaller(
 		}
 	}
 	return installer, nil
+}
+
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return roleauthorizer.NewRoleAuthorizer()
 }
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) rest.Storage {
