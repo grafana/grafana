@@ -36,7 +36,7 @@ func Test_canBeAutomaticallyCleanedUp(t *testing.T) {
 				{Name: "3", Folder: ""},
 				{Name: "4", Folder: "f1"},
 			},
-			expectedSkip: "dashboards provisioned in different folders",
+			expectedSkip: "dashboards provisioned across multiple folders",
 		},
 		{
 			name: "one of the provisioned dashboards allows UI updates",
@@ -56,7 +56,7 @@ func Test_canBeAutomaticallyCleanedUp(t *testing.T) {
 				{Name: "3", Folder: "f1"},
 				{Name: "4", Folder: "different"},
 			},
-			expectedSkip: "dashboards provisioned in different folders",
+			expectedSkip: "dashboards provisioned across multiple folders",
 		},
 		{
 			name: "can be skipped when all conditions are met",
