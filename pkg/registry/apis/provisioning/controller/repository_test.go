@@ -39,6 +39,10 @@ func (m mockProvisioningV0alpha1Interface) Jobs(namespace string) client.JobInte
 	panic("not needed for testing")
 }
 
+func (m mockProvisioningV0alpha1Interface) Connections(namespace string) client.ConnectionInterface {
+	panic("not needed for testing")
+}
+
 func (m mockProvisioningV0alpha1Interface) Repositories(namespace string) client.RepositoryInterface {
 	if m.repositoriesFunc != nil {
 		return m.repositoriesFunc(namespace)
