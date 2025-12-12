@@ -250,6 +250,7 @@ function getStyles(theme: GrafanaTheme2) {
         opacity: 1,
         filter: 'unset',
       },
+      display: 'inline-block',
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
