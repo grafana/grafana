@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAsync, useMeasure } from 'react-use';
 
 import {
@@ -133,9 +133,9 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   return (
     <div className={styles.grid}>
       {isNewVizSuggestionsEnabled
-        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
-            <>
-              <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
+        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
+            <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
+              <div className={styles.vizTypeHeader}>
                 <Text variant="body" weight="medium">
                   {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
                   {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
@@ -190,7 +190,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))
         : suggestions?.map((suggestion, index) => (
             <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
