@@ -216,12 +216,14 @@ Set up image rendering to add visual previews of dashboard updates directly in p
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-## Modify configurations after set up is complete
+## Next steps
 
-To update your repository configuration after you've completed set up:
+You've successfully set up Git Sync to manage your Grafana dashboards through version control. Your dashboards are now synchronized with a GitHub repository, enabling collaborative development and change tracking.
 
-1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration** in the left-side menu and then **Provisioning**.
-1. Select **Settings** for the repository you wish to modify.
-1. Use the **Configure repository** screen to update any of the settings.
-1. Select **Save** to preserve the updates.
+To learn more about using Git Sync:
+
+- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
+- [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
+- [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
+- [grafanactl documentation](https://grafana.github.io/grafanactl/)
