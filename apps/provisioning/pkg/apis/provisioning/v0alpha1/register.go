@@ -138,6 +138,7 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			case GithubConnectionType:
 				appID = m.Spec.GitHub.AppID
 				installationID = m.Spec.GitHub.InstallationID
+			default:
 			}
 
 			return []interface{}{
