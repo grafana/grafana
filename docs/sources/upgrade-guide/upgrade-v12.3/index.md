@@ -49,7 +49,7 @@ SELECT
     pg_size_pretty(pg_total_relation_size('annotation')) AS total_size;
 ```
 
-For MySQL or MariaDB, run the following query:
+For MySQL, run the following query:
 
 ```sql
 SELECT 
@@ -59,6 +59,12 @@ SELECT
 FROM information_schema.tables
 WHERE table_schema = DATABASE()
     AND table_name = 'annotation';
+```
+
+For SQLite, check the database file size directly, as SQLite stores all tables in a single file. You can run the following command from your terminal:
+
+```bash
+ls -lh <PATH/TO/GRAFANA.DB>
 ```
 
 If your total size is several gigabytes or more, you should plan accordingly before upgrading.
@@ -85,10 +91,16 @@ For PostgreSQL, run a `VACUUM FULL` operation on the `annotation` table:
 VACUUM FULL annotation;
 ```
 
-For MySQL or MariaDB, run an `OPTIMIZE TABLE` operation on the `annotation` table:
+For MySQL, run an `OPTIMIZE TABLE` operation on the `annotation` table:
 
 ```sql
 OPTIMIZE TABLE annotation;
 ```
 
-These operations require a lock on the table and may take significant time depending on the table size. Plan to run this during a low-traffic period.
+For SQLite, run a `VACUUM` operation on the database:
+
+```sql
+VACUUM;
+```
+
+These operations require a lock on the table and may take significant time depending on the table size. Plan to run these during a low-traffic period.
