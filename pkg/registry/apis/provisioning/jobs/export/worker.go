@@ -21,26 +21,29 @@ type ExportFn func(ctx context.Context, repoName string, options provisioning.Ex
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
 
 type ExportWorker struct {
-	clientFactory       resources.ClientFactory
-	repositoryResources resources.RepositoryResourcesFactory
-	exportFn            ExportFn
-	wrapWithStageFn     WrapWithStageFn
-	metrics             jobs.JobMetrics
+	clientFactory             resources.ClientFactory
+	repositoryResources       resources.RepositoryResourcesFactory
+	exportAllFn               ExportFn
+	exportSpecificResourcesFn ExportFn
+	wrapWithStageFn           WrapWithStageFn
+	metrics                   jobs.JobMetrics
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
-	exportFn ExportFn,
+	exportAllFn ExportFn,
+	exportSpecificResourcesFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
-		clientFactory:       clientFactory,
-		repositoryResources: repositoryResources,
-		exportFn:            exportFn,
-		wrapWithStageFn:     wrapWithStageFn,
-		metrics:             metrics,
+		clientFactory:             clientFactory,
+		repositoryResources:       repositoryResources,
+		exportAllFn:               exportAllFn,
+		exportSpecificResourcesFn: exportSpecificResourcesFn,
+		wrapWithStageFn:           wrapWithStageFn,
+		metrics:                   metrics,
 	}
 }
 
@@ -100,7 +103,19 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
+		// Check if Resources list is provided (specific resources export mode)
+		if len(options.Resources) > 0 {
+			progress.SetTotal(ctx, len(options.Resources))
+			progress.StrictMaxErrors(1) // Fail fast on any error during export
+			// Validate that specific resource export is only used with folder sync targets
+			if cfg.Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+				return fmt.Errorf("specific resource export is only supported for folder sync targets, but repository has target type '%s'", cfg.Spec.Sync.Target)
+			}
+			return r.exportSpecificResourcesFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
+		}
+
+		// Fall back to existing ExportAll behavior for backward compatibility
+		return r.exportAllFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
 	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)

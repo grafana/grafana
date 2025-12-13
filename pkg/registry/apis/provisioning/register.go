@@ -705,6 +705,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
+				export.ExportSpecificResources,
 				stageIfPossible,
 				metrics,
 			)
