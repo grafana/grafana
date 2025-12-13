@@ -48,6 +48,9 @@ export function LogsTableActionButtons(props: Props) {
 
   const lineValue = getLineValue();
 
+  // Check if line value is available
+  const isLineValueAvailable = lineValue !== undefined && lineValue !== null && lineValue !== '';
+
   const styles = getStyles(theme);
 
   // Generate link to the log line
@@ -99,8 +102,18 @@ export function LogsTableActionButtons(props: Props) {
   }, [absoluteRange, displayedFields, exploreId, logId, logRows, rowIndex, panelState]);
 
   const handleViewClick = () => {
-    setIsInspecting(true);
+    if (isLineValueAvailable) {
+      setIsInspecting(true);
+    }
   };
+
+  const viewTooltip = isLineValueAvailable
+    ? t('explore.logs-table.action-buttons.view-log-line', 'View log line')
+    : t('explore.logs-table.action-buttons.log-line-not-available', 'Log line not available');
+
+  const copyLinkTooltip = isLineValueAvailable
+    ? t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')
+    : t('explore.logs-table.action-buttons.log-line-not-available', 'Log line not available');
 
   return (
     <>
@@ -108,14 +121,15 @@ export function LogsTableActionButtons(props: Props) {
         <div className={styles.inspect}>
           <IconButton
             className={styles.inspectButton}
-            tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+            tooltip={viewTooltip}
             variant="secondary"
-            aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+            aria-label={viewTooltip}
             tooltipPlacement="top"
             size="md"
             name="eye"
             onClick={handleViewClick}
             tabIndex={0}
+            disabled={!isLineValueAvailable}
           />
         </div>
         <div className={styles.inspect}>
@@ -125,11 +139,12 @@ export function LogsTableActionButtons(props: Props) {
             variant="secondary"
             fill="text"
             size="md"
-            tooltip={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+            tooltip={copyLinkTooltip}
             tooltipPlacement="top"
             tabIndex={0}
-            aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+            aria-label={copyLinkTooltip}
             getText={getText}
+            disabled={!isLineValueAvailable}
           />
         </div>
       </div>

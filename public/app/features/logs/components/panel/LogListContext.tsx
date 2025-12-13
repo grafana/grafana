@@ -27,6 +27,12 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import {
+  LOG_LINE_BODY_FIELD_NAME,
+  TABLE_TIME_FIELD_NAME,
+  TABLE_DETECTED_LEVEL_FIELD_NAME,
+  TABLE_LEVEL_FIELD_NAME,
+} from '../LogDetailsBody';
 import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
@@ -117,6 +123,27 @@ export const useLogIsPermalinked = (log: LogListModel) => {
   const { permalinkedLogId } = useContext(LogListContext);
   return permalinkedLogId && permalinkedLogId === log.uid;
 };
+
+/**
+ * Get default table fields.
+ * Always returns Time, and detected_level if it exists in the logs (excluding Line).
+ */
+function getTableDefaultFields(logs: LogRowModel[]): string[] {
+  const fields: string[] = [TABLE_TIME_FIELD_NAME];
+
+  // Check if detected_level exists in any log's labels, fall back to level if not found
+  const hasDetectedLevel = logs.some((log) => log.labels?.[TABLE_DETECTED_LEVEL_FIELD_NAME] !== undefined);
+  const hasLevel = !hasDetectedLevel && logs.some((log) => log.labels?.[TABLE_LEVEL_FIELD_NAME] !== undefined);
+
+  if (hasDetectedLevel) {
+    fields.push(TABLE_DETECTED_LEVEL_FIELD_NAME);
+  } else if (hasLevel) {
+    // Fall back to level if detected_level is not present
+    fields.push(TABLE_LEVEL_FIELD_NAME);
+  }
+
+  return fields;
+}
 
 export type LogListState = Pick<
   LogListContextData,
@@ -263,27 +290,52 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!config.featureToggles.otelLogsFormatting) {
+      return [];
+    }
+    if (showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, showLogAttributes]);
 
-  // OTel displayed fields
+  // Get table default fields
+  const tableDefaultFields = useMemo(() => {
+    return getTableDefaultFields(logs);
+  }, [logs]);
+
+  // Combine table defaults with OTel defaults in specific order:
+  // ['Time', 'detected_level', '___LOG_LINE_BODY___', '___OTEL_LOG_ATTRIBUTES___']
+  const defaultDisplayedFields = useMemo(() => {
+    const orderedFields: string[] = tableDefaultFields;
+
+    // Always add LOG_LINE_BODY before OTel fields
+    orderedFields.push(LOG_LINE_BODY_FIELD_NAME);
+
+    // Add OTel fields, excluding LOG_LINE_BODY_FIELD_NAME if it's already there to avoid duplicates
+    const otelFieldsWithoutBody = otelDisplayedFields.filter((field) => field !== LOG_LINE_BODY_FIELD_NAME);
+    orderedFields.push(...otelFieldsWithoutBody);
+
+    return orderedFields;
+  }, [tableDefaultFields, otelDisplayedFields]);
+
+  // Pass default displayed fields (table defaults + OTel defaults) to parent
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
-      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
+    if (defaultDisplayedFields.length > 0) {
+      onLogOptionsChange?.('defaultDisplayedFields', defaultDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, defaultDisplayedFields]);
 
+  // Set default displayed fields (table defaults + OTel defaults) when displayedFields is empty or missing table defaults
   useEffect(() => {
-    if (displayedFields.length > 0 || !setDisplayedFields) {
+    if (!setDisplayedFields || defaultDisplayedFields.length === 0) {
       return;
     }
-    if (otelDisplayedFields.length) {
-      setDisplayedFields(otelDisplayedFields);
+
+    if (displayedFields.length === 0) {
+      setDisplayedFields(defaultDisplayedFields);
     }
-  }, [displayedFields.length, otelDisplayedFields, setDisplayedFields]);
+  }, [displayedFields, defaultDisplayedFields, tableDefaultFields, setDisplayedFields]);
 
   // Sync state
   useEffect(() => {

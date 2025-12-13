@@ -1,16 +1,7 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
-import {
-  LogsDedupStrategy,
-  LogsMetaItem,
-  LogsMetaKind,
-  LogRowModel,
-  CoreApp,
-  Labels,
-  store,
-  shallowCompare,
-} from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
@@ -58,6 +49,14 @@ export const LogsMetaRow = memo(
   }: Props) => {
     const style = useStyles2(getStyles);
 
+    // Filter out default fields from displayedFields to show only user-added fields
+    const nonDefaultFields = useMemo(() => {
+      if (!displayedFields?.length || !defaultDisplayedFields?.length) {
+        return [];
+      }
+      return displayedFields.filter((field) => !defaultDisplayedFields.includes(field));
+    }, [displayedFields, defaultDisplayedFields]);
+
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
@@ -69,16 +68,12 @@ export const LogsMetaRow = memo(
       });
     }
 
-    // Add detected fields info
-    if (
-      visualisationType === 'logs' &&
-      displayedFields?.length > 0 &&
-      shallowCompare(displayedFields, defaultDisplayedFields) === false
-    ) {
+    // Add detected fields info - only show when user has added fields beyond defaults
+    if (visualisationType === 'logs' && nonDefaultFields.length > 0) {
       logsMetaItem.push(
         {
           label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
-          value: <LogLabelsList labels={displayedFields} />,
+          value: <LogLabelsList labels={nonDefaultFields} />,
         },
         {
           label: '',
