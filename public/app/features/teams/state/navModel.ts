@@ -59,6 +59,13 @@ export function buildNavModel(team: Team): NavModelItem {
       url: `org/teams/edit/${team.uid}/members`,
     });
   }
+  navModel.children!.push({
+    active: false,
+    icon: 'folder',
+    id: `team-resources-${team.uid}`,
+    text: 'Resources',
+    url: `org/teams/edit/${team.uid}/resources`,
+  });
 
   const teamGroupSync: NavModelItem = {
     active: false,

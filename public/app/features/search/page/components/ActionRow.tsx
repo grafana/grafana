@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { FormEvent } from 'react';
+import { FormEvent, useMemo } from 'react';
 
+import { useListTeamQuery } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2, Combobox } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
@@ -76,10 +77,25 @@ export const ActionRow = ({
       ? [SearchLayout.Folders]
       : [];
 
+  const teams = useListTeamQuery({});
+
+  const teamOptions = useMemo(() => {
+    return teams.data?.items.map((team) => ({
+      label: team.spec.title,
+      value: team.metadata.name || '',
+    }));
+  }, [teams.data?.items]);
   return (
     <Stack justifyContent="space-between" alignItems="center">
       <Stack gap={2} alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        <Combobox
+          prefixIcon="user-arrows"
+          onChange={() => {}}
+          placeholder="Filter by owner"
+          options={teamOptions || []}
+          isClearable={false}
+        />
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
             data-testid="include-panels"
@@ -99,6 +115,13 @@ export const ActionRow = ({
             />
           </div>
         )}
+        {/* <div className={styles.checkboxWrapper}>
+          <Checkbox
+            label={t('search.actions.owned-by-me', 'My team folders')}
+            onChange={onStarredFilterChange}
+            value={state.teamFolders}
+          />
+        </div> */}
         {state.datasource && (
           <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
             <Trans i18nKey="search.actions.remove-datasource-filter">
