@@ -1,4 +1,4 @@
-import { SQLOptions } from '@grafana/sql';
+import { SQLOptions, SQLQuery } from '@grafana/sql';
 
 export enum PostgresTLSModes {
   disable = 'disable',
@@ -24,4 +24,8 @@ export interface PostgresOptions extends SQLOptions {
 
 export interface SecureJsonData {
   password?: string;
+}
+
+export interface VariableQuery extends SQLQuery {
+  query: string;
 }

@@ -15,7 +15,8 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect' | 'hideRunButton' | 'hideFormatSelector'>;
+  isVariableQuery?: boolean;
 }
 
 export default function SqlQueryEditor({
@@ -25,6 +26,7 @@ export default function SqlQueryEditor({
   onRunQuery,
   range,
   queryHeaderProps,
+  isVariableQuery = false,
 }: SqlQueryEditorProps) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
@@ -99,6 +101,8 @@ export default function SqlQueryEditor({
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
         dialect={dialect}
+        hideRunButton={queryHeaderProps?.hideRunButton}
+        hideFormatSelector={queryHeaderProps?.hideFormatSelector}
       />
 
       <Space v={0.5} />
@@ -111,6 +115,7 @@ export default function SqlQueryEditor({
           queryRowFilter={queryRowFilter}
           onValidate={setIsQueryRunnable}
           range={range}
+          isVariableQuery={isVariableQuery}
         />
       )}
 

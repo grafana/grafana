@@ -107,6 +107,8 @@
           }
         },
         "label": {
+          "__text": "__text",
+          "__value": "__value",
           "time": "time",
           "value": "value"
         },
