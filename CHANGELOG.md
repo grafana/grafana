@@ -106,6 +106,7 @@
 - **Accessibility:** Improve no-unreduced-motion rule and fix violations [#110304](https://github.com/grafana/grafana/pull/110304), [@tomratcliffe](https://github.com/tomratcliffe)
 - **Alerting Provisioning:** Don't error on recording rules without conditions [#109410](https://github.com/grafana/grafana/pull/109410), [@djpnicholls](https://github.com/djpnicholls)
 - **Alerting:** Clear outdated settings when switching contact point type [#111869](https://github.com/grafana/grafana/pull/111869), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Fix data loss when dismissing query options tooltip [#111664](https://github.com/grafana/grafana/issues/111664), [@hasanrashid](https://github.com/hasanrashid)
 - **Alerting:** Fix enrichment tab to be rendered only for grafana alerting rules [#113030](https://github.com/grafana/grafana/pull/113030), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **Alerting:** Fix instances matching in notification policies [#112326](https://github.com/grafana/grafana/pull/112326), [@konrad147](https://github.com/konrad147)
 - **Alerting:** Fix threshold params [#111645](https://github.com/grafana/grafana/pull/111645), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
