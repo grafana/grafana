@@ -20,10 +20,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=provisioning.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketRepositoryConfig"):
 		return &provisioningv0alpha1.BitbucketRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Connection"):
+		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSecure"):
+		return &provisioningv0alpha1.ConnectionSecureApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSpec"):
+		return &provisioningv0alpha1.ConnectionSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionStatus"):
+		return &provisioningv0alpha1.ConnectionStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
 		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
 		return &provisioningv0alpha1.ExportJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubConnectionConfig"):
+		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):

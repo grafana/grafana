@@ -281,6 +281,7 @@ func RegisterAPIService(
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
 // so that things are not spread out all over the place.
+// nolint: gocyclo
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
@@ -403,6 +404,26 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "admin role is required", nil
 
+			case provisioning.ConnectionResourceInfo.GetName():
+				switch a.GetSubresource() {
+				case "":
+					// Doing something with the connection itself.
+					if id.GetOrgRole().Includes(identity.RoleAdmin) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "admin role is required", nil
+				case "status":
+					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+				default:
+					if id.GetIsGrafanaAdmin() {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+				}
+
 			default:
 				// We haven't bothered with this kind yet.
 				if id.GetIsGrafanaAdmin() {
@@ -487,9 +508,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
+	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create connection storage: %w", err)
+	}
+	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+
+	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
@@ -530,6 +560,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 	// FIXME: Do nothing for Jobs for now
 	_, ok = obj.(*provisioning.Job)
+	if ok {
+		return nil
+	}
+	// FIXME: Do nothing for Connections for now
+	_, ok = obj.(*provisioning.Connection)
 	if ok {
 		return nil
 	}
@@ -578,6 +613,11 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+	// FIXME: Do nothing for Connection for now
+	_, ok = obj.(*provisioning.Connection)
 	if ok {
 		return nil
 	}

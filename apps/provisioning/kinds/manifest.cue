@@ -5,5 +5,6 @@ manifest: {
 	groupOverride:	"provisioning.grafana.app"
 	kinds:			[
 		repository,
+		connection
 	]
-} 
+}
