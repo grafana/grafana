@@ -37,7 +37,8 @@ func TestMain(m *testing.M) {
 func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous: true,
+			DisableAnonymous:      true,
+			DisableDataMigrations: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -194,7 +195,9 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+	})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -500,9 +503,10 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
+			AppModeProduction:     true,
+			DisableDataMigrations: true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
