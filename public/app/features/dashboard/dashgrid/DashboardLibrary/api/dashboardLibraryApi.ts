@@ -2,7 +2,25 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboardsResponse, Link } from '../types';
+import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
+
+/**
+ * Panel types that might contain JavaScript code.
+ * We want to filter them out due to security reasons
+ */
+const PANEL_TYPE_FILTER_SLUGS = [
+  'aceiot-svg-panel',
+  'ae3e-plotly-panel',
+  'gapit-htmlgraphics-panel',
+  'marcusolsson-dynamictext-panel',
+  'volkovlabs-echarts-panel',
+  'volkovlabs-form-panel',
+];
+
+/**
+ * Arbitrary value for the minimum number of downloads to filter out dashboards as suggestions.
+ */
+const MIN_DOWNLOADS_FILTER = 10000;
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -56,6 +74,7 @@ export async function fetchCommunityDashboards(
     pageSize: params.pageSize.toString(),
     includeLogo: params.includeLogo ? '1' : '0',
     includeScreenshots: params.includeScreenshots ? 'true' : 'false',
+    includePanelTypeSlugs: 'true',
   });
 
   if (params.dataSourceSlugIn) {
@@ -69,13 +88,13 @@ export async function fetchCommunityDashboards(
     showErrorAlert: false,
   });
 
-  // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
-  // We normalize it to use "dashboards" instead of "items" for consistency
   if (result && Array.isArray(result.items)) {
+    const dashboards = filterNonSafeDashboards(result.items);
+
     return {
       page: result.page || params.page,
       pages: result.pages || 1,
-      items: result.items,
+      items: dashboards,
     };
   }
 
@@ -109,3 +128,20 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     return [];
   }
 }
+
+// We only show dashboards with at least MIN_DOWNLOADS_FILTER downloads
+// They are already ordered by downloads amount
+const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
+  return dashboards.filter((item: GnetDashboard) => {
+    if (
+      item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
+      item.downloads < MIN_DOWNLOADS_FILTER
+    ) {
+      console.warn(
+        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavasScript`
+      );
+      return false;
+    }
+    return true;
+  });
+};

@@ -24,6 +24,7 @@ export interface GnetDashboard {
   id: number;
   name: string;
   description: string;
+  slug: string;
   downloads: number;
   datasource: string;
   screenshots?: Screenshot[];
@@ -38,6 +39,7 @@ export interface GnetDashboard {
   orgSlug?: string;
   userId?: number;
   userName?: string;
+  panelTypeSlugs?: string[];
 }
 
 export interface GnetDashboardsResponse {
