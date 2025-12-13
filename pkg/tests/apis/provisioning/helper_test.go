@@ -957,3 +957,49 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 	}, waitTimeoutDefault, waitIntervalDefault, "repositories should be cleaned up between subtests")
 }
+
+func postHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPost, path, body, user)
+}
+
+func patchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func requestHelper(
+	t *testing.T,
+	helper apis.K8sTestHelper,
+	method string,
+	path string,
+	body interface{},
+	user apis.User,
+) (map[string]interface{}, int, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:        user,
+		Method:      method,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		res := map[string]interface{}{}
+		err := json.Unmarshal(resp.Body, &res)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+		}
+
+		return res, resp.Response.StatusCode, fmt.Errorf("failure when making request: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, resp.Response.StatusCode, nil
+}
