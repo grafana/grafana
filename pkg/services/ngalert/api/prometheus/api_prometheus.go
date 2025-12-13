@@ -474,7 +474,7 @@ func accumulateTotals(dest, source map[string]int64) {
 }
 
 // fetchAndFilterPage fetches one page from the store and applies filters
-func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64, compact bool) (pageResult, error) {
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:           ctx.opts.OrgID,
@@ -492,6 +492,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		Limit:         remainingGroups,
 		RuleLimit:     remainingRules,
 		ContinueToken: token,
+		Compact:       compact,
 	}
 
 	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
@@ -545,7 +546,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
-func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
+func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string, compact bool) ([]apimodels.RuleGroup, map[string]int64, string, error) {
 	allGroups := []apimodels.RuleGroup{}
 	rulesTotals := make(map[string]int64)
 
@@ -569,7 +570,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 			}
 		}
 
-		page, err := ctx.fetchAndFilterPage(log, store, span, continueToken, remainingGroups, remainingRules)
+		page, err := ctx.fetchAndFilterPage(log, store, span, continueToken, remainingGroups, remainingRules, compact)
 		if err != nil {
 			return nil, nil, "", err
 		}
@@ -809,7 +810,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		limitRulesPerGroup: limitRulesPerGroup,
 	}
 
-	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
+	compact := getBoolWithDefault(opts.Query, "compact", false)
+	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken, compact)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
