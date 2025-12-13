@@ -18,9 +18,10 @@
     }
   },
   "ts-node": {
+    "swc": true,
     "compilerOptions": {
       "module": "ESNext",
-      "moduleResolution": "Node"
+      "moduleResolution": "Bundler"
     }
   },
   "include": [

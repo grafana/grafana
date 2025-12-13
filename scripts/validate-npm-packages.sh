@@ -17,7 +17,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   fi
 
   # shellcheck disable=SC2086
-  if ! yarn attw "$file" --ignore-rules "false-cjs" $ATTW_FLAGS; then
+  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" $ATTW_FLAGS; then
     echo "attw check failed for $file"
     echo ""
     failed_checks+=("$file - yarn attw")
