@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3704,6 +3706,10 @@
     "no-results": {
       "clear": "Keresés és szűrők törlése",
       "text": "Nincs találat a lekérdezésre"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5091,6 +5097,14 @@
         "layout": "Elrendezés"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5477,12 @@
         "label": "Szerkesztés",
         "tooltip": "Belépés a szerkesztési módba"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Legyen szerkeszthető",
         "tooltip": "Ez az irányítópult csak olvashatóként van megjelölve"
@@ -5483,14 +5503,6 @@
         "discard-panel-new": "Panel elvetése",
         "edit-dashboard-v2-schema": {
           "tooltip": "Irányítópult v2 sémájának szerkesztése"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Belépés a szerkesztési módba"
-          },
-          "exit": {
-            "label": "Kilépés a szerkesztési módból"
-          }
         },
         "enter-edit-mode": {
           "label": "Legyen szerkeszthető",
@@ -5942,13 +5954,25 @@
       "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Panel szerkesztése",
         "view-panel": "Panel megtekintése"
       },
       "title": {
         "dashboard": "Irányítópult",
-        "discard-changes-to-dashboard": "Elveti az irányítópult módosításait?"
+        "discard-changes-to-dashboard": "Elveti az irányítópult módosításait?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8827,6 +8851,13 @@
       "aria-label-default": "Válasszon színt",
       "aria-label-selected-color": "{{colorLabel}} szín"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Törlés",
       "cancel": "Mégse",
@@ -9024,6 +9055,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Minden sor összecsukása",
       "aria-label-expand-all": "Minden sor kibontása",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Sorkibontás váltása",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
@@ -10695,7 +10728,6 @@
       "title": "Új"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Új irányítópult"
     },
     "new-folder": {
@@ -11829,7 +11861,7 @@
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
       "modal-title-set-up-required-features": "Kötelező funkciók beállítása",
       "step-description-copy-url": "Az ngrok kimenetéből másolja ki a https:// átirányítási URL-címet, amely így néz ki:",
-      "step-description-enable-feature-toggles": "A szükséges funkciók engedélyezéséhez adja hozzá ezeket a beállításokat a custom.ini fájlhoz:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Futtassa ezt a parancsot egy biztonságos alagút létrehozásához a helyi Grafanához:",
       "step-description-update-grafana-config": "Adja hozzá ezt a custom.ini fájlhoz, lecserélve az URL-t a tényleges ngrok URL-címre:",
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
@@ -11839,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "A kapcsolat létrehozása ideiglenes üzemszünetet okozhat"
     },
     "getting-started-page": {
-      "header": "Kiépítés",
       "subtitle-provisioning-feature": "Kiépítési kapcsolatok megtekintése és kezelése"
     },
     "git": {
@@ -12425,13 +12456,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importálás",
       "new": "Új",
       "new-dashboard": "Új irányítópult",

@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3688,6 +3690,10 @@
     "no-results": {
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5072,6 +5078,14 @@
         "layout": "Tata Letak"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5457,12 @@
         "label": "Edit",
         "tooltip": "Masuk ke mode edit"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Jadikan dapat diedit",
         "tooltip": "Dasbor ini ditandai sebagai hanya baca"
@@ -5463,14 +5483,6 @@
         "discard-panel-new": "Buang panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit skema dasbor v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Masuk ke mode edit"
-          },
-          "exit": {
-            "label": "Keluar dari mode edit"
-          }
         },
         "enter-edit-mode": {
           "label": "Jadikan dapat diedit",
@@ -5921,13 +5933,25 @@
       "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Edit panel",
         "view-panel": "Lihat panel"
       },
       "title": {
         "dashboard": "Dasbor",
-        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?"
+        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8792,6 +8816,13 @@
       "aria-label-default": "Pilih warna",
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Hapus",
       "cancel": "Batalkan",
@@ -8989,6 +9020,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ciutkan semua baris",
       "aria-label-expand-all": "Perluas semua baris",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
@@ -10652,7 +10685,6 @@
       "title": "Baru"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Dasbor baru"
     },
     "new-folder": {
@@ -11778,7 +11810,7 @@
       "modal-title-set-up-public-access": "Atur akses publik",
       "modal-title-set-up-required-features": "Atur fitur yang diwajibkan",
       "step-description-copy-url": "Dari output ngrok, salin URL penerusan https:// yang terlihat seperti ini:",
-      "step-description-enable-feature-toggles": "Tambahkan pengaturan ini ke file custom.ini Anda untuk mengaktifkan fitur yang diperlukan:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Jalankan perintah ini untuk membuat tunnel aman ke Grafana lokal Anda:",
       "step-description-update-grafana-config": "Tambahkan ini ke file custom.ini Anda, ganti URL dengan URL ngrok Anda yang sebenarnya:",
       "step-title-copy-url": "Salin URL publik Anda",
@@ -11788,7 +11820,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Mengatur koneksi ini dapat menyebabkan pemadaman sementara"
     },
     "getting-started-page": {
-      "header": "Penyediaan",
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
     },
     "git": {
@@ -12373,13 +12404,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12552,7 +12582,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Impor",
       "new": "Baru",
       "new-dashboard": "Dasbor baru",

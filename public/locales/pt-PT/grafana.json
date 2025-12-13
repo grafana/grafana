@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3704,6 +3706,10 @@
     "no-results": {
       "clear": "Limpar a pesquisa e os filtros",
       "text": "Não foram encontrados resultados para a sua consulta"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5091,6 +5097,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5477,12 @@
         "label": "Editar",
         "tooltip": "Entrar no modo de edição"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Tornar editável",
         "tooltip": "Este painel de controlo foi marcado como apenas de leitura"
@@ -5483,14 +5503,6 @@
         "discard-panel-new": "Descartar painel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema do painel de controlo v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar no modo de edição"
-          },
-          "exit": {
-            "label": "Sair do modo de edição"
-          }
         },
         "enter-edit-mode": {
           "label": "Tornar editável",
@@ -5942,13 +5954,25 @@
       "title-error-loading-dashboard": "Erro ao carregar o painel de controlo"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar painel",
         "view-panel": "Visualizar painel"
       },
       "title": {
         "dashboard": "Painel de controlo",
-        "discard-changes-to-dashboard": "Rejeitar alterações no painel de controlo?"
+        "discard-changes-to-dashboard": "Rejeitar alterações no painel de controlo?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8827,6 +8851,13 @@
       "aria-label-default": "Escolher uma cor",
       "aria-label-selected-color": "cor {{colorLabel}} "
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -9024,6 +9055,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Recolher todas as linhas",
       "aria-label-expand-all": "Expandir todas as linhas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
@@ -10695,7 +10728,6 @@
       "title": "Novo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Novo painel de controlo"
     },
     "new-folder": {
@@ -11829,7 +11861,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar as funcionalidades necessárias",
       "step-description-copy-url": "A partir da saída do ngrok, copie o URL de encaminhamento https:// que tem o seguinte aspeto:",
-      "step-description-enable-feature-toggles": "Adicione estas definições ao seu ficheiro custom.ini para ativar as funcionalidades necessárias:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para a sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isto ao seu ficheiro custom.ini, substituindo o URL pelo seu URL ngrok atual:",
       "step-title-copy-url": "Copie o seu URL público",
@@ -11839,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Configurar esta ligação pode causar uma interrupção temporária"
     },
     "getting-started-page": {
-      "header": "Provisionamento",
       "subtitle-provisioning-feature": "Ver e gerir as suas ligações de provisionamento"
     },
     "git": {
@@ -12425,13 +12456,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Novo",
       "new-dashboard": "Novo painel de controlo",

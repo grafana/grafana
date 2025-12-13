@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3688,6 +3690,10 @@
     "no-results": {
       "clear": "清除搜索和筛选条件",
       "text": "未找到与您的查询相关的结果"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5072,6 +5078,14 @@
         "layout": "布局"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5457,12 @@
         "label": "编辑",
         "tooltip": "进入编辑模式"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "设为可编辑",
         "tooltip": "此数据面板已被标记为只读"
@@ -5463,14 +5483,6 @@
         "discard-panel-new": "丢弃面板",
         "edit-dashboard-v2-schema": {
           "tooltip": "编辑数据面板 v2 架构"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "进入编辑模式"
-          },
-          "exit": {
-            "label": "退出编辑模式"
-          }
         },
         "enter-edit-mode": {
           "label": "设为可编辑",
@@ -5921,13 +5933,25 @@
       "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "编辑面板",
         "view-panel": "查看面板"
       },
       "title": {
         "dashboard": "仪表板",
-        "discard-changes-to-dashboard": "放弃对数据面板的更改？"
+        "discard-changes-to-dashboard": "放弃对数据面板的更改？",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8792,6 +8816,13 @@
       "aria-label-default": "选择颜色",
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "删除",
       "cancel": "取消",
@@ -8989,6 +9020,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "折叠所有行",
       "aria-label-expand-all": "展开所有行",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "切换行展开",
       "tooltip-collapse-all": "折叠所有行",
       "tooltip-expand-all": "展开所有行"
@@ -10652,7 +10685,6 @@
       "title": "新建"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "新建仪表板"
     },
     "new-folder": {
@@ -11778,7 +11810,7 @@
       "modal-title-set-up-public-access": "设置公共访问",
       "modal-title-set-up-required-features": "设置所需功能",
       "step-description-copy-url": "从 ngrok 输出中，复制 https:// 转发 URL，如下所示：",
-      "step-description-enable-feature-toggles": "将这些设置添加到您的 custom.ini 文件以启用必要的功能：",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "运行此命令以创建指向本地 Grafana 的安全隧道：",
       "step-description-update-grafana-config": "将此添加到您的 custom.ini 文件，并将 URL 替换为您的实际 ngrok URL：",
       "step-title-copy-url": "复制您的公共 URL",
@@ -11788,7 +11820,6 @@
       "title-setting-connection-could-cause-temporary-outage": "设置此连接可能会导致暂时中断"
     },
     "getting-started-page": {
-      "header": "配置",
       "subtitle-provisioning-feature": "查看和管理您的预配连接"
     },
     "git": {
@@ -12373,13 +12404,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12552,7 +12582,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "导入",
       "new": "新建",
       "new-dashboard": "新建仪表板",

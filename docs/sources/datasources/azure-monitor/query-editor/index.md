@@ -21,6 +21,7 @@ labels:
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
+last_reviewed: 2025-12-04
 refs:
   query-transform-data-query-options:
     - pattern: /docs/grafana/
@@ -32,30 +33,85 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  configure-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  troubleshoot-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
+  configure-grafana-feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
+  alerting-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
+  annotations-azure-monitor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
 ---
 
 # Azure Monitor query editor
 
-This topic explains querying specific to the Azure Monitor data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the Azure Monitor data source, which is located on the [Explore page](ref:explore). You can also access the Azure Monitor query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
-## Choose a query editing mode
+This document explains querying specific to the Azure Monitor data source.
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
-The Azure Monitor data source's query editor has three modes depending on which Azure service you want to query:
+The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
+
+## Before you begin
+
+- Ensure you have [configured the Azure Monitor data source](ref:configure-azure-monitor).
+- Verify your credentials have appropriate permissions for the resources you want to query.
+
+## Key concepts
+
+If you're new to Azure Monitor, here are some key terms used throughout this documentation:
+
+| Term                           | Description                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **KQL (Kusto Query Language)** | The query language used for Azure Monitor Logs and Azure Resource Graph. KQL uses a pipe-based syntax similar to Unix commands and is optimized for read-only data exploration. If you know SQL, the [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet) can help you get started. |
+| **Log Analytics workspace**    | An Azure resource that collects and stores log data from your Azure resources, applications, and services. You query this data using KQL.                                                                                                                                                                                                 |
+| **Application Insights**       | Azure's application performance monitoring (APM) service. It collects telemetry data like requests, exceptions, and traces from your applications.                                                                                                                                                                                        |
+| **Metrics vs. Logs**           | **Metrics** are lightweight numeric values collected at regular intervals (e.g., CPU percentage). **Logs** are detailed records of events with varying schemas (e.g., request logs, error messages). Metrics use a visual query builder; Logs require KQL.                                                                                |
+
+## Choose a query editor mode
+
+The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:
 
 - **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
 - **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
-- [**Azure Resource Graph**](#query-azure-resource-graph)
 - **Traces** for [Application Insights Traces](#query-application-insights-traces)
+- **Azure Resource Graph** for [Azure Resource Graph](#query-azure-resource-graph)
 
 ## Query Azure Monitor Metrics
 
-Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and you can query them to investigate your resources' health and usage and maximise availability and performance.
+Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and you can query them to investigate your resources' health and usage and maximize availability and performance.
 
 Monitor Metrics use a lightweight format that stores only numeric data in a specific structure and supports near real-time scenarios, making it useful for fast detection of issues.
 In contrast, Azure Monitor Logs can store a variety of data types, each with their own structure.
 
-{{< figure src="/static/img/docs/azure-monitor/query-editor-metrics.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Logs Metrics sample query visualizing CPU percentage over time" >}}
+{{< figure src="/static/img/docs/azure-monitor/query-editor-metrics.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics sample query visualizing CPU percentage over time" >}}
 
 ### Create a Metrics query
 
@@ -85,7 +141,7 @@ Optionally, you can apply further aggregations or filter by dimensions.
 
 The available options change depending on what is relevant to the selected metric.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 ### Format legend aliases
 
@@ -109,7 +165,7 @@ For example:
 | `{{ dimensionname }}`          | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
 | `{{ dimensionvalue }}`         | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
 
-### Filter using dimensions
+### Filter with dimensions
 
 Some metrics also have dimensions, which associate additional metadata.
 Dimensions are represented as key-value pairs assigned to each value of a metric.
@@ -121,7 +177,7 @@ For more information on multi-dimensional metrics, refer to the [Azure Monitor d
 
 ## Query Azure Monitor Logs
 
-Azure Monitor Logs collects and organises log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and makes many sources of data available to query together with the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
+Azure Monitor Logs collects and organizes log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and makes many sources of data available to query together with the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
 
 While Azure Monitor Metrics stores only simplified numerical data, Logs can store different data types, each with their own structure.
 You can also perform complex analysis of Logs data by using KQL.
@@ -129,6 +185,32 @@ You can also perform complex analysis of Logs data by using KQL.
 The Azure Monitor data source also supports querying of [Basic Logs](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) tables (if they exist in your Log Analytics workspace). This feature must be enabled in the data source configuration.
 
 {{< figure src="/static/img/docs/azure-monitor/query-editor-logs.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Logs sample query comparing successful requests to failed requests" >}}
+
+### Logs query builder (public preview)
+
+{{< admonition type="note" >}}
+The Logs query builder is a [public preview feature](/docs/release-life-cycle/). It may not be enabled in all Grafana environments.
+{{< /admonition >}}
+
+The Logs query builder provides a visual interface for building Azure Monitor Logs queries without writing KQL. This is helpful if you're new to KQL or want to quickly build simple queries.
+
+**To enable the Logs query builder:**
+
+1. Enable the `azureMonitorLogsBuilderEditor` [feature toggle](ref:configure-grafana-feature-toggles) in your Grafana configuration.
+1. Restart Grafana for the change to take effect.
+
+**To switch between Builder and Code modes:**
+
+When the feature is enabled, a **Builder / Code** toggle appears in the Logs query editor:
+
+- **Builder**: Use the visual interface to select tables, columns, filters, and aggregations. The builder generates the KQL query for you.
+- **Code**: Write KQL queries directly. Use this mode for complex queries that require full KQL capabilities.
+
+New queries default to Builder mode. Existing queries that were created with raw KQL remain in Code mode.
+
+{{< admonition type="note" >}}
+You can switch from Builder to Code mode at any time to view or edit the generated KQL. However, switching from Code to Builder mode may not preserve complex queries that can't be represented in the builder interface.
+{{< /admonition >}}
 
 ### Create a Logs query
 
@@ -140,13 +222,13 @@ The Azure Monitor data source also supports querying of [Basic Logs](https://lea
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
    {{< admonition type="note" >}}
-   If a timespan is specified in the query, the overlap of the timespan between the query and the dashboard will be used as the query timespan. See the [API documentation for
+   If a time span is specified in the query, the overlap between the query time span and the dashboard time range will be used. See the [API documentation for
    details.](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters)
    {{< /admonition >}}
 
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 **To create a Basic Logs query:**
 
@@ -161,7 +243,7 @@ You can also augment queries by using [template variables](../template-variables
    {{< /admonition >}}
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
+You can also augment queries by using [template variables](ref:template-variables).
 
 ### Logs query examples
 
@@ -174,24 +256,28 @@ The Azure documentation includes resources to help you learn KQL:
 - [Tutorial: Use Kusto queries in Azure Monitor](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial?pivots=azuremonitor)
 - [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet)
 
-> **Time-range:** The time-range that will be used for the query can be modified via the time-range switch. Selecting `Query` will only make use of time-ranges specified within the query.
-> Specifying `Dashboard` will only make use of the Grafana time-range.
-> If there are no time-ranges specified within the query, the default Log Analytics time-range will apply.
-> For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
-> If the `Intersection` option was previously chosen it will be migrated by default to `Dashboard`.
+{{< admonition type="note" >}}
+**Time-range:** The time-range used for the query can be modified via the time-range switch:
 
-This example query returns a virtual machine's CPU performance, averaged over 5ms time grains:
+- Selecting **Query** uses only time-ranges specified within the query.
+- Selecting **Dashboard** uses only the Grafana dashboard time-range.
+- If no time-range is specified in the query, the default Log Analytics time-range applies.
+
+For more details, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters). If you previously used the `Intersection` option, it has been migrated to `Dashboard`.
+{{< /admonition >}}
+
+This example query returns a virtual machine's CPU performance, averaged over 5-minute time grains:
 
 ```kusto
 Perf
-# $__timeFilter is a special Grafana macro that filters the results to the time span of the dashboard
+// $__timeFilter is a special Grafana macro that filters the results to the time span of the dashboard
 | where $__timeFilter(TimeGenerated)
 | where CounterName == "% Processor Time"
 | summarize avg(CounterValue) by bin(TimeGenerated, 5m), Computer
 | order by TimeGenerated asc
 ```
 
-Use time series queries for values that change over time, usually for graph visualisations such as the Time series panel.
+Use time series queries for values that change over time, usually for graph visualizations such as the Time series panel.
 Each query should return at least a datetime column and numeric value column.
 The result must also be sorted in ascending order by the datetime column.
 
@@ -357,21 +443,33 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
    This query type only supports Application Insights resources.
    {{< /admonition >}}
 
-Running a query of this kind will return all trace data within the timespan specified by the panel/dashboard.
+1. (Optional) Specify an **Operation ID** value to filter traces.
+1. (Optional) Specify **event types** to filter by.
+1. (Optional) Specify **event properties** to filter by.
+1. (Optional) Change the **Result format** to switch between tabular format and trace format.
 
-Optionally, you can apply further filtering or select a specific Operation ID to query. The result format can also be switched between a tabular format or the trace format which will return the data in a format that can be used with the Trace visualization.
+   {{< admonition type="note" >}}
+   Selecting the trace format filters events to only the `trace` type. Use this format with the Trace visualization.
+   {{< /admonition >}}
 
-{{< admonition type="note" >}}
-Selecting the trace format will filter events with the `trace` type.
-{{< /admonition >}}
+Running a query returns all trace data within the time span specified by the panel or dashboard time range.
 
-1. Specify an Operation ID value.
-1. Specify event types to filter by.
-1. Specify event properties to filter by.
+You can also augment queries by using [template variables](ref:template-variables).
 
-You can also augment queries by using [template variables](../template-variables/).
+## Use queries for alerting and recording rules
 
-## Working with large Azure resource data sets
+All Azure Monitor query types (Metrics, Logs, Azure Resource Graph, and Traces) can be used with Grafana Alerting and recording rules.
+
+For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](ref:alerting-azure-monitor).
+
+## Work with large Azure resource datasets
 
 If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned.
 You can use filters to reduce the amount of records returned under that value.
+
+## Next steps
+
+- [Use template variables](../template-variables/) to create dynamic, reusable dashboards
+- [Add annotations](ref:annotations-azure-monitor) to overlay events on your graphs
+- [Set up alerting](ref:alerting-azure-monitor) to create alert rules based on Azure Monitor data
+- [Troubleshoot](ref:troubleshoot-azure-monitor) common query and configuration issues

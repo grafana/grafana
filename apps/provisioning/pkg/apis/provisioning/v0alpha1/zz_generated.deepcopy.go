@@ -401,6 +401,11 @@ func (in *JobResourceSummary) DeepCopyInto(out *JobResourceSummary) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Warnings != nil {
+		in, out := &in.Warnings, &out.Warnings
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -465,6 +470,11 @@ func (in *JobStatus) DeepCopyInto(out *JobStatus) {
 	*out = *in
 	if in.Errors != nil {
 		in, out := &in.Errors, &out.Errors
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Warnings != nil {
+		in, out := &in.Warnings, &out.Warnings
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

@@ -2351,7 +2351,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3736,6 +3738,10 @@
     "no-results": {
       "clear": "Очистить поиск и фильтры",
       "text": "По вашему запросу ничего не найдено"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5129,6 +5135,14 @@
         "layout": "Расположение"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5503,6 +5517,12 @@
         "label": "Редактировать",
         "tooltip": "Войти в режим редактирования"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Сделать доступным для редактирования",
         "tooltip": "Дашборд был помечен как «только для чтения»"
@@ -5523,14 +5543,6 @@
         "discard-panel-new": "Отменить панель",
         "edit-dashboard-v2-schema": {
           "tooltip": "Редактировать дашборд схемы v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Войти в режим редактирования"
-          },
-          "exit": {
-            "label": "Выйти из режима редактирования"
-          }
         },
         "enter-edit-mode": {
           "label": "Сделать доступным для редактирования",
@@ -5984,13 +5996,25 @@
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Редактировать панель",
         "view-panel": "Просмотр панели"
       },
       "title": {
         "dashboard": "Дашборд",
-        "discard-changes-to-dashboard": "Отменить изменения на дашборде?"
+        "discard-changes-to-dashboard": "Отменить изменения на дашборде?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8897,6 +8921,13 @@
       "aria-label-default": "Выбрать цвет",
       "aria-label-selected-color": "{{colorLabel}} цвет"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Удалить",
       "cancel": "Отмена",
@@ -9094,6 +9125,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Свернуть все строки",
       "aria-label-expand-all": "Развернуть все строки",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Развернута строка переключения",
       "tooltip-collapse-all": "Свернуть все строки",
       "tooltip-expand-all": "Развернуть все строки"
@@ -10781,7 +10814,6 @@
       "title": "Новые элементы"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Новый дашборд"
     },
     "new-folder": {
@@ -11931,7 +11963,7 @@
       "modal-title-set-up-public-access": "Настройка общего доступа",
       "modal-title-set-up-required-features": "Настройка необходимых функций",
       "step-description-copy-url": "Из вывода ngrok скопируйте URL-адрес переадресации https://, который выглядит следующим образом:",
-      "step-description-enable-feature-toggles": "Добавьте параметры в свой файл custom.ini, чтобы включить необходимые функции:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Выполните эту команду, чтобы создать защищенный туннель к вашей локальной версии Grafana:",
       "step-description-update-grafana-config": "Добавьте данные в свой файл custom.ini, заменив URL-адрес на фактический URL-адрес ngrok:",
       "step-title-copy-url": "Копирование общедоступного URL-адреса",
@@ -11941,7 +11973,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Настройка этого подключения может привести к временному сбою"
     },
     "getting-started-page": {
-      "header": "Подготовка к работе",
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
     },
     "git": {
@@ -12529,13 +12560,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12714,7 +12744,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Импорт",
       "new": "Новые элементы",
       "new-dashboard": "Новый дашборд",

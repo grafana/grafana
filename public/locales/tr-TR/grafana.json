@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3704,6 +3706,10 @@
     "no-results": {
       "clear": "Aramayı ve filtreleri temizle",
       "text": "Sorgunuz için sonuç bulunamadı"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5091,6 +5097,14 @@
         "layout": "Düzen"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5477,12 @@
         "label": "Düzenle",
         "tooltip": "Düzenleme kipine gir"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Düzenlenebilir hâle getir",
         "tooltip": "Bu pano salt okunur olarak işaretlendi"
@@ -5483,14 +5503,6 @@
         "discard-panel-new": "Paneli at",
         "edit-dashboard-v2-schema": {
           "tooltip": "Pano v2 şemasını düzenle"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Düzenleme kipine gir"
-          },
-          "exit": {
-            "label": "Düzenleme modundan çık"
-          }
         },
         "enter-edit-mode": {
           "label": "Düzenlenebilir yap",
@@ -5942,13 +5954,25 @@
       "title-error-loading-dashboard": "Pano yüklenirken hata oluştu"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Paneli düzenle",
         "view-panel": "Paneli görüntüle"
       },
       "title": {
         "dashboard": "Pano",
-        "discard-changes-to-dashboard": "Panodaki değişiklikler silinsin mi?"
+        "discard-changes-to-dashboard": "Panodaki değişiklikler silinsin mi?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8827,6 +8851,13 @@
       "aria-label-default": "Bir renk seçin",
       "aria-label-selected-color": "{{colorLabel}} rengi"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Sil",
       "cancel": "İptal",
@@ -9024,6 +9055,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Tüm satırları daralt",
       "aria-label-expand-all": "Tüm satırları genişlet",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
       "tooltip-collapse-all": "Tüm satırları daralt",
       "tooltip-expand-all": "Tüm satırları genişlet"
@@ -10695,7 +10728,6 @@
       "title": "Yeni"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Yeni pano"
     },
     "new-folder": {
@@ -11829,7 +11861,7 @@
       "modal-title-set-up-public-access": "Herkese açık erişimi ayarla",
       "modal-title-set-up-required-features": "Gerekli özellikleri ayarla",
       "step-description-copy-url": "Ngrok çıktısından https:// ile başlayan yönlendirme URL'sini kopyalayın:",
-      "step-description-enable-feature-toggles": "Gerekli özellikleri etkinleştirmek için bu ayarları custom.ini dosyanıza ekleyin:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Yerel Grafana'nıza güvenli bir tünel oluşturmak için bu komutu çalıştırın:",
       "step-description-update-grafana-config": "Bunu custom.ini dosyanıza ekleyin ve URL'yi kendi ngrok URL'nizle değiştirin:",
       "step-title-copy-url": "Herkese açık URL'nizi kopyalayın",
@@ -11839,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Bu bağlantıyı kurmak geçici bir kesintiye neden olabilir"
     },
     "getting-started-page": {
-      "header": "Sağlama",
       "subtitle-provisioning-feature": "Sağlama bağlantılarınızı görüntüleyin ve yönetin"
     },
     "git": {
@@ -12425,13 +12456,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "İçe aktar",
       "new": "Yeni",
       "new-dashboard": "Yeni pano",
