@@ -1,17 +1,17 @@
 package advisor
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
+	"fmt"
+
+	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
-	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/client-go/rest"
 )
 
 var (
@@ -20,37 +20,26 @@ var (
 )
 
 type AdvisorAppInstaller struct {
-	appsdkapiserver.AppInstaller
-}
-
-// GetAuthorizer returns the authorizer for the plugins app.
-func (a *AdvisorAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return advisorapp.GetAuthorizer()
+	*advisorapp.AdvisorAppInstaller
 }
 
 func ProvideAppInstaller(
+	accessControlService accesscontrol.Service,
+	accessClient authlib.AccessClient,
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
 	orgService org.Service,
 ) (*AdvisorAppInstaller, error) {
-	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, advisorapp.New)
-	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
-	specificConfig := checkregistry.AdvisorAppConfig{
-		CheckRegistry: checkRegistry,
-		PluginConfig:  pluginConfig,
-		StackID:       cfg.StackID,
-		OrgService:    orgService,
+	if err := registerAccessControlRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
-	appCfg := app.Config{
-		KubeConfig:     rest.Config{},
-		ManifestData:   *advisorapi.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
-	}
-	installer := &AdvisorAppInstaller{}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, advisorapi.NewGoTypeAssociator())
+
+	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
+	i, err := advisorapp.ProvideAppInstaller(authorizer, checkRegistry, cfg, orgService)
 	if err != nil {
 		return nil, err
 	}
-	installer.AppInstaller = i
-	return installer, nil
+	return &AdvisorAppInstaller{
+		AdvisorAppInstaller: i,
+	}, nil
 }
