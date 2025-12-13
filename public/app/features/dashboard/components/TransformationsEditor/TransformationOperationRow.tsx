@@ -227,6 +227,7 @@ export const TransformationOperationRow = ({
         draggable
         actions={renderActions}
         disabled={disabled}
+        hideHeader={true}
         expanderMessages={{
           close: 'Collapse transformation row',
           open: 'Expand transformation row',

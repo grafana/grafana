@@ -16,6 +16,7 @@ interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
+  showIllustrations?: boolean;
 }
 
 const TRANSFORMATION_IDS = [
@@ -60,6 +61,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
+  const showIllustrations = props.showIllustrations ?? true;
 
   // Get transformations from registry
   const transformations = useMemo(() => {
@@ -118,7 +120,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   key={transform.id}
                   transform={transform}
                   onClick={handleTransformationClick}
-                  showIllustrations={true}
+                  showIllustrations={showIllustrations}
                   showPluginState={false}
                   showTags={false}
                 />

@@ -5,14 +5,7 @@ import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
-const EXPRESSION_ICON_MAP = {
-  [ExpressionQueryType.math]: 'calculator-alt',
-  [ExpressionQueryType.reduce]: 'compress-arrows',
-  [ExpressionQueryType.resample]: 'sync',
-  [ExpressionQueryType.classic]: 'cog',
-  [ExpressionQueryType.threshold]: 'sliders-v-alt',
-  [ExpressionQueryType.sql]: 'database',
-} as const satisfies Record<ExpressionQueryType, string>;
+import { getExpressionIcon } from '../types';
 
 interface ExpressionTypeDropdownProps {
   children: ReactElement<Record<string, unknown>>;
@@ -35,7 +28,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
       component={() => (
         <div className={styles.expressionTypeItem} role="menuitem">
           <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
-            <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
+            <Icon className={styles.icon} name={getExpressionIcon(value!)} aria-hidden="true" />
             {label}
             {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>

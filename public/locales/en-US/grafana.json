@@ -3234,6 +3234,17 @@
       "title-query-result": "Query result"
     }
   },
+  "app": {
+    "features": {
+      "dashboardScene": {
+        "panelEdit": {
+          "panelDataPane": {
+            "expandSidebar": "Expand sidebar"
+          }
+        }
+      }
+    }
+  },
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "top-bar": {
@@ -5809,6 +5820,19 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-data-item-menu": {
+      "add-button": "Add",
+      "add-from-saved-queries": "From saved queries",
+      "add-query": "Query",
+      "add-transformation": "Transformation",
+      "expression-classic": "Classic condition",
+      "expression-math": "Math",
+      "expression-reduce": "Reduce",
+      "expression-resample": "Resample",
+      "expression-sql": "SQL",
+      "expression-threshold": "Threshold",
+      "expressions-group": "Expression"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -5836,6 +5860,13 @@
       "title": {
         "new-panel": "New panel"
       }
+    },
+    "ai-mode-card": {
+      "aria-label": "AI prompt input",
+      "click-nodes-to-add-context": "Click nodes to add context",
+      "prompt-placeholder": "Describe what you want to do...",
+      "remove-context": "Remove context",
+      "submit": "Send message"
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
@@ -6011,6 +6042,26 @@
     "description-label": {
       "description": "Description"
     },
+    "detail-view-header": {
+      "actions": "Actions",
+      "debug": "Debug transformation",
+      "debug-transformation": "Debug transformation",
+      "disable-transform": "Disable",
+      "duplicate-query": "Duplicate",
+      "edit-query-name": "Edit query name",
+      "enable-transform": "Enable",
+      "hide-response": "Hide response",
+      "input-data": "Input data",
+      "output-data": "Output data",
+      "query-inspector": "Query inspector",
+      "remove-query": "Remove",
+      "remove-transform": "Remove",
+      "run-query": "RUN QUERY",
+      "save-query": "SAVE",
+      "show-documentation": "Show documentation",
+      "show-response": "Show response",
+      "transformation-help": "Transformation help"
+    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6034,6 +6085,9 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
+    },
+    "expression-detail-view": {
+      "loading": "Loading expression editor..."
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -6227,6 +6281,9 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
+    "panel-data-pane": {
+      "empty-state": "Select a query or transformation to edit"
+    },
     "panel-data-queries-tab": {
       "tab-label": "Queries"
     },
@@ -6236,13 +6293,6 @@
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
-    },
-    "panel-data-transformations-tab-rendered": {
-      "add-another-transformation": "Add another transformation",
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen.",
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -6289,8 +6339,46 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
     },
+    "query-detail-view": {
+      "loading": "Loading data source...",
+      "no-editor": "This data source does not have a query editor",
+      "options": "Options",
+      "query-options": "Query Options"
+    },
     "query-editor": {
       "query": "Query"
+    },
+    "query-transform-card": {
+      "disable-transform": "Disable transformation",
+      "duplicate": "Duplicate query",
+      "enable-transform": "Enable transformation",
+      "expression": {
+        "label": "Expression"
+      },
+      "hide-response": "Hide response",
+      "query": {
+        "label": "Query"
+      },
+      "remove-query": "Remove query",
+      "remove-transform": "Remove transformation",
+      "show-response": "Show response",
+      "transform": {
+        "label": "Transform"
+      }
+    },
+    "query-transform-list": {
+      "add": "Add",
+      "ai-mode": "AI",
+      "ai-mode-enter": "Supercharge your pipeline with AI",
+      "ai-mode-exit": "Exit AI mode",
+      "debug-mode-enter": "Step through your pipeline",
+      "debug-mode-exit": "Exit debug mode",
+      "debug-position": "Debug position",
+      "header": "Pipeline",
+      "nodes": "nodes",
+      "notifications-tooltip": "Alerts (coming soon)",
+      "queries-expressions": "Queries & Expressions",
+      "transformations": "Transformations"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -6471,6 +6559,13 @@
         }
       }
     },
+    "transformation-picker-view": {
+      "clear-search": "Clear search",
+      "close": "Close",
+      "no-results": "No transformations found",
+      "search-placeholder": "Search for transformation",
+      "title": "Add transformation"
+    },
     "transformations-drawer": {
       "search-box-suffix": {
         "tooltip-clear-search": "Clear search"
@@ -6612,10 +6707,6 @@
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
       "text": "Change"
-    },
-    "viz-and-data-pane": {
-      "aria-label-open-query-pane": "Open query pane",
-      "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": "Panel links"
@@ -7440,6 +7531,9 @@
     },
     "pane": {
       "loading-placeholder": "Loading..."
+    },
+    "query-library": {
+      "default-title": "New query"
     },
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"
@@ -12403,10 +12497,14 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "collapsed-cache-timeout-label": "Cache timeout",
+      "collapsed-cache-ttl-label": "Cache TTL",
+      "collapsed-interval-label": "Interval",
+      "collapsed-max-data-points-label": "Max data points",
+      "collapsed-min-interval-label": "Min interval",
+      "collapsed-relative-time-label": "Relative time",
+      "collapsed-time-shift-label": "Time shift",
       "hide-time-info": "Hide time info",
-      "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -12416,13 +12514,11 @@
         "interval": "Interval",
         "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <4>$__interval_ms</4>. This value is not exactly equal to <6>Time range / max data points</6>, it will approximate a series of magic number.",
         "min-interval": "Min interval",
-        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
-        "time-range-max-data-points": "Time range / max data points"
+        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources."
       },
       "render-max-data-points-option": {
         "max-data-points": "Max data points",
-        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.",
-        "width-of-panel": "Width of panel"
+        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
       },
       "render-query-caching-ttloption": {
         "cache-ttl": "Cache TTL"
@@ -12435,6 +12531,38 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-library": {
+    "empty-state": {
+      "message": "Start adding them from Explore or when editing a dashboard",
+      "title": "You haven't saved any queries yet"
+    },
+    "filters": {
+      "search": "Search by..."
+    },
+    "header": {
+      "close": "Close",
+      "delete-all": "Delete all",
+      "more": "More",
+      "save-query": "SAVE",
+      "select-query": "SELECT QUERY",
+      "title": "SAVED QUERIES"
+    },
+    "item": {
+      "new": "New"
+    },
+    "not-found": {
+      "message": "Try adjusting your search or filter criteria",
+      "title": "No results found"
+    },
+    "query-details": {
+      "author": "Author",
+      "datasource": "Datasource",
+      "date-added": "Date added",
+      "description": "Description",
+      "make-query-visible": "Share query with all users",
+      "tags": "Tags"
     }
   },
   "query-operation": {
