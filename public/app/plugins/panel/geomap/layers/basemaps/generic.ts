@@ -42,9 +42,10 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           url: cfg.url,
           attributions: cfg.attribution, // singular?
           wrapX: !noRepeat,
+          minZoom: cfg.minZoom,
+          maxZoom: cfg.maxZoom,
         }),
         minZoom: cfg.minZoom,
-        maxZoom: cfg.maxZoom,
       });
     },
     registerOptionsUI: (builder) => {
@@ -62,6 +63,26 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           name: 'Attribution',
           settings: {
             placeholder: defaultXYZConfig.attribution,
+          },
+        })
+        .addNumberInput({
+          path: 'config.minZoom',
+          name: 'Min Zoom',
+          description: 'Minimum zoom level. Tiles will not be loaded below this level.',
+          settings: {
+            placeholder: '0',
+            min: 0,
+            max: 30,
+          },
+        })
+        .addNumberInput({
+          path: 'config.maxZoom',
+          name: 'Max Zoom',
+          description: 'Maximum zoom level provided by the server. Past this level, tiles will be upscaled.',
+          settings: {
+            placeholder: '18',
+            min: 0,
+            max: 30,
           },
         });
     },
