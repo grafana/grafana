@@ -193,6 +193,34 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         },
         defaultValue: defaultOptions.showValue,
       })
+      .addFieldNamePicker({ 
+        path: 'groupByField',
+        name: 'Group by',
+        description: 'Select field to group by, this will create clusters based on the selected field.',
+        defaultValue: defaultOptions.groupByField,
+      })
+      .addBooleanSwitch({
+        path: 'isClusteredStacked',
+        name: 'Stack clusters',
+        description: 'If switched on will generate new field in order to stack multiple rows together.',
+        defaultValue: defaultOptions.isClusteredStacked,
+        showIf: (c) => {
+          return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
+        },
+      })
+      .addSliderInput({
+        path: 'clusterWidth',
+        name: 'Cluster width',
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+        defaultValue: defaultOptions.clusterWidth,
+        showIf: (c) => {
+          return c.groupByField !== "" && c.groupByField !== undefined; // only show if no group field is selected
+        },
+      })
       .addRadio({
         path: 'stacking',
         name: t('barchart.config.name-stacking', 'Stacking'),
