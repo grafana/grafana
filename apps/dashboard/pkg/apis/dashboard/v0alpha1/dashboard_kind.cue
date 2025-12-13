@@ -277,6 +277,12 @@ lineage: schemas: [{
 			uid?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
+		// Source information for controls (e.g. variables or links)
+		#ControlSourceRef: {
+			uid: string
+			source: string
+		}
+
 		// Links with references to other dashboards or external resources
 		#DashboardLink: {
 			// Title to display with the link
@@ -301,6 +307,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			source?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 

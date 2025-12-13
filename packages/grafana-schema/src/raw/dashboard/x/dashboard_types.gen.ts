@@ -333,6 +333,13 @@ export interface DashboardLink {
    */
   placement?: DashboardLinkPlacement;
   /**
+   * The source that registered the link (if any)
+   */
+  source?: {
+    uid: string;
+    source: string;
+  };
+  /**
    * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
    */
   tags: Array<string>;
