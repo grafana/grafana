@@ -18,7 +18,7 @@ const renderInput = (field: FieldSchema, onChange: SchemaFormProps['onChange'], 
       return (
         <Input
           type="number"
-          defaultValue={config?.[field.name]}
+          value={config?.[field.name]}
           onChange={(e: FormEvent<HTMLInputElement>) => {
             const newValue = e.currentTarget.valueAsNumber;
             onChange({ ...config, [field.name]: newValue });
@@ -76,7 +76,7 @@ export const SimulationSchemaForm = ({ config, schema, onChange }: SchemaFormPro
         onChange={() => setJsonView(!jsonView)}
       />
       {jsonView ? (
-        <TextArea defaultValue={JSON.stringify(config, null, 2)} rows={7} onChange={onUpdateTextArea} />
+        <TextArea value={JSON.stringify(config, null, 2)} rows={7} onChange={onUpdateTextArea} />
       ) : (
         <>
           {schema.fields.map((field) => (

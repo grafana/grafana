@@ -105,6 +105,19 @@ export interface TextDimensionConfig extends BaseDimensionConfig {
   mode: TextDimensionMode;
 }
 
+export enum PositionDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+}
+
+/**
+ * Simple position/coordinate dimension - just fixed value or field value, no scaling/clamping
+ */
+export interface PositionDimensionConfig extends BaseDimensionConfig {
+  fixed?: number;
+  mode: PositionDimensionMode;
+}
+
 export enum ResourceDimensionMode {
   Field = 'field',
   Fixed = 'fixed',

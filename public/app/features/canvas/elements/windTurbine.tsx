@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScalarDimensionConfig } from '@grafana/schema';
+import { ScalarDimensionConfig, ScalarDimensionMode, PositionDimensionMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
@@ -85,11 +85,11 @@ export const windTurbineItem: CanvasElementItem = {
       },
     },
     placement: {
-      width: options?.placement?.width ?? 100,
-      height: options?.placement?.height ?? 155,
-      top: options?.placement?.top,
-      left: options?.placement?.left,
-      rotation: options?.placement?.rotation ?? 0,
+      width: options?.placement?.width ?? { fixed: 100, mode: PositionDimensionMode.Fixed },
+      height: options?.placement?.height ?? { fixed: 155, mode: PositionDimensionMode.Fixed },
+      top: options?.placement?.top ?? { fixed: 0, mode: PositionDimensionMode.Fixed },
+      left: options?.placement?.left ?? { fixed: 0, mode: PositionDimensionMode.Fixed },
+      rotation: options?.placement?.rotation ?? { fixed: 0, min: 0, max: 360, mode: ScalarDimensionMode.Clamped },
     },
     links: options?.links ?? [],
   }),

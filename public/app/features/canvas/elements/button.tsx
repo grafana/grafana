@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, PluginState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TextDimensionMode } from '@grafana/schema';
+import { ScalarDimensionMode, PositionDimensionMode, TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -122,11 +122,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       },
     },
     placement: {
-      width: options?.placement?.width ?? 32,
-      height: options?.placement?.height ?? 78,
-      top: options?.placement?.top ?? 100,
-      left: options?.placement?.left ?? 100,
-      rotation: options?.placement?.rotation ?? 0,
+      width: options?.placement?.width ?? { fixed: 32, mode: PositionDimensionMode.Fixed },
+      height: options?.placement?.height ?? { fixed: 78, mode: PositionDimensionMode.Fixed },
+      top: options?.placement?.top ?? { fixed: 100, mode: PositionDimensionMode.Fixed },
+      left: options?.placement?.left ?? { fixed: 100, mode: PositionDimensionMode.Fixed },
+      rotation: options?.placement?.rotation ?? { fixed: 0, min: 0, max: 360, mode: ScalarDimensionMode.Clamped },
     },
   }),
 

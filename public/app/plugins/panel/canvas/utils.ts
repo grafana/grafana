@@ -1,7 +1,7 @@
 import { isNumber, isString } from 'lodash';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
-import { ConnectionDirection } from '@grafana/schema';
+import { ConnectionDirection, PositionDimensionConfig, PositionDimensionMode } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';
@@ -15,6 +15,9 @@ import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './type
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
+    // Clear any previous field-driven selection
+    scene.clearFieldDrivenSelection?.();
+
     let selection: SelectionParams = { targets: [] };
     if (element instanceof FrameState) {
       const targetElements: HTMLDivElement[] = [];
@@ -22,6 +25,14 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
       selection.targets = targetElements;
       selection.frame = element;
       scene.select(selection);
+    } else if (element.hasFieldDrivenPosition()) {
+      // Field-driven elements can't be selected via Selecto, show custom selection
+      scene.currentLayer = element.parent;
+      scene.setFieldDrivenSelection(element);
+      // Clear Selecto selection and broadcast this element as selected
+      scene.selecto?.setSelectedTargets([]);
+      scene.moveable!.target = [];
+      scene.selection.next([element]);
     } else {
       scene.currentLayer = element.parent;
       selection.targets = [element?.div!];
@@ -81,12 +92,30 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
     name: '',
   };
 
+  // Helper to create a fixed PositionDimensionConfig
+  const fixedPosition = (value: number): PositionDimensionConfig => ({
+    fixed: value,
+    mode: PositionDimensionMode.Fixed,
+  });
+
   if (anchorPoint) {
-    newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
+    newElementOptions.placement = {
+      ...newElementOptions.placement,
+      top: fixedPosition(anchorPoint.y),
+      left: fixedPosition(anchorPoint.x),
+    };
   }
 
   if (newItem.defaultSize) {
-    newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
+    // defaultSize uses simple numbers, convert to PositionDimensionConfig
+    const sizeConfig: Partial<typeof newElementOptions.placement> = {};
+    if (newItem.defaultSize.width !== undefined) {
+      sizeConfig.width = fixedPosition(newItem.defaultSize.width);
+    }
+    if (newItem.defaultSize.height !== undefined) {
+      sizeConfig.height = fixedPosition(newItem.defaultSize.height);
+    }
+    newElementOptions.placement = { ...newElementOptions.placement, ...sizeConfig };
   }
 
   if (rootLayer) {
