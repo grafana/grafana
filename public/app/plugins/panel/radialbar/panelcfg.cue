@@ -27,8 +27,6 @@ composableKinds: PanelCfg: {
 			schema: {
 				GaugePanelEffects: {
 					barGlow?: bool | *false
-					spotlight?: bool | *false
-					rounded?: bool | *false
 					centerGlow?: bool | *false
           gradient?: bool | *true
 				 } @cuetsy(kind="interface")
@@ -42,6 +40,7 @@ composableKinds: PanelCfg: {
 					sparkline?: bool | *true
 					shape: "circle" | *"gauge"
 					barWidthFactor: number | *0.5
+          barShape: "flat" | "rounded" | *"flat"
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}

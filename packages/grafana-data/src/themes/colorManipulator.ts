@@ -392,6 +392,55 @@ export const onBackground = (
   });
 };
 
+/**
+ * Given color stops (each with a color and percentage 0..1) returns the color at a given percentage.
+ * Uses tinycolor.mix for interpolation.
+ * @params stops - array of color stops (percentages 0..1)
+ * @params percent - percentage 0..1
+ * @returns color at the given percentage
+ */
+export function colorAtGradientPercent(
+  stops: Array<{ color: string; percent: number }>,
+  percent: number
+): tinycolor.Instance {
+  if (!stops || stops.length < 2) {
+    throw new Error('colorAtGradientPercent requires at least two color stops');
+  }
+
+  // normalize and sort stops by percent
+  const sorted = stops
+    .map((s) => ({ color: s.color, percent: clamp(s.percent, 0, 1) }))
+    .sort((a, b) => a.percent - b.percent);
+
+  // percent outside range
+  if (percent <= sorted[0].percent) {
+    return tinycolor(sorted[0].color);
+  }
+  if (percent >= sorted[sorted.length - 1].percent) {
+    return tinycolor(sorted[sorted.length - 1].color);
+  }
+
+  // find surrounding stops
+  let left = sorted[0];
+  let right = sorted[sorted.length - 1];
+  for (let i = 1; i < sorted.length; i++) {
+    if (percent <= sorted[i].percent) {
+      left = sorted[i - 1];
+      right = sorted[i];
+      break;
+    }
+  }
+
+  const range = right.percent - left.percent;
+  const t = range === 0 ? 0 : (percent - left.percent) / range; // 0..1
+
+  // tinycolor.mix expects amount as percentage of the second color
+  const mixed = tinycolor.mix(left.color, right.color, t * 100);
+
+  // return hex6 if opaque, hex8 if has alpha
+  return mixed;
+}
+
 interface DecomposeColor {
   type: string;
   values: any;
@@ -414,4 +463,5 @@ export const colorManipulator = {
   darken,
   lighten,
   onBackground,
+  colorAtGradientPercent,
 };

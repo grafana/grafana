@@ -16,19 +16,16 @@ export interface GaugePanelEffects {
   barGlow?: boolean;
   centerGlow?: boolean;
   gradient?: boolean;
-  rounded?: boolean;
-  spotlight?: boolean;
 }
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
   centerGlow: false,
   gradient: true,
-  rounded: false,
-  spotlight: false,
 };
 
 export interface Options extends common.SingleStatBaseOptions {
+  barShape: ('flat' | 'rounded');
   barWidthFactor: number;
   effects: GaugePanelEffects;
   segmentCount: number;
@@ -40,6 +37,7 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
+  barShape: 'flat',
   barWidthFactor: 0.5,
   effects: {},
   segmentCount: 1,

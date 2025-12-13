@@ -21,7 +21,7 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
-import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
+import { GlowGradient, MiddleCircleGlow } from './effects';
 import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
@@ -40,8 +40,6 @@ export interface RadialGaugeProps {
    * Defaults to 0.4
    **/
   barWidthFactor?: number;
-  /** Adds a white spotlight for the end position */
-  spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
   roundedBars?: boolean;
@@ -89,7 +87,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     shape = 'circle',
     gradient = 'none',
     barWidthFactor = 0.4,
-    spotlight = false,
     glowBar = false,
     glowCenter = false,
     textMode = 'auto',
@@ -135,7 +132,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     );
 
     const displayProcessor = getFieldDisplayProcessor(displayValue);
-    const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
     const colorDefs = new RadialColorDefs({
       gradient,
@@ -146,19 +142,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       gaugeId,
       displayProcessor,
     });
-
-    if (spotlight && theme.isDark) {
-      defs.push(
-        <SpotlightGradient
-          key={spotlightGradientId}
-          id={spotlightGradientId}
-          angle={angle + startAngle}
-          dimensions={dimensions}
-          roundedBars={roundedBars}
-          theme={theme}
-        />
-      );
-    }
 
     if (segmentCount > 1) {
       graphics.push(
@@ -184,7 +167,6 @@ export function RadialGauge(props: RadialGaugeProps) {
           angleRange={angleRange}
           startAngle={startAngle}
           roundedBars={roundedBars}
-          spotlightStroke={`url(#${spotlightGradientId})`}
           glowFilter={`url(#${glowFilterId})`}
         />
       );

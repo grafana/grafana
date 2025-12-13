@@ -953,11 +953,10 @@
         "sparkline": false,
         "showThresholdMarkers": true,
         "showThresholdLabels": false,
+        "barShape": "flat",
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         }
       }
