@@ -22,7 +22,7 @@ func TestIntegrationTeamSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode3 and rest.Mode4 when they're supported
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team search with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -38,6 +38,7 @@ func TestIntegrationTeamSearch(t *testing.T) {
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
 				},
+				UnifiedStorageEnableSearch: true,
 			})
 			doTeamSearchTests(t, helper)
 		})
