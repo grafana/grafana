@@ -39,10 +39,14 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './SavedSearches.types';
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
@@ -86,6 +90,23 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const popupRef = useRef<HTMLDivElement>(null);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
+  // Feature toggle for saved searches
+  const savedSearchesEnabled = shouldUseSavedSearches();
+
+  // Saved searches hook with UserStorage persistence
+  const {
+    savedSearches,
+    isLoading: savedSearchesLoading,
+    saveSearch,
+    renameSearch,
+    deleteSearch,
+    setDefaultSearch,
+    getAutoApplySearch,
+  } = useSavedSearches();
+
+  // Track whether we've already attempted to auto-apply default search (prevents double-apply)
+  const hasAttemptedAutoApplyRef = useRef(false);
+
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
@@ -96,6 +117,39 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   useEffect(() => {
     setValue('query', searchQuery);
   }, [searchQuery, setValue]);
+
+  // Apply saved search - triggers filtering (which updates search input and URL)
+  const handleApplySearch = useCallback(
+    (search: SavedSearch) => {
+      const parsedFilter = getSearchFilterFromQuery(search.query);
+      updateFilters(parsedFilter);
+
+      // Track analytics
+      trackSavedSearchApplied(search);
+    },
+    [updateFilters]
+  );
+
+  // Auto-apply default search on first load (navigation, not refresh)
+  // We use a ref to ensure this only runs once, preventing re-application when dependencies change
+  useEffect(() => {
+    // Skip if feature is disabled, still loading, or we've already attempted
+    if (!savedSearchesEnabled || savedSearchesLoading || hasAttemptedAutoApplyRef.current) {
+      return;
+    }
+
+    // Mark as attempted immediately to prevent any possibility of double-apply
+    hasAttemptedAutoApplyRef.current = true;
+
+    const defaultSearch = getAutoApplySearch();
+    if (defaultSearch) {
+      try {
+        handleApplySearch(defaultSearch);
+      } catch (error) {
+        console.error('Failed to auto-apply default search:', error);
+      }
+    }
+  }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, handleApplySearch]);
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
@@ -240,7 +294,21 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               {filterButtonLabel}
             </Button>
           </PopupCard>
-          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          {savedSearchesEnabled && (
+            <SavedSearches
+              savedSearches={savedSearches}
+              currentSearchQuery={searchQuery}
+              onSave={saveSearch}
+              onRename={renameSearch}
+              onDelete={deleteSearch}
+              onApply={handleApplySearch}
+              onSetDefault={setDefaultSearch}
+              isLoading={savedSearchesLoading}
+            />
+          )}
+          <Box marginLeft={2}>
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          </Box>
         </Stack>
       </Stack>
     </form>
