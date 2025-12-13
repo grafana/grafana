@@ -1,12 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { GenAIButton } from '../../../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../../../dashboard/components/GenAI/utils';
+import { SQLSchemasResponse } from '../hooks/useSQLSchemas';
 
 import { getSQLSuggestionSystemPrompt, QueryUsageContext } from './sqlPromptConfig';
+import { formatSchemasForPrompt } from './utils/formatSchemas';
 
 interface GenAISQLSuggestionsButtonProps {
   currentQuery: string;
@@ -14,7 +16,7 @@ interface GenAISQLSuggestionsButtonProps {
   onHistoryUpdate?: (history: string[]) => void;
   refIds: string[];
   initialQuery: string;
-  schemas?: unknown; // Reserved for future schema implementation
+  schemas?: SQLSchemasResponse | null;
   errorContext?: string[];
   queryContext?: QueryUsageContext;
 }
@@ -41,15 +43,15 @@ const getContextualPrompts = (refIds: string[], currentQuery: string): string[] 
  *
  * @param refIds - The list of RefIDs available in the current context
  * @param currentQuery - The current SQL query being edited
- * @param schemas - Optional schema information (planned for future implementation)
- * @param errorContext - Optional error context for targeted fixes (planned for future implementation)
+ * @param formattedSchemas - Pre-formatted schema information string
+ * @param errorContext - Optional error context for targeted fixes
  * @param queryContext - Optional query usage context
  * @returns A list of messages to be sent to the LLM for generating SQL suggestions
  */
 const getSQLSuggestionMessages = (
   refIds: string[],
   currentQuery: string,
-  schemas?: unknown,
+  formattedSchemas?: string,
   errorContext?: string[],
   queryContext?: QueryUsageContext
 ): Message[] => {
@@ -62,7 +64,7 @@ const getSQLSuggestionMessages = (
     refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
     currentQuery: trimmedQuery || 'No current query provided',
     queryInstruction: queryInstruction,
-    schemas, // Will be utilized once schema extraction is implemented
+    formattedSchemas,
     errorContext,
     queryContext,
   });
@@ -88,13 +90,15 @@ export const GenAISQLSuggestionsButton = ({
   onHistoryUpdate,
   refIds,
   initialQuery,
-  schemas, // Future implementation will use this for enhanced context
+  schemas,
   errorContext,
   queryContext,
 }: GenAISQLSuggestionsButtonProps) => {
+  const formattedSchemas = useMemo(() => formatSchemasForPrompt(schemas), [schemas]);
+
   const messages = useCallback(() => {
-    return getSQLSuggestionMessages(refIds, currentQuery, schemas, errorContext, queryContext);
-  }, [refIds, currentQuery, schemas, errorContext, queryContext]);
+    return getSQLSuggestionMessages(refIds, currentQuery, formattedSchemas, errorContext, queryContext);
+  }, [refIds, currentQuery, formattedSchemas, errorContext, queryContext]);
 
   const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
 
