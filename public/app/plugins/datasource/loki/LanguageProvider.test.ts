@@ -560,6 +560,23 @@ describe('Language completion provider', () => {
           start: 1560153109000,
         });
       });
+
+      it('should interpolate variables in stream selector', async () => {
+        const datasource = setup({});
+        jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
+        jest
+          .spyOn(datasource, 'interpolateString')
+          .mockImplementation((string: string) => string.replace(/\$test_var/g, 'age'));
+
+        const languageProvider = new LanguageProvider(datasource);
+        languageProvider.request = jest.fn().mockResolvedValue([]);
+        await languageProvider.fetchLabels({ streamSelector: '{age="new", $test_var="new"}' });
+        expect(languageProvider.request).toHaveBeenCalledWith('labels', {
+          end: 1,
+          query: '{age="new", age="new"}',
+          start: 0,
+        });
+      });
     });
 
     it('should filter internal labels', async () => {
