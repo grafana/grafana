@@ -28,13 +28,20 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			Message: "Health check failed: Failed to get data source info",
 		}, nil
 	}
-
 	healthStatusUrl, err := url.Parse(ds.URL)
 	if err != nil {
 		logger.Error("Failed to parse data source URL", "error", err)
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
 			Message: "Failed to parse data source URL",
+		}, nil
+	}
+
+	// If the cluster is serverless, return a healthy result
+	if ds.ClusterInfo.IsServerless() {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "Elasticsearch Serverless data source is healthy.",
 		}, nil
 	}
 

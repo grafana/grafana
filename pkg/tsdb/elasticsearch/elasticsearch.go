@@ -88,6 +88,14 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			httpCliOpts.SigV4.Service = "es"
 		}
 
+		apiKeyAuth, ok := jsonData["apiKeyAuth"].(bool)
+		if ok && apiKeyAuth {
+			apiKey := settings.DecryptedSecureJSONData["apiKey"]
+			if apiKey != "" {
+				httpCliOpts.Header.Add("Authorization", "ApiKey "+apiKey)
+			}
+		}
+
 		httpCli, err := httpClientProvider.New(httpCliOpts)
 		if err != nil {
 			return nil, err
@@ -151,6 +159,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			includeFrozen = false
 		}
 
+		clusterInfo, err := es.GetClusterInfo(httpCli, settings.URL)
+		if err != nil {
+			return nil, err
+		}
+
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -166,6 +179,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
+			ClusterInfo:                clusterInfo,
 		}
 		return model, nil
 	}
