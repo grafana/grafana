@@ -148,18 +148,26 @@ export const getContentItems = (
 
   _restFields?.forEach((field) => {
     if (!field.config.custom?.hideFrom?.tooltip) {
-      const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
-      const display = field.display!(field.values[dataIdxs[0]!]);
+      const valueIdx = dataIdxs[seriesIdx ?? 0];
 
-      rows.push({
-        label: field.state?.displayName ?? field.name,
-        value: formattedValueToString(display),
-        color: FALLBACK_COLOR,
-        colorIndicator,
-        colorPlacement,
-        lineStyle: field.config.custom?.lineStyle,
-        isHiddenFromViz: true,
-      });
+      if (valueIdx != null) {
+        const value = field.values[valueIdx];
+
+        if (value != null) {
+          const display = field.display!(value);
+          const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
+
+          rows.push({
+            label: field.state?.displayName ?? field.name,
+            value: formattedValueToString(display),
+            color: FALLBACK_COLOR,
+            colorIndicator,
+            colorPlacement,
+            lineStyle: field.config.custom?.lineStyle,
+            isHiddenFromViz: true,
+          });
+        }
+      }
     }
   });
 
