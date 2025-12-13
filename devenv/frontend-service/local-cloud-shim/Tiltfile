@@ -1,0 +1,32 @@
+# --- Frontend Build (One-time, no watch)
+local_resource(
+  'frontend-assets',
+  cmd='yarn install && yarn dev',
+  dir='../../..',
+  allow_parallel=True,
+  labels=["local"]
+)
+
+# --- Backend Build (One-time, no watch)
+local_resource(
+  'backend-build',
+  cmd='mkdir -p build && bash ./build-grafana.sh',
+  dir='..',
+  allow_parallel=True,
+  labels=["local"]
+)
+
+# --- Docker Compose
+docker_compose('./docker-compose.yaml')
+
+dc_resource("proxy",
+  resource_deps=["frontend-service"],
+  labels=["services"]
+)
+
+dc_resource("frontend-service",
+  resource_deps=["frontend-assets", "backend-build"],
+  labels=["services"],
+  trigger_mode = TRIGGER_MODE_MANUAL
+)
+
