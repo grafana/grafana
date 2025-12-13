@@ -188,6 +188,8 @@ type SearchOrgUsersQuery struct {
 	SortOpts []model.SortOption
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
+	// Flag used to exclude hidden users from the result
+	ExcludeHiddenUsers bool
 
 	User identity.Requester
 }

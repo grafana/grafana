@@ -294,6 +294,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 }
 
 func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	query.ExcludeHiddenUsers = true
 	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
@@ -303,9 +304,6 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	userIDs := map[string]bool{}
 	authLabelsUserIDs := make([]int64, 0, len(result.OrgUsers))
 	for _, user := range result.OrgUsers {
-		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
-			continue
-		}
 		user.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, user.Email)
 
 		userIDs[fmt.Sprint(user.UserID)] = true
