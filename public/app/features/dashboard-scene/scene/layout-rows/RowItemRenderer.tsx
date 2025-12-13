@@ -238,6 +238,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dragging: css({
       cursor: 'move',
+      backgroundColor: theme.colors.background.canvas,
     }),
     wrapperGrow: css({
       flexGrow: 1,
