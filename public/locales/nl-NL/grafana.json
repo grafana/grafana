@@ -3707,6 +3707,10 @@
       "clear": "Zoekopdracht en filters wissen",
       "text": "Geen resultaten gevonden voor je zoekopdracht"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5950,13 +5954,25 @@
       "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Paneel bewerken",
         "view-panel": "Paneel bekijken"
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Wijzigingen in dashboard verwerpen?"
+        "discard-changes-to-dashboard": "Wijzigingen in dashboard verwerpen?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10712,7 +10728,6 @@
       "title": "Nieuw"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nieuw dashboard"
     },
     "new-folder": {
@@ -11856,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Het opzetten van deze verbinding kan een tijdelijke storing veroorzaken"
     },
     "getting-started-page": {
-      "header": "Provisioning",
       "subtitle-provisioning-feature": "Je provisioningverbindingen bekijken en beheren"
     },
     "git": {
@@ -12622,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importeren",
       "new": "Nieuw",
       "new-dashboard": "Nieuw dashboard",

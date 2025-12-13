@@ -3739,6 +3739,10 @@
       "clear": "Очистить поиск и фильтры",
       "text": "По вашему запросу ничего не найдено"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5992,13 +5996,25 @@
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Редактировать панель",
         "view-panel": "Просмотр панели"
       },
       "title": {
         "dashboard": "Дашборд",
-        "discard-changes-to-dashboard": "Отменить изменения на дашборде?"
+        "discard-changes-to-dashboard": "Отменить изменения на дашборде?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10798,7 +10814,6 @@
       "title": "Новые элементы"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Новый дашборд"
     },
     "new-folder": {
@@ -11958,7 +11973,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Настройка этого подключения может привести к временному сбою"
     },
     "getting-started-page": {
-      "header": "Подготовка к работе",
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
     },
     "git": {
@@ -12730,7 +12744,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Импорт",
       "new": "Новые элементы",
       "new-dashboard": "Новый дашборд",
