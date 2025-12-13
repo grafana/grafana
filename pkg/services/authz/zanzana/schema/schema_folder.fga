@@ -4,15 +4,21 @@ type folder
   relations
     define parent: [folder]
 
-    # Action sets
-    define view: [user, service-account, team#member, role#assignee] or edit or view from parent
-    define edit: [user, service-account, team#member, role#assignee] or admin or edit from parent
+    # Permission levels (each follows its OWN parent chain)
     define admin: [user, service-account, team#member, role#assignee] or admin from parent
+    define edit: [user, service-account, team#member, role#assignee] or edit from parent
+    define view: [user, service-account, team#member, role#assignee] or view from parent
 
-    define get: [user, service-account, team#member, role#assignee] or view or get from parent
-    define create: [user, service-account, team#member, role#assignee] or edit or create from parent
-    define update: [user, service-account, team#member, role#assignee] or edit or update from parent
-    define delete: [user, service-account, team#member, role#assignee] or edit or delete from parent
+    # Action permissions (computed from permission levels - no recursion)
+    define get: admin or edit or view
+    define create: admin or edit
+    define update: admin or edit
+    define delete: admin or edit
 
-    define get_permissions: [user, service-account, team#member, role#assignee] or admin or get_permissions from parent
-    define set_permissions: [user, service-account, team#member, role#assignee] or admin or set_permissions from parent
+    # Permission management (O(N) linear recursion)
+    define get_permissions: [user, service-account, team#member, role#assignee] or get_permissions from parent
+    define set_permissions: [user, service-account, team#member, role#assignee] or set_permissions from parent
+
+    # Computed permission management (admin can always manage permissions)
+    define can_get_permissions: admin or get_permissions
+    define can_set_permissions: admin or set_permissions

@@ -58,6 +58,9 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
+	RelationCanGetPermissions string = "can_get_permissions"
+	RelationCanSetPermissions string = "can_set_permissions"
+
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
@@ -132,6 +135,18 @@ var RelationToVerbMapping = map[string]string{
 	RelationDelete:         utils.VerbDelete,
 	RelationGetPermissions: utils.VerbGetPermissions,
 	RelationSetPermissions: utils.VerbSetPermissions,
+}
+
+// FolderPermissionRelation returns the optimized folder relation for permission management.
+func FolderPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGetPermissions:
+		return RelationCanGetPermissions
+	case RelationSetPermissions:
+		return RelationCanSetPermissions
+	default:
+		return relation
+	}
 }
 
 func IsGroupResourceRelation(relation string) bool {
