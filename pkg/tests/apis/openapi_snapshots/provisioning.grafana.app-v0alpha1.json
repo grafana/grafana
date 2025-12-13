@@ -3288,6 +3288,18 @@
           "path": {
             "description": "FIXME: we should validate this in admission hooks Prefix in target file system",
             "type": "string"
+          },
+          "resources": {
+            "description": "Resources to export This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the resources.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
           }
         }
       },
