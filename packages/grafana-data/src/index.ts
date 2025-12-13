@@ -591,6 +591,7 @@ export {
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
+  type DynamicPluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
@@ -598,6 +599,10 @@ export {
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
+  type PluginExtensionCommandPaletteDynamicConfig,
+  type CommandPaletteDynamicResult,
+  type CommandPaletteDynamicSearchProvider,
+  type CommandPaletteDynamicResultAction,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

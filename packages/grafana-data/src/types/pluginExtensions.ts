@@ -294,7 +294,23 @@ export type PluginExtensionDataSourceConfigContext<
   setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
-export type PluginExtensionCommandPaletteContext = {};
+export type PluginExtensionCommandPaletteContext = {
+  /** The current search query entered by the user */
+  searchQuery?: string;
+  /** Signal for request cancellation */
+  signal?: AbortSignal;
+};
+
+/**
+ * Context for dynamic command palette search providers.
+ * Unlike the base context, searchQuery and signal are always provided.
+ */
+export type DynamicPluginExtensionCommandPaletteContext = {
+  /** The current search query entered by the user */
+  searchQuery: string;
+  /** Signal for request cancellation */
+  signal: AbortSignal;
+};
 
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
@@ -348,4 +364,70 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+// Dynamic Command Palette Types
+// --------------------------------------------------------
+
+/**
+ * A single dynamic result item returned by a command palette search provider
+ */
+export type CommandPaletteDynamicResult = {
+  /** Unique identifier for this result (scoped to plugin) */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Optional subtitle or description */
+  description?: string;
+  /** Optional URL to navigate to (alternative to onSelect) */
+  path?: string;
+  /** Optional keywords for better search matching */
+  keywords?: string[];
+  /** Optional section/category override (defaults to plugin category) */
+  section?: string;
+  /** Optional custom data to pass through to the action handler */
+  data?: Record<string, unknown>;
+  /**
+   * Action handler when this result is selected.
+   * If not provided, will use `path` for navigation.
+   */
+  onSelect?: CommandPaletteDynamicResultAction;
+};
+
+/**
+ * Action handler for when a dynamic result is selected
+ */
+export type CommandPaletteDynamicResultAction = (
+  result: Omit<CommandPaletteDynamicResult, 'onSelect'>,
+  helpers: PluginExtensionEventHelpers<DynamicPluginExtensionCommandPaletteContext>
+) => void | Promise<void>;
+
+/**
+ * Search provider function that fetches dynamic results
+ */
+export type CommandPaletteDynamicSearchProvider = (
+  context: DynamicPluginExtensionCommandPaletteContext
+) => Promise<CommandPaletteDynamicResult[]>;
+
+/**
+ * Configuration for registering a dynamic command palette provider
+ */
+export type PluginExtensionCommandPaletteDynamicConfig = {
+  /**
+   * Category/section name for grouping results.
+   * If not provided, results will be grouped under "Dynamic Results".
+   */
+  category?: string;
+
+  /**
+   * Minimum query length before search is triggered
+   * @default 2
+   */
+  minQueryLength?: number;
+
+  /**
+   * Search provider function that returns results.
+   * Return an empty array to skip results for the current search.
+   */
+  searchProvider: CommandPaletteDynamicSearchProvider;
 };
