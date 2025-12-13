@@ -501,11 +501,9 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 
 			if currentRow != nil {
 				// If currentRow is a hidden-header row (panels before first explicit row),
-				// set its collapse to match the first explicit row's collapsed value
-				// This matches frontend behavior: collapse: panel.collapsed
+				// it should not be collapsed because it will disappear and be visible only in edit mode
 				if currentRow.Spec.HideHeader != nil && *currentRow.Spec.HideHeader {
-					rowCollapsed := getBoolField(panelMap, "collapsed", false)
-					currentRow.Spec.Collapse = &rowCollapsed
+					currentRow.Spec.Collapse = &[]bool{false}[0]
 				}
 				// Flush current row to layout
 				rows = append(rows, *currentRow)

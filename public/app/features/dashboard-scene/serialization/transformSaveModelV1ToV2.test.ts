@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { normalizeBackendOutputForFrontendComparison } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
@@ -311,8 +313,23 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
         inputPanels
       );
 
+      const normalizedFrontendOutput = normalizeFrontendOutputRowLayout(frontendOutput);
       // Compare only the spec structures - this is the core transformation
-      expect(normalizedBackendOutput).toEqual(frontendOutput);
+      expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
     });
   });
 });
+
+// Rows that are collapsed and have hideHeader set to true are invalid in V2
+// because they will disappear and be visible only in edit mode
+// So during the conversion from v1 to v2, we need to normalize the output to set collapse to false
+const normalizeFrontendOutputRowLayout = (dashboard: Spec): Spec => {
+  if (dashboard.layout.kind === 'RowsLayout') {
+    dashboard.layout.spec.rows.forEach((row) => {
+      if (row.spec.collapse && row.spec.hideHeader) {
+        row.spec.collapse = false;
+      }
+    });
+  }
+  return dashboard;
+};
