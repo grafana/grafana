@@ -53,6 +53,7 @@ export function HistoryContainer() {
       <ToolbarButton
         onClick={() => {
           onToggleShowHistoryDrawer();
+          //Using new tracking event process
           logUnifiedHistoryDrawerInteractionEvent({ type: 'open' });
         }}
         iconOnly
@@ -65,6 +66,7 @@ export function HistoryContainer() {
           title={t('nav.history-container.drawer-tittle', 'History')}
           onClose={() => {
             onToggleShowHistoryDrawer();
+            //Using new tracking event process
             logUnifiedHistoryDrawerInteractionEvent({ type: 'close' });
           }}
           size="sm"
