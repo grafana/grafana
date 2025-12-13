@@ -40,7 +40,7 @@ func NewResourcePermissionsAuthorizer(
 	return &ResourcePermissionsAuthorizer{
 		accessClient:   accessClient,
 		parentProvider: parentProvider,
-		logger:         log.New("iam.resource-permissions-authorizer"),
+		logger:         log.New("iam.authorizer.resource-permissions"),
 	}
 }
 
@@ -216,8 +216,7 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 					// Skip item on error fetching parent
 					r.logger.Warn("filter list: error fetching parent, skipping item",
 						"error", err.Error(),
-						"namespace",
-						item.Namespace,
+						"namespace", item.Namespace,
 						"group", target.ApiGroup,
 						"resource", target.Resource,
 						"name", target.Name,
