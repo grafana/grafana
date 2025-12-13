@@ -89,7 +89,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
-  const isLegacyStorage = Boolean(settingsData?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
@@ -115,19 +114,23 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
+  const [repoName = '', repoType, syncTarget, migrateExistingResources] = watch([
+    'repositoryName',
+    'repository.type',
+    'repository.sync.target',
+    'migrate.migrateExistingResources',
+  ]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const {
     shouldSkipSync,
     requiresMigration,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
+  } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
-    repoType,
-    isLegacyStorage,
+    migrateExistingResources,
     setStepStatusInfo,
   });
 
@@ -412,11 +415,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep
-                  isLegacyStorage={isLegacyStorage}
-                  onCancel={handleRepositoryDeletion}
-                  isCancelling={isCancelling}
-                />
+                <SynchronizeStep onCancel={handleRepositoryDeletion} isCancelling={isCancelling} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>

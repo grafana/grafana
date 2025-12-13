@@ -49,7 +49,6 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 				Path:    "/exported",
 			},
 			Migrate: &provisioning.MigrateJobOptions{
-				History: true,
 				Message: "Migration test",
 			},
 			Delete: &provisioning.DeleteJobOptions{
@@ -101,7 +100,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 	}
 
 	t.Run("jobToStream creates correct stream with all fields", func(t *testing.T) {
-		history := createTestLokiJobHistory(t)
+		history := createTestLokiJobHistory()
 		// Clean job copy like WriteJob does
 		jobCopy := job.DeepCopy()
 		delete(jobCopy.Labels, LabelJobClaim)
@@ -147,7 +146,6 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		assert.Equal(t, "main", deserializedJob.Spec.Push.Branch)
 		assert.Equal(t, "/exported", deserializedJob.Spec.Push.Path)
 		require.NotNil(t, deserializedJob.Spec.Migrate)
-		assert.True(t, deserializedJob.Spec.Migrate.History)
 		assert.Equal(t, "Migration test", deserializedJob.Spec.Migrate.Message)
 		require.NotNil(t, deserializedJob.Spec.Delete)
 		assert.Equal(t, "main", deserializedJob.Spec.Delete.Ref)
@@ -190,7 +188,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 	})
 
 	t.Run("buildJobQuery creates correct LogQL", func(t *testing.T) {
-		history := createTestLokiJobHistory(t)
+		history := createTestLokiJobHistory()
 
 		query := history.buildJobQuery("test-ns", "test-repo")
 
@@ -199,7 +197,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 	})
 
 	t.Run("getJobTimestamp returns correct timestamp", func(t *testing.T) {
-		history := createTestLokiJobHistory(t)
+		history := createTestLokiJobHistory()
 
 		// Test finished time priority
 		jobWithFinished := &provisioning.Job{
@@ -584,7 +582,7 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 }
 
 // createTestLokiJobHistory creates a LokiJobHistory for testing
-func createTestLokiJobHistory(t *testing.T) *LokiJobHistory {
+func createTestLokiJobHistory() *LokiJobHistory {
 	// Create test URLs
 	readURL, _ := url.Parse("http://localhost:3100")
 	writeURL, _ := url.Parse("http://localhost:3100")

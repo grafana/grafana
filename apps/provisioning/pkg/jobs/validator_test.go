@@ -384,8 +384,7 @@ func TestValidateJob(t *testing.T) {
 					Action:     provisioning.JobActionMigrate,
 					Repository: "test-repo",
 					Migrate: &provisioning.MigrateJobOptions{
-						History: true,
-						Message: "Migrate from legacy",
+						Message: "Migrate from unified",
 					},
 				},
 			},

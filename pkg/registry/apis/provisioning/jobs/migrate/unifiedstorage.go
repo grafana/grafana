@@ -33,23 +33,7 @@ func NewUnifiedStorageMigrator(
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := repo.Config().GetNamespace()
 
-	// For folder-type repositories, only run sync (skip export and cleaner)
-	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
-		progress.SetMessage(ctx, "pull resources")
-		syncJob := provisioning.Job{
-			Spec: provisioning.JobSpec{
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: false,
-				},
-			},
-		}
-		if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
-			return fmt.Errorf("pull resources: %w", err)
-		}
-		return nil
-	}
-
-	// For instance-type repositories, run the full workflow: export -> sync -> clean
+	// Export resources first (for both folder and instance sync)
 	progress.SetMessage(ctx, "export resources")
 	progress.StrictMaxErrors(1) // strict as we want the entire instance to be managed
 
@@ -67,6 +51,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
 
+	// Pull resources from the repository
 	progress.SetMessage(ctx, "pull resources")
 	syncJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -79,9 +64,12 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	progress.SetMessage(ctx, "clean namespace")
-	if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
-		return fmt.Errorf("clean namespace: %w", err)
+	// For instance-type repositories, also clean the namespace
+	if repo.Config().Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+		progress.SetMessage(ctx, "clean namespace")
+		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
+			return fmt.Errorf("clean namespace: %w", err)
+		}
 	}
 
 	return nil

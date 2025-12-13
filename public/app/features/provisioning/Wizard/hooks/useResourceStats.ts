@@ -100,7 +100,7 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, syncTarget?: RepositoryView['target']) {
+export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target']) {
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
   const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
@@ -121,8 +121,8 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, s
     };
   }, [resourceStatsQuery.data]);
 
-  const requiresMigration = isLegacyStorage || resourceCount > 0;
-  const shouldSkipSync = !isLegacyStorage && (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
+  const requiresMigration = resourceCount > 0 && syncTarget === 'instance';
+  const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =

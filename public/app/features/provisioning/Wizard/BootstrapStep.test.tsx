@@ -143,7 +143,7 @@ describe('BootstrapStep', () => {
     it('should render correct info for GitHub repository type', async () => {
       setup();
       expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
+      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should show "Empty" (2 external + 2 unmanaged, one per card)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -198,7 +198,7 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('7 resources')).toBeInTheDocument();
+      expect((await screen.findAllByText('7 resources')).length).toBeGreaterThan(0);
     });
   });
 
@@ -207,13 +207,19 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
+      // The hook is called with repoName and selectedTarget
+      // selectedTarget is 'instance' from default form values, but may be undefined on initial render
+      // Check that it was called with the repoName and optionally with selectedTarget
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', expect.anything());
+      // Verify it was eventually called with 'instance' (after form initializes)
+      const calls = mockUseResourceStats.mock.calls;
+      const hasInstanceCall = calls.some((call: unknown[]) => call[0] === 'test-repo' && call[1] === 'instance');
+      expect(hasInstanceCall).toBe(true);
     });
 
     it('should use useResourceStats hook with legacy storage flag', async () => {
       setup({
         settingsData: {
-          legacyStorage: true,
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
@@ -221,7 +227,14 @@ describe('BootstrapStep', () => {
       });
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
+      // The hook is called with repoName and selectedTarget
+      // selectedTarget is 'instance' from default form values, but may be undefined on initial render
+      // Check that it was called with the repoName and optionally with selectedTarget
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', expect.anything());
+      // Verify it was eventually called with 'instance' (after form initializes)
+      const calls = mockUseResourceStats.mock.calls;
+      const hasInstanceCall = calls.some((call: unknown[]) => call[0] === 'test-repo' && call[1] === 'instance');
+      expect(hasInstanceCall).toBe(true);
     });
   });
 
@@ -255,7 +268,6 @@ describe('BootstrapStep', () => {
 
       setup({
         settingsData: {
-          legacyStorage: true,
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],

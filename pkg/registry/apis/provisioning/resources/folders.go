@@ -197,6 +197,8 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
 			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
 		} else if err == nil {
+			// Folder already exists in repository, add it to tree so resources can find it
+			fm.tree.Add(folder, parent)
 			return fn(folder, false, nil)
 		}
 

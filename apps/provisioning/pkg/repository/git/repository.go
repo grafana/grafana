@@ -238,6 +238,8 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 
 	// Check if the path represents a directory
 	if safepath.IsDir(filePath) {
+		// Strip trailing slash for git tree lookup to avoid empty path components
+		finalPath = strings.TrimSuffix(finalPath, "/")
 		tree, err := r.client.GetTreeByPath(ctx, commit.Tree, finalPath)
 		if err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
