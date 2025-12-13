@@ -3446,16 +3446,16 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
 export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
