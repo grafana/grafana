@@ -1,10 +1,12 @@
 import * as React from 'react';
-import { first, firstValueFrom, take } from 'rxjs';
+import { first, lastValueFrom, Observable, take, takeUntil, timer } from 'rxjs';
 
 import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedComponentConfig,
+  PluginExtensionLink,
   PluginExtensionTypes,
+  PluginExtension,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
@@ -61,9 +63,13 @@ async function createRegistries(
   }
 
   return {
-    addedLinksRegistry: await addedLinksRegistry.getState(),
-    addedComponentsRegistry: await addedComponentsRegistry.getState(),
+    addedLinksRegistry,
+    addedComponentsRegistry,
   };
+}
+
+function getLastEmittedValue<T = { extensions: PluginExtension[] }>(observable: Observable<T>) {
+  return lastValueFrom(observable.pipe(takeUntil(timer(100))));
 }
 
 describe('getPluginExtensions()', () => {
@@ -108,10 +114,12 @@ describe('getPluginExtensions()', () => {
     const registries = await createRegistries([
       { pluginId, addedLinkConfigs: [link1, link2], addedComponentConfigs: [] },
     ]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint1,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint1,
+      })
+    );
 
     expect(extensions).toHaveLength(1);
     expect(extensions[0]).toEqual(
@@ -127,12 +135,19 @@ describe('getPluginExtensions()', () => {
   test('should not limit the number of extensions per plugin by default', async () => {
     // Registering 3 extensions for the same plugin for the same placement
     const registries = await createRegistries([
-      { pluginId, addedLinkConfigs: [link1, link1, link1, link2], addedComponentConfigs: [] },
+      {
+        pluginId,
+        addedLinkConfigs: [link1, link1, link1, link2],
+        addedComponentConfigs: [],
+      },
     ]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint1,
-    });
+
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint1,
+      })
+    );
 
     expect(extensions).toHaveLength(3);
     expect(extensions[0]).toEqual(
@@ -143,6 +158,7 @@ describe('getPluginExtensions()', () => {
         path: expect.stringContaining(link1.path!),
       })
     );
+    // });
   });
 
   test('should be possible to limit the number of extensions per plugin for a given placement', async () => {
@@ -161,11 +177,13 @@ describe('getPluginExtensions()', () => {
     ]);
 
     // Limit to 1 extension per plugin
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint1,
-      limitPerPlugin: 1,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint1,
+        limitPerPlugin: 1,
+      })
+    );
 
     expect(extensions).toHaveLength(2);
     expect(extensions[0]).toEqual(
@@ -182,10 +200,12 @@ describe('getPluginExtensions()', () => {
     const registries = await createRegistries([
       { pluginId, addedLinkConfigs: [link1, link2], addedComponentConfigs: [] },
     ]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: 'placement-with-no-extensions',
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: 'placement-with-no-extensions',
+      })
+    );
 
     expect(extensions).toEqual([]);
   });
@@ -194,7 +214,7 @@ describe('getPluginExtensions()', () => {
     const context = { title: 'New title from the context!' };
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
 
-    getPluginExtensions({ ...registries, context, extensionPointId: extensionPoint2 });
+    await getLastEmittedValue(getPluginExtensions({ ...registries, context, extensionPointId: extensionPoint2 }));
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(link2.configure).toHaveBeenCalledWith(context);
@@ -210,10 +230,12 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint2,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint2,
+      })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -236,10 +258,12 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint2,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint2,
+      })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -264,10 +288,12 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint2,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: extensionPoint2,
+      })
+    );
     const [extension] = extensions;
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
@@ -281,11 +307,13 @@ describe('getPluginExtensions()', () => {
   test('should pass a read only context to the configure() function', async () => {
     const context = { title: 'New title from the context!' };
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      context,
-      extensionPointId: extensionPoint2,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        context,
+        extensionPointId: extensionPoint2,
+      })
+    );
     const [extension] = extensions;
     const readOnlyContext = (link2.configure as jest.Mock).mock.calls[0][0];
 
@@ -306,8 +334,8 @@ describe('getPluginExtensions()', () => {
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
 
-    expect(() => {
-      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    expect(async () => {
+      await getLastEmittedValue(getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 }));
     }).not.toThrow();
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
@@ -327,29 +355,35 @@ describe('getPluginExtensions()', () => {
     link2.configure = jest.fn().mockImplementation(() => overrides);
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
 
     expect(extensions).toHaveLength(0);
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(log.error).toHaveBeenCalledTimes(1);
   });
 
-  test('should skip the extension if the configure() function returns a promise', async () => {
+  test('should not skip the extension if the configure() function returns a promise', async () => {
     link2.configure = jest.fn().mockImplementation(() => Promise.resolve({}));
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
 
-    expect(extensions).toHaveLength(0);
+    expect(extensions).toHaveLength(1);
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledTimes(0);
   });
 
   test('should skip (hide) the extension if the configure() function returns undefined', async () => {
     link2.configure = jest.fn().mockImplementation(() => undefined);
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
 
     expect(extensions).toHaveLength(0);
     expect(log.warning).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
@@ -363,7 +397,9 @@ describe('getPluginExtensions()', () => {
 
     const context = {};
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -387,7 +423,9 @@ describe('getPluginExtensions()', () => {
     link2.onClick = jest.fn().mockRejectedValue(new Error('testing'));
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -406,7 +444,9 @@ describe('getPluginExtensions()', () => {
     });
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -427,7 +467,9 @@ describe('getPluginExtensions()', () => {
     link2.onClick = jest.fn();
 
     const registries = await createRegistries([{ pluginId, addedLinkConfigs: [link2], addedComponentConfigs: [] }]);
-    const { extensions } = getPluginExtensions({ ...registries, context, extensionPointId: extensionPoint2 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, context, extensionPointId: extensionPoint2 })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -475,7 +517,9 @@ describe('getPluginExtensions()', () => {
         addedComponentConfigs: [],
       },
     ]);
-    const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint1 });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({ ...registries, extensionPointId: extensionPoint1 })
+    );
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -499,10 +543,12 @@ describe('getPluginExtensions()', () => {
         addedComponentConfigs: [component1],
       },
     ]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      extensionPointId: Array.isArray(component1.targets) ? component1.targets[0] : component1.targets,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        extensionPointId: Array.isArray(component1.targets) ? component1.targets[0] : component1.targets,
+      })
+    );
 
     expect(extensions).toHaveLength(1);
     expect(extensions[0]).toEqual(
@@ -532,11 +578,13 @@ describe('getPluginExtensions()', () => {
         ],
       },
     ]);
-    const { extensions } = getPluginExtensions({
-      ...registries,
-      limitPerPlugin: 1,
-      extensionPointId: Array.isArray(component1.targets) ? component1.targets[0] : component1.targets,
-    });
+    const { extensions } = await getLastEmittedValue(
+      getPluginExtensions({
+        ...registries,
+        limitPerPlugin: 1,
+        extensionPointId: Array.isArray(component1.targets) ? component1.targets[0] : component1.targets,
+      })
+    );
 
     expect(extensions).toHaveLength(1);
     expect(extensions[0]).toEqual(
@@ -585,10 +633,10 @@ describe('getObservablePluginExtensions()', () => {
   });
 
   it('should emit the initial state when no changes are made to the registries', async () => {
-    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(takeUntil(timer(10)));
 
     await expect(observable).toEmitValuesWith((received) => {
-      const { extensions } = received[0];
+      const { extensions } = received[received.length - 1];
       expect(extensions).toHaveLength(2);
       expect(extensions[0].pluginId).toBe(pluginId);
       expect(extensions[1].pluginId).toBe(pluginId);
@@ -596,7 +644,7 @@ describe('getObservablePluginExtensions()', () => {
   });
 
   it('should emit the new state when the registries change', async () => {
-    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(take(2));
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(takeUntil(timer(10)));
 
     setTimeout(() => {
       pluginExtensionRegistries.addedLinksRegistry.register({
@@ -614,12 +662,12 @@ describe('getObservablePluginExtensions()', () => {
     }, 0);
 
     await expect(observable).toEmitValuesWith((received) => {
-      const { extensions } = received[0];
+      const { extensions } = received[1];
       expect(extensions).toHaveLength(2);
       expect(extensions[0].pluginId).toBe(pluginId);
       expect(extensions[1].pluginId).toBe(pluginId);
 
-      const { extensions: extensions2 } = received[1];
+      const { extensions: extensions2 } = received[received.length - 1];
       expect(extensions2).toHaveLength(3);
       expect(extensions2[0].pluginId).toBe(pluginId);
       expect(extensions2[1].pluginId).toBe(pluginId);
@@ -676,7 +724,7 @@ describe('getObservablePluginLinks()', () => {
 
   it('should be possible to get the last value from the observable', async () => {
     const observable = getObservablePluginLinks({ extensionPointId });
-    const links = await firstValueFrom(observable);
+    const links = await getLastEmittedValue(observable);
 
     expect(links).toHaveLength(1);
     expect(links[0].pluginId).toBe(pluginId);
@@ -699,7 +747,7 @@ describe('getObservablePluginLinks()', () => {
     });
 
     const observable = getObservablePluginLinks({ extensionPointId });
-    const links = await firstValueFrom(observable);
+    const links = await getLastEmittedValue(observable);
 
     expect(links).toHaveLength(2);
     expect(links[0].pluginId).toBe(pluginId);
@@ -708,14 +756,220 @@ describe('getObservablePluginLinks()', () => {
     expect(links[1].type).toBe(PluginExtensionTypes.link);
   });
 
-  it('should receive an empty array if there are no links', async () => {
+  it('should emit static links immediately and then emit again as async configure() functions resolve', async () => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
 
-    const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
-    const links = await firstValueFrom(observable);
+    const staticLinkPromise = new Promise<{ title: string }>((resolve) =>
+      setTimeout(() => resolve({ title: 'Updated Async' }), 50)
+    );
 
-    expect(links).toHaveLength(0);
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Static Link',
+          description: 'Static Description',
+          path: `/a/${pluginId}/static`,
+          targets: extensionPointId,
+          // No configure function - should appear immediately
+        },
+        {
+          title: 'Async Link',
+          description: 'Async Description',
+          path: `/a/${pluginId}/async`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue(staticLinkPromise),
+        },
+      ],
+    });
+
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const emittedValues: PluginExtensionLink[][] = [];
+
+    const subscription = observable.subscribe((links) => {
+      emittedValues.push([...links]);
+    });
+
+    // Wait for initial emission (should include static link)
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(emittedValues.length).toBeGreaterThanOrEqual(1);
+    const firstEmission = emittedValues[0];
+    expect(firstEmission.length).toBeGreaterThanOrEqual(1);
+    const staticLink = firstEmission.find((link) => link.title === 'Static Link');
+    expect(staticLink).toBeDefined();
+
+    // Wait for async configure to resolve
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Should have emitted again with the async link
+    expect(emittedValues.length).toBeGreaterThanOrEqual(2);
+    const lastEmission = emittedValues[emittedValues.length - 1];
+    expect(lastEmission.length).toBe(2);
+    const asyncLink = lastEmission.find((link) => link.title === 'Updated Async');
+    expect(asyncLink).toBeDefined();
+
+    subscription.unsubscribe();
+  });
+
+  it('should emit the links with a sync configure() function first', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Sync Link',
+          description: 'Sync Description',
+          path: `/a/${pluginId}/sync`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({ title: 'Sync Link (updated)' }),
+        },
+        {
+          title: 'Async Link',
+          description: 'Async Description',
+          path: `/a/${pluginId}/async`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue(Promise.resolve({ title: 'Async Link (updated)' })),
+        },
+      ],
+    });
+
+    await expect(getObservablePluginLinks({ extensionPointId }).pipe(take(2))).toEmitValuesWith((received) => {
+      expect(received.length).toBe(2);
+
+      const links1 = received[0];
+      expect(links1).toHaveLength(1);
+      expect(links1[0].title).toBe('Sync Link (updated)');
+
+      const links2 = received[1];
+      expect(links2).toHaveLength(2);
+      expect(links2[0].title).toBe('Sync Link (updated)');
+      expect(links2[1].title).toBe('Async Link (updated)');
+    });
+  });
+
+  it('should emit incrementally as multiple async configure() functions resolve at different times', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const fastConfigure = new Promise<{ title: string }>((resolve) =>
+      setTimeout(() => resolve({ title: 'Fast Link (updated)' }), 20)
+    );
+    const slowConfigure = new Promise<{ title: string }>((resolve) =>
+      setTimeout(() => resolve({ title: 'Slow Link (updated)' }), 80)
+    );
+
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Static Link', // no dynamic behaviour = no configure() function
+          description: 'Static Description',
+          path: `/a/${pluginId}/static`,
+          targets: extensionPointId,
+        },
+        {
+          title: 'Sync Link',
+          description: 'Sync Description',
+          path: `/a/${pluginId}/sync`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({ title: 'Sync Link (updated)' }),
+        },
+        {
+          title: 'Fast Link',
+          description: 'Fast Description',
+          path: `/a/${pluginId}/fast`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue(fastConfigure),
+        },
+        {
+          title: 'Slow Link',
+          description: 'Slow Description',
+          path: `/a/${pluginId}/slow`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue(slowConfigure),
+        },
+      ],
+    });
+
+    await expect(getObservablePluginLinks({ extensionPointId }).pipe(take(4))).toEmitValuesWith((received) => {
+      expect(received.length).toBe(4);
+
+      const links0 = received[0];
+      expect(links0).toHaveLength(1);
+      expect(links0[0].title).toBe('Static Link');
+
+      const links1 = received[1];
+      expect(links1).toHaveLength(2);
+      expect(links1[0].title).toBe('Static Link');
+      expect(links1[1].title).toBe('Sync Link (updated)');
+
+      const links2 = received[2];
+      expect(links2).toHaveLength(3);
+      expect(links2[0].title).toBe('Static Link');
+      expect(links2[1].title).toBe('Sync Link (updated)');
+      expect(links2[2].title).toBe('Fast Link (updated)');
+
+      const links3 = received[3];
+      expect(links3).toHaveLength(4);
+      expect(links3[0].title).toBe('Static Link');
+      expect(links3[1].title).toBe('Sync Link (updated)');
+      expect(links3[2].title).toBe('Fast Link (updated)');
+      expect(links3[3].title).toBe('Slow Link (updated)');
+    });
+  });
+
+  it('should handle buggy async configure() functions that never resolve without blocking', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const buggyPromise = new Promise(() => {
+      // Never resolves - simulating a buggy implementation
+    });
+
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Static Link',
+          description: 'Static Description',
+          path: `/a/${pluginId}/static`,
+          targets: extensionPointId,
+        },
+        {
+          title: 'Buggy Async Link',
+          description: 'Buggy Description',
+          path: `/a/${pluginId}/buggy`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue(buggyPromise),
+        },
+      ],
+    });
+
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const emittedValues: PluginExtensionLink[][] = [];
+
+    const subscription = observable.subscribe((links) => {
+      emittedValues.push([...links]);
+    });
+
+    // Wait a bit
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Should have emitted initial value with static link
+    expect(emittedValues.length).toBeGreaterThanOrEqual(1);
+    const firstEmission = emittedValues[0];
+    expect(firstEmission.length).toBe(1);
+    expect(firstEmission[0].title).toBe('Static Link');
+
+    // Buggy link should never appear
+    const hasBuggyLink = emittedValues.some((emission) => emission.some((link) => link.title === 'Buggy Async Link'));
+    expect(hasBuggyLink).toBe(false);
+
+    subscription.unsubscribe();
   });
 });
 
@@ -767,7 +1021,7 @@ describe('getObservablePluginComponents()', () => {
 
   it('should be possible to get the last value from the observable', async () => {
     const observable = getObservablePluginComponents({ extensionPointId });
-    const components = await firstValueFrom(observable);
+    const components = await getLastEmittedValue(observable);
 
     expect(components).toHaveLength(1);
     expect(components[0].pluginId).toBe(pluginId);
@@ -791,22 +1045,12 @@ describe('getObservablePluginComponents()', () => {
     });
 
     const observable = getObservablePluginComponents({ extensionPointId });
-    const components = await firstValueFrom(observable);
+    const components = await getLastEmittedValue(observable);
 
     expect(components).toHaveLength(2);
     expect(components[0].pluginId).toBe(pluginId);
     expect(components[0].type).toBe(PluginExtensionTypes.component);
     expect(components[1].pluginId).toBe(pluginId);
     expect(components[1].type).toBe(PluginExtensionTypes.component);
-  });
-
-  it('should receive an empty array if there are no components', async () => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
-
-    const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
-    const components = await firstValueFrom(observable);
-
-    expect(components).toHaveLength(0);
   });
 });

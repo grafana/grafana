@@ -5,7 +5,7 @@ import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/ru
 
 import { useAddedFunctionsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, useExtensionPointLog } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
@@ -15,11 +15,17 @@ export function usePluginFunctions<Signature>({
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
   const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
   const pluginContext = usePluginContext();
+  const extensionPointLog = useExtensionPointLog(extensionPointId);
   const deps = getExtensionPointPluginDependencies(extensionPointId);
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
 
   return useMemo(() => {
-    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
+    const { result } = validateExtensionPoint({
+      extensionPointId,
+      pluginContext,
+      isLoadingAppPlugins,
+      extensionPointLog,
+    });
 
     if (result) {
       return {
@@ -58,5 +64,5 @@ export function usePluginFunctions<Signature>({
       isLoading: false,
       functions: results,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins, extensionPointLog]);
 }

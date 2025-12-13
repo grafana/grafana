@@ -11,7 +11,7 @@ import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useAddedComponentsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, useExtensionPointLog } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
 
 // Returns an array of component extensions for the given extension point
@@ -21,10 +21,16 @@ export function usePluginComponents<Props extends object = {}>({
 }: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
   const registryItems = useAddedComponentsRegistrySlice<Props>(extensionPointId);
   const pluginContext = usePluginContext();
+  const extensionPointLog = useExtensionPointLog(extensionPointId);
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
+    const { result } = validateExtensionPoint({
+      extensionPointId,
+      pluginContext,
+      isLoadingAppPlugins,
+      extensionPointLog,
+    });
 
     if (result) {
       return {
@@ -58,7 +64,7 @@ export function usePluginComponents<Props extends object = {}>({
       isLoading: false,
       components,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, extensionPointLog, isLoadingAppPlugins]);
 }
 
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
