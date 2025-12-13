@@ -621,6 +621,19 @@
     },
     {
       "metadata": {
+        "name": "apiExtensions",
+        "resourceVersion": "1764159104213",
+        "creationTimestamp": "2025-11-26T12:11:44Z"
+      },
+      "spec": {
+        "description": "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-10-14T10:47:18Z"

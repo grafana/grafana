@@ -319,6 +319,10 @@ const (
 	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
+	// FlagApiExtensions
+	// Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration
+	FlagApiExtensions = "apiExtensions"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"

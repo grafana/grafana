@@ -108,6 +108,7 @@ sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,fa
 sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesAggregatorCapTokenAuth,experimental,@grafana/grafana-app-platform-squad,false,true,false
+apiExtensions,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
