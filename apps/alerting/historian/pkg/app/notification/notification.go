@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -49,7 +50,7 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusBadRequest,
-				Message: err.Error(),
+				Message: fmt.Sprintf("parse request: %s", err.Error()),
 			}}
 	}
 
@@ -67,7 +68,7 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
+				Message: fmt.Sprintf("notification query: %s", err.Error()),
 			}}
 	}
 
