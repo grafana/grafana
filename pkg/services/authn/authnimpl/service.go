@@ -593,8 +593,12 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 			extSession.IDToken = idToken
 		}
 
-		// As of https://openid.net/specs/openid-connect-session-1_0.html
-		if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+		// Prefer sid claim from identity (extracted from ID token) for OIDC back-channel logout
+		if identity.SessionID != "" {
+			extSession.SessionID = identity.SessionID
+		} else if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+			// Fallback to session_state for backward compatibility
+			// As of https://openid.net/specs/openid-connect-session-1_0.html
 			extSession.SessionID = sessionState
 		}
 

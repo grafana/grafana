@@ -219,6 +219,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		Groups:          userInfo.Groups,
 		OAuthToken:      token,
 		OrgRoles:        userInfo.OrgRoles,
+		SessionID:       userInfo.SessionID,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
