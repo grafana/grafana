@@ -12,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/notification"
 )
@@ -45,12 +44,6 @@ func New(cfg app.Config) (app.App, error) {
 					Path:       "/notification/query",
 					Method:     "POST",
 				}: notificationHandler.QueryHandler,
-			},
-		},
-		// TODO: Remove when SDK is fixed.
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: v0alpha1.DummyKind(),
 			},
 		},
 	}

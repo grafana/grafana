@@ -6,7 +6,6 @@
 package apis
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -19,12 +18,6 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
 )
 
-var (
-	rawSchemaDummyv0alpha1     = []byte(`{"Dummy":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"description":"Spec is the schema of our resource. The spec should include all the user-editable information for the kind.","properties":{"dummyField":{"type":"integer"}},"required":["dummyField"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaDummyv0alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaDummyv0alpha1, &versionSchemaDummyv0alpha1)
-)
-
 var appManifestData = app.ManifestData{
 	AppName:          "alerting-historian",
 	Group:            "historian.alerting.grafana.app",
@@ -33,15 +26,7 @@ var appManifestData = app.ManifestData{
 		{
 			Name:   "v0alpha1",
 			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "Dummy",
-					Plural:     "Dummys",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Schema:     &versionSchemaDummyv0alpha1,
-				},
-			},
+			Kinds:  []app.ManifestVersionKind{},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/alertstate/history": {
@@ -181,6 +166,13 @@ var appManifestData = app.ManifestData{
 																		"entries": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntry"),
+																						}},
+																				},
 																			},
 																		},
 																	},
@@ -235,6 +227,13 @@ var appManifestData = app.ManifestData{
 					"createNotificationqueryMatchers": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryMatcher"),
+									}},
+							},
 						},
 					},
 					"createNotificationqueryNotificationEntry": {
@@ -245,6 +244,13 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
 										Description: "Alerts are the alerts grouped into the notification.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntryAlert"),
+												}},
+										},
 									},
 								},
 								"duration": {
@@ -420,9 +426,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("alerting-historian")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"Dummy/v0alpha1": v0alpha1.DummyKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.
