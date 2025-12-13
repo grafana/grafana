@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "Mongodb Atlas Datasource",
+  "id": "datasource-mongodbatlas-datasource",
+  "metrics": true,
+  "info": {
+    "description": "A grafana data source plugin that connects to mongo db atlas allowing users to query collections visualize metrics and monitor document level data using custom filters and time ranges",
+    "author": {
+      "name": "Datasource"
+    },
+    "keywords": ["datasource"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.0.3",
+    "plugins": []
+  }
+}
