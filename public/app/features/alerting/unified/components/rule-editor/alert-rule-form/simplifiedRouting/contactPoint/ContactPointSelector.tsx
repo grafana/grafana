@@ -97,7 +97,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
     </Stack>
   );
 }
-function LinkToContactPoints() {
+export function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
     <TextLink
