@@ -2,7 +2,7 @@ import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
+import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -11,7 +11,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
@@ -128,7 +128,6 @@ function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
 
 function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
   const { layout } = row.useState();
-  const dashboard = useDashboard(row);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -143,7 +142,7 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
     <>
       <RepeatRowSelect2
         id={id}
-        sceneContext={dashboard}
+        sceneContext={row}
         repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}
       />

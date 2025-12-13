@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneObject, sceneGraph } from '@grafana/scenes';
+import { LocalValueVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
@@ -57,12 +57,15 @@ interface Props2 {
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
   const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
+  const existingRepeat = useExistingRepeat(sceneContext);
 
   const variableOptions = useMemo(() => {
-    const options: ComboboxOption[] = variables.map((item) => ({
-      label: item.state.name,
-      value: item.state.name,
-    }));
+    const options: ComboboxOption[] = variables
+      .filter((item) => !existingRepeat.has(item.state.name))
+      .map((item) => ({
+        label: item.state.name,
+        value: item.state.name,
+      }));
 
     options.unshift({
       label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
@@ -70,7 +73,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [variables]);
+  }, [existingRepeat, variables]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
@@ -79,7 +82,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   return (
     <Combobox
       id={id}
-      value={repeat}
+      value={repeat || ''}
       onChange={onSelectChange}
       options={variableOptions}
       disabled={isDisabled}
@@ -94,3 +97,42 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     />
   );
 };
+
+function useExistingRepeat(sceneContext: SceneObject) {
+  return useMemo<Set<string>>(() => {
+    const repeats = new Set<string>();
+
+    findRepeatedAncestors(sceneContext, repeats);
+    findRepeatedDescendent(sceneContext, repeats);
+
+    return repeats;
+  }, [sceneContext]);
+}
+
+function findRepeatedAncestors(o: SceneObject, repeats: Set<string>) {
+  let p = o.parent;
+
+  while (p) {
+    const localVar = p.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
+    if (localVar) {
+      repeats.add(localVar.state.name);
+    }
+    p = p.parent;
+  }
+}
+
+function findRepeatedDescendent(o: SceneObject, repeats: Set<string>) {
+  o.forEachChild((c) => {
+    // skip clones
+    if ('repeatSourceKey' in c.state && c.state.repeatSourceKey) {
+      return;
+    }
+
+    const localVar = c.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
+    if (localVar) {
+      repeats.add(localVar.state.name);
+    }
+
+    findRepeatedDescendent(c, repeats);
+  });
+}
