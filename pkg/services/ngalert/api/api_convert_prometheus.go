@@ -753,7 +753,7 @@ func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	if folderUID != "" {
 		return folderUID
 	}
-	return folder.RootFolderUID
+	return folder.EmptyFolderUID
 }
 
 func namespaceErrorResponse(err error) response.Response {

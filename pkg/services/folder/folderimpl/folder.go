@@ -1283,6 +1283,10 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
+	if dash.FolderUID == folder.GeneralFolderUID {
+		dash.FolderUID = "" // general is the same as root
+	}
+
 	if dash.FolderUID != "" {
 		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
 			return nil, err

@@ -47,6 +47,9 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	if uid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
+	if uid == folder.GeneralFolderUID {
+		return nil, fmt.Errorf("general folder not saved in the database")
+	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
