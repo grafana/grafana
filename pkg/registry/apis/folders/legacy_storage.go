@@ -182,6 +182,12 @@ func (s *legacyStorage) Create(ctx context.Context,
 		descr = *p.Spec.Description
 	}
 
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
 	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
@@ -234,6 +240,13 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return oldObj, created, err
 	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
 	f, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, created, fmt.Errorf("expected folder after update")
@@ -303,6 +316,12 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	p, ok := v.(*folders.Folder)
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, v); err != nil {
+			return nil, false, err
+		}
 	}
 
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
