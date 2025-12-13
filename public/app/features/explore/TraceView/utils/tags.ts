@@ -9,6 +9,7 @@ import {
   STATUS,
   STATUS_MESSAGE,
   TRACE_STATE,
+  SPAN_NAME,
 } from '../components/constants/span';
 import { Trace } from '../components/types/trace';
 
@@ -37,6 +38,11 @@ export const getTraceTagKeys = (trace: Trace) => {
     span.process.tags.forEach((tag) => {
       keys.push(tag.key);
     });
+
+    if (span.process.serviceName) {
+      keys.push('service.name');
+    }
+
     if (span.logs !== null) {
       span.logs.forEach((log) => {
         log.fields.forEach((field) => {
@@ -62,6 +68,9 @@ export const getTraceTagKeys = (trace: Trace) => {
     }
     if (span.traceState) {
       keys.push(TRACE_STATE);
+    }
+    if (span.operationName) {
+      keys.push(SPAN_NAME);
     }
     keys.push(ID);
   });
@@ -93,6 +102,11 @@ export const getTraceTagValues = (trace: Trace, key: string) => {
     }
 
     switch (key) {
+      case SPAN_NAME:
+        if (span.operationName) {
+          values.push(span.operationName);
+        }
+        break;
       case KIND:
         if (span.kind) {
           values.push(span.kind);
