@@ -619,7 +619,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 					UserID:       1,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 		)
 		assert.Equal(t, "test_user", req.Header.Get("X-Grafana-User"))
 	})
@@ -632,7 +632,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 					Login: "test_user",
 				},
 			},
-			&setting.Cfg{SendUserHeader: false},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: false}},
 		)
 		// Get will return empty string even if header is not set
 		assert.Empty(t, req.Header.Get("X-Grafana-User"))
@@ -644,7 +644,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{IsAnonymous: true},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 		)
 		// Get will return empty string even if header is not set
 		assert.Empty(t, req.Header.Get("X-Grafana-User"))
