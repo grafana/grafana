@@ -355,7 +355,7 @@ const HeatmapHoverCell = ({
 
   const headerItem: VizTooltipItem = {
     label: '',
-    value: xDisp(xBucketMax!)!,
+    value: xField?.type === FieldType.time ? xDisp(xBucketMax!)! : xDisp(xBucketMin!)!,
   };
 
   let customContent: ReactElement[] = [];
