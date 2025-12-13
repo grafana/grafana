@@ -71,10 +71,6 @@ export interface FeatureToggles {
   */
   showDashboardValidationWarnings?: boolean;
   /**
-  * Use double quotes to escape keyword in a MySQL query
-  */
-  mysqlAnsiQuotes?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
