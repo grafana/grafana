@@ -81,6 +81,9 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       imageQueryParams['__feature.dashboardSceneSolo'] = true;
     }
 
+    // hide Grafana logo in the rendered image
+    urlParamsUpdate.hideLogo = 'true';
+
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
