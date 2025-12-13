@@ -46,15 +46,13 @@ refs:
 
 Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
-## Differences between Classic V1 Resource, and V2 Resource schemas
+## Different dashboard schema models
 
-When you export a dashboard as code, there might be multiple options available.
-This is because of the evolution of the dashboard JSON schema.
+There are currently three dashboard JSON schema models:
 
-- **V2 Resource**: The current, or v2, JSON schema. This schema is the one used by all dashboards created today. It's also the schema used by any dashboards created in the past using the new editing experience when it was experimental. It uses the Kubernetes resources type structure.
-<!--Runs on our app platform which uses resources, of which there are many; it's a resource schema-->
-- **Classic**: The classic or v1 JSON schema. This schema was used by dashboards created before the dashboards experience released experimentally in Grafana v 12.0.
-- **V1 Resource**: The classic or v1 schema, using the resources structure. The legacy schema is included under the `spec` property of the V1 Resource. This schema is the one used by all dashboards created using the classic schema within the new editing experience.
+- [Classic](#classic-model) - The default schema in self-managed Grafana. (Also referred to as the JSON schema v1.).
+- [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. The `spec` property of the schema contains the Classic-style model of the schema. Dashboards created using the Classic model can be exported using either that model or this one.
+- [V2 Resource](#v2-resource-model) - Kubernetes-style resource schema. The default schema in Grafana Cloud. (Also referred to as the JSON schema v2.)
 
 {{< admonition type="note" >}}
 [Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with all versions of the JSON model, and it's fully compatible with version 2.
@@ -64,138 +62,19 @@ This is because of the evolution of the dashboard JSON schema.
 
 To access the JSON representation of a dashboard:
 
-1. Toggle on the edit mode switch in the top-right corner of the dashboard.
+1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the gear icon in the right sidebar and click **Settings** in the secondary sidebar.
 1. Select the **JSON Model** tab.
 1. Update the JSON structure as needed.
 1. Click **Save changes**.
 
-## V2 Resource (JSON schema v2)
+## Classic model
 
-{{< admonition type="caution" >}}
-
-Dashboard JSON schema v2 is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
-
-**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
-
-{{< /admonition >}}
-
-To view the detailed v2 JSON schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
-
-### Before you begin
-
-Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
-To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
-It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
-
-For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
-
-### Notes and limitations
-
-#### Existing dashboards
-
-With schema v2 enabled, you can still open and view your pre-existing dashboards.
-Upon saving, they’ll be updated to the new schema where you can take advantage of the new features and functionalities.
-
-#### Dashboard behavior with disabled feature flags
-
-If you disable the Dynamic dashboards or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
-
-##### Disable Dynamic dashboards
-
-If the Dynamic dashboards feature toggle is disabled, depending on how the dashboard was built, it will behave differently:
-
-- Dashboards built on the new schema through the UI - View only
-- Dashboards built on Schema v1 - View and edit
-- Dashboards built on the new schema by way of Terraform or the CLI - View and edit
-- Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
-
-##### Disable Dynamic dashboards and `kubernetesDashboards`
-
-You’ll be unable to view or edit dashboards created or updated in the new schema.
-
-#### Import and export
-
-From the UI, dashboards created on schema v2 can be exported and imported like other dashboards.
-When you export them to use in another instance, references of data sources are not persisted but data source types are.
-You’ll have the option to select the data source of your choice in the import UI.
-
-## V1 Resource
-
-To view the detailed V1 Resource schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1beta1).
-
-When you open a dashboard created before (version?) using the new editing experience, the schema uses the Kubernetes-style structure and includes the classic schema (v1 schema) under the `spec` property:
-
-```json
-{
-  "apiVersion": "dashboard.grafana.app/v1beta1",
-  "kind": "Dashboard",
-  "metadata": {
-    "name": "isnt5ss",
-    "namespace": "stacks-521104",
-    "uid": "92674c0e-0360-4bb4-99ab-fb150581376d",
-    "resourceVersion": "1764705030717045",
-    "generation": 1,
-    "creationTimestamp": "2025-12-02T19:50:30Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1329"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:u000000002",
-      "grafana.app/folder": "",
-      "grafana.app/saved-from-ui": "Grafana Cloud (instant)"
-    }
-  },
-  "spec": {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 1329,
-    "links": [],
-    "panels": [],
-    "preload": false,
-    "schemaVersion": 42,
-    "tags": [],
-    "templating": {
-      "list": []
-    },
-    "time": {
-      "from": "now-6h",
-      "to": "now"
-    },
-    "timepicker": {},
-    "timezone": "Africa/Abidjan",
-    "title": "Graphite suggestions",
-    "uid": "isnt5ss",
-    "version": 1,
-    "weekStart": ""
-  },
-  "status": {}
-}
-```
-
-## Classic JSON (Schema v1) {#json-fields}
-
-Before (version?), when you created a new dashboard, a new dashboard JSON object was initialized with the following fields:
+When you create a new dashboard in self-managed Grafana, a new dashboard JSON object was initialized with the following fields:
 
 {{< admonition type="note" >}}
-In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
+In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved.
+After a dashboard is saved, an integer value is assigned to the `id` field.
 {{< /admonition >}}
 
 ```json
@@ -432,3 +311,87 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
+
+## V1 Resource model
+
+The V1 Resource schema model formats the [Classic JSON model](#classic-model) schema as a Kubernetes-style resource.
+The `spec` property of the schema contains the Classic-style model of the schema.
+
+<!-- Following text is from limitations section of schema v2 docs. What do you see when you open a dashboard that was created before DD was enabled? A v1 Resource schema or a V2 resource schema?
+  With schema v2 enabled, you can still open and view your pre-existing dashboards.
+  Upon saving, they’ll be updated to the new schema where you can take advantage of the new features and functionalities.-->
+
+Dashboards created using the Classic model can be exported using either this model or the Classic one.
+
+The following code snippet shows the fields included in the V1 Resource model.
+For the detailed V1 Resource schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1beta1).
+
+```json
+{
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "isnt5ss",
+    "namespace": "stacks-521104",
+    "uid": "92674c0e-0360-4bb4-99ab-fb150581376d",
+    "resourceVersion": "1764705030717045",
+    "generation": 1,
+    "creationTimestamp": "2025-12-02T19:50:30Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "1329"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:u000000002",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana Cloud (instant)"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1329,
+    "links": [],
+    "panels": [],
+    "preload": false,
+    "schemaVersion": 42,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "Africa/Abidjan",
+    "title": "Graphite suggestions",
+    "uid": "isnt5ss",
+    "version": 1,
+    "weekStart": ""
+  },
+  "status": {}
+}
+```
+
+## V2 Resource model
+
+{{< docs/public-preview product="Dashboard JSON schema v2" >}}
+
+For the detailed V2 Resource model schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
