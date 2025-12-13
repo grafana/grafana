@@ -18,7 +18,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { renderOrCallToRender } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
-import { Portal } from '../Portal/Portal';
+import { getPortalContainer, Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
 
 export interface Props {
@@ -67,7 +67,11 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
   });
 
   const click = useClick(context);
-  const dismiss = useDismiss(context);
+  const dismiss = useDismiss(context, {
+    outsidePress(event) {
+      return event.target instanceof Element ? !getPortalContainer().contains(event.target) : false;
+    },
+  });
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
   const animationDuration = 150;
