@@ -1183,6 +1183,19 @@
     },
     {
       "metadata": {
+        "name": "drilldownRecommendations",
+        "resourceVersion": "1764855550769",
+        "creationTimestamp": "2025-12-04T13:39:10Z"
+      },
+      "spec": {
+        "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-12-12T22:20:04Z"

@@ -314,6 +314,13 @@ abstract class DataSourceApi<
   ): Promise<DrilldownsApplicability[]>;
 
   /**
+   * Get recommended drilldowns for a dashboard
+   */
+  getRecommendedDrilldowns?(
+    options?: DataSourceGetRecommendedDrilldownsOptions<TQuery>
+  ): Promise<DrilldownRecommendation>;
+
+  /**
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
@@ -652,6 +659,20 @@ export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends Data
   timeRange?: TimeRange;
   queries?: TQuery[];
   scopes?: Scope[] | undefined;
+}
+
+export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery> {
+  dashboardUid?: string;
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+  timeRange?: TimeRange;
+  queries?: TQuery[];
+  scopes?: Scope[] | undefined;
+}
+
+export interface DrilldownRecommendation {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
 }
 
 export interface DrilldownsApplicability {
