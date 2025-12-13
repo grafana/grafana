@@ -13,7 +13,6 @@ import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
 import { DataSourcesListPage } from './pages/DataSourcesListPage';
 import { EditDataSourcePage } from './pages/EditDataSourcePage';
 import { InsightsFeatureHighlightPage } from './pages/InsightsFeatureHighlightPage';
-import { NewDataSourcePage } from './pages/NewDataSourcePage';
 import { PermissionsFeatureHighlightPage } from './pages/PermissionsFeatureHighlightPage';
 
 function RedirectToAddNewConnection() {
@@ -40,7 +39,11 @@ export default function Connections() {
       <Route caseSensitive path={'/'} element={<ConnectionsHomePage />} />
       {/* The route paths need to be relative to the parent path (ROUTES.Base), so we need to remove that part */}
       <Route caseSensitive path={ROUTES.DataSources.replace(ROUTES.Base, '')} element={<DataSourcesListPage />} />
-      <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />
+      <Route
+        caseSensitive
+        path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')}
+        element={<Navigate replace to={{ pathname: ROUTES.AddNewConnection, search: '?cat=data-source' }} />}
+      />
       <Route
         caseSensitive
         path={ROUTES.DataSourcesDetails.replace(ROUTES.Base, '')}
