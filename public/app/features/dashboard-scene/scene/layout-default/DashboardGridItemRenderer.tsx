@@ -2,16 +2,20 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { useDashboardState } from '../../utils/utils';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
+import { getIsLazy } from '../layouts-shared/utils';
 
 import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 
 export function DashboardGridItemRenderer({ model }: SceneComponentProps<DashboardGridItem>) {
   const { repeatedPanels = [], itemHeight, variableName, body } = model.useState();
   const soloPanelContext = useSoloPanelContext();
+  const { preload } = useDashboardState(model);
+  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
     model.getChildCount(),
@@ -19,27 +23,35 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     itemHeight ?? 10
   );
 
+  function LazyPanelWrapper({ item }: { item: VizPanel }) {
+    return isLazy ? (
+      <LazyLoader key={item.state.key!} className={panelWrapper}>
+        <item.Component model={item} />
+      </LazyLoader>
+    ) : (
+      <div className={panelWrapper}>
+        <item.Component model={item} />
+      </div>
+    );
+  }
+
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
   }
 
   if (!variableName) {
     return (
       <div className={panelWrapper} ref={model.containerRef}>
-        <body.Component model={body} key={body.state.key} />
+        <LazyPanelWrapper item={body} key={body.state.key!} />
       </div>
     );
   }
 
   return (
     <div className={layoutStyle} ref={model.containerRef}>
-      <div className={panelWrapper} key={body.state.key}>
-        <body.Component model={body} key={body.state.key} />
-      </div>
+      <LazyPanelWrapper item={body} key={body.state.key!} />
       {repeatedPanels.map((panel) => (
-        <div className={panelWrapper} key={panel.state.key}>
-          <panel.Component model={panel} key={panel.state.key} />
-        </div>
+        <LazyPanelWrapper item={panel} key={panel.state.key!} />
       ))}
     </div>
   );

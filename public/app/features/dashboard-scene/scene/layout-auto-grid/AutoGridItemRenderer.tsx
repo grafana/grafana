@@ -89,7 +89,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   );
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
   }
 
   const isDragging = !!draggingKey;

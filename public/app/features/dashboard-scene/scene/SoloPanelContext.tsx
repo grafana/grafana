@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { VizPanel } from '@grafana/scenes';
+import { LazyLoader, VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
@@ -51,11 +51,23 @@ export function useSoloPanelContext() {
   return useContext(SoloPanelContext);
 }
 
-export function renderMatchingSoloPanels(soloPanelContext: SoloPanelContextValue, panels: VizPanel[]) {
+export function renderMatchingSoloPanels(
+  soloPanelContext: SoloPanelContextValue,
+  panels: VizPanel[],
+  isLazy?: boolean
+) {
   const matches: React.ReactNode[] = [];
   for (const panel of panels) {
     if (soloPanelContext.matches(panel)) {
-      matches.push(<panel.Component model={panel} key={panel.state.key} />);
+      if (isLazy) {
+        matches.push(
+          <LazyLoader key={panel.state.key!}>
+            <panel.Component model={panel} />
+          </LazyLoader>
+        );
+      } else {
+        matches.push(<panel.Component model={panel} key={panel.state.key} />);
+      }
     }
   }
 
