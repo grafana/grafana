@@ -336,7 +336,7 @@ function countNewLines(log: string, limit = Infinity) {
   let count = 0;
   for (let i = 0; i < log.length; ++i) {
     // No need to iterate further
-    if (count > Infinity) {
+    if (count > limit) {
       return count;
     }
     if (log[i] === '\n') {

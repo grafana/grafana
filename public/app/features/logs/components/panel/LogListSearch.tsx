@@ -18,19 +18,11 @@ interface Props {
 
 export const LOG_LIST_SEARCH_HEIGHT = 48;
 export const LogListSearch = ({ listRef, logs }: Props) => {
-  const {
-    hideSearch,
-    filterLogs,
-    matchingUids,
-    setMatchingUids,
-    setSearch: setContextSearch,
-    searchVisible,
-    toggleFilterLogs,
-  } = useLogListSearchContext();
+  const { hideSearch, filterLogs, matchingUids, search, setMatchingUids, setSearch, searchVisible, toggleFilterLogs } =
+    useLogListSearchContext();
   const { displayedFields, noInteractions } = useLogListContext();
-  const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
-  const inputRef = useRef('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const searchUsedRef = useRef(false);
   const styles = useStyles2(getStyles);
 
@@ -43,16 +35,15 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      inputRef.current = e.target.value;
       startTransition(() => {
-        setSearch(inputRef.current);
+        setSearch(inputRef.current?.value ?? '');
       });
       if (!searchUsedRef.current && !noInteractions) {
         reportInteraction('logs_log_list_search_used');
         searchUsedRef.current = true;
       }
     },
-    [noInteractions]
+    [noInteractions, setSearch]
   );
 
   const prevResult = useCallback(() => {
@@ -78,19 +69,27 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
       setCurrentResult(null);
       return;
     }
-    if (!currentResult) {
+    if (currentResult === null) {
       setCurrentResult(0);
-      listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
+      // No need to filter if we're only showing matching logs, otherwise scroll to the first result.
+      if (!filterLogs) {
+        listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
+      }
     }
-  }, [currentResult, listRef, logs, matches]);
+  }, [currentResult, filterLogs, listRef, logs, matches]);
 
   useEffect(() => {
     if (!searchVisible) {
-      setSearch('');
-      setContextSearch(undefined);
       setMatchingUids(null);
     }
-  }, [searchVisible, setContextSearch, setMatchingUids]);
+  }, [searchVisible, setMatchingUids]);
+
+  useEffect(() => {
+    if (!inputRef.current || !search) {
+      return;
+    }
+    inputRef.current.value = search;
+  }, [search]);
 
   useEffect(() => {
     const newMatchingUids = matches.map((log) => log.uid);
@@ -104,13 +103,12 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         .forEach((log) => log.setCurrentSearch(undefined));
     }
 
-    setContextSearch(search ? search : undefined);
     if (!sameLogs) {
       setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
     } else if (!matches.length) {
       setMatchingUids(null);
     }
-  }, [logs, matches, matchingUids, search, setContextSearch, setMatchingUids]);
+  }, [logs, matches, matchingUids, search, setMatchingUids]);
 
   if (!searchVisible) {
     return null;
@@ -126,6 +124,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
           onChange={handleChange}
           autoFocus
           placeholder={t('logs.log-list-search.input-placeholder', 'Search in logs')}
+          ref={inputRef}
           suffix={suffix}
         />
       </div>
@@ -141,22 +140,22 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         onClick={prevResult}
         disabled={!matches || !matches.length}
         name="angle-up"
-        aria-label={t('logs.log-list-search.prev', 'Previous result')}
+        tooltip={t('logs.log-list-search.prev', 'Previous result')}
       />
       <IconButton
         onClick={nextResult}
         disabled={!matches || !matches.length}
         name="angle-down"
-        aria-label={t('logs.log-list-search.next', 'Next result')}
+        tooltip={t('logs.log-list-search.next', 'Next result')}
       />
       <IconButton
         onClick={toggleFilterLogs}
         disabled={!matches || !matches.length}
         className={filterLogs ? styles.controlButtonActive : undefined}
         name="filter"
-        aria-label={t('logs.log-list-search.filter', 'Filter matching logs')}
+        tooltip={t('logs.log-list-search.filter', 'Filter matching logs')}
       />
-      <IconButton onClick={hideSearch} name="times" aria-label={t('logs.log-list-search.close', 'Close search')} />
+      <IconButton onClick={hideSearch} name="times" tooltip={t('logs.log-list-search.close', 'Close search')} />
     </div>
   );
 };

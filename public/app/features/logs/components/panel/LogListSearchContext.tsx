@@ -7,7 +7,7 @@ export interface LogListSearchContextData {
   search?: string;
   searchVisible?: boolean;
   setMatchingUids: (matches: string[] | null) => void;
-  setSearch: (search: string | undefined) => void;
+  setSearch: (search: string) => void;
   showSearch: () => void;
   toggleFilterLogs: () => void;
 }
@@ -33,13 +33,14 @@ export const useLogListSearchContext = (): LogListSearchContextData => {
 };
 
 export const LogListSearchContextProvider = ({ children }: { children: ReactNode }) => {
-  const [search, setSearch] = useState<string | undefined>(undefined);
+  const [search, setSearch] = useState<string>('');
   const [searchVisible, setSearchVisible] = useState(false);
   const [matchingUids, setMatchingUids] = useState<string[] | null>(null);
   const [filterLogs, setFilterLogs] = useState(false);
 
   const hideSearch = useCallback(() => {
     setSearchVisible(false);
+    setSearch('');
   }, []);
 
   const showSearch = useCallback(() => {
