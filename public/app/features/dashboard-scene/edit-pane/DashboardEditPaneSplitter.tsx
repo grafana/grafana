@@ -10,6 +10,7 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardInsightsOverlay } from '../scene/DashboardInsightsOverlay';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -41,6 +42,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           <NavToolbarActions dashboard={dashboard} />
           <div className={styles.controlsWrapperSticky}>{controls}</div>
           <div className={styles.body}>{body}</div>
+          <DashboardInsightsOverlay dashboard={dashboard} />
         </div>
       </NativeScrollbar>
     );
@@ -116,6 +118,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
           </Sidebar>
         </div>
+        <DashboardInsightsOverlay dashboard={dashboard} />
       </ElementSelectionContext.Provider>
     </div>
   );

@@ -41,6 +41,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
+import { AnalyzeDashboardButton } from './new-toolbar/actions/AnalyzeDashboardButton';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -160,6 +161,12 @@ export function ToolbarActions({ dashboard }: Props) {
     // This adds the alert rules button and the dashboard insights button
     addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
   }
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && isShowingDashboard && !isEditing,
+    render: () => <AnalyzeDashboardButton key="analyze-dashboard-button" dashboard={dashboard} />,
+  });
 
   toolbarActions.push({
     group: 'add-panel',
