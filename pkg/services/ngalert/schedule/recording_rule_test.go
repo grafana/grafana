@@ -17,11 +17,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -29,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
@@ -832,6 +836,74 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			}
 		})
 	})
+
+	testWriteTimestamp := func(t *testing.T, evaluationOffset time.Duration) {
+		writeTarget.Reset()
+		scheduledAt := time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC)
+
+		mockEvalFactory := createMockEvaluatorFactory(t, "A")
+
+		testRuleStore := newFakeRulesStore()
+		testReg := prometheus.NewPedanticRegistry()
+		testSch := setupScheduler(t, testRuleStore, nil, testReg, nil, mockEvalFactory, nil, withSchedulerClock(clk))
+		testSch.recordingWriter = writer
+
+		// Create rule with evaluation offset
+		rule := gen.GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
+		rule.Record.From = "A"
+		rule.Data = []models.AlertQuery{
+			{
+				RefID:         "A",
+				DatasourceUID: "prometheus-uid",
+				Model:         json.RawMessage(`{"expr": "up"}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(10 * time.Minute),
+					To:   models.Duration(evaluationOffset),
+				},
+			},
+		}
+		testRuleStore.PutRule(context.Background(), rule)
+
+		folderTitle := testRuleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(testSch)
+
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		process.Eval(&Evaluation{
+			scheduledAt: scheduledAt,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+		process.Stop(nil)
+
+		require.NotEmpty(t, writeTarget.LastRequestBody)
+		writeRequest := decodePrometheusWriteRequest(t, writeTarget.LastRequestBody)
+		require.NotEmpty(t, writeRequest.Timeseries)
+
+		// Verify timestamp on first sample equals scheduledAt - offset
+		expectedWriteTimestamp := scheduledAt.Add(-evaluationOffset)
+		actualTimestamp, found := getFirstSampleTimestamp(t, writeRequest)
+		require.True(t, found)
+		require.Equal(t, expectedWriteTimestamp.UnixMilli(), actualTimestamp.UnixMilli())
+	}
+
+	t.Run("write timestamp without evaluation offset", func(t *testing.T) {
+		testWriteTimestamp(t, 0)
+	})
+
+	t.Run("write timestamp with evaluation offset", func(t *testing.T) {
+		testWriteTimestamp(t, 5*time.Minute)
+	})
 }
 
 func withQueryForHealth(health string) models.AlertRuleMutator {
@@ -920,6 +992,40 @@ func decodePrometheusWriteRequest(t *testing.T, data string) *prompb.WriteReques
 	require.NoError(t, err)
 
 	return &writeReq
+}
+
+func getFirstSampleTimestamp(t *testing.T, req *prompb.WriteRequest) (time.Time, bool) {
+	t.Helper()
+
+	for _, ts := range req.Timeseries {
+		if len(ts.Samples) > 0 {
+			return time.UnixMilli(ts.Samples[0].Timestamp), true
+		}
+	}
+	return time.Time{}, false
+}
+
+func createMockEvaluatorFactory(t *testing.T, refID string) eval.EvaluatorFactory {
+	t.Helper()
+
+	// Create a frame with proper metadata for the writer to process
+	frame := data.NewFrame("test",
+		data.NewField("value", nil, []float64{42}),
+	)
+	frame.SetMeta(&data.FrameMeta{
+		Type: data.FrameTypeNumericWide,
+	})
+
+	mockEval := &eval_mocks.ConditionEvaluatorMock{}
+	mockEval.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			refID: {
+				Frames: data.Frames{frame},
+			},
+		},
+	}, nil)
+
+	return eval_mocks.NewEvaluatorFactory(mockEval)
 }
 
 func getLabel(req *prompb.WriteRequest, labelName string) (string, bool) {
