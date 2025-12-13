@@ -26,13 +26,16 @@ keywords:
   - json
   - model
   - schema v2
+  - v1 resource
+  - v2 resource
+  - classic
 labels:
   products:
     - cloud
     - enterprise
     - oss
 title: JSON model
-description: View your Grafana dashboard JSON object
+description: View and update your Grafana dashboard JSON object
 weight: 700
 refs:
   annotations:
