@@ -3,9 +3,9 @@ import { pick } from 'lodash';
 import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -16,6 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -25,6 +26,9 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
+import { useRunTrinoArchiveQuery } from './Logs/hooks/useRunTrinoArchiveQuery';
+import { useTrinoDataSource } from './Logs/hooks/useTrinoDataSource';
+import { SETTINGS_KEYS } from './Logs/utils/logs';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -60,22 +64,29 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
+  onSetEnrichedTrinoData?: (data: Array<import('@grafana/data').LogRowModel> | null) => void;
 }
 
-export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen, onSetEnrichedTrinoData }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
 
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
-  const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
+  const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes, queries } = useSelector(
     (state: StoreState) => ({
-      ...pick(state.explore.panes[exploreId]!, 'refreshInterval', 'datasourceInstance', 'range', 'isLive', 'isPaused'),
+      ...pick(state.explore.panes[exploreId]!, 'refreshInterval', 'datasourceInstance', 'range', 'isLive', 'isPaused', 'queries'),
       syncedTimes: state.explore.syncedTimes,
     }),
     shallowEqual
   );
+  
+  // Get panel state separately to access logs sort order
+  const panelsState = useSelector((state: StoreState) => state.explore.panes[exploreId]?.panelsState);
+  
+  // Get logs sort order from panel state or fallback to stored value or default
+  const logsSortOrder = panelsState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending;
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -87,6 +98,25 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
+
+  const trinoDataSource = useTrinoDataSource(config.trino?.datasourceUid);
+  const isLokiDatasource = datasourceInstance?.type === 'loki';
+  const showArchiveButton = !!(
+    config.trino?.logsArchiveTable &&
+    isLokiDatasource &&
+    trinoDataSource &&
+    !isLive &&
+    range
+  );
+
+  const { runArchiveQuery } = useRunTrinoArchiveQuery({
+    trinoDataSource,
+    timeRange: range!,
+    logsQueries: queries,
+    exploreId,
+    onDataReceived: onSetEnrichedTrinoData,
+    sortOrder: logsSortOrder,
+  });
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -277,7 +307,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="basic"
           />,
-          !isLive && (
+          !isLive && range && (
             <ExploreTimeControls
               key="timeControls"
               exploreId={exploreId}
@@ -301,12 +331,22 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             text={showSmallTimePicker ? undefined : refreshPickerLabel}
             tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
-            isLive={isLive}
+            isLive={!!isLive}
             onRefresh={() => onRunQuery(loading)}
-            noIntervalPicker={isLive}
+            noIntervalPicker={!!isLive}
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
           />,
+          showArchiveButton && (
+            <ToolbarButton
+              key="archive-query"
+              variant="canvas"
+              onClick={runArchiveQuery}
+              tooltip={t('explore.toolbar.archive-query-tooltip', 'Query all logs from archive')}
+            >
+              <Trans i18nKey="explore.toolbar.archive-query">Run archive query</Trans>
+            </ToolbarButton>
+          ),
           (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
@@ -323,8 +363,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
                 return (
                   <LiveTailButton
                     splitted={splitted}
-                    isLive={isLive}
-                    isPaused={isPaused}
+                    isLive={isLive!}
+                    isPaused={isPaused!}
                     start={controls.start}
                     pause={controls.pause}
                     resume={controls.resume}

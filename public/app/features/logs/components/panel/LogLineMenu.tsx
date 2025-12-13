@@ -21,6 +21,7 @@ export type GetRowContextQueryFn = (
 type MenuItem = {
   label: string;
   onClick(log: LogListModel): void;
+  shouldShow?: (log: LogListModel) => boolean;
 };
 
 type MenuItemDivider = {
@@ -117,6 +118,9 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
             return <Menu.Divider key={i} />;
           }
           if (isItem(item)) {
+            if (item.shouldShow && !item.shouldShow(log)) {
+              return null;
+            }
             return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
           }
           return null;

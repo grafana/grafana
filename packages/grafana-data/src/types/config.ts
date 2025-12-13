@@ -303,6 +303,10 @@ export interface GrafanaConfig {
   dashboardPerformanceMetrics: string[];
   panelSeriesLimit: number;
   sqlConnectionLimits: SqlConnectionLimits;
+  trino: {
+    logsArchiveTable: string;
+    datasourceUid: string;
+  };
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
