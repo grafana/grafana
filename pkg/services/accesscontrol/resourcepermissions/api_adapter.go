@@ -13,9 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -161,4 +164,229 @@ func getMapKeys(m map[string][]string) []string {
 
 func (a *api) buildResourcePermissionName(resourceID string) string {
 	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceID)
+}
+
+// Write operations
+
+func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	dynamicClient, err := a.getDynamicClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	resourcePermName := a.buildResourcePermissionName(resourceID)
+	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
+
+	existing, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to get existing resource permission: %w", err)
+	}
+
+	k8sPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(permissions))
+	for _, perm := range permissions {
+		if perm.Permission == "" {
+			continue
+		}
+
+		kind := a.getPermissionKind(perm)
+		name := a.getPermissionName(ctx, perm)
+
+		if name == "" {
+			continue
+		}
+
+		k8sPermissions = append(k8sPermissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
+			Name: name,
+			Verb: cases.Lower(language.Und).String(perm.Permission),
+		})
+	}
+
+	if len(k8sPermissions) == 0 {
+		if existing != nil {
+			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{})
+			if err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to delete resource permission in k8s: %w", err)
+			}
+		}
+		return nil
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resourcePermName,
+			Namespace: namespace,
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{
+				ApiGroup: a.getAPIGroup(),
+				Resource: a.service.options.Resource,
+				Name:     resourceID,
+			},
+			Permissions: k8sPermissions,
+		},
+	}
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resourcePerm)
+	if err != nil {
+		return fmt.Errorf("failed to convert resource permission to unstructured: %w", err)
+	}
+	unstructuredPerm := &unstructured.Unstructured{Object: unstructuredObj}
+
+	if existing != nil {
+		unstructuredPerm.SetResourceVersion(existing.GetResourceVersion())
+		_, err = resourcePermResource.Update(ctx, unstructuredPerm, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update resource permission in k8s: %w", err)
+		}
+	} else {
+		_, err = resourcePermResource.Create(ctx, unstructuredPerm, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create resource permission in k8s: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (a *api) setUserPermissionToK8s(ctx context.Context, namespace string, resourceID string, userID int64, permission string) error {
+	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
+}
+
+func (a *api) setBuiltInRolePermissionToK8s(ctx context.Context, namespace string, resourceID string, builtInRole string, permission string) error {
+	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindBasicRole), builtInRole, permission)
+}
+
+func (a *api) setSinglePermissionToK8s(ctx context.Context, namespace string, resourceID string, kind string, name string, permission string) error {
+	dynamicClient, err := a.getDynamicClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	resourcePermName := a.buildResourcePermissionName(resourceID)
+	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
+
+	existing, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to get existing resource permission: %w", err)
+	}
+
+	var existingResourcePerm iamv0.ResourcePermission
+	if existing != nil {
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(existing.Object, &existingResourcePerm); err != nil {
+			return fmt.Errorf("failed to convert existing resource permission: %w", err)
+		}
+	}
+
+	newPermissions := make([]iamv0.ResourcePermissionspecPermission, 0)
+
+	for _, perm := range existingResourcePerm.Spec.Permissions {
+		if string(perm.Kind) == kind && perm.Name == name {
+			continue
+		}
+		newPermissions = append(newPermissions, perm)
+	}
+
+	if permission != "" {
+		newPermissions = append(newPermissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
+			Name: name,
+			Verb: cases.Lower(language.Und).String(permission),
+		})
+	}
+
+	if len(newPermissions) == 0 {
+		if existing != nil {
+			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{})
+			if err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to delete resource permission in k8s: %w", err)
+			}
+		}
+		return nil
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resourcePermName,
+			Namespace: namespace,
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{
+				ApiGroup: a.getAPIGroup(),
+				Resource: a.service.options.Resource,
+				Name:     resourceID,
+			},
+			Permissions: newPermissions,
+		},
+	}
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resourcePerm)
+	if err != nil {
+		return fmt.Errorf("failed to convert resource permission to unstructured: %w", err)
+	}
+	unstructuredPerm := &unstructured.Unstructured{Object: unstructuredObj}
+
+	if existing != nil {
+		unstructuredPerm.SetResourceVersion(existing.GetResourceVersion())
+		_, err = resourcePermResource.Update(ctx, unstructuredPerm, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update resource permission in k8s: %w", err)
+		}
+	} else if permission != "" {
+		_, err = resourcePermResource.Create(ctx, unstructuredPerm, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create resource permission in k8s: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (a *api) getPermissionKind(perm accesscontrol.SetResourcePermissionCommand) string {
+	if perm.UserID != 0 {
+		return string(iamv0.ResourcePermissionSpecPermissionKindUser)
+	}
+	if perm.TeamID != 0 {
+		return string(iamv0.ResourcePermissionSpecPermissionKindTeam)
+	}
+	if perm.BuiltinRole != "" {
+		return string(iamv0.ResourcePermissionSpecPermissionKindBasicRole)
+	}
+	return ""
+}
+
+func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) string {
+	if perm.UserID != 0 {
+		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		if err != nil {
+			return ""
+		}
+		return userDetails.UID
+	}
+	if perm.TeamID != 0 {
+		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			ID: perm.TeamID,
+		})
+		if err != nil {
+			return ""
+		}
+		return teamDetails.UID
+	}
+	if perm.BuiltinRole != "" {
+		return perm.BuiltinRole
+	}
+	return ""
 }
