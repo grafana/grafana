@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
+import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
+import { useSelectionUnmanagedStatus } from 'app/features/provisioning/hooks/useSelectionUnmanagedStatus';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -33,6 +36,7 @@ export interface Props {
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
   const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
+  const [showBulkExportProvisionedResource, setShowBulkExportProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -47,6 +51,9 @@ export function BrowseActions({ folderDTO }: Props) {
     selectedItems,
     folderDTO?.managedBy === ManagerKind.Repo
   );
+  const { hasUnmanaged, isLoading: isLoadingUnmanaged } = useSelectionUnmanagedStatus(selectedItems);
+  const { data: frontendSettings, isLoading: isLoadingSettings } = useGetFrontendSettingsQuery();
+  const hasRepositories = (frontendSettings?.items?.length ?? 0) > 0;
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -134,9 +141,28 @@ export function BrowseActions({ folderDTO }: Props) {
     }
   };
 
+  const showExportModal = () => {
+    trackAction('export', selectedItems);
+    setShowBulkExportProvisionedResource(true);
+  };
+
   const moveButton = (
     <Button onClick={showMoveModal} variant="secondary">
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
+    </Button>
+  );
+
+  // Check if any dashboards are selected (export only supports dashboards, not folders)
+  const hasSelectedDashboards =
+    Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]).length > 0;
+
+  const exportButton = (
+    <Button
+      onClick={showExportModal}
+      variant="secondary"
+      disabled={!hasRepositories || isLoadingSettings || !hasUnmanaged || isLoadingUnmanaged || !hasSelectedDashboards}
+    >
+      <Trans i18nKey="browse-dashboards.action.export-to-repository-button">Export to Repository</Trans>
     </Button>
   );
 
@@ -144,6 +170,7 @@ export function BrowseActions({ folderDTO }: Props) {
     <>
       <Stack gap={1} data-testid="manage-actions">
         {moveButton}
+        {provisioningEnabled && exportButton}
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
@@ -192,6 +219,32 @@ export function BrowseActions({ folderDTO }: Props) {
           />
         </Drawer>
       )}
+
+      {/* bulk export */}
+      {showBulkExportProvisionedResource && (
+        <Drawer
+          title={
+            // Heading levels should only increase by one (a11y)
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.export-provisioned-resources', 'Export Resources')}
+            </Text>
+          }
+          onClose={() => setShowBulkExportProvisionedResource(false)}
+          size="md"
+        >
+          <BulkExportProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid}
+            onActionComplete={() => {
+              setShowBulkExportProvisionedResource(false);
+              onActionComplete();
+            }}
+            onDismiss={() => {
+              setShowBulkExportProvisionedResource(false);
+            }}
+          />
+        </Drawer>
+      )}
     </>
   );
 }
@@ -199,6 +252,7 @@ export function BrowseActions({ folderDTO }: Props) {
 const actionMap = {
   move: 'grafana_manage_dashboards_item_moved',
   delete: 'grafana_manage_dashboards_item_deleted',
+  export: 'grafana_manage_dashboards_item_exported',
 } as const;
 
 function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {

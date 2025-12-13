@@ -575,6 +575,242 @@ func TestValidateJob(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "push action with valid dashboard resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "dashboard-1",
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+							{
+								Name:  "dashboard-2",
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+						Path:    "dashboards/",
+						Message: "Export dashboards",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with resource missing name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].name")
+				require.Contains(t, err.Error(), "Required value")
+			},
+		},
+		{
+			name: "push action with resource missing kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "dashboard-1",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "Required value")
+			},
+		},
+		{
+			name: "push action with resource missing group",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "dashboard-1",
+								Kind: "Dashboard",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "Required value")
+			},
+		},
+		{
+			name: "push action with folder resource by kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "my-folder",
+								Kind:  "Folder",
+								Group: "folder.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0]")
+				require.Contains(t, err.Error(), "folders are not supported for export")
+			},
+		},
+		{
+			name: "push action with folder resource by group",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "my-folder",
+								Kind:  "SomeKind",
+								Group: "folder.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0]")
+				require.Contains(t, err.Error(), "folders are not supported for export")
+			},
+		},
+		{
+			name: "push action with unsupported resource type",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "my-resource",
+								Kind:  "AlertRule",
+								Group: "alerting.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0]")
+				require.Contains(t, err.Error(), "resource type is not supported for export")
+			},
+		},
+		{
+			name: "push action with valid folder (old behavior)",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Folder:  "my-folder",
+						Path:    "dashboards/",
+						Message: "Export folder",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with multiple resources including invalid ones",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "dashboard-1",
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+							{
+								Name:  "my-folder",
+								Kind:  "Folder",
+								Group: "folder.grafana.app",
+							},
+							{
+								Name:  "dashboard-2",
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[1]")
+				require.Contains(t, err.Error(), "folders are not supported for export")
+			},
+		},
 	}
 
 	for _, tt := range tests {
