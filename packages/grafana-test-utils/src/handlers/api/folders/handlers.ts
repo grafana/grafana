@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
 
 const [mockTree, { folderB }] = wellFormedTree();
+// folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 const [mockTreeThatViewersCanEdit] = treeViewersCanEdit();
 const collator = new Intl.Collator();
 
@@ -48,6 +49,7 @@ const listFoldersHandler = () =>
           id: random.integer({ min: 1, max: 1000 }),
           uid: folder.item.uid,
           title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+          ...('managedBy' in folder.item && folder.item.managedBy ? { managedBy: folder.item.managedBy } : {}),
         };
       })
       .sort((a, b) => collator.compare(a.title, b.title)) // API always sorts by title
@@ -76,6 +78,7 @@ const getFolderHandler = () =>
       uid: folder?.item.uid,
       ...additionalProperties,
       ...(accessControlQueryParam ? { accessControl: mockAccessControl } : {}),
+      ...('managedBy' in folder.item && folder.item.managedBy ? { managedBy: folder.item.managedBy } : {}),
     });
   });
 

@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
@@ -35,6 +36,9 @@ export interface NestedFolderPickerProps {
 
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
+
+  /* Disable managed folders (e.g., Git-synced folders) in the picker  */
+  disableManaged?: boolean;
 
   /* Start tree from this folder instead of root */
   rootFolderUID?: string;
@@ -75,6 +79,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
+  disableManaged = false,
   rootFolderUID,
   rootFolderItem,
   permission = 'edit',
@@ -231,22 +236,30 @@ export function NestedFolderPicker({
 
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal
-    if (!showRootFolder || excludeUIDs?.length) {
-      flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
-          return false;
-        }
+    if (!showRootFolder || excludeUIDs?.length || disableManaged) {
+      flatTree = flatTree
+        .filter((item) => {
+          if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
+            return false;
+          }
 
-        if (excludeUIDs?.includes(item.item.uid)) {
-          return false;
-        }
+          if (excludeUIDs?.includes(item.item.uid)) {
+            return false;
+          }
 
-        return true;
-      });
+          return true;
+        })
+        .map((item) => {
+          // Mark managed folders as disabled if disableManaged is true
+          if (disableManaged && 'managedBy' in item.item && item.item.managedBy === ManagerKind.Repo) {
+            return { ...item, disabled: true };
+          }
+          return item;
+        });
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, disableManaged, isBrowsing, searchResults?.items, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

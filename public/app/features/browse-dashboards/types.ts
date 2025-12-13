@@ -44,6 +44,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   level: number;
   isOpen: boolean;
   parentUID?: string;
+  disabled?: boolean;
 }
 
 interface RendererUserProps {

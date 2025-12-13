@@ -5,6 +5,7 @@ import { wellFormedTree } from '../../../../fixtures/folders';
 import { getErrorResponse } from '../../../helpers';
 
 const [mockTree, { folderB }] = wellFormedTree();
+// folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 
 const baseResponse = {
   kind: 'Folder',
@@ -24,7 +25,7 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
         // TODO: Generalise annotations in fixture data
         'grafana.app/createdBy': 'user:1',
         'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': 'user',
+        'grafana.app/managedBy': 'managedBy' in folder ? folder.managedBy : 'user',
         'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
         'grafana.app/folder': folder.kind === 'folder' ? folder.parentUID : undefined,
       },

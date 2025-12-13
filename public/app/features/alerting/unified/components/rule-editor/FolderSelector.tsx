@@ -51,6 +51,7 @@ export function FolderSelector() {
                   <NestedFolderPicker
                     permission="view"
                     showRootFolder={false}
+                    disableManaged={true}
                     invalid={!!errors.folder?.message}
                     {...field}
                     value={folder?.uid}
