@@ -2,6 +2,8 @@ package team
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -77,7 +79,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 	namespace := signedInUser.GetNamespace()
 
 	for _, t := range res.Teams {
-		cells := createCells(t, req.Fields)
+		cells := createCells(c.log, t, req.Fields)
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(t, namespace),
 			Cells: cells,
@@ -118,7 +120,7 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 	}
 }
 
-func createCells(t *team.TeamDTO, fields []string) [][]byte {
+func createCells(log *slog.Logger, t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
 		switch field {
@@ -128,6 +130,22 @@ func createCells(t *team.TeamDTO, fields []string) [][]byte {
 			cells = append(cells, []byte(strconv.FormatBool(t.IsProvisioned)))
 		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			cells = append(cells, []byte(t.ExternalUID))
+		case builders.TEAM_SEARCH_MEMBER_COUNT:
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, uint64(t.MemberCount))
+			cells = append(cells, b)
+		case builders.TEAM_SEARCH_PERMISSION:
+			b := make([]byte, 4)
+			binary.BigEndian.PutUint32(b, uint32(t.Permission))
+			cells = append(cells, b)
+		case builders.TEAM_SEARCH_ACCESS_CONTROL:
+			accessControl, err := json.Marshal(t.AccessControl)
+			if err != nil {
+				log.Error("error marshalling access control", "error", err)
+				cells = append(cells, []byte(""))
+				continue
+			}
+			cells = append(cells, accessControl)
 		}
 	}
 	return cells

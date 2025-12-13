@@ -14,9 +14,12 @@ import (
 )
 
 const (
-	TEAM_SEARCH_EMAIL        = "email"
-	TEAM_SEARCH_PROVISIONED  = "provisioned"
-	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
+	TEAM_SEARCH_EMAIL          = "email"
+	TEAM_SEARCH_PROVISIONED    = "provisioned"
+	TEAM_SEARCH_EXTERNAL_UID   = "externalUID"
+	TEAM_SEARCH_MEMBER_COUNT   = "memberCount"
+	TEAM_SEARCH_PERMISSION     = "permission"
+	TEAM_SEARCH_ACCESS_CONTROL = "accessControl"
 )
 
 var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
@@ -34,6 +37,21 @@ var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColum
 		Name:        TEAM_SEARCH_EXTERNAL_UID,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "External UID of the team",
+	},
+	TEAM_SEARCH_MEMBER_COUNT: {
+		Name:        TEAM_SEARCH_MEMBER_COUNT,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+		Description: "Number of members in the team",
+	},
+	TEAM_SEARCH_PERMISSION: {
+		Name:        TEAM_SEARCH_PERMISSION,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT32,
+		Description: "Permission of the team",
+	},
+	TEAM_SEARCH_ACCESS_CONTROL: {
+		Name:        TEAM_SEARCH_ACCESS_CONTROL,
+		Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
+		Description: "Access control of the team",
 	},
 }
 

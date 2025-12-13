@@ -89,7 +89,7 @@ func TestTeamSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"email", "provisioned", "externalUID"}
+		expectedFields := []string{"email", "provisioned", "externalUID", "memberCount", "permission", "accessControl"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
