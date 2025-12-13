@@ -1,3 +1,5 @@
+import { Subject, Subscription } from 'rxjs';
+
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
 import { performanceUtils } from '@grafana/scenes';
 
@@ -13,7 +15,7 @@ import {
 /**
  * Panel metrics structure for analytics
  */
-interface PanelAnalyticsMetrics {
+export interface PanelAnalyticsMetrics {
   panelId: string;
   panelKey: string;
   pluginId: string;
@@ -54,12 +56,19 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
   private dashboardUID = '';
   private dashboardTitle = '';
+  private panelMetricsSubject = new Subject<{ panelId: string; metrics: PanelAnalyticsMetrics }>();
 
   public initialize(uid: string, title: string) {
     // Clear previous dashboard data and set new context
     this.panelMetrics.clear();
     this.dashboardUID = uid;
     this.dashboardTitle = title;
+    // Recreate the Subject for the new dashboard (since this is a singleton, we need a fresh Subject)
+    // Complete the old Subject first to clean up any remaining subscriptions
+    if (!this.panelMetricsSubject.closed) {
+      this.panelMetricsSubject.complete();
+    }
+    this.panelMetricsSubject = new Subject<{ panelId: string; metrics: PanelAnalyticsMetrics }>();
   }
 
   public destroy() {
@@ -67,6 +76,8 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
     this.panelMetrics.clear();
     this.dashboardUID = '';
     this.dashboardTitle = '';
+    // Note: We don't complete the Subject here since this is a singleton that will be reused.
+    // The Subject will be recreated in initialize() for the next dashboard.
   }
 
   /**
@@ -74,6 +85,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
    */
   public clearMetrics() {
     this.panelMetrics.clear();
+    // Note: We don't emit clear events as subscribers should handle empty metrics gracefully
   }
 
   /**
@@ -81,6 +93,37 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
    */
   public getPanelMetrics(): PanelAnalyticsMetrics[] {
     return Array.from(this.panelMetrics.values());
+  }
+
+  /**
+   * Get panel metrics by panel ID
+   */
+  public getPanelMetricsByPanelId(panelId: string): PanelAnalyticsMetrics | undefined {
+    for (const metrics of this.panelMetrics.values()) {
+      if (metrics.panelId === panelId) {
+        return metrics;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Subscribe to panel metrics updates for a specific panel ID
+   * Returns a subscription that emits when metrics for the given panel are updated
+   */
+  public subscribeToPanelMetrics(panelId: string, callback: (metrics: PanelAnalyticsMetrics) => void): Subscription {
+    // Get initial metrics if available
+    const initialMetrics = this.getPanelMetricsByPanelId(panelId);
+    if (initialMetrics) {
+      callback(initialMetrics);
+    }
+
+    // Subscribe to future updates
+    return this.panelMetricsSubject.subscribe(({ panelId: updatedPanelId, metrics }) => {
+      if (updatedPanelId === panelId) {
+        callback(metrics);
+      }
+    });
   }
 
   // Dashboard-level events (we don't need to track these for panel analytics)
@@ -101,12 +144,14 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   // Panel-level events
   onPanelOperationStart = (data: performanceUtils.PanelPerformanceData): void => {
     // Start events don't need aggregation, just ensure panel exists
-    this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
+    this.ensurePanelExists(data.panelKey, String(data.panelId), data.pluginId, data.pluginVersion);
   };
 
   onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
     // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
-    const panel = this.panelMetrics.get(data.panelKey);
+    // Ensure panel exists - it may not have been created by onPanelOperationStart if the panel
+    // was loaded from saved state or if start events were missed
+    let panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
       console.warn('Panel not found for operation completion:', data.panelKey);
       return;
@@ -154,6 +199,8 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         panel.pluginLoadTime += duration;
         break;
     }
+
+    this.panelMetricsSubject.next({ panelId: String(data.panelId), metrics: panel });
   };
 
   // Query-level events
