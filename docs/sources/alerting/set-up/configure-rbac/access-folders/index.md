@@ -16,7 +16,7 @@ title: Manage access using folders or data sources
 weight: 200
 ---
 
-## Manage access using folders or data sources
+# Manage access using folders or data sources
 
 You can extend the access provided by a role to alert rules and rule-specific silences by assigning permissions to individual folders or data sources.
 
