@@ -12,6 +12,7 @@ const (
 	AzureKeeperType     KeeperType = "azure"
 	GCPKeeperType       KeeperType = "gcp"
 	HashiCorpKeeperType KeeperType = "hashicorp"
+	SystemKeeperType    KeeperType = "system"
 )
 
 func (kt KeeperType) String() string {
@@ -20,7 +21,29 @@ func (kt KeeperType) String() string {
 
 // KeeperConfig is an interface that all keeper config types must implement.
 type KeeperConfig interface {
+	// Returns the name of the keeper
+	GetName() string
 	Type() KeeperType
+}
+
+type NamedKeeperConfig[T interface {
+	Type() KeeperType
+}] struct {
+	Name string
+	Cfg  T
+}
+
+func NewNamedKeeperConfig[T interface {
+	Type() KeeperType
+}](keeperName string, cfg T) *NamedKeeperConfig[T] {
+	return &NamedKeeperConfig[T]{Name: keeperName, Cfg: cfg}
+}
+
+func (c *NamedKeeperConfig[T]) GetName() string {
+	return c.Name
+}
+func (c *NamedKeeperConfig[T]) Type() KeeperType {
+	return c.Cfg.Type()
 }
 
 func (s *KeeperSpec) GetType() KeeperType {
@@ -43,7 +66,7 @@ func (s *KeeperSpec) GetType() KeeperType {
 type SystemKeeperConfig struct{}
 
 func (*SystemKeeperConfig) Type() KeeperType {
-	return "system"
+	return SystemKeeperType
 }
 
 func (s *KeeperAWSConfig) Type() KeeperType {

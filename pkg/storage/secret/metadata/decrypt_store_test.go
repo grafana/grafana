@@ -9,12 +9,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	grpcmetadata "google.golang.org/grpc/metadata"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -323,6 +325,66 @@ func TestIntegrationDecrypt(t *testing.T) {
 				require.Equal(t, tokenSvcIdentity, args[i+1].(string))
 			}
 		}
+	})
+
+	t.Run("happy path, referencing a secret in a 3rd party store", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		tokenSvcIdentity := "svc"
+		stSvcIdentity := "st-svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, tokenSvcIdentity, types.TypeUser)
+
+		// Needs to be incoming because we are pretending we received the metadata from a gRPC request
+		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
+			contracts.HeaderGrafanaServiceIdentityName: stSvcIdentity,
+		}))
+
+		// Setup service
+		sut := testutils.Setup(t)
+
+		// Create a secret on the 3rd party secret store
+		sut.ModelSecretsManager.Create("ref1", "value")
+
+		// Create a 3rd party keeper
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// Create a secure value
+		sv := &secretv1beta1.SecureValue{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sv-test",
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "description",
+				Decrypters:  []string{tokenSvcIdentity},
+				Ref:         ptr.To("ref1"),
+			}}
+
+		_, err = sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		fakeLogger := &mockLogger{}
+
+		loggerCtx := logging.Context(ctx, fakeLogger)
+
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "sv-test")
+		require.NoError(t, err)
+		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
 	})
 }
 

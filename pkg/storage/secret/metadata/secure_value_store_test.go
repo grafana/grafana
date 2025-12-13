@@ -194,7 +194,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := newModel()
+		model := newModel(nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
@@ -208,6 +208,19 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
 				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+			},
+			"read": func(t *rapid.T) {
+				ns := namespaceGen.Draw(t, "ns")
+				name := secureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.read(ns, name)
+				sv, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(ns), name, contracts.ReadOpts{})
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+				require.Equal(t, modelSv.Namespace, sv.Namespace)
+				require.Equal(t, modelSv.Name, sv.Name)
+				require.Equal(t, modelSv.Status.Version, sv.Status.Version)
 			},
 			"delete": func(t *rapid.T) {
 				ns := namespaceGen.Draw(t, "ns")
