@@ -125,20 +125,20 @@ func (a *sqlAdapter) Create(ctx context.Context, anno *annotationV0.Annotation) 
 	return created, nil
 }
 
-func (a *sqlAdapter) Update(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+func (a *sqlAdapter) Update(ctx context.Context, anno *annotationV0.Annotation) error {
 	orgID, err := namespaceToOrgID(ctx, anno.Namespace)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	item := a.fromK8sResource(anno)
 	item.OrgID = orgID
 
 	if err := a.repo.Update(ctx, item); err != nil {
-		return nil, err
+		return err
 	}
 
-	return anno, nil
+	return nil
 }
 
 func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
