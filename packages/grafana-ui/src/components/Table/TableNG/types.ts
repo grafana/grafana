@@ -14,7 +14,7 @@ import {
   SelectableValue,
   FieldState,
 } from '@grafana/data';
-import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
@@ -241,6 +241,11 @@ export interface ActionCellProps {
   getActions: GetActionsFunctionLocal;
 }
 
+export interface InvalidCellProps {
+  cellOptions: TableCellOptions;
+  field: Field;
+}
+
 export interface PillCellProps {
   theme: GrafanaTheme2;
   field: Field;
@@ -304,6 +309,7 @@ export interface MeasureCellHeightEntry {
   fieldIdxs: number[];
 }
 
+export type RenderableCellTypes = TableCellOptions['type'] | TableCellDisplayMode.Geo;
 export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
 
 export interface FromFieldsResult {
