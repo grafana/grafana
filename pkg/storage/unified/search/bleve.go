@@ -1559,17 +1559,20 @@ var termFields = []string{
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	switch selection.Operator(req.Operator) {
-	case selection.Equals, selection.DoubleEquals:
+	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
 
 		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
 		// This should be fixed by using the info from the schema
-		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
-			tq := bleve.NewTermQuery(req.Values[0])
-			tq.SetField(prefix + req.Key)
-			return tq, nil
+		if len(req.Values) == 1 {
+			switch req.Key {
+			case "login", "email", resource.SEARCH_FIELD_OWNER_REFERENCES:
+				tq := bleve.NewTermQuery(req.Values[0])
+				tq.SetField(prefix + req.Key)
+				return tq, nil
+			}
 		}
 
 		if len(req.Values) == 1 {
@@ -1585,11 +1588,6 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 
 		return query.NewConjunctionQuery(conjuncts), nil
 
-	case selection.NotEquals:
-	case selection.DoesNotExist:
-	case selection.GreaterThan:
-	case selection.LessThan:
-	case selection.Exists:
 	case selection.In:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
@@ -1622,6 +1620,14 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		boolQuery.AddMust(notEmptyQuery)
 
 		return boolQuery, nil
+
+	// will fall through to the BadRequestError
+	case selection.DoubleEquals:
+	case selection.NotEquals:
+	case selection.DoesNotExist:
+	case selection.GreaterThan:
+	case selection.LessThan:
+	case selection.Exists:
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
