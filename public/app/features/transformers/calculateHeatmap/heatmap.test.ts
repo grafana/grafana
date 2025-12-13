@@ -1,7 +1,7 @@
 import { FieldType, toDataFrame } from '@grafana/data';
-import { HeatmapCalculationOptions } from '@grafana/schema';
+import { HeatmapCalculationOptions, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 
-import { rowsToCellsHeatmap, calculateHeatmapFromData } from './heatmap';
+import { rowsToCellsHeatmap, calculateHeatmapFromData, calculateBucketFactor } from './heatmap';
 
 describe('Heatmap transformer', () => {
   it('calculate heatmap from input data', async () => {
@@ -120,5 +120,277 @@ describe('Heatmap transformer', () => {
         }),
       })
     ).toThrowErrorMatchingInlineSnapshot(`"No numeric fields found for heatmap"`);
+  });
+
+  describe('calculateBucketFactor', () => {
+    it('calculates ratio from last two buckets for log2 spacing', () => {
+      const buckets = [1, 2, 4, 8];
+      expect(calculateBucketFactor(buckets)).toBe(2);
+    });
+
+    it('calculates ratio from last two buckets for log10 spacing', () => {
+      const buckets = [1, 10, 100, 1000];
+      expect(calculateBucketFactor(buckets)).toBe(10);
+    });
+
+    it('calculates ratio for non-uniform spacing', () => {
+      const buckets = [1, 2.5, 6.25];
+      expect(calculateBucketFactor(buckets)).toBe(2.5);
+    });
+
+    it('returns default factor for single value array', () => {
+      expect(calculateBucketFactor([5])).toBe(1.5);
+    });
+
+    it('returns default factor for empty array', () => {
+      expect(calculateBucketFactor([])).toBe(1.5);
+    });
+
+    it('returns default factor when ratio is not valid expansion (<=1)', () => {
+      const buckets = [10, 5]; // Descending
+      expect(calculateBucketFactor(buckets)).toBe(1.5);
+    });
+
+    it('returns default factor when ratio contains zero', () => {
+      const buckets = [0, 5];
+      expect(calculateBucketFactor(buckets)).toBe(1.5);
+    });
+
+    it('returns default factor when ratio is infinite', () => {
+      const buckets = [5, Infinity];
+      expect(calculateBucketFactor(buckets)).toBe(1.5);
+    });
+
+    it('accepts custom default factor', () => {
+      expect(calculateBucketFactor([5], 3)).toBe(3);
+    });
+  });
+
+  describe('rowsToCellsHeatmap with linear scale', () => {
+    it('converts prometheus-style le labels to numeric buckets with linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          {
+            name: '1',
+            type: FieldType.number,
+            labels: { le: '1' },
+            values: [10, 15],
+          },
+          {
+            name: '10',
+            type: FieldType.number,
+            labels: { le: '10' },
+            values: [20, 25],
+          },
+          {
+            name: '100',
+            type: FieldType.number,
+            labels: { le: '100' },
+            values: [30, 35],
+          },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // Should use numeric values [1, 10, 100] instead of ordinal indices [0, 1, 2]
+      expect(heatmap.fields[1].values).toEqual([1, 10, 100, 1, 10, 100]);
+      expect(heatmap.fields[1].name).toBe('yMax'); // le layout
+    });
+
+    it('converts ge labels to numeric buckets with linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          {
+            name: '1',
+            type: FieldType.number,
+            labels: { ge: '1' },
+            values: [10, 15],
+          },
+          {
+            name: '10',
+            type: FieldType.number,
+            labels: { ge: '10' },
+            values: [20, 25],
+          },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+        layout: HeatmapCellLayout.ge,
+      });
+
+      expect(heatmap.fields[1].values).toEqual([1, 10, 1, 10]);
+      expect(heatmap.fields[1].name).toBe('yMin'); // ge layout
+    });
+
+    it('generates yMax field for linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '2', type: FieldType.number, values: [20] },
+          { name: '4', type: FieldType.number, values: [30] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // Should have yMin, yMax, and count fields
+      expect(heatmap.fields.length).toBe(4);
+      expect(heatmap.fields[2].name).toBe('yMax');
+      expect(heatmap.fields[2].type).toBe('number');
+
+      // yMax should be [2, 4, 8] (shifted buckets + calculated last bucket)
+      // Last bucket uses factor 2 (from 2→4) to estimate 4→8
+      expect(heatmap.fields[2].values).toEqual([2, 4, 8]);
+    });
+
+    it('clears yOrdinalDisplay for linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      expect(heatmap.meta?.custom?.yOrdinalDisplay).toBeUndefined();
+    });
+
+    it('preserves yOrdinalDisplay for non-linear scale (auto/ordinal)', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: 'low', type: FieldType.number, values: [10] },
+          { name: 'high', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({ frame });
+
+      expect(heatmap.meta?.custom?.yOrdinalDisplay).toEqual(['low', 'high']);
+    });
+
+    it('sets unit to undefined for linear scale (preserves original unit)', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // Y field should not have 'short' unit for linear scale
+      expect(heatmap.fields[1].config.unit).toBeUndefined();
+    });
+
+    it('sets unit to short for ordinal scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: 'low', type: FieldType.number, values: [10] },
+          { name: 'high', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({ frame });
+
+      expect(heatmap.fields[1].config.unit).toBe('short');
+    });
+
+    it('uses "count" as value field name for linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // Without yMax, should be 3 fields: xMax, y/yMin/yMax, yMax, count
+      const valueField = heatmap.fields.find((f) => f.name === 'count');
+      expect(valueField).toBeDefined();
+    });
+
+    it('uses "Value" as field name for ordinal scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: 'low', type: FieldType.number, values: [10] },
+          { name: 'high', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({ frame });
+
+      const valueField = heatmap.fields.find((f) => f.name === 'Value');
+      expect(valueField).toBeDefined();
+    });
+
+    it('respects custom value field name for linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+        value: 'Temperature',
+      });
+
+      const valueField = heatmap.fields.find((f) => f.name === 'Temperature');
+      expect(valueField).toBeDefined();
+    });
+
+    it('calculates yMax upper bound using bucket factor', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+          { name: '100', type: FieldType.number, values: [30] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // buckets: [1, 10, 100]
+      // yMax: [10, 100, 1000] - last one calculated as 100 * 10
+      const yMaxField = heatmap.fields.find((f) => f.name === 'yMax');
+      expect(yMaxField?.values).toEqual([10, 100, 1000]);
+    });
   });
 });
