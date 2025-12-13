@@ -103,10 +103,11 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Set the data source's basic configuration options:
 
-   | Name        | Description                                                              |
-   | ----------- | ------------------------------------------------------------------------ |
-   | **Name**    | Sets the name you use to refer to the data source in panels and queries. |
-   | **Default** | Sets whether the data source is pre-selected for new panels.             |
+   | Name             | Description                                                              |
+   | ---------------- | ------------------------------------------------------------------------ |
+   | **Name**         | Sets the name you use to refer to the data source in panels and queries. |
+   | **Default**      | Sets whether the data source is pre-selected for new panels.             |
+   | **Universe Domain** | The universe domain to connect to. For more information, see [Documentation on universe domains](https://documentation.s3ns.fr/docs/get-started-tpc/use-client-libraries?hl=en). |
 
 ### Provision the data source
 
@@ -129,6 +130,7 @@ datasources:
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
       authenticationType: jwt
       defaultProject: my-project-name
+      universeDomain: googleapis.com
     secureJsonData:
       privateKey: |
         -----BEGIN PRIVATE KEY-----
@@ -152,6 +154,7 @@ datasources:
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
       authenticationType: jwt
       defaultProject: my-project-name
+      universeDomain: googleapis.com
       privateKeyPath: /etc/secrets/gce.pem
 ```
 
@@ -166,6 +169,7 @@ datasources:
     access: proxy
     jsonData:
       authenticationType: gce
+      universeDomain: googleapis.com
 ```
 
 ## Import pre-configured dashboards

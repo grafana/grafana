@@ -44,6 +44,24 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
           </ConfigSection>
         </>
       )}
+      <Divider />
+      <div className="gf-form-group">
+        <h5 className="section-heading">Advanced settings</h5>
+        <div className="gf-form">
+          <label className="gf-form-label width-12">Universe Domain</label>
+          <input
+            className="gf-form-input width-30"
+            value={options.jsonData.universeDomain}
+            onChange={(event) =>
+              this.handleOnOptionsChange({
+                ...options,
+                jsonData: { ...options.jsonData, universeDomain: event.target.value },
+              })
+            }
+            placeholder="googleapis.com"
+          />
+        </div>
+      </div>
     </>
   );
 });
