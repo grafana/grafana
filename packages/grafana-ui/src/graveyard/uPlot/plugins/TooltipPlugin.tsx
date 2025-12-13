@@ -53,7 +53,7 @@ export const TooltipPlugin = ({
   renderTooltip,
   ...otherProps
 }: TooltipPluginProps) => {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot>(null);
   const theme = useTheme2();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);

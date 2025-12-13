@@ -64,7 +64,7 @@
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
-    "@types/react": "18.3.18",
+    "@types/react": "19.2.7",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
     "typescript": "5.9.2"

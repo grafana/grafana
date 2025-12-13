@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataQueryRequest, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -31,7 +32,10 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
       .get(traceRef.dsUID)
       .then((dataSource) => {
         if (dataSource) {
-          setDataSource(dataSource);
+          // TODO why?
+          flushSync(() => {
+            setDataSource(dataSource);
+          });
         } else {
           setDataFrames(null);
         }

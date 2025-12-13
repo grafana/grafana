@@ -10,7 +10,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
-  activeRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement | null>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
@@ -103,7 +103,7 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
-  activeRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const DataLinkSuggestionsList = React.memo(

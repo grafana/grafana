@@ -1,4 +1,4 @@
-import { screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
@@ -26,7 +26,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-function setup(token = 'an-access-token') {
+async function setup(token = 'an-access-token') {
   const pubdashProps: PublicDashboardSceneProps = {
     ...getRouteComponentProps({
       route: {
@@ -37,11 +37,19 @@ function setup(token = 'an-access-token') {
     }),
   };
 
-  return render(
-    <Routes>
-      <Route path="/public-dashboards/:accessToken" element={<PublicDashboardScenePage {...pubdashProps} />} />
-    </Routes>,
-    { historyOptions: { initialEntries: [`/public-dashboards/${token}`] } }
+  // TODO investigate why act is needed here
+  // see https://github.com/testing-library/react-testing-library/issues/1375
+  return await act(() =>
+    render(
+      <Routes>
+        <Route
+          path="/public-dashboards/:accessToken"
+          element={<PublicDashboardScenePage {...pubdashProps} />}
+          key={token}
+        />
+      </Routes>,
+      { historyOptions: { initialEntries: [`/public-dashboards/${token}`] } }
+    )
   );
 }
 
@@ -115,7 +123,6 @@ const publicDashboardSceneSelector = e2eSelectors.pages.PublicDashboardScene;
 
 describe('PublicDashboardScenePage', () => {
   beforeEach(() => {
-    config.publicDashboardAccessToken = 'an-access-token';
     getDashboardScenePageStateManager().clearDashboardCache();
     setupLoadDashboardMock({ dashboard: simpleDashboard, meta: {} });
 
@@ -125,7 +132,9 @@ describe('PublicDashboardScenePage', () => {
   });
 
   it('can render public dashboard', async () => {
-    setup();
+    const accessToken = 'an-access-token';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -139,7 +148,9 @@ describe('PublicDashboardScenePage', () => {
   });
 
   it('cannot see menu panel', async () => {
-    setup();
+    const accessToken = 'cannot-see-menu-panel';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -148,7 +159,9 @@ describe('PublicDashboardScenePage', () => {
   });
 
   it('shows time controls when it is not hidden', async () => {
-    setup();
+    const accessToken = 'shows-time-controls';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -158,7 +171,9 @@ describe('PublicDashboardScenePage', () => {
   });
 
   it('does not render paused or deleted screen', async () => {
-    setup();
+    const accessToken = 'does-not-render-paused-or-deleted-screen';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -172,7 +187,7 @@ describe('PublicDashboardScenePage', () => {
       dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
       meta: {},
     });
-    setup(accessToken);
+    await setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -207,9 +222,7 @@ describe('given unavailable public dashboard', () => {
       },
     });
 
-    setup(accessToken);
-
-    await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
+    await setup(accessToken);
 
     expect(screen.queryByTestId(publicDashboardSceneSelector.page)).not.toBeInTheDocument();
     expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
@@ -239,9 +252,7 @@ describe('given unavailable public dashboard', () => {
       },
     });
 
-    setup(accessToken);
-
-    await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
+    await setup(accessToken);
 
     expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
     expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();

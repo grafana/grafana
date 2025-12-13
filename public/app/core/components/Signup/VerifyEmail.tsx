@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -25,7 +26,10 @@ export const VerifyEmail = () => {
     getBackendSrv()
       .post('/api/user/signup', formModel)
       .then(() => {
-        setEmailSent(true);
+        // TODO why?
+        flushSync(() => {
+          setEmailSent(true);
+        });
       })
       .catch((err) => {
         const msg = err.data?.message || err;

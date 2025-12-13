@@ -1,11 +1,10 @@
-import { HTMLAttributes, PropsWithChildren, type JSX } from 'react';
-import * as React from 'react';
+import { createElement, type HTMLAttributes, type PropsWithChildren, type HTMLElementType, type JSX } from 'react';
 
 import { textUtil } from '@grafana/data';
 
 export interface RenderUserContentAsHTMLProps<T = HTMLSpanElement>
   extends Omit<HTMLAttributes<T>, 'dangerouslySetInnerHTML'> {
-  component?: keyof React.ReactHTML;
+  component?: HTMLElementType;
   content: string;
 }
 
@@ -19,7 +18,7 @@ export function RenderUserContentAsHTML<T>({
   content,
   ...rest
 }: PropsWithChildren<RenderUserContentAsHTMLProps<T>>): JSX.Element {
-  return React.createElement(component || 'span', {
+  return createElement(component || 'span', {
     dangerouslySetInnerHTML: { __html: textUtil.sanitize(content) },
     ...rest,
   });

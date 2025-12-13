@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
@@ -225,7 +226,10 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
         newSelectedMetric === '' ? undefined : selector
       );
 
-      setMetrics(fetchedMetrics);
+      // TODO why?!
+      flushSync(() => {
+        setMetrics(fetchedMetrics);
+      });
       setSelectedMetric(newSelectedMetric);
       setLabelKeys(fetchedLabelKeys);
       setIsLoadingLabelKeys(false);

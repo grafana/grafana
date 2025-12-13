@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import type { JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
@@ -301,15 +302,20 @@ describe('AnnotationsField', function () {
       })
     );
 
-    render(
-      <FormWrapper
-        formValues={{
-          annotations: [
-            { key: Annotation.dashboardUID, value: 'dash-test-uid' },
-            { key: Annotation.panelID, value: '1' },
-          ],
-        }}
-      />
+    // TODO investigate why we need act
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(() =>
+      render(
+        <FormWrapper
+          formValues={{
+            annotations: [
+              { key: Annotation.dashboardUID, value: 'dash-test-uid' },
+              { key: Annotation.panelID, value: '1' },
+            ],
+          }}
+        />
+      )
     );
 
     expect(await ui.dashboardAnnotation.find()).toBeInTheDocument();

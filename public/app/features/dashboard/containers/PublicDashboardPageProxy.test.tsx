@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -62,7 +62,9 @@ describe('PublicDashboardPageProxy', () => {
   describe('when scene feature enabled', () => {
     it('should render PublicDashboardScenePage if publicDashboardsScene is enabled', async () => {
       config.featureToggles.publicDashboardsScene = true;
-      setup({});
+      // TODO investigate why we need act
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => setup({}));
 
       await waitFor(() => {
         expect(screen.queryByTestId(PublicDashboardScene.page)).toBeInTheDocument();

@@ -1,3 +1,4 @@
+import { act, fireEvent } from '@testing-library/react';
 import { produce } from 'immer';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
@@ -58,7 +59,7 @@ describe('Moving a Grafana managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -66,7 +67,10 @@ describe('Moving a Grafana managed rule', () => {
         rule={ruleToMove}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -87,7 +91,7 @@ describe('Moving a Grafana managed rule', () => {
       uid: 'does-not-exist',
     };
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={currentRuleGroupID}
@@ -95,7 +99,10 @@ describe('Moving a Grafana managed rule', () => {
         rule={grafanaRulerRule}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });
@@ -130,7 +137,7 @@ describe('Moving a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -138,7 +145,10 @@ describe('Moving a Data source managed rule', () => {
         rule={newRule}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -167,7 +177,7 @@ describe('Moving a Data source managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -175,7 +185,10 @@ describe('Moving a Data source managed rule', () => {
         rule={ruleToMove}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -206,7 +219,7 @@ describe('Moving a Data source managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -214,7 +227,10 @@ describe('Moving a Data source managed rule', () => {
         rule={ruleToMove}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -239,7 +255,7 @@ describe('Moving a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    const { user } = render(
+    render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={curentRuleGroupID}
         targetRuleGroupIdentifier={curentRuleGroupID}
@@ -247,7 +263,10 @@ describe('Moving a Data source managed rule', () => {
         rule={newRule}
       />
     );
-    await user.click(byRole('button').get());
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(byRole('button').get()));
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });

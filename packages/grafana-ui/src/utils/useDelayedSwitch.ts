@@ -19,7 +19,7 @@ export function useDelayedSwitch(value: boolean, options: DelayOptions = {}): bo
   const { duration = 250, delay = 250 } = options;
 
   const [delayedValue, setDelayedValue] = useState(value);
-  const onStartTime = useRef<Date | undefined>();
+  const onStartTime = useRef<Date | undefined>(undefined);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;

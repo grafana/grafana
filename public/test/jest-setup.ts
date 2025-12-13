@@ -126,6 +126,22 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
+global.MessageChannel = jest.fn().mockImplementation(() => {
+  let onmessage: Function;
+  return {
+    port1: {
+      set onmessage(cb: Function) {
+        onmessage = cb;
+      },
+    },
+    port2: {
+      postMessage: (data: unknown) => {
+        onmessage?.({ data });
+      },
+    },
+  };
+});
+
 global.BroadcastChannel = class BroadcastChannel {
   onmessage() {}
   onmessageerror() {}

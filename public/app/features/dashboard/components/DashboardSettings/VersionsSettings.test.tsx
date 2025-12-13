@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -154,7 +154,9 @@ describe('VersionSettings', () => {
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(VERSIONS_FETCH_LIMIT);
 
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
-    await user.click(showMoreButton);
+    // TODO investigate why we need act/fireEvent
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    act(() => fireEvent.click(showMoreButton));
 
     expect(historySrv.getHistoryList).toBeCalledTimes(2);
     expect(screen.getByText(/Fetching more entries/i)).toBeInTheDocument();

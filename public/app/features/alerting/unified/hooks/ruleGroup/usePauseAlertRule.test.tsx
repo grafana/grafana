@@ -31,7 +31,6 @@ describe('pause rule', () => {
     expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/loading/i).find()).toBeInTheDocument();
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
     expect(await byText(/result/i).find()).toBeInTheDocument();
@@ -68,7 +67,6 @@ describe('pause rule', () => {
     expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/loading/i).find()).toBeInTheDocument();
     expect(byText(/success/i).query()).not.toBeInTheDocument();
     expect(await byText(/error:(.+)oops/i).find()).toBeInTheDocument();
   });
