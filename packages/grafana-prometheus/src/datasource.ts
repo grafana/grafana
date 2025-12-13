@@ -70,6 +70,10 @@ import {
 } from './types';
 import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
+interface PrometheusResponse {
+  data: any[];
+  warnings?: string[];
+}
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -98,6 +102,7 @@ export class PrometheusDatasource
   url: string;
   withCredentials: boolean;
   defaultEditor?: QueryEditorMode;
+  instanceSettings: any;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -463,13 +468,13 @@ export class PrometheusDatasource
 
     return processedTargets;
   }
+  
 
-  query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'direct') {
       return this.directAccessError();
     }
 
-    // Use incremental query only if enabled and no instant queries or no $__range variables
     const shouldUseIncrementalQuery =
       this.hasIncrementalQuery &&
       !config.publicDashboardAccessToken &&
@@ -485,12 +490,21 @@ export class PrometheusDatasource
 
     const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
     const startTime = new Date();
+
     return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
-      map((response) => {
-        const amendedResponse = {
+      map((response): PrometheusResponse => {
+        // Proper typing: warnings belong on the response object, not response.data
+        const amendedResponse: PrometheusResponse = {
           ...response,
           data: this.cache.procFrames(request, requestInfo, response.data),
         };
+
+        // Remove warnings if hideWarnings is enabled
+        if (this.instanceSettings.jsonData.hideWarnings && amendedResponse.warnings?.length) {
+          delete amendedResponse.warnings;
+        }
+
+        // Transform the response as usual
         return transformV2(amendedResponse, request, {
           exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
         });
