@@ -19,7 +19,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, seperateMarkerSeries } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -122,7 +122,12 @@ describe('BarChart utils', () => {
           valueSize: 10,
         },
         fullHighlight: false,
+        markers: {
+          markerGroups: [],
+        },
       },
+      preparedMarkers: [],
+      markerData: [],
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -257,6 +262,84 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[0].config.unit).toBeUndefined();
       expect(info.series[0].fields[1].config.unit).toBeUndefined();
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
+    });
+
+    describe('hideMarkerSeries', () => {
+      it('removes marker fields from a deep-copied PanelData and returns them in markerData', () => {
+        const df = new MutableDataFrame({
+          fields: [
+            { name: 'x', type: FieldType.string, values: ['a', 'b'] },
+            { name: 'metric', type: FieldType.number, values: [1, 2] },
+            { name: 'marker', type: FieldType.number, values: [5, 6] },
+          ],
+        });
+        df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+        const panelData = { series: [df] } as any;
+        const markers = [
+          {
+            id: 1,
+            dataField: 'marker',
+            targetField: 'series1',
+            opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
+          },
+        ];
+
+        const originalFieldCount = panelData.series[0].fields.length;
+
+        const { barData, markerData } = seperateMarkerSeries(panelData, markers);
+
+        // marker removed from returned barData
+        expect(barData.series[0].fields.find((f: any) => f.name === 'marker')).toBeUndefined();
+        // marker returned in markerData
+        expect(markerData).toHaveLength(1);
+        expect(markerData[0].name).toBe('marker');
+
+        // original panelData must remain unchanged (deep copy)
+        expect(panelData.series[0].fields.find((f: any) => f.name === 'marker')).toBeDefined();
+        expect(panelData.series[0].fields.length).toBe(originalFieldCount);
+      });
+
+      it('ignores markers that reference missing fields and handles duplicate marker references gracefully', () => {
+        const df = new MutableDataFrame({
+          fields: [
+            { name: 'x', type: FieldType.string, values: ['a'] },
+            { name: 'metric', type: FieldType.number, values: [1] },
+            { name: 'markerA', type: FieldType.number, values: [9] },
+          ],
+        });
+        df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+        const panelData = { series: [df] } as any;
+
+        // two markers refer to the same dataField and one refers to a non-existent field
+        const markers = [
+          {
+            id: 1,
+            dataField: 'markerA',
+            targetField: 'metric',
+            opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
+          },
+          {
+            id: 3,
+            dataField: 'markerA',
+            targetField: 'none_existent',
+            opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
+          },
+        ];
+
+        const { barData, markerData } = seperateMarkerSeries(panelData, markers);
+
+        // only one marker field present and removed once
+        expect(markerData).toHaveLength(1);
+        expect(markerData[0].name).toBe('markerA');
+
+        // barData no longer contains the marker field
+        expect(barData.series[0].fields.find((f: any) => f.name === 'markerA')).toBeUndefined();
+
+        // missing marker had no effect
+        expect(barData.series[0].fields.find((f: any) => f.name === 'does_not_exist')).toBeUndefined();
+      });
     });
   });
 });
