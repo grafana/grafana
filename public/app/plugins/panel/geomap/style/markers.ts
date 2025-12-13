@@ -66,10 +66,32 @@ const textLabel = (cfg: StyleConfigValues) => {
     ...defaultStyleConfig.textConfig,
     ...cfg.textConfig,
   };
+
+  const weight = textConfig.fontWeight ?? 'normal';
+  const style = textConfig.fontStyle ?? 'normal';
+  const fontString = `${style} ${weight} ${textConfig.fontSize}px ${fontFamily}`;
+
+  let stroke = undefined;
+  if (textConfig.outlineWidth && textConfig.outlineWidth > 0) {
+    stroke = new Stroke({
+      color: textConfig.outlineColor ?? '#000',
+      width: textConfig.outlineWidth,
+    });
+  }
+
+  let content = String(cfg.text);
+  if (textConfig.textTransform === 'uppercase') {
+    content = content.toUpperCase();
+  } else if (textConfig.textTransform === 'lowercase') {
+    content = content.toLowerCase();
+  }
+
   return new Text({
-    text: cfg.text,
+    text: content,
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
-    font: `normal ${textConfig.fontSize}px ${fontFamily}`,
+    font: fontString,
+    stroke: stroke,
+    rotation: cfg.rotation ? (cfg.rotation * Math.PI) / 180 : 0,
     ...textConfig,
   });
 };
@@ -386,7 +408,7 @@ export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<
 
 // Will prepare symbols as necessary
 export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): Promise<StyleMaker> {
-  if (!symbol) {
+  if (!symbol || symbol === '') {
     return hasTextLabel ? textMarker : circleMarker;
   }
 
