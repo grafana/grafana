@@ -5,7 +5,24 @@ metaV0Alpha1: {
 	scope: "Namespaced"
 	schema: {
 		spec: {
-			pluginJSON: #JSONData,
+			pluginJson: #JSONData
+			module?: {
+				path:             string
+				hash?:            string
+				loadingStrategy?: "fetch" | "script"
+			}
+			baseURL?: string
+			signature?: {
+				status: "internal" | "valid" | "invalid" | "modified" | "unsigned"
+				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
+				org?:   string
+			}
+			angular?: {
+				detected: bool
+			}
+			translations?: [string]: string
+			// +listType=atomic
+			children?: [...string]
 		}
 	}
 }

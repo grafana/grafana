@@ -9,9 +9,13 @@ import (
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var (
@@ -20,10 +24,20 @@ var (
 )
 
 type AppInstaller struct {
+	metaManager        *meta.ProviderManager
+	cfgProvider        configprovider.ConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
+
 	*pluginsapp.PluginAppInstaller
 }
 
-func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClient authlib.AccessClient) (*AppInstaller, error) {
+func ProvideAppInstaller(
+	cfgProvider configprovider.ConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider,
+	pluginStore pluginstore.Store,
+	pluginAssetsService *pluginassets.Service,
+	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
+) (*AppInstaller, error) {
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
@@ -35,8 +49,8 @@ func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClien
 
 	coreProvider := meta.NewCoreProvider()
 	cloudProvider := meta.NewCatalogProvider(grafanaComAPIURL)
-	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
-
+	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
+	metaProviderManager := meta.NewProviderManager(localProvider, coreProvider, cloudProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
 	if err != nil {
@@ -44,6 +58,9 @@ func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClien
 	}
 
 	return &AppInstaller{
+		metaManager:        metaProviderManager,
+		cfgProvider:        cfgProvider,
+		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
 }

@@ -49,7 +49,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta)
+		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
 		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 
