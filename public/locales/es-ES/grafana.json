@@ -3707,6 +3707,10 @@
       "clear": "Borrar la búsqueda y los filtros",
       "text": "No se han encontrado resultados para tu consulta"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5950,13 +5954,25 @@
       "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar panel",
         "view-panel": "Ver panel"
       },
       "title": {
         "dashboard": "Panel de control",
-        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?"
+        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10712,7 +10728,6 @@
       "title": "Nuevo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nuevo panel de control"
     },
     "new-folder": {
@@ -11856,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Configurar esta conexión podría causar una interrupción temporal"
     },
     "getting-started-page": {
-      "header": "Aprovisionamiento",
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
     },
     "git": {
@@ -12622,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",
