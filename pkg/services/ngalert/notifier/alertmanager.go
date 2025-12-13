@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -58,6 +59,7 @@ type alertmanager struct {
 	decryptFn            alertingNotify.GetDecryptedValueFn
 	crypto               Crypto
 	features             featuremgmt.FeatureToggles
+	dynamicLimits        alertingNotify.DynamicLimits
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -148,6 +150,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		return nil, err
 	}
 
+	limits := alertingNotify.DynamicLimits{
+		Dispatcher: nilLimits{},
+		Templates: alertingTemplates.Limits{
+			MaxTemplateOutputSize: cfg.UnifiedAlerting.AlertmanagerMaxTemplateOutputSize,
+		},
+	}
+	if err := limits.Templates.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid template limits: %w", err)
+	}
+
 	am := &alertmanager{
 		Base:                 gam,
 		ConfigMetrics:        m.AlertmanagerConfigMetrics,
@@ -158,6 +170,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		decryptFn:            decryptFn,
 		crypto:               crypto,
 		features:             featureToggles,
+		dynamicLimits:        limits,
 	}
 
 	return am, nil
@@ -382,7 +395,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		TimeIntervals:     amConfig.TimeIntervals,
 		Templates:         templates,
 		Receivers:         receivers,
-		DispatcherLimits:  &nilLimits{},
+		Limits:            am.dynamicLimits,
 		Raw:               rawConfig,
 		Hash:              configHash,
 	})
