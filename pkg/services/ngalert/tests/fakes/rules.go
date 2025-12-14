@@ -219,6 +219,7 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		RuleUIDs:                    q.RuleUIDs,
 		ReceiverName:                q.ReceiverName,
 		HasPrometheusRuleDefinition: q.HasPrometheusRuleDefinition,
+		LabelMatchers:               q.LabelMatchers,
 	}
 
 	ruleList, err := f.listAlertRules(query)
@@ -355,6 +356,20 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
 			continue
 		}
+
+		if len(q.LabelMatchers) > 0 {
+			matches := true
+			for _, m := range q.LabelMatchers {
+				if !m.Matches(r.Labels[m.Name]) {
+					matches = false
+					break
+				}
+			}
+			if !matches {
+				continue
+			}
+		}
+
 		copyR := models.CopyRule(r)
 		ruleList = append(ruleList, copyR)
 	}
