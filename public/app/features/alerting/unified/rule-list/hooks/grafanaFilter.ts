@@ -3,6 +3,7 @@ import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
 import { RulesFilter } from '../../search/rulesSearchParser';
+import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
 import {
@@ -75,6 +76,20 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     hasInvalidDataSourceNames = datasourceUids.length === 0;
   }
 
+  // Convert labels to JSON-encoded matchers for backend filtering
+  let ruleLabels: string[] | undefined = undefined;
+  if (shouldUseBackendFilters() && normalizedFilterState.labels.length > 0) {
+    ruleLabels = normalizedFilterState.labels
+      .map((label) => {
+        try {
+          return JSON.stringify(parseMatcher(label));
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((matcher): matcher is string => matcher !== undefined);
+  }
+
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
@@ -85,6 +100,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
+    ruleLabels,
   };
 
   return {

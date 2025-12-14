@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -796,6 +797,15 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 	return result, nextToken, err
 }
 
+func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool {
+	for _, m := range matchers {
+		if !m.Matches(lbls[m.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
 // nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
@@ -914,6 +924,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if len(query.LabelMatchers) > 0 {
+		q, err = st.filterByLabelMatchers(query.LabelMatchers, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
 	// FIXME: record is nullable but we don't save it as null when it's nil
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
@@ -958,6 +975,11 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 	}
 	if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
 		if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
+			return nil, false
+		}
+	}
+	if len(query.LabelMatchers) > 0 { // remove false-positive hits from the result
+		if !matchersMatchLabels(query.LabelMatchers, converted.Labels) {
 			return nil, false
 		}
 	}
@@ -1347,6 +1369,44 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 		"%prometheus_style_rule%",
 		"%original_rule_definition%",
 	), nil
+}
+
+// filterByLabelMatchers adds filtering for equality and inequality label matchers.
+// Returns error if regex matchers are passed.
+func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Session) (*xorm.Session, error) {
+	dialect := st.SQLStore.GetDialect()
+	isSQLite := dialect.DriverName() == migrator.SQLite
+
+	for _, m := range matchers {
+		switch m.Type {
+		case labels.MatchEqual, labels.MatchNotEqual:
+			if isSQLite {
+				pattern, err := buildGlobPattern(dialect, m.Name, m.Value)
+				if err != nil {
+					return nil, err
+				}
+				if m.Type == labels.MatchEqual {
+					sess = sess.And("labels GLOB ?", "*"+pattern+"*")
+				} else {
+					sess = sess.And("labels NOT GLOB ?", "*"+pattern+"*")
+				}
+			} else {
+				jsonExtract, err := jsonExtractText(dialect, "labels")
+				if err != nil {
+					return nil, err
+				}
+				if m.Type == labels.MatchEqual {
+					sess = sess.And(jsonExtract+" = ?", m.Name, m.Value)
+				} else {
+					sess = sess.And("("+jsonExtract+" IS NULL OR "+jsonExtract+" != ?)", m.Name, m.Name, m.Value)
+				}
+			}
+
+		case labels.MatchRegexp, labels.MatchNotRegexp:
+			return nil, fmt.Errorf("regex matchers (=~, !~) are not supported, got matcher %q %s %q", m.Name, m.Type, m.Value)
+		}
+	}
+	return sess, nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
