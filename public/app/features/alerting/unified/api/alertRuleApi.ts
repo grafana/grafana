@@ -54,6 +54,7 @@ export enum PrometheusAPIFilters {
   Namespace = 'file',
   NamespaceVanilla = 'file[]',
   FolderUID = 'folder_uid',
+  RuleUID = 'rule_uid',
   LimitAlerts = 'limit_alerts',
   MaxGroups = 'max_groups',
   ExcludeAlerts = 'exclude_alerts',
@@ -169,6 +170,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         namespace?: string;
         groupName?: string;
         ruleName?: string;
+        ruleUid?: string;
         dashboardUid?: string;
         panelId?: number;
         limitAlerts?: number;
@@ -181,6 +183,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         namespace,
         groupName,
         ruleName,
+        ruleUid,
         dashboardUid,
         panelId,
         limitAlerts,
@@ -200,6 +203,11 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         if (ruleName) {
           queryParams[PrometheusAPIFilters.RuleName] = ruleName;
           queryParams[PrometheusAPIFilters.RuleNameVanilla] = ruleName;
+        }
+
+        // Supported only by Grafana managed rules
+        if (ruleUid) {
+          queryParams[PrometheusAPIFilters.RuleUID] = ruleUid;
         }
 
         if (namespace) {

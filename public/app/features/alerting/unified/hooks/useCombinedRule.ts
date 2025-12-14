@@ -122,6 +122,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       namespace: ruleLocation?.namespace,
       groupName: ruleLocation?.group,
       ruleName: ruleLocation?.ruleName,
+      ruleUid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : undefined,
       limitAlerts,
     },
     {

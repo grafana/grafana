@@ -69,5 +69,19 @@ describe('alertRuleApi', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(request.params?.[PrometheusAPIFilters.LimitAlerts]).toBe('25');
     });
+
+    it('includes rule_uid when provided', async () => {
+      const request = await executePrometheusRuleNamespacesQuery({ ruleUid: 'test-rule-uid-123' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(request.params?.[PrometheusAPIFilters.RuleUID]).toBe('test-rule-uid-123');
+    });
+
+    it('omits rule_uid when not provided', async () => {
+      const request = await executePrometheusRuleNamespacesQuery();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(request.params?.[PrometheusAPIFilters.RuleUID]).toBeUndefined();
+    });
   });
 });
