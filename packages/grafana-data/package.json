@@ -55,7 +55,7 @@
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "7.0.1",
+    "@braintree/sanitize-url": "7.1.1",
     "@grafana/i18n": "12.4.0-pre",
     "@grafana/schema": "12.4.0-pre",
     "@leeoniya/ufuzzy": "1.0.19",
