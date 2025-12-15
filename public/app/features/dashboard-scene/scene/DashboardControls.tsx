@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import { Box, Button, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -171,14 +172,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} />
           </div>
         )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
+      {config.featureToggles.scopeFilters && !editPanel && (
+        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+      )}
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
+      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
@@ -286,6 +290,10 @@ function getStyles(theme: GrafanaTheme2) {
     rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
+    }),
+    contextualNavToggle: css({
+      display: 'inline-flex',
+      margin: theme.spacing(0, 1, 1, 0),
     }),
   };
 }

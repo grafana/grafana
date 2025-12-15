@@ -10,6 +10,7 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
 import {
   ScopeNavigation,
+  ScopeNavigationSpec,
   SuggestedNavigationsFolder,
   SuggestedNavigationsFoldersMap,
   SuggestedNavigationsMap,
@@ -386,12 +387,17 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         // All folders with the same subScope will load the same content when expanded
         const folderKey = `${subScope}-${navigation.metadata.name}`;
         if (!rootNode.folders[folderKey]) {
+          let disableSubScopeSelection: ScopeNavigationSpec['disableSubScopeSelection'] = undefined;
+          if ('disableSubScopeSelection' in navigation.spec) {
+            disableSubScopeSelection = navigation.spec.disableSubScopeSelection;
+          }
           rootNode.folders[folderKey] = {
             title: navigationTitle,
             expanded,
             folders: {},
             suggestedNavigations: {},
             subScopeName: subScope,
+            disableSubScopeSelection,
           };
         }
         if (expanded && !rootNode.folders[folderKey].expanded) {

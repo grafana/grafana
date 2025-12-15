@@ -35,7 +35,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
     useLogListContext();
   const [sidebarHeight, setSidebarHeight] = useState(220);
-  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(logOptionsStorageKey));
+  const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(logOptionsStorageKey));
   const dragStyles = useStyles2(getDragStyles);
 
   useLayoutEffect(() => {
@@ -74,7 +74,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
-    const width = getSidebarWidth(logOptionsStorageKey);
+    const width = getFieldSelectorWidth(logOptionsStorageKey);
     setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
     reportInteraction('logs_field_selector_expand_clicked', {
       mode: 'logs',
@@ -205,7 +205,7 @@ export const LogsTableFieldSelector = ({
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
-    const width = getSidebarWidth(SETTING_KEY_ROOT);
+    const width = getFieldSelectorWidth(SETTING_KEY_ROOT);
     setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
     reportInteraction('logs_field_selector_expand_clicked', {
       mode: 'table',
@@ -436,7 +436,7 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[], def
   return suggestedFields;
 }
 
-export function getSidebarWidth(logOptionsStorageKey?: string): number {
+export function getFieldSelectorWidth(logOptionsStorageKey?: string): number {
   const width =
     (logOptionsStorageKey
       ? parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)
@@ -445,7 +445,7 @@ export function getSidebarWidth(logOptionsStorageKey?: string): number {
   return width < MIN_WIDTH ? MIN_WIDTH : width;
 }
 
-export function getSidebarState(logOptionsStorageKey?: string): boolean | undefined {
+export function getFieldSelectorState(logOptionsStorageKey?: string): boolean | undefined {
   if (!logOptionsStorageKey) {
     return undefined;
   }
