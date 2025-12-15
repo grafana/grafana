@@ -83,8 +83,7 @@ type NavigationConfig struct {
 	Title                    string   `yaml:"title"`                    // Display title
 	Groups                   []string `yaml:"groups"`                   // Optional groups for categorization
 	DisableSubScopeSelection bool     `yaml:"disableSubScopeSelection"` // Makes the subscope not selectable
-	ExpandOnLoad             bool     `yaml:"expandOnLoad"`             // Automatically expand folder on load
-	PreLoadSubScopeChildren  bool     `yaml:"preLoadSubScopeChildren"` // Preload children of subScope without updating UI
+	PreLoadSubScopeChildren  bool     `yaml:"preLoadSubScopeChildren"`  // Preload children of subScope without updating UI
 }
 
 // NavigationTreeNode represents a node in the navigation tree structure
@@ -96,7 +95,6 @@ type NavigationTreeNode struct {
 	SubScope                 string               `yaml:"subScope,omitempty"`
 	Groups                   []string             `yaml:"groups,omitempty"`
 	DisableSubScopeSelection bool                 `yaml:"disableSubScopeSelection,omitempty"`
-	ExpandOnLoad             bool                 `yaml:"expandOnLoad,omitempty"`             // Automatically expand folder on load
 	PreLoadSubScopeChildren  bool                 `yaml:"preLoadSubScopeChildren,omitempty"` // Preload children of subScope without updating UI
 	Children                 []NavigationTreeNode `yaml:"children,omitempty"`
 }
@@ -322,7 +320,6 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		URL:                      nav.URL,
 		Scope:                    prefixedScope,
 		DisableSubScopeSelection: nav.DisableSubScopeSelection,
-		ExpandOnLoad:             nav.ExpandOnLoad,
 		PreLoadSubScopeChildren:  nav.PreLoadSubScopeChildren,
 	}
 
@@ -366,12 +363,11 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		return fmt.Errorf("failed to get created navigation: %w", err)
 	}
 
-	// Update spec if we have ExpandOnLoad or PreLoadSubScopeChildren to ensure they're persisted
-	if nav.ExpandOnLoad || nav.PreLoadSubScopeChildren {
+	// Update spec if we have PreLoadSubScopeChildren to ensure it's persisted
+	if nav.PreLoadSubScopeChildren {
 		// Merge our spec with the created spec to preserve any server-side defaults
-		// but ensure our ExpandOnLoad and PreLoadSubScopeChildren values are set
+		// but ensure our PreLoadSubScopeChildren value is set
 		mergedSpec := createdNav.Spec
-		mergedSpec.ExpandOnLoad = nav.ExpandOnLoad
 		mergedSpec.PreLoadSubScopeChildren = nav.PreLoadSubScopeChildren
 
 		specResource := v0alpha1.ScopeNavigation{
@@ -456,7 +452,6 @@ func treeToNavigations(node NavigationTreeNode, parentPath []string, dashboardCo
 		Scope:                    node.Scope,
 		Title:                    node.Title,
 		DisableSubScopeSelection: node.DisableSubScopeSelection,
-		ExpandOnLoad:             node.ExpandOnLoad,
 		PreLoadSubScopeChildren:  node.PreLoadSubScopeChildren,
 	}
 	if node.SubScope != "" {
