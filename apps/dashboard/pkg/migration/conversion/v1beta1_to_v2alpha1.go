@@ -229,6 +229,16 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+func getUnionField[T ~string](m map[string]interface{}, key string) *T {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			result := T(str)
+			return &result
+		}
+	}
+	return nil
+}
+
 // Helper function to create int64 pointer
 func int64Ptr(i int64) *int64 {
 	return &i
@@ -1195,6 +1205,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			RegexApplyTo:     getUnionField[dashv2alpha1.DashboardVariableRegexApplyTo](varMap, "regexApplyTo"),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
@@ -2011,6 +2022,9 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
 	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
+	if refId == "" {
+		refId = "A"
+	}
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
@@ -2507,22 +2521,15 @@ func buildRegexMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardReg
 	regexMap := &dashv2alpha1.DashboardRegexMap{}
 	regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
 
-	opts, ok := mappingMap["options"].([]interface{})
-	if !ok || len(opts) == 0 {
-		return nil
-	}
-
-	optMap, ok := opts[0].(map[string]interface{})
+	optMap, ok := mappingMap["options"].(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
 	r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
-	if pattern, ok := optMap["regex"].(string); ok {
+	if pattern, ok := optMap["pattern"].(string); ok {
 		r.Pattern = pattern
 	}
-
-	// Result is a DashboardValueMappingResult
 	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
 		r.Result = buildValueMappingResult(resMap)
 	}

@@ -4818,5 +4818,10 @@
     "title": "TimeSeries \u0026 BarChart Stacking",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

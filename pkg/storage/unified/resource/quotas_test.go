@@ -27,10 +27,11 @@ func TestNewQuotaService(t *testing.T) {
 			opts: ReloadOptions{},
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -105,10 +106,11 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 
 	// Create a temporary config file
 	tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-	initialConfig := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+	initialConfig := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 	require.NoError(t, os.WriteFile(tmpFile, []byte(initialConfig), 0644))
 
@@ -139,14 +141,15 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	assert.Equal(t, 1500, quota.Limit, "initial quota should be 1500")
 
 	// Update the config file with new values
-	updatedConfig := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 2500
-"456":
-  quotas:
-    grafana.folder.app/folders:
-      limit: 3000
+	updatedConfig := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 2500
+  "456":
+    quotas:
+      grafana.folder.app/folders:
+        limit: 3000
 `
 	require.NoError(t, os.WriteFile(tmpFile, []byte(updatedConfig), 0644))
 
@@ -183,10 +186,11 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns custom quota for matching tenant and resource",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -204,10 +208,11 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns default quota when tenant not found",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -225,10 +230,11 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns default quota when resource not found",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -246,10 +252,11 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "handles namespace without stacks- prefix",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -284,12 +291,13 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "handles multiple resources for same tenant",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
-    grafana.folder.app/folders:
-      limit: 2500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
+      grafana.folder.app/folders:
+        limit: 2500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -307,12 +315,13 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns error when namespace is empty",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
-    grafana.folder.app/folders:
-      limit: 2500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
+      grafana.folder.app/folders:
+        limit: 2500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -330,12 +339,13 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns error when group is empty",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
-    grafana.folder.app/folders:
-      limit: 2500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
+      grafana.folder.app/folders:
+        limit: 2500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -353,12 +363,13 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns error when resource is empty",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
-    grafana.folder.app/folders:
-      limit: 2500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
+      grafana.folder.app/folders:
+        limit: 2500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile
@@ -376,12 +387,13 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			name: "returns error when all fields are empty",
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
-				content := `"123":
-  quotas:
-    grafana.dashboard.app/dashboards:
-      limit: 1500
-    grafana.folder.app/folders:
-      limit: 2500
+				content := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1500
+      grafana.folder.app/folders:
+        limit: 2500
 `
 				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 				return tmpFile

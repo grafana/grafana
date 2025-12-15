@@ -173,6 +173,7 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(templatesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingNotificationsTemplatesWrite},
 				{Action: accesscontrol.ActionAlertingNotificationsTemplatesDelete},
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesTest},
 			}),
 		},
 	}

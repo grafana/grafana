@@ -654,6 +654,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
+            ...(v.regexApplyTo && { regexApplyTo: v.regexApplyTo }),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
@@ -919,6 +920,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
+          regexApplyTo: v.spec.regexApplyTo,
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
@@ -1266,6 +1268,16 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
       return FieldColorModeIdV1.ContinuousGreens;
     case 'continuous-purples':
       return FieldColorModeIdV1.ContinuousPurples;
+    case 'continuous-viridis':
+      return FieldColorModeIdV1.ContinuousViridis;
+    case 'continuous-magma':
+      return FieldColorModeIdV1.ContinuousMagma;
+    case 'continuous-plasma':
+      return FieldColorModeIdV1.ContinuousPlasma;
+    case 'continuous-inferno':
+      return FieldColorModeIdV1.ContinuousInferno;
+    case 'continuous-cividis':
+      return FieldColorModeIdV1.ContinuousCividis;
     case 'fixed':
       return FieldColorModeIdV1.Fixed;
     case 'shades':

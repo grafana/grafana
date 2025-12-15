@@ -156,6 +156,7 @@ export enum AccessControlAction {
   AlertingTemplatesRead = 'alert.notifications.templates:read',
   AlertingTemplatesWrite = 'alert.notifications.templates:write',
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
+  AlertingNotificationsTemplatesTest = 'alert.notifications.templates.test:write',
 
   // Alerting enrichments actions
   AlertingEnrichmentsRead = 'alert.enrichments:read',

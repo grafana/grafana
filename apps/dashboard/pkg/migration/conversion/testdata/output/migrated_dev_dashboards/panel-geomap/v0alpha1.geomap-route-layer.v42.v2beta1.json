@@ -347,5 +347,10 @@
     "title": "Panel Tests - Geomap Fit to Data - Multiple Layer Types",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

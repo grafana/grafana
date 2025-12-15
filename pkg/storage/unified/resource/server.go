@@ -41,6 +41,7 @@ type ResourceServer interface {
 	resourcepb.ManagedObjectIndexServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
+	resourcepb.QuotasServer
 }
 
 type ListIterator interface {
@@ -1038,7 +1039,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	// Fast path for getting single value in a list
-	if rsp := s.tryFastPathList(ctx, req); rsp != nil {
+	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
 		return rsp, nil
 	}
 
@@ -1134,40 +1135,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
-}
-
-// Some list queries can be calculated with simple reads
-func (s *server) tryFastPathList(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
-	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
-		return nil
-	}
-
-	for _, v := range req.Options.Fields {
-		if v.Key == "metadata.name" && v.Operator == `=` {
-			if len(v.Values) == 1 {
-				read := &resourcepb.ReadRequest{
-					Key:             req.Options.Key,
-					ResourceVersion: req.ResourceVersion,
-				}
-				read.Key.Name = v.Values[0]
-				found, err := s.Read(ctx, read)
-				if err != nil {
-					return &resourcepb.ListResponse{Error: AsErrorResult(err)}
-				}
-
-				// Return a value when it exists
-				rsp := &resourcepb.ListResponse{}
-				if len(found.Value) > 0 {
-					rsp.Items = []*resourcepb.ResourceWrapper{{
-						Value:           found.Value,
-						ResourceVersion: found.ResourceVersion,
-					}}
-				}
-				return rsp
-			}
-		}
-	}
-	return nil
 }
 
 // isTrashItemAuthorized checks if the user has access to the trash item.
@@ -1466,6 +1433,38 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	return rsp, nil
 }
 
+func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
+	if s.overridesService == nil {
+		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
+			Message: "overrides service not configured on resource server",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+	nsr := NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	}
+	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	limit, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+
+	// handle case where no resources exist yet - very unlikely but possible
+	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
+	if len(usage) <= 0 {
+		rsp.Usage = 0
+	} else {
+		rsp.Usage = usage[0].Count
+	}
+
+	return rsp, nil
+}
+
 func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
 		return nil, r
@@ -1585,6 +1584,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 	))
 
 	if s.overridesService == nil {
+		s.log.FromContext(ctx).Debug("overrides service not configured, skipping quota check", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 		return
 	}
 
@@ -1599,6 +1599,12 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		return
 	}
+	if len(stats) > 0 {
+		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
+	} else {
+		s.log.FromContext(ctx).Debug("no stats found for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	}
+
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
 	}

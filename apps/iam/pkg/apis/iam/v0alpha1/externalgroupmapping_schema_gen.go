@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaExternalGroupMapping = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &ExternalGroupMapping{}, &ExternalGroupMappingList{}, resource.WithKind("ExternalGroupMapping"),
+	schemaExternalGroupMapping = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewExternalGroupMapping(), &ExternalGroupMappingList{}, resource.WithKind("ExternalGroupMapping"),
 		resource.WithPlural("externalgroupmappings"), resource.WithScope(resource.NamespacedScope))
 	kindExternalGroupMapping = resource.Kind{
 		Schema: schemaExternalGroupMapping,
