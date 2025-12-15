@@ -202,7 +202,6 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				// EnableLog:             true,
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
 				DisableDataMigrations: false, // Run migrations at startup
@@ -239,7 +238,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				EnableLog:             true,
+				// EnableLog:             true,
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
 				DisableDataMigrations: false,
