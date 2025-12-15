@@ -55,6 +55,8 @@ When you reach the bottom of the list of logs, you will see the message `Scroll 
 
 You have the option to customize the display of logs and choose which columns to show. Following is a list of available options.
 
+<!-- vale Grafana.Spelling = NO -->
+
 | Option                                | Description                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Expand / Collapse                     | Expand or collapse the controls toolbar.                                                                                                                                                                                                                                                                                                                                            |
@@ -69,6 +71,8 @@ You have the option to customize the display of logs and choose which columns to
 | Font size                             | Small font (default), Large font.                                                                                                                                                                                                                                                                                                                                                   |
 | Unescaped newlines                    | Only displayed if the logs contain unescaped new lines. Click to unescape and display as new lines.                                                                                                                                                                                                                                                                                 |
 | Download logs                         | Plain text (txt), JavaScript Object Notation (JSON), Comma-separated values (CSV)                                                                                                                                                                                                                                                                                                   |
+
+<!-- vale Grafana.Spelling = YES -->
 
 ### Download log lines
 
