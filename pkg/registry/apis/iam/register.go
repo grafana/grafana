@@ -594,9 +594,9 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		}
 		return nil
 	case admission.Delete:
-		switch typedObj := a.GetObject().(type) {
+		switch oldRoleObj := a.GetOldObject().(type) {
 		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateRoleOnDelete(ctx, typedObj)
+			return b.roleApiInstaller.ValidateRoleOnDelete(ctx, oldRoleObj)
 		}
 		return nil
 	case admission.Connect:
