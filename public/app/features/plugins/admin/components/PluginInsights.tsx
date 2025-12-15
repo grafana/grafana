@@ -1,18 +1,30 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { CatalogPluginInsights } from '../types';
 
 type Props = { pluginInsights: CatalogPluginInsights | undefined };
 
+const PLUGINS_INSIGHTS_OPENED_EVENT_NAME = 'plugins_insights_opened';
+
 export function PluginInsights(props: Props): React.ReactElement | null {
   const { pluginInsights } = props;
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const [openInsights, setOpenInsights] = useState<Record<string, boolean>>({});
+
+  const handleInsightToggle = (insightName: string, isOpen: boolean) => {
+    if (isOpen) {
+      reportInteraction(PLUGINS_INSIGHTS_OPENED_EVENT_NAME, { insight: insightName });
+    }
+    setOpenInsights((prev) => ({ ...prev, [insightName]: isOpen }));
+  };
 
   const tooltipInfo = (
     <Stack direction="column" gap={0.5}>
@@ -35,8 +47,8 @@ export function PluginInsights(props: Props): React.ReactElement | null {
       <hr className={styles.pluginInsightsTooltipSeparator} />
       <Text color="secondary" variant="body">
         <Trans i18nKey="plugins.details.labels.moreDetails">
-          Plese find more information{' '}
-          <TextLink href="https://grafana.com/developers/plugin-tools/" external>
+          Do you find Plugin Insights usefull? Please share your feedback{' '}
+          <TextLink href="https://forms.gle/1ZVLbecyQ8aY9mDYA" external>
             here
           </TextLink>
           .
@@ -60,7 +72,8 @@ export function PluginInsights(props: Props): React.ReactElement | null {
           return (
             <Stack key={index} wrap direction="column" gap={1}>
               <CollapsableSection
-                isOpen={false}
+                isOpen={openInsights[insightItem.name] ?? false}
+                onToggle={(isOpen) => handleInsightToggle(insightItem.name, isOpen)}
                 label={
                   <Stack
                     direction="row"
