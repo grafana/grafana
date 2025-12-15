@@ -64,13 +64,14 @@ function wellFormedFolder(
 }
 
 export function treeViewersCanEdit() {
-  const [, { folderA, folderC }] = wellFormedTree();
+  const [, { folderA, folderC, folderD }] = wellFormedTree();
 
   return [
-    [folderA, folderC],
+    [folderA, folderC, folderD],
     {
       folderA,
       folderC,
+      folderD,
     },
   ] as const;
 }
