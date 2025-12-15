@@ -1,25 +1,36 @@
 import { render, screen } from 'test/test-utils';
 
+import {
+  useAddTeamGroupApiMutation,
+  useGetTeamGroupsApiQuery,
+  useRemoveTeamGroupApiQueryMutation,
+} from '@grafana/api-clients/rtkq/legacy';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TeamGroup } from 'app/types/teams';
 
 import TeamGroupSync from './TeamGroupSync';
-import * as hooks from './hooks';
 import { getMockTeamGroups } from './mocks/teamMocks';
 
+setBackendSrv(backendSrv);
+setupMockServer();
+
 // Mock the hooks
-jest.mock('./hooks', () => ({
-  useGetTeamGroups: jest.fn(),
-  useAddTeamGroup: jest.fn(),
-  useRemoveTeamGroup: jest.fn(),
+jest.mock('@grafana/api-clients/rtkq/legacy', () => ({
+  ...jest.requireActual('@grafana/api-clients/rtkq/legacy'),
+  useGetTeamGroupsApiQuery: jest.fn(),
+  useAddTeamGroupApiMutation: jest.fn(),
+  useRemoveTeamGroupApiQueryMutation: jest.fn(),
 }));
 
-const mockUseGetTeamGroups = hooks.useGetTeamGroups as jest.Mock;
-const mockUseAddTeamGroup = hooks.useAddTeamGroup as jest.Mock;
-const mockUseRemoveTeamGroup = hooks.useRemoveTeamGroup as jest.Mock;
+const mockUseGetTeamGroups = useGetTeamGroupsApiQuery as jest.Mock;
+const mockUseAddTeamGroup = useAddTeamGroupApiMutation as jest.Mock;
+const mockUseRemoveTeamGroup = useRemoveTeamGroupApiQueryMutation as jest.Mock;
 
 const setup = (groups: TeamGroup[] = []) => {
-  const retry = jest.fn();
-  mockUseGetTeamGroups.mockReturnValue({ value: groups, retry });
+  const refetch = jest.fn();
+  mockUseGetTeamGroups.mockReturnValue({ data: groups, refetch });
   const addTeamGroup = jest.fn();
   mockUseAddTeamGroup.mockReturnValue([addTeamGroup, {}]);
   const removeTeamGroup = jest.fn();
@@ -27,7 +38,7 @@ const setup = (groups: TeamGroup[] = []) => {
 
   return {
     ...render(<TeamGroupSync teamUid="team-1" isReadOnly={false} />),
-    retry,
+    refetch,
     addTeamGroup,
     removeTeamGroup,
   };
@@ -49,7 +60,7 @@ describe('TeamGroupSync', () => {
   });
 
   it('should call add group', async () => {
-    const { user, addTeamGroup, retry } = setup();
+    const { user, addTeamGroup } = setup();
     // Empty List CTA "Add group" button is second in the DOM order
     await user.click(screen.getAllByRole('button', { name: /add group/i })[1]);
     expect(screen.getByRole('textbox', { name: /add external group/i })).toBeVisible();
@@ -57,16 +68,14 @@ describe('TeamGroupSync', () => {
     await user.type(screen.getByRole('textbox', { name: /add external group/i }), 'test/group');
     await user.click(screen.getAllByRole('button', { name: /add group/i })[0]);
 
-    expect(addTeamGroup).toHaveBeenCalledWith('team-1', 'test/group');
-    expect(retry).toHaveBeenCalled();
+    expect(addTeamGroup).toHaveBeenCalledWith({ teamId: 'team-1', teamGroupMapping: { groupId: 'test/group' } });
   });
 
   it('should remove group', async () => {
     const mockGroup: TeamGroup = { teamId: 1, groupId: 'someGroup' };
-    const { user, removeTeamGroup, retry } = setup([mockGroup]);
+    const { user, removeTeamGroup } = setup([mockGroup]);
     await user.click(screen.getByRole('button', { name: 'Remove group someGroup' }));
 
-    expect(removeTeamGroup).toHaveBeenCalledWith('team-1', 'someGroup');
-    expect(retry).toHaveBeenCalled();
+    expect(removeTeamGroup).toHaveBeenCalledWith({ teamId: 'team-1', groupId: 'someGroup' });
   });
 });

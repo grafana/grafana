@@ -1,16 +1,19 @@
 import { css, cx } from '@emotion/css';
 import { FormEventHandler, useState } from 'react';
 
-import { TeamGroupDto } from '@grafana/api-clients/rtkq/legacy';
+import {
+  TeamGroupDto,
+  useAddTeamGroupApiMutation,
+  useGetTeamGroupsApiQuery,
+  useRemoveTeamGroupApiQueryMutation,
+} from '@grafana/api-clients/rtkq/legacy';
 import { Trans, t } from '@grafana/i18n';
-import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
-
-import { useAddTeamGroup, useGetTeamGroups, useRemoveTeamGroup } from './hooks';
 
 interface Props {
   isReadOnly: boolean;
@@ -20,16 +23,16 @@ interface Props {
 const headerTooltip = `Sync LDAP, OAuth or SAML groups with your Grafana teams.`;
 
 export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddBoxVisible, setIsAddBoxVisible] = useState(false);
   const [newGroupId, setNewGroupId] = useState('');
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
-  const { value: groups = [], retry: fetchTeamGroups } = useGetTeamGroups(teamUid);
-  const [addTeamGroup] = useAddTeamGroup();
-  const [removeTeamGroup] = useRemoveTeamGroup();
+  const { data: groups = [] } = useGetTeamGroupsApiQuery({ teamId: teamUid });
+  const [addTeamGroup] = useAddTeamGroupApiMutation();
+  const [removeTeamGroup] = useRemoveTeamGroupApiQueryMutation();
 
   const onToggleAdding = () => {
-    setIsAdding(!isAdding);
+    setIsAddBoxVisible(!isAddBoxVisible);
   };
 
   const onNewGroupIdChanged: FormEventHandler<HTMLInputElement> = (event) => {
@@ -38,9 +41,8 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
 
   const onAddGroup: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
-    await addTeamGroup(teamUid, newGroupId);
-    fetchTeamGroups();
-    setIsAdding(false);
+    await addTeamGroup({ teamId: teamUid, teamGroupMapping: { groupId: newGroupId } });
+    setIsAddBoxVisible(false);
     setNewGroupId('');
   };
 
@@ -48,8 +50,7 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
     if (!groupId) {
       return;
     }
-    await removeTeamGroup(teamUid, groupId);
-    fetchTeamGroups();
+    await removeTeamGroup({ teamId: teamUid, groupId });
   };
 
   const isNewGroupValid = () => {
@@ -109,7 +110,7 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
         )}
       </div>
 
-      <SlideDown in={isAdding}>
+      <SlideDown in={isAddBoxVisible}>
         <div className="cta-form">
           <CloseButton onClick={onToggleAdding} />
           <form onSubmit={onAddGroup}>
@@ -138,7 +139,7 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
       </SlideDown>
 
       {groups.length === 0 &&
-        !isAdding &&
+        !isAddBoxVisible &&
         (highlightTrial() ? (
           <TeamSyncUpgradeContent
             action={{ onClick: onToggleAdding, text: t('teams.team-group-sync.text.add-group', 'Add group') }}
