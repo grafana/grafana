@@ -668,6 +668,7 @@ export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQu
   timeRange?: TimeRange;
   queries?: TQuery[];
   scopes?: Scope[] | undefined;
+  loggedUser?: string;
 }
 
 export interface DrilldownRecommendation {
