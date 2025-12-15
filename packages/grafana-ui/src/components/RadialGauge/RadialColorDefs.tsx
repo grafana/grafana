@@ -22,7 +22,7 @@ export interface RadialColorDefsOptions {
   displayProcessor: DisplayProcessor;
 }
 
-const CONTRAST_THRESHOLD_MAX = 7.5;
+const CONTRAST_THRESHOLD_MAX = 4.5;
 const getGuideDotColor = (color: string): string => {
   const darkColor = '#111217'; // gray05
   const lightColor = '#fbfbfb'; // gray90
@@ -70,15 +70,16 @@ export class RadialColorDefs {
       <stop key={i} offset={`${(stop.percent * 100).toFixed(2)}%`} stopColor={stop.color} stopOpacity={1} />
     ));
 
+    // circular gradients are a little awkward today. we don't exactly have the result we
+    // want for continuous color modes, which would be to have the radial bar fill from the top
+    // around the circle. But SVG doesn't support that kind of gradient on stroke paths out-of-the-box,
+    // we'd need to implement something like https://gist.github.com/mbostock/4163057
+
     // Handle continusous color modes first
     // If it's a segment color we don't want to do continuous gradients
     if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
-      // this linear gradient doesn't work well for the circular shape yoday for what we actually
-      // want for continuous color modes, which would be to have the radial bar fill from the top
-      // around the circle. But SVG doesn't support that kind of gradient on stroke paths out-of-the-box,
-      // we'd need to implement something like https://gist.github.com/mbostock/4163057
       this.defs.push(
-        <linearGradient key={id} id={id} x1="0" y1="0" x2={1 / valuePercent} y2="0">
+        <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
           {stops}
         </linearGradient>
       );
@@ -89,12 +90,13 @@ export class RadialColorDefs {
     // For value based colors we want to stay more true to the specific color
     // So a radial gradient that adds a bit of light and shade works best
     if (colorMode.isByValue) {
+      const x2 = shape === 'circle' ? 0 : 1 / valuePercent;
+      const y2 = shape === 'circle' ? 1 : 0;
       this.defs.push(
-        <radialGradient key={id} id={id} x1="0" y1="0" x2={1 / valuePercent} y2="0">
+        <radialGradient key={id} id={id} x1="0" y1="0" x2={x2} y2={y2}>
           {stops}
         </radialGradient>
       );
-
       return returnColor;
     }
 
@@ -103,23 +105,8 @@ export class RadialColorDefs {
     const x2 = shape === 'circle' ? 0 : dimensions.centerX + dimensions.radius;
     const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
 
-    // this makes it so the gradient is always brightest at the current value
-    const transform =
-      shape === 'circle'
-        ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
-        : `translate(-${dimensions.radius * 2 * (1 - valuePercent)}, 0)`;
-
     this.defs.push(
-      <linearGradient
-        key={id}
-        id={id}
-        x1="0"
-        y1="0"
-        x2={x2}
-        y2={y2}
-        gradientUnits="userSpaceOnUse"
-        gradientTransform={transform}
-      >
+      <linearGradient key={id} id={id} x1="0" y1="0" x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
         {stops}
       </linearGradient>
     );
@@ -184,10 +171,20 @@ export class RadialColorDefs {
   }
 
   getGuideDotColors(): [string, string] {
-    const { fieldDisplay } = this.options;
+    const { dimensions, fieldDisplay, shape } = this.options;
 
     const gradient = this.getGradient();
     let valuePercent = fieldDisplay.display.percent ?? 0;
+
+    // the linear gradient used in circular gradients means that we want to use the
+    // y position of the edge of the bar to determine the color. If we ever address
+    // that shortcoming, we could delete this block.
+    if (shape === 'circle') {
+      const angleDeg = ((valuePercent - 0.25) % 1) * 360;
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const yPos = dimensions.centerY + dimensions.radius * Math.sin(angleRad);
+      valuePercent = yPos / (dimensions.centerY * 2);
+    }
 
     let startColor = gradient[0].color;
     let endColor = gradient[gradient.length - 1].color;
