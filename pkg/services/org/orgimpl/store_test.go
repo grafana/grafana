@@ -822,13 +822,16 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 		log:     log.NewNopLogger(),
 		cfg:     cfg,
 	}
-	// orgUserStore.cfg.Skip
+
 	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
 
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
 	seedOrgUsers(t, &orgUserStore, 10, userSvc, o.ID)
+
+	user1, err := userSvc.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "user-1"})
+	require.NoError(t, err)
 
 	cfg.HiddenUsers = map[string]struct{}{
 		"user-1": {},
@@ -912,6 +915,20 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			},
 			expectedNumUsers: 10,
 		},
+		{
+			desc: "should include hidden user if they are the requester",
+			query: &org.SearchOrgUsersQuery{
+				OrgID:              o.ID,
+				ExcludeHiddenUsers: true,
+				User: &user.SignedInUser{
+					UserID:      user1.ID,
+					Login:       user1.Login,
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 9,
+		},
 	}
 
 	for _, tt := range tests {
@@ -930,6 +947,29 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("should paginate correctly when ExcludeHiddenUsers is true", func(t *testing.T) {
+		query := &org.SearchOrgUsersQuery{
+			OrgID:              o.ID,
+			ExcludeHiddenUsers: true,
+			User: &user.SignedInUser{
+				OrgID:       o.ID,
+				Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+			},
+			Limit: 5,
+			Page:  1,
+		}
+		result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
+		require.NoError(t, err)
+		assert.Len(t, result.OrgUsers, 5)
+		assert.Equal(t, int64(8), result.TotalCount)
+
+		query.Page = 2
+		result, err = orgUserStore.SearchOrgUsers(context.Background(), query)
+		require.NoError(t, err)
+		assert.Len(t, result.OrgUsers, 3)
+		assert.Equal(t, int64(8), result.TotalCount)
+	})
 
 	t.Run("should return all users if HiddenUsers is empty", func(t *testing.T) {
 		oldHiddenUsers := cfg.HiddenUsers
