@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef, sceneUtils } from '@grafana/scenes';
+import { Spec as DashboardV2Spec } from '@grafana/schema/src/schema/dashboard/v2';
 import { Alert, Box, Button, Drawer, useStyles2 } from '@grafana/ui';
 
+import { DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { DashboardEditActionEvent, DashboardStateChangedEvent } from '../edit-pane/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -49,24 +51,31 @@ export class SchemaV2EditorDrawer extends SceneObjectBase<SchemaV2EditorDrawerSt
     try {
       const spec = JSON.parse(jsonText);
 
-      // Build a DTO for the transformation function
-      const dto = {
-        apiVersion: 'v2beta1' as const,
-        kind: 'Dashboard' as const,
-        metadata: dashboard.state.meta.k8s ?? {
+      // Get existing metadata from serializer and access from dashboard meta
+      const metadata = dashboard.serializer.metadata;
+      const { meta } = dashboard.state;
+
+      // Build a DTO for the transformation function - only spec changes, metadata/access stays the same
+      const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
           name: dashboard.state.uid ?? '',
-          namespace: 'default',
           resourceVersion: '',
           creationTimestamp: '',
+          ...metadata,
         },
         spec,
         access: {
-          canSave: dashboard.state.meta.canSave ?? false,
-          canEdit: dashboard.state.meta.canEdit ?? false,
-          canAdmin: dashboard.state.meta.canAdmin ?? false,
-          canStar: dashboard.state.meta.canStar ?? false,
-          canDelete: dashboard.state.meta.canDelete ?? false,
-          canShare: dashboard.state.meta.canShare ?? false,
+          canSave: meta.canSave,
+          canEdit: meta.canEdit,
+          canAdmin: meta.canAdmin,
+          canStar: meta.canStar,
+          canDelete: meta.canDelete,
+          canShare: meta.canShare,
+          annotationsPermissions: meta.annotationsPermissions,
+          url: meta.url,
+          slug: meta.slug,
         },
       };
 
@@ -179,6 +188,7 @@ function SchemaV2EditorDrawerComponent({ model }: SchemaV2EditorDrawerComponentP
             onChange={handleChange}
             onValidationChange={handleValidationChange}
             containerStyles={styles.codeEditor}
+            showFormatToggle={true}
           />
         </div>
 

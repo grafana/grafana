@@ -70,17 +70,19 @@ async function doFetchSchema(): Promise<JSONSchema> {
 
   // Build a JSON Schema with definitions for all referenced schemas
   // Monaco's JSON validation supports $ref with definitions
-  const jsonSchema: JSONSchema = {
-    $schema: 'http://json-schema.org/draft-07/schema#',
-    ...convertOpenAPIToJSONSchema(specSchema),
-    definitions: {},
-  };
+  const definitions: Record<string, JSONSchema> = {};
 
   // Add all component schemas as definitions, converting the key format
   for (const [key, schema] of Object.entries(schemas)) {
     const definitionKey = convertRefToDefinitionKey(key);
-    jsonSchema.definitions![definitionKey] = convertOpenAPIToJSONSchema(schema);
+    definitions[definitionKey] = convertOpenAPIToJSONSchema(schema);
   }
+
+  const jsonSchema: JSONSchema = {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    ...convertOpenAPIToJSONSchema(specSchema),
+    definitions,
+  };
 
   // Convert all $ref paths from OpenAPI format to JSON Schema definitions format
   replaceRefs(jsonSchema);
