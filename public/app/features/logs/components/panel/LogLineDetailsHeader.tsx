@@ -102,7 +102,11 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     }
 
     setDetailsMode(newMode);
-  }, [detailsMode, logOptionsStorageKey, setDetailsMode]);
+
+    reportInteractionWrapper('logs_log_line_details_header_toggle_details_mode', {
+      newMode,
+    });
+  }, [detailsMode, logOptionsStorageKey, reportInteractionWrapper, setDetailsMode]);
 
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
