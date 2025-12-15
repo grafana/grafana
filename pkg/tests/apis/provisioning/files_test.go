@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		// Create a branch first by creating a file on a branch
 		branchRef := "test-branch-delete"
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "branch-test-delete.json")
-		
+
 		// Delete on branch should work
 		result := helper.AdminREST.Delete().
 			Namespace("default").
