@@ -175,6 +175,7 @@ export const prepareConfig = (
   builder.addAxis({
     scaleKey: 'x',
     theme,
+    show: false,
     placement: AxisPlacement.Hidden,
   });
 
@@ -201,6 +202,7 @@ export const prepareConfig = (
     builder.addAxis({
       scaleKey,
       theme,
+      show: false,
       placement: AxisPlacement.Hidden,
     });
 
