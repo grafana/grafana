@@ -142,7 +142,14 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
-          'loginPrompt',
+          {
+            name: 'loginPrompt',
+            disabledWhen: {
+              field: 'useRefreshToken',
+              is: true,
+              disabledValue: { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+            },
+          },
         ],
       },
       {
@@ -518,23 +525,23 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation:
         provider === 'azuread'
           ? {
-              validate: (value) => {
-                if (typeof value === 'string') {
-                  return uuidValidate(value);
-                }
-                if (isSelectableValueArray(value)) {
-                  return value.every((v) => v?.value && uuidValidate(v.value));
-                }
-                return true;
-              },
-              message: t(
-                'auth-config.fields.allowed-groups-object-ids',
-                '{{ allowedGroupsLabel }} must be {{ objectIDsField }}.',
-                {
-                  objectIDsField: 'Object IDs',
-                }
-              ),
-            }
+            validate: (value) => {
+              if (typeof value === 'string') {
+                return uuidValidate(value);
+              }
+              if (isSelectableValueArray(value)) {
+                return value.every((v) => v?.value && uuidValidate(v.value));
+              }
+              return true;
+            },
+            message: t(
+              'auth-config.fields.allowed-groups-object-ids',
+              '{{ allowedGroupsLabel }} must be {{ objectIDsField }}.',
+              {
+                objectIDsField: 'Object IDs',
+              }
+            ),
+          }
           : undefined,
     },
     apiUrl: {
@@ -729,10 +736,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     useRefreshToken: {
       label: t('auth-config.fields.use-refresh-token-label', 'Use refresh token'),
-      description: t(
-        'auth-config.fields.use-refresh-token-description',
-        'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
-      ),
+      description:
+        provider === 'google'
+          ? t(
+            'auth-config.fields.use-refresh-token-description-google',
+            'If enabled, Grafana will fetch a new access token using the refresh token provided by Google. This forces the login prompt to "Consent" to ensure Google returns a refresh token.'
+          )
+          : t(
+            'auth-config.fields.use-refresh-token-description',
+            'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+          ),
       type: 'checkbox',
     },
     tlsClientCa: {
@@ -862,17 +875,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation:
         provider === 'github'
           ? {
-              validate: (value) => {
-                if (typeof value === 'string') {
-                  return isNumeric(value);
-                }
-                if (isSelectableValueArray(value)) {
-                  return value.every((v) => v?.value && isNumeric(v.value));
-                }
-                return true;
-              },
-              message: t('auth-config.fields.team-ids-numbers', 'Team IDs must be numbers.'),
-            }
+            validate: (value) => {
+              if (typeof value === 'string') {
+                return isNumeric(value);
+              }
+              if (isSelectableValueArray(value)) {
+                return value.every((v) => v?.value && isNumeric(v.value));
+              }
+              return true;
+            },
+            message: t('auth-config.fields.team-ids-numbers', 'Team IDs must be numbers.'),
+          }
           : undefined,
     },
     hostedDomain: {
@@ -922,10 +935,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     loginPrompt: {
       label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
       type: 'select',
-      description: t(
-        'auth-config.fields.login-prompt-description',
-        'Indicates the type of user interaction when the user logs in with the IdP.'
-      ),
+      description:
+        provider === 'google'
+          ? t(
+            'auth-config.fields.login-prompt-description-google',
+            'Indicates the type of user interaction when the user logs in with Google. This is forced to "Consent" when "Use refresh token" is enabled.'
+          )
+          : t(
+            'auth-config.fields.login-prompt-description',
+            'Indicates the type of user interaction when the user logs in with the IdP.'
+          ),
       multi: false,
       options: [
         { value: '', label: '' },
