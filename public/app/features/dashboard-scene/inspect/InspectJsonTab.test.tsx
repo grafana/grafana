@@ -190,7 +190,7 @@ describe('InspectJsonTab', () => {
     expect(obj.kind).toEqual('Panel');
     expect(obj.spec.id).toEqual(12);
     expect(obj.spec.data.kind).toEqual('QueryGroup');
-    expect(tab.isEditable()).toBe(false);
+    expect(tab.isEditable()).toBe(true);
   });
 });
 
