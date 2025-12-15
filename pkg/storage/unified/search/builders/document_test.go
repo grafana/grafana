@@ -115,7 +115,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		"aaa",
 	})
 
-	builder = resource.StandardDocumentBuilder()
+	builder = resource.StandardDocumentBuilder(nil)
 	doSnapshotTests(t, builder, "folder", &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "folder.grafana.app",

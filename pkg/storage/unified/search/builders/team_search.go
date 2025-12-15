@@ -70,7 +70,7 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, nil)
 
 	doc.Fields = make(map[string]any)
 	if team.Spec.Email != "" {

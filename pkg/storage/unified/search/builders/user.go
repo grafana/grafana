@@ -66,7 +66,7 @@ func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, nil)
 
 	doc.Fields = make(map[string]any)
 	if user.Spec.Email != "" {

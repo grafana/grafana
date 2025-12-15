@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -21,6 +23,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
+	sdkres "github.com/grafana/grafana-app-sdk/resource"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
@@ -129,12 +133,55 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Version: runtime.APIVersionInternal,
 	})
 
+	kinds := []sdkres.Kind{folders.FolderKind()}
+	for _, kind := range kinds {
+		gvk := gv.WithKind(kind.Kind())
+		err := scheme.AddFieldLabelConversionFunc(
+			gvk,
+			func(label, value string) (string, string, error) {
+				if label == "metadata.name" || label == "metadata.namespace" {
+					return label, value, nil
+				}
+				fields := kind.SelectableFields()
+				for _, field := range fields {
+					if field.FieldSelector == label {
+						return label, value, nil
+					}
+				}
+				return "", "", fmt.Errorf("field label not supported for %s: %s", gvk, label)
+			},
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
+}
+
+// TODO: work with all kinds from schema, not just one.
+func (b *FolderAPIBuilder) BuildGetAttrsFn(k sdkres.Kind) func(obj runtime.Object) (labels.Set, fields.Set, error) {
+	return func(obj runtime.Object) (labels.Set, fields.Set, error) {
+		if robj, ok := obj.(sdkres.Object); !ok {
+			return nil, nil, fmt.Errorf("not a resource.Object")
+		} else {
+			fieldsSet := fields.Set{}
+
+			for _, f := range k.SelectableFields() {
+				v, err := f.FieldValueFunc(robj)
+				if err != nil {
+					return nil, nil, err
+				}
+				fieldsSet[f.FieldSelector] = v
+			}
+			return robj.GetLabels(), fieldsSet, nil
+		}
+	}
 }
 
 func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -148,10 +195,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		Permissions:                 b.setDefaultFolderPermissions,
 	})
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter, grafanaregistry.WithAttrFunc(b.BuildGetAttrsFn(folders.FolderKind())))
 	if err != nil {
 		return err
 	}
+
 	b.registerPermissionHooks(unified)
 	b.storage = unified
 

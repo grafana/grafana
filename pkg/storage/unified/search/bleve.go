@@ -93,6 +93,8 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
+	selectableFields map[string][]string
+
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
 }
@@ -135,11 +137,12 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be := &bleveBackend{
-		log:          l,
-		cache:        map[resource.NamespacedResource]*bleveIndex{},
-		opts:         opts,
-		ownsIndexFn:  ownFn,
-		indexMetrics: indexMetrics,
+		log:              l,
+		cache:            map[resource.NamespacedResource]*bleveIndex{},
+		opts:             opts,
+		ownsIndexFn:      ownFn,
+		indexMetrics:     indexMetrics,
+		selectableFields: resource.SelectableFields(),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -366,7 +369,9 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	selectableFields := b.selectableFields[fmt.Sprintf("%s/%s", key.Group, key.Resource)]
+
+	mapper, err := GetBleveMappings(fields, selectableFields)
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +464,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, selectableFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -699,8 +704,9 @@ type bleveIndex struct {
 	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
 	nextUpdateTime time.Time
 
-	standard resource.SearchableDocumentFields
-	fields   resource.SearchableDocumentFields
+	standard         resource.SearchableDocumentFields
+	fields           resource.SearchableDocumentFields
+	selectableFields []string
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -736,6 +742,7 @@ func (b *bleveBackend) newBleveIndex(
 	fields resource.SearchableDocumentFields,
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
+	selectableFields []string,
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
 ) *bleveIndex {
@@ -745,6 +752,7 @@ func (b *bleveBackend) newBleveIndex(
 		indexStorage:      newIndexType,
 		fields:            fields,
 		allFields:         allFields,
+		selectableFields:  selectableFields,
 		standard:          standardSearchFields,
 		logger:            logger,
 		updaterFn:         updaterFn,
@@ -1215,7 +1223,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
-			q, err := requirementQuery(v, "")
+			prefix := ""
+			if b.isSelectableField(v.Key) {
+				prefix = "selectable_fields."
+			}
+			q, err := requirementQuery(v, prefix)
 			if err != nil {
 				return nil, err
 			}
@@ -1785,6 +1797,15 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 
 	return table, nil
+}
+
+func (b *bleveIndex) isSelectableField(key string) bool {
+	for _, f := range b.selectableFields {
+		if key == f {
+			return true
+		}
+	}
+	return false
 }
 
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {

@@ -10,19 +10,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
+func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 
 	err := RegisterCustomAnalyzers(mapper)
 	if err != nil {
 		return nil, err
 	}
-	mapper.DefaultMapping = getBleveDocMappings(fields)
+	mapper.DefaultMapping = getBleveDocMappings(fields, selectableFields)
 
 	return mapper, nil
 }
 
-func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.DocumentMapping {
+func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
@@ -165,5 +165,73 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
+	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
+	for _, field := range selectableFields {
+		selectableFieldsMapper.AddFieldMappingsAt(field, &mapping.FieldMapping{
+			Name:     field,
+			Type:     "text",
+			Analyzer: keyword.Name,
+			Store:    false,
+			Index:    true,
+		})
+	}
+	mapper.AddSubDocumentMapping("selectable_fields", selectableFieldsMapper)
+
 	return mapper
 }
+
+/*
+Here's a tree representation of the field mappings in pkg/storage/unified/search/bleve_mappings.go:
+
+  Document Root (DefaultMapping)
+  │
+  ├── name [text, keyword analyzer]
+  │
+  ├── title_phrase [keyword, not stored]
+  │
+  ├── title [3 mappings]
+  │   ├── [1] standard analyzer, stored
+  │   ├── [2] TITLE_ANALYZER (edge ngram), not stored
+  │   └── [3] keyword, not stored
+  │
+  ├── description [text, stored]
+  │
+  ├── tags [text, keyword analyzer, stored, includeInAll]
+  │
+  ├── folder [text, keyword analyzer, stored, includeInAll, docValues]
+  │
+  ├── managedBy [text, keyword analyzer, not stored]
+  │
+  ├── source/ [sub-document]
+  │   ├── path [text, keyword analyzer, stored]
+  │   ├── checksum [text, keyword analyzer, stored]
+  │   └── timestampMillis [numeric]
+  │
+  ├── manager/ [sub-document]
+  │   ├── kind [text, keyword analyzer, stored, includeInAll]
+  │   └── id [text, keyword analyzer, stored, includeInAll]
+  │
+  ├── reference/ [sub-document, default analyzer: keyword]
+  │   └── (dynamic fields inherit keyword analyzer)
+  │
+  ├── labels/ [sub-document]
+  │   └── (dynamic fields)
+  │
+  └── fields/ [sub-document]
+      └── (conditional mappings)
+          ├── {filterable string fields} [keyword, stored]
+          └── {other fields} [dynamically mapped by Bleve]
+
+  Key observations:
+
+  - Root level has standard searchable fields (name, title, description, tags, folder)
+  - title has 3 analyzers applied: standard (for word search), edge ngram (for prefix search), and keyword (for phrase sorting)
+  - source/, manager/: Static sub-documents with explicitly mapped fields
+  - reference/: Dynamic sub-document with keyword default analyzer (line 142)
+  - labels/, fields/: Dynamic sub-documents where Bleve auto-detects field types at index time
+
+  References:
+  - Main mapping function: pkg/storage/unified/search/bleve_mappings.go:25-169
+  - Sub-document mappings: lines 88-143
+  - Dynamic fields handling: lines 148-166
+*/

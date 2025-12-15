@@ -264,7 +264,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	summary.UID = obj.GetName()
 	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, nil)
 	doc.Title = summary.Title
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags

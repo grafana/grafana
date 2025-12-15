@@ -74,6 +74,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Users",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.email",
+						"spec.login",
+					},
 				},
 
 				{

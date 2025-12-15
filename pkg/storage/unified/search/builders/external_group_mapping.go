@@ -66,7 +66,7 @@ func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key 
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, nil)
 
 	doc.Fields = make(map[string]any)
 	if extGroupMapping.Spec.TeamRef.Name != "" {

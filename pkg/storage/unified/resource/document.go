@@ -3,9 +3,11 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -101,6 +103,9 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// Automatically indexed selectable fields, used for field-based filtering when listing.
+	SelectableFields map[string]string `json:"selectable_fields,omitempty"`
+
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
 	References ResourceReferences `json:"references,omitempty"`
@@ -175,7 +180,7 @@ func (m ResourceReferences) Less(i, j int) bool {
 }
 
 // Create a new indexable document based on a generic k8s resource
-func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
+func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor, selectableFields map[string]string) *IndexableDocument {
 	title := obj.FindTitle(key.Name)
 	if title == key.Name {
 		// TODO: something wrong with FindTitle
@@ -191,14 +196,15 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		}
 	}
 	doc := &IndexableDocument{
-		Key:       key,
-		RV:        rv,
-		Name:      key.Name,
-		Title:     title, // We always want *something* to display
-		Labels:    obj.GetLabels(),
-		Folder:    obj.GetFolder(),
-		CreatedBy: obj.GetCreatedBy(),
-		UpdatedBy: obj.GetUpdatedBy(),
+		Key:              key,
+		RV:               rv,
+		Name:             key.Name,
+		Title:            title, // We always want *something* to display
+		Labels:           obj.GetLabels(),
+		Folder:           obj.GetFolder(),
+		CreatedBy:        obj.GetCreatedBy(),
+		UpdatedBy:        obj.GetUpdatedBy(),
+		SelectableFields: selectableFields,
 	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
@@ -220,11 +226,14 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	return doc.UpdateCopyFields()
 }
 
-func StandardDocumentBuilder() DocumentBuilder {
-	return &standardDocumentBuilder{}
+func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {
+	return &standardDocumentBuilder{selectableFields: SelectableFieldsForManifests(manifests)}
 }
 
-type standardDocumentBuilder struct{}
+type standardDocumentBuilder struct {
+	// Maps "group/resource" (in lowercase) to list of selectable fields.
+	selectableFields map[string][]string
+}
 
 func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
 	tmp := &unstructured.Unstructured{}
@@ -238,8 +247,34 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 		return nil, err
 	}
 
-	doc := NewIndexableDocument(key, rv, obj)
+	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
+	selectableFields := buildSelectableFields(tmp, s.selectableFields[sfKey])
+
+	doc := NewIndexableDocument(key, rv, obj, selectableFields)
 	return doc, nil
+}
+
+func buildSelectableFields(tmp *unstructured.Unstructured, fields []string) map[string]string {
+	result := map[string]string{}
+
+	for _, field := range fields {
+		path := strings.Split(field, ".")
+		val, ok, err := unstructured.NestedFieldNoCopy(tmp.Object, path...)
+		if err != nil || !ok {
+			continue
+		}
+
+		switch v := val.(type) {
+		case string:
+			result[field] = v
+		case bool:
+			result[field] = strconv.FormatBool(v)
+		case int, float64:
+			result[field] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return result
 }
 
 type searchableDocumentFields struct {

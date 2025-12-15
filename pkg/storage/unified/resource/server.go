@@ -12,6 +12,8 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,9 +21,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/backoff"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -1040,6 +1039,68 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	// Fast path for getting single value in a list
 	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+		return rsp, nil
+	}
+
+	// Remove metadata.namespace filter from requirement fields, if it's present.
+	for ix := 0; ix < len(req.Options.Fields); {
+		v := req.Options.Fields[ix]
+		if v.Key == "metadata.namespace" && v.Operator == "=" {
+			if len(v.Values) == 1 && v.Values[0] == req.Options.Key.Namespace {
+				// Remove this requirement from fields, as it's implied by the key.namespace.
+				req.Options.Fields = append(req.Options.Fields[:ix], req.Options.Fields[ix+1:]...)
+				// Don't increment ix, as we're removing an element from the slice.
+				continue
+			}
+		}
+		ix++
+	}
+
+	// TODO: What to do about RV and version_match fields?
+	// If we get here, we're doing list with selectable fields. Let's do search instead, since
+	// we index all selectable fields, and fetch resulting documents one by one.
+	if s.search != nil && req.Source == resourcepb.ListRequest_STORE && (len(req.Options.Fields) > 0) {
+		if req.Options.Key.Namespace == "" {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("namespace must be specified for list with filter"),
+			}, nil
+		}
+
+		srq := &resourcepb.ResourceSearchRequest{
+			Options: req.Options,
+			//Federated: nil,
+			Limit: req.Limit,
+			// Offset:     req.NextPageToken, // TODO
+			// Page:       0,
+			// Permission: 0, // Not needed, default is List
+		}
+
+		searchResp, err := s.search.Search(ctx, srq)
+		if err != nil {
+			return nil, err
+		}
+
+		rsp := &resourcepb.ListResponse{}
+		// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
+		for _, row := range searchResp.GetResults().GetRows() {
+			// TODO: use batch reading
+			val, err := s.Read(ctx, &resourcepb.ReadRequest{
+				Key:             row.Key,
+				ResourceVersion: row.ResourceVersion,
+			})
+			if err != nil {
+				return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+			}
+			if len(val.Value) > 0 {
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					Value:           val.Value,
+					ResourceVersion: val.ResourceVersion,
+				})
+				if val.ResourceVersion > rsp.ResourceVersion {
+					rsp.ResourceVersion = val.ResourceVersion
+				}
+			}
+		}
 		return rsp, nil
 	}
 

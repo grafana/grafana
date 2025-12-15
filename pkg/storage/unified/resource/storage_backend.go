@@ -59,7 +59,6 @@ type kvStorageBackend struct {
 	dataStore                    *dataStore
 	eventStore                   *eventStore
 	notifier                     *notifier
-	builder                      DocumentBuilder
 	log                          logging.Logger
 	withPruner                   bool
 	eventRetentionPeriod         time.Duration
@@ -109,8 +108,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{}),
 		snowflake:                    s,
-		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:                          &logging.NoOpLogger{},     // Make this configurable
+		log:                          &logging.NoOpLogger{}, // Make this configurable
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,

@@ -4,11 +4,24 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
+type registryStoreOptions struct {
+	attrFunc storage.AttrFunc
+}
+
+type OptionFn func(*registryStoreOptions)
+
+func WithAttrFunc(attrFunc storage.AttrFunc) OptionFn {
+	return func(opts *registryStoreOptions) {
+		opts.attrFunc = attrFunc
+	}
+}
+
+func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, options ...OptionFn) (*registry.Store, error) {
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
 	strategy := NewStrategy(scheme, gv)
@@ -20,7 +33,7 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 		NewListFunc:               resourceInfo.NewListFunc,
 		KeyRootFunc:               KeyRootFunc(resourceInfo.GroupResource()),
 		KeyFunc:                   NamespaceKeyFunc(resourceInfo.GroupResource()),
-		PredicateFunc:             Matcher,
+		//PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            resourceInfo.TableConverter(),
@@ -28,8 +41,16 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
-	if err := store.CompleteWithOptions(options); err != nil {
+
+	opts := &registryStoreOptions{
+		attrFunc: GetAttrs,
+	}
+	for _, opt := range options {
+		opt(opts)
+	}
+
+	o := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: opts.attrFunc}
+	if err := store.CompleteWithOptions(o); err != nil {
 		return nil, err
 	}
 	return store, nil

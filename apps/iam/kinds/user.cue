@@ -14,7 +14,7 @@ userKind: {
 }
 
 userv0alpha1: userKind & {
-	// TODO: Uncomment this when User will be added to ManagedKinds 
+	// TODO: Uncomment this when User will be added to ManagedKinds
 	// validation: {
 	// 	operations: [
 	// 		"CREATE",

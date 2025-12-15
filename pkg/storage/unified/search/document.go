@@ -25,7 +25,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 
 	result := []resource.DocumentBuilderInfo{
 		{
-			Builder: resource.StandardDocumentBuilder(),
+			Builder: resource.StandardDocumentBuilder(resource.AppManifests()),
 		},
 	}
 	return append(result, all...), nil

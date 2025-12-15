@@ -8,6 +8,12 @@ foldersV1beta1: {
 		spec: {
 			title:    string
 			description?: string
+			foo: bool
+			bar: int
 		}
 	}
+
+	selectableFields: [
+		"spec.title",
+	]
 }
