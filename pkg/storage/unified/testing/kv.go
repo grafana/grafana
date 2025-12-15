@@ -86,15 +86,20 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 
 func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-get"
+	// Use `eventsSection` as the section for these tests, as the sqlkv implementation
+	// needs a real section to determine which table to use, and apply `nsPrefix` on
+	// the key itself.
+	section := "unified/events"
+	keyPrefix := nsPrefix + "-get"
+	prefixed := func(name string) string { return keyPrefix + "/" + name }
 
 	t.Run("get existing key", func(t *testing.T) {
 		// First save a key
 		testValue := "test value for get"
-		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader(testValue))
+		saveKVHelper(t, kv, ctx, section, prefixed("existing-key"), strings.NewReader(testValue))
 
 		// Now get it
-		reader, err := kv.Get(ctx, section, "existing-key")
+		reader, err := kv.Get(ctx, section, prefixed("existing-key"))
 		require.NoError(t, err)
 
 		// Read the value
@@ -108,15 +113,21 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
-		_, err := kv.Get(ctx, section, "non-existent-key")
+		_, err := kv.Get(ctx, section, prefixed("non-existent-key"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("get with empty section", func(t *testing.T) {
-		_, err := kv.Get(ctx, "", "some-key")
+		_, err := kv.Get(ctx, "", prefixed("some-key"))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("get with empty key", func(t *testing.T) {
+		_, err := kv.Get(ctx, section, "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "key is required")
 	})
 }
 
@@ -800,6 +811,19 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
 func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, key string, value io.Reader) {
 	t.Helper()
+
+	// TODO: remove this check once the sqlkv implementation supports `Save`.
+	type testingSaver interface {
+		TestingSave(context.Context, string, []byte) error
+	}
+
+	if saver, ok := kv.(testingSaver); ok {
+		blob, err := io.ReadAll(value)
+		require.NoError(t, err)
+		require.NoError(t, saver.TestingSave(ctx, key, blob))
+		return
+	}
+
 	writer, err := kv.Save(ctx, section, key)
 	require.NoError(t, err)
 	_, err = io.Copy(writer, value)
