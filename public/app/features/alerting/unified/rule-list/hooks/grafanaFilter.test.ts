@@ -1,10 +1,12 @@
-import { config } from '@grafana/runtime';
 import { testWithFeatureToggles } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
+import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { getFilter } from '../../utils/search';
@@ -419,12 +421,7 @@ describe('grafana-managed rules', () => {
 
       it('should still apply other frontend filters', () => {
         // Set up test plugin as installed
-        config.apps['test-plugin'] = {
-          id: 'test-plugin',
-          version: '',
-          path: '',
-          preload: false,
-        };
+        config.apps[SupportedPlugin.Slo] = pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]);
 
         const regularRule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
@@ -434,7 +431,7 @@ describe('grafana-managed rules', () => {
 
         const pluginRule = mockGrafanaPromAlertingRule({
           name: 'Plugin Rule',
-          labels: { __grafana_origin: 'plugin/test-plugin' },
+          labels: { __grafana_origin: `plugin/${SupportedPlugin.Slo}` },
           alerts: [],
         });
 
