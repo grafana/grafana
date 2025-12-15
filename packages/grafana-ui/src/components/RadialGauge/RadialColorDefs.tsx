@@ -1,5 +1,3 @@
-import tinycolor from 'tinycolor2';
-
 import {
   colorManipulator,
   DisplayProcessor,
@@ -10,6 +8,7 @@ import {
 } from '@grafana/data';
 
 import { RadialGradientMode, RadialShape } from './RadialGauge';
+import { buildGradientColors } from './colors';
 import { GaugeDimensions } from './utils';
 
 export interface RadialColorDefsOptions {
@@ -124,50 +123,15 @@ export class RadialColorDefs {
 
   getGradient(baseColor = this.getFieldBaseColor(), forSegment?: boolean): Array<{ color: string; percent: number }> {
     const { gradient, fieldDisplay, theme } = this.options;
-    if (gradient === 'none') {
-      return [
-        { color: baseColor, percent: 0 },
-        { color: baseColor, percent: 1 },
-      ];
-    }
+    return buildGradientColors(gradient, baseColor, theme, fieldDisplay.field.color?.mode, forSegment);
+  }
 
-    const colorModeId = fieldDisplay.field.color?.mode;
-    const colorMode = getFieldColorMode(colorModeId);
-
-    // Handle continusous color modes first
-    if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
-      const colors = colorMode.getColors(theme);
-      return colors.map((color, idx) => ({ color, percent: idx / (colors.length - 1) }));
-    } else if (colorMode.isByValue) {
-      // For value based colors we want to stay more true to the specific color
-      // So a radial gradient that adds a bit of light and shade works best
-      const darkerColor = tinycolor(baseColor).darken(5);
-      const lighterColor = tinycolor(baseColor).spin(20).lighten(10);
-
-      const color1 = theme.isDark ? lighterColor : darkerColor;
-      const color2 = theme.isDark ? darkerColor : lighterColor;
-
-      return [
-        { color: color1.toString(), percent: 0 },
-        { color: color2.toString(), percent: 0.6 },
-        { color: color2.toString(), percent: 1 },
-      ];
-    }
-
-    // For value based colors we want to stay more true to the specific color
-    // So a radial gradient that adds a bit of light and shade works best
-    // we set the highest contrast color second based on the theme.
-    const darkerColor = tinycolor(baseColor).spin(-20).darken(5);
-    const lighterColor = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
-    return theme.isDark
-      ? [
-          { color: darkerColor.darken(10).toString(), percent: 0 },
-          { color: lighterColor.lighten(10).toString(), percent: 1 },
-        ]
-      : [
-          { color: lighterColor.lighten(10).toString(), percent: 0 },
-          { color: darkerColor.toString(), percent: 1 },
-        ];
+  getGradientDef(): string {
+    const gradientStops = this.getGradient();
+    const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
+    return this.options.shape === 'circle'
+      ? `conic-gradient(from -10deg, ${colorStrings.join(', ')})`
+      : 'linear-gradient(90deg, ' + colorStrings.join(', ') + ')';
   }
 
   getGuideDotColors(): [string, string] {
