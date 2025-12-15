@@ -42,12 +42,12 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ### Migration flow
 
-1. Grafana starts and checks migration status in `migration_log` table
+1. Grafana starts and checks migration status in `unifiedstorage_migration_log` table
 2. For each organization, the migrator:
    - Reads resources from legacy SQL tables
    - Streams resources to unified storage via BulkProcess API
    - Runs validators to verify data integrity
-3. Records migration result in `migration_log` table
+3. Records migration result in `unifiedstorage_migration_log` table
 
 ### Per-organization execution
 
@@ -94,7 +94,7 @@ error: storage.unified.resource_migration Migration validation failed
 Query the migration log table to check status:
 
 ```sql
-SELECT * FROM migration_log WHERE migration_id LIKE '%folders-dashboards%';
+SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-dashboards%';
 ```
 
 ## Development
