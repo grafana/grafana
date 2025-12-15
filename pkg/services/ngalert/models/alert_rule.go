@@ -24,6 +24,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -396,6 +397,20 @@ type Namespaced interface {
 }
 
 type Namespace folder.FolderReference
+
+func NewNamespace(f *folder.Folder) Namespace {
+	return Namespace(*f.ToFolderReference())
+}
+
+func (n Namespace) ValidateForRuleStorage() error {
+	if n.UID == "" {
+		return fmt.Errorf("cannot store rules in folder without UID")
+	}
+	if n.ManagedBy == utils.ManagerKindRepo {
+		return fmt.Errorf("cannot store rules in folder managed by Git Sync")
+	}
+	return nil
+}
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID

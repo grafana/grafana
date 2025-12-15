@@ -48,11 +48,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
           ))}
       </div>
 
-      {config.featureToggles.dashboardNewLayouts ? (
-        <div className={styles.addButton}>
-          <AddVariableButton dashboard={dashboard} />
-        </div>
-      ) : null}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -231,13 +227,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
-  }),
-  addButton: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    verticalAlign: 'middle',
-    marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
   allowShrinkForDrilldownInputs: css({
     minWidth: 0,
