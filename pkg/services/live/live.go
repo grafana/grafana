@@ -27,13 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -52,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -72,12 +69,11 @@ type CoreGrafanaScope struct {
 	Dashboards DashboardActivityChannel
 }
 
-func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore pluginstore.Store, pluginClient plugins.Client, _ *localcache.CacheService,
-	dataSourceCache datasources.CacheService, _ secrets.Service,
+func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugCtxProvider *plugincontext.Provider,
+	pluginStore pluginstore.Store, pluginClient plugins.Client, dataSourceCache datasources.CacheService,
 	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
-	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
-	_ org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
+	dashboardService dashboards.DashboardAccessService,
+	configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -172,10 +168,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher:        g.Publish,
-		ClientCount:      g.ClientCount,
-		DashboardService: dashboardService,
-		AccessControl:    accessControl,
+		Publisher:     g.Publish,
+		ClientCount:   g.ClientCount,
+		AccessControl: dashboardService,
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
