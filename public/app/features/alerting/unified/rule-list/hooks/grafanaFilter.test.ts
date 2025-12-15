@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -417,16 +418,34 @@ describe('grafana-managed rules', () => {
       });
 
       it('should still apply other frontend filters', () => {
-        const rule = mockGrafanaPromAlertingRule({
+        // Set up test plugin as installed
+        config.apps['test-plugin'] = {
+          id: 'test-plugin',
+          version: '',
+          path: '',
+          preload: false,
+        };
+
+        const regularRule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
           labels: { severity: 'critical', team: 'ops' },
           alerts: [],
         });
 
+        const pluginRule = mockGrafanaPromAlertingRule({
+          name: 'Plugin Rule',
+          labels: { __grafana_origin: 'plugin/test-plugin' },
+          alerts: [],
+        });
+
         // Plugins filter should still work on frontend
         const { frontendFilter } = getGrafanaFilter(getFilter({ plugins: 'hide' }));
-        // When plugins='hide', rules should be filtered
-        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+        // Non-plugin rules should pass through
+        expect(frontendFilter.ruleMatches(regularRule)).toBe(true);
+
+        // Plugin-provided rules should be filtered out
+        expect(frontendFilter.ruleMatches(pluginRule)).toBe(false);
       });
     });
 
