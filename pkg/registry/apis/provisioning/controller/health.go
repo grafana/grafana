@@ -26,6 +26,18 @@ type StatusPatcher interface {
 	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
 }
 
+// HealthCheckerInterface defines the interface for health checking operations
+//
+//go:generate mockery --name=HealthCheckerInterface --structname=MockHealthChecker
+type HealthCheckerInterface interface {
+	ShouldCheckHealth(repo *provisioning.Repository) bool
+	RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error)
+	RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error)
+	RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error
+	RecordFailure(ctx context.Context, failureType provisioning.HealthFailureType, err error, repo *provisioning.Repository) error
+	HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool
+}
+
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
 	statusPatcher StatusPatcher
@@ -160,6 +172,33 @@ func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repo
 	}
 
 	return testResults, newHealthStatus, nil
+}
+
+// RefreshHealthWithPatchOps performs a health check on an existing repository
+// and returns the test results, health status, and patch operations to apply.
+// This method does NOT apply the patch itself, allowing the caller to batch
+// multiple status updates together to avoid race conditions.
+func (hc *HealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error) {
+	cfg := repo.Config()
+
+	// Use health checker to perform comprehensive health check with existing status
+	testResults, newHealthStatus, err := hc.refreshHealth(ctx, repo, cfg.Status.Health)
+	if err != nil {
+		return nil, provisioning.HealthStatus{}, nil, fmt.Errorf("health check failed: %w", err)
+	}
+
+	var patchOps []map[string]interface{}
+
+	// Only return patch operation if health status actually changed
+	if hc.hasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
+		patchOps = append(patchOps, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": newHealthStatus,
+		})
+	}
+
+	return testResults, newHealthStatus, patchOps, nil
 }
 
 // RefreshTimestamp updates the health status timestamp without changing other fields

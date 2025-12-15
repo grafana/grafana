@@ -59,7 +59,7 @@ function AnalyzeRuleButtonView({
     });
 
     openAssistant({
-      origin: 'alerting',
+      origin: 'alerting/analyze-rule-menu-item',
       mode: 'assistant',
       prompt: analyzeRulePrompt,
       context: [alertContext],

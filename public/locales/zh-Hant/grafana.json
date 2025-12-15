@@ -2327,7 +2327,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3688,6 +3690,10 @@
     "no-results": {
       "clear": "清除搜尋和篩選條件",
       "text": "未找到您的查詢結果"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5072,6 +5078,14 @@
         "layout": "版面配置"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5443,6 +5457,12 @@
         "label": "編輯",
         "tooltip": "進入編輯模式"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "使其可編輯",
         "tooltip": "此儀表板已標記為唯讀"
@@ -5463,14 +5483,6 @@
         "discard-panel-new": "捨棄面板",
         "edit-dashboard-v2-schema": {
           "tooltip": "編輯儀表板 v2 結構"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "進入編輯模式"
-          },
-          "exit": {
-            "label": "結束編輯模式"
-          }
         },
         "enter-edit-mode": {
           "label": "使其可編輯",
@@ -5921,13 +5933,25 @@
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "編輯面板",
         "view-panel": "檢視面板"
       },
       "title": {
         "dashboard": "儀表板",
-        "discard-changes-to-dashboard": "要捨棄儀表板的變更嗎？"
+        "discard-changes-to-dashboard": "要捨棄儀表板的變更嗎？",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8792,6 +8816,13 @@
       "aria-label-default": "挑選顏色",
       "aria-label-selected-color": "{{colorLabel}} 顏色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "刪除",
       "cancel": "取消",
@@ -8989,6 +9020,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "收闔所有列",
       "aria-label-expand-all": "展開所有列",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "切換列展開",
       "tooltip-collapse-all": "收闔所有列",
       "tooltip-expand-all": "展開所有列"
@@ -10652,7 +10685,6 @@
       "title": "新"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "新儀表板"
     },
     "new-folder": {
@@ -11778,7 +11810,7 @@
       "modal-title-set-up-public-access": "設定公共存取",
       "modal-title-set-up-required-features": "設定所需的功能",
       "step-description-copy-url": "從 ngrok 輸出中，複製以下的 https:// 轉送網址：",
-      "step-description-enable-feature-toggles": "將這些設定新增至您的 custom.ini 檔案，以啟用必要的功能：",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "執行此命令，以建立通往本機 Grafana 的安全通道：",
       "step-description-update-grafana-config": "將此新增至您的 custom.ini 檔案，並使用您實際的 ngrok 網址來取代網址：",
       "step-title-copy-url": "複製您的公共網址",
@@ -11788,7 +11820,6 @@
       "title-setting-connection-could-cause-temporary-outage": "設定此連線可能會導致暫時中斷"
     },
     "getting-started-page": {
-      "header": "佈建",
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
     },
     "git": {
@@ -12373,13 +12404,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12552,7 +12582,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "匯入",
       "new": "新",
       "new-dashboard": "新儀表板",

@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -35,7 +34,7 @@ var (
 	_ rest.TableConvertor       = (*LegacyStore)(nil)
 )
 
-var resource = iamv0alpha1.UserResourceInfo
+var userResource = iamv0alpha1.UserResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
 	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
@@ -54,7 +53,7 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	defer span.End()
 
 	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "update")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -105,7 +104,7 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deletecollection")
+	return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "deletecollection")
 }
 
 // Delete implements rest.GracefulDeleter.
@@ -114,7 +113,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	defer span.End()
 
 	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "delete")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -131,7 +130,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, err
 	}
 	if found == nil || len(found.Items) < 1 {
-		return nil, false, resource.NewNotFound(name)
+		return nil, false, userResource.NewNotFound(name)
 	}
 
 	userToDelete := &found.Items[0]
@@ -157,7 +156,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 }
 
 func (s *LegacyStore) New() runtime.Object {
-	return resource.NewFunc()
+	return userResource.NewFunc()
 }
 
 func (s *LegacyStore) Destroy() {}
@@ -167,15 +166,15 @@ func (s *LegacyStore) NamespaceScoped() bool {
 }
 
 func (s *LegacyStore) GetSingularName() string {
-	return resource.GetSingularName()
+	return userResource.GetSingularName()
 }
 
 func (s *LegacyStore) NewList() runtime.Object {
-	return resource.NewListFunc()
+	return userResource.NewListFunc()
 }
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+	return userResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -183,7 +182,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	defer span.End()
 
 	res, err := common.List(
-		ctx, resource, s.ac, common.PaginationFromListOptions(options),
+		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
@@ -231,10 +230,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if found == nil || err != nil {
-		return nil, resource.NewNotFound(name)
+		return nil, userResource.NewNotFound(name)
 	}
 	if len(found.Items) < 1 {
-		return nil, resource.NewNotFound(name)
+		return nil, userResource.NewNotFound(name)
 	}
 
 	obj := toUserItem(&found.Items[0], ns.Value)
@@ -247,7 +246,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	defer span.End()
 
 	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+		return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "create")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -310,18 +309,12 @@ func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 			Provisioned:   u.IsProvisioned,
 			Role:          u.Role,
 		},
+		Status: iamv0alpha1.UserStatus{
+			LastSeenAt: u.LastSeenAt.Unix(),
+		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetAnnotation(AnnoKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
-}
-
-func formatTime(v *time.Time) string {
-	txt := ""
-	if v != nil && v.Unix() != 0 {
-		txt = v.UTC().Format(time.RFC3339)
-	}
-	return txt
 }

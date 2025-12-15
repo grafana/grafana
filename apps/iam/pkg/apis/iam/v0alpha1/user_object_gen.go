@@ -21,11 +21,14 @@ type User struct {
 
 	// Spec is the spec of the User
 	Spec UserSpec `json:"spec" yaml:"spec"`
+
+	Status UserStatus `json:"status" yaml:"status"`
 }
 
 func NewUser() *User {
 	return &User{
-		Spec: *NewUserSpec(),
+		Spec:   *NewUserSpec(),
+		Status: *NewUserStatus(),
 	}
 }
 
@@ -43,11 +46,15 @@ func (o *User) SetSpec(spec any) error {
 }
 
 func (o *User) GetSubresources() map[string]any {
-	return map[string]any{}
+	return map[string]any{
+		"status": o.Status,
+	}
 }
 
 func (o *User) GetSubresource(name string) (any, bool) {
 	switch name {
+	case "status":
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,6 +62,13 @@ func (o *User) GetSubresource(name string) (any, bool) {
 
 func (o *User) SetSubresource(name string, value any) error {
 	switch name {
+	case "status":
+		cast, ok := value.(UserStatus)
+		if !ok {
+			return fmt.Errorf("cannot set status type %#v, not of type UserStatus", value)
+		}
+		o.Status = cast
+		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -226,6 +240,7 @@ func (o *User) DeepCopyInto(dst *User) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -295,5 +310,17 @@ func (s *UserSpec) DeepCopy() *UserSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *UserSpec) DeepCopyInto(dst *UserSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of UserStatus
+func (s *UserStatus) DeepCopy() *UserStatus {
+	cpy := &UserStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies UserStatus into another UserStatus object
+func (s *UserStatus) DeepCopyInto(dst *UserStatus) {
 	resource.CopyObjectInto(dst, s)
 }

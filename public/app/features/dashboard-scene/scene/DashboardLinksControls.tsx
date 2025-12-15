@@ -36,13 +36,9 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     linksContainer: css({
-      display: 'flex',
-      flexWrap: 'wrap',
+      display: 'inline-flex',
       gap: theme.spacing(1),
-      maxWidth: '100%',
-      minWidth: 0,
-      order: 1,
-      flex: '1 1 0%',
+      marginRight: theme.spacing(1),
     }),
   };
 }

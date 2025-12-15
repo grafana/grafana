@@ -3,8 +3,10 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,FileList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,HistoryList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobResourceSummary,Errors
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobResourceSummary,Warnings
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobStatus,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobStatus,Summary
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobStatus,Warnings
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ManagerStats,Stats
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,MoveJobOptions,Paths
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,MoveJobOptions,Resources

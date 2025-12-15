@@ -67,7 +67,12 @@ export function ScopesDashboards() {
         />
       ) : filteredFolders[''] ? (
         <ScrollContainer>
-          <ScopesDashboardsTree folders={filteredFolders} folderPath={['']} onFolderUpdate={updateFolder} />
+          <ScopesDashboardsTree
+            folders={filteredFolders}
+            folderPath={['']}
+            subScopePath={[]}
+            onFolderUpdate={updateFolder}
+          />
         </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
