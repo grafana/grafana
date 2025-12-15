@@ -29,7 +29,7 @@ If you're a Grafana Cloud user, follow [Install a plugin through the Grafana UI]
 
 {{< /admonition >}}
 
-# Install a plugin through the Grafana UI
+## Install a plugin through the Grafana UI
 
 The most common way to install a plugin is through the Grafana UI.
 
