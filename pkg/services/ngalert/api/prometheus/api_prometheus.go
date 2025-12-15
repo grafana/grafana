@@ -520,7 +520,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleStatusMutator, ctx.alertStateMutator,
+			ctx.ruleStatusMutator, ctx.alertStateMutator, compact,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -961,7 +961,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1112,7 +1112,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1128,10 +1128,14 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
 			provenance = prov
 		}
+		var query string
+		if !compact {
+			query = ruleToQuery(log, rule)
+		}
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
 			Name:                  rule.Title,
-			Query:                 ruleToQuery(log, rule),
+			Query:                 query,
 			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
 			Duration:              rule.For.Seconds(),
 			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
@@ -1201,7 +1205,7 @@ func extractDatasourceUIDs(rule *ngmodels.AlertRule) []string {
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
-// Returns an empty string if it fails to extract a minimum of 1 query.
+// Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
 
@@ -1229,8 +1233,17 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 		return strings.Join(queries, " | ")
 	}
 
-	// No queries extracted, return an empty string.
-	return ""
+	return encodedQueriesOrError(rule.Data)
+}
+
+// encodedQueriesOrError tries to encode rule query data into JSON if it fails returns the encoding error as a string.
+func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
+	encodedQueries, err := json.Marshal(rules)
+	if err == nil {
+		return string(encodedQueries)
+	}
+
+	return err.Error()
 }
 
 func errorOrEmpty(err error) string {
