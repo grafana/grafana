@@ -125,6 +125,7 @@ navigationTree:
     url: /d/_5rDmaQiz
     scope: shoe-org
     subScope: shoes
+    preLoadSubScopeChildren: true
     children:
       - name: shoes-overview
         title: Overview
@@ -176,7 +177,6 @@ navigationTree:
 
       - name: shoes-main-app
         title: Main App
-        expandOnLoad: true
         url: /d/WZ7AhQiVz
         scope: shoes
         subScope: main-app
