@@ -114,18 +114,18 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const { jsonText } = model.useState();
 
   const onSave = async (overwrite: boolean) => {
-    const rawJSON: Dashboard | DashboardV2Spec = JSON.parse(model.state.jsonText);
     // If this is a provisioned (Git sync) dashboard, open the SaveDashboardDrawer
+    // The drawer will get the raw JSON via dashboard.getRawJsonFromEditor()
     if (isProvisionedNG) {
       const drawer = new SaveDashboardDrawer({
         dashboardRef: new SceneObjectRef(dashboard),
-        rawDashboardJSON: rawJSON,
       });
       dashboard.setState({ overlay: drawer });
       return;
     }
 
     // Standard save flow for non-provisioned dashboards
+    const rawJSON: Dashboard | DashboardV2Spec = JSON.parse(model.state.jsonText);
     const result = await onSaveDashboard(dashboard, {
       folderUid: dashboard.state.meta.folderUid,
       overwrite,

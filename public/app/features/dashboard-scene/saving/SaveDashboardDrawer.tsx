@@ -1,7 +1,5 @@
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
@@ -22,7 +20,6 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveAsCopy?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
-  rawDashboardJSON?: Dashboard | DashboardV2Spec;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -111,7 +108,6 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
-          rawDashboardJSON={model.state.rawDashboardJSON}
         />
       );
     }
