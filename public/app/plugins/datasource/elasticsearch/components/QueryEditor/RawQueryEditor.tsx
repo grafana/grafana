@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, CodeEditorMonacoOptions,  monacoTypes, useStyles2, Button, Stack, Box } from '@grafana/ui';
+import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Button, Stack, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;
