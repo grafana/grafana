@@ -1,6 +1,7 @@
 package resourcepermissions
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,6 +58,8 @@ func TestGetPermissionKind(t *testing.T) {
 
 // TestGetDynamicClient_RestConfigNotAvailable tests error handling when rest config is not available
 func TestGetDynamicClient_RestConfigNotAvailable(t *testing.T) {
+	ctx := context.Background()
+
 	api := &api{
 		service: &Service{
 			options: Options{
@@ -66,7 +69,7 @@ func TestGetDynamicClient_RestConfigNotAvailable(t *testing.T) {
 		restConfigProvider: nil,
 	}
 
-	client, err := api.getDynamicClient(nil)
+	client, err := api.getDynamicClient(ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, client)
