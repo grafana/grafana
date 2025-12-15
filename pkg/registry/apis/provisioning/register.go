@@ -344,12 +344,19 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 				switch a.GetSubresource() {
-				case "", "test", "jobs":
+				case "", "test":
 					// Doing something with the repository itself.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
+
+				case "jobs":
+					// Posting jobs requires editor privileges (for syncing).
+					if id.GetOrgRole().Includes(identity.RoleAdmin) || id.GetOrgRole().Includes(identity.RoleEditor) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "editor role is required", nil
 
 				case "refs":
 					// This is strictly a read operation. It is handy on the frontend for viewers.
