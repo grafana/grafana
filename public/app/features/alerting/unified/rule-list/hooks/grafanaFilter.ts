@@ -131,7 +131,7 @@ function buildGrafanaFilterConfigs() {
     ruleState: null,
     ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
     dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
-    labels: labelsFilter,
+    labels: useBackendFilters ? null : labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: pluginsFilter,
