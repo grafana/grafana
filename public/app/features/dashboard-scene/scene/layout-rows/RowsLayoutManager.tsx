@@ -390,4 +390,20 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     return duplicateTitles;
   }
+
+  public collapseAllRows() {
+    this.state.rows.forEach((row) => {
+      if (!row.getCollapsedState()) {
+        row.setCollapsedState(true);
+      }
+    });
+  }
+
+  public expandAllRows() {
+    this.state.rows.forEach((row) => {
+      if (row.getCollapsedState()) {
+        row.setCollapsedState(false);
+      }
+    });
+  }
 }
