@@ -188,6 +188,25 @@ You can set standard min/max options to define hard limits of the Y-axis. For mo
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+### Markers
+Markers provide an alternative method for visualising data points within a bar chart. Instead of rendering a field as bars, it can be configured to display as markers. These markers are overlayed on the bars of a designated target field. Markers allow for higher data density without overcrowding the chart.
+
+The following options can be used to configure a marker
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Target field| Selects the field on which the markers will be displayed |
+| Data field | Marker positions use the data fields' y-values. The bars of the data field are removed fom visualisation while in use |
+| Color | Picks the color of the marker. Gradient modes can be achieved by applying an override to the marker's data field |
+| Shape | Select the shape of the marker. Choose from: <ul><li>**Circle** </li><li>**Cross** </li><li>**Line** </li><li>**Star**
+| Size | Set the size of a marker. 
+| Opacity | Sets the opacity of the marker |
+| Fill | Decides if the shaped is outlined or filled in. Does not apply if the selected shape is 'Cross' or 'Line' |
+| Stroke width | Sets the stroke width of the marker. Does not apply if fill is set to true|
+<!-- prettier-ignore-end -->
+
 ### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
