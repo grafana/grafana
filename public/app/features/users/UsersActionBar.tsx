@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Trans, t } from '@grafana/i18n';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
 import { GrafanaTheme2, OrgRole, TimeZone, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';

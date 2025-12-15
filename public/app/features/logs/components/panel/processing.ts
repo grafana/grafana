@@ -62,6 +62,7 @@ export class LogListModel implements LogRowModel {
   private _highlightedBody: string | undefined = undefined;
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
+  private _escapeUnescapedString = false;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -111,11 +112,10 @@ export class LogListModel implements LogRowModel {
     this._virtualization = virtualization;
     this._wrapLogMessage = wrapLogMessage;
 
-    let raw = log.raw;
     if (escape && log.hasUnescapedContent) {
-      raw = escapeUnescapedString(raw);
+      this._escapeUnescapedString = true;
     }
-    this.raw = raw;
+    this.raw = log.raw;
 
     if (config.featureToggles.otelLogsFormatting && this.otelLanguage) {
       this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this, wrapLogMessage);
@@ -128,6 +128,7 @@ export class LogListModel implements LogRowModel {
     clone._wrapLogMessage = true;
     clone._body = undefined;
     clone._highlightTokens = undefined;
+    clone.collapsed = false;
     return clone;
   }
 
@@ -141,6 +142,9 @@ export class LogListModel implements LogRowModel {
         const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
           this.raw = reStringified;
+        }
+        if (this._escapeUnescapedString) {
+          this.raw = escapeUnescapedString(this.raw);
         }
       } catch (error) {}
       const raw = this.raw;
@@ -360,7 +364,7 @@ export function getNormalizedFieldName(field: string) {
   if (field === LOG_LINE_BODY_FIELD_NAME) {
     return t('logs.log-line-details.log-line-field', 'Log line');
   } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
-    return t('logs.log-line-details.log-attributes-field', 'OTel attributes');
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
   }
   return field;
 }

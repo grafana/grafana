@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties } from 'react';
+import { CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';

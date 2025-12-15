@@ -1,8 +1,10 @@
 package sqleng
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng/util"
 )
 
@@ -435,4 +438,268 @@ func (t *testQueryResultTransformer) TransformQueryError(_ log.Logger, err error
 
 func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	return nil
+}
+
+func genTempCacheFile(t *testing.T, lookups []kerberos.KerberosLookup) string {
+	content, err := json.Marshal(lookups)
+	if err != nil {
+		t.Fatalf("Unable to marshall json for temp lookup: %v", err)
+	}
+
+	tmpFile, err := os.CreateTemp("", "lookup*.json")
+	if err != nil {
+		t.Fatalf("Unable to create temporary file for temp lookup: %v", err)
+	}
+
+	if _, err := tmpFile.Write(content); err != nil {
+		t.Fatalf("Unable to write to temporary file for temp lookup: %v", err)
+	}
+
+	return tmpFile.Name()
+}
+
+func TestGenerateConnectionString(t *testing.T) {
+	kerberosLookup := []kerberos.KerberosLookup{
+		{
+			Address:                 "example.host",
+			DBName:                  "testDB",
+			User:                    "testUser",
+			CredentialCacheFilename: "/tmp/cache",
+		},
+	}
+	tmpFile := genTempCacheFile(t, kerberosLookup)
+	defer func() {
+		err := os.Remove(tmpFile)
+		if err != nil {
+			t.Log(err)
+		}
+	}()
+
+	testCases := []struct {
+		desc        string
+		kerberosCfg kerberos.KerberosAuth
+		dataSource  DataSourceInfo
+		expConnStr  string
+	}{
+		{
+			desc: "Use Kerberos Credential Cache",
+			kerberosCfg: kerberos.KerberosAuth{
+				CredentialCache:    "/tmp/krb5cc_1000",
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
+			},
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				JsonData: JsonData{
+					AuthenticationType: "Windows AD: Credential cache",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;krb5-credcachefile=/tmp/krb5cc_1000;",
+		},
+		{
+			desc: "Use Kerberos Credential Cache File path",
+			kerberosCfg: kerberos.KerberosAuth{
+				CredentialCacheLookupFile: tmpFile,
+				ConfigFilePath:            "/etc/krb5.conf",
+				UDPConnectionLimit:        1,
+			},
+			dataSource: DataSourceInfo{
+				URL:      "example.host",
+				Database: "testDB",
+				User:     "testUser",
+				JsonData: JsonData{
+					AuthenticationType: "Windows AD: Credential cache file",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=example.host;database=testDB;krb5-credcachefile=/tmp/cache;",
+		},
+		{
+			desc: "Use Kerberos Keytab",
+			kerberosCfg: kerberos.KerberosAuth{
+				KeytabFilePath:     "/foo/bar.keytab",
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
+			},
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				JsonData: JsonData{
+					AuthenticationType: "Windows AD: Keytab",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;krb5-keytabfile=/foo/bar.keytab;",
+		},
+		{
+			desc: "Use Kerberos Username and Password",
+			kerberosCfg: kerberos.KerberosAuth{
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
+			},
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				DecryptedSecureJSONData: map[string]string{
+					"password": "foo",
+				},
+				JsonData: JsonData{
+					AuthenticationType: "Windows AD: Username + password",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;password=foo;",
+		},
+		{
+			desc: "Use non-default UDP connection limit",
+			kerberosCfg: kerberos.KerberosAuth{
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 0,
+			},
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				DecryptedSecureJSONData: map[string]string{
+					"password": "foo",
+				},
+				JsonData: JsonData{
+					AuthenticationType: "Windows AD: Username + password",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;password=foo;krb5-udppreferencelimit=0;",
+		},
+
+		{
+			desc: "From URL w/ port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost:1001",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;port=1001;",
+		},
+		// When no port is specified, the driver should be allowed to choose
+		{
+			desc: "From URL w/o port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		// Port 0 should be equivalent to not specifying a port, i.e. let the driver choose
+		{
+			desc: "From URL w port 0",
+			dataSource: DataSourceInfo{
+				URL:      "localhost:0",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With instance name",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With instance name and port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance:333",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;",
+		},
+		{
+			desc: "With instance name and ApplicationIntent",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;ApplicationIntent=ReadOnly;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With ApplicationIntent instance name and port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance:333;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;ApplicationIntent=ReadOnly;",
+		},
+		{
+			desc: "With instance name",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With instance name and port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance:333",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;",
+		},
+		{
+			desc: "With instance name and ApplicationIntent",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;ApplicationIntent=ReadOnly;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With ApplicationIntent instance name and port",
+			dataSource: DataSourceInfo{
+				URL:      "localhost\\instance:333;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;ApplicationIntent=ReadOnly;",
+		},
+		{
+			desc: "Defaults",
+			dataSource: DataSourceInfo{
+				Database: "database",
+				User:     "user",
+				JsonData: JsonData{},
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+	}
+
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			connStr, err := generateConnectionString(tc.dataSource, nil, tc.kerberosCfg, logger, nil, "")
+			require.NoError(t, err)
+			assert.Equal(t, tc.expConnStr, connStr)
+		})
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -200,6 +202,11 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "GetDataSourceByUID"), time.Since(start).Seconds())
+	}()
+
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
 
 	if err != nil {
@@ -231,6 +238,11 @@ func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Re
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "DeleteDataSourceByUID"), time.Since(start).Seconds())
+	}()
+
 	uid := web.Params(c.Req)[":uid"]
 
 	if uid == "" {
@@ -361,6 +373,11 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "AddDataSource"), time.Since(start).Seconds())
+	}()
+
 	cmd := datasources.AddDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -478,6 +495,10 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "UpdateDataSourceByUID"), time.Since(start).Seconds())
+	}()
 	cmd := datasources.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

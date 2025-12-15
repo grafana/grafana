@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 type DashboardSearchClient struct {
@@ -37,11 +37,11 @@ func NewDashboardSearchClient(dashboardStore dashboards.Store, sorter sort.Servi
 }
 
 var sortByMapping = map[string]string{
-	unisearch.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
-	unisearch.DASHBOARD_VIEWS_TOTAL:         "viewed",
-	unisearch.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
-	unisearch.DASHBOARD_ERRORS_TOTAL:        "errors",
-	"title":                                 "alpha",
+	builders.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
+	builders.DASHBOARD_VIEWS_TOTAL:         "viewed",
+	builders.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
+	builders.DASHBOARD_ERRORS_TOTAL:        "errors",
+	"title":                                "alpha",
 }
 
 func ParseSortName(sortName string) (string, bool, error) {
@@ -231,7 +231,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			}
 			query.ManagerIdentity = vals[0]
 
-		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
+		case builders.DASHBOARD_LIBRARY_PANEL_REFERENCE:
 			if len(vals) != 1 {
 				return nil, apierrors.NewBadRequest("only one library panel uid is supported")
 			}

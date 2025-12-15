@@ -5,8 +5,9 @@ import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
+import { AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMetricQuery, AzureMonitorQuery, AzureQueryType } from '../types/query';
+import { AzureMonitorQuery } from '../types/query';
 import {
   AzureAPIResponse,
   AzureMonitorDataSourceInstanceSettings,

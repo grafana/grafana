@@ -56,13 +56,14 @@ func (m *mockHTTPClientProvider) New(options ...sdkhttpclient.Options) (*http.Cl
 type testDataSources struct {
 	dsfakes.FakeDataSourceService
 
-	prom1, prom2, prom3 *TestRemoteWriteTarget
+	prom1, prom2, prom3, prom4 *TestRemoteWriteTarget
 }
 
 func (t *testDataSources) Reset() {
 	t.prom1.Reset()
 	t.prom2.Reset()
 	t.prom3.Reset()
+	t.prom4.Reset()
 }
 
 func setupDataSources(t *testing.T) *testDataSources {
@@ -70,7 +71,9 @@ func setupDataSources(t *testing.T) *testDataSources {
 		prom1: NewTestRemoteWriteTarget(t),
 		prom2: NewTestRemoteWriteTarget(t),
 		prom3: NewTestRemoteWriteTarget(t),
+		prom4: NewTestRemoteWriteTarget(t),
 	}
+	res.DataSourceHeaders = make(map[string]http.Header)
 
 	t.Cleanup(func() {
 		res.prom1.Close()
@@ -80,6 +83,9 @@ func setupDataSources(t *testing.T) *testDataSources {
 	})
 	t.Cleanup(func() {
 		res.prom3.Close()
+	})
+	t.Cleanup(func() {
+		res.prom4.Close()
 	})
 
 	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -107,7 +113,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		Type: datasources.DS_LOKI,
 	})
 
-	// Add a third Prometheus datasource that uses PDC
+	// Add a third Prometheus datasource that uses PDC.
 	p3, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Name: "prom-3",
 		UID:  "prom-3",
@@ -122,6 +128,21 @@ func setupDataSources(t *testing.T) *testDataSources {
 	res.prom3.ExpectedPath = "/api/v1/write"
 
 	require.True(t, p3.IsSecureSocksDSProxyEnabled())
+
+	// Add a fourth Prometheus datasource with headers in the JSON config.
+	p4, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		Name:     "prom-4",
+		UID:      "prom-4",
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+	})
+	p4.URL = res.prom4.srv.URL
+	res.prom4.ExpectedPath = "/api/v1/write"
+	res.DataSourceHeaders["prom-4"] = http.Header{
+		"X-Scope-OrgID":   []string{"test-user"},
+		"X-Test-Header":   []string{"test-value"},
+		"X-Double-Header": []string{"one", "two"},
+	}
 
 	return res
 }
@@ -202,6 +223,48 @@ func TestDatasourceWriter(t *testing.T) {
 
 		assert.Equal(t, headers[header1], testDS.prom1.LastHeaders.Get(header1))
 		assert.Equal(t, headers[header2], testDS.prom1.LastHeaders.Get(header2))
+	})
+
+	t.Run("when data source headers are configured, they are passed to the request", func(t *testing.T) {
+		testDS.Reset()
+		overwrittenHeader := "X-Test-Header"
+		cHeaders := map[string]string{
+			"X-Custom-Header":  "test-value",
+			"X-Another-Header": "another-value",
+			overwrittenHeader:  "should-be-overwritten", // Data source headers overwrite custom headers.
+		}
+
+		cfg = DatasourceWriterConfig{
+			Timeout:              time.Second * 5,
+			DefaultDatasourceUID: "prom-1",
+			CustomHeaders:        cHeaders,
+		}
+		writer = NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
+
+		uid := "prom-4"
+		err := writer.WriteDatasource(context.Background(), uid, "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		dsHeaders := testDS.DataSourceHeaders[uid]
+		require.Len(t, dsHeaders, 3)
+
+		// We're confirming we have a data source header with the same name but different value.
+		require.NotEmpty(t, dsHeaders[overwrittenHeader])
+		require.NotEqual(t, dsHeaders[overwrittenHeader], cHeaders[overwrittenHeader])
+
+		// All data source headers should have been used.
+		for k, vv := range dsHeaders {
+			assert.Equal(t, vv, testDS.prom4.LastHeaders.Values(k))
+		}
+
+		// All custom headers except for the overwritten one should have been used.
+		for k, v := range cHeaders {
+			if k == overwrittenHeader {
+				assert.NotEqual(t, v, testDS.prom4.LastHeaders.Get(k))
+				continue
+			}
+			assert.Equal(t, v, testDS.prom4.LastHeaders.Get(k))
+		}
 	})
 
 	t.Run("when PDC is enabled proxy options are passed to HTTP client provider", func(t *testing.T) {

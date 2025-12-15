@@ -13,7 +13,7 @@ import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { Options, defaultOptions, FieldConfig } from './panelcfg.gen';
-import { TableSuggestionsSupplier } from './suggestions';
+import { tableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -227,4 +227,4 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: defaultOptions?.enablePagination,
       });
   })
-  .setSuggestionsSupplier(new TableSuggestionsSupplier());
+  .setSuggestionsSupplier(tableSuggestionsSupplier);

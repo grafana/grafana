@@ -53,6 +53,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrFolderCannotBeParentOfItself
 	}
 
+	// note: `parents` will include itself as the last item
 	parents, err := getter(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)

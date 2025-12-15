@@ -9,8 +9,10 @@ import {
   HistoryItem,
   PanelData,
   getDataSourceRef,
+  isSystemOverrideWithRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -44,6 +46,7 @@ export interface Props {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  panelRef?: SceneObjectRef<VizPanel>;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -63,6 +66,20 @@ export class QueryEditorRows extends PureComponent<Props> {
         return item;
       })
     );
+
+    if (this.props.panelRef) {
+      const panel = this.props.panelRef.resolve();
+      const hideSeriesOverrideIndex = panel.state.fieldConfig.overrides.findIndex(
+        isSystemOverrideWithRef('hideSeriesFrom')
+      );
+
+      if (hideSeriesOverrideIndex !== -1) {
+        const newOverrides = [...panel.state.fieldConfig.overrides];
+        newOverrides.splice(hideSeriesOverrideIndex, 1);
+
+        panel.setState({ fieldConfig: { ...panel.state.fieldConfig, overrides: newOverrides } });
+      }
+    }
   }
 
   onReplaceQuery(query: DataQuery, index: number) {

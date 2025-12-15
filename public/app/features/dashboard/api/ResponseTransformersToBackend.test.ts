@@ -3,6 +3,7 @@ import path from 'path';
 
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { normalizeBackendOutputForFrontendComparison } from 'app/features/dashboard-scene/serialization/serialization-test-utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ensureV2Response } from './ResponseTransformers';
@@ -205,8 +206,13 @@ describe('Backend / Frontend result comparison', () => {
         expect(frontendOutput.spec).toBeDefined();
         expect(backendOutput.spec).toBeDefined();
 
+        // Normalize backend output to account for differences in library panel repeat handling
+        // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
+        const inputPanels = jsonInput.spec?.panels || [];
+        const normalizedBackendSpec = normalizeBackendOutputForFrontendComparison(backendOutput.spec, inputPanels);
+
         // Compare the spec structures
-        expect(backendOutput.spec).toEqual(frontendOutput.spec);
+        expect(normalizedBackendSpec).toEqual(frontendOutput.spec);
 
         // Verify the conversion doesn't throw errors and produces a valid structure
         expect(() => JSON.stringify(frontendOutput)).not.toThrow();

@@ -24,10 +24,10 @@ import {
 } from '@grafana/ui';
 
 import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
+import { AzureMonitorResource } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorResource } from '../../types/query';
 import { ResourceGraphFilters } from '../../types/types';
 import messageFromError from '../../utils/messageFromError';
 

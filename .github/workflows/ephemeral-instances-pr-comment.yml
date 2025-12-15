@@ -33,6 +33,16 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
+          # Secrets placed in the ci/common/<path> path in Vault
+          common_secrets: |
+            DOCKERHUB_USERNAME=dockerhub:username
+            DOCKERHUB_PASSWORD=dockerhub:password
+
+      - name: Log in to Docker Hub to avoid unauthenticated image pull rate-limiting
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_PASSWORD }}
 
       - name: Generate a GitHub app installation token
         id: generate_token

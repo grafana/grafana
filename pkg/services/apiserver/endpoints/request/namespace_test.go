@@ -26,7 +26,7 @@ func TestNamespaceMapper(t *testing.T) {
 			orgId:    123,
 			expected: "org-123",
 		},
-		// an invalid use-case, but just documenting that it's handled as stack-0
+		// an invalid use-case, but just documenting that it's handled as stacks-0
 		// this currently prevents the need to have the Mapper return (mapped, err) instead of just mapped.
 		// err checking is avoided for now to keep the usage fluent
 		{

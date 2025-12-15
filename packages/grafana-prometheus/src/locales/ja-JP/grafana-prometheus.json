@@ -175,7 +175,7 @@
         "label-scrape-interval": "スクレイプ間隔",
         "label-series-limit": "系列制限",
         "label-use-series-endpoint": "系列エンドポイントを使用",
-        "more-info": "",
+        "more-info": "データソースでのPrometheusタイプとバージョンの設定の詳細については、<2>プロビジョニングドキュメント</2>をご覧ください。",
         "placeholder-example-maxsourceresolutionmtimeout": "例: {{example}}",
         "title-interval-behaviour": "間隔の動作",
         "title-other": "その他",

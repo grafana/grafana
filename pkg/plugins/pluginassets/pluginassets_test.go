@@ -42,15 +42,6 @@ func TestLocalProvider_Module(t *testing.T) {
 			},
 			expected: "public/plugins/external-plugin/module.js",
 		},
-		{
-			name: "CDN plugin should use standard path",
-			plugin: PluginInfo{
-				JsonData: plugins.JSONData{ID: "cdn-plugin"},
-				Class:    plugins.ClassCDN,
-				FS:       plugins.NewLocalFS("/cdn/plugins/cdn-plugin"),
-			},
-			expected: "public/plugins/cdn-plugin/module.js",
-		},
 	}
 
 	for _, tt := range tests {

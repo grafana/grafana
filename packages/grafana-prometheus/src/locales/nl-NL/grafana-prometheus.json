@@ -175,7 +175,7 @@
         "label-scrape-interval": "Scrape-interval",
         "label-series-limit": "Reekslimiet",
         "label-use-series-endpoint": "Serie-eindpunt gebruiken",
-        "more-info": "",
+        "more-info": "Zie de <2>provisioning-documentatie</2> voor meer informatie over het configureren van het Prometheus-type en de versie in gegevensbronnen.",
         "placeholder-example-maxsourceresolutionmtimeout": "Voorbeeld: {{example}}",
         "title-interval-behaviour": "Intervalgedrag",
         "title-other": "Overige",

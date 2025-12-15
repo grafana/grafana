@@ -41,9 +41,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardSceneForViewers`            | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
 | `dashboardSceneSolo`                  | Enables rendering dashboards using scenes for solo panels                                                                                                     | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
-| `logsInfiniteScrolling`               | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                       | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
-| `onPremToCloudMigrations`             | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
@@ -68,7 +66,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
+| `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
+| `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
 
@@ -90,15 +90,16 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
+| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
+| `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles

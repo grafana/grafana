@@ -15,11 +15,13 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate = mustTemplate("keeper_create.sql")
-	sqlKeeperRead   = mustTemplate("keeper_read.sql")
-	sqlKeeperUpdate = mustTemplate("keeper_update.sql")
-	sqlKeeperList   = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
+	sqlKeeperCreate      = mustTemplate("keeper_create.sql")
+	sqlKeeperRead        = mustTemplate("keeper_read.sql")
+	sqlKeeperReadActive  = mustTemplate("keeper_read_active.sql")
+	sqlKeeperUpdate      = mustTemplate("keeper_update.sql")
+	sqlKeeperList        = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete      = mustTemplate("keeper_delete.sql")
+	sqlKeeperSetAsActive = mustTemplate("keeper_set_as_active.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -32,9 +34,9 @@ var (
 	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
 
-	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
-	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
-	sqlSecureValueSetVersionToInactive = mustTemplate("secure_value_set_version_to_inactive.sql")
+	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
+	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
+	sqlSecureValueSetVersionToInactive         = mustTemplate("secure_value_set_version_to_inactive.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -47,6 +49,18 @@ func mustTemplate(filename string) *template.Template {
 /************************/
 /**-- Keeper Queries --**/
 /************************/
+
+// Set as active
+type setKeeperAsActive struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r setKeeperAsActive) Validate() error {
+	return nil // TODO
+}
 
 // Create
 type createKeeper struct {
@@ -69,6 +83,17 @@ type readKeeper struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readKeeper) Validate() error {
+	return nil // TODO
+}
+
+// Read active keeper
+type readActiveKeeper struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r readActiveKeeper) Validate() error {
 	return nil // TODO
 }
 
@@ -146,13 +171,13 @@ func (r readSecureValue) Validate() error {
 	return nil // TODO
 }
 
-type getLatestSecureValueVersion struct {
+type getLatestSecureValueVersionAndCreatedAt struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
 }
 
-func (r getLatestSecureValueVersion) Validate() error {
+func (r getLatestSecureValueVersionAndCreatedAt) Validate() error {
 	return nil
 }
 

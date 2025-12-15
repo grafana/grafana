@@ -93,14 +93,14 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 }
 
 func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) error {
-	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: false})
+	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Status.Keeper, contracts.ReadOpts{ForUpdate: false})
 	if err != nil {
-		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)
+		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Status.Keeper, err)
 	}
 
 	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
 	if err != nil {
-		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)
+		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Status.Keeper, err)
 	}
 
 	// Keeper deletion is idempotent

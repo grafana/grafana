@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var (
@@ -120,6 +121,7 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 		},
 	}
 	r.SetUpdateTimestamp(updated.UTC())
+	r.UID = gapiutil.CalculateClusterWideUID(&r)
 	return r
 }
 

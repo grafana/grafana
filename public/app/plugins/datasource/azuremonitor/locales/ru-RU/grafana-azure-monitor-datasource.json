@@ -17,7 +17,7 @@
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Вручную измените <2>URI ресурса</2>. Поддерживает использование нескольких переменных шаблона (например, /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Агрегатная функция",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Базовые журналы",
-      "description-basic-logs": "",
+      "description-basic-logs": "Включение этой функции влечет за собой затраты на каждый запрос Azure Monitor на панелях дашбордов, связанный с таблицами для <2>базовых журналов</2>.",
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {

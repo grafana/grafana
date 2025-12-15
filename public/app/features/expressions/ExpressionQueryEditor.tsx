@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
@@ -11,7 +10,7 @@ import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpr';
+import { SqlExpr } from './components/SqlExpressions/SqlExpr';
 import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
@@ -96,22 +95,6 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
   const styles = useStyles2(getStyles);
-
-  const initialExpressionRef = useRef(query.expression);
-  const hasTrackedAddExpression = useRef(false);
-
-  useEffect(() => {
-    // Only track if 1) query has a type, and 2) we haven't tracked yet for this component instance, and
-    // 3) initial expression was empty (indicating a new expression, not editing existing)
-    if (query.type && !hasTrackedAddExpression.current && !initialExpressionRef.current) {
-      reportInteraction('dashboards_expression_interaction', {
-        action: 'add_expression',
-        expression_type: query.type,
-        context: 'panel_query_section',
-      });
-      hasTrackedAddExpression.current = true;
-    }
-  }, [query.type, query.refId]);
 
   useEffect(() => {
     setCachedExpression(query.type, query.expression);

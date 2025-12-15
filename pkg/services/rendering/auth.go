@@ -37,6 +37,7 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 
 	var renderUser *RenderUser
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if looksLikeJWT(key) && rs.features.IsEnabled(ctx, featuremgmt.FlagRenderAuthJWT) {
 		from = "jwt"
 		renderUser = rs.getRenderUserFromJWT(key)

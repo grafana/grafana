@@ -124,7 +124,7 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)
 			}
-			req.Options.Labels = append(req.Options.Labels, requirement)
+			req.Options.Fields = append(req.Options.Fields, requirement)
 		}
 	}
 

@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
+import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../dataquery.gen';
 import {
   namespaceVariable,
   metricVariable,
@@ -15,7 +16,6 @@ import {
 import { initialVariableModelState } from '../mocks/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../mocks/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../mocks/queries';
-import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

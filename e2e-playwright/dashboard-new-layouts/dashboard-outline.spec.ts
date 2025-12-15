@@ -21,14 +21,15 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
 
       // Should be able to click Variables item in outline to see add variable button
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       ).toBeVisible();
+
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
 
       // Clicking a panel should scroll that panel in view
       await expect(page.getByText('Dashboard panel 48')).toBeHidden();

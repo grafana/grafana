@@ -7,6 +7,7 @@ import (
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/codes"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -22,6 +23,8 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 
 	res, err := s.write(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform write request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform write request")
 	}

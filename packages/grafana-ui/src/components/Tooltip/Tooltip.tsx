@@ -10,7 +10,7 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
+import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

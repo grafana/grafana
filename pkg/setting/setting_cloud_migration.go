@@ -35,12 +35,14 @@ type CloudMigrationSettings struct {
 	TokenExpiresAfter           time.Duration
 	FrontendPollInterval        time.Duration
 
+	Enabled         bool
 	IsTarget        bool
 	IsDeveloperMode bool
 }
 
 func (cfg *Cfg) readCloudMigrationSettings() {
 	cloudMigration := cfg.Raw.Section("cloud_migration")
+	cfg.CloudMigration.Enabled = cloudMigration.Key("enabled").MustBool(true)
 	cfg.CloudMigration.IsTarget = cloudMigration.Key("is_target").MustBool(false)
 	cfg.CloudMigration.GcomAPIToken = cloudMigration.Key("gcom_api_token").MustString("")
 	cfg.CloudMigration.AuthAPIUrl = cloudMigration.Key("auth_api_url").MustString("")

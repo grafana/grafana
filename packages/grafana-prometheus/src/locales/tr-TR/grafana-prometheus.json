@@ -175,7 +175,7 @@
         "label-scrape-interval": "Kazıma aralığı",
         "label-series-limit": "Seri sınırı",
         "label-use-series-endpoint": "Seri uç noktasını kullan",
-        "more-info": "",
+        "more-info": "Prometheus türü ve sürümünü veri kaynaklarında yapılandırma hakkında daha fazla bilgi için <2>sağlama belgelerine</2> bakın.",
         "placeholder-example-maxsourceresolutionmtimeout": "Örnek: {{example}}",
         "title-interval-behaviour": "Aralık davranışı",
         "title-other": "Diğer",

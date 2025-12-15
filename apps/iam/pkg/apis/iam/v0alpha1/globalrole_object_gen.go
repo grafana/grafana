@@ -23,6 +23,12 @@ type GlobalRole struct {
 	Spec GlobalRoleSpec `json:"spec" yaml:"spec"`
 }
 
+func NewGlobalRole() *GlobalRole {
+	return &GlobalRole{
+		Spec: *NewGlobalRoleSpec(),
+	}
+}
+
 func (o *GlobalRole) GetSpec() any {
 	return o.Spec
 }

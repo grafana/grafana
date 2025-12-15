@@ -6,11 +6,11 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 
-import { LogsEditorMode } from '../../dataquery.gen';
+import { LogsEditorMode, ResultFormat } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery, ResultFormat } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField/ResourceField';

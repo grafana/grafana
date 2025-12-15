@@ -447,19 +447,6 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "cdn class is mapped correctly",
-			install: PluginInstall{
-				ID:      "plugin-cdn",
-				Version: "3.0.0",
-				Class:   ClassCDN,
-				Source:  SourcePluginStore,
-			},
-			namespace: "org-3",
-			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
-				require.Equal(t, pluginsv0alpha1.PluginSpecClass(ClassCDN), p.Spec.Class)
-			},
-		},
-		{
 			name: "source annotation is set correctly",
 			install: PluginInstall{
 				ID:      "plugin-1",

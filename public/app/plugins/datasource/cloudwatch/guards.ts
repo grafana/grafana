@@ -5,9 +5,9 @@ import {
   CloudWatchLogsAnomaliesQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
-  CloudWatchQuery,
   LogsMode,
-} from './types';
+} from './dataquery.gen';
+import { CloudWatchQuery } from './types';
 
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   cloudwatchQuery.queryMode === 'Logs';

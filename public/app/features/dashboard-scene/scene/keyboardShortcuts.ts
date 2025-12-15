@@ -1,4 +1,4 @@
-import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent } from '@grafana/data';
+import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -130,13 +130,36 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
-  // Zoom out
-  keybindings.addBinding({
-    key: 't z',
-    onTrigger: () => {
-      handleZoomOut(scene);
-    },
-  });
+  if (config.featureToggles.newTimeRangeZoomShortcuts) {
+    keybindings.addBinding({
+      key: 't +',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
+      key: 't =',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
+      key: 't -',
+      type: 'keypress', // NOTE: Because some browsers/OS identify minus symbol differently.
+      onTrigger: () => {
+        handleZoomOut(scene);
+      },
+    });
+  } else {
+    keybindings.addBinding({
+      key: 't z',
+      onTrigger: () => {
+        handleZoomOut(scene);
+      },
+    });
+  }
 
   keybindings.addBinding({
     key: 'ctrl+z',
@@ -264,6 +287,31 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.removeAll();
     panelAttentionSubscription.unsubscribe();
   };
+}
+
+function handleZoom(scene: DashboardScene, scale: number) {
+  const timeRange = sceneGraph.getTimeRange(scene);
+  const currentRange = timeRange.state.value;
+  const timespan = currentRange.to.valueOf() - currentRange.from.valueOf();
+
+  if (timespan === 0) {
+    return;
+  }
+
+  const center = currentRange.to.valueOf() - timespan / 2;
+  const newTimespan = timespan * scale;
+
+  const to = center + newTimespan / 2;
+  const from = center - newTimespan / 2;
+
+  timeRange.onTimeRangeChange({
+    from: dateTime(from),
+    to: dateTime(to),
+    raw: {
+      from: dateTime(from),
+      to: dateTime(to),
+    },
+  });
 }
 
 function handleZoomOut(scene: DashboardScene) {

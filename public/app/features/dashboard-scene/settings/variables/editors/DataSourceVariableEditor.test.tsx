@@ -2,6 +2,7 @@
 
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceVariable } from '@grafana/scenes';

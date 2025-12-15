@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/audit"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -97,7 +98,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
-	storageStatus     dualwrite.Service
+	dualWriter        dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient       plugins.Client
@@ -113,6 +114,9 @@ type service struct {
 	appInstallers                     []appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
 	dualWriterMetrics                 *grafanarest.DualWriterMetrics
+
+	auditBackend             audit.Backend
+	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator
 }
 
 func ProvideService(
@@ -127,7 +131,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
-	storageStatus dualwrite.Service,
+	dualWriter dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
@@ -137,6 +141,8 @@ func ProvideService(
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
+	auditBackend audit.Backend,
+	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -158,7 +164,7 @@ func ProvideService(
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
-		storageStatus:                     storageStatus,
+		dualWriter:                        dualWriter,
 		unified:                           unified,
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
@@ -167,6 +173,8 @@ func ProvideService(
 		appInstallers:                     appInstallers,
 		builderMetrics:                    builderMetrics,
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
+		auditBackend:                      auditBackend,
+		auditPolicyRuleEvaluator:          auditPolicyRuleEvaluator,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -275,6 +283,8 @@ func (s *service) start(ctx context.Context) error {
 				auth := a.GetAuthorizer()
 				if auth != nil {
 					s.authorizer.Register(gv, auth)
+				} else {
+					panic("authorizer can not be nil for api group=" + gv.String())
 				}
 			}
 		}
@@ -316,7 +326,11 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
-	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
+	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
+	// add the builder group versions to the api resource config
+	apiResourceConfig.EnableVersions(groupVersions...)
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
 	}
 
@@ -349,6 +363,10 @@ func (s *service) start(ctx context.Context) error {
 		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
 	}
 
+	// Auditing Options
+	serverConfig.AuditBackend = s.auditBackend
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleEvaluator
+
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
@@ -359,6 +377,7 @@ func (s *service) start(ctx context.Context) error {
 		groupVersions,
 		defGetters,
 		s.metrics,
+		apiResourceConfig,
 	)
 	if err != nil {
 		return err
@@ -385,16 +404,22 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version for existing builders
-	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+	err = builder.InstallAPIs(s.scheme,
+		s.codecs,
+		server,
+		serverConfig.RESTOptionsGetter,
+		builders,
+		o.StorageOptions,
 		s.metrics,
 		request.GetNamespaceMapper(s.cfg),
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
-		s.storageStatus,
+		s.dualWriter,
 		optsregister,
 		s.features,
 		s.dualWriterMetrics,
 		s.builderMetrics,
+		apiResourceConfig,
 	)
 	if err != nil {
 		return err
@@ -409,7 +434,7 @@ func (s *service) start(ctx context.Context) error {
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		request.GetNamespaceMapper(s.cfg),
-		s.storageStatus,
+		s.dualWriter,
 		s.dualWriterMetrics,
 		s.builderMetrics,
 		serverConfig.MergedResourceConfig,

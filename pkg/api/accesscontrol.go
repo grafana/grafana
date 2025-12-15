@@ -313,6 +313,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
 		annotationsReaderRole = ac.RoleRegistration{
@@ -619,6 +620,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{
 			Role: ac.RoleDTO{

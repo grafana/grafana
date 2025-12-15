@@ -30,7 +30,7 @@ var (
 )
 
 type LibraryPanelStore struct {
-	Access       legacy.DashboardAccess
+	Access       legacy.DashboardAccessor
 	ResourceInfo utils.ResourceInfo
 	service      libraryelements.Service
 }

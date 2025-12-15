@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { AzureAuthType, AzureCredentials, getAzureClouds } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';

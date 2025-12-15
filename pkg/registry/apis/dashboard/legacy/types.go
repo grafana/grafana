@@ -16,6 +16,11 @@ type DashboardQuery struct {
 	UID   string // to select a single dashboard
 	Limit int
 
+	// MaxRows is used internally by the iterator to fetch data in batches
+	// When set, the SQL query will include LIMIT MaxRows
+	// If Limit is smaller, that will be used instead
+	MaxRows int
+
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
 	LastID int64
@@ -55,10 +60,9 @@ type LibraryPanelQuery struct {
 	LastID int64
 }
 
-type DashboardAccess interface {
+type DashboardAccessor interface {
 	resource.StorageBackend
 	resourcepb.ResourceIndexServer
-	LegacyMigrator
 
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboardV1.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard, failOnExisting bool) (*dashboardV1.Dashboard, bool, error)
@@ -66,4 +70,14 @@ type DashboardAccess interface {
 
 	// Get a typed list
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error)
+}
+
+//go:generate mockery --name MigrationDashboardAccessor --structname MockMigrationDashboardAccessor --inpackage --filename migration_dashboard_accessor_mock.go --with-expecter
+type MigrationDashboardAccessor interface {
+	// Migration helper methods - these support the separate LegacyMigrator
+	CountResources(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
+	MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+	MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+	MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+	MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 }

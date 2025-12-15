@@ -8,19 +8,22 @@ import {
   DataQueryResponse,
   DataTopic,
   dateTime,
-  rangeUtil,
-  TimeRange,
   LoadingState,
+  rangeUtil,
+  store,
+  TimeRange,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
+import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiGroupedRequest, LokiQuery } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -55,6 +58,10 @@ interface QuerySplittingOptions {
    * Do not retry failed queries.
    */
   disableRetry?: boolean;
+  /**
+   * The current index of all query attempts
+   */
+  shardQueryIndex?: number;
 }
 
 /**
@@ -85,6 +92,25 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
     })
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
+
+const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: number, requests: LokiGroupedRequest[]) => {
+  // requests has already been mutated
+  return requests.map((r) => ({
+    ...r,
+    request: {
+      ...r.request,
+      targets: r.request.targets.map((t) => {
+        // @todo if we retry the first request, we will strip out the query limits context
+        if (splitQueryIndex === 0 && shardQueryIndex === 0) {
+          // Don't pull from request if it has already been added by `addLimitsToShardGroups`
+          return t.limitsContext === undefined ? addQueryLimitsContext(t, r.request) : t;
+        }
+        return { ...t, limitsContext: undefined };
+      }),
+    },
+  }));
+};
+
 export function runSplitGroupedQueries(
   datasource: LokiDatasource,
   requests: LokiGroupedRequest[],
@@ -99,8 +125,15 @@ export function runSplitGroupedQueries(
   let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let splitQueryIndex = 0;
+  const shardQueryIndex = options.shardQueryIndex ?? 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
+    if (config.featureToggles.lokiQueryLimitsContext) {
+      requests = addLimitsToSplitRequests(splitQueryIndex, shardQueryIndex, requests);
+    }
+
+    splitQueryIndex++;
     let retrying = false;
 
     if (subquerySubscription != null) {
@@ -114,7 +147,10 @@ export function runSplitGroupedQueries(
     }
 
     const done = () => {
-      mergedResponse.state = LoadingState.Done;
+      if (mergedResponse.state !== LoadingState.Error) {
+        mergedResponse.state = LoadingState.Done;
+      }
+
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
@@ -188,6 +224,10 @@ export function runSplitGroupedQueries(
         mergedResponse = combineResponses(mergedResponse, partialResponse);
         if (!options.skipPartialUpdates) {
           mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
+        }
+
+        if (mergedResponse.state === LoadingState.Error) {
+          done();
         }
       },
       complete: () => {
@@ -301,7 +341,9 @@ export function runSplitQuery(
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
-  const oneDayMs = 24 * 60 * 60 * 1000;
+  // Allow custom split durations for debugging, e.g. `localStorage.setItem('grafana.loki.querySplitInterval', 24 * 60 * 1000) // 1 hour`
+  const debugSplitDuration = parseInt(store.get('grafana.loki.querySplitInterval'), 10);
+  const oneDayMs = debugSplitDuration || 24 * 60 * 60 * 1000;
   const directionPartitionedLogQueries = groupBy(logQueries, (query) =>
     query.direction === LokiQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward
   );

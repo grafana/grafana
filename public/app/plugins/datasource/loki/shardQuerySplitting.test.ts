@@ -1,16 +1,21 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiQuery } from './types';
 
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
+
+const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
 
 const originalLog = console.log;
 const originalWarn = console.warn;
@@ -20,20 +25,26 @@ beforeEach(() => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
+beforeAll(() => {
+  config.featureToggles.lokiQueryLimitsContext = true;
+});
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
   console.error = originalErr;
+  config.featureToggles.lokiQueryLimitsContext = originalLokiQueryLimitsContextState;
 });
 
 describe('runShardSplitQuery()', () => {
   let datasource: LokiDatasource;
+  const from = dateTime('2023-02-08T04:00:00.000Z');
+  const to = dateTime('2023-02-08T11:00:00.000Z');
   const range = {
-    from: dateTime('2023-02-08T04:00:00.000Z'),
-    to: dateTime('2023-02-08T11:00:00.000Z'),
+    from,
+    to,
     raw: {
-      from: dateTime('2023-02-08T04:00:00.000Z'),
-      to: dateTime('2023-02-08T11:00:00.000Z'),
+      from,
+      to,
     },
   };
 
@@ -139,6 +150,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{a="b", __stream_shard__=~"20|10"}',
+            limitsContext: {
+              expr: `{a="b"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -209,6 +225,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{service_name="test", filter="true", __stream_shard__=~"20|10"}',
+            limitsContext: {
+              expr: `{service_name="test", filter="true"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -227,9 +248,13 @@ describe('runShardSplitQuery()', () => {
 
   test('Retries failed retriable requests', async () => {
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }],
+        data: [],
+      })
+    );
     // @ts-expect-error
     jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
       callback();
@@ -241,27 +266,72 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
-  test('Failed requests have loading state Error', async () => {
-    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'parse error' }, data: [] }));
-    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      expect(response[0].state).toBe(LoadingState.Error);
+  describe('Errors', () => {
+    beforeEach(() => {
+      const querySplittingRange = {
+        from: dateTime('2023-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-10T06:00:00.000Z'),
+        raw: {
+          from: dateTime('2023-02-08T05:00:00.000Z'),
+          to: dateTime('2023-02-10T06:00:00.000Z'),
+        },
+      };
+      request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
+        range: querySplittingRange,
+      });
+      // @ts-expect-error
+      jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
+        callback();
+      });
     });
-  });
 
-  test('Does not retry on other errors', async () => {
-    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] }));
-    // @ts-expect-error
-    jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
-      callback();
-    });
-    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+    test('Failed 4xx responses have loading state Error', async () => {
+      jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '12', '5']);
+      jest
+        .spyOn(datasource, 'runQuery')
+        .mockReturnValue(
+          of({ state: LoadingState.Error, error: { refId: 'A', message: 'client error', status: 400 }, data: [] })
+        );
+      await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+        expect(response[0].state).toBe(LoadingState.Error);
+      });
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+    });
+
+    test('Max query bytes errors are not retried', async () => {
+      const errResp: DataQueryResponse = {
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...`, status: 500 }],
+        data: [],
+      };
+      jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '4']);
+      jest
+        .spyOn(datasource, 'runQuery')
+        .mockReturnValueOnce(of(errResp))
+        .mockReturnValueOnce(of({ state: LoadingState.Done, data: [], status: 200 }));
+
+      await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+        expect(response[0].state).toBe(LoadingState.Error);
+      });
+
+      // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests + 1 retriable error = 13 requests
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+    });
+
+    test('Does not retry on other errors', async () => {
+      jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
+      jest
+        .spyOn(datasource, 'runQuery')
+        .mockReturnValueOnce(
+          of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] })
+        );
+      // @ts-expect-error
+      jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
+        callback();
+      });
+      await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
@@ -302,9 +372,13 @@ describe('runShardSplitQuery()', () => {
     );
 
     // sqrt(currentSize)
-    jest
-      .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }],
+        data: [],
+      })
+    );
 
     // +10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
@@ -425,6 +499,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{a="b", __stream_shard__=~"20|10|9"}',
+            limitsContext: {
+              expr: `{a="b"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
+import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { RowItem } from '../scene/layout-rows/RowItem';
@@ -53,6 +54,12 @@ const buildTestScene = (scene: DashboardScene) => {
   return scene;
 };
 
+function WrapSidebar({ children }: { children: React.ReactElement }) {
+  const sidebarContext = useSidebar({});
+
+  return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
+}
+
 describe('EditPaneHeader', () => {
   const mockEditPane = {
     state: { selection: null },
@@ -71,7 +78,11 @@ describe('EditPaneHeader', () => {
       const elementSelection = new ElementSelection([['row-test', row.getRef()]]);
       const editableElement = elementSelection.createSelectionElement()!;
 
-      render(<EditPaneHeader element={editableElement} editPane={mockEditPane} />);
+      render(
+        <WrapSidebar>
+          <EditPaneHeader element={editableElement} editPane={mockEditPane} />
+        </WrapSidebar>
+      );
 
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
       expect(DashboardInteractions.trackRemoveRowClick).toHaveBeenCalled();
@@ -84,7 +95,11 @@ describe('EditPaneHeader', () => {
       const elementSelection = new ElementSelection([['tab-test', tab.getRef()]]);
       const editableElement = elementSelection.createSelectionElement()!;
 
-      render(<EditPaneHeader element={editableElement} editPane={mockEditPane} />);
+      render(
+        <WrapSidebar>
+          <EditPaneHeader element={editableElement} editPane={mockEditPane} />
+        </WrapSidebar>
+      );
 
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
       expect(DashboardInteractions.trackRemoveTabClick).toHaveBeenCalled();

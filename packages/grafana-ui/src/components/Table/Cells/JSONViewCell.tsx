@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 
 import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';

@@ -581,10 +581,16 @@ func TestMain(m *testing.M) {
 	// nolint:staticcheck
 	testSQLStore.cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
-	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
-		return nil, err
+	skipTruncate := false
+	if skip, present := os.LookupEnv("SKIP_DB_TRUNCATE"); present {
+		skipTruncate = strings.ToLower(skip) == "true"
 	}
-	testSQLStore.engine.ResetSequenceGenerator()
+	if !skipTruncate {
+		if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
+			return nil, err
+		}
+		testSQLStore.engine.ResetSequenceGenerator()
+	}
 
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err

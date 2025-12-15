@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { InlineField, Input, Stack } from '@grafana/ui';
 
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../types';
+import { LokiQueryType, LokiQueryDirection } from '../dataquery.gen';
+import { LokiQuery } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;

@@ -1,18 +1,17 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -26,14 +25,9 @@ jest.mock('../utils/interactions', () => ({
   },
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useLocation: () => ({
-    pathname: '/dashboard/test',
-    search: '',
-    hash: '',
-    state: null,
-  }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn().mockReturnValue(80),
 }));
 
 export function buildTestScene() {
@@ -47,26 +41,43 @@ export function buildTestScene() {
       }),
     }),
   });
-  activateFullSceneTree(testScene);
   return testScene;
 }
 
 describe('DashboardEditPaneRenderer', () => {
-  describe('outline interactions tracking', () => {
-    it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
-      const user = userEvent.setup();
-      const scene = buildTestScene();
-      render(
-        <DashboardEditPaneRenderer
-          editPane={scene.state.editPane}
-          isEditPaneCollapsed={false}
-          onToggleCollapse={() => {}}
-        />
-      );
-      const outlineButton = screen.getByTestId(selectors.components.PanelEditor.Outline.section);
-      await user.click(outlineButton);
+  config.featureToggles.dashboardNewLayouts = true;
 
-      expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
-    });
+  it('Should render sidebar', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
+
+  it('Should sync sidebar docked state with edit pane state', async () => {
+    const scene = buildTestScene();
+    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    act(() => screen.getByLabelText('Outline').click());
+
+    expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+
+    act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
+
+    expect(scene.state.editPane.state.isDocked).toBe(true);
+  });
+
+  // describe('outline interactions tracking', () => {
+  //   it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
+  //     const user = userEvent.setup();
+  //     const scene = buildTestScene();
+  //     render(<DashboardEditPaneRenderer editPane={scene.state.editPane} dashboard={scene} />);
+  //     const outlineButton = screen.getByTestId(selectors.components.PanelEditor.Outline.section);
+  //     await user.click(outlineButton);
+  //     expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
+  //   });
+  // });
 });

@@ -1,6 +1,7 @@
 import { omit } from 'lodash';
 
-import { Dimensions, VariableQuery, VariableQueryType, OldVariableQuery, MultiFilters } from '../types';
+import { Dimensions } from '../dataquery.gen';
+import { VariableQuery, VariableQueryType, OldVariableQuery, MultiFilters } from '../types';
 
 const jsonVariable = /\${(\w+):json}/g;
 

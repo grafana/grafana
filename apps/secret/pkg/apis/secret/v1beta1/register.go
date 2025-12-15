@@ -28,7 +28,7 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 		},
 		Reader: func(obj any) ([]any, error) {
 			if r, ok := obj.(*SecureValue); ok {
-				return []any{r.Name, r.Spec.Description, r.Spec.Keeper, r.Spec.Ref}, nil
+				return []any{r.Name, r.Spec.Description, r.Status.Keeper, r.Spec.Ref}, nil
 			}
 
 			return nil, fmt.Errorf("expected SecureValue but got %T", obj)

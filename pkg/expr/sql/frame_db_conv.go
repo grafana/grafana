@@ -187,7 +187,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		return parseBoolFromInt8(val, nullable)
 
-	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
 		switch v := val.(type) {
 		case types.JSONDocument:
 			raw := json.RawMessage(v.String())

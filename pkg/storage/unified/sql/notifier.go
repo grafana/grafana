@@ -28,7 +28,6 @@ func newNotifier(b *backend) (eventNotifier, error) {
 			pollingInterval: b.pollingInterval,
 			watchBufferSize: b.watchBufferSize,
 			log:             b.log,
-			tracer:          b.tracer,
 			bulkLock:        b.bulkLock,
 			listLatestRVs:   b.listLatestRVs,
 			storageMetrics:  b.storageMetrics,

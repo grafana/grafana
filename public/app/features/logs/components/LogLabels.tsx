@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, forwardRef, useMemo, useState } from 'react';
+import { memo, forwardRef, useMemo, useState, type JSX } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';

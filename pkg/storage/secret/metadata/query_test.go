@@ -13,6 +13,15 @@ func TestKeeperQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlKeeperSetAsActive: {
+				{
+					Name: "keeper set as active",
+					Data: &setKeeperAsActive{
+						SQLTemplate: mocks.NewTestingSQLTemplate(), Name: "name",
+						Namespace: "ns",
+					},
+				},
+			},
 			sqlKeeperCreate: {
 				{
 					Name: "create",
@@ -49,6 +58,15 @@ func TestKeeperQueries(t *testing.T) {
 				{
 					Name: "list",
 					Data: &listKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlKeeperReadActive: {
+				{
+					Name: "read active",
+					Data: &readActiveKeeper{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
 					},
@@ -123,10 +141,10 @@ func TestSecureValueQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlGetLatestSecureValueVersion: {
+			sqlGetLatestSecureValueVersionAndCreatedAt: {
 				{
 					Name: "get latest secure value version",
-					Data: &getLatestSecureValueVersion{
+					Data: &getLatestSecureValueVersionAndCreatedAt{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Name:        "name",
 						Namespace:   "ns",

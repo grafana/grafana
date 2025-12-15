@@ -17,7 +17,7 @@
       "label-subscription": "Předplatné",
       "placeholder-resource-name": "název",
       "tooltip-region": "Oblast kódu zdroje. Volitelné pro jeden zdroj, ale povinné při výběru více zdrojů.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Ručně upravte <2>identifikátor URI zdroje</2>. Podporuje použití více proměnných šablony (např.: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Funkce agregování",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Základní protokoly",
-      "description-basic-logs": "",
+      "description-basic-logs": "Povolení této funkce zapříčiní vznik nákladů Azure Monitor na dotaz na panelech nástěnek, které dotazují tabulky nakonfigurované pro <2>základní protokoly</2>.",
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {

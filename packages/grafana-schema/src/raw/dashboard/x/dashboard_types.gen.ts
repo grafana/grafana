@@ -188,6 +188,10 @@ export interface VariableModel {
    */
   regex?: string;
   /**
+   * Determine whether regex applies to variable value or display text
+   */
+  regexApplyTo?: VariableRegexApplyTo;
+  /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync?: boolean;
@@ -258,6 +262,12 @@ export enum VariableHide {
   hideVariable = 2,
   inControlsMenu = 3,
 }
+
+/**
+ * Determine whether regex applies to variable value or display text
+ * Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+ */
+export type VariableRegexApplyTo = ('value' | 'text');
 
 /**
  * Sort variable options
@@ -475,7 +485,12 @@ export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'dataso
  * `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
  * `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
  * `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
- * `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+ * `continuous-viridis`: Continuous Viridis palette mode
+ * `continuous-magma`: Continuous Magma palette mode
+ * `continuous-plasma`: Continuous Plasma palette mode
+ * `continuous-inferno`: Continuous Inferno palette mode
+ * `continuous-cividis`: Continuous Cividis palette mode
+ * `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
  * `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
  * `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
  * `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -492,11 +507,16 @@ export enum FieldColorModeId {
   ContinuousBlPu = 'continuous-BlPu',
   ContinuousBlYlRd = 'continuous-BlYlRd',
   ContinuousBlues = 'continuous-blues',
+  ContinuousCividis = 'continuous-cividis',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   ContinuousGreens = 'continuous-greens',
+  ContinuousInferno = 'continuous-inferno',
+  ContinuousMagma = 'continuous-magma',
+  ContinuousPlasma = 'continuous-plasma',
   ContinuousPurples = 'continuous-purples',
   ContinuousRdYlGr = 'continuous-RdYlGr',
   ContinuousReds = 'continuous-reds',
+  ContinuousViridis = 'continuous-viridis',
   ContinuousYlBl = 'continuous-YlBl',
   ContinuousYlRd = 'continuous-YlRd',
   Fixed = 'fixed',

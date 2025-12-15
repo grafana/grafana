@@ -48,7 +48,7 @@ jobs:
   analyze:
     needs: detect-changes
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     continue-on-error: true # doesn't block PRs from being merged if this fails
     if: github.repository == 'grafana/grafana'
 

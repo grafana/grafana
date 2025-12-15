@@ -18,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
-const concurrencyLimit = 32
-
 type Loader struct {
 	cfg          *pluginsCfg.PluginManagementCfg
 	discovery    discovery.Discoverer
@@ -87,37 +85,13 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 
 	st = time.Now()
 	validatedPlugins := []*plugins.Plugin{}
-	type validateResult struct {
-		bootstrappedPlugin *plugins.Plugin
-		err                error
-	}
-	validateResults := make(chan validateResult, len(bootstrappedPlugins))
-
-	var limitSize int
-	if src.PluginClass(ctx) == plugins.ClassCDN {
-		limitSize = min(len(bootstrappedPlugins), concurrencyLimit)
-	} else {
-		limitSize = 1
-	}
-	limit := make(chan struct{}, limitSize)
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
-		limit <- struct{}{}
-		go func(p *plugins.Plugin) {
-			err := l.validation.Validate(ctx, p)
-			validateResults <- validateResult{
-				bootstrappedPlugin: bootstrappedPlugin,
-				err:                err,
-			}
-			<-limit
-		}(bootstrappedPlugin)
-	}
-	for i := 0; i < len(bootstrappedPlugins); i++ {
-		r := <-validateResults
-		if r.err != nil {
-			l.recordError(ctx, r.bootstrappedPlugin, r.err)
+		err := l.validation.Validate(ctx, bootstrappedPlugin)
+		if err != nil {
+			l.recordError(ctx, bootstrappedPlugin, err)
 			continue
 		}
-		validatedPlugins = append(validatedPlugins, r.bootstrappedPlugin)
+		validatedPlugins = append(validatedPlugins, bootstrappedPlugin)
 	}
 	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st), "total", len(validatedPlugins))
 

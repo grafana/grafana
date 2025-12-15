@@ -28,6 +28,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,7 +39,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
@@ -660,11 +661,10 @@ alerting:
   alertmanagers:
   - static_configs:
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
-	require.NoError(t, err, "Unable to load YAML config.")
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err = n.ApplyConfig(cfg, nil)
+	err := n.ApplyConfig(cfg, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -711,11 +711,10 @@ alerting:
         regex: 'alertmanager:9093'
         action: drop
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
-	require.NoError(t, err, "Unable to load YAML config.")
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err = n.ApplyConfig(cfg, nil)
+	err := n.ApplyConfig(cfg, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -1091,7 +1090,7 @@ alerting:
       - foo.json
 `
 	// 1. Ensure known alertmanagers are not dropped during ApplyConfig.
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
 	// First, apply the config and reload.
@@ -1117,7 +1116,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg, nil))
@@ -1140,7 +1139,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg, nil))
@@ -1167,9 +1166,22 @@ alerting:
       regex: 'doesntmatter:1234'
       action: drop
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg, nil))
 	require.Empty(t, n.Alertmanagers())
+}
+
+// Maintain strict yaml decode behavior from v2: https://github.com/go-yaml/yaml/issues/639#issuecomment-666935833
+func mustStrictlyDecodeConfig(t testing.TB, r io.Reader, cfg *config.Config) {
+	t.Helper()
+
+	dec := yaml.NewDecoder(r)
+	dec.KnownFields(true)
+
+	err := dec.Decode(cfg)
+	if err != nil {
+		require.Equal(t, io.EOF, err, "Unable to load YAML config.")
+	}
 }

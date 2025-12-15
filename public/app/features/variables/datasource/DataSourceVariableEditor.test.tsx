@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceVariableEditorUnConnected as DataSourceVariableEditor } from './DataSourceVariableEditor';
