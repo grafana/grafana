@@ -19,15 +19,175 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+/*
+DualReadWriter Authorization and Operation Behavior
+
+DualReadWriter manages file operations for provisioning repositories, handling both repository writes
+and Grafana DB synchronization. It performs resource-level authorization checks using the access checker.
+
+Authorization Context:
+  - Standard provisioning Authorizer validates repository-level access before DualReadWriter is called
+  - DualReadWriter performs additional resource-level authorization (e.g., folder permissions for dashboards)
+  - Authorization checks use the access checker with the requester's identity and folder context
+  - Folder context comes from the EXISTING resource's folder (if it exists) or the NEW resource's folder
+
+Branch Behavior:
+  - Configured Branch (empty ref or matches repo default): Updates both repository and Grafana DB
+  - Other Branches: Only updates repository, Grafana DB remains unchanged
+  - Some operations (directory move/delete) are restricted on configured branch
+
+Operation Authorization and Behavior Table:
+┌───────────────────┬──────────────────┬──────────────────────────────────────────────────────────────────────────┐
+│ Operation         │ Branch Type      │ Authorization & Behavior                                                 │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ Read (GET)        │ Any Branch       │ Auth: VerbGet on resource in its folder                                  │
+│                   │                  │ Folder: From parsed resource metadata                                    │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Read file from repository                                           │
+│                   │                  │   2. Parse file                                                          │
+│                   │                  │   3. Run DryRun validation                                               │
+│                   │                  │   4. Authorize (VerbGet)                                                 │
+│                   │                  │   5. Return parsed resource                                              │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ CreateResource    │ Configured       │ Auth: VerbCreate if new resource, VerbUpdate if exists                  │
+│ (POST file)       │ Branch           │ Folder: Existing resource's folder OR new resource's folder              │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Parse file content                                                  │
+│                   │                  │   2. Run DryRun validation                                               │
+│                   │                  │   3. Check if resource exists (ensureExisting)                           │
+│                   │                  │   4. Authorize (VerbCreate if new, VerbUpdate if exists)                │
+│                   │                  │   5. Create file in repository                                           │
+│                   │                  │   6. Create folder path in Grafana (if needed)                           │
+│                   │                  │   7. Run resource create/update in Grafana DB                            │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth: Same as configured branch                                          │
+│                   │                  │ Behavior: Same as configured branch BUT skip steps 6-7                   │
+│                   │                  │ (Grafana DB not updated)                                                 │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ UpdateResource    │ Configured       │ Auth: VerbUpdate if exists, VerbCreate if new                           │
+│ (PUT file)        │ Branch           │ Folder: Existing resource's folder OR new resource's folder              │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Parse file content                                                  │
+│                   │                  │   2. Run DryRun validation                                               │
+│                   │                  │   3. Check if resource exists (ensureExisting)                           │
+│                   │                  │   4. Authorize (VerbUpdate if exists, VerbCreate if new)                │
+│                   │                  │   5. Update file in repository                                           │
+│                   │                  │   6. Create folder path in Grafana (if needed)                           │
+│                   │                  │   7. Run resource create/update in Grafana DB                            │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth: Same as configured branch                                          │
+│                   │                  │ Behavior: Same as configured branch BUT skip steps 6-7                   │
+│                   │                  │ (Grafana DB not updated)                                                 │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ Delete (file)     │ Configured       │ Auth: VerbDelete on resource in its folder                               │
+│ (DELETE file)     │ Branch           │ Folder: Existing resource's folder (via ensureExisting)                  │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Read file from repository                                           │
+│                   │                  │   2. Parse file                                                          │
+│                   │                  │   3. Check if resource exists (ensureExisting)                           │
+│                   │                  │   4. Authorize (VerbDelete)                                              │
+│                   │                  │   5. Set Action to Delete                                                │
+│                   │                  │   6. Run DryRun validation (unless skipped)                              │
+│                   │                  │   7. Delete file from repository                                         │
+│                   │                  │   8. Run resource delete in Grafana DB                                   │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth: Same as configured branch                                          │
+│                   │                  │ Behavior: Same as configured branch BUT skip step 8                      │
+│                   │                  │ (Grafana DB not updated)                                                 │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ CreateFolder      │ Configured       │ Auth: VerbCreate on folder                                               │
+│ (POST dir/)       │ Branch           │ Folder: Parent folder context (currently empty)                          │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Validate path is directory                                          │
+│                   │                  │   2. Authorize folder creation (VerbCreate)                              │
+│                   │                  │   3. Create folder in repository                                         │
+│                   │                  │   4. Ensure folder path exists in Grafana                                │
+│                   │                  │   5. Return folder info with URLs                                        │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth: Same as configured branch                                          │
+│                   │                  │ Behavior: Same as configured branch BUT skip steps 4-5                   │
+│                   │                  │ (Grafana DB not updated)                                                 │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ Delete (folder)   │ Configured       │ NOT ALLOWED - Returns HTTP 405 Method Not Allowed                        │
+│ (DELETE dir/)     │ Branch           │ Error: "directory delete operations are not available for configured     │
+│                   │                  │ branch. Use bulk delete operations via the jobs API instead"             │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth: VerbDelete on folder                                               │
+│                   │                  │ Folder: The folder path itself                                           │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Authorize folder deletion (VerbDelete)                              │
+│                   │                  │   2. Delete folder from repository                                       │
+│                   │                  │   3. Return folder delete response                                       │
+│                   │                  │ Note: Grafana DB not updated (branch operation)                          │
+├───────────────────┼──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ MoveResource      │ Configured       │ NOT ALLOWED for directories - Returns HTTP 405 Method Not Allowed        │
+│ (POST with        │ Branch           │ Error: "directory move operations are not available for configured       │
+│ originalPath)     │                  │ branch. Use bulk move operations via the jobs API instead"               │
+│                   │                  │                                                                          │
+│ (directory move)  │                  │ ALLOWED for files:                                                       │
+│                   │                  │ Auth: Two checks required:                                               │
+│                   │                  │   1. VerbDelete on original resource in its existing folder              │
+│                   │                  │   2. VerbCreate (if new) or VerbUpdate (if exists) on destination        │
+│                   │                  │ Folder: Existing resource's folder for both source and destination       │
+│                   │                  │ Behavior:                                                                │
+│                   │                  │   1. Read and parse original file                                        │
+│                   │                  │   2. Check if original resource exists (ensureExisting)                  │
+│                   │                  │   3. Authorize delete on original (VerbDelete)                           │
+│                   │                  │   4. Parse destination file (original or updated content)                │
+│                   │                  │   5. Run DryRun on destination                                           │
+│                   │                  │   6. Check if destination resource exists (ensureExisting)               │
+│                   │                  │   7. Authorize destination (VerbCreate if new, VerbUpdate if exists)     │
+│                   │                  │   8. Perform move in repository (or delete+create if content changes)    │
+│                   │                  │   9. Create folder path in Grafana (if needed)                           │
+│                   │                  │   10. Delete old resource from Grafana (if name changed)                 │
+│                   │                  │   11. Create/update new resource in Grafana DB                           │
+│                   ├──────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│                   │ Other Branches   │ Auth (files): Same as configured branch                                  │
+│                   │                  │ Behavior (files): Same BUT skip steps 9-11 (Grafana DB not updated)     │
+│                   │                  │                                                                          │
+│                   │                  │ Auth (directories):                                                      │
+│                   │                  │   1. VerbDelete on original folder                                       │
+│                   │                  │   2. VerbCreate on destination folder                                    │
+│                   │                  │ Behavior (directories):                                                  │
+│                   │                  │   1. Authorize delete on original folder (VerbDelete)                    │
+│                   │                  │   2. Authorize create on destination folder (VerbCreate)                 │
+│                   │                  │   3. Perform move in repository                                          │
+│                   │                  │   4. Return folder move response                                         │
+│                   │                  │ Note: Grafana DB not updated (branch operation)                          │
+└───────────────────┴──────────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+Authorization Details:
+- authorize() checks permissions on resources (dashboards, etc.)
+  * Uses parsed.Existing.folder if resource exists, otherwise uses parsed.Meta.folder
+  * Calls access.Check() with resource Group/Resource/Namespace/Name/Verb and folder context
+  * Returns Forbidden (403) if not allowed
+
+- authorizeFolder() checks permissions on folders
+  * Used for folder create/delete operations
+  * Calls access.Check() with Folder resource and verb
+  * For create operations, uses empty name (checking parent folder permissions)
+  * Returns Forbidden (403) if not allowed
+
+Key Concepts:
+- Configured Branch: The default branch set in repository config (empty ref or explicit match)
+- Other Branches: Any non-default branch specified via "ref" query parameter
+- ensureExisting: Populates parsed.Existing by querying Grafana DB for resource by name
+- DryRun: Validates resource before applying (checks schema, required fields, etc.)
+- Grafana DB Update: Only happens on configured branch; ensures repository and DB stay in sync
+- Provisioning Identity: All write operations use provisioning service identity for Grafana DB changes
+- Folder Context: Authorization checks include folder path to validate granular permissions
+- Move Operations: Require authorization at both source (delete) and destination (create/update)
+- Bulk Operations: Directory moves/deletes on configured branch must use Jobs API for safety
+
+Restrictions:
+- Directory delete on configured branch: Not allowed (use Jobs API)
+- Directory move on configured branch: Not allowed (use Jobs API)
+- PUT on directory: Returns Method Not Supported (405)
+- Operations on unhealthy repositories: Write operations require healthy repository
+*/
+
 // DualReadWriter is a wrapper around a repository that can read from and write resources
 // into both the Git repository as well as in Grafana. It isn't a dual writer in the sense of what unistore handling calls dual writing.
-
-// Standard provisioning Authorizer has already run by the time DualReadWriter is called
-// for incoming requests from actors, external or internal. However, since it is the files
-// connector that redirects here, the external resources such as dashboards
-// end up requiring additional authorization checks which the DualReadWriter performs here.
-
-// TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
