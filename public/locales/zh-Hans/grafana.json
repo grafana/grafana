@@ -3691,6 +3691,10 @@
       "clear": "清除搜索和筛选条件",
       "text": "未找到与您的查询相关的结果"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_other": "",
@@ -5929,13 +5933,25 @@
       "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "编辑面板",
         "view-panel": "查看面板"
       },
       "title": {
         "dashboard": "仪表板",
-        "discard-changes-to-dashboard": "放弃对数据面板的更改？"
+        "discard-changes-to-dashboard": "放弃对数据面板的更改？",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10669,7 +10685,6 @@
       "title": "新建"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "新建仪表板"
     },
     "new-folder": {
@@ -11805,7 +11820,6 @@
       "title-setting-connection-could-cause-temporary-outage": "设置此连接可能会导致暂时中断"
     },
     "getting-started-page": {
-      "header": "配置",
       "subtitle-provisioning-feature": "查看和管理您的预配连接"
     },
     "git": {
@@ -12568,7 +12582,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "导入",
       "new": "新建",
       "new-dashboard": "新建仪表板",
