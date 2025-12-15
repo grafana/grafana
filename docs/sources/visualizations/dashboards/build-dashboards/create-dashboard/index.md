@@ -107,18 +107,19 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
 
-**To create a dashboard**:
-
-{{< shared id="create-dashboard" >}}
+To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. On the empty dashboard, click **+ Add visualization**.
+1. In the edit pane, enter the dashboard title and description.
 
-   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
-{{< /shared >}}
+1. Under **Panel layout**, choose one of the following options:
+   - **Custom** - Position and size panels manually. The default selection.
+   - **Auto grid** - Panels are automatically resized to create a uniform grid based on the column and row settings.
 
+1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
    - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
@@ -127,29 +128,19 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
    The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the drop-down in the **Queries** tab of the panel editor if needed.
+   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
-1. To create a query, do one of the following:
-   - Write or construct a query in the query language of your data source.
-   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
-
-1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+1. Write or construct a query in the query language of your data source.
 1. Click **Refresh** to query the data source.
-1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and refresh the data source as many times as needed.
-
-   {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
-   {{< /admonition >}}
-
 1. In the visualization list, select a visualization type.
 
-   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png)
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-select-visualization-v12.png" max-width="350px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
-   For more information about individual visualizations, refer to [Visualizations options](ref:visualizations-options).
+   For more information about configuring individual visualizations, refer to [Visualizations options](ref:visualizations-options).
 
 1. Under **Panel options**, enter a title and description for your panel or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Refer to the following documentation for ways you can adjust panel settings.
@@ -161,65 +152,107 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds](ref:configure-thresholds)
    - [Configure standard options](ref:configure-standard-options)
 
-1. When you've finished editing your panel, click **Save dashboard**.
+1. When you've finished editing your panel, click **Save**.
 
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
-1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
+1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Back to dashboard**.
-   Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
+1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png)
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.png" max-width="500px" alt="Add panel button" >}}
 
-   When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
+1. (Optional) In the edit pane, enter a title and description for the panel and set the panel transparency and repeat options, if applicable.
+1. Click **Configure** in either the edit pane or on the panel to the configuration process.
+1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
+1. Toggle off the edit mode switch.
 
-1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
+## Group panels
 
-   Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
+To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
+Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
+You can nest tabs and rows within each other or themselves.
+Also, tabs are included in the dashboard URL.
 
-## Copy a dashboard
-
-To copy a dashboard, follow these steps:
+The following sections describe the configuration options for adding tabs and rows.
+While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
 1. Click **Dashboards** in the main menu.
-1. Open the dashboard you want to copy.
-1. Click **Edit** in top-right corner.
-1. Click the **Save dashboard** drop-down and select **Save as copy**.
-1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+1. At the bottom-left corner of the dashboard, click **Group panels**.
+1. Select **Group into row** or **Group into tab**.
 
-   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
+   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
 
+1. Set the [grouping configuration options](#grouping-configuration-options).
+1. When you're finished, click **Save** at the top-right corner of the dashboard.
+1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 
-## Configure repeating rows
+### Grouping configuration options
 
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](ref:configure-repeating-panels).
+The following table describes the options you can set for a row.
 
-To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
+<!-- prettier-ignore-start -->
 
-**Before you begin:**
+| Option | Description |
+| ------ | ----------- |
+| Title                    | Title of the row or tab. |
+| Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
+| Hide row header          | Toggle the switch on to hide the header. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Only applies to rows. |
+| Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when there's a nested grouping and applies to the nested grouping. |
+| Panel layout             | Select whether panels are sized and positioned manually, **Custom**, or automatically, **Auto grid**. Only available when a grouping contains panels. |
+| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add rows or tabs based on the value of a variable. |
+| Show / hide rules > [Row/Tab visibility](#configure-showhide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
 
-- Ensure that the query includes a multi-value variable.
+<!-- prettier-ignore-end -->
 
-**To configure repeating rows:**
+## Configure repeat options
+
+<!-- previous heading "Configure repeating rows" -->
+
+You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
+Variables dynamically change your queries across all rows in a dashboard.
+
+This only applies to queries that include a multi-value variable.
+
+<!-- To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows).
+The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
+Might be good to update this Play example -->
+
+To configure repeats, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
 
-   If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
+   The **Dashboard** edit pane opens on the right side of the dashboard.
 
-1. Hover over the row title and click the cog icon.
-1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
-1. Click **Update**.
+1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
+1. Expand the **Repeat options** section.
+1. Select the **Repeat by variable**.
+1. For panels only, set the following options:
+   - Under **Repeat direction**, choose one of the following:
+     - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
+     - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
-To provide context to dashboard users, add the variable to the row title.
+   - If you selected **Horizontal**, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
 
-### Repeating rows and the Dashboard special data source
+1. (Optional) To provide context to dashboard users, add the variable name to the panel, row, or tab title.
+1. When you've finished setting the repeat option, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
+
+### Repeating rows and tabs and the Dashboard special data source
+
+<!-- is this next section still true? -->
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+The same behavior applies to tabs.
 
 For example, in a dashboard:
 
@@ -228,28 +261,124 @@ For example, in a dashboard:
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
-## Move a panel
+## Configure show/hide rules
 
-You can place a panel on a dashboard in any location.
+You can configure panels, rows, and tabs to be shown or hidden based on rules.
+For example, you might want to set a panel to be hidden if there's no data returned by a query or a tab to only be shown based on a variable being present.
 
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
-1. Click **Edit** in the top-right corner.
-1. Click the panel title and drag the panel to the new location.
-1. Click **Save dashboard**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
+{{< admonition type="note" >}}
+You can only configure show/hide rules for panels when the dashboard is using the **Auto grid** panel layout.
+{{< /admonition >}}
 
-## Resize a panel
-
-You can size a dashboard panel to suits your needs.
+To configure show/hide rules, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
-1. Click **Edit** in the top-right corner.
-1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
-1. Click **Save dashboard**.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+
+   The **Dashboard** edit pane opens on the right side of the dashboard.
+
+1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
+1. Expand the **Show / hide rules** section.
+1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
+1. Click **+ Add rule**.
+1. Select a rule type:
+   - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
+   - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
+   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time frame. Select or enter a time range.
+
+1. Configure the rule.
+1. Under **Match rules**, select one of the following:
+   - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
+   - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
+
+   This option is only displayed if you add multiple rules.
+
+1. When you've finished setting rules, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Toggle off the edit mode switch.
+
+## Edit dashboards
+
+When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
+For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
+
+- For rows and tabs, all of the available options are in the edit pane.
+- For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
+- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
+
+To edit dashboards, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+
+   The **Dashboard** edit pane opens on the right side of the dashboard.
+
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane.
+1. Do one of the following:
+   - For rows or tabs, make the required changes using the edit pane.
+   - For panels, update the panel title, description, repeat options or show/hide rules in the edit pane. For more changes, click **Configure** and continue in **Edit panel** view.
+   - For dashboards, update the dashboard title, description, grouping or panel layout. For more changes, click the settings (gear) icon in the top-right corner.
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
+
+## Move or resize a panel
+
+<!-- previous headings Move a panel & Resize a panel -->
+
+When you're dashboard has a **Custom** layout, you can resize or move a panel to any location on the dashboard.
+
+To move or resize, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+1. Do one of the following:
+   - Click the panel title and drag the panel to the new location.
+   - Click and drag the lower-right corner of the panel to change the size of the panel.
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
+
+## Navigate using the dashboard outline
+
+The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
+The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
+By default, the outline is collapsed except for the part that's currently in focus.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
+
+To navigate the dashboard using the outline, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+
+   The **Dashboard** edit pane opens on the right side of the dashboard.
+
+1. In the edit pane, expand the **Outline** section.
+1. Expand the outline to find the dashboard part to which you want to navigate.
+1. Click the tree item to navigate that part of the dashboard.
+
+## Copy a dashboard
+
+To make a copy of a dashboard, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+1. Click the **Save** drop-down and select **Save as copy**.
+1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
+
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
+
+1. Click **Save**.
