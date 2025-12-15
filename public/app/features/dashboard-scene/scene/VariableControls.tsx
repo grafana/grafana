@@ -142,7 +142,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
         styles.container,
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element',
-        config.featureToggles.newDashboardWithFiltersAndGroupBy && styles.allowShrinkForDrilldownInputs
+        config.featureToggles.dashboardAdHocAndGroupByWrapper && styles.allowShrinkForDrilldownInputs
       )}
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
