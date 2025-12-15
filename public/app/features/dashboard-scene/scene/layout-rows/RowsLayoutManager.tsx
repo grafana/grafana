@@ -396,6 +396,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       if (!row.getCollapsedState()) {
         row.setCollapsedState(true);
       }
+      row.state.repeatedRows?.forEach((repeatedRow) => {
+        if (!repeatedRow.getCollapsedState()) {
+          repeatedRow.setCollapsedState(true);
+        }
+      });
     });
   }
 
@@ -404,6 +409,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       if (row.getCollapsedState()) {
         row.setCollapsedState(false);
       }
+      row.state.repeatedRows?.forEach((repeatedRow) => {
+        if (repeatedRow.getCollapsedState()) {
+          repeatedRow.setCollapsedState(false);
+        }
+      });
     });
   }
 }
