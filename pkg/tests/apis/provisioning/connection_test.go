@@ -13,14 +13,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func TestIntegrationProvisioning_CreatingAndGettingConnections(t *testing.T) {
+func TestIntegrationProvisioning_ConnectionsCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
-	t.Run("should create and retrieve connection", func(t *testing.T) {
+	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
@@ -41,25 +41,63 @@ func TestIntegrationProvisioning_CreatingAndGettingConnections(t *testing.T) {
 				},
 			},
 		}}
+		// CREATE
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.NoError(t, err, "failed to create resource")
 
+		// READ
 		output, err := helper.Connections.Resource.Get(ctx, "connection", metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back resource")
-
 		assert.Equal(t, "connection", output.GetName(), "name should be equal")
 		assert.Equal(t, "default", output.GetNamespace(), "namespace should be equal")
-
 		spec := output.Object["spec"].(map[string]any)
 		assert.Equal(t, "github", spec["type"], "type should be equal")
-
 		require.Contains(t, spec, "github")
 		githubInfo := spec["github"].(map[string]any)
 		assert.Equal(t, "123456", githubInfo["appID"], "appID should be equal")
 		assert.Equal(t, "454545", githubInfo["installationID"], "installationID should be equal")
-
 		require.Contains(t, output.Object, "secure", "object should contain secure")
 		assert.Contains(t, output.Object["secure"], "privateKey", "secure should contain PrivateKey")
+
+		// LIST
+		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "failed to list resource")
+		assert.Equal(t, 1, len(list.Items), "should have one connection")
+		assert.Equal(t, "connection", list.Items[0].GetName(), "name should be equal")
+
+		// UPDATE
+		updatedConnection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "456789",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		res, err := helper.Connections.Resource.Update(ctx, updatedConnection, metav1.UpdateOptions{})
+		require.NoError(t, err, "failed to update resource")
+		spec = res.Object["spec"].(map[string]any)
+		require.Contains(t, spec, "github")
+		githubInfo = spec["github"].(map[string]any)
+		assert.Equal(t, "456789", githubInfo["appID"], "appID should be updated")
+
+		// DELETE
+		require.NoError(t, helper.Connections.Resource.Delete(ctx, "connection", metav1.DeleteOptions{}), "failed to delete resource")
+		list, err = helper.Connections.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "failed to list resources")
+		assert.Equal(t, 0, len(list.Items), "should have no connections")
 	})
 
 	t.Run("viewer can't create or get connection", func(t *testing.T) {
@@ -108,5 +146,99 @@ func TestIntegrationProvisioning_CreatingAndGettingConnections(t *testing.T) {
 		assert.Equal(t, metav1.StatusReasonForbidden, err.Status().Reason)
 		assert.Contains(t, err.Status().Message, "User \"viewer\" cannot get resource \"connections\"")
 		assert.Contains(t, err.Status().Message, "admin role is required")
+	})
+}
+
+func TestIntegrationProvisioning_Validation(t *testing.T) {
+	helper := runGrafana(t)
+	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	ctx := context.Background()
+
+	t.Run("should fail when type is empty", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "",
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "spec.type must be specified")
+	})
+
+	t.Run("should fail when type is github but 'github' field is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "github",
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "spec.github must be specified")
+	})
+
+	t.Run("should fail when type is bitbucket but 'bitbucket' field is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "bitbucket",
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "spec.bitbucket must be specified")
+	})
+
+	t.Run("should fail when type is gitlab but 'gitlab' field is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "gitlab",
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "spec.gitlab must be specified")
 	})
 }
