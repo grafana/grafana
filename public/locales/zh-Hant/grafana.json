@@ -3691,6 +3691,10 @@
       "clear": "清除搜尋和篩選條件",
       "text": "未找到您的查詢結果"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_other": "",
@@ -5929,13 +5933,25 @@
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "編輯面板",
         "view-panel": "檢視面板"
       },
       "title": {
         "dashboard": "儀表板",
-        "discard-changes-to-dashboard": "要捨棄儀表板的變更嗎？"
+        "discard-changes-to-dashboard": "要捨棄儀表板的變更嗎？",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10669,7 +10685,6 @@
       "title": "新"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "新儀表板"
     },
     "new-folder": {
@@ -11805,7 +11820,6 @@
       "title-setting-connection-could-cause-temporary-outage": "設定此連線可能會導致暫時中斷"
     },
     "getting-started-page": {
-      "header": "佈建",
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
     },
     "git": {
@@ -12568,7 +12582,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "匯入",
       "new": "新",
       "new-dashboard": "新儀表板",
