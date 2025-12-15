@@ -56,7 +56,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamBindingLegacyStore      *teambinding.LegacyBindingStore
 	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
-	rolesStorage                RoleStorageBackend
+	roleApiInstaller            RoleApiInstaller
 	resourcePermissionsStorage  resource.StorageBackend
 	roleBindingsStorage         RoleBindingStorageBackend
 	externalGroupMappingStorage ExternalGroupMappingStorageBackend
