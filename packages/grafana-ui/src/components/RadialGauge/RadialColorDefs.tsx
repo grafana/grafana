@@ -35,17 +35,20 @@ export class RadialColorDefs {
 
   constructor(private options: RadialColorDefsOptions) {}
 
-  getSegmentColor(forValue: number): string {
+  getSegmentColor(forValue: number, segmentIdx: number): string {
     const { displayProcessor } = this.options;
     const baseColor = displayProcessor(forValue).color ?? FALLBACK_COLOR;
-
-    return this.getColor(baseColor, true);
+    return this.getColor(baseColor, segmentIdx);
   }
 
-  getColor(baseColor: string, forSegment?: boolean): string {
-    const { gradient, dimensions, gaugeId, fieldDisplay, shape, theme } = this.options;
+  getColor(baseColor: string, segmentIdx?: number): string {
+    const { gradient, dimensions, gaugeId, fieldDisplay, shape } = this.options;
 
-    const id = `value-color-${baseColor}-${gaugeId}`;
+    let id = `value-color-${baseColor}-${gaugeId}`;
+    const forSegment = segmentIdx !== undefined;
+    if (forSegment) {
+      id += `-segment-${segmentIdx}`;
+    }
 
     if (this.colorToIds[id]) {
       return this.colorToIds[id];
@@ -62,7 +65,7 @@ export class RadialColorDefs {
     const colorMode = getFieldColorMode(colorModeId);
     const valuePercent = fieldDisplay.display.percent ?? 0;
 
-    const gradientStops = this.getGradient();
+    const gradientStops = this.getGradient(baseColor, forSegment);
     const stops = gradientStops.map((stop, i) => (
       <stop key={i} offset={`${(stop.percent * 100).toFixed(2)}%`} stopColor={stop.color} stopOpacity={1} />
     ));
@@ -70,6 +73,10 @@ export class RadialColorDefs {
     // Handle continusous color modes first
     // If it's a segment color we don't want to do continuous gradients
     if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
+      // this linear gradient doesn't work well for the circular shape yoday for what we actually
+      // want for continuous color modes, which would be to have the radial bar fill from the top
+      // around the circle. But SVG doesn't support that kind of gradient on stroke paths out-of-the-box,
+      // we'd need to implement something like https://gist.github.com/mbostock/4163057
       this.defs.push(
         <linearGradient key={id} id={id} x1="0" y1="0" x2={1 / valuePercent} y2="0">
           {stops}
@@ -97,7 +104,6 @@ export class RadialColorDefs {
     const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
 
     // this makes it so the gradient is always brightest at the current value
-    // this makes the point color math much more annoying so it's currently disabled.
     const transform =
       shape === 'circle'
         ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
@@ -129,9 +135,8 @@ export class RadialColorDefs {
     return this.getColor(this.getFieldBaseColor());
   }
 
-  getGradient(): Array<{ color: string; percent: number }> {
+  getGradient(baseColor = this.getFieldBaseColor(), forSegment?: boolean): Array<{ color: string; percent: number }> {
     const { gradient, fieldDisplay, theme } = this.options;
-    const baseColor = this.getFieldBaseColor();
     if (gradient === 'none') {
       return [
         { color: baseColor, percent: 0 },
@@ -143,7 +148,7 @@ export class RadialColorDefs {
     const colorMode = getFieldColorMode(colorModeId);
 
     // Handle continusous color modes first
-    if (colorMode.isContinuous && colorMode.getColors) {
+    if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
       const colors = colorMode.getColors(theme);
       return colors.map((color, idx) => ({ color, percent: idx / (colors.length - 1) }));
     } else if (colorMode.isByValue) {
@@ -186,12 +191,6 @@ export class RadialColorDefs {
 
     let startColor = gradient[0].color;
     let endColor = gradient[gradient.length - 1].color;
-
-    const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode);
-    if (colorMode.isContinuous) {
-    } else if (colorMode.isByValue) {
-    } else {
-    }
 
     // if we have a percentageFilled, use it to get a the correct end color based on where the bar terminates
     if (gradient.length >= 2) {

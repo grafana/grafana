@@ -1,5 +1,3 @@
-import { GrafanaTheme2 } from '@grafana/data';
-
 import { GaugeDimensions } from './utils';
 
 export interface GlowGradientProps {

@@ -58,7 +58,7 @@ export function ThresholdsBar({
         dimensions={thresholdDimensions}
         roundedBars={roundedBars}
         glowFilter={glowFilter}
-        color={colorDefs.getColor(threshold.color, true)}
+        color={colorDefs.getColor(threshold.color, i)}
       />
     );
 

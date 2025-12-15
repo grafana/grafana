@@ -38,7 +38,7 @@ export function RadialBarSegmented({
 
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
-    const angleColor = colorDefs.getSegmentColor(angleValue);
+    const angleColor = colorDefs.getSegmentColor(angleValue, i);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
     const segmentColor = angleValue >= value ? theme.colors.action.hover : angleColor;
 
