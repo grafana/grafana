@@ -17,7 +17,6 @@ import {
   parseLiveChannelAddress,
   ScopedVars,
   AdHocVariableFilter,
-  CoreApp,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
