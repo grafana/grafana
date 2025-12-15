@@ -14,8 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Create a dashboard
-title: Create a dashboard
+title: Create dashboards
 description: Create and edit a dashboard
 weight: 1
 refs:
@@ -215,8 +214,6 @@ The following table describes the options you can set for a row.
 
 ## Configure repeat options
 
-<!-- previous heading "Configure repeating rows" -->
-
 You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
 Variables dynamically change your queries across all rows in a dashboard.
 
@@ -251,8 +248,6 @@ To configure repeats, follow these steps:
 1. Toggle off the edit mode switch.
 
 ### Repeating rows and tabs and the Dashboard special data source
-
-<!-- is this next section still true? -->
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 The same behavior applies to tabs.
@@ -302,7 +297,9 @@ To configure show/hide rules, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
-## Edit dashboards
+## Edit a dashboard
+
+<!-- should this move to the last position just before copy? -->
 
 When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
 For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
@@ -333,8 +330,6 @@ To edit dashboards, follow these steps:
 1. Toggle off the edit mode switch.
 
 ## Move or resize a panel
-
-<!-- previous headings Move a panel & Resize a panel -->
 
 When you're dashboard has a **Custom** layout, you can resize or move a panel to any location on the dashboard.
 
