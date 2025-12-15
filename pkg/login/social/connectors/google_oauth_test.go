@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -1021,6 +1022,105 @@ func TestIsHDAllowed(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestSocialGoogle_AuthCodeURL(t *testing.T) {
+	testCases := []struct {
+		name    string
+		info    *social.OAuthInfo
+		opts    []oauth2.AuthCodeOption
+		state   string
+		wantURL *url.URL
+	}{
+		{
+			name: "should return the correct auth code URL",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				AuthUrl:      "https://example.com/auth",
+				LoginPrompt:  "login",
+				Scopes:       []string{"openid", "email", "profile"},
+			},
+			state: "test-state",
+			opts: []oauth2.AuthCodeOption{
+				oauth2.SetAuthURLParam("extra_param", "extra_value"),
+			},
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"login"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"extra_param":   {"extra_value"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should add access type offline and approval force if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should override configured login prompt if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			gotURL := s.AuthCodeURL(tc.state, tc.opts...)
+			parsedURL, err := url.Parse(gotURL)
+			require.NoError(t, err)
+			require.EqualValues(t, tc.wantURL, parsedURL)
 		})
 	}
 }
