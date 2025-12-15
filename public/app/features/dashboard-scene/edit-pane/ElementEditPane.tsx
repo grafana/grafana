@@ -5,22 +5,20 @@ import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
-import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {
   element: EditableDashboardElement;
-  editPane: DashboardEditPane;
   isNewElement: boolean;
 }
 
-export function ElementEditPane({ element, editPane, isNewElement }: Props) {
+export function ElementEditPane({ element, isNewElement }: Props) {
   const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
-      <EditPaneHeader element={element} editPane={editPane} />
+      <EditPaneHeader element={element} />
       <ScrollContainer showScrollIndicators={true}>
         <div className={styles.categories}>{categories.map((cat) => cat.renderElement())}</div>
       </ScrollContainer>

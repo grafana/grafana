@@ -1,9 +1,9 @@
-import { useId, useMemo } from 'react';
+import { ReactNode, useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { Stack, Button } from '@grafana/ui';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -25,24 +25,17 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { dashboardEditActions } from './shared';
 
 function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
-  const rootId = useId();
   const titleId = useId();
   const descriptionId = useId();
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: rootId,
-          render: () => <OpenPanelEditViz panel={this.panel} />,
-        })
-      )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.viz-panel.options.title-option', 'Title'),
@@ -69,7 +62,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
-  }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
+  }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -118,9 +111,21 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.duplicatePanel?.(this.panel);
+    const panel = this.panel;
+
+    dashboardEditActions.edit({
+      source: this.panel,
+      description: t('dashboard-scene.viz-panel-editable-element.description.duplicate-panel', 'Duplicate panel'),
+      perform: () => {
+        DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
+        const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
+        layout.duplicatePanel?.(this.panel);
+      },
+      undo: () => {
+        const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
+        layout.removePanel?.(panel);
+      },
+    });
   }
 
   public onCopy() {
@@ -142,16 +147,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
       this.panel.parent.scrollIntoView();
     }
   }
-}
 
-type OpenPanelEditVizProps = { panel: VizPanel };
-
-const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
-  return (
-    <Stack alignItems="center" width="100%">
+  public renderActions(): ReactNode {
+    return (
       <Button
         onClick={() => {
-          const panelId = getPanelIdForVizPanel(panel);
+          const panelId = getPanelIdForVizPanel(this.panel);
           locationService.partial({ editPanel: panelId });
           DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
         }}
@@ -162,6 +163,6 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
       >
         <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>
-    </Stack>
-  );
-};
+    );
+  }
+}

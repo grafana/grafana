@@ -113,7 +113,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             {body}
           </div>
           <Sidebar contextValue={sidebarContext}>
-            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
           </Sidebar>
         </div>
       </ElementSelectionContext.Provider>

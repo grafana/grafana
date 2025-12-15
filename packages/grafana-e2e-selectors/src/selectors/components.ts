@@ -69,9 +69,6 @@ export const versionedComponents = {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
     },
-    copyDropdown: {
-      '12.1.0': 'data-testid EditPaneHeader copy dropdown',
-    },
     copy: {
       '12.1.0': 'data-testid EditPaneHeader copy',
     },
