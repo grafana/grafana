@@ -1,8 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
 import { normalizeBackendOutputForFrontendComparison } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
