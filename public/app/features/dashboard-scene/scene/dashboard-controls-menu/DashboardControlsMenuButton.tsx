@@ -29,6 +29,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
       content={
         <DashboardControlsMenu variables={variables} links={links} annotations={annotations} dashboardUID={uid} />
       }
+      closeButton={false}
     >
       <ToolbarButton
         aria-label={t('dashboard.controls.menu.aria-label', DASHBOARD_CONTROLS_MENU_ARIA_LABEL)}
