@@ -94,18 +94,6 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return r.deleteFolder(ctx, opts)
 	}
 
-	// Reject individual file delete operations for configured branch - use bulk operations instead
-	if r.isConfiguredBranch(opts) {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusMethodNotAllowed,
-				Reason:  metav1.StatusReasonMethodNotAllowed,
-				Message: "file delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
-			},
-		}
-	}
-
 	// Read the file from the default branch as it won't exist in the possibly new branch
 	file, err := r.repo.Read(ctx, opts.Path, "")
 	if err != nil {
@@ -378,18 +366,6 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// Reject individual file move operations for configured branch - use bulk operations instead
-	if r.isConfiguredBranch(opts) {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusMethodNotAllowed,
-				Reason:  metav1.StatusReasonMethodNotAllowed,
-				Message: "file move operations are not available for configured branch. Use bulk move operations via the jobs API instead",
-			},
-		}
-	}
-
 	// Read the original file to get its content for parsing and authorization
 	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
 	if err != nil {

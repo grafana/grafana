@@ -786,15 +786,13 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	v, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyUpdatedBy)
 	require.Equal(t, "access-policy:provisioning", v)
 
-	// Should not be able to directly delete the managed resource on configured branch
-	// Individual file delete operations are not allowed on configured branch
+	// Should be able to directly delete the managed resource
 	err = helper.DashboardsV1.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
-	require.Error(t, err, "deleting managed resource on configured branch should fail")
-	require.True(t, apierrors.IsMethodNotSupported(err), "expected MethodNotAllowed for configured branch operation")
+	require.NoError(t, err, "user can delete")
 
-	// Verify the dashboard still exists after failed delete
 	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
-	require.NoError(t, err, "dashboard should still exist after failed delete")
+	require.Error(t, err, "should delete the internal resource")
+	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {

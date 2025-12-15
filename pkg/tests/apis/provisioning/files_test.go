@@ -68,17 +68,20 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
-	t.Run("delete individual dashboard file on configured branch should return MethodNotAllowed", func(t *testing.T) {
+	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
 			Do(ctx)
-		require.Error(t, result.Error())
-		var statusErr *apierrors.StatusError
-		require.True(t, errors.As(result.Error(), &statusErr), "error should be a StatusError")
-		require.Equal(t, int32(http.StatusMethodNotAllowed), statusErr.ErrStatus.Code, "should return MethodNotAllowed for configured branch delete")
+		require.NoError(t, result.Error(), "delete file on configured branch should succeed")
+
+		// Verify the dashboard is removed from Grafana
+		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
+		_, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.Error(t, err, "dashboard should be deleted from Grafana")
+		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
 	})
 
 	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {
@@ -162,7 +165,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	require.NoError(t, err, "original dashboard should exist in Grafana")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
-	t.Run("move file without content change on configured branch should return MethodNotAllowed", func(t *testing.T) {
+	t.Run("move file without content change on configured branch should succeed", func(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
 		// Perform the move operation using helper function (no ref = configured branch)
@@ -173,7 +176,15 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move operation on configured branch should return MethodNotAllowed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
+
+		// Verify file was moved - read from new location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
+		require.NoError(t, err, "file should exist at new location")
+
+		// Verify file no longer exists at old location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+		require.Error(t, err, "file should not exist at old location")
 	})
 
 	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
@@ -210,7 +221,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		}
 	})
 
-	t.Run("move file to nested path on configured branch should return MethodNotAllowed", func(t *testing.T) {
+	t.Run("move file to nested path on configured branch should succeed", func(t *testing.T) {
 		// Test a different scenario: Move a file that was never synced to Grafana
 		// This might reveal the issue if dashboard creation fails during move
 		const sourceFile = "never-synced.json"
@@ -227,15 +238,19 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move operation on configured branch should return MethodNotAllowed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
-		// File should still exist at original location since move was rejected
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
-		require.NoError(t, err, "original file should still exist after rejected move")
+		// File should exist at new location
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
+		require.NoError(t, err, "file should exist at new nested location")
+
+		// File should not exist at original location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
+		require.Error(t, err, "file should not exist at original location after move")
 	})
 
-	t.Run("move file with content update on configured branch should return MethodNotAllowed", func(t *testing.T) {
-		const sourcePath = "all-panels.json"
+	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
+		const sourcePath = "moved/simple-move.json" // Use the file we moved earlier
 		const targetPath = "updated/content-updated.json"
 
 		// Use text-options.json content for the update
@@ -250,11 +265,24 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move with content update on configured branch should return MethodNotAllowed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update on configured branch should succeed")
 
-		// Source file should still exist since move was rejected
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
-		require.NoError(t, err, "source file should still exist after rejected move")
+		// File should exist at new location with updated content
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
+		require.NoError(t, err, "file should exist at new location")
+
+		// Verify content was updated (should be text-options dashboard now)
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Text options", title, "content should be updated")
+
+		// Source file should not exist anymore
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
+		require.Error(t, err, "source file should not exist after move")
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
@@ -486,8 +514,8 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	t.Run("DELETE resource on configured branch - should fail with MethodNotAllowed", func(t *testing.T) {
-		// Create a file manually in the second repo which is already in first one
+	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
+		// Create a file manually in the second repo which has UID from first repo
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		printFileTree(t, helper.ProvisioningPath)
 
@@ -499,8 +527,8 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 
-		// This should fail because DELETE is not allowed on configured branch
-		require.Error(t, result.Error(), "deleting file on configured branch should fail")
+		// This should fail with ownership conflict
+		require.Error(t, result.Error(), "deleting resource owned by different repository should fail")
 
 		// Get detailed error information
 		err := result.Error()
@@ -510,28 +538,28 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 				statusErr.Status().Code, statusErr.Status().Reason, statusErr.Status().Message)
 		}
 
-		// Verify it returns MethodNotAllowed (405) since configured branch check happens first
-		require.True(t, apierrors.IsMethodNotSupported(err), "Expected MethodNotAllowed error but got: %T - %v", err, err)
+		// Verify it returns BadRequest (400) for ownership conflicts
+		require.True(t, apierrors.IsBadRequest(err), "Expected BadRequest error but got: %T - %v", err, err)
 
-		// Check error message mentions configured branch
+		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
 		t.Logf("Error message: %s", errorMsg)
-		require.Contains(t, errorMsg, "configured branch")
-		require.Contains(t, errorMsg, "bulk delete operations")
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	t.Run("MOVE file on configured branch - should fail with MethodNotAllowed", func(t *testing.T) {
+	t.Run("MOVE and UPDATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		resp := helper.postFilesRequest(t, repo2, filesPostOptions{
 			targetPath:   "moved-dashboard.json",
 			originalPath: path.Join("dashboard2.json"),
-			message:      "attempt to move file on configured branch",
-			body:         string(helper.LoadFile("testdata/all-panels.json")),
+			message:      "attempt to move file from different repository",
+			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content with the conflicting UID
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 
-		// This should fail because MOVE is not allowed on configured branch
-		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving file on configured branch should fail")
+		// This should fail with ownership conflict
+		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving resource owned by different repository should fail")
 		// Read response body to check error message
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -541,10 +569,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		t.Logf("MOVE operation HTTP status: %d", resp.StatusCode)
 		t.Logf("MOVE operation error response: %s", errorMsg)
 
-		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed (405) for configured branch")
-		// Check error message mentions configured branch
-		require.Contains(t, errorMsg, "configured branch")
-		require.Contains(t, errorMsg, "bulk move operations")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return BadRequest (400) for ownership conflict")
+		// Check error message contains ownership conflict information
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
 	t.Run("verify original resources remain intact", func(t *testing.T) {
