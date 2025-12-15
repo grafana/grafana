@@ -70,8 +70,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     let {
       scaleKey,
       label,
-      show = true,
       placement = AxisPlacement.Auto,
+      show = placement !== AxisPlacement.Hidden,
       grid = { show: true },
       ticks,
       space,
