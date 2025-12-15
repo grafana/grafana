@@ -3707,6 +3707,10 @@
       "clear": "Rensa sökning och filter",
       "text": "Inga resultat hittades för din fråga"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5950,13 +5954,25 @@
       "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Redigera panel",
         "view-panel": "Visa panel"
       },
       "title": {
         "dashboard": "Instrumentpanel",
-        "discard-changes-to-dashboard": "Kassera ändringar i instrumentpanelen?"
+        "discard-changes-to-dashboard": "Kassera ändringar i instrumentpanelen?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10712,7 +10728,6 @@
       "title": "Nyhet"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Ny instrumentpanel"
     },
     "new-folder": {
@@ -11856,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Konfiguration av den här anslutningen kan orsaka ett tillfälligt avbrott"
     },
     "getting-started-page": {
-      "header": "Provisionering",
       "subtitle-provisioning-feature": "Visa och hantera dina provisioneringsanslutningar"
     },
     "git": {
@@ -12622,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importera",
       "new": "Nyhet",
       "new-dashboard": "Ny instrumentpanel",
