@@ -561,9 +561,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	_, healthStatus, err := rc.healthChecker.RefreshHealth(ctx, repo)
+	_, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
+	}
+
+	// Add health patch operations first
+	if len(healthPatchOps) > 0 {
+		patchOperations = append(patchOperations, healthPatchOps...)
 	}
 
 	// determine the sync strategy and sync status to apply

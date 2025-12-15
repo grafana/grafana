@@ -10,22 +10,42 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
 // TODO: Logs, Metrics, Traces?
 
+// ParentProvider interface for fetching parent information of resources
+type ParentProvider interface {
+	// HasParent checks if the given GroupResource has a parent folder
+	HasParent(gr schema.GroupResource) bool
+	// GetParent fetches the parent folder name for the given resource
+	GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error)
+}
+
 // ResourcePermissionsAuthorizer
 type ResourcePermissionsAuthorizer struct {
-	accessClient types.AccessClient
+	accessClient   types.AccessClient
+	parentProvider ParentProvider
+	logger         log.Logger
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
 
-func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *ResourcePermissionsAuthorizer {
+func NewResourcePermissionsAuthorizer(
+	accessClient types.AccessClient,
+	parentProvider ParentProvider,
+) *ResourcePermissionsAuthorizer {
 	return &ResourcePermissionsAuthorizer{
-		accessClient: accessClient,
+		accessClient:   accessClient,
+		parentProvider: parentProvider,
+		logger:         log.New("iam.resource-permissions-authorizer"),
 	}
+}
+
+func isAccessPolicy(authInfo types.AuthInfo) bool {
+	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
 // AfterGet implements ResourceStorageAuthorizer.
@@ -37,9 +57,24 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
 		target := o.Spec.Resource
+		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
-		// TODO: Fetch the resource to retrieve its parent folder.
 		parent := ""
+		// Fetch the parent of the resource
+		// Access Policies have global scope, so no parent check needed
+		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			if err != nil {
+				r.logger.Error("after get: error fetching parent", "error", err.Error(),
+					"namespace", o.Namespace,
+					"group", target.ApiGroup,
+					"resource", target.Resource,
+					"name", target.Name,
+				)
+				return err
+			}
+			parent = p
+		}
 
 		checkReq := types.CheckRequest{
 			Namespace: o.Namespace,
@@ -72,9 +107,24 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
 		target := o.Spec.Resource
+		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
-		// TODO: Fetch the resource to retrieve its parent folder.
 		parent := ""
+		// Fetch the parent of the resource
+		// Access Policies have global scope, so no parent check needed
+		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			if err != nil {
+				r.logger.Error("before write: error fetching parent", "error", err.Error(),
+					"namespace", o.Namespace,
+					"group", target.ApiGroup,
+					"resource", target.Resource,
+					"name", target.Name,
+				)
+				return err
+			}
+			parent = p
+		}
 
 		checkReq := types.CheckRequest{
 			Namespace: o.Namespace,
@@ -153,8 +203,29 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 				canViewFuncs[gr] = canView
 			}
 
-			// TODO : Fetch the resource to retrieve its parent folder.
+			target := item.Spec.Resource
+			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
+
 			parent := ""
+			// Fetch the parent of the resource
+			// It's not efficient to do for every item in the list, but it's a good starting point.
+			// Access Policies have global scope, so no parent check needed
+			if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+				p, err := r.parentProvider.GetParent(ctx, targetGR, item.Namespace, target.Name)
+				if err != nil {
+					// Skip item on error fetching parent
+					r.logger.Warn("filter list: error fetching parent, skipping item",
+						"error", err.Error(),
+						"namespace",
+						item.Namespace,
+						"group", target.ApiGroup,
+						"resource", target.Resource,
+						"name", target.Name,
+					)
+					continue
+				}
+				parent = p
+			}
 
 			allowed := canView(item.Spec.Resource.Name, parent)
 			if allowed {

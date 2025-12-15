@@ -2335,7 +2335,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3704,6 +3706,10 @@
     "no-results": {
       "clear": "Cancella ricerca e filtri",
       "text": "Nessun risultato trovato per la ricerca"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -5091,6 +5097,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5463,6 +5477,12 @@
         "label": "Modifica",
         "tooltip": "Entra in modalità di modifica"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendi modificabile",
         "tooltip": "Questo dashboard è stato contrassegnato come di sola lettura"
@@ -5483,14 +5503,6 @@
         "discard-panel-new": "Annulla il pannello",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifica lo schema v2 della dashboard"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entra in modalità di modifica"
-          },
-          "exit": {
-            "label": "Esci dalla modalità di modifica"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendi modificabile",
@@ -5942,13 +5954,25 @@
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Modifica pannello",
         "view-panel": "Visualizza pannello"
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Annullare le modifiche alla dashboard?"
+        "discard-changes-to-dashboard": "Annullare le modifiche alla dashboard?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -8827,6 +8851,13 @@
       "aria-label-default": "Scegli un colore",
       "aria-label-selected-color": "Colore {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Elimina",
       "cancel": "Annulla",
@@ -9024,6 +9055,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ridurre tutte le righe",
       "aria-label-expand-all": "Espandi tutte le righe",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Attiva/disattiva riga espansa",
       "tooltip-collapse-all": "Ridurre tutte le righe",
       "tooltip-expand-all": "Espandi tutte le righe"
@@ -10695,7 +10728,6 @@
       "title": "Nuovo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nuovo dashboard"
     },
     "new-folder": {
@@ -11829,7 +11861,7 @@
       "modal-title-set-up-public-access": "Configura l'accesso pubblico",
       "modal-title-set-up-required-features": "Configura le funzionalità necessarie",
       "step-description-copy-url": "Dall'output di ngrok, copia l'URL di inoltro https:// simile al seguente:",
-      "step-description-enable-feature-toggles": "Aggiungi queste impostazioni al tuo file custom.ini per abilitare le funzionalità necessarie:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Esegui questo comando per creare un tunnel sicuro per il tuo Grafana locale:",
       "step-description-update-grafana-config": "Aggiungi questo al tuo file custom.ini, sostituendo l'URL con il tuo URL ngrok effettivo:",
       "step-title-copy-url": "Copia il tuo URL pubblico",
@@ -11839,7 +11871,6 @@
       "title-setting-connection-could-cause-temporary-outage": "La configurazione di questa connessione potrebbe causare un'interruzione temporanea"
     },
     "getting-started-page": {
-      "header": "Provisioning",
       "subtitle-provisioning-feature": "Visualizza e gestisci le connessioni di provisioning"
     },
     "git": {
@@ -12425,13 +12456,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12636,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importa",
       "new": "Nuovo",
       "new-dashboard": "Nuovo dashboard",

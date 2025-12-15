@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -178,7 +178,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 			},
 			searchClient: &FakeUserLegacySearchClient{
-				Users: []*user.UserSearchHitDTO{
+				Users: []*org.OrgUserDTO{
 					{Email: "existing@example"},
 				},
 			},
@@ -202,7 +202,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 			},
 			searchClient: &FakeUserLegacySearchClient{
-				Users: []*user.UserSearchHitDTO{
+				Users: []*org.OrgUserDTO{
 					{Login: "existinguser"},
 				},
 			},
@@ -490,7 +490,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				IsGrafanaAdmin: true,
 			},
 			searchClient: &FakeUserLegacySearchClient{
-				Users: []*user.UserSearchHitDTO{
+				Users: []*org.OrgUserDTO{
 					{Email: "two@example"},
 				},
 			},
@@ -516,7 +516,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				IsGrafanaAdmin: true,
 			},
 			searchClient: &FakeUserLegacySearchClient{
-				Users: []*user.UserSearchHitDTO{
+				Users: []*org.OrgUserDTO{
 					{Name: "other", UID: "uid456", Login: "two"},
 				},
 			},
@@ -536,7 +536,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				IsGrafanaAdmin: true,
 			},
 			searchClient: &FakeUserLegacySearchClient{
-				Users: []*user.UserSearchHitDTO{
+				Users: []*org.OrgUserDTO{
 					{Login: "testuser", Email: "test@example"},
 				},
 			},

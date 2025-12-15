@@ -1268,6 +1268,16 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
       return FieldColorModeIdV1.ContinuousGreens;
     case 'continuous-purples':
       return FieldColorModeIdV1.ContinuousPurples;
+    case 'continuous-viridis':
+      return FieldColorModeIdV1.ContinuousViridis;
+    case 'continuous-magma':
+      return FieldColorModeIdV1.ContinuousMagma;
+    case 'continuous-plasma':
+      return FieldColorModeIdV1.ContinuousPlasma;
+    case 'continuous-inferno':
+      return FieldColorModeIdV1.ContinuousInferno;
+    case 'continuous-cividis':
+      return FieldColorModeIdV1.ContinuousCividis;
     case 'fixed':
       return FieldColorModeIdV1.Fixed;
     case 'shades':
