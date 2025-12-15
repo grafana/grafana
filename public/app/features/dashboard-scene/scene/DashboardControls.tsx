@@ -246,6 +246,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
+      display: 'inline-block',
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
