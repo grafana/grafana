@@ -5,6 +5,9 @@ export interface ScopeNavigationSpec {
   url: string;
   scope: string;
   subScope?: string;
+  preLoadSubScopeChildren?: boolean;
+  expandOnLoad?: boolean;
+  disableSubScopeSelection?: boolean;
 }
 
 export interface ScopeNavigationStatus {
@@ -40,6 +43,7 @@ export interface SuggestedNavigationsFolder {
   suggestedNavigations: SuggestedNavigationsMap;
   subScopeName?: string;
   loading?: boolean;
+  disableSubScopeSelection?: boolean;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;

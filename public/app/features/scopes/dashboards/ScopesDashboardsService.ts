@@ -386,12 +386,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         // All folders with the same subScope will load the same content when expanded
         const folderKey = `${subScope}-${navigation.metadata.name}`;
         if (!rootNode.folders[folderKey]) {
+          const disableSubScopeSelection =
+            'disableSubScopeSelection' in navigation.spec ? navigation.spec.disableSubScopeSelection : undefined;
           rootNode.folders[folderKey] = {
             title: navigationTitle,
             expanded,
             folders: {},
             suggestedNavigations: {},
             subScopeName: subScope,
+            disableSubScopeSelection,
           };
         }
         if (expanded && !rootNode.folders[folderKey].expanded) {

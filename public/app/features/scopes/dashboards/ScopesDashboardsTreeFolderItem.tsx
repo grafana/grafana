@@ -26,6 +26,8 @@ export function ScopesDashboardsTreeFolderItem({
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
 
+  console.log(folder.title, folder.disableSubScopeSelection);
+
   // get scopesselector service
   const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
   const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
@@ -48,7 +50,7 @@ export function ScopesDashboardsTreeFolderItem({
           {folder.loading && <Spinner inline size="sm" className={styles.loadingIcon} />}
         </button>
 
-        {folder.subScopeName && (
+        {folder.subScopeName && !folder.disableSubScopeSelection && (
           <IconButton
             className={styles.exchangeIcon}
             tooltip={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
