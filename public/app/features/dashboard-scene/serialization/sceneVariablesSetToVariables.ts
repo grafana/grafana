@@ -84,6 +84,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
+        regexApplyTo: variable.state.regexApplyTo,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
@@ -101,6 +102,10 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       }
       variables.push(variableObj);
     } else if (sceneUtils.isCustomVariable(variable)) {
+      let options: VariableOption[] = [];
+      if (keepQueryOptions) {
+        options = variableValueOptionsToVariableOptions(variable.state);
+      }
       const customVariable: VariableModel = {
         ...commonProperties,
         current: {
@@ -109,7 +114,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
-        options: [],
+        options,
         query: variable.state.query,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
@@ -375,6 +380,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex ?? '',
+          regexApplyTo: variable.state.regexApplyTo ?? 'value',
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,

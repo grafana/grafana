@@ -2,7 +2,13 @@ import { css, cx } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValueAlignmentFactors, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import {
+  DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -66,6 +72,7 @@ export interface RadialGaugeProps {
   showScaleLabels?: boolean;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
+  timeRange?: TimeRange;
 }
 
 export type RadialGradientMode = 'none' | 'auto';
@@ -98,6 +105,11 @@ export function RadialGauge(props: RadialGaugeProps) {
   const theme = useTheme2();
   const gaugeId = useId();
   const styles = useStyles2(getStyles);
+
+  let effectiveTextMode = textMode;
+  if (effectiveTextMode === 'auto') {
+    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+  }
 
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
@@ -181,7 +193,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     // These elements are only added for first value / bar
     if (barIndex === 0) {
       if (glowBar) {
-        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} radius={dimensions.radius} />);
+        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} barWidth={dimensions.barWidth} />);
       }
 
       if (glowCenter) {
@@ -191,14 +203,14 @@ export function RadialGauge(props: RadialGaugeProps) {
       graphics.push(
         <RadialText
           key="radial-text"
-          vizCount={vizCount}
-          textMode={textMode}
+          textMode={effectiveTextMode}
           displayValue={displayValue.display}
           dimensions={dimensions}
           theme={theme}
           valueManualFontSize={props.valueManualFontSize}
           nameManualFontSize={props.nameManualFontSize}
           shape={shape}
+          sparkline={displayValue.sparkline}
         />
       );
 
@@ -247,6 +259,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             theme={theme}
             color={color}
             shape={shape}
+            textMode={effectiveTextMode}
           />
         );
       }

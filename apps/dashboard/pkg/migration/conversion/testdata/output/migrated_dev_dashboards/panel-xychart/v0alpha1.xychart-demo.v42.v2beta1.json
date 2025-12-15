@@ -1825,5 +1825,10 @@
     "title": "Panel Tests - XY Chart Demo",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

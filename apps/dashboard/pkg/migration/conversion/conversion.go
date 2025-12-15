@@ -12,13 +12,6 @@ import (
 )
 
 func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
-	// Wrap the provider once with 10s caching for all conversions.
-	// This prevents repeated DB queries across multiple conversion calls while allowing
-	// the cache to refresh periodically, making it suitable for long-lived singleton usage.
-	dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
-	// Wrap library element provider with caching as well
-	leIndexProvider = schemaversion.WrapLibraryElementProviderWithCache(leIndexProvider)
-
 	// v0 conversions
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
@@ -62,13 +55,13 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	// v2alpha1 conversions
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
 		withConversionMetrics(dashv2alpha1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2alpha1_to_V0(a.(*dashv2alpha1.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
+			return Convert_V2alpha1_to_V0(a.(*dashv2alpha1.Dashboard), b.(*dashv0.Dashboard), scope)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv2alpha1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
+			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope)
 		})); err != nil {
 		return err
 	}

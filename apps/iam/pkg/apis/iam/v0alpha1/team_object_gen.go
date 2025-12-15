@@ -23,6 +23,12 @@ type Team struct {
 	Spec TeamSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTeam() *Team {
+	return &Team{
+		Spec: *NewTeamSpec(),
+	}
+}
+
 func (o *Team) GetSpec() any {
 	return o.Spec
 }

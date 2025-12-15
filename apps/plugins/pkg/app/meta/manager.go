@@ -16,7 +16,7 @@ const (
 
 // cachedMeta represents a cached metadata entry with expiration time
 type cachedMeta struct {
-	meta      pluginsv0alpha1.PluginMetaJSONData
+	meta      pluginsv0alpha1.MetaJSONData
 	ttl       time.Duration
 	expiresAt time.Time
 }
