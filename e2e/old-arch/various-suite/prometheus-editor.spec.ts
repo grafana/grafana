@@ -22,6 +22,8 @@ function navigateToEditor(editorType: editorType, name: string): void {
     .should('be.visible') // prevents flakiness
     .click();
 
+  e2e.pages.ConnectionsDataSource.button().should('exist').click();
+
   // choose default editor
   e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist').click();
   selectOption(editorType);

@@ -99,11 +99,19 @@ export const versionedPages = {
   },
   AddDataSource: {
     url: {
-      [MIN_GRAFANA_VERSION]: '/datasources/new',
+      [MIN_GRAFANA_VERSION]: '/connections/add-new-connection?cat=data-source',
     },
     dataSourcePluginsV2: {
       '9.3.1': (pluginName: string) => `Add new data source ${pluginName}`,
       [MIN_GRAFANA_VERSION]: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    },
+  },
+  ConnectionsDataSource: {
+    url: {
+      [MIN_GRAFANA_VERSION]: (dataSourceUid: string) => `/connections/datasources/${dataSourceUid}`,
+    },
+    button: {
+      '12.4.0': 'data-testid Add new data source button',
     },
   },
   ConfirmModal: {
