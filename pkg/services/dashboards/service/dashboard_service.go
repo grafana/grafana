@@ -114,7 +114,7 @@ func (dr *DashboardServiceImpl) HasDashboardAccess(ctx context.Context, user ide
 	if err != nil || dash == nil {
 		return false, nil
 	}
-	action := dashboards.ActionDashboardsRead
+	var action string
 	switch verb {
 	case utils.VerbGet:
 		action = dashboards.ActionDashboardsRead
