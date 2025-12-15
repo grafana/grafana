@@ -111,8 +111,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 To create a dashboard, follow these steps:
 
-{{< docs/list >}}
-{{< shared id="create-dashboard" >}}
+<!-- {{< docs/list >}}
+{{< shared id="create-dashboard" >}} -->
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
@@ -120,7 +120,7 @@ To create a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
-{{< /shared >}}
+<!-- {{< /shared >}} -->
 
 1. Under **Panel layout**, choose one of the following options:
    - **Custom** - Position and size panels manually. The default selection.
@@ -176,7 +176,7 @@ To create a dashboard, follow these steps:
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Toggle off the edit mode switch.
 
-{{< /docs/list >}}
+<!-- {{< /docs/list >}} -->
 
 ## Group panels
 
