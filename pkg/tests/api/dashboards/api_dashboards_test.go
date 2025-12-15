@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,8 +39,16 @@ func TestMain(m *testing.M) {
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
+	for _, resource := range []string{"folders.folder.grafana.app", "dashboards.dashboard.grafana.app"} {
+		trueValue := true
+		unifiedConfig[resource] = setting.UnifiedStorageConfig{
+			EnableMigration: &trueValue,
+		}
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		UnifiedStorageConfig: unifiedConfig,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
