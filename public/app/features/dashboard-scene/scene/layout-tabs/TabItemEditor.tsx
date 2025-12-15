@@ -125,7 +125,7 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
           <TextLink
             external
             href={
-              'https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dynamic-dashboard/#repeating-rows-and-tabs-and-the-dashboard-special-data-source'
+              'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-tabs'
             }
           >
             <Trans i18nKey="dashboard.tabs-layout.tab.repeat.learn-more">Learn more</Trans>
