@@ -23,9 +23,13 @@ weight: 120
 
 {{< admonition type="note" >}}
 
-Installing plugins from the Grafana website into a Grafana Cloud instance will be removed in February 2026. Use the following guidance to install through the Grafana UI
+Installing plugins from the Grafana website into a Grafana Cloud instance will be removed in February 2026. 
+
+If you're a Grafana Cloud user, follow [Install a plugin through the Grafana UI](#install-a-plugin-through-the-grafana-uiinstall-a-plugin-through-the-grafana-ui) instead.
 
 {{< /admonition >}}
+
+# Install a plugin through the Grafana UI
 
 The most common way to install a plugin is through the Grafana UI.
 
@@ -34,7 +38,7 @@ The most common way to install a plugin is through the Grafana UI.
 1. Click the plugin's logo.
 1. Click **Install**.
 
-You can use use the following alternative methods to install a plugin depending on your environment or set-up.
+You can use use the following alternative methods to install a plugin depending on your environment or setup.
 
 ## Install a plugin using Grafana CLI
 
