@@ -229,6 +229,16 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+func getUnionField[T ~string](m map[string]interface{}, key string) *T {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			result := T(str)
+			return &result
+		}
+	}
+	return nil
+}
+
 // Helper function to create int64 pointer
 func int64Ptr(i int64) *int64 {
 	return &i
@@ -491,11 +501,9 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 
 			if currentRow != nil {
 				// If currentRow is a hidden-header row (panels before first explicit row),
-				// set its collapse to match the first explicit row's collapsed value
-				// This matches frontend behavior: collapse: panel.collapsed
+				// it should not be collapsed because it will disappear and be visible only in edit mode
 				if currentRow.Spec.HideHeader != nil && *currentRow.Spec.HideHeader {
-					rowCollapsed := getBoolField(panelMap, "collapsed", false)
-					currentRow.Spec.Collapse = &rowCollapsed
+					currentRow.Spec.Collapse = &[]bool{false}[0]
 				}
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
@@ -1195,6 +1203,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			RegexApplyTo:     getUnionField[dashv2alpha1.DashboardVariableRegexApplyTo](varMap, "regexApplyTo"),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
@@ -1539,25 +1548,37 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		},
 	}
 
-	// Transform baseFilters if they exist
+	// Transform baseFilters if they exist, otherwise default to empty array
 	if baseFilters, exists := varMap["baseFilters"]; exists {
 		if baseFiltersArray, ok := baseFilters.([]interface{}); ok {
 			adhocVar.Spec.BaseFilters = transformAdHocFilters(baseFiltersArray)
 		}
 	}
+	// Ensure baseFilters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.BaseFilters == nil {
+		adhocVar.Spec.BaseFilters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform filters if they exist
+	// Transform filters if they exist, otherwise default to empty array
 	if filters, exists := varMap["filters"]; exists {
 		if filtersArray, ok := filters.([]interface{}); ok {
 			adhocVar.Spec.Filters = transformAdHocFilters(filtersArray)
 		}
 	}
+	// Ensure filters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.Filters == nil {
+		adhocVar.Spec.Filters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform defaultKeys if they exist
+	// Transform defaultKeys if they exist, otherwise default to empty array
 	if defaultKeys, exists := varMap["defaultKeys"]; exists {
 		if defaultKeysArray, ok := defaultKeys.([]interface{}); ok {
 			adhocVar.Spec.DefaultKeys = transformMetricFindValues(defaultKeysArray)
 		}
+	}
+	// Ensure defaultKeys is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.DefaultKeys == nil {
+		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)
@@ -1999,6 +2020,9 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
 	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
+	if refId == "" {
+		refId = "A"
+	}
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
@@ -2495,22 +2519,15 @@ func buildRegexMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardReg
 	regexMap := &dashv2alpha1.DashboardRegexMap{}
 	regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
 
-	opts, ok := mappingMap["options"].([]interface{})
-	if !ok || len(opts) == 0 {
-		return nil
-	}
-
-	optMap, ok := opts[0].(map[string]interface{})
+	optMap, ok := mappingMap["options"].(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
 	r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
-	if pattern, ok := optMap["regex"].(string); ok {
+	if pattern, ok := optMap["pattern"].(string); ok {
 		r.Pattern = pattern
 	}
-
-	// Result is a DashboardValueMappingResult
 	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
 		r.Result = buildValueMappingResult(resMap)
 	}

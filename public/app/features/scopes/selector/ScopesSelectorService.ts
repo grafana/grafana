@@ -218,6 +218,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           children: undefined,
         };
       }
+      // Set loaded to true if node is a container
+      treeNode.childrenLoaded = true;
     });
 
     // TODO: we might not want to update the tree as a side effect of this function
@@ -256,7 +258,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const selectedScope = {
       scopeId: scopeNode.spec.linkId,
       scopeNodeId: scopeNode.metadata.name,
-      parentNodeId: parentNode?.metadata.name,
     };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
@@ -342,33 +343,36 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
+
+      // Fetch the scope node if it is not available
+      let newNodesState = { ...this.state.nodes };
+      let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+
+      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
+        scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
+        if (scopeNode) {
+          newNodesState[scopeNode.metadata.name] = scopeNode;
+        }
+      }
+
       const newScopesState = { ...this.state.scopes };
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
 
-      const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-
-      // If parentNodeId is provided, use it directly as the parent node
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
-      this.addRecentScopes(fetchedScopes, parentNode);
+      this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
-    // Check if the selected scope has a redirect path
-    if (scopeNode && scopeNode.spec.redirectPath && typeof scopeNode.spec.redirectPath === 'string') {
-      locationService.push(scopeNode.spec.redirectPath);
-      return;
-    }
-
-    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
+    // Check if we are currently on an active scope navigation
     const currentPath = locationService.getLocation().pathname;
     const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
       if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
@@ -377,6 +381,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return isCurrentPath(currentPath, s.spec.url);
     });
 
+    // Only redirect to redirectPath if we are not currently on an active scope navigation
+    if (
+      !activeScopeNavigation &&
+      scopeNode &&
+      scopeNode.spec.redirectPath &&
+      typeof scopeNode.spec.redirectPath === 'string' &&
+      // Don't redirect if we're already on the target path
+      !isCurrentPath(currentPath, scopeNode.spec.redirectPath)
+    ) {
+      locationService.push(scopeNode.spec.redirectPath);
+      return;
+    }
+
+    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
     if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
       // Redirect to the first available scopeNavigation
       const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
@@ -386,7 +404,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         'url' in firstScopeNavigation.spec &&
         typeof firstScopeNavigation.spec.url === 'string' &&
         // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
-        firstScopeNavigation.spec.url.includes('/d/')
+        firstScopeNavigation.spec.url.includes('/d/') &&
+        // Don't redirect if we're already on the target path
+        !isCurrentPath(currentPath, firstScopeNavigation.spec.url)
       ) {
         locationService.push(firstScopeNavigation.spec.url);
       }
@@ -395,18 +415,21 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public removeAllScopes = () => {
     this.applyScopes([], false);
-    this.dashboardsService.setNavigationScope(undefined);
+    this.dashboardsService.setNavigationScope(undefined, undefined, undefined);
   };
 
-  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode, scopeNodeId?: string) => {
     if (scopes.length === 0) {
       return;
     }
 
     const newScopes: RecentScope[] = structuredClone(scopes);
-    // Set parent node for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
+    // Set parent node and scopeNodeId for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
     if (parentNode) {
       newScopes[0].parentNode = parentNode;
+    }
+    if (scopeNodeId) {
+      newScopes[0].scopeNodeId = scopeNodeId;
     }
 
     const RECENT_SCOPES_MAX_LENGTH = 5;
@@ -452,15 +475,31 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
   public open = async () => {
-    if (!this.state.tree.children || Object.keys(this.state.tree.children).length === 0) {
+    if (
+      !this.state.tree.children ||
+      Object.keys(this.state.tree.children).length === 0 ||
+      !this.state.tree.childrenLoaded
+    ) {
       await this.filterNode('', '');
+    }
+
+    // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
+    if (
+      config.featureToggles.useScopeSingleNodeEndpoint &&
+      this.state.selectedScopes[0]?.scopeNodeId &&
+      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
+    ) {
+      const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
+      if (scopeNode) {
+        this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });
+      }
     }
 
     // First close all nodes
     let newTree = closeNodes(this.state.tree);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
+      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
       let nodeAtPath = treeNodeAtPath(newTree, path);
@@ -468,22 +507,30 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // In the cases where nodes are not in the tree yet
       if (!nodeAtPath) {
         try {
-          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].parentNodeId, newTree)).tree;
+          const result = await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree);
+          newTree = result.tree;
+          // Update path to use the resolved path since nodes have been fetched
+          path = result.path.map((n) => n.metadata.name);
+          path.unshift('');
           nodeAtPath = treeNodeAtPath(newTree, path);
         } catch (error) {
           console.error('Failed to resolve path to root', error);
         }
       }
 
-      if (nodeAtPath && !nodeAtPath.children) {
+      // We have resolved to root, which means the parent node should be available
+      let parentPath = path.slice(0, -1);
+      let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
+
+      if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
         // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(parentPath, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
       }
 
       // Expand the nodes to the selected scope - must be done after loading children
       try {
-        newTree = expandNodes(newTree, path);
+        newTree = expandNodes(newTree, parentPath);
       } catch (error) {
         console.error('Failed to expand nodes', error);
       }

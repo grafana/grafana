@@ -70,11 +70,165 @@ func TestCheckHealth(t *testing.T) {
 	}
 }
 
-func TestOpenTsdbExecutor(t *testing.T) {
-	service := &Service{}
+func TestBuildMetric(t *testing.T) {
+	t.Run("Metric with no downsampleInterval should use query interval", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "avg",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+			Interval: 30 * time.Second,
+		}
 
+		metric := BuildMetric(query)
+		require.Equal(t, "30s-avg", metric["downsample"], "should use query interval formatted as seconds")
+	})
+
+	t.Run("Metric with downsampleInterval converts decimal seconds to milliseconds", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "0.5s",
+						"downsampleAggregator": "avg",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+		}
+
+		metric := BuildMetric(query)
+		require.Equal(t, "500ms-avg", metric["downsample"], "should convert 0.5s to 500ms")
+	})
+
+	t.Run("Metric with no downsampleInterval uses milliseconds for sub-second query interval", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "avg",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+			Interval: 500 * time.Millisecond,
+		}
+
+		metric := BuildMetric(query)
+		require.Equal(t, "500ms-avg", metric["downsample"], "should use query interval formatted as milliseconds")
+	})
+
+	t.Run("Metric with no downsampleInterval uses minutes for longer intervals", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "sum",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+			Interval: 5 * time.Minute,
+		}
+
+		metric := BuildMetric(query)
+		require.Equal(t, "5m-sum", metric["downsample"], "should use query interval formatted as minutes")
+	})
+
+	t.Run("Metric with no downsampleInterval uses hours for multi-hour intervals", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "max",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+			Interval: 2 * time.Hour,
+		}
+
+		metric := BuildMetric(query)
+		require.Equal(t, "2h-max", metric["downsample"], "should use query interval formatted as hours")
+	})
+
+	t.Run("Metric with no downsampleInterval uses days for multi-day intervals", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "min",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
+			Interval: 48 * time.Hour,
+		}
+
+		metric := BuildMetric(query)
+		require.Equal(t, "2d-min", metric["downsample"], "should use query interval formatted as days")
+	})
+
+	t.Run("Build metric with explicitTags enabled", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"explicitTags": true,
+						"tags": {
+							"host": "server01"
+						}
+					}`,
+			),
+		}
+
+		metric := BuildMetric(query)
+		require.True(t, metric["explicitTags"].(bool), "explicitTags should be true")
+
+		metricTags := metric["tags"].(map[string]any)
+		require.Equal(t, "server01", metricTags["host"])
+	})
+
+	t.Run("Build metric with explicitTags disabled does not include explicitTags", func(t *testing.T) {
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"explicitTags": false,
+						"tags": {
+							"host": "server01"
+						}
+					}`,
+			),
+		}
+
+		metric := BuildMetric(query)
+		require.Nil(t, metric["explicitTags"], "explicitTags should not be present when false")
+	})
+}
+
+func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("create request", func(t *testing.T) {
-		req, err := service.createRequest(context.Background(), logger, &datasourceInfo{}, OpenTsdbQuery{})
+		req, err := CreateRequest(context.Background(), logger, &datasourceInfo{}, OpenTsdbQuery{})
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -89,7 +243,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		response := `{ invalid }`
 
 		tsdbVersion := float32(4)
-		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A", tsdbVersion)
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -119,13 +273,14 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		testFrame.Meta = &data.FrameMeta{
 			Type:        data.FrameTypeTimeSeriesMulti,
 			TypeVersion: data.FrameTypeVersion{0, 1},
+			Custom:      map[string]any{"tagKeys": []string{"app", "env"}},
 		}
 		testFrame.RefID = "A"
 		tsdbVersion := float32(4)
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -160,13 +315,14 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		testFrame.Meta = &data.FrameMeta{
 			Type:        data.FrameTypeTimeSeriesMulti,
 			TypeVersion: data.FrameTypeVersion{0, 1},
+			Custom:      map[string]any{"tagKeys": []string{"app", "env"}},
 		}
 		testFrame.RefID = "A"
 		tsdbVersion := float32(3)
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -232,13 +388,14 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		testFrame.Meta = &data.FrameMeta{
 			Type:        data.FrameTypeTimeSeriesMulti,
 			TypeVersion: data.FrameTypeVersion{0, 1},
+			Custom:      map[string]any{"tagKeys": []string{"app", "env"}},
 		}
 		testFrame.RefID = "A"
 		tsdbVersion := float32(3)
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -275,6 +432,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		testFrame.Meta = &data.FrameMeta{
 			Type:        data.FrameTypeTimeSeriesMulti,
 			TypeVersion: data.FrameTypeVersion{0, 1},
+			Custom:      map[string]any{"tagKeys": []string{"app", "env"}},
 		}
 		testFrame.RefID = myRefid
 
@@ -282,12 +440,51 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, myRefid, tsdbVersion)
+		result, err := ParseResponse(logger, &resp, myRefid, tsdbVersion)
 		require.NoError(t, err)
 
 		if diff := cmp.Diff(testFrame, result.Responses[myRefid].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
+	})
+
+	t.Run("tagKeys are returned sorted alphabetically in frame metadata", func(t *testing.T) {
+		response := `
+		[
+			{
+				"metric": "cpu.usage",
+				"dps": [
+					[1405544146, 75.5]
+				],
+				"tags" : {
+					"zone": "us-east-1",
+					"host": "server01",
+					"app": "api",
+					"env": "production"
+				}
+			}
+		]`
+
+		tsdbVersion := float32(4)
+
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
+		require.NoError(t, err)
+
+		frame := result.Responses["A"].Frames[0]
+		require.NotNil(t, frame.Meta, "frame metadata should not be nil")
+		require.NotNil(t, frame.Meta.Custom, "frame custom metadata should not be nil")
+
+		customMeta, ok := frame.Meta.Custom.(map[string]any)
+		require.True(t, ok, "custom metadata should be a map")
+
+		tagKeys, ok := customMeta["tagKeys"].([]string)
+		require.True(t, ok, "tagKeys should be present and be a string slice")
+		require.Len(t, tagKeys, 4, "should have 4 tag keys")
+
+		expectedTagKeys := []string{"app", "env", "host", "zone"}
+		require.Equal(t, expectedTagKeys, tagKeys, "tagKeys should be sorted alphabetically")
 	})
 
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
@@ -304,7 +501,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -326,7 +523,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 
 		require.Len(t, metric, 2)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -347,7 +544,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -373,7 +570,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -404,7 +601,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -439,7 +636,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := service.buildMetric(query)
+		metric := BuildMetric(query)
 		t.Log(metric)
 
 		require.Len(t, metric, 5)

@@ -362,5 +362,10 @@
     "title": "V13 Graph Thresholds Migration Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

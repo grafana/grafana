@@ -14,32 +14,20 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
+
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder.addRadio({
       path: 'shape',
-      name: t('radialbar.config.shape', 'Shape'),
+      name: t('radialbar.config.shape', 'Style'),
       category,
       defaultValue: defaultOptions.shape,
       settings: {
         options: [
           { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle'), icon: 'circle' },
-          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Gauge'), icon: 'tachometer-fast' },
-        ],
-      },
-    });
-
-    builder.addRadio({
-      path: 'gradient',
-      name: t('radialbar.config.gradient', 'Gradient'),
-      category,
-      defaultValue: defaultOptions.gradient,
-      settings: {
-        options: [
-          { value: 'none', label: t('radialbar.config.gradient-none', 'None') },
-          { value: 'auto', label: t('radialbar.config.gradient-auto', 'Auto') },
+          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Arc'), icon: 'tachometer-empty' },
         ],
       },
     });
@@ -105,7 +93,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     builder.addCustomEditor({
       id: 'radialbar-effects',
       path: 'effects',
-      name: 'Effects',
+      name: t('radialbar.config.effects.label', 'Effects'),
       category,
       editor: EffectsEditor,
       settings: {},

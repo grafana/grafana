@@ -1663,7 +1663,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",
@@ -1900,5 +1900,10 @@
     "title": "CloudWatch Multiple Statistics Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

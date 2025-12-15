@@ -141,6 +141,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "regexApplyTo": "value",
       "staticOptions": [
         {
           "text": "test",
@@ -205,6 +206,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "regexApplyTo": "value",
       "staticOptions": [
         {
           "text": "test",
@@ -376,6 +378,35 @@ describe('sceneVariablesSetToVariables', () => {
       "type": "custom",
     }
     `);
+  });
+
+  it('should handle Custom variable when sceneVariablesSetToVariables should keep options', () => {
+    const variable = new CustomVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: ['test'],
+      text: ['test'],
+      query: 'test,test1,test2',
+      options: [
+        { label: 'test', value: 'test' },
+        { label: 'test1', value: 'test1' },
+        { label: 'test2', value: 'test2' },
+      ],
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+    const keepQueryOptions = true;
+    const result = sceneVariablesSetToVariables(set, keepQueryOptions);
+    expect(result).toHaveLength(1);
+    expect(result[0].options).not.toEqual([]);
+    expect(result[0].options?.length).toEqual(3);
   });
 
   it('should handle ConstantVariable', () => {
@@ -1084,6 +1115,7 @@ describe('sceneVariablesSetToVariables', () => {
             },
             "refresh": "onDashboardLoad",
             "regex": "",
+            "regexApplyTo": "value",
             "skipUrlSync": false,
             "sort": "disabled",
             "staticOptions": [

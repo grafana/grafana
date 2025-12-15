@@ -71,6 +71,9 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
     COALESCE(dashboard_version.version, dashboard.version) {{ .Query.Order }},
     {{ end }}
     dashboard.uid ASC
+  {{ if .Query.MaxRows }}
+  LIMIT {{ .Arg .Query.MaxRows }}
+  {{ end }}
   {{ else }}
   {{ if .Query.UID }}
   AND dashboard.uid = {{ .Arg .Query.UID }}
@@ -83,4 +86,7 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND dashboard.deleted IS NULL
   {{ end }}
   ORDER BY dashboard.id DESC
+  {{ if .Query.MaxRows }}
+  LIMIT {{ .Arg .Query.MaxRows }}
+  {{ end }}
   {{ end }}

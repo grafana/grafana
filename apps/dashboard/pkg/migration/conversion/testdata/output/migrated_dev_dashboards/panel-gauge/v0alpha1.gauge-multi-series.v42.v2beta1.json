@@ -534,5 +534,10 @@
     "title": "Panel Tests - Gauge Multi Series",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
 
@@ -88,5 +89,66 @@ describe('VizTooltipFooter', () => {
     );
 
     expect(screen.queryByRole('button', { name: /filter for 'testValue'/i })).not.toBeInTheDocument();
+  });
+
+  it('should render filter by grouping buttons and fire onclick', async () => {
+    const onForClick = jest.fn();
+    const onOutClick = jest.fn();
+
+    const filterByGroupedLabels = {
+      onFilterForGroupedLabels: onForClick,
+      onFilterOutGroupedLabels: onOutClick,
+    };
+
+    render(
+      <MemoryRouter>
+        <VizTooltipFooter dataLinks={[]} filterByGroupedLabels={filterByGroupedLabels} />
+      </MemoryRouter>
+    );
+
+    const onForButton = screen.getByRole('button', { name: /Apply as filter/i });
+    expect(onForButton).toBeInTheDocument();
+
+    const onOutButton = screen.getByRole('button', { name: /Apply as inverse filter/i });
+    expect(onOutButton).toBeInTheDocument();
+
+    await userEvent.click(onForButton);
+    expect(onForClick).toHaveBeenCalled();
+
+    await userEvent.click(onOutButton);
+    expect(onOutClick).toHaveBeenCalled();
+  });
+
+  it('should not render filter by grouping buttons when there are one-click links', () => {
+    const filterByGroupedLabels = {
+      onFilterForGroupedLabels: jest.fn(),
+      onFilterOutGroupedLabels: jest.fn(),
+    };
+
+    const onClick = jest.fn();
+    const field: Field = {
+      name: '',
+      type: FieldType.string,
+      values: [],
+      config: {},
+    };
+
+    const oneClickLink: LinkModel<Field> = {
+      href: '#',
+      onClick,
+      title: 'One Click Link',
+      origin: field,
+      target: undefined,
+      oneClick: true,
+    };
+
+    render(
+      <MemoryRouter>
+        <VizTooltipFooter dataLinks={[oneClickLink]} filterByGroupedLabels={filterByGroupedLabels} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.apply)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.applyInverse)).not.toBeInTheDocument();
   });
 });

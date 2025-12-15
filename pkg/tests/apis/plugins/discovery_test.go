@@ -13,26 +13,27 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)
-		disco := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		disco, err := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		require.NoError(t, err)
 		require.JSONEq(t, `[
 			{
 				"version": "v0alpha1",
 				"freshness": "Current",
 				"resources": [
 					{
-						"resource": "pluginmetas",
+						"resource": "metas",
 						"responseKind": {
 							"group": "",
-							"kind": "PluginMeta",
+							"kind": "Meta",
 							"version": ""
 						},
 						"scope": "Namespaced",
-						"singularResource": "pluginmeta",
+						"singularResource": "meta",
 						"subresources": [
 							{
 								"responseKind": {
 									"group": "",
-									"kind": "PluginMeta",
+									"kind": "Meta",
 									"version": ""
 								},
 								"subresource": "status",

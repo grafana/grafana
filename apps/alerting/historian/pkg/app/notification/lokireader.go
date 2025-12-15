@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"sort"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/logutil"
 )
 
@@ -47,7 +49,7 @@ type LokiReader struct {
 	logger logging.Logger
 }
 
-func NewLokiReader(cfg lokiclient.LokiConfig, reg prometheus.Registerer, logger logging.Logger, tracer trace.Tracer) *LokiReader {
+func NewLokiReader(cfg config.LokiConfig, reg prometheus.Registerer, logger logging.Logger, tracer trace.Tracer) *LokiReader {
 	duration := instrument.NewHistogramCollector(promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Namespace,
 		Subsystem: Subsystem,
@@ -56,9 +58,13 @@ func NewLokiReader(cfg lokiclient.LokiConfig, reg prometheus.Registerer, logger 
 		Buckets:   instrument.DefBuckets,
 	}, instrument.HistogramCollectorBuckets))
 
+	requester := &http.Client{
+		Transport: cfg.Transport,
+	}
+
 	gkLogger := logutil.ToGoKitLogger(logger)
 	return &LokiReader{
-		client: lokiclient.NewLokiClient(cfg, lokiclient.NewRequester(), nil, duration, gkLogger, tracer, LokiClientSpanName),
+		client: lokiclient.NewLokiClient(cfg.LokiConfig, requester, nil, duration, gkLogger, tracer, LokiClientSpanName),
 		logger: logger,
 	}
 }

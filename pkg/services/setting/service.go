@@ -2,27 +2,27 @@ package setting
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/client-go/dynamic"
-	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
 	authlib "github.com/grafana/authlib/authn"
 	logging "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/semconv"
 )
 
@@ -38,18 +38,11 @@ const (
 	ApiGroup   = "setting.grafana.app"
 	apiVersion = "v0alpha1"
 	resource   = "settings"
-	kind       = "Setting"
-	listKind   = "SettingList"
 )
 
-var settingGroupVersion = schema.GroupVersionResource{
-	Group:    ApiGroup,
-	Version:  apiVersion,
-	Resource: resource,
-}
-
-var settingGroupListKind = map[schema.GroupVersionResource]string{
-	settingGroupVersion: listKind,
+var settingGroupVersion = schema.GroupVersion{
+	Group:   ApiGroup,
+	Version: apiVersion,
 }
 
 type remoteSettingServiceMetrics struct {
@@ -106,10 +99,10 @@ type Service interface {
 }
 
 type remoteSettingService struct {
-	dynamicClient dynamic.Interface
-	log           logging.Logger
-	pageSize      int64
-	metrics       remoteSettingServiceMetrics
+	restClient *rest.RESTClient
+	log        logging.Logger
+	pageSize   int64
+	metrics    remoteSettingServiceMetrics
 }
 
 var _ Service = (*remoteSettingService)(nil)
@@ -126,7 +119,7 @@ type Config struct {
 	// At least one of WrapTransport or TokenExchangeClient is required.
 	WrapTransport transport.WrapperFunc
 	// TLSClientConfig configures TLS for the client connection.
-	TLSClientConfig clientrest.TLSClientConfig
+	TLSClientConfig rest.TLSClientConfig
 	// QPS limits requests per second (defaults to DefaultQPS).
 	QPS float32
 	// Burst allows request bursts above QPS (defaults to DefaultBurst).
@@ -145,29 +138,39 @@ type Setting struct {
 	Value string `json:"value"`
 }
 
+// settingResource represents a single Setting resource from the K8s API.
+type settingResource struct {
+	Spec Setting `json:"spec"`
+}
+
+// settingListMetadata contains pagination info from the K8s list response.
+type settingListMetadata struct {
+	Continue string `json:"continue,omitempty"`
+}
+
 // New creates a Service from the provided configuration.
 func New(config Config) (Service, error) {
 	log := logging.New(LogPrefix)
-	dynamicClient, err := getDynamicClient(config, log)
+
+	restClient, err := getRestClient(config, log)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create REST client: %w", err)
 	}
+
 	pageSize := DefaultPageSize
 	if config.PageSize > 0 {
 		pageSize = config.PageSize
 	}
 
-	metrics := initMetrics()
-
 	return &remoteSettingService{
-		dynamicClient: dynamicClient,
-		pageSize:      pageSize,
-		log:           log,
-		metrics:       metrics,
+		restClient: restClient,
+		log:        log,
+		pageSize:   pageSize,
+		metrics:    initMetrics(),
 	}, nil
 }
 
-func (m *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
+func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	ns := semconv.GrafanaNamespaceName(namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
@@ -178,33 +181,34 @@ func (m *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 		return nil, tracing.Errorf(span, "missing namespace in context")
 	}
 
-	settings, err := m.List(ctx, labelSelector)
+	settings, err := s.List(ctx, labelSelector)
 	if err != nil {
 		return nil, err
 	}
-	iniFile, err := m.toIni(settings)
+	iniFile, err := toIni(settings)
 	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
 	return iniFile, nil
 }
 
-func (m *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) ([]*Setting, error) {
+func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) ([]*Setting, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	ns := semconv.GrafanaNamespaceName(namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
 		trace.WithAttributes(ns))
 	defer span.End()
+
 	if !ok || namespace == "" {
 		return nil, tracing.Errorf(span, "missing namespace in context")
 	}
-	log := m.log.FromContext(ctx).New(ns.Key, ns.Value, "function", "remoteSettingService.List", "traceId", span.SpanContext().TraceID())
+	log := s.log.FromContext(ctx).New(ns.Key, ns.Value, "function", "remoteSettingService.List", "traceId", span.SpanContext().TraceID())
 
 	startTime := time.Now()
 	var status string
 	defer func() {
 		duration := time.Since(startTime).Seconds()
-		m.metrics.listDuration.WithLabelValues(status).Observe(duration)
+		s.metrics.listDuration.WithLabelValues(status).Observe(duration)
 	}()
 
 	selector, err := metav1.LabelSelectorAsSelector(&labelSelector)
@@ -216,64 +220,142 @@ func (m *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 		log.Debug("empty selector. Fetching all settings")
 	}
 
-	var allSettings []*Setting
+	// Pre-allocate with estimated capacity
+	allSettings := make([]*Setting, 0, s.pageSize*8)
 	var continueToken string
 	hasNext := true
 	totalPages := 0
 	// Using an upper limit to prevent infinite loops
 	for hasNext && totalPages < 1000 {
 		totalPages++
-		opts := metav1.ListOptions{
-			Limit:    m.pageSize,
-			Continue: continueToken,
-		}
-		if !selector.Empty() {
-			opts.LabelSelector = selector.String()
-		}
 
-		settingsList, lErr := m.dynamicClient.Resource(settingGroupVersion).Namespace(namespace).List(ctx, opts)
+		settings, nextToken, lErr := s.fetchPage(ctx, namespace, selector.String(), continueToken)
 		if lErr != nil {
 			status = "error"
 			return nil, tracing.Error(span, lErr)
 		}
-		for i := range settingsList.Items {
-			setting, pErr := parseSettingResource(&settingsList.Items[i])
-			if pErr != nil {
-				status = "error"
-				return nil, tracing.Error(span, pErr)
-			}
-			allSettings = append(allSettings, setting)
-		}
-		continueToken = settingsList.GetContinue()
+
+		allSettings = append(allSettings, settings...)
+		continueToken = nextToken
 		if continueToken == "" {
 			hasNext = false
 		}
 	}
 
 	status = "success"
-	m.metrics.listResultSize.WithLabelValues(status).Observe(float64(len(allSettings)))
+	s.metrics.listResultSize.WithLabelValues(status).Observe(float64(len(allSettings)))
 
 	return allSettings, nil
 }
 
-func parseSettingResource(setting *unstructured.Unstructured) (*Setting, error) {
-	spec, found, err := unstructured.NestedMap(setting.Object, "spec")
+func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSelector, continueToken string) ([]*Setting, string, error) {
+	req := s.restClient.Get().
+		Resource(resource).
+		Namespace(namespace).
+		Param("limit", fmt.Sprintf("%d", s.pageSize))
+
+	if labelSelector != "" {
+		req = req.Param("labelSelector", labelSelector)
+	}
+	if continueToken != "" {
+		req = req.Param("continue", continueToken)
+	}
+
+	stream, err := req.Stream(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get spec from setting: %w", err)
+		return nil, "", fmt.Errorf("request failed: %w", err)
 	}
-	if !found {
-		return nil, fmt.Errorf("spec not found in setting %s", setting.GetName())
-	}
+	defer func() { _ = stream.Close() }()
 
-	var result Setting
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(spec, &result); err != nil {
-		return nil, fmt.Errorf("failed to convert spec to Setting: %w", err)
-	}
-
-	return &result, nil
+	return parseSettingList(stream)
 }
 
-func (m *remoteSettingService) toIni(settings []*Setting) (*ini.File, error) {
+// parseSettingList parses a SettingList JSON response using token-by-token streaming.
+func parseSettingList(r io.Reader) ([]*Setting, string, error) {
+	decoder := json.NewDecoder(r)
+	// Currently, first page may have a large number of items.
+	settings := make([]*Setting, 0, 1600)
+	var continueToken string
+
+	// Skip to the start of the object
+	if _, err := decoder.Token(); err != nil {
+		return nil, "", fmt.Errorf("expected start of object: %w", err)
+	}
+
+	for decoder.More() {
+		// Read field name
+		tok, err := decoder.Token()
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to read field name: %w", err)
+		}
+
+		fieldName, ok := tok.(string)
+		if !ok {
+			continue
+		}
+
+		switch fieldName {
+		case "metadata":
+			var meta settingListMetadata
+			if err := decoder.Decode(&meta); err != nil {
+				return nil, "", fmt.Errorf("failed to decode metadata: %w", err)
+			}
+			continueToken = meta.Continue
+
+		case "items":
+			// Parse items array token-by-token
+			itemSettings, err := parseItems(decoder)
+			if err != nil {
+				return nil, "", err
+			}
+			settings = append(settings, itemSettings...)
+
+		default:
+			// Skip unknown fields
+			var skip json.RawMessage
+			if err := decoder.Decode(&skip); err != nil {
+				return nil, "", fmt.Errorf("failed to skip field %s: %w", fieldName, err)
+			}
+		}
+	}
+
+	return settings, continueToken, nil
+}
+
+func parseItems(decoder *json.Decoder) ([]*Setting, error) {
+	// Expect start of array
+	tok, err := decoder.Token()
+	if err != nil {
+		return nil, fmt.Errorf("expected start of items array: %w", err)
+	}
+	if tok != json.Delim('[') {
+		return nil, fmt.Errorf("expected '[', got %v", tok)
+	}
+
+	settings := make([]*Setting, 0, DefaultPageSize)
+
+	// Parse each item
+	for decoder.More() {
+		var item settingResource
+		if err := decoder.Decode(&item); err != nil {
+			return nil, fmt.Errorf("failed to decode setting item: %w", err)
+		}
+		settings = append(settings, &Setting{
+			Section: item.Spec.Section,
+			Key:     item.Spec.Key,
+			Value:   item.Spec.Value,
+		})
+	}
+
+	// Consume end of array
+	if _, err := decoder.Token(); err != nil {
+		return nil, fmt.Errorf("expected end of items array: %w", err)
+	}
+
+	return settings, nil
+}
+
+func toIni(settings []*Setting) (*ini.File, error) {
 	conf := ini.Empty()
 	for _, setting := range settings {
 		if !conf.HasSection(setting.Section) {
@@ -287,7 +369,7 @@ func (m *remoteSettingService) toIni(settings []*Setting) (*ini.File, error) {
 	return conf, nil
 }
 
-func getDynamicClient(config Config, log logging.Logger) (dynamic.Interface, error) {
+func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) {
 	if config.URL == "" {
 		return nil, fmt.Errorf("URL cannot be empty")
 	}
@@ -296,7 +378,7 @@ func getDynamicClient(config Config, log logging.Logger) (dynamic.Interface, err
 	}
 
 	wrapTransport := config.WrapTransport
-	if config.WrapTransport == nil {
+	if wrapTransport == nil {
 		log.Debug("using default wrapTransport with TokenExchangeClient")
 		wrapTransport = func(rt http.RoundTripper) http.RoundTripper {
 			return &authRoundTripper{
@@ -316,13 +398,24 @@ func getDynamicClient(config Config, log logging.Logger) (dynamic.Interface, err
 		burst = config.Burst
 	}
 
-	return dynamic.NewForConfig(&clientrest.Config{
+	// Add a default scheme to handle K8s API error responses
+	scheme := runtime.NewScheme()
+
+	restConfig := &rest.Config{
 		Host:            config.URL,
-		WrapTransport:   wrapTransport,
 		TLSClientConfig: config.TLSClientConfig,
+		WrapTransport:   wrapTransport,
 		QPS:             qps,
 		Burst:           burst,
-	})
+		// Configure for our API group
+		APIPath: "/apis",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion:         &settingGroupVersion,
+			NegotiatedSerializer: serializer.NewCodecFactory(scheme).WithoutConversion(),
+		},
+	}
+
+	return rest.RESTClientFor(restConfig)
 }
 
 // authRoundTripper wraps an HTTP transport with token-based authentication.
@@ -341,10 +434,9 @@ func (a *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %w", err)
 	}
-	req = utilnet.CloneRequest(req)
-
-	req.Header.Set("X-Access-Token", fmt.Sprintf("Bearer %s", token.Token))
-	return a.transport.RoundTrip(req)
+	reqCopy := req.Clone(req.Context())
+	reqCopy.Header.Set("X-Access-Token", fmt.Sprintf("Bearer %s", token.Token))
+	return a.transport.RoundTrip(reqCopy)
 }
 
 func initMetrics() remoteSettingServiceMetrics {
@@ -373,12 +465,12 @@ func initMetrics() remoteSettingServiceMetrics {
 	return metrics
 }
 
-func (m *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
-	m.metrics.listDuration.Describe(descs)
-	m.metrics.listResultSize.Describe(descs)
+func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
+	s.metrics.listDuration.Describe(descs)
+	s.metrics.listResultSize.Describe(descs)
 }
 
-func (m *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
-	m.metrics.listDuration.Collect(metrics)
-	m.metrics.listResultSize.Collect(metrics)
+func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
+	s.metrics.listDuration.Collect(metrics)
+	s.metrics.listResultSize.Collect(metrics)
 }

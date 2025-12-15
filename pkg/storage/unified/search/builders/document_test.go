@@ -53,8 +53,9 @@ func TestUserDocumentBuilder(t *testing.T) {
 		Group:     "iam.grafana.app",
 		Resource:  "users",
 	}, []string{
-		"user-with-login-and-email",
-		"user-with-login-only",
+		"with-login-and-email",
+		"with-login-only",
+		"with-last-seen-at-and-role",
 	})
 }
 
@@ -67,6 +68,18 @@ func TestExternalGroupMappingDocumentBuilder(t *testing.T) {
 		Resource:  "externalgroupmappings",
 	}, []string{
 		"mapping-with-team-and-group",
+	})
+}
+
+func TestTeamSearchBuilder(t *testing.T) {
+	info, err := GetTeamSearchBuilder()
+	require.NoError(t, err)
+	doSnapshotTests(t, info.Builder, "team", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "iam.grafana.app",
+		Resource:  "searchTeams",
+	}, []string{
+		"with-email-and-external-uid",
 	})
 }
 
