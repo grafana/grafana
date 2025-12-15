@@ -16,7 +16,7 @@ export function collectInsights(logs: LogRowModel[], app: CoreApp, properties?: 
   if (!logs.length) {
     return;
   }
-  
+
   const { longest, shortest, average, median } = getLogsStats(logs);
 
   reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
