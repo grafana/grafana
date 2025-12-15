@@ -16,19 +16,19 @@ type compactQuery struct {
 }
 
 func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
-	return transformRule(ar, l, false)
+	return convertAlertRuleToModel(ar, l, false)
 }
 
 // alertRuleToModelsAlertRuleCompact transforms an alertRule to a models.AlertRule
 // ignoring alert queries (except for data source UIDs), notification settings, and metadata.
 func alertRuleToModelsAlertRuleCompact(ar alertRule, l log.Logger) (models.AlertRule, error) {
-	return transformRule(ar, l, true)
+	return convertAlertRuleToModel(ar, l, true)
 }
 
-// transformRule creates a models.AlertRule from an alertRule.
+// convertAlertRuleToModel creates a models.AlertRule from an alertRule.
 // When 'compact' is set to 'true', it skips parsing the alert queries (except for the data source UID), notification
 // settings, and metadata, thus reducing the number of JSON serializations needed.
-func transformRule(ar alertRule, l log.Logger, compact bool) (models.AlertRule, error) {
+func convertAlertRuleToModel(ar alertRule, l log.Logger, compact bool) (models.AlertRule, error) {
 	var data []models.AlertQuery
 	if compact {
 		var cqs []compactQuery
