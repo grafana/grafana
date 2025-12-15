@@ -68,17 +68,31 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
+<<<<<<< HEAD
 	t.Run("delete individual dashboard file on configured branch should return MethodNotAllowed", func(t *testing.T) {
+=======
+	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
+>>>>>>> origin/main
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
 			Do(ctx)
+<<<<<<< HEAD
 		require.Error(t, result.Error())
 		var statusErr *apierrors.StatusError
 		require.True(t, errors.As(result.Error(), &statusErr), "error should be a StatusError")
 		require.Equal(t, int32(http.StatusMethodNotAllowed), statusErr.ErrStatus.Code, "should return MethodNotAllowed for configured branch delete")
+=======
+		require.NoError(t, result.Error(), "delete file on configured branch should succeed")
+
+		// Verify the dashboard is removed from Grafana
+		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
+		_, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.Error(t, err, "dashboard should be deleted from Grafana")
+		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
+>>>>>>> origin/main
 	})
 
 	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {
@@ -162,7 +176,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	require.NoError(t, err, "original dashboard should exist in Grafana")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
+<<<<<<< HEAD
 	t.Run("move file without content change on configured branch should return MethodNotAllowed", func(t *testing.T) {
+=======
+	t.Run("move file without content change on configured branch should succeed", func(t *testing.T) {
+>>>>>>> origin/main
 		const targetPath = "moved/simple-move.json"
 
 		// Perform the move operation using helper function (no ref = configured branch)
@@ -173,7 +191,19 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
+<<<<<<< HEAD
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move operation on configured branch should return MethodNotAllowed")
+=======
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
+
+		// Verify file was moved - read from new location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
+		require.NoError(t, err, "file should exist at new location")
+
+		// Verify file no longer exists at old location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+		require.Error(t, err, "file should not exist at old location")
+>>>>>>> origin/main
 	})
 
 	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
@@ -210,7 +240,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		}
 	})
 
+<<<<<<< HEAD
 	t.Run("move file to nested path on configured branch should return MethodNotAllowed", func(t *testing.T) {
+=======
+	t.Run("move file to nested path on configured branch should succeed", func(t *testing.T) {
+>>>>>>> origin/main
 		// Test a different scenario: Move a file that was never synced to Grafana
 		// This might reveal the issue if dashboard creation fails during move
 		const sourceFile = "never-synced.json"
@@ -227,6 +261,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
+<<<<<<< HEAD
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move operation on configured branch should return MethodNotAllowed")
 
 		// File should still exist at original location since move was rejected
@@ -236,6 +271,21 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 	t.Run("move file with content update on configured branch should return MethodNotAllowed", func(t *testing.T) {
 		const sourcePath = "all-panels.json"
+=======
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
+
+		// File should exist at new location
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
+		require.NoError(t, err, "file should exist at new nested location")
+
+		// File should not exist at original location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
+		require.Error(t, err, "file should not exist at original location after move")
+	})
+
+	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
+		const sourcePath = "moved/simple-move.json" // Use the file we moved earlier
+>>>>>>> origin/main
 		const targetPath = "updated/content-updated.json"
 
 		// Use text-options.json content for the update
@@ -250,11 +300,32 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
+<<<<<<< HEAD
 		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "move with content update on configured branch should return MethodNotAllowed")
 
 		// Source file should still exist since move was rejected
 		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
 		require.NoError(t, err, "source file should still exist after rejected move")
+=======
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update on configured branch should succeed")
+
+		// File should exist at new location with updated content
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
+		require.NoError(t, err, "file should exist at new location")
+
+		// Verify content was updated (should be text-options dashboard now)
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Text options", title, "content should be updated")
+
+		// Source file should not exist anymore
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
+		require.Error(t, err, "source file should not exist after move")
+>>>>>>> origin/main
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
@@ -487,7 +558,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 
 	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
-		// Create a file manually in the second repo which is already in first one
+		// Create a file manually in the second repo which has UID from first repo
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		printFileTree(t, helper.ProvisioningPath)
 
@@ -511,10 +582,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		}
 
 		// Verify it returns BadRequest (400) for ownership conflicts
-		if !apierrors.IsBadRequest(err) {
-			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
-			return
-		}
+		require.True(t, apierrors.IsBadRequest(err), "Expected BadRequest error but got: %T - %v", err, err)
 
 		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
@@ -528,7 +596,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			targetPath:   "moved-dashboard.json",
 			originalPath: path.Join("dashboard2.json"),
 			message:      "attempt to move file from different repository",
-			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content to move with the conflicting UID
+			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content with the conflicting UID
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
