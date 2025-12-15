@@ -287,4 +287,84 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     // The component checks for scopesSelectorService existence before calling setNavigationScope
     expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalled();
   });
+
+  describe('disableSubScopeSelection', () => {
+    it('does not show exchange icon when disableSubScopeSelection is true', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: true,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButtons = screen.queryAllByRole('button', { name: /change root scope/i });
+      expect(exchangeButtons).toHaveLength(0);
+    });
+
+    it('shows exchange icon when disableSubScopeSelection is false', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: false,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
+      expect(exchangeButton).toBeInTheDocument();
+    });
+
+    it('shows exchange icon when disableSubScopeSelection is undefined', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: undefined,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
+      expect(exchangeButton).toBeInTheDocument();
+    });
+
+    it('does not call changeScopes when disableSubScopeSelection is true and exchange icon is clicked', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: true,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      // Exchange button should not be present, so clicking should not trigger any actions
+      const exchangeButton = screen.queryByRole('button', { name: /change root scope/i });
+      expect(exchangeButton).not.toBeInTheDocument();
+      expect(mockScopesSelectorService.changeScopes).not.toHaveBeenCalled();
+    });
+  });
 });

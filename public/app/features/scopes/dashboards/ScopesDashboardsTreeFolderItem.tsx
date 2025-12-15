@@ -26,8 +26,6 @@ export function ScopesDashboardsTreeFolderItem({
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
 
-  console.log(folder.title, folder.disableSubScopeSelection);
-
   // get scopesselector service
   const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
   const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
