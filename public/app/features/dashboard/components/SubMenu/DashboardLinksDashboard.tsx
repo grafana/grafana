@@ -182,7 +182,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       verticalAlign: 'middle',
       marginBottom: theme.spacing(1),
-      marginRight: theme.spacing(1),
     }),
   };
 }

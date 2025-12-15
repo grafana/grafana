@@ -1138,7 +1138,7 @@ export type JobResourceSummary = {
   delete?: number;
   /** Create or update (export) */
   error?: number;
-  /** Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
+  /** Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
   errors?: string[];
   group?: string;
   kind?: string;
@@ -1146,6 +1146,9 @@ export type JobResourceSummary = {
   noop?: number;
   total?: number;
   update?: number;
+  /** The error count */
+  warning?: number;
+  warnings?: string[];
   write?: number;
 };
 export type RepositoryUrLs = {
@@ -1176,6 +1179,7 @@ export type JobStatus = {
   summary?: JobResourceSummary[];
   /** URLs contains URLs for the reference branch or commit if applicable. */
   url?: RepositoryUrLs;
+  warnings?: string[];
 };
 export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
