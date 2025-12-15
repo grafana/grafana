@@ -92,6 +92,12 @@ refs:
 
 ## Create a dashboard
 
+{{< admonition type="note">}}
+Dynamic dashboards is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+For information on the generally available dashboard creation experience, refer to the [documentation for the latest self-managed version of Grafana](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/).
+{{< /admonition >}}
+
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
 **Before you begin:**
