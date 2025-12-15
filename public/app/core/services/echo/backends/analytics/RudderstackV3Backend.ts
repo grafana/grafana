@@ -53,6 +53,7 @@ export interface RudderstackBackendOptions {
   buildInfo: BuildInfo;
   user?: User;
   sdkUrl?: string;
+  sdkV3Url?: string;
   configUrl?: string;
   integrationsUrl?: string;
 }

@@ -289,6 +289,7 @@ export interface GrafanaConfig {
   rudderstackWriteKey: string;
   rudderstackDataPlaneUrl: string;
   rudderstackSdkUrl: string;
+  rudderstackV3SdkUrl: string;
   rudderstackConfigUrl: string;
   rudderstackIntegrationsUrl: string;
   applicationInsightsConnectionString: string;

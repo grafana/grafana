@@ -224,6 +224,7 @@ export class GrafanaBootConfig {
   rudderstackWriteKey?: string;
   rudderstackDataPlaneUrl?: string;
   rudderstackSdkUrl?: string;
+  rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
   analyticsConsoleReporting = false;

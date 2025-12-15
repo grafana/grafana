@@ -157,6 +157,7 @@ async function initRudderstackBackend() {
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
       sdkUrl: config.rudderstackSdkUrl,
+      sdkV3Url: config.rudderstackV3SdkUrl,
       configUrl: config.rudderstackConfigUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,

@@ -94,6 +94,7 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 		RudderstackDataPlaneUrl:              cfg.RudderstackDataPlaneURL,
 		RudderstackIntegrationsUrl:           cfg.RudderstackIntegrationsURL,
 		RudderstackSdkUrl:                    cfg.RudderstackSDKURL,
+		RudderstackV3SdkUrl:                  cfg.RudderstackV3SDKURL,
 		RudderstackWriteKey:                  cfg.RudderstackWriteKey,
 		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,

@@ -32,6 +32,7 @@ type FSFrontendSettings struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey,omitempty"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl,omitempty"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl,omitempty"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl,omitempty"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl,omitempty"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl,omitempty"`
 
