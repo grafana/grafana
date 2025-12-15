@@ -536,6 +536,11 @@ func extractCollapsedPanelsWithAbsoluteY(elements map[string]dashv2alpha1.Dashbo
 	panels := make([]interface{}, 0)
 
 	if layout.GridLayoutKind != nil {
+		// Maintain relative alignment while ensuring Y does not move backwards as panels are added.
+		var yAdjustment int64
+		var hasPreviousY bool
+		var previousY int64
+
 		for _, item := range layout.GridLayoutKind.Spec.Items {
 			element, ok := elements[item.Spec.Element.Name]
 			if !ok {
@@ -543,12 +548,19 @@ func extractCollapsedPanelsWithAbsoluteY(elements map[string]dashv2alpha1.Dashbo
 			}
 			// Create a copy with adjusted Y position
 			adjustedItem := item
-			adjustedItem.Spec.Y = item.Spec.Y + baseY
+			adjustedItem.Spec.Y = item.Spec.Y + baseY + yAdjustment
+			if hasPreviousY && adjustedItem.Spec.Y < previousY {
+				delta := previousY - adjustedItem.Spec.Y
+				adjustedItem.Spec.Y += delta
+				yAdjustment += delta
+			}
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 			}
 			panels = append(panels, panel)
+			previousY = adjustedItem.Spec.Y
+			hasPreviousY = true
 		}
 	}
 	// Handle AutoGridLayout for collapsed rows with Y offset
@@ -592,18 +604,29 @@ func extractCollapsedPanelsFromTabLayoutWithAbsoluteY(elements map[string]dashv2
 	panels := make([]interface{}, 0)
 
 	if layout.GridLayoutKind != nil {
+		var yAdjustment int64
+		var hasPreviousY bool
+		var previousY int64
+
 		for _, item := range layout.GridLayoutKind.Spec.Items {
 			element, ok := elements[item.Spec.Element.Name]
 			if !ok {
 				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 			}
 			adjustedItem := item
-			adjustedItem.Spec.Y = item.Spec.Y + baseY
+			adjustedItem.Spec.Y = item.Spec.Y + baseY + yAdjustment
+			if hasPreviousY && adjustedItem.Spec.Y < previousY {
+				delta := previousY - adjustedItem.Spec.Y
+				adjustedItem.Spec.Y += delta
+				yAdjustment += delta
+			}
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 			}
 			panels = append(panels, panel)
+			previousY = adjustedItem.Spec.Y
+			hasPreviousY = true
 		}
 	}
 	if layout.AutoGridLayoutKind != nil {
@@ -677,7 +700,16 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 	maxY := startY
 
 	if layout.GridLayoutKind != nil {
-		var localMaxY int64 = 0
+		// All panels in this row should start from the same base offset so that they
+		// stay below any previously converted content while keeping their relative
+		// alignment. Track an adjustment that is applied to subsequent panels when a
+		// panel would otherwise move backwards on the Y axis.
+		baseY := startY
+		var yAdjustment int64
+		var localMaxY int64 = startY
+		var hasPreviousY bool
+		var previousY int64
+
 		for _, item := range layout.GridLayoutKind.Spec.Items {
 			element, ok := elements[item.Spec.Element.Name]
 			if !ok {
@@ -685,12 +717,15 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 			}
 
 			adjustedItem := item
-			if !isHiddenHeader {
-				// For explicit rows: Y = item.Spec.Y + currentY - 1
-				// currentY has been incremented after row panel, so currentY - 1 gives offset
-				adjustedItem.Spec.Y = item.Spec.Y + currentY - 1
+			// Panels should keep their relative Y values but also stay below previously
+			// processed panels. Start from the row's base Y and bump forward if needed.
+			adjustedItem.Spec.Y = item.Spec.Y + baseY + yAdjustment
+			if hasPreviousY && adjustedItem.Spec.Y < previousY {
+				// Maintain non-decreasing Y to avoid overlapping with earlier panels.
+				delta := previousY - adjustedItem.Spec.Y
+				adjustedItem.Spec.Y += delta
+				yAdjustment += delta
 			}
-			// For hidden headers: don't adjust Y, keep item.Spec.Y as-is
 
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
@@ -703,6 +738,8 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 			if panelEndY > localMaxY {
 				localMaxY = panelEndY
 			}
+			previousY = adjustedItem.Spec.Y
+			hasPreviousY = true
 		}
 
 		// Return maxY for next row position (applies to both explicit rows and hidden headers)
