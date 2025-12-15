@@ -31,6 +31,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -228,7 +229,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
-	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
+// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -657,10 +658,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	if ok {
 		return nil
 	}
-	// FIXME: Do nothing for Connection for now
-	_, ok = obj.(*provisioning.Connection)
+
+	connection, ok := obj.(*provisioning.Connection)
 	if ok {
-		return nil
+		return connectionvalidation.ValidateConnection(connection)
 	}
 
 	// Validate Jobs
