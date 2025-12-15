@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Toggletip, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../DashboardScene';
 
@@ -24,9 +24,9 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   }
 
   return (
-    <Dropdown
+    <Toggletip
       placement="bottom-start"
-      overlay={
+      content={
         <DashboardControlsMenu variables={variables} links={links} annotations={annotations} dashboardUID={uid} />
       }
     >
@@ -40,7 +40,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
       >
         + {dashboardControlsCount}
       </ToolbarButton>
-    </Dropdown>
+    </Toggletip>
   );
 }
 

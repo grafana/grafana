@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
-import { Box, Menu, useStyles2 } from '@grafana/ui';
+import { Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
 import { DataLayerControl } from '../DataLayerControl';
@@ -18,23 +18,7 @@ interface DashboardControlsMenuProps {
 
 export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
   return (
-    <Box
-      minWidth={32}
-      borderColor={'weak'}
-      borderStyle={'solid'}
-      boxShadow={'z3'}
-      display={'flex'}
-      direction={'column'}
-      borderRadius={'default'}
-      backgroundColor={'primary'}
-      padding={1}
-      gap={0.5}
-      onClick={(e) => {
-        // Normally, clicking the overlay closes the dropdown.
-        // We stop event propagation here to keep it open while users interact with variable controls.
-        e.stopPropagation();
-      }}
-    >
+    <>
       {/* Variables */}
       {variables.map((variable, index) => (
         <div key={variable.state.key}>
@@ -61,7 +45,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
           ))}
         </>
       )}
-    </Box>
+    </>
   );
 }
 
