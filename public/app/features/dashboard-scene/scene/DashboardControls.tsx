@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
-import { config, useScopes } from '@grafana/runtime';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -17,9 +17,9 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Button, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Box, Button, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -174,7 +174,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} />
+        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
         <>
@@ -218,39 +218,6 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
         </Button>
       )}
     </>
-  );
-}
-
-function ContextualNavigationPaneToggle({ className }: { className?: string }) {
-  const scopes = useScopes();
-  const services = useScopesServices();
-
-  if (!scopes || !services) {
-    return;
-  }
-
-  const { scopesDashboardsService } = services;
-  const { readOnly, drawerOpened } = scopes.state;
-
-  const dashboardsIconLabel = readOnly
-    ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
-    : drawerOpened
-      ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
-      : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
-
-  return (
-    <div className={className}>
-      <ToolbarButton
-        icon="web-section-alt"
-        aria-label={dashboardsIconLabel}
-        tooltip={dashboardsIconLabel}
-        data-testid="scopes-dashboards-expand"
-        disabled={readOnly}
-        onClick={scopesDashboardsService.toggleDrawer}
-        variant={drawerOpened ? 'active' : 'canvas'}
-        narrow
-      />
-    </div>
   );
 }
 
