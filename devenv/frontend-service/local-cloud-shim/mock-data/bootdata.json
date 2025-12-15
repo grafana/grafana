@@ -35,6 +35,7 @@
     }
   },
   "settings": {
+    "namespace": "stacks-11",
     "defaultDatasource": "-- Grafana --",
     "datasources": {},
     "minRefreshInterval": "5s",
