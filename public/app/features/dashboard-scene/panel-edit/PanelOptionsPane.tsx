@@ -158,7 +158,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   }, [pluginId]);
 
   return (
-    <>
+    <div className={styles.wrapper}>
       {!isVizPickerOpen && (
         <>
           <div className={styles.top}>
@@ -235,12 +235,19 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
         />
       )}
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    wrapper: css({
+      display: 'contents',
+      '& h6': {
+        fontFamily: theme.typography.fontFamilyMonospace,
+        textTransform: 'uppercase',
+      },
+    }),
     top: css({
       display: 'flex',
       flexDirection: 'row',

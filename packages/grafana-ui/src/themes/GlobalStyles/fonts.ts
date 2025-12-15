@@ -75,5 +75,24 @@ export function getFontStyles(theme: GrafanaTheme2) {
         src: `url('${fontRoot}inter/Inter-MediumItalic.woff2') format('woff2')`,
       },
     },
+    {
+      /* CommitMono - monospace font for code */
+      '@font-face': {
+        fontFamily: 'CommitMono',
+        fontStyle: 'normal',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}commitmono/CommitMono-Regular.woff2') format('woff2')`,
+      },
+    },
+    {
+      '@font-face': {
+        fontFamily: 'CommitMono',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}commitmono/CommitMono-Italic.woff2') format('woff2')`,
+      },
+    },
   ]);
 }

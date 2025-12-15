@@ -1,10 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryGroupOptions } from 'app/types/query';
 
 interface Props {
@@ -18,7 +17,6 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const [timeRangeFrom, setTimeRangeFrom] = useState(options.timeRange?.from || '');
   const [timeRangeShift, setTimeRangeShift] = useState(options.timeRange?.shift || '');
   const [timeRangeHide, setTimeRangeHide] = useState(options.timeRange?.hide ?? false);
-  const [isOpen, setIsOpen] = useState(false);
   const [relativeTimeIsValid, setRelativeTimeIsValid] = useState(true);
   const [timeShiftIsValid, setTimeShiftIsValid] = useState(true);
 
@@ -141,14 +139,6 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     [onChange, options]
   );
 
-  const onOpenOptions = useCallback(() => {
-    setIsOpen(true);
-  }, []);
-
-  const onCloseOptions = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
   const renderCacheTimeoutOption = () => {
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
     numeric value in seconds.`;
@@ -204,7 +194,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const renderMaxDataPointsOption = () => {
     const realMd = data.request?.maxDataPoints;
     const value = options.maxDataPoints ?? '';
-    const isAuto = value === '';
+    // const isAuto = value === '';
 
     return (
       <>
@@ -230,7 +220,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           onBlur={onMaxDataPointsBlur}
           defaultValue={value}
         />
-        {isAuto && (
+        {/* {isAuto && (
           <>
             <span className={cx(styles.noSquish, styles.operator)}>=</span>
             <span className={cx(styles.noSquish, styles.left)}>
@@ -239,7 +229,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
               </Trans>
             </span>
           </>
-        )}
+        )} */}
       </>
     );
   };
@@ -284,127 +274,89 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval">Interval</Trans>
         </InlineLabel>
         <span className={styles.noSquish}>{realInterval}</span>
-        <span className={cx(styles.noSquish, styles.operator)}>=</span>
+        {/* <span className={cx(styles.noSquish, styles.operator)}>=</span>
         <span className={cx(styles.noSquish, styles.left)}>
           <Trans i18nKey="query.query-group-options-editor.render-interval-option.time-range-max-data-points">
             Time range / max data points
           </Trans>
-        </span>
-      </>
-    );
-  };
-
-  const renderCollapsedText = (): React.ReactNode | undefined => {
-    if (isOpen) {
-      return undefined;
-    }
-
-    let mdDesc = options.maxDataPoints ?? '';
-    if (mdDesc === '' && data.request) {
-      mdDesc = `auto = ${data.request.maxDataPoints}`;
-    }
-
-    const intervalDesc = data.request?.interval ?? options.minInterval;
-
-    return (
-      <>
-        {
-          <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {{ mdDesc }}</Trans>
-          </span>
-        }
-        {
-          <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {{ intervalDesc }}</Trans>
-          </span>
-        }
+        </span> */}
       </>
     );
   };
 
   return (
-    <QueryOperationRow
-      id="Query options"
-      index={0}
-      title={t('query.query-group-options-editor.Query options-title-query-options', 'Query options')}
-      headerElement={renderCollapsedText()}
-      isOpen={isOpen}
-      onOpen={onOpenOptions}
-      onClose={onCloseOptions}
-    >
-      <div className={styles.grid}>
-        {renderMaxDataPointsOption()}
-        {renderIntervalOption()}
-        {renderCacheTimeoutOption()}
-        {renderQueryCachingTTLOption()}
+    <div className={styles.grid}>
+      {renderMaxDataPointsOption()}
+      {renderIntervalOption()}
+      {renderCacheTimeoutOption()}
+      {renderQueryCachingTTLOption()}
 
-        <InlineLabel
-          htmlFor="relative-time-input"
-          tooltip={
-            <Trans
-              i18nKey="query.query-group-options-editor.relative-time-tooltip"
-              values={{ relativeFrom: 'now-5m', relativeTo: '5m', variable: '$_relativeTime' }}
-            >
-              Overrides the relative time range for individual panels, which causes them to be different than what is
-              selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
-              the Last 5 minutes the Relative time should be <code>{'{{relativeFrom}}'}</code> and{' '}
-              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
-            </Trans>
-          }
-        >
-          <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
-        </InlineLabel>
-        <Input
-          id="relative-time-input"
-          type="text"
-          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-          placeholder="1h"
-          onChange={onRelativeTimeChange}
-          onBlur={onOverrideTime}
-          invalid={!relativeTimeIsValid}
-          value={timeRangeFrom}
-        />
-        <InlineLabel
-          htmlFor="time-shift-input"
-          className={styles.firstColumn}
-          tooltip={
-            <Trans
-              i18nKey="query.query-group-options-editor.time-shift-tooltip"
-              values={{ relativeFrom: 'now-1h', relativeTo: '1h', variable: '$_timeShift' }}
-            >
-              Overrides the time range for individual panels by shifting its start and end relative to the time picker.
-              For example to configure the Last 1h the Time shift should be <code>{'{{relativeFrom}}'}</code> and{' '}
-              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
-            </Trans>
-          }
-        >
-          <Trans i18nKey="query.query-group-options-editor.time-shift">Time shift</Trans>
-        </InlineLabel>
-        <Input
-          id="time-shift-input"
-          type="text"
-          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-          placeholder="1h"
-          onChange={onTimeShiftChange}
-          onBlur={onTimeShift}
-          invalid={!timeShiftIsValid}
-          value={timeRangeShift}
-        />
-        {(timeRangeShift || timeRangeFrom) && (
-          <>
-            <InlineLabel htmlFor="hide-time-info-switch" className={styles.firstColumn}>
-              <Trans i18nKey="query.query-group-options-editor.hide-time-info">Hide time info</Trans>
-            </InlineLabel>
-            <InlineSwitch
-              id="hide-time-info-switch"
-              className={styles.left}
-              value={timeRangeHide}
-              onChange={onToggleTimeOverride}
-            />
-          </>
-        )}
-      </div>
-    </QueryOperationRow>
+      <InlineLabel
+        htmlFor="relative-time-input"
+        tooltip={
+          <Trans
+            i18nKey="query.query-group-options-editor.relative-time-tooltip"
+            values={{ relativeFrom: 'now-5m', relativeTo: '5m', variable: '$_relativeTime' }}
+          >
+            Overrides the relative time range for individual panels, which causes them to be different than what is
+            selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the
+            Last 5 minutes the Relative time should be <code>{'{{relativeFrom}}'}</code> and{' '}
+            <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+          </Trans>
+        }
+      >
+        <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
+      </InlineLabel>
+      <Input
+        id="relative-time-input"
+        type="text"
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder="1h"
+        onChange={onRelativeTimeChange}
+        onBlur={onOverrideTime}
+        invalid={!relativeTimeIsValid}
+        value={timeRangeFrom}
+      />
+      <InlineLabel
+        htmlFor="time-shift-input"
+        className={styles.firstColumn}
+        tooltip={
+          <Trans
+            i18nKey="query.query-group-options-editor.time-shift-tooltip"
+            values={{ relativeFrom: 'now-1h', relativeTo: '1h', variable: '$_timeShift' }}
+          >
+            Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+            For example to configure the Last 1h the Time shift should be <code>{'{{relativeFrom}}'}</code> and{' '}
+            <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+          </Trans>
+        }
+      >
+        <Trans i18nKey="query.query-group-options-editor.time-shift">Time shift</Trans>
+      </InlineLabel>
+      <Input
+        id="time-shift-input"
+        type="text"
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder="1h"
+        onChange={onTimeShiftChange}
+        onBlur={onTimeShift}
+        invalid={!timeShiftIsValid}
+        value={timeRangeShift}
+      />
+      {(timeRangeShift || timeRangeFrom) && (
+        <>
+          <InlineLabel htmlFor="hide-time-info-switch" className={styles.firstColumn}>
+            <Trans i18nKey="query.query-group-options-editor.hide-time-info">Hide time info</Trans>
+          </InlineLabel>
+          <InlineSwitch
+            id="hide-time-info-switch"
+            className={styles.left}
+            value={timeRangeHide}
+            onChange={onToggleTimeOverride}
+          />
+        </>
+      )}
+    </div>
   );
 });
 
@@ -422,10 +374,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     grid: css({
       display: 'grid',
-      gridTemplateColumns: `auto minmax(5em, 1fr) auto 1fr`,
+      gridTemplateColumns: `auto 8em`,
       gap: theme.spacing(0.5),
       gridAutoRows: theme.spacing(4),
       whiteSpace: 'nowrap',
+      minWidth: '100%',
     }),
     firstColumn: css({
       gridColumn: 1,

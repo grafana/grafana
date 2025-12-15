@@ -1,4 +1,6 @@
-import { DataQuery } from '@grafana/schema';
+import { CustomTransformerDefinition, SceneDataQuery } from '@grafana/scenes';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 export function findSqlExpression(queries: DataQuery[]) {
@@ -22,3 +24,11 @@ export function scrollToQueryRow(refId: string) {
     }
   }
 }
+
+export const queryItemId = (query: SceneDataQuery) =>
+  isExpressionQuery(query) ? `expression-${query.refId}` : `query-${query.refId}`;
+export const transformItemId = (index: number) => `transform-${index}`;
+
+export const isDataTransformerConfig = (
+  t: DataTransformerConfig | CustomTransformerDefinition
+): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string';

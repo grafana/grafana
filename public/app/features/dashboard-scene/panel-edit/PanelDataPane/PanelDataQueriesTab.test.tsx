@@ -916,7 +916,7 @@ async function setupScene(panelId: string) {
   deactivators.push(dashboard.activate());
   deactivators.push(panelEditor.activate());
 
-  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  const queriesTab = panelEditor.state.dataPane!.state.tabs[0];
   deactivators.push(queriesTab.activate());
 
   await Promise.resolve();
