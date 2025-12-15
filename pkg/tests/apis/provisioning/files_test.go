@@ -486,7 +486,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
+	t.Run("DELETE resource on configured branch - should fail with MethodNotAllowed", func(t *testing.T) {
 		// Create a file manually in the second repo which is already in first one
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		printFileTree(t, helper.ProvisioningPath)
@@ -499,8 +499,8 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 
-		// This should fail with ownership conflict
-		require.Error(t, result.Error(), "deleting resource owned by different repository should fail")
+		// This should fail because DELETE is not allowed on configured branch
+		require.Error(t, result.Error(), "deleting file on configured branch should fail")
 
 		// Get detailed error information
 		err := result.Error()
@@ -510,31 +510,28 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 				statusErr.Status().Code, statusErr.Status().Reason, statusErr.Status().Message)
 		}
 
-		// Verify it returns BadRequest (400) for ownership conflicts
-		if !apierrors.IsBadRequest(err) {
-			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
-			return
-		}
+		// Verify it returns MethodNotAllowed (405) since configured branch check happens first
+		require.True(t, apierrors.IsMethodNotSupported(err), "Expected MethodNotAllowed error but got: %T - %v", err, err)
 
-		// Check error message contains ownership conflict information
+		// Check error message mentions configured branch
 		errorMsg := err.Error()
 		t.Logf("Error message: %s", errorMsg)
-		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
-		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
+		require.Contains(t, errorMsg, "configured branch")
+		require.Contains(t, errorMsg, "bulk delete operations")
 	})
 
-	t.Run("MOVE and UPDATE file with UID already owned by different repository - should fail", func(t *testing.T) {
+	t.Run("MOVE file on configured branch - should fail with MethodNotAllowed", func(t *testing.T) {
 		resp := helper.postFilesRequest(t, repo2, filesPostOptions{
 			targetPath:   "moved-dashboard.json",
 			originalPath: path.Join("dashboard2.json"),
-			message:      "attempt to move file from different repository",
-			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content to move with the conflicting UID
+			message:      "attempt to move file on configured branch",
+			body:         string(helper.LoadFile("testdata/all-panels.json")),
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 
-		// This should fail with ownership conflict
-		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving resource owned by different repository should fail")
+		// This should fail because MOVE is not allowed on configured branch
+		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving file on configured branch should fail")
 		// Read response body to check error message
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -544,10 +541,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		t.Logf("MOVE operation HTTP status: %d", resp.StatusCode)
 		t.Logf("MOVE operation error response: %s", errorMsg)
 
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return BadRequest (400) for ownership conflict")
-		// Check error message contains ownership conflict information
-		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
-		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
+		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed (405) for configured branch")
+		// Check error message mentions configured branch
+		require.Contains(t, errorMsg, "configured branch")
+		require.Contains(t, errorMsg, "bulk move operations")
 	})
 
 	t.Run("verify original resources remain intact", func(t *testing.T) {
