@@ -34,6 +34,59 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Controls the width of groups. 1 = max with, 0 = min width.
    */
   groupWidth: number;
+  markers: {
+    /**
+     * keeps track of which marker is being edited
+     */
+    select?: string;
+    /**
+     * Sets visual markers on each bar of a targeted field, based on y values provided by the data field
+     */
+    markerGroups: Array<{
+      /**
+       * Ids the marker group, generated automatically
+       */
+      id: number;
+      /**
+       * Sets the field on which the markers will appear
+       */
+      targetField: string;
+      /**
+       * Sets the field which provides the values for each marker. This field will no longer be shown in the chart
+       */
+      dataField: string;
+      /**
+       * Options for visual representation
+       */
+      opts: {
+        label: string;
+        /**
+         * Sets the color of the marker group
+         */
+        color: string;
+        /**
+         * Controls the size of the marker group
+         */
+        size: number;
+        /**
+         * Sets the shape of the marker group
+         */
+        shape: string;
+        /**
+         * Sets the opacity of the marker group
+         */
+        opacity: number;
+        /**
+         * Picks if the marker is filled; only applicable to 'star' and 'circle'
+         */
+        fill: boolean;
+        /**
+         * Sets the width of the strokes
+         */
+        strokeWidth: number;
+      };
+    }>;
+  };
   /**
    * Controls the orientation of the bar chart, either vertical or horizontal.
    */

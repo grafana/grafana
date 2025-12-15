@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -6,6 +7,7 @@ import {
   FieldConfigSource,
   FieldType,
   GrafanaTheme2,
+  PanelData,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
@@ -33,12 +35,15 @@ import {
   StackingMode,
   UPlotConfigBuilder,
   measureText,
+  useTheme2,
 } from '@grafana/ui';
 import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
+import { drawBarMarkers } from './barmarkers';
 import { BarsOptions, getConfig } from './bars';
+import { PreparedMarker, MarkerGroup } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
@@ -159,9 +164,21 @@ export interface PrepConfigOpts {
   options: Options;
   timeZone: TimeZone;
   theme: GrafanaTheme2;
+  preparedMarkers: PreparedMarker[];
+  markerData: Field[];
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({
+  series,
+  totalSeries,
+  color,
+  orientation,
+  options,
+  timeZone,
+  theme,
+  preparedMarkers,
+  markerData,
+}: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -278,6 +295,10 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     text,
     showValue,
     legend,
+
+    markers: preparedMarkers,
+    markerData: markerData,
+
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
@@ -291,7 +312,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.addHook('draw', config.draw);
+
+  builder.addHook('draw', drawBarMarkers(config.resolvedMarkers));
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -341,6 +363,18 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   // let seriesIndex = 0;
   // const legendOrdered = isLegendOrdered(legend);
 
+  //Calculate min and max marker values
+  let markerMin = 0;
+  let markerMax = 0;
+  for (let i = 0; i < markerData.length; i++) {
+    const vals = markerData[i].values.filter((v) => Number.isFinite(v));
+    if (vals.length === 0) {
+      continue;
+    }
+    markerMin = Math.min(...vals, markerMin);
+    markerMax = Math.max(...vals, markerMax);
+  }
+
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -358,12 +392,21 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     let softMin = customConfig.axisSoftMin;
     let softMax = customConfig.axisSoftMax;
 
+    //move soft min and max to accomodate marker values if not overridden
     if (softMin == null && field.config.min == null) {
-      softMin = 0;
+      if (stacking === StackingMode.Percent) {
+        softMin = 0;
+      } else {
+        softMin = markerMin;
+      }
     }
 
     if (softMax == null && field.config.max == null) {
-      softMax = 0;
+      if (stacking === StackingMode.Percent) {
+        softMax = 0;
+      } else {
+        softMax = markerMax;
+      }
     }
 
     // Render thresholds in graph
@@ -556,4 +599,117 @@ function getScaleOrientation(orientation: VizOrientation) {
     yOri: ScaleOrientation.Horizontal,
     yDir: ScaleDirection.Right,
   };
+}
+
+export function prepMarkers(
+  vizFields: Field[],
+  markerFields: Field[],
+  markers: MarkerGroup[],
+  stacking: StackingMode
+): PreparedMarker[] {
+  let prepMarkerList: PreparedMarker[] = [];
+  const theme = useTheme2();
+
+  for (const m of markers ?? []) {
+    const i = markerFields.findIndex((f) => f.name === m.dataField);
+
+    if (i === -1) {
+      continue;
+    }
+
+    const fi = markerFields[i];
+
+    let fieldColor = theme.visualization.getColorByName(m.opts.color);
+    //Color override
+    if (fi.config.custom?.color) {
+      fieldColor = theme.visualization.getColorByName(fi.config.custom.color);
+    }
+
+    const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
+
+    switch (stacking) {
+      case StackingMode.None: {
+        for (let j = 0; j < fi.values.length; j++) {
+          const pm: PreparedMarker = {
+            groupIdx: j,
+            yValue: fi.values[j],
+            seriesIdx: targetIdx,
+            yScaleKey: fi.config.unit || FIXED_UNIT,
+            opts: { ...m.opts, color: fieldColor },
+          };
+
+          prepMarkerList.push(pm);
+        }
+        continue;
+      }
+      case StackingMode.Normal: {
+        for (let j = 0; j < fi.values.length; j++) {
+          let yTotal = 0;
+          for (let k = 1; k < targetIdx; k++) {
+            yTotal += vizFields[k].values[j];
+          }
+          const pm: PreparedMarker = {
+            groupIdx: j,
+            yValue: yTotal + fi.values[j],
+            seriesIdx: targetIdx,
+            yScaleKey: fi.config.unit || FIXED_UNIT,
+            opts: { ...m.opts, color: fieldColor },
+          };
+
+          prepMarkerList.push(pm);
+        }
+        continue;
+      }
+      case StackingMode.Percent: {
+        for (let j = 0; j < fi.values.length; j++) {
+          let yTotal = 0;
+          let yBase = 0;
+          for (let k = 1; k < vizFields.length; k++) {
+            yTotal += vizFields[k].values[j];
+
+            if (k === targetIdx - 1) {
+              yBase = yTotal;
+            }
+          }
+
+          const val = fi.values[j] + yBase;
+
+          const pm: PreparedMarker = {
+            groupIdx: j,
+            yValue: val === 0 ? 0 : val / yTotal,
+            seriesIdx: targetIdx,
+            yScaleKey: fi.config.unit || FIXED_UNIT,
+            opts: { ...m.opts, color: fieldColor },
+          };
+
+          prepMarkerList.push(pm);
+        }
+        continue;
+      }
+    }
+  }
+  return prepMarkerList;
+}
+
+export function seperateMarkerSeries(
+  data: PanelData,
+  markers: MarkerGroup[]
+): { barData: PanelData; markerData: Field[] } {
+  const barData = cloneDeep(data); //deepCopy to ensure useMemo works correctly
+  const markerData: Field[] = [];
+  if (!markers) {
+    return { barData, markerData };
+  }
+  for (const m of markers ?? []) {
+    const i = barData.series[0]?.fields?.findIndex((f) => f.name === m.dataField);
+
+    if (i === -1) {
+      continue;
+    }
+
+    const fi = barData.series[0]?.fields?.splice(i, 1)[0];
+
+    markerData.push(fi);
+  }
+  return { barData, markerData };
 }

@@ -1,6 +1,14 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  colorManipulator,
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  systemDateFormats,
+  TimeZone,
+  Field,
+} from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
@@ -15,6 +23,7 @@ import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/inter
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
+import { PreparedMarker, MarkerDrawingArgs } from './markerTypes';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
@@ -56,6 +65,8 @@ export interface BarsOptions {
   text?: VizTextDisplayOptions;
   hoverMulti?: boolean;
   legend?: VizLegendOptions;
+  markers?: PreparedMarker[];
+  markerData?: Field[];
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
@@ -129,6 +140,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSpacing = 0,
     hoverMulti = false,
     timeZone = 'browser',
+    markers,
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -145,6 +157,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const numSeries = 30; // !!
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
+  let resolvedMarkers: MarkerDrawingArgs[] = [];
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
@@ -448,6 +461,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             w: textMetrics.width * scaleFactor,
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
+
+          //Calculate marker positions and fill markerList to prepare drawing
+          const m = populateMarkerList(
+            markers ?? [],
+            dataIdx,
+            seriesIdx,
+            xOri,
+            wid,
+            hgt,
+            u,
+            barRect.x + u.bbox.left,
+            barRect.y + u.bbox.top
+          );
+
+          resolvedMarkers.push(...m);
         }
       }
     },
@@ -517,6 +545,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
     qt.clear();
+
+    resolvedMarkers.length = 0;
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -660,5 +690,70 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     drawClear,
     draw,
     prepData,
+    resolvedMarkers,
   };
+}
+
+export function populateMarkerList(
+  markers: PreparedMarker[],
+  dataIdx: number,
+  seriesIdx: number,
+  xOri: ScaleOrientation,
+  wid: number,
+  hgt: number,
+  u: uPlot,
+  barX: number,
+  barY: number
+) {
+  const resolvedMarkerList: MarkerDrawingArgs[] = [];
+  if (!markers) {
+    return resolvedMarkerList;
+  }
+
+  for (const marker of markers) {
+    if (
+      marker.groupIdx !== dataIdx ||
+      seriesIdx !== marker.seriesIdx //match to bar
+    ) {
+      continue;
+    }
+
+    if (xOri === ScaleOrientation.Horizontal) {
+      // Compute marker position at center of bar
+      const markerX = barX + wid / 2;
+      const markerY = marker.yValue;
+
+      let resolvedY: number;
+      if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+        resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
+      } else {
+        resolvedY = Infinity;
+      }
+      const m: MarkerDrawingArgs = {
+        x: markerX!,
+        y: resolvedY,
+        opts: { ...marker.opts, size: marker.opts.size / 2 },
+        isRotated: false,
+      };
+      resolvedMarkerList.push(m);
+    } else {
+      const markerY = barY + hgt / 2;
+      const markerX = marker.yValue;
+
+      let resolvedX: number;
+      if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+        resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
+      } else {
+        resolvedX = Infinity;
+      }
+      const m: MarkerDrawingArgs = {
+        x: resolvedX!,
+        y: markerY!,
+        opts: { ...marker.opts, size: marker.opts.size / 2 },
+        isRotated: true,
+      };
+      resolvedMarkerList.push(m);
+    }
+  }
+  return resolvedMarkerList;
 }
