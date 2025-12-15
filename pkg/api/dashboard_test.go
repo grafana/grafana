@@ -111,17 +111,15 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
+func newTestLive(t *testing.T) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
-		store,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
-		nil,
 		features, acimpl.ProvideAccessControl(features),
 		&dashboards.FakeDashboardService{},
 		nil, nil)
@@ -751,7 +749,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 				hs := HTTPServer{
 					Cfg:                     cfg,
 					ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-					Live:                    newTestLive(t, db.InitTestDB(t)),
+					Live:                    newTestLive(t),
 					QuotaService:            quotatest.New(false, nil),
 					LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 					DashboardService:        dashboardService,
@@ -1003,7 +1001,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t, db.InitTestDB(t)),
+			Live:                  newTestLive(t),
 			QuotaService:          quotatest.New(false, nil),
 			pluginStore:           &pluginstore.FakePluginStore{},
 			LibraryElementService: &libraryelementsfake.LibraryElementService{},
@@ -1043,7 +1041,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                    newTestLive(t, db.InitTestDB(t)),
+			Live:                    newTestLive(t),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			DashboardService:        mock,

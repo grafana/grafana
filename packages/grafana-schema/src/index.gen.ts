@@ -12,6 +12,7 @@ export type {
   AnnotationTarget,
   AnnotationPanelFilter,
   VariableOption,
+  VariableRegexApplyTo,
   DashboardLink,
   DashboardLinkType,
   DashboardLinkPlacement,

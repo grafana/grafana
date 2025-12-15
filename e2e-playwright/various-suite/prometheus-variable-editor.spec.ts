@@ -95,7 +95,7 @@ test.describe(
       await createNewPanelButton.click();
 
       // Close the data source picker modal
-      const closeButton = page.getByRole('button', { name: 'Close menu' });
+      const closeButton = page.getByRole('button', { name: 'Close', exact: true });
       await closeButton.click({ force: true });
 
       // Select prom data source from the data source list

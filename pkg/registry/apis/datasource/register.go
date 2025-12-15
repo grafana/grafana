@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -48,6 +49,7 @@ type DataSourceAPIBuilder struct {
 	queryTypes           *queryV0.QueryTypeDefinitionList
 	schemaProvider       func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	configCrudUseNewApis bool
+	dataSourceCRUDMetric *prometheus.HistogramVec
 }
 
 func RegisterAPIService(
@@ -77,6 +79,16 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 
+	dataSourceCRUDMetric := metricutil.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "ds_config_handler_requests_duration_seconds",
+		Help:      "Duration of requests handled by datasource configuration handlers",
+	}, []string{"code_path", "handler"})
+	regErr := reg.Register(dataSourceCRUDMetric)
+	if regErr != nil && !errors.As(regErr, &prometheus.AlreadyRegisteredError{}) {
+		return nil, regErr
+	}
+
 	pluginJSONs, err := getDatasourcePlugins(pluginSources)
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
@@ -101,6 +113,7 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
 
 		// Hardcoded schemas for testdata
 		// NOTE: this will be driven by the pluginJSON/manifest soon
@@ -177,6 +190,10 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.datasourceResourceInfo.GroupVersion()
 }
 
+func (b *DataSourceAPIBuilder) SetDataSourceCRUDMetrics(datasourceCRUDMetric *prometheus.HistogramVec) {
+	b.dataSourceCRUDMetric = datasourceCRUDMetric
+}
+
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasourceV0.DataSource{},
@@ -234,13 +251,9 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	if b.configCrudUseNewApis {
 		legacyStore := &legacyStorage{
-			datasources:  b.datasources,
-			resourceInfo: &ds,
-			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Name:      "ds_config_handler_requests_duration_seconds",
-				Help:      "Duration of requests handled by datasource configuration handlers",
-			}, []string{"code_path", "handler"}),
+			datasources:                     b.datasources,
+			resourceInfo:                    &ds,
+			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {

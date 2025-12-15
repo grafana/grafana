@@ -86,6 +86,17 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       let datasource: DataSourceApi | undefined;
       let dsSettings: DataSourceInstanceSettings | undefined;
 
+      // If no panel-level datasource (V2 schema non-mixed case), infer from first query
+      // This also improves the V1 behavior because it doesn't make sense to rely on last used
+      // if underlying queries have different datasources
+      if (!datasourceToLoad) {
+        const queries = this.queryRunner.state.queries;
+        const firstQueryDs = queries[0]?.datasource;
+        if (firstQueryDs) {
+          datasourceToLoad = firstQueryDs;
+        }
+      }
+
       if (!datasourceToLoad) {
         const dashboardScene = getDashboardSceneFor(this);
         const dashboardUid = dashboardScene.state.uid ?? '';

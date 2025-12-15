@@ -1403,5 +1403,10 @@
     "title": "Panel Tests - Graph NG - By value color schemes",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

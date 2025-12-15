@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -32,7 +32,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta, KioskMode, SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
+import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -271,7 +271,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = () => {
     // Save this state
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
@@ -323,17 +323,46 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: t('dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard', 'Discard changes to dashboard?'),
-        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
-        icon: 'trash-alt',
-        yesText: 'Discard',
-        onConfirm: () => {
-          this.exitEditModeConfirmed();
-        },
-      })
-    );
+    if (config.featureToggles.dashboardNewLayouts) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
+          text: t(
+            'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
+            'Do you want to save your changes?'
+          ),
+          icon: 'trash-alt',
+          altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
+          noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
+          yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
+          yesButtonVariant: 'destructive',
+          onAltAction: () => {
+            this.openSaveDrawer({});
+          },
+          onConfirm: () => {
+            this.exitEditModeConfirmed();
+          },
+        })
+      );
+    } else {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t(
+            'dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard',
+            'Discard changes to dashboard?'
+          ),
+          icon: 'trash-alt',
+          text: t(
+            'dashboard-scene.dashboard-scene.title.unsaved-changes-question',
+            'You have unsaved changes to this dashboard. Are you sure you want to discard them?'
+          ),
+          yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
+          onConfirm: () => {
+            this.exitEditModeConfirmed();
+          },
+        })
+      );
+    }
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
@@ -835,7 +864,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
-        name: meta.uid ?? meta.k8s?.name,
+        name: options.isNew ? undefined : (meta.uid ?? meta.k8s?.name),
         generateName: options.isNew ? 'd' : undefined,
       },
       spec,

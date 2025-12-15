@@ -341,6 +341,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
+					Annotations:       v2.Annotations,
 					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
 					CurrentReason:     v2.StateReason,
 					LastEvalTime:      v2.LastEvaluationTime,
