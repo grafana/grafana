@@ -26,7 +26,6 @@ import {
   expectNoDashboardsForFilter,
   expectNoDashboardsForScope,
   expectNoDashboardsNoScopes,
-  expectNoDashboardsSearch,
 } from './utils/assertions';
 import {
   alternativeDashboardWithRootFolder,
