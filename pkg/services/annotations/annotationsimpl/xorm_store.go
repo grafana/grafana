@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -37,6 +38,8 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
+var xormMigrationTrigger sync.Once
+
 type xormRepositoryImpl struct {
 	cfg        *setting.Cfg
 	db         db.DB
@@ -45,12 +48,9 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
-	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
-	// the initial migration occurs
-	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
-	if err != nil {
-		l.Error("failed to populate dashboard_uid for annotations", "error", err)
-	}
+	xormMigrationTrigger.Do(func() {
+		triggerAlwaysOnMigrations(cfg, l, db)
+	})
 
 	return &xormRepositoryImpl{
 		cfg:        cfg,
@@ -58,6 +58,25 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 		log:        l,
 		tagService: tagService,
 	}
+}
+
+func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
+	sec := cfg.Raw.Section("database")
+	skipDashboardUIDMigration := sec.Key("skip_dashboard_uid_migration_on_startup").MustBool(false)
+	if skipDashboardUIDMigration {
+		l.Debug("skipped dashboard UID startup migration")
+		return
+	}
+	// Run migration in a background goroutine to avoid blocking service startup
+	go func() {
+		l.Info("Starting annotation dashboard_uid migration in background")
+		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName(), l)
+		if err != nil {
+			l.Error("failed to populate dashboard_uid for annotations", "error", err)
+		} else {
+			l.Info("Annotation dashboard_uid migration completed successfully")
+		}
+	}()
 }
 
 func (r *xormRepositoryImpl) Type() string {
