@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +20,18 @@ func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
 		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
+	eventStore := newEventStore(kv)
+	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
+	return notifier, eventStore
+}
+
+// nolint:unused
+func setupTestNotifierSqlKv(t *testing.T) (*notifier, *eventStore) {
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	kv, err := NewSQLKV(eDB)
+	require.NoError(t, err)
 	eventStore := newEventStore(kv)
 	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
 	return notifier, eventStore
@@ -35,10 +50,21 @@ func TestDefaultWatchOptions(t *testing.T) {
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
 }
 
-func TestNotifier_lastEventResourceVersion(t *testing.T) {
-	ctx := context.Background()
-	notifier, eventStore := setupTestNotifier(t)
+func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) (*notifier, *eventStore), testFn func(*testing.T, context.Context, *notifier, *eventStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		notifier, eventStore := newStoreFn(t)
+		testFn(t, ctx, notifier, eventStore)
+	})
+}
 
+func TestNotifier_lastEventResourceVersion(t *testing.T) {
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierLastEventResourceVersion)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierLastEventResourceVersion)
+}
+
+func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
 	// Test with no events
 	rv, err := notifier.lastEventResourceVersion(ctx)
 	assert.Error(t, err)
@@ -85,8 +111,12 @@ func TestNotifier_lastEventResourceVersion(t *testing.T) {
 }
 
 func TestNotifier_cachekey(t *testing.T) {
-	notifier, _ := setupTestNotifier(t)
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierCachekey)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierCachekey)
+}
 
+func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
 	tests := []struct {
 		name     string
 		event    Event
@@ -136,10 +166,14 @@ func TestNotifier_cachekey(t *testing.T) {
 }
 
 func TestNotifier_Watch_NoEvents(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchNoEvents)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchNoEvents)
+}
 
-	notifier, eventStore := setupTestNotifier(t)
+func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
 
 	// Add at least one event so that lastEventResourceVersion doesn't return ErrNotFound
 	initialEvent := Event{
@@ -174,10 +208,14 @@ func TestNotifier_Watch_NoEvents(t *testing.T) {
 }
 
 func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchWithExistingEvents)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchWithExistingEvents)
+}
 
-	notifier, eventStore := setupTestNotifier(t)
+func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
 	// Save some initial events
 	initialEvents := []Event{
@@ -245,10 +283,14 @@ func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
 }
 
 func TestNotifier_Watch_EventDeduplication(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchEventDeduplication)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchEventDeduplication)
+}
 
-	notifier, eventStore := setupTestNotifier(t)
+func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
 	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
 	initialEvent := Event{
@@ -308,9 +350,13 @@ func TestNotifier_Watch_EventDeduplication(t *testing.T) {
 }
 
 func TestNotifier_Watch_ContextCancellation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchContextCancellation)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchContextCancellation)
+}
 
-	notifier, eventStore := setupTestNotifier(t)
+func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+	ctx, cancel := context.WithCancel(ctx)
 
 	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
 	initialEvent := Event{
@@ -351,10 +397,14 @@ func TestNotifier_Watch_ContextCancellation(t *testing.T) {
 }
 
 func TestNotifier_Watch_MultipleEvents(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchMultipleEvents)
+	// enable this when sqlkv is ready
+	// runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchMultipleEvents)
+}
 
-	notifier, eventStore := setupTestNotifier(t)
+func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 	rv := time.Now().UnixNano()
 	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
 	initialEvent := Event{
