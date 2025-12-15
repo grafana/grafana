@@ -916,7 +916,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			expectedNumUsers: 10,
 		},
 		{
-			desc: "should include hidden user if they are the requester",
+			desc: "should include the hidden user when the request is made by the hidden user and ExcludeHiddenUsers is true",
 			query: &org.SearchOrgUsersQuery{
 				OrgID:              o.ID,
 				ExcludeHiddenUsers: true,
