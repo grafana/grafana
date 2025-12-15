@@ -146,9 +146,13 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const modulePromise = config.featureToggles.rudderstackUpgrade
-    ? import('./backends/analytics/RudderstackV3Backend')
-    : import('./backends/analytics/RudderstackBackend');
+  const modulePromise =
+    config.featureToggles.rudderstackUpgrade &&
+    // Import V3 backend only if all V3 related config is present
+    config.rudderstackV3SdkUrl
+      ? import('./backends/analytics/RudderstackV3Backend')
+      : // If not set, fallback to legacy backend
+        import('./backends/analytics/RudderstackBackend');
 
   const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
