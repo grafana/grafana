@@ -184,8 +184,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
-			// nil safety.
-			annotations := ruleForEntry.Annotations
+			// Use persisted annotations if available, otherwise fall back to rule annotations
+			annotations := entry.Annotations
+			if len(annotations) == 0 {
+				annotations = ruleForEntry.Annotations
+			}
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}

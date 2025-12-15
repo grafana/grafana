@@ -107,6 +107,9 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	dbCfg.Key("user").SetValue(testDB.User)
 	dbCfg.Key("password").SetValue(testDB.Password)
 	dbCfg.Key("name").SetValue(testDB.Database)
+	if testDB.Path != "" {
+		dbCfg.Key("path").SetValue(testDB.Path)
+	}
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
@@ -312,6 +315,21 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
+
+	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
+	require.NoError(t, err)
+	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
+	require.NoError(t, err)
+	if !opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+		require.NoError(t, err)
+		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
+		require.NoError(t, err)
+
+		// so staticFlags can be provided to static provider
+		_, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+	}
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
@@ -651,6 +669,7 @@ type GrafanaOpts struct {
 	DisableDBCleanup                      bool
 	DisableDataMigrations                 bool
 	SecretsManagerEnableDBMigrations      bool
+	OpenFeatureAPIEnabled                 bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string

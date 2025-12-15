@@ -4,6 +4,7 @@ import { LRUCache } from 'lru-cache';
 import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, config } from '@grafana/runtime';
 
+import { LokiQueryType } from './dataquery.gen';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
 import { getStreamSelectorsFromQuery } from './queryUtils';
@@ -13,7 +14,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLabelKeysResult } from './types';
+import { DetectedFieldsResult, LabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';

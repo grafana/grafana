@@ -1,3 +1,6 @@
+import { Spec as DashboardV2Spec, defaultDataQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+
 export const panelWithQueriesOnly = {
   datasource: {
     type: 'grafana-testdata-datasource',
@@ -750,4 +753,224 @@ export const testDashboard = {
   uid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
   version: 6,
   weekStart: '',
+};
+
+// V2 Dashboard fixture - panels have queries with datasources but NO panel-level datasource
+export const testDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
+  kind: 'DashboardWithAccessInfo',
+  metadata: {
+    name: 'v2-dashboard-uid',
+    namespace: 'default',
+    labels: {},
+    generation: 1,
+    resourceVersion: '1',
+    creationTimestamp: new Date().toISOString(),
+  },
+  spec: {
+    title: 'V2 Test Dashboard',
+    description: 'Test dashboard for V2 schema',
+    tags: [],
+    cursorSync: 'Off',
+    liveNow: false,
+    editable: true,
+    preload: false,
+    links: [],
+    variables: [],
+    annotations: [],
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+      fiscalYearStartMonth: 0,
+      hideTimepicker: false,
+      timezone: '',
+      weekStart: undefined,
+      quickRanges: [],
+    },
+    elements: {
+      'panel-1': {
+        kind: 'Panel',
+        spec: {
+          id: 1,
+          title: 'Panel with Prometheus datasource',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'grafana-prometheus-datasource',
+                      datasource: {
+                        name: 'gdev-prometheus',
+                      },
+                      spec: {
+                        expr: 'up',
+                      },
+                    },
+                  },
+                },
+              ],
+              transformations: [],
+              queryOptions: {},
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '1.0.0',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+      'panel-2': {
+        kind: 'Panel',
+        spec: {
+          id: 2,
+          title: 'Panel with TestData datasource',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'grafana-testdata-datasource',
+                      datasource: {
+                        name: 'gdev-testdata',
+                      },
+                      spec: {
+                        scenarioId: 'random_walk',
+                      },
+                    },
+                  },
+                },
+              ],
+              transformations: [],
+              queryOptions: {},
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '1.0.0',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+      'panel-3': {
+        kind: 'Panel',
+        spec: {
+          id: 3,
+          title: 'Panel with no datasource on query',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'grafana-testdata-datasource',
+                      // No datasource.name - simulates panel with no explicit datasource
+                      spec: {},
+                    },
+                  },
+                },
+              ],
+              transformations: [],
+              queryOptions: {},
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '1.0.0',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+    },
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [
+          {
+            kind: 'GridLayoutItem',
+            spec: {
+              x: 0,
+              y: 0,
+              width: 12,
+              height: 8,
+              element: { kind: 'ElementReference', name: 'panel-1' },
+            },
+          },
+          {
+            kind: 'GridLayoutItem',
+            spec: {
+              x: 12,
+              y: 0,
+              width: 12,
+              height: 8,
+              element: { kind: 'ElementReference', name: 'panel-2' },
+            },
+          },
+          {
+            kind: 'GridLayoutItem',
+            spec: {
+              x: 0,
+              y: 8,
+              width: 12,
+              height: 8,
+              element: { kind: 'ElementReference', name: 'panel-3' },
+            },
+          },
+        ],
+      },
+    },
+  },
+  access: {
+    url: '/d/v2-dashboard-uid',
+    slug: 'v2-test-dashboard',
+  },
+  apiVersion: 'v2',
 };

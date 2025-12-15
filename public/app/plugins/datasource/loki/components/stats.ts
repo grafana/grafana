@@ -1,6 +1,6 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
-import { LokiQueryType } from '../types';
+import { LokiQueryType } from '../dataquery.gen';
 
 /**
  * This function compares two time values. If the first is absolute, it compares them using `DateTime.isSame`.

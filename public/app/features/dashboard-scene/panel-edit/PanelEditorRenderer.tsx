@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -25,6 +26,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   const isScrollingLayout = useScrollReflowLimit();
 
+  const theme = useTheme2();
+  const panePadding = useMemo(() => +theme.spacing(2).replace(/px$/, ''), [theme]);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
@@ -32,7 +35,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       initialSize: 330,
       usePixels: true,
       collapsed: isInitiallyCollapsed,
-      collapseBelowPixels: 250,
+      collapseBelowPixels: MIN_SUGGESTIONS_PANE_WIDTH + panePadding,
       disabled: isScrollingLayout,
     });
 

@@ -24,7 +24,7 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
-import { isDashboardV2Spec } from './utils';
+import { isV0V1StoredVersion } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -44,16 +44,10 @@ export class K8sDashboardV2API
   async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
-
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
-      if (
-        !isDashboardV2Spec(dashboard.spec) &&
-        dashboard.status?.conversion?.failed &&
-        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
-          dashboard.status.conversion.storedVersion === 'v1beta1' ||
-          dashboard.status.conversion.storedVersion === 'v0alpha1')
-      ) {
+      // This could come as conversion error from v0 or v2 to V1.
+      if (dashboard.status?.conversion?.failed && isV0V1StoredVersion(dashboard.status.conversion.storedVersion)) {
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
 

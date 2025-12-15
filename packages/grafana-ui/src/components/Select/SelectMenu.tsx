@@ -197,7 +197,7 @@ export const VirtualizedSelectMenu = ({
 // check if a child has array children (and is therefore a react-select group)
 // we need to flatten these so the correct count and elements are passed to the virtualized list
 const hasArrayChildren = (child: React.ReactNode) => {
-  return React.isValidElement(child) && Array.isArray(child.props.children);
+  return React.isValidElement<Record<string, unknown>>(child) && Array.isArray(child.props.children);
 };
 
 VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';

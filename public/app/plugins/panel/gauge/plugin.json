@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Gauge",
   "id": "gauge",
-
+  "suggestions": true,
   "info": {
     "description": "Standard gauge visualization",
     "author": {

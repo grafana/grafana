@@ -28,6 +28,7 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlQueryDashboards = mustTemplate("query_dashboards.sql")
 	sqlQueryPanels     = mustTemplate("query_panels.sql")
+	sqlQueryPlaylists  = mustTemplate("query_playlists.sql")
 )
 
 type sqlQuery struct {
@@ -81,5 +82,31 @@ func newLibraryQueryReq(sql *legacysql.LegacyDatabaseHelper, query *LibraryPanel
 
 		LibraryElementTable: sql.Table("library_element"),
 		UserTable:           sql.Table("user"),
+	}
+}
+
+type PlaylistQuery struct {
+	OrgID int64
+}
+
+type sqlPlaylistQuery struct {
+	sqltemplate.SQLTemplate
+	Query *PlaylistQuery
+
+	PlaylistTable     string
+	PlaylistItemTable string
+}
+
+func (r sqlPlaylistQuery) Validate() error {
+	return nil
+}
+
+func newPlaylistQueryReq(sql *legacysql.LegacyDatabaseHelper, query *PlaylistQuery) sqlPlaylistQuery {
+	return sqlPlaylistQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       query,
+
+		PlaylistTable:     sql.Table("playlist"),
+		PlaylistItemTable: sql.Table("playlist_item"),
 	}
 }

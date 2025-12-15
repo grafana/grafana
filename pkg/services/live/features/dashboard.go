@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live/model"
@@ -22,46 +21,19 @@ const (
 	ActionDeleted  actionType = "deleted"
 	EditingStarted actionType = "editing-started"
 	//EditingFinished actionType = "editing-finished"
-
-	GitopsChannel = "grafana/dashboard/gitops"
 )
-
-type userDisplayDTO struct {
-	ID        int64  `json:"id,omitempty"`
-	UID       string `json:"uid,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Login     string `json:"login,omitempty"`
-	AvatarURL string `json:"avatarUrl"`
-}
-
-// Static function to parse a requester into a userDisplayDTO
-func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDTO {
-	// nolint:staticcheck
-	userID, _ := requester.GetInternalID()
-	return &userDisplayDTO{
-		ID:    userID,
-		UID:   requester.GetRawIdentifier(),
-		Login: requester.GetLogin(),
-		Name:  requester.GetName(),
-	}
-}
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string                `json:"uid"`
-	Action    actionType            `json:"action"` // saved, editing, deleted
-	User      *userDisplayDTO       `json:"user,omitempty"`
-	SessionID string                `json:"sessionId,omitempty"`
-	Message   string                `json:"message,omitempty"`
-	Dashboard *dashboards.Dashboard `json:"dashboard,omitempty"`
-	Error     string                `json:"error,omitempty"`
+	UID       string     `json:"uid"`
+	Action    actionType `json:"action"` // saved, editing, deleted
+	SessionID string     `json:"sessionId,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
 	Publisher        model.ChannelPublisher
 	ClientCount      model.ChannelClientCount
-	Store            db.DB
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 }
@@ -134,9 +106,6 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
-		// Tell everyone who is editing
-		event.User = newUserDisplayDTOFromRequester(requester)
-
 		msg, err := json.Marshal(event)
 		if err != nil {
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
@@ -153,55 +122,21 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-
-	// Only broadcast non-error events
-	if event.Error == "" {
-		err = h.Publisher(orgID, "grafana/dashboard/uid/"+event.UID, msg)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Send everything to the gitops channel
-	return h.Publisher(orgID, GitopsChannel, msg)
+	return h.Publisher(orgID, "grafana/dashboard/uid/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error {
-	if err != nil && !h.HasGitOpsObserver(orgID) {
-		return nil // only broadcast if it was OK
-	}
-
-	msg := dashboardEvent{
-		UID:       dashboard.UID,
-		Action:    ActionSaved,
-		User:      newUserDisplayDTOFromRequester(requester),
-		Message:   message,
-		Dashboard: dashboard,
-	}
-
-	if err != nil {
-		msg.Error = err.Error()
-	}
-
-	return h.publish(orgID, msg)
-}
-
-// DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(orgID int64, requester identity.Requester, uid string) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, uid string) error {
 	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
-		Action: ActionDeleted,
-		User:   newUserDisplayDTOFromRequester(requester),
+		Action: ActionSaved,
 	})
 }
 
-// HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
-func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
-	count, err := h.ClientCount(orgID, GitopsChannel)
-	if err != nil {
-		logger.Error("Error getting client count", "error", err)
-		return false
-	}
-	return count > 0
+// DashboardDeleted will broadcast to all connected dashboards
+func (h *DashboardHandler) DashboardDeleted(orgID int64, uid string) error {
+	return h.publish(orgID, dashboardEvent{
+		UID:    uid,
+		Action: ActionDeleted,
+	})
 }

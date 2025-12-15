@@ -3,6 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import * as pluginSettings from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
@@ -33,6 +34,10 @@ setupPluginsExtensionsHook();
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {
+    // Mock getPluginSettings to ensure labels plugin is not detected
+    // This ensures consistent test behavior across OSS and Enterprise environments
+    jest.spyOn(pluginSettings, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,

@@ -1,0 +1,222 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "v6.pulldowns_and_templating.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "deployment",
+          "query": "ALERTS{alertname=\"DeploymentStarted\"}"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-uid"
+          },
+          "enable": false,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "alerts",
+          "query": "{job=\"alertmanager\"}"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "expr": "cpu_usage{environment=\"$environment\", service=\"$service\"}",
+            "refId": "A"
+          }
+        ],
+        "title": "CPU Usage",
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "expr": "memory_usage{region=\"$region\"}",
+            "refId": "B"
+          }
+        ],
+        "title": "Memory Usage",
+        "type": "stat"
+      }
+    ],
+    "preload": false,
+    "refresh": "30s",
+    "schemaVersion": 42,
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "environment",
+          "options": [],
+          "query": "label_values(up, instance)",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "datasource": {
+            "type": "prometheus"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "service",
+          "options": [],
+          "query": "label_values(up, instance)",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "region",
+          "options": [
+            {
+              "selected": false,
+              "text": "us-east-1",
+              "value": "us-east-1"
+            },
+            {
+              "selected": false,
+              "text": "us-west-2",
+              "value": "us-west-2"
+            }
+          ],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "custom"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "datasource": {
+            "type": "prometheus"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "instance",
+          "options": [],
+          "query": "label_values(up, instance)",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "V6 Pulldowns and Template Variables Migration Test"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
+    }
+  }
+}

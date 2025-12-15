@@ -6,9 +6,9 @@ import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
+import { Dimensions, MetricStat } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../hooks';
-import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
 import { DimensionFilterCondition } from './Dimensions';

@@ -37,6 +37,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  fixed-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
 ---
 
 # Externally shared dashboards
@@ -48,6 +53,8 @@ This feature was previously called **Public dashboards**.
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
 If you change a dashboard, ensure that you save the changes before sharing.
+
+In order to create public dashboards, you need to be an Admin, have the `dashboards.public:write` permission, or the `fixed:dashboards.public:write` [RBAC role](ref:fixed-role-definitions).
 
 {{< admonition type="warning" >}}
 Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
@@ -250,6 +257,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Graphite
 - Google Sheets
 - Tempo
+- Zabbix
 
 ### Unconfirmed
 

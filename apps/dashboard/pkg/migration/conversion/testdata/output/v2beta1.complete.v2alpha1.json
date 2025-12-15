@@ -256,6 +256,19 @@
     "title": "Test: Complete V2alpha1 Dashboard Example",
     "variables": [
       {
+        "kind": "SwitchVariable",
+        "spec": {
+          "name": "switch_var",
+          "current": "false",
+          "enabledValue": "true",
+          "disabledValue": "false",
+          "label": "Enable Feature",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Toggle feature on/off"
+        }
+      },
+      {
         "kind": "QueryVariable",
         "spec": {
           "name": "prometheus_query",
@@ -267,7 +280,7 @@
           },
           "label": "Prometheus Query",
           "hide": "dontHide",
-          "refresh": "time",
+          "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "description": "Shows all up metrics",
           "datasource": {

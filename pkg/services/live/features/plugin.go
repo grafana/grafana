@@ -5,9 +5,11 @@ import (
 	"errors"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"

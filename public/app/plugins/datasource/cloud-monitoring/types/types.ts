@@ -1,7 +1,7 @@
 import { DataQuery, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 import { DataSourceOptions, DataSourceSecureJsonData } from '@grafana/google-sdk';
 
-import { MetricKind } from './query';
+import { MetricKind } from '../dataquery.gen';
 
 export interface CloudMonitoringVariableQuery extends DataQuery {
   selectedQueryType: string;

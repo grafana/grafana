@@ -384,6 +384,7 @@ export function PanelChrome({
                 menu={menu}
                 title={typeof title === 'string' ? title : undefined}
                 dragClass={dragClass}
+                onDragStart={onDragStart}
                 offset={hoverHeaderOffset}
                 onOpenMenu={onOpenMenu}
               >
@@ -518,6 +519,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
+      height: '100%',
       position: 'relative',
     }),
     panel: css({

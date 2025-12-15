@@ -162,6 +162,12 @@ To access your saved queries, click **+ Add from saved queries** or **Replace wi
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace with saved query** updates your existing query.
 
+{{< admonition type="note" >}}
+Users with Admin and Editor roles can create and save queries for reuse.
+While Admin users can edit or delete any saved queries, users with the Editor role can only edit or delete the queries they've saved.
+Viewers can only reuse queries.
+{{< /admonition >}}
+
 #### Save a query
 
 To save a query you've created:

@@ -12,9 +12,19 @@ import (
 )
 
 const (
-	USER_EMAIL = "email"
-	USER_LOGIN = "login"
+	USER_EMAIL        = "email"
+	USER_LOGIN        = "login"
+	USER_LAST_SEEN_AT = "lastSeenAt"
+	USER_ROLE         = "role"
 )
+
+// UserSortableExtraFields are the additional fields that can be used for sorting user search results.
+// Should not include standard fields like title.
+var UserSortableExtraFields = []string{
+	USER_EMAIL,
+	USER_LOGIN,
+	USER_LAST_SEEN_AT,
+}
 
 var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
 	USER_EMAIL: {
@@ -33,6 +43,22 @@ var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefin
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 			UniqueValues: true,
 			Filterable:   true,
+		},
+	},
+	USER_LAST_SEEN_AT: {
+		Name:        USER_LAST_SEEN_AT,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+		Description: "The last seen timestamp of the user",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
+		},
+	},
+	USER_ROLE: {
+		Name:        USER_ROLE,
+		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+		Description: "The role of the user",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
 		},
 	},
 }
@@ -75,6 +101,8 @@ func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	if user.Spec.Login != "" {
 		doc.Fields[USER_LOGIN] = user.Spec.Login
 	}
+	doc.Fields[USER_LAST_SEEN_AT] = user.Status.LastSeenAt
+	doc.Fields[USER_ROLE] = user.Spec.Role
 
 	return doc, nil
 }

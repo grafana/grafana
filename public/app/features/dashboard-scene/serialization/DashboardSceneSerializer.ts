@@ -99,9 +99,12 @@ interface DynamicDashboardsTrackingInformationLayoutParsing
 }
 
 export interface DSReferencesMapping {
-  panels: Map<string, Set<string>>;
-  variables: Set<string>;
-  annotations: Set<string>;
+  // panel id as keys, map as value. Map<refId, group> as value, if undefined, it means the datasource type was not defined
+  panels: Map<string, Map<string, string | undefined>>;
+  // variable name as keys, group as value, if undefined, it means the datasource type was not defined
+  variables: Map<string, string | undefined>;
+  // annotation name as keys, group as value, if undefined, it means the datasource type was not defined
+  annotations: Map<string, string | undefined>;
 }
 
 export class V1DashboardSerializer
@@ -110,10 +113,10 @@ export class V1DashboardSerializer
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
-  protected defaultDsReferencesMap = {
-    panels: new Map<string, Set<string>>(), // refIds as keys
-    variables: new Set<string>(), // variable names as keys
-    annotations: new Set<string>(), // annotation names as keys
+  protected defaultDsReferencesMap: DSReferencesMapping = {
+    panels: new Map(),
+    variables: new Map(),
+    annotations: new Map(),
   };
 
   initializeElementMapping(saveModel: Dashboard | undefined) {
@@ -175,7 +178,7 @@ export class V1DashboardSerializer
       uid: '',
       title: options.title || '',
       description: options.description || undefined,
-      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 
@@ -274,10 +277,10 @@ export class V2DashboardSerializer
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();
   // map of elementId that will contain all the queries, variables and annotations that dont have a ds defined
-  protected defaultDsReferencesMap = {
-    panels: new Map<string, Set<string>>(), // refIds as keys
-    variables: new Set<string>(), // variable names as keys
-    annotations: new Set<string>(), // annotation names as keys
+  protected defaultDsReferencesMap: DSReferencesMapping = {
+    panels: new Map(),
+    variables: new Map(),
+    annotations: new Map(),
   };
 
   getElementPanelMapping() {
@@ -308,13 +311,9 @@ export class V2DashboardSerializer
       return;
     }
     // initialize the object
-    this.defaultDsReferencesMap = {
-      panels: new Map<string, Set<string>>(),
-      variables: new Set<string>(),
-      annotations: new Set<string>(),
-    };
+    this.defaultDsReferencesMap = { panels: new Map(), variables: new Map(), annotations: new Map() };
 
-    // get all the element keys
+    // initialize autossigned panel queries ds references map
     const elementKeys = Object.keys(saveModel?.elements || {});
     elementKeys.forEach((key) => {
       const elementPanel = saveModel?.elements[key];
@@ -324,14 +323,13 @@ export class V2DashboardSerializer
 
         for (const query of panelQueries) {
           if (!query.spec.query.datasource?.name) {
+            // Datasources without UID. Here we're saving elements with only type!
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
-            if (!this.defaultDsReferencesMap.panels.has(elementId)) {
-              this.defaultDsReferencesMap.panels.set(elementId, new Set());
-            }
+            const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId) || new Map();
+            const datasourceType = query.spec.query.group || undefined;
 
-            const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId)!;
-
-            panelDsqueries.add(query.spec.refId);
+            panelDsqueries.set(query.spec.refId, datasourceType);
+            this.defaultDsReferencesMap.panels.set(elementId, panelDsqueries);
           }
         }
       }
@@ -342,7 +340,8 @@ export class V2DashboardSerializer
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
         if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
-          this.defaultDsReferencesMap.variables.add(variable.spec.name);
+          const datasourceType = variable.spec.query.group || undefined;
+          this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
         }
       }
     }
@@ -351,7 +350,8 @@ export class V2DashboardSerializer
     if (saveModel?.annotations) {
       for (const annotation of saveModel.annotations) {
         if (!annotation.spec.query?.datasource?.name) {
-          this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
+          const datasourceType = annotation.spec.query.group || undefined;
+          this.defaultDsReferencesMap.annotations.set(annotation.spec.name, datasourceType);
         }
       }
     }
@@ -390,7 +390,7 @@ export class V2DashboardSerializer
       ...saveModel,
       title: options.title || '',
       description: options.description || '',
-      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 

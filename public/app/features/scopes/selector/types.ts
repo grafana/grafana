@@ -8,7 +8,7 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
-  // @deprecated Used to display title next to selected scope. scopeNodeId is used to resolve this anyways. Remove if we can confirm it doesn't break anything.
+  // Used for recent scopes functionality when scope node isn't loaded yet
   parentNodeId?: string;
 }
 
@@ -17,10 +17,13 @@ export interface TreeNode {
   expanded: boolean;
   query: string;
   children?: Record<string, TreeNode>;
+  // Check if we have loaded all the children. Used when resolving to root.
+  childrenLoaded?: boolean;
 }
 
 export interface RecentScope extends Scope {
   parentNode?: ScopeNode;
+  scopeNodeId?: string;
 }
 
 // Zod schemas for type validation
@@ -64,4 +67,5 @@ export const ScopeNodeSchema = z.object({
 
 export const RecentScopeSchema = ScopeSchema.extend({
   parentNode: ScopeNodeSchema.optional(),
+  scopeNodeId: z.string().optional(),
 });

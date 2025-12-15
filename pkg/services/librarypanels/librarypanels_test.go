@@ -87,6 +87,31 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
 		})
 
+	scenarioWithLibraryPanel(t, "When an admin tries to store a V2 dashboard with a library panel, it should connect the two",
+		func(t *testing.T, sc scenarioContext) {
+			dashJSON := map[string]any{
+				"elements": []any{
+					map[string]any{
+						"kind": "Panel",
+						"spec": map[string]any{
+							"datasource": "${DS_GDEV-TESTDATA}",
+							"libraryPanel": map[string]any{
+								"uid": sc.initialResult.Result.UID,
+							},
+						},
+					},
+				},
+			}
+			dash := dashboards.Dashboard{
+				Title: "Testing ConnectLibraryPanelsForDashboard for V2 dashboard",
+				Data:  simplejson.NewFromAny(dashJSON),
+			}
+			dashInDB := createDashboard(t, sc, &dash)
+
+			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
+			require.NoError(t, err)
+		})
+
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{

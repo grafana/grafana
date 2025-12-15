@@ -31,6 +31,8 @@ type DashboardAnnotationQuerySpec struct {
 	Name       string                          `json:"name"`
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Mappings define how to convert data frame fields to annotation event fields.
+	Mappings map[string]DashboardAnnotationEventFieldMapping `json:"mappings,omitempty"`
 	// Catch-all field for datasource-specific properties
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -82,6 +84,24 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
 		Ids:     []uint32{},
+	}
+}
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+// +k8s:openapi-gen=true
+type DashboardAnnotationEventFieldMapping struct {
+	// Source type for the field value
+	Source *string `json:"source,omitempty"`
+	// Constant value to use when source is "text"
+	Value *string `json:"value,omitempty"`
+	// Regular expression to apply to the field value
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewDashboardAnnotationEventFieldMapping creates a new DashboardAnnotationEventFieldMapping object.
+func NewDashboardAnnotationEventFieldMapping() *DashboardAnnotationEventFieldMapping {
+	return &DashboardAnnotationEventFieldMapping{
+		Source: (func(input string) *string { return &input })("field"),
 	}
 }
 
@@ -583,7 +603,12 @@ func NewDashboardFieldColor() *DashboardFieldColor {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -602,6 +627,11 @@ const (
 	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
 	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
 	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
 	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
 	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
 	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
@@ -1206,6 +1236,8 @@ type DashboardDashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1216,6 +1248,7 @@ func NewDashboardDashboardLink() *DashboardDashboardLink {
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
 	}
 }
 
@@ -1227,6 +1260,11 @@ const (
 	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
 	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1326,6 +1364,7 @@ type DashboardQueryVariableSpec struct {
 	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
+	RegexApplyTo       *DashboardVariableRegexApplyTo                `json:"regexApplyTo,omitempty"`
 	Sort               DashboardVariableSort                         `json:"sort"`
 	Definition         *string                                       `json:"definition,omitempty"`
 	Options            []DashboardVariableOption                     `json:"options"`
@@ -1355,6 +1394,7 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 		SkipUrlSync:      false,
 		Query:            *NewDashboardDataQueryKind(),
 		Regex:            "",
+		RegexApplyTo:     (func(input DashboardVariableRegexApplyTo) *DashboardVariableRegexApplyTo { return &input })(DashboardVariableRegexApplyToValue),
 		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
@@ -1403,6 +1443,16 @@ const (
 	DashboardVariableRefreshNever              DashboardVariableRefresh = "never"
 	DashboardVariableRefreshOnDashboardLoad    DashboardVariableRefresh = "onDashboardLoad"
 	DashboardVariableRefreshOnTimeRangeChanged DashboardVariableRefresh = "onTimeRangeChanged"
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+// +k8s:openapi-gen=true
+type DashboardVariableRegexApplyTo string
+
+const (
+	DashboardVariableRegexApplyToValue DashboardVariableRegexApplyTo = "value"
+	DashboardVariableRegexApplyToText  DashboardVariableRegexApplyTo = "text"
 )
 
 // Sort variable options

@@ -1,4 +1,4 @@
-import { QueryEditorExpressionType } from '../../expressions';
+import { SQLExpression, QueryEditorExpressionType } from '../../dataquery.gen';
 import {
   aggregationvariable,
   labelsVariable,
@@ -14,7 +14,6 @@ import {
   createFunction,
   createProperty,
 } from '../../mocks/sqlUtils';
-import { SQLExpression } from '../../types';
 
 import SQLGenerator from './SQLGenerator';
 

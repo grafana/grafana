@@ -12,7 +12,7 @@ comments: |
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
