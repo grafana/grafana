@@ -16,6 +16,11 @@ type DashboardQuery struct {
 	UID   string // to select a single dashboard
 	Limit int
 
+	// MaxRows is used internally by the iterator to fetch data in batches
+	// When set, the SQL query will include LIMIT MaxRows
+	// If Limit is smaller, that will be used instead
+	MaxRows int
+
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
 	LastID int64
@@ -74,4 +79,5 @@ type MigrationDashboardAccessor interface {
 	MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 	MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 	MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+	MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 }

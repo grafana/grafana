@@ -530,8 +530,8 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
 
+      await user.type(input, 'fir');
       await act(async () => {
-        await user.type(input, 'fir');
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
@@ -604,8 +604,8 @@ describe('Combobox', () => {
         const input = screen.getByRole('combobox');
         await user.click(input);
 
+        await user.type(input, 'Opt');
         await act(async () => {
-          await user.type(input, 'Opt');
           jest.advanceTimersByTime(500); // Custom value while typing
         });
 

@@ -154,10 +154,22 @@
             "exclude": true
           },
           "mappings": {
-            "title": "service",
-            "text": "description",
-            "time": "timestamp",
-            "tags": "labels"
+            "title": {
+              "source": "field",
+              "value": "service"
+            },
+            "text": {
+              "source": "field",
+              "value": "description"
+            },
+            "time": {
+              "source": "field",
+              "value": "timestamp"
+            },
+            "tags": {
+              "source": "field",
+              "value": "labels"
+            }
           },
           "builtIn": 0,
           "type": "influxdb"

@@ -252,7 +252,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"folderUid": "default",
 				"uid": "%s",
@@ -270,7 +270,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"folderUid": "default",
 				"uid": "%s",
 				"health": "ok",
@@ -317,7 +317,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"folderUid": "default",
 				"uid": "%s",
@@ -335,7 +335,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"folderUid": "default",
 				"uid": "%s",
 				"health": "ok",
@@ -639,7 +639,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiring",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"keepFiringFor": 15,
 				"annotations": {
@@ -656,7 +656,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiringButSilenced",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"health": "ok",
 				"isPaused": false,
 				"type": "alerting",
@@ -688,7 +688,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiring",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"keepFiringFor": 15,
 				"annotations": {

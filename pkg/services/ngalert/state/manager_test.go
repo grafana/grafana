@@ -74,7 +74,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime),
 			ResolvedAt:         util.Pointer(evaluationTime),
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        rule.Annotations, // alert instance has no stored annotations, falls back to the rule annotations
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
 		}, {
 			AlertRuleUID:       rule.UID,
@@ -87,7 +87,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-2"},
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64 - 1),
 		},
 		{
@@ -101,7 +101,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-3"},
 			ResultFingerprint:  data.Fingerprint(0),
 		},
 		{
@@ -115,7 +115,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-4"},
 			ResultFingerprint:  data.Fingerprint(1),
 		},
 		{
@@ -129,7 +129,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         nil,
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-5"},
 			ResultFingerprint:  data.Fingerprint(2),
 		},
 	}
@@ -169,6 +169,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 		ResolvedAt:        nil,
 		Labels:            labels,
+		Annotations:       models.InstanceAnnotations{"testAnnotation": "value-2"},
 		ResultFingerprint: data.Fingerprint(math.MaxUint64 - 1).String(),
 	})
 
@@ -187,6 +188,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 		ResolvedAt:        nil,
 		Labels:            labels,
+		Annotations:       models.InstanceAnnotations{"testAnnotation": "value-3"},
 		ResultFingerprint: data.Fingerprint(0).String(),
 	})
 
@@ -205,6 +207,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 		ResolvedAt:        nil,
 		Labels:            labels,
+		Annotations:       models.InstanceAnnotations{"testAnnotation": "value-4"},
 		ResultFingerprint: data.Fingerprint(1).String(),
 	})
 
@@ -223,6 +226,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		LastSentAt:        nil,
 		ResolvedAt:        nil,
 		Labels:            labels,
+		Annotations:       models.InstanceAnnotations{"testAnnotation": "value-5"},
 		ResultFingerprint: data.Fingerprint(2).String(),
 	})
 
@@ -241,6 +245,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		LastSentAt:        nil,
 		ResolvedAt:        nil,
 		Labels:            labels,
+		Annotations:       models.InstanceAnnotations{"testAnnotation": "value-6"},
 		ResultFingerprint: data.Fingerprint(2).String(),
 	})
 
@@ -1497,6 +1502,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			},
 			CurrentState:      models.InstanceStateNormal,
 			Labels:            labels1,
+			Annotations:       rule.Annotations,
 			LastEvalTime:      lastEval,
 			CurrentStateSince: lastEval,
 			CurrentStateEnd:   lastEval.Add(3 * interval),
@@ -1512,6 +1518,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			},
 			CurrentState:      models.InstanceStateFiring,
 			Labels:            labels2,
+			Annotations:       rule.Annotations,
 			LastEvalTime:      lastEval,
 			CurrentStateSince: lastEval,
 			CurrentStateEnd:   lastEval.Add(3 * interval),
@@ -1562,7 +1569,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 					LastSentAt:         &lastEval,
 					ResolvedAt:         &lastEval,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        rule.Annotations,
 					ResultFingerprint:  data.Labels{"test1": "testValue1"}.Fingerprint(),
 				},
 			},
@@ -1810,7 +1817,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -1818,7 +1825,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 			},
 			startingStateCacheCount: 2,
@@ -1959,7 +1966,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -1967,7 +1974,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 			},
 			startingStateCacheCount:  2,

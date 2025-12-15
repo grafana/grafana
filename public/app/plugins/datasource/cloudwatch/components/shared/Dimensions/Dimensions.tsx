@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 
 import { EditorList } from '@grafana/plugin-ui';
 
+import { Dimensions as DimensionsType, MetricStat } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
-import { Dimensions as DimensionsType, MetricStat } from '../../../types';
 
 import { FilterItem } from './FilterItem';
 

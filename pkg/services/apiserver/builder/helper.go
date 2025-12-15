@@ -73,27 +73,6 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-// GetDefaultBuildHandlerChainFuncForAggregator is a replica of GetDefaultBuildHandlerChainFunc except it skips custom routes handling
-func GetDefaultBuildHandlerChainFuncForAggregator() BuildHandlerChainFunc {
-	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler := filters.WithRequester(delegateHandler)
-
-		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
-		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
-		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
-		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
-
-		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, PathRewriters)
-		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
-		handler = filters.WithExtractJaegerTrace(handler)
-		// Configure filters.WithPanicRecovery to not crash on panic
-		utilruntime.ReallyCrash = false
-
-		return handler
-	}
-}
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(

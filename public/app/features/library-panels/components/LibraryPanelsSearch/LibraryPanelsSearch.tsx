@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useState, type JSX } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';

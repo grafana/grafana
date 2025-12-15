@@ -94,9 +94,17 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // get folder info (e.g. title, parents) but *not* children
-    getFolder: builder.query<FolderDTO, string>({
-      providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+    getFolder: builder.query<FolderDTO, { folderUID: string; accesscontrol: boolean; isLegacyCall: boolean }>({
+      providesTags: (_result, _error, { folderUID }) => [{ type: 'getFolder', id: folderUID }],
+      query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
+        url: `/folders/${folderUID}`,
+        params: {
+          accesscontrol,
+          // Add additional query param so we can tell when
+          // this was called for app platform compatibility purposes vs. actually needing to use the legacy API
+          isLegacyCall,
+        },
+      }),
     }),
 
     // create a new folder

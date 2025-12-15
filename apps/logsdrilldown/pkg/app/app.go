@@ -28,6 +28,12 @@ func New(cfg app.Config) (app.App, error) {
 			{
 				Kind: logsdrilldownv1alpha1.LogsDrilldownKind(),
 			},
+			{
+				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultsKind(),
+			},
+			{
+				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultColumnsKind(),
+			},
 		},
 	}
 

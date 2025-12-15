@@ -4,7 +4,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { Team, TeamGroup, TeamState } from 'app/types/teams';
+import { TeamGroup, TeamState } from 'app/types/teams';
 
 import TeamGroupSync from './TeamGroupSync';
 import { getMockTeamGroups } from './mocks/teamMocks';
@@ -13,12 +13,10 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const setup = (preloadedTeamState?: Partial<TeamState>) => {
-  return render(<TeamGroupSync isReadOnly={false} />, {
+  return render(<TeamGroupSync teamUid={MOCK_TEAMS[0].metadata.name} isReadOnly={false} />, {
     preloadedState: {
       team: {
-        members: [],
         groups: [],
-        team: { uid: MOCK_TEAMS[0].metadata.name } as Team,
         ...preloadedTeamState,
       },
     },

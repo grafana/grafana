@@ -1,3 +1,5 @@
+import { produce } from 'immer';
+
 import {
   DataSourceInstanceSettings,
   IntervalValues,
@@ -278,14 +280,16 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
-  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
+  const normalizedRule = fixMissingRefIdsInExpressionModel(rule);
+
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(normalizedRule);
 
   const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
     if (isGrafanaRecordingRule) {
       // grafana recording rule
-      const ga = rule.grafana_alert;
+      const ga = normalizedRule.grafana_alert;
       return {
         ...defaultFormValues,
         name: ga.title,
@@ -294,16 +298,16 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
-        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
-        labels: listifyLabelsOrAnnotations(rule.labels, true),
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
+        labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
         targetDatasourceUid: ga.record?.target_datasource_uid || defaultFormValues.targetDatasourceUid,
       };
-    } else if (rulerRuleType.grafana.rule(rule)) {
+    } else if (rulerRuleType.grafana.rule(normalizedRule)) {
       // grafana alerting rule
-      const ga = rule.grafana_alert;
+      const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
@@ -312,14 +316,14 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           type: RuleFormType.grafana,
           group: group.name,
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-          evaluateFor: rule.for || '0',
-          keepFiringFor: rule.keep_firing_for || '0',
+          evaluateFor: normalizedRule.for || '0',
+          keepFiringFor: normalizedRule.keep_firing_for || '0',
           noDataState: ga.no_data_state,
           execErrState: ga.exec_err_state,
           queries: ga.data,
           condition: ga.condition,
-          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
-          labels: listifyLabelsOrAnnotations(rule.labels, true),
+          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
+          labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
           folder: { title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
@@ -338,7 +342,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (rulerRuleType.dataSource.alertingRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(normalizedRule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -346,27 +350,27 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         datasourceUid,
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
-        expr: rule.expr,
+        expr: normalizedRule.expr,
         model: {
           refId: 'A',
           hide: false,
-          expr: rule.expr,
+          expr: normalizedRule.expr,
         },
       };
 
-      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+      const alertingRuleValues = alertingRulerRuleToRuleForm(normalizedRule);
 
       return {
         ...defaultFormValues,
         ...alertingRuleValues,
         queries: [defaultQuery],
-        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
       };
-    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
+    } else if (rulerRuleType.dataSource.recordingRule(normalizedRule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -374,15 +378,15 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         datasourceUid,
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
-        expr: rule.expr,
+        expr: normalizedRule.expr,
         model: {
           refId: 'A',
           hide: false,
-          expr: rule.expr,
+          expr: normalizedRule.expr,
         },
       };
 
-      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+      const recordingRuleValues = recordingRulerRuleToRuleForm(normalizedRule);
 
       return {
         ...defaultFormValues,
@@ -397,6 +401,23 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       throw new Error('Unexpected type of rule for cloud rules source');
     }
   }
+}
+
+/**
+ * This function isn't supposed to be needed, but we've noticed some customers are creating rules via Provisioning or
+ * other interfaces where they aren't including the RefId in the "model" of the expression so copy the refId from the query definition.
+ */
+export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: T): T {
+  // non-Grafana managed rules don't use expression nodes so we return the rule as-is
+  if (!rulerRuleType.grafana.rule(rule)) {
+    return rule;
+  }
+
+  return produce(rule, (draft) => {
+    draft.grafana_alert.data.forEach((query) => {
+      query.model.refId = query.model.refId ?? query.refId;
+    });
+  });
 }
 
 export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {

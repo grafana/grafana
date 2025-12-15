@@ -37,6 +37,12 @@ export function SidebarResizer() {
         return;
       }
 
+      // mouse is moving with no buttons pressed
+      if (!e.buttons) {
+        dragStart.current = null;
+        return;
+      }
+
       const diff = e.clientX - dragStart.current;
       dragStart.current = e.clientX;
 

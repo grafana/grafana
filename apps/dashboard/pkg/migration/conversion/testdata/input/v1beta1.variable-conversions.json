@@ -42,7 +42,7 @@
           "regex": "",
           "skipUrlSync": false,
           "refresh": 1
-        },
+      },
         {
           "name": "query_var",
           "type": "query",
@@ -81,6 +81,7 @@
           "allValue": ".*",
           "multi": true,
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "skipUrlSync": false,
           "refresh": 2,
           "sort": 1,
@@ -107,7 +108,7 @@
             },
             {
               "selected": false,
-              "text": "staging", 
+              "text": "staging",
               "value": "staging"
             },
             {
@@ -259,6 +260,32 @@
           "skipUrlSync": false
         },
         {
+          "name": "switch_var",
+          "type": "switch",
+          "label": "Enable Feature",
+          "description": "Toggle feature on/off",
+          "query": "",
+          "current": {
+            "selected": false,
+            "text": "false",
+            "value": "false"
+          },
+          "options": [
+            {
+              "selected": false,
+              "text": "true",
+              "value": "true"
+            },
+            {
+              "selected": true,
+              "text": "false",
+              "value": "false"
+            }
+          ],
+          "hide": 0,
+          "skipUrlSync": false
+        },
+        {
           "name": "legacy_string_var",
           "type": "query",
           "label": "Legacy Variable",
@@ -309,6 +336,7 @@
           "allValue": "*",
           "multi": true,
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "skipUrlSync": false,
           "refresh": 1,
           "sort": 2,
@@ -328,4 +356,4 @@
     },
     "links": []
   }
-} 
+}

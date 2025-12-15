@@ -32,7 +32,6 @@ func TestDefaultWatchOptions(t *testing.T) {
 	opts := defaultWatchOptions()
 
 	assert.Equal(t, defaultLookbackPeriod, opts.LookbackPeriod)
-	assert.Equal(t, defaultPollInterval, opts.PollInterval)
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
 }
 
@@ -158,8 +157,9 @@ func TestNotifier_Watch_NoEvents(t *testing.T) {
 
 	opts := watchOptions{
 		LookbackPeriod: 100 * time.Millisecond,
-		PollInterval:   50 * time.Millisecond,
 		BufferSize:     10,
+		MinBackoff:     50 * time.Millisecond,
+		MaxBackoff:     500 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -210,8 +210,9 @@ func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
 
 	opts := watchOptions{
 		LookbackPeriod: 100 * time.Millisecond,
-		PollInterval:   50 * time.Millisecond,
 		BufferSize:     10,
+		MinBackoff:     50 * time.Millisecond,
+		MaxBackoff:     500 * time.Millisecond,
 	}
 
 	// Start watching
@@ -265,8 +266,9 @@ func TestNotifier_Watch_EventDeduplication(t *testing.T) {
 
 	opts := watchOptions{
 		LookbackPeriod: time.Second,
-		PollInterval:   20 * time.Millisecond,
 		BufferSize:     10,
+		MinBackoff:     20 * time.Millisecond,
+		MaxBackoff:     200 * time.Millisecond,
 	}
 
 	// Start watching
@@ -326,8 +328,9 @@ func TestNotifier_Watch_ContextCancellation(t *testing.T) {
 
 	opts := watchOptions{
 		LookbackPeriod: 100 * time.Millisecond,
-		PollInterval:   20 * time.Millisecond,
 		BufferSize:     10,
+		MinBackoff:     20 * time.Millisecond,
+		MaxBackoff:     200 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -369,8 +372,9 @@ func TestNotifier_Watch_MultipleEvents(t *testing.T) {
 
 	opts := watchOptions{
 		LookbackPeriod: time.Second,
-		PollInterval:   20 * time.Millisecond,
 		BufferSize:     10,
+		MinBackoff:     20 * time.Millisecond,
+		MaxBackoff:     200 * time.Millisecond,
 	}
 
 	// Start watching

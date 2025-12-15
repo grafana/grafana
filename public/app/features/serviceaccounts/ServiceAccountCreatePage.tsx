@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { OrgRole } from '@grafana/data';

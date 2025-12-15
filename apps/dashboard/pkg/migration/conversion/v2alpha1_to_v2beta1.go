@@ -113,6 +113,11 @@ func convertAnnotationQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardAnnota
 	out.Spec.Filter = (*dashv2beta1.DashboardAnnotationPanelFilter)(in.Spec.Filter)
 	out.Spec.LegacyOptions = in.Spec.LegacyOptions
 
+	// Convert mappings
+	if in.Spec.Mappings != nil {
+		out.Spec.Mappings = convertAnnotationMappings_V2alpha1_to_V2beta1(in.Spec.Mappings)
+	}
+
 	// Convert query - move datasource from annotation spec to query
 	if err := convertDataQuery_V2alpha1_to_V2beta1(in.Spec.Query, &out.Spec.Query, in.Spec.Datasource, scope); err != nil {
 		return err
@@ -548,6 +553,7 @@ func convertDashboardLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDashboar
 	out.TargetBlank = in.TargetBlank
 	out.IncludeVars = in.IncludeVars
 	out.KeepTime = in.KeepTime
+	out.Placement = in.Placement
 }
 
 func convertDataLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataLink, out *dashv2beta1.DashboardDataLink) {
@@ -733,6 +739,22 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 		}
 	}
 
+	if in.SwitchVariableKind != nil {
+		out.SwitchVariableKind = &dashv2beta1.DashboardSwitchVariableKind{
+			Kind: in.SwitchVariableKind.Kind,
+			Spec: dashv2beta1.DashboardSwitchVariableSpec{
+				Name:          in.SwitchVariableKind.Spec.Name,
+				Current:       in.SwitchVariableKind.Spec.Current,
+				EnabledValue:  in.SwitchVariableKind.Spec.EnabledValue,
+				DisabledValue: in.SwitchVariableKind.Spec.DisabledValue,
+				Label:         in.SwitchVariableKind.Spec.Label,
+				Hide:          dashv2beta1.DashboardVariableHide(in.SwitchVariableKind.Spec.Hide),
+				SkipUrlSync:   in.SwitchVariableKind.Spec.SkipUrlSync,
+				Description:   in.SwitchVariableKind.Spec.Description,
+			},
+		}
+	}
+
 	return nil
 }
 
@@ -745,6 +767,7 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
+	out.RegexApplyTo = (*dashv2beta1.DashboardVariableRegexApplyTo)(in.RegexApplyTo)
 	out.Sort = dashv2beta1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2alpha1_to_V2beta1(in.Options)
@@ -964,4 +987,19 @@ func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKi
 
 func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	return convertLayout_V2alpha1_to_V2beta1(in, out, scope)
+}
+
+func convertAnnotationMappings_V2alpha1_to_V2beta1(in map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping) map[string]dashv2beta1.DashboardAnnotationEventFieldMapping {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]dashv2beta1.DashboardAnnotationEventFieldMapping, len(in))
+	for key, mapping := range in {
+		out[key] = dashv2beta1.DashboardAnnotationEventFieldMapping{
+			Source: mapping.Source,
+			Value:  mapping.Value,
+			Regex:  mapping.Regex,
+		}
+	}
+	return out
 }

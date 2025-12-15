@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -27,7 +25,6 @@ import (
 )
 
 type CDKBlobSupportOptions struct {
-	Tracer        trace.Tracer
 	Bucket        CDKBucket
 	RootFolder    string
 	URLExpiration time.Duration
@@ -47,10 +44,6 @@ func OpenBlobBucket(ctx context.Context, url string) (*blob.Bucket, error) {
 }
 
 func NewCDKBlobSupport(ctx context.Context, opts CDKBlobSupportOptions) (BlobSupport, error) {
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("cdk-blob-store")
-	}
-
 	if opts.Bucket == nil {
 		return nil, fmt.Errorf("missing bucket")
 	}
@@ -70,7 +63,6 @@ func NewCDKBlobSupport(ctx context.Context, opts CDKBlobSupportOptions) (BlobSup
 	}
 
 	return &cdkBlobSupport{
-		tracer:      opts.Tracer,
 		bucket:      opts.Bucket,
 		root:        opts.RootFolder,
 		cansignurls: false, // TODO depends on the implementation
@@ -79,7 +71,6 @@ func NewCDKBlobSupport(ctx context.Context, opts CDKBlobSupportOptions) (BlobSup
 }
 
 type cdkBlobSupport struct {
-	tracer      trace.Tracer
 	bucket      CDKBucket
 	root        string
 	cansignurls bool

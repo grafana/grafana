@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import { ExtensionRegistriesProvider } from '../ExtensionRegistriesContext';
 

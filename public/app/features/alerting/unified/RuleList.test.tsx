@@ -45,6 +45,9 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 jest.spyOn(apiRuler, 'rulerUrlBuilder');

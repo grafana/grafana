@@ -66,6 +66,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Search"},
+							OperationId: "searchDashboardsAndFolders",
 							Description: "Dashboard search",
 							Parameters: []*spec3.Parameter{
 								{
@@ -136,9 +137,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (View, Edit, Admin)",
+										Description: "permission needed for the resource (view, edit, admin)",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("View", "Edit", "Admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
 									},
 								},
 								{
@@ -218,6 +219,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Search"},
+							OperationId: "getSortableFields",
 							Description: "Get sortable fields",
 							Parameters: []*spec3.Parameter{
 								{

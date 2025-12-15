@@ -9,6 +9,7 @@ import (
 type AlertInstance struct {
 	AlertInstanceKey  `xorm:"extends"`
 	Labels            InstanceLabels
+	Annotations       InstanceAnnotations
 	CurrentState      InstanceStateType
 	CurrentReason     string
 	CurrentStateSince time.Time

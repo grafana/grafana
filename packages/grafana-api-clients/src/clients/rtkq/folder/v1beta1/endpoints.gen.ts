@@ -444,7 +444,6 @@ export type FolderSpec = {
   description?: string;
   title: string;
 };
-export type FolderStatus = object;
 export type Folder = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -453,7 +452,6 @@ export type Folder = {
   metadata: ObjectMeta;
   /** Spec is the spec of the Folder */
   spec: FolderSpec;
-  status: FolderStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */

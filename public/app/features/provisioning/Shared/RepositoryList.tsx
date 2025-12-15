@@ -4,7 +4,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryCard } from '../Repository/RepositoryCard';
+import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
 import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
@@ -89,7 +89,7 @@ export function RepositoryList({ items }: Props) {
         )}
         <Stack direction={'column'} gap={2}>
           {filteredItems.length ? (
-            filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
+            filteredItems.map((item) => <RepositoryListItem key={item.metadata?.name} repository={item} />)
           ) : (
             <EmptyState
               variant="not-found"

@@ -323,6 +323,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {
@@ -705,10 +706,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "to": "now",
   },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "browser",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
+  "weekStart": "",
 }
 `;
 
@@ -1048,6 +1050,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {
@@ -1407,6 +1410,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {

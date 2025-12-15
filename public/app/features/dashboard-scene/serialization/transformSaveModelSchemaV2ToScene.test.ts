@@ -14,6 +14,7 @@ import {
   AdHocFiltersVariable,
   SceneDataTransformer,
   SceneGridItem,
+  SwitchVariable,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -27,6 +28,7 @@ import {
   GroupByVariableKind,
   IntervalVariableKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
@@ -204,6 +206,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       sceneVariableClass: AdHocFiltersVariable,
       index: 7,
     });
+    validateVariable({
+      sceneVariable: variables?.state.variables[8],
+      variableKind: dash.variables[8] as SwitchVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: SwitchVariable,
+      index: 8,
+    });
 
     // Annotations
     expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
@@ -371,7 +381,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const scene = transformSaveModelSchemaV2ToScene(snapshot);
 
       // check variables were converted to snapshot variables
-      expect(scene.state.$variables?.state.variables).toHaveLength(8);
+      expect(scene.state.$variables?.state.variables).toHaveLength(9);
       expect(scene.state.$variables?.getByName('customVar')).toBeInstanceOf(SnapshotVariable);
       expect(scene.state.$variables?.getByName('adhocVar')).toBeInstanceOf(AdHocFiltersVariable);
       expect(scene.state.$variables?.getByName('intervalVar')).toBeInstanceOf(SnapshotVariable);

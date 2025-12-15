@@ -1,34 +1,13 @@
-import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { MetricAggregation } from '../../dataquery.gen';
+import { QUERY_TYPE_SELECTOR_OPTIONS } from '../../configuration/utils';
 import { useDispatch } from '../../hooks/useStatelessReducer';
+import { queryTypeToMetricType } from '../../queryDef';
 import { QueryType } from '../../types';
 
 import { useQuery } from './ElasticsearchQueryContext';
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
-
-const OPTIONS: Array<SelectableValue<QueryType>> = [
-  { value: 'metrics', label: 'Metrics' },
-  { value: 'logs', label: 'Logs' },
-  { value: 'raw_data', label: 'Raw Data' },
-  { value: 'raw_document', label: 'Raw Document' },
-];
-
-function queryTypeToMetricType(type: QueryType): MetricAggregation['type'] {
-  switch (type) {
-    case 'logs':
-    case 'raw_data':
-    case 'raw_document':
-      return type;
-    case 'metrics':
-      return 'count';
-    default:
-      // should never happen
-      throw new Error(`invalid query type: ${type}`);
-  }
-}
 
 export const QueryTypeSelector = () => {
   const query = useQuery();
@@ -47,5 +26,12 @@ export const QueryTypeSelector = () => {
     dispatch(changeMetricType({ id: firstMetric.id, type: queryTypeToMetricType(newQueryType) }));
   };
 
-  return <RadioButtonGroup<QueryType> fullWidth={false} options={OPTIONS} value={queryType} onChange={onChange} />;
+  return (
+    <RadioButtonGroup<QueryType>
+      fullWidth={false}
+      options={QUERY_TYPE_SELECTOR_OPTIONS}
+      value={queryType}
+      onChange={onChange}
+    />
+  );
 };

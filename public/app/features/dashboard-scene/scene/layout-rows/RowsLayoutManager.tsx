@@ -292,6 +292,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
         const conditionalRendering = tab.state.conditionalRendering;
         conditionalRendering?.clearParent();
+        // We need to clear the target since we don't want to point the original tab anymore (if it was set)
+        conditionalRendering?.setTarget(undefined);
 
         rows.push(
           new RowItem({

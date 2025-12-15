@@ -1,5 +1,5 @@
 import { Placement } from '@popperjs/core';
-import { Component } from 'react';
+import { useState, useRef, useCallback, type JSX } from 'react';
 
 import { PopoverContent } from './types';
 
@@ -21,37 +21,28 @@ interface Props {
   hideAfter?: number;
 }
 
-interface State {
-  show: boolean;
-}
+const PopoverController = ({ placement = 'auto', content, children, hideAfter }: Props) => {
+  const [show, setShow] = useState(false);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-class PopoverController extends Component<Props, State> {
-  private hideTimeout: ReturnType<typeof setTimeout> | null = null;
-  state = { show: false };
-
-  showPopper = () => {
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
+  const showPopper = useCallback(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
     }
-    this.setState({ show: true });
-  };
+    setShow(true);
+  }, []);
 
-  hidePopper = () => {
-    this.hideTimeout = setTimeout(() => {
-      this.setState({ show: false });
-    }, this.props.hideAfter);
-  };
+  const hidePopper = useCallback(() => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setShow(false);
+    }, hideAfter);
+  }, [hideAfter]);
 
-  render() {
-    const { children, content, placement = 'auto' } = this.props;
-    const { show } = this.state;
-
-    return children(this.showPopper, this.hidePopper, {
-      show,
-      placement,
-      content,
-    });
-  }
-}
+  return children(showPopper, hidePopper, {
+    show,
+    placement,
+    content,
+  });
+};
 
 export { PopoverController };

@@ -228,6 +228,9 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
 		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
@@ -445,6 +448,14 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 		result = append(result, ToOpenFGATuple(t))
 	}
 	return result
+}
+
+func ToOpenFGADeleteTupleKey(tuples *openfgav1.TupleKey) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     tuples.GetUser(),
+		Relation: tuples.GetRelation(),
+		Object:   tuples.GetObject(),
+	}
 }
 
 func AddRenderContext(req *openfgav1.CheckRequest) {

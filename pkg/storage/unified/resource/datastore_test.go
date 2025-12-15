@@ -2022,7 +2022,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 2)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv1) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv1}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2035,7 +2035,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv2) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv2}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2053,7 +2053,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv3) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv3}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2074,7 +2074,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv4 - should return all resources", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 4)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv4) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv4}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2093,7 +2093,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 3)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv5) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv5}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2119,7 +2119,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 		}
 
 		resultKeys := make([]DataKey, 0, 2)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, specificListKey, rv3) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: specificListKey, ResourceVersion: rv3}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2132,7 +2132,7 @@ func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
 		resultKeys := make([]DataKey, 0, 4)
-		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, 0) {
+		for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: 0}) {
 			require.NoError(t, err)
 			resultKeys = append(resultKeys, dataKey)
 		}
@@ -2185,7 +2185,7 @@ func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, err := range ds.ListResourceKeysAtRevision(ctx, tt.key, 0) {
+			for _, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: tt.key, ResourceVersion: 0}) {
 				require.Error(t, err)
 				return
 			}
@@ -2204,7 +2204,7 @@ func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	}
 
 	resultKeys := make([]DataKey, 0, 1)
-	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, 0) {
+	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: 0}) {
 		require.NoError(t, err)
 		resultKeys = append(resultKeys, dataKey)
 	}
@@ -2238,7 +2238,7 @@ func TestDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *test
 
 	// List at a revision before the resource was created
 	resultKeys := make([]DataKey, 0, 1)
-	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, listKey, rv-1000) {
+	for dataKey, err := range ds.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv - 1000}) {
 		require.NoError(t, err)
 		resultKeys = append(resultKeys, dataKey)
 	}
@@ -2947,6 +2947,42 @@ func TestDataStore_getGroupResources(t *testing.T) {
 
 	for _, expected := range expectedCombinations {
 		require.True(t, foundCombinations[expected], "Expected combination not found: %s", expected)
+	}
+}
+
+func TestDataStore_BatchDelete(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	keys := make([]DataKey, 95)
+	for i := 0; i < 95; i++ {
+		rv := node.Generate().Int64()
+		keys[i] = DataKey{
+			Namespace:       "test-namespace",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            fmt.Sprintf("test-name-%d", i),
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+			Folder:          "test-folder",
+		}
+		content := fmt.Sprintf("test-value-%d", i)
+		err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+		require.NoError(t, err)
+	}
+
+	err := ds.batchDelete(ctx, keys)
+	require.NoError(t, err)
+
+	// Verify all events were deleted
+	for i := 0; i < 95; i++ {
+		_, err := ds.Get(ctx, DataKey{
+			Namespace: "test-namespace",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      fmt.Sprintf("test-name-%d", i),
+		})
+		require.Error(t, err, "Resource should have been deleted")
 	}
 }
 

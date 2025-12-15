@@ -24,6 +24,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	playlistv0 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -138,7 +139,35 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	}
 }
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
+func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
+	var tx *sql.Tx
+	// After this function runs, the `tx` variable will only be set if
+	// this function was called in the context of a transaction set up by a
+	// caller upstream. In that case, we reuse the transaction.
+	_ = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		coreTx, err := sess.Tx()
+		if err != nil {
+			return nil
+		}
+
+		tx = coreTx.Tx
+		return nil
+	})
+
+	// Use transaction from unified storage if available in the context.
+	// This allows us to run migrations in a transaction which is specifically required for SQLite.
+	if tx == nil {
+		tx = resource.TransactionFromContext(ctx)
+	}
+
+	if tx != nil {
+		return tx.QueryContext(ctx, query, args...)
+	}
+
+	return helper.DB.GetSqlxSession().Query(ctx, query, args...)
+}
+
+func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.getRows")
 	defer span.End()
 
@@ -150,7 +179,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		// }
 	}
 
-	req := newQueryReq(sql, query)
+	req := newQueryReq(helper, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
@@ -167,7 +196,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 	//	 fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
 	// }
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := a.executeQuery(ctx, helper, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -465,6 +494,132 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 	return nil, nil
 }
 
+// MigratePlaylists handles the playlist migration logic
+func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+	opts.Progress(-1, "migrating playlists...")
+	rows, err := a.ListPlaylists(ctx, orgId)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Group playlist items by playlist ID
+	type playlistData struct {
+		id        int64
+		uid       string
+		name      string
+		interval  string
+		items     []playlistv0.PlaylistItem
+		createdAt int64
+		updatedAt int64
+	}
+
+	playlists := make(map[int64]*playlistData)
+	var currentID int64
+	var orgID int64
+	var uid, name, interval string
+	var createdAt, updatedAt int64
+	var itemType, itemValue sql.NullString
+
+	count := 0
+	for rows.Next() {
+		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &createdAt, &updatedAt, &itemType, &itemValue)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get or create playlist entry
+		pl, exists := playlists[currentID]
+		if !exists {
+			pl = &playlistData{
+				id:        currentID,
+				uid:       uid,
+				name:      name,
+				interval:  interval,
+				items:     []playlistv0.PlaylistItem{},
+				createdAt: createdAt,
+				updatedAt: updatedAt,
+			}
+			playlists[currentID] = pl
+		}
+
+		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
+		if itemType.Valid && itemValue.Valid {
+			pl.items = append(pl.items, playlistv0.PlaylistItem{
+				Type:  playlistv0.PlaylistItemType(itemType.String),
+				Value: itemValue.String,
+			})
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Convert to K8s objects and send to stream
+	for _, pl := range playlists {
+		playlist := &playlistv0.Playlist{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: playlistv0.GroupVersion.String(),
+				Kind:       "Playlist",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              pl.uid,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
+			},
+			Spec: playlistv0.PlaylistSpec{
+				Title:    pl.name,
+				Interval: pl.interval,
+				Items:    pl.items,
+			},
+		}
+
+		// Set updated timestamp if different from created
+		if pl.updatedAt != pl.createdAt {
+			meta, err := utils.MetaAccessor(playlist)
+			if err != nil {
+				return nil, err
+			}
+			updatedTime := time.UnixMilli(pl.updatedAt)
+			meta.SetUpdatedTimestamp(&updatedTime)
+		}
+
+		body, err := json.Marshal(playlist)
+		if err != nil {
+			return nil, err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Name:      pl.uid,
+			},
+			Value:  body,
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+
+		opts.Progress(count, fmt.Sprintf("%s (%d)", pl.name, len(req.Value)))
+		count++
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return nil, err
+		}
+	}
+	opts.Progress(-2, fmt.Sprintf("finished playlists... (%d)", len(playlists)))
+	return nil, nil
+}
+
 var _ resource.ListIterator = (*rowsWrapper)(nil)
 
 type rowsWrapper struct {
@@ -555,6 +710,128 @@ func (r *rowsWrapper) Value() []byte {
 	b, err := json.Marshal(r.row.Dash)
 	r.err = err
 	return b
+}
+
+// batchingIterator wraps rowsWrapper to fetch data in batches
+type batchingIterator struct {
+	wrapper   *rowsWrapper
+	a         *dashboardSqlAccess
+	ctx       context.Context
+	helper    *legacysql.LegacyDatabaseHelper
+	query     *DashboardQuery
+	batchSize int
+	done      bool
+	err       error
+}
+
+var _ resource.ListIterator = (*batchingIterator)(nil)
+
+func (b *batchingIterator) Error() error {
+	if b.err != nil {
+		return b.err
+	}
+	return b.wrapper.Error()
+}
+
+func (b *batchingIterator) ContinueToken() string {
+	return b.wrapper.ContinueToken()
+}
+
+func (b *batchingIterator) ResourceVersion() int64 {
+	return b.wrapper.ResourceVersion()
+}
+
+func (b *batchingIterator) Namespace() string {
+	return b.wrapper.Namespace()
+}
+
+func (b *batchingIterator) Name() string {
+	return b.wrapper.Name()
+}
+
+func (b *batchingIterator) Folder() string {
+	return b.wrapper.Folder()
+}
+
+func (b *batchingIterator) Value() []byte {
+	return b.wrapper.Value()
+}
+
+func (b *batchingIterator) Close() error {
+	return b.wrapper.Close()
+}
+
+func newBatchingIterator(ctx context.Context, a *dashboardSqlAccess, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*batchingIterator, error) {
+	iter := &batchingIterator{
+		a:         a,
+		ctx:       ctx,
+		helper:    helper,
+		query:     query,
+		batchSize: query.MaxRows,
+	}
+
+	// Loads the first batch
+	if err := iter.nextBatch(query.LastID); err != nil {
+		return nil, err
+	}
+	return iter, nil
+}
+
+func (b *batchingIterator) nextBatch(lastID int64) error {
+	b.query.LastID = lastID
+	wrapper, err := b.a.getRows(b.ctx, b.helper, b.query)
+	if err != nil {
+		return err
+	}
+	b.wrapper = wrapper
+	return nil
+}
+
+func (b *batchingIterator) Next() bool {
+	if b.done {
+		return false
+	}
+
+	// Try to get next row from current batch
+	if b.wrapper.Next() {
+		return true
+	}
+
+	// Check for errors in current wrapper
+	if b.Error() != nil {
+		return false
+	}
+
+	// No more rows in current batch - close it
+	if err := b.wrapper.Close(); err != nil {
+		// Should not happen, but handle it
+		b.err = err
+		b.done = true
+		return false
+	}
+
+	// Current batch exhausted - check if we got a full batch (might be more data)
+	if b.wrapper.count < b.batchSize {
+		// Got fewer rows than batch size, so we're done
+		b.done = true
+		return false
+	}
+
+	// Fetch next batch with LastID from last row
+	if err := b.nextBatch(b.wrapper.row.token.id); err != nil {
+		b.err = err
+		b.done = true
+		return false
+	}
+
+	// Try to get first row from new batch
+	if b.wrapper.Next() {
+		return true
+	}
+
+	// New batch is empty, we're done
+	b.done = true
+	return false
 }
 
 func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
@@ -903,20 +1180,19 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, err
 	}
 
-	sqlx, err := a.sql(ctx)
+	helper, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newLibraryQueryReq(sqlx, &query)
+	req := newLibraryQueryReq(helper, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
 	}
-	q := rawQuery
 
 	res := &dashboardV0.LibraryPanelList{}
-	rows, err := sqlx.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -959,7 +1235,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 	}
 	if query.UID == "" {
-		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
+		rv, err := helper.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
 			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
@@ -1037,4 +1313,30 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 
 func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (a *dashboardSqlAccess) ListPlaylists(ctx context.Context, orgID int64) (*sql.Rows, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListPlaylists")
+	defer span.End()
+
+	helper, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newPlaylistQueryReq(helper, &PlaylistQuery{
+		OrgID: orgID,
+	})
+
+	rawQuery, err := sqltemplate.Execute(sqlQueryPlaylists, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPlaylists.Name(), err)
+	}
+
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
+	if err != nil && rows != nil {
+		_ = rows.Close()
+		return nil, err
+	}
+	return rows, err
 }

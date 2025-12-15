@@ -14,6 +14,13 @@ export function getGroup(condition: ConditionalRenderingConditions): Conditional
 }
 
 export function getObject(condition: ConditionalRenderingConditions): SceneObject | undefined {
+  const group = getGroup(condition);
+  const groupTarget = group.getTarget();
+
+  if (groupTarget) {
+    return groupTarget;
+  }
+
   return getGroup(condition).parent;
 }
 

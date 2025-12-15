@@ -20,7 +20,7 @@ import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
-import { checkGroup, getObjectType } from './utils';
+import { checkGroup, getObject, getObjectType } from './utils';
 
 type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
 
@@ -40,14 +40,6 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
     deserialize: this.deserialize,
   };
 
-  protected _variableDependency = new VariableDependencyConfig(this, {
-    onAnyVariableChanged: (v) => {
-      if (v.state.name === this.state.variable) {
-        this._check();
-      }
-    },
-  });
-
   public constructor(state: ConditionalRenderingVariableState) {
     super(state);
 
@@ -55,6 +47,20 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
   }
 
   private _activationHandler() {
+    const object = getObject(this);
+
+    if (!object) {
+      return;
+    }
+
+    this._variableDependency = new VariableDependencyConfig(object, {
+      onAnyVariableChanged: (v) => {
+        if (v.state.name === this.state.variable) {
+          this._check();
+        }
+      },
+    });
+
     this.forEachChild((child) => {
       if (!child.isActive) {
         this._subs.add(child.activate());
@@ -78,7 +84,13 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
       return undefined;
     }
 
-    const variable = sceneGraph.getVariables(this).getByName(this.state.variable);
+    const object = getObject(this);
+
+    if (!object) {
+      return undefined;
+    }
+
+    const variable = sceneGraph.getVariables(object).getByName(this.state.variable);
 
     if (!variable) {
       return undefined;
@@ -125,6 +137,10 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
       this.setState({ value });
       this._check();
     }
+  }
+
+  public forceCheck() {
+    this._check();
   }
 
   public renderCmp(): ReactElement {

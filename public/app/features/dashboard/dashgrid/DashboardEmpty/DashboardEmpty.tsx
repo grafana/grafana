@@ -15,7 +15,7 @@ import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
-  useIsReadOnlyRepo,
+  useRepositoryStatus,
   useOnAddVisualization,
   useOnAddLibraryPanel,
   useOnImportDashboard,
@@ -149,10 +149,10 @@ export interface Props {
 // We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed.
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
-  const isReadOnlyRepo = useIsReadOnlyRepo(props);
-  const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo });
-  const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo });
-  const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo });
+  const { isReadOnlyRepo, isProvisioned } = useRepositoryStatus(props);
+  const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo, isProvisioned });
+  const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo, isProvisioned });
+  const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo, isProvisioned });
 
   return (
     <DashboardEmptyExtensionPoint

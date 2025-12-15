@@ -10,12 +10,12 @@ import {
   LogRowModel,
 } from '@grafana/data';
 
+import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode } from '../dataquery.gen'; // Add this import statement
 import { logGroupNamesVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';
 import { validLogsQuery } from '../mocks/queries';
 import { TimeRangeMock } from '../mocks/timeRange';
-import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode } from '../types'; // Add this import statement
 
 import {
   LOGSTREAM_IDENTIFIER_INTERNAL,

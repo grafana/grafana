@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +14,6 @@ import (
 func NewSearchOptions(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
-	tracer trace.Tracer,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
@@ -48,7 +46,7 @@ func NewSearchOptions(
 			BuildVersion:           cfg.BuildVersion,
 			OwnsIndex:              ownsIndexFn,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
-		}, tracer, indexMetrics)
+		}, indexMetrics)
 
 		if err != nil {
 			return resource.SearchOptions{}, err

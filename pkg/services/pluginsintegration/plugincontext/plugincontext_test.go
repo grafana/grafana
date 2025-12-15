@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -42,7 +41,7 @@ func TestGet(t *testing.T) {
 	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
-	store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+	store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 	require.NoError(t, err)
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
 		store, &fakeDatasources.FakeCacheService{},

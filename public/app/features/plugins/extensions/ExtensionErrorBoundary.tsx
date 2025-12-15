@@ -25,7 +25,6 @@ export const ExtensionErrorBoundary = ({
         log.error(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
           message: error.message,
           componentStack: errorInfo.componentStack ?? '',
-          digest: errorInfo.digest ?? '',
         });
       }}
       fallback={() => {

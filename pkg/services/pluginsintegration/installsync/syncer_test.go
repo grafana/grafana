@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func TestSyncer_Sync(t *testing.T) {
@@ -25,7 +26,7 @@ func TestSyncer_Sync(t *testing.T) {
 		name                        string
 		pluginInstallAPISyncEnabled bool
 		pluginStoreServiceEnabled   bool
-		installedPlugins            []*plugins.Plugin
+		installedPlugins            []pluginstore.Plugin
 		orgs                        []*org.OrgDTO
 		orgServiceError             error
 		serverLockError             error
@@ -36,7 +37,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "plugin install API sync feature toggle disabled",
 			pluginInstallAPISyncEnabled: false,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -45,7 +46,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "plugin store service feature toggle disabled",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   false,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -54,7 +55,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, no orgs",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -63,7 +64,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, empty installed plugins",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{},
+			installedPlugins:            []pluginstore.Plugin{},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -72,7 +73,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, single org",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             1,
@@ -81,7 +82,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, multiple orgs",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs: []*org.OrgDTO{
 				{ID: 1, Name: "Org 1"},
 				{ID: 2, Name: "Org 2"},
@@ -94,7 +95,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "org service error",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        nil,
 			orgServiceError:             errors.New("org service error"),
 			expectedError:               errors.New("org service error"),
@@ -104,7 +105,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "server lock error",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			serverLockError:             errors.New("lock error"),
 			expectedError:               errors.New("lock error"),
@@ -156,6 +157,8 @@ func TestSyncer_Sync(t *testing.T) {
 				orgService,
 				func(orgID int64) string { return "org-1" },
 				serverLock,
+				nil,
+				nil,
 			)
 
 			// Execute
@@ -177,7 +180,7 @@ func TestSyncer_Sync(t *testing.T) {
 func TestSyncer_syncNamespace(t *testing.T) {
 	tests := []struct {
 		name               string
-		installedPlugins   []*plugins.Plugin
+		installedPlugins   []pluginstore.Plugin
 		apiPlugins         []pluginsv0alpha1.Plugin
 		clientListError    error
 		expectedError      error
@@ -188,7 +191,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 	}{
 		{
 			name:               "no installed plugins, no API plugins",
-			installedPlugins:   []*plugins.Plugin{},
+			installedPlugins:   []pluginstore.Plugin{},
 			apiPlugins:         []pluginsv0alpha1.Plugin{},
 			expectedError:      nil,
 			expectedRegCalls:   0,
@@ -196,7 +199,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		},
 		{
 			name: "installed plugins only",
-			installedPlugins: []*plugins.Plugin{
+			installedPlugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
 				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
 			},
@@ -208,7 +211,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		},
 		{
 			name:             "API plugins only",
-			installedPlugins: []*plugins.Plugin{},
+			installedPlugins: []pluginstore.Plugin{},
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -236,7 +239,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		},
 		{
 			name: "mixed - some match",
-			installedPlugins: []*plugins.Plugin{
+			installedPlugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
 				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
 				{JSONData: plugins.JSONData{ID: "plugin-3", Info: plugins.Info{Version: "3.0.0"}}, Class: plugins.ClassExternal},
@@ -269,7 +272,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		},
 		{
 			name:             "list error",
-			installedPlugins: []*plugins.Plugin{},
+			installedPlugins: []pluginstore.Plugin{},
 			apiPlugins:       []pluginsv0alpha1.Plugin{},
 			clientListError:  errors.New("list error"),
 			expectedError:    errors.New("list error"),
@@ -327,6 +330,8 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },
 				&fakeServerLock{},
+				nil,
+				nil,
 			)
 
 			// Execute
@@ -378,6 +383,8 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },
 				&fakeServerLock{},
+				nil,
+				nil,
 			)
 
 			// First call

@@ -30,6 +30,23 @@ func New(cfg app.Config) (app.App, error) {
 		},
 	}
 
+	// Add custom route handlers if a TagHandler is provided in SpecificConfig.
+	// The handler is created/owned by the registry layer and passed in via
+	// SpecificConfig to avoid the apps package depending on the registry.
+	if cfg.SpecificConfig != nil {
+		if annotationConfig, ok := cfg.SpecificConfig.(*AnnotationConfig); ok && annotationConfig.TagHandler != nil {
+			simpleConfig.VersionedCustomRoutes = map[string]simple.AppVersionRouteHandlers{
+				"v0alpha1": {
+					{
+						Namespaced: true,
+						Path:       "tags",
+						Method:     "GET",
+					}: annotationConfig.TagHandler,
+				},
+			}
+		}
+	}
+
 	a, err := simple.NewApp(simpleConfig)
 	if err != nil {
 		return nil, err

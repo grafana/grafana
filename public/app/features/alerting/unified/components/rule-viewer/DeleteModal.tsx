@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';

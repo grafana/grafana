@@ -62,6 +62,7 @@ export const Example: StoryFn<StoryProps> = (args) => {
     position: args.position,
     bottomMargin: 0,
     edgeMargin: 0,
+    onClosePane: () => setOpenPane(''),
   });
 
   return (
@@ -79,7 +80,7 @@ export const Example: StoryFn<StoryProps> = (args) => {
         <Sidebar contextValue={contextValue}>
           {openPane === 'settings' && (
             <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Settings" onClose={() => togglePane('')}>
+              <Sidebar.PaneHeader title="Settings">
                 <Button variant="secondary" size="sm">
                   Action
                 </Button>
@@ -88,12 +89,12 @@ export const Example: StoryFn<StoryProps> = (args) => {
           )}
           {openPane === 'outline' && (
             <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Outline" onClose={() => togglePane('')} />
+              <Sidebar.PaneHeader title="Outline" />
             </Sidebar.OpenPane>
           )}
           {openPane === 'add' && (
             <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Add element" onClose={() => togglePane('')} />
+              <Sidebar.PaneHeader title="Add element" />
             </Sidebar.OpenPane>
           )}
           <Sidebar.Toolbar>

@@ -156,13 +156,18 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     return;
   }
 
-  const url: string =
+  const dashboardBindingsUrl: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
+    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+
+  const scopeNavigationsUrl: string =
+    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
   const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
 
-  await page.route(url, async (route) => {
+  // Mock scope_dashboard_bindings endpoint
+  await page.route(dashboardBindingsUrl, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -215,7 +220,52 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_dashboard_bindings`));
+  // Mock scope_navigations endpoint
+  await page.route(scopeNavigationsUrl, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: scopes.flatMap((scope) => {
+          const navigations: Array<{
+            kind: string;
+            apiVersion: string;
+            metadata: { name: string; resourceVersion: string; creationTimestamp: string };
+            spec: { url: string; scope: string };
+            status: { title: string };
+          }> = [];
+
+          // Create a scope navigation if dashboardUid is provided
+          if (scope.dashboardUid && scope.addLinks) {
+            navigations.push({
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: `scope-${scope.name}-nav`,
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                url: `/d/${scope.dashboardUid}`,
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                title: scope.dashboardTitle ?? scope.title,
+              },
+            });
+          }
+
+          return navigations;
+        }),
+      }),
+    });
+  });
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/find/scope_dashboard_bindings`) || response.url().includes(`/find/scope_navigations`)
+  );
   const scopeRequestPromises: Array<Promise<Response>> = [];
 
   for (const scope of scopes) {

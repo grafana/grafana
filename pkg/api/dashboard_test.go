@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -112,17 +111,15 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
+func newTestLive(t *testing.T) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
-		store,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
-		nil,
 		features, acimpl.ProvideAccessControl(features),
 		&dashboards.FakeDashboardService{},
 		nil, nil)
@@ -752,7 +749,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 				hs := HTTPServer{
 					Cfg:                     cfg,
 					ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-					Live:                    newTestLive(t, db.InitTestDB(t)),
+					Live:                    newTestLive(t),
 					QuotaService:            quotatest.New(false, nil),
 					LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 					DashboardService:        dashboardService,
@@ -866,45 +863,6 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, false, dash.Meta.Provisioned)
-		}, mockSQLStore)
-	})
-
-	t.Run("v2 dashboards should not be returned in api", func(t *testing.T) {
-		mockSQLStore := dbtest.NewFakeDB()
-		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardProvisioningService := dashboards.NewFakeDashboardProvisioning(t)
-
-		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "apiVersion": "v2"}`))
-		require.NoError(t, err)
-		qResult := &dashboards.Dashboard{
-			ID:         1,
-			UID:        "dash",
-			OrgID:      1,
-			APIVersion: "v2",
-			Data:       dataValue,
-		}
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
-			hs := &HTTPServer{
-				Cfg:                          setting.NewCfg(),
-				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
-				SQLStore:                     mockSQLStore,
-				AccessControl:                actest.FakeAccessControl{ExpectedEvaluate: true},
-				DashboardService:             dashboardService,
-				Features:                     featuremgmt.WithFeatures(),
-				starService:                  startest.NewStarServiceFake(),
-				tracer:                       tracing.InitializeTracerForTest(),
-				dashboardProvisioningService: dashboardProvisioningService,
-				folderService:                foldertest.NewFakeService(),
-				log:                          log.New("test"),
-				namespacer:                   func(orgID int64) string { return strconv.FormatInt(orgID, 10) },
-			}
-			hs.callGetDashboard(sc)
-
-			assert.Equal(t, http.StatusNotAcceptable, sc.resp.Code)
-			result := sc.ToJSON()
-			assert.Equal(t, "dashboard api version not supported, use /apis/dashboard.grafana.app/v2/namespaces/1/dashboards/dash instead", result.Get("message").MustString())
 		}, mockSQLStore)
 	})
 }
@@ -1043,7 +1001,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t, db.InitTestDB(t)),
+			Live:                  newTestLive(t),
 			QuotaService:          quotatest.New(false, nil),
 			pluginStore:           &pluginstore.FakePluginStore{},
 			LibraryElementService: &libraryelementsfake.LibraryElementService{},
@@ -1083,7 +1041,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                    newTestLive(t, db.InitTestDB(t)),
+			Live:                    newTestLive(t),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			DashboardService:        mock,

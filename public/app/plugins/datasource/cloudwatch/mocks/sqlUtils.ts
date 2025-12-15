@@ -2,13 +2,13 @@ import {
   QueryEditorExpression,
   QueryEditorExpressionType,
   QueryEditorArrayExpression,
-  QueryEditorOperatorExpression,
   QueryEditorPropertyType,
   QueryEditorGroupByExpression,
   QueryEditorFunctionExpression,
   QueryEditorFunctionParameterExpression,
   QueryEditorPropertyExpression,
-} from '../expressions';
+} from '../dataquery.gen';
+import { QueryEditorOperatorExpression } from '../expressions';
 
 export function createArray(
   expressions: QueryEditorExpression[],

@@ -889,6 +889,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format:      "int64",
 						},
 					},
+					"warning": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The error count",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"noop": {
 						SchemaProps: spec.SchemaProps{
 							Description: "No action required (useful for sync)",
@@ -898,8 +905,22 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
 							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"warnings": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1016,6 +1037,20 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 						},
 					},
 					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"warnings": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1686,6 +1721,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					"branch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target URL",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target path",
 							Type:        []string{"string"},
 							Format:      "",
 						},

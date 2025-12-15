@@ -20,8 +20,7 @@ func TestValidateCreate(t *testing.T) {
 	tests := []struct {
 		name        string
 		folder      *folders.Folder
-		getter      *folders.FolderInfoList
-		getterError error
+		mockFolders map[string]*folders.Folder
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
 	}{
@@ -36,10 +35,23 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3"},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "p3",
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
 				},
 			},
 		},
@@ -94,12 +106,41 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3", Parent: "p4"},
-					{Name: "p4", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p3",
+						Annotations: map[string]string{"grafana.app/folder": "p4"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
+				},
+				"p4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p4",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p4 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
 				},
 			},
 			maxDepth:    2,
@@ -116,16 +157,94 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "4", Parent: "3"},
-					{Name: "3", Parent: "2"},
-					{Name: "2", Parent: "1"},
-					{Name: "1", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "4",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "4 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": "2"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "1",
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
 				},
 			},
 			maxDepth: folder.MaxNestedFolderDepth,
+		},
+		{
+			name: "cannot create a circular reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "3",
+					Annotations: map[string]string{"grafana.app/folder": "2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			expectedErr: "cyclic folder references found",
+			mockFolders: map[string]*folders.Folder{
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "1",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
+				},
+			},
 		},
 	}
 
@@ -135,10 +254,16 @@ func TestValidateCreate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			err := validateOnCreate(context.Background(), tt.folder,
-				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
-					return tt.getter, tt.getterError
-				}, maxDepth)
+
+			mockStorage := grafanarest.NewMockStorage(t)
+			for name, f := range tt.mockFolders {
+				f.Name = name
+				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+			}
+
+			getter := newParentsGetter(mockStorage, maxDepth)
+
+			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)

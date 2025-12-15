@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -43,7 +44,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	return dsHandler.QueryData(ctx, req)
+
+	return dsHandler.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 
 func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
@@ -53,6 +55,8 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		if err != nil {
 			return nil, err
 		}
+		pluginCfg := backend.PluginConfigFromContext(ctx)
+
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      sqlCfg.DefaultMaxOpenConns,
 			MaxIdleConns:      sqlCfg.DefaultMaxIdleConns,
@@ -87,6 +91,7 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			OrgID:                   pluginCfg.OrgID,
 		}
 
 		userFacingDefaultError, err := grafCfg.UserFacingDefaultError()
@@ -117,5 +122,5 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, err
 	}
 
-	return dsHandler.CheckHealth(ctx, req)
+	return dsHandler.CheckHealth(azusercontext.WithUserFromHealthCheckReq(ctx, req), req)
 }

@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type JSX } from 'react';
 
 import { Stack, InlineField, Input, Select, TextArea } from '@grafana/ui';
 

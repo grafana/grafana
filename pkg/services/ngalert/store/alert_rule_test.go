@@ -1963,6 +1963,94 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			require.Equal(t, expected, actual, "rules should be ordered by group name")
 		}
 	})
+
+	t.Run("SearchTitle filter should be applied across all pages", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		searchTitle := "str"
+
+		// Create rules across multiple groups with some having "str" in title
+		// Group 1: 2 rules, one with "str", one without
+		// Group 2: 2 rules, none with "str"
+		// Group 3: 2 rules, one with "str", one without
+		ruleGen := models.RuleGen.With(
+			models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+			models.RuleMuts.WithOrgID(orgID),
+		)
+
+		ns := "test-ns"
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-1 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-2"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-3"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-4"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-5 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-6"),
+		))
+
+		// First page: get 1 group with SearchTitle filter
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit: 1,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, continueToken, "should have more pages")
+
+		// Verify first page only has rules with "str" in title
+		require.Len(t, result, 1)
+		for _, rule := range result {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-1", rule.RuleGroup)
+		}
+
+		// Second page
+		result2, continueToken2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit:         1,
+			ContinueToken: continueToken,
+		})
+		require.NoError(t, err)
+
+		// Verify second page also only has rules with "str" in title
+		require.Len(t, result2, 1)
+		for _, rule := range result2 {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-3", rule.RuleGroup)
+		}
+
+		// After all pages, token should be empty
+		require.Empty(t, continueToken2, "should be no more pages")
+	})
 }
 
 func Benchmark_ListAlertRules(b *testing.B) {
@@ -2078,6 +2166,84 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
 				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
+
+	t.Run("filter by DataSourceUIDs", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		// Create rules with different data sources.
+		const (
+			uid1     = "uid-1"
+			uid2     = "uid-2"
+			uid3     = "uid-3"
+			rule1UID = "rule-1"
+			rule2UID = "rule-2"
+			rule3UID = "rule-3"
+			rule4UID = "rule-4"
+			rule5UID = "rule-5"
+			rule6UID = "rule-6"
+		)
+
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule1UID), models.RuleGen.WithDataSourceUID(uid1)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule2UID), models.RuleMuts.WithDataSourceUID(uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule3UID), models.RuleMuts.WithDataSourceUID(uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule4UID), models.RuleGen.WithDataSourceUID(uid1, uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule5UID), models.RuleMuts.WithDataSourceUID(uid2, uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule6UID), models.RuleMuts.WithDataSourceUID(uid1, uid2, uid3)))
+
+		tc := []struct {
+			name         string
+			dsUIDs       []string
+			expectedUIDs []string
+		}{
+			{
+				name:         "searching for uid-1 returns rules using it",
+				dsUIDs:       []string{uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "searching for uid-1 and uid-2 returns rules using them",
+				dsUIDs:       []string{uid1, uid2},
+				expectedUIDs: []string{rule1UID, rule2UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:         "searching for uid-1, uid-2, and uid-3 returns all rules",
+				dsUIDs:       []string{uid1, uid2, uid3},
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:   "searching for a non-existing UID returns no rules",
+				dsUIDs: []string{"non-existing"},
+			},
+			{
+				name:         "searching for uid-1 and a non-existing UID returns the rules using uid-1",
+				dsUIDs:       []string{"non-existing", uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "no data source filter should return all rules",
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:          orgID,
+					DataSourceUIDs: tt.dsUIDs,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+
+				got := make([]string, 0, len(result))
+				for _, r := range result {
+					got = append(got, r.UID)
+				}
+				require.ElementsMatch(t, tt.expectedUIDs, got)
 			})
 		}
 	})
