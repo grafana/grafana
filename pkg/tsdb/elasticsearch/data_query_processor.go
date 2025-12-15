@@ -212,7 +212,7 @@ func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchReques
 		if firstMetricType != logsType && firstMetricType != rawDataType && firstMetricType != rawDocumentType {
 			bucketAggs, metricAggs, err := e.aggregationParserDSLRawQuery.Parse(q.RawDSLQuery)
 			if err != nil {
-				return err
+				return backend.DownstreamError(fmt.Errorf("failed to parse aggregations: %w", err))
 			}
 
 			// If there is no metric agg in the query, it is a count agg

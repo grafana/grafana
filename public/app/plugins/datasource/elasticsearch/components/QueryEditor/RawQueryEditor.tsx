@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, monacoTypes, useStyles2, Button, Stack } from '@grafana/ui';
+import { CodeEditor, Monaco, CodeEditorMonacoOptions,  monacoTypes, useStyles2, Button, Stack, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;
@@ -42,8 +42,29 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
     [onChange]
   );
 
+  const monacoOptions: CodeEditorMonacoOptions = {
+    fontSize: 14,
+    lineNumbers: 'on',
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    automaticLayout: true,
+    fixedOverflowWidgets: true,
+    folding: true,
+    renderLineHighlight: 'all',
+    suggest: {
+      showProperties: true,
+      showMethods: true,
+      showKeywords: true,
+    },
+    quickSuggestions: {
+      other: true,
+      strings: true,
+    },
+  };
+
   return (
-    <div className={styles.container}>
+    <Box>
       <div className={styles.header}>
         <Stack gap={1}>
           <Button
@@ -66,29 +87,10 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
         height={200}
         width="100%"
         onBlur={handleQueryChange}
-        monacoOptions={{
-          fontSize: 14,
-          lineNumbers: 'on',
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          wordWrap: 'on',
-          automaticLayout: true,
-          fixedOverflowWidgets: true,
-          folding: true,
-          renderLineHighlight: 'all',
-          suggest: {
-            showProperties: true,
-            showMethods: true,
-            showKeywords: true,
-          },
-          quickSuggestions: {
-            other: true,
-            strings: true,
-          },
-        }}
+        monacoOptions={monacoOptions}
         onEditorDidMount={handleEditorDidMount}
       />
-    </div>
+    </Box>
   );
 }
 
