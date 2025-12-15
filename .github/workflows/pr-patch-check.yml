@@ -93,6 +93,8 @@ jobs:
         uses: myrotvorets/set-commit-status-action@6d6905c99cd24a4a2cbccc720b62dc6ca5587141
         with:
           token: ${{ github.token }}
+          sha: ${{ inputs.src_pr_commit_sha }}
+          repo: ${{ inputs.src_repo }}
           status: success
           context: "Test Patches (event)"
           description: "Test Patches (event) on a fork"
