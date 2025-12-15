@@ -28,7 +28,7 @@ func TestIntegrationPluginMeta(t *testing.T) {
 			"apiVersion": "plugins.grafana.app/v0alpha1",
 			"kind": "Plugin",
 			"metadata": {"name": "%s"},
-			"spec": {"id": "grafana-piechart-panel", "version": "1.0.0"}
+			"spec": {"id": "piechart", "version": "1.0.0"}
 		}`, plugin1Name))
 		_, err := client.Resource.Create(ctx, plugin1, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestIntegrationPluginMeta(t *testing.T) {
 			"apiVersion": "plugins.grafana.app/v0alpha1",
 			"kind": "Plugin",
 			"metadata": {"name": "%s"},
-			"spec": {"id": "grafana-clock-panel", "version": "1.0.0"}
+			"spec": {"id": "table", "version": "1.0.0"}
 		}`, plugin2Name))
 		_, err = client.Resource.Create(ctx, plugin2, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -63,8 +63,8 @@ func TestIntegrationPluginMeta(t *testing.T) {
 			require.NotEmpty(t, item.Spec.PluginJson.Type)
 			require.NotEmpty(t, item.Spec.PluginJson.Name)
 		}
-		require.True(t, foundIDs["grafana-piechart-panel"])
-		require.True(t, foundIDs["grafana-clock-panel"])
+		require.True(t, foundIDs["piechart"])
+		require.True(t, foundIDs["table"])
 	})
 
 	t.Run("list plugin metas with no plugins", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestIntegrationPluginMeta(t *testing.T) {
 			"apiVersion": "plugins.grafana.app/v0alpha1",
 			"kind": "Plugin",
 			"metadata": {"name": "%s"},
-			"spec": {"id": "grafana-piechart-panel", "version": "1.0.0"}
+			"spec": {"id": "piechart", "version": "1.0.0"}
 		}`, pluginName))
 		_, err := client.Resource.Create(ctx, plugin, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestIntegrationPluginMeta(t *testing.T) {
 
 		require.NotNil(t, response.Result)
 		require.NotNil(t, response.Result.Spec.PluginJson)
-		require.Equal(t, "grafana-piechart-panel", response.Result.Spec.PluginJson.Id)
+		require.Equal(t, "piechart", response.Result.Spec.PluginJson.Id)
 		require.NotEmpty(t, response.Result.Spec.PluginJson.Name)
 		require.NotEmpty(t, response.Result.Spec.PluginJson.Type)
 	})
