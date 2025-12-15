@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { MergeExclusive } from 'type-fest';
 
+import { config } from '@grafana/runtime';
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -76,6 +77,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         ...fetchOptions,
         limitAlerts: hookOptions.limitAlerts,
         ...fetchOptions.filter,
+        compact: config.featureToggles.alertingCompactRulesResponse,
       }).unwrap();
 
       if (hookOptions.populateCache) {

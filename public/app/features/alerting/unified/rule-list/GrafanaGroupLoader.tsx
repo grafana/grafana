@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
@@ -44,6 +45,7 @@ export function GrafanaGroupLoader({
       folderUid: groupIdentifier.namespace.uid,
       groupName: groupIdentifier.groupName,
       limitAlerts: 0,
+      compact: config.featureToggles.alertingCompactRulesResponse,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );
