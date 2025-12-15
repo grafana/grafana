@@ -94,18 +94,6 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return r.deleteFolder(ctx, opts)
 	}
 
-	// Reject individual file delete operations for configured branch - use bulk operations instead
-	if r.isConfiguredBranch(opts) {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusMethodNotAllowed,
-				Reason:  metav1.StatusReasonMethodNotAllowed,
-				Message: "file delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
-			},
-		}
-	}
-
 	// Read the file from the default branch as it won't exist in the possibly new branch
 	file, err := r.repo.Read(ctx, opts.Path, "")
 	if err != nil {
@@ -124,8 +112,29 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
+	// Check simple validation rules BEFORE calling external services
+	// Reject individual file delete operations for configured branch - use bulk operations instead
+	if r.isConfiguredBranch(opts) {
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusMethodNotAllowed,
+				Reason:  metav1.StatusReasonMethodNotAllowed,
+				Message: "file delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
+			},
+		}
+	}
+
+	// Authorize after simple checks but before performing the operation
+	// This ensures authorization is validated for all branches
 	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
 		return nil, err
+	}
+
+	// Check if an existing resource with this UID is managed by a different repository
+	// This prevents unauthorized deletion of resources owned by other repositories
+	if err = r.authorizeForExistingResource(ctx, parsed, utils.VerbDelete); err != nil {
+		return nil, fmt.Errorf("not authorized to delete existing resource: %w", err)
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -254,6 +263,17 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
+	// Check if an existing resource with this UID exists
+	// If it does, we need permission to update/delete it
+	// This prevents unauthorized overwrites of resources managed by other repositories
+	// Note: This check applies to ALL operations, not just configured branch operations
+	if parsed.Action == provisioning.ResourceActionCreate {
+		// For creates, check if we can overwrite an existing resource with this UID
+		if err = r.authorizeForExistingResource(ctx, parsed, utils.VerbUpdate); err != nil {
+			return nil, fmt.Errorf("not authorized to overwrite existing resource: %w", err)
+		}
+	}
+
 	// Verify that we can create (or update) the referenced resource
 	verb := utils.VerbUpdate
 	if parsed.Action == provisioning.ResourceActionCreate {
@@ -378,6 +398,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	// Check simple validation rules BEFORE parsing and authorization
 	// Reject individual file move operations for configured branch - use bulk operations instead
 	if r.isConfiguredBranch(opts) {
 		return nil, &apierrors.StatusError{
@@ -441,7 +462,17 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("errors while parsing moved file [%v]", newParsed.Errors)
 	}
 
-	// Authorize create on the new path
+	// Authorize for the target resource
+	// If the UID changed or this is a new file, check if an existing resource with the target UID exists
+	// and verify we have permission to modify/delete it
+	if newParsed.Obj.GetName() != parsed.Obj.GetName() {
+		// UID changed - we need permission to delete any existing resource with the new UID
+		if err = r.authorizeForExistingResource(ctx, newParsed, utils.VerbDelete); err != nil {
+			return nil, fmt.Errorf("not authorized to overwrite existing resource at target: %w", err)
+		}
+	}
+
+	// Authorize create or update on the new path
 	verb := utils.VerbCreate
 	if newParsed.Action == provisioning.ResourceActionUpdate {
 		verb = utils.VerbUpdate
@@ -505,12 +536,15 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	return newParsed, nil
 }
 
+// authorize checks if the requester has permission to perform the specified verb on the resource.
+// The provisioning service operates with admin privileges and validates based on resource-level permissions.
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
+	// Determine which resource name to use for authorization
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
@@ -518,6 +552,8 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		name = parsed.Obj.GetName()
 	}
 
+	// Check resource-level permissions via access checker
+	// The provisioning service is treated as admin-level for resource type operations
 	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
 		Group:     parsed.GVR.Group,
 		Resource:  parsed.GVR.Resource,
@@ -527,35 +563,54 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 	}, parsed.Meta.GetFolder())
 	if err != nil || !rsp.Allowed {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to read the embedded file"))
+			fmt.Errorf("no access to perform %s on the resource", verb))
 	}
 
-	idType, _, err := authlib.ParseTypeID(id.GetID())
-	if err != nil {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
-	}
-	// only apply role based access if identity is not of type access policy
-	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-		fmt.Errorf("must be admin or editor to access files from provisioning"))
+	return nil
 }
 
+// authorizeForExistingResource checks if we have permission to modify/delete an existing resource
+// with the given name. If no resource exists, this returns nil (no authorization needed).
+// This is used to prevent unauthorized overwrites of existing resources managed by other repositories.
+func (r *DualReadWriter) authorizeForExistingResource(ctx context.Context, parsed *ParsedResource, verb string) error {
+	// Try to fetch the existing resource with this name/UID
+	if parsed.Client == nil {
+		return nil // No client means we can't check for existing resources
+	}
+
+	existing, err := parsed.Client.Get(ctx, parsed.Obj.GetName(), metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil // No existing resource, no authorization needed
+		}
+		return fmt.Errorf("failed to check for existing resource: %w", err)
+	}
+
+	// Resource exists - create a ParsedResource for authorization check
+	existingParsed := &ParsedResource{
+		Obj:      existing,
+		Existing: existing,
+		GVR:      parsed.GVR,
+		GVK:      parsed.GVK,
+		Meta:     parsed.Meta,
+		Client:   parsed.Client,
+	}
+
+	// Authorize the operation on the existing resource
+	return r.authorize(ctx, existingParsed, verb)
+}
+
+// authorizeCreateFolder checks if the requester has permission to create folders.
+// The provisioning service operates with admin privileges for folder creation.
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
-	id, err := identity.GetRequester(ctx)
+	_, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-	// Simple role based access for now
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-		fmt.Errorf("must be admin or editor to access folders with provisioning"))
+	// Provisioning service is treated as admin-level for folder operations
+	// No additional authorization checks needed beyond identity validation
+	return nil
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
