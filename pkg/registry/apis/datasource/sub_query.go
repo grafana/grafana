@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -93,26 +95,47 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       map[string]string{},
 		})
 
+		code := query.GetResponseCode(rsp)
+
 		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
-			responder.Object(int(backend.StatusBadRequest),
-				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
-					"A": {
-						Error:       errors.New(e.LogMessage),
-						ErrorSource: backend.ErrorSourceDownstream,
-						Status:      backend.StatusBadRequest,
-					},
-				}}},
-			)
-			return
+			err = nil
+			rsp = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				"A": {
+					Error:       errors.New(e.LogMessage),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusBadRequest,
+				},
+			}}
 		}
-
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		responder.Object(query.GetResponseCode(rsp),
+
+		// Respond with raw protobuf when requested
+		for _, accept := range req.Header.Values("Accept") {
+			if accept == "application/vnd.grafana.protobuf" {
+				conv := backend.ConvertToProtobuf{}
+				p, err := conv.QueryDataResponse(rsp)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				data, err := proto.Marshal(p)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				w.Header().Add("Content-Type", "application/vnd.grafana.protobuf")
+				w.WriteHeader(code)
+				_, _ = w.Write(data)
+				return
+			}
+		}
+
+		responder.Object(code,
 			&query.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
