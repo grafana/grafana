@@ -554,6 +554,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
 			require.NoError(t, err)
+			if v.EnableMigration != nil {
+				_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", *v.EnableMigration))
+				require.NoError(t, err)
+			}
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {

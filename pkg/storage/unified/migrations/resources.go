@@ -86,7 +86,7 @@ func validateRegisteredResources() error {
 	}
 
 	var missing []string
-	for _, expected := range setting.MigratedUnifiedResources {
+	for expected := range setting.MigratedUnifiedResources {
 		if !registeredMap[expected] {
 			missing = append(missing, expected)
 		}
