@@ -21,9 +21,9 @@ weight: 120
 
 # Install a plugin
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-Plugin installation from the Grafana website will be removed in February 2026. Use the options in this document instead.
+Installing plugins from the Grafana website into a Grafana Cloud instance will be removed in February 2026. Use the following guidance to install through the Grafana UI
 
 {{< /admonition >}}
 
