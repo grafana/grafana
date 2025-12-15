@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
@@ -80,6 +81,10 @@ func RegisterAppInstaller(
 	installer.AppInstaller = i
 
 	return installer, nil
+}
+
+func (a *AnnotationAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return annotationapp.GetAuthorizer()
 }
 
 func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
