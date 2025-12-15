@@ -867,3 +867,86 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 		}
 	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
 }
+
+func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "job-permissions-test"
+	testRepo := TestRepo{
+		Name:               repo,
+		Target:             "folder",
+		Copies:             map[string]string{}, // No files needed for this test
+		ExpectedDashboards: 0,
+		ExpectedFolders:    1, // Repository creates a folder
+	}
+	helper.CreateRepo(t, testRepo)
+
+	jobSpec := provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	}
+	body := asJSON(jobSpec)
+
+	t.Run("editor can POST jobs", func(t *testing.T) {
+		var statusCode int
+		result := helper.EditorREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "editor should be able to POST jobs")
+		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
+
+		// Verify the job was created
+		obj, err := result.Get()
+		require.NoError(t, err, "should get job object")
+		unstruct, ok := obj.(*unstructured.Unstructured)
+		require.True(t, ok, "expecting unstructured object")
+		require.NotEmpty(t, unstruct.GetName(), "job should have a name")
+	})
+
+	t.Run("viewer cannot POST jobs", func(t *testing.T) {
+		var statusCode int
+		result := helper.ViewerREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "viewer should not be able to POST jobs")
+		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+	})
+
+	t.Run("admin can POST jobs", func(t *testing.T) {
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
+
+		// Job might already exist from previous test, which is acceptable
+		if apierrors.IsAlreadyExists(result.Error()) {
+			// Wait for the existing job to complete
+			helper.AwaitJobs(t, repo)
+			return
+		}
+
+		require.NoError(t, result.Error(), "admin should be able to POST jobs")
+		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
+	})
+}
