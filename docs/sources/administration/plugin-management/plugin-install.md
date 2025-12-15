@@ -21,6 +21,12 @@ weight: 120
 
 # Install a plugin
 
+{{< admonition type="caution" >}}
+
+Plugin installation from the Grafana website will be removed in February 2026. Use the options in this document instead.
+
+{{< /admonition >}}
+
 The most common way to install a plugin is through the Grafana UI.
 
 1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
@@ -30,11 +36,9 @@ The most common way to install a plugin is through the Grafana UI.
 
 You can use use the following alternative methods to install a plugin depending on your environment or set-up.
 
-[DEPRECATION NOTE HERE???]
-
 ## Install a plugin using Grafana CLI
 
-The Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line tool. For more information about Grafana CLI plugin commands, refer to [Plugin commands](/docs/grafana/<GRAFANA_VERSION>/cli/#plugins-commands).
+The Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line tool. For more information about Grafana CLI plugin commands, refer to [Plugin commands](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/cli/#plugins-commands).
 
 ## Install a plugin from a ZIP file
 
