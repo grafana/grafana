@@ -1201,7 +1201,7 @@ func extractDatasourceUIDs(rule *ngmodels.AlertRule) []string {
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
-// Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
+// Returns an empty string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
 
@@ -1229,17 +1229,8 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 		return strings.Join(queries, " | ")
 	}
 
-	return encodedQueriesOrError(rule.Data)
-}
-
-// encodedQueriesOrError tries to encode rule query data into JSON if it fails returns the encoding error as a string.
-func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
-	encodedQueries, err := json.Marshal(rules)
-	if err == nil {
-		return string(encodedQueries)
-	}
-
-	return err.Error()
+	// No queries extracted, return an empty string.
+	return ""
 }
 
 func errorOrEmpty(err error) string {
