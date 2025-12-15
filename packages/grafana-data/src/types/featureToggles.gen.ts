@@ -499,6 +499,10 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
+  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+  */
+  dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */

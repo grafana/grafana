@@ -821,6 +821,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "dashboardAdHocAndGroupByWrapper",
+			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "cloudWatchNewLabelParsing",
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,

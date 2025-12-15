@@ -924,6 +924,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardAdHocAndGroupByWrapper",
+        "resourceVersion": "1765841806645",
+        "creationTimestamp": "2025-12-15T23:36:46Z"
+      },
+      "spec": {
+        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-11T16:52:46Z"

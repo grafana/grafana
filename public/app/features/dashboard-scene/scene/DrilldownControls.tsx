@@ -17,7 +17,7 @@ interface DrilldownControlsProps {
  * and the feature toggle is enabled.
  */
 export function shouldUseDrilldownLayout(variables: SceneVariable[]): boolean {
-  if (!config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (!config.featureToggles.dashboardAdHocAndGroupByWrapper) {
     return false;
   }
 
