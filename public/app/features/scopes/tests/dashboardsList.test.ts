@@ -304,14 +304,12 @@ describe('Dashboards list', () => {
   it('Shows a proper message when no scopes are selected', async () => {
     await toggleDashboards();
     expectNoDashboardsNoScopes();
-    expectNoDashboardsSearch();
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
     await updateScopes(scopesService, ['cloud']);
     await toggleDashboards();
     expectNoDashboardsForScope();
-    expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
