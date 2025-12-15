@@ -721,11 +721,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	// k6-specific check to prevent folder move for a k6-app folder and its children
-	if cmd.UID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-	}
-
 	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
 		UID:          &cmd.UID,
 		OrgID:        cmd.OrgID,
@@ -746,29 +741,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 	}
 	if !hasAccess {
 		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	// here we get the folder, we need to get the height of current folder
-	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
-	}
-
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
-	}
-
-	for _, parent := range parents {
-		// if the current folder is already a parent of newparent, we should return error
-		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
-		}
 	}
 
 	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
