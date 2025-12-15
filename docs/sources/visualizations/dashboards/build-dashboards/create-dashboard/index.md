@@ -8,6 +8,7 @@ keywords:
   - panel
   - dashboard
   - create
+  - dynamic dashboard
 labels:
   products:
     - cloud
@@ -90,7 +91,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
-## Create a dashboard
+# Create dashboards
 
 {{< admonition type="note">}}
 Dynamic dashboards is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -106,6 +107,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
+
+## Create a dashboard
 
 To create a dashboard, follow these steps:
 
