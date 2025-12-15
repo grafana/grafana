@@ -3,11 +3,13 @@
     "namespace": "default",
     "group": "iam.grafana.app",
     "resource": "users",
-    "name": "user-with-login-only"
+    "name": "with-login-only"
   },
-  "name": "user-with-login-only",
+  "name": "with-login-only",
   "rv": 1234,
   "fields": {
-    "login": "user.two"
+    "lastSeenAt": 0,
+    "login": "user.two",
+    "role": "Viewer"
   }
 }

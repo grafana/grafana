@@ -839,4 +839,52 @@ describe('ScopesDashboardsService', () => {
       expect(service.state.drawerOpened).toBe(true);
     });
   });
+
+  describe('setNavScopePath', () => {
+    beforeEach(() => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+    });
+
+    it('should set nav scope path', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+    });
+
+    it('should replace existing path with new path', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+
+      await service.setNavScopePath(['loki']);
+      expect(service.state.navScopePath).toEqual(['loki']);
+    });
+
+    it('should handle multiple scopes in path', async () => {
+      await service.setNavScopePath(['mimir', 'loki']);
+      expect(service.state.navScopePath).toEqual(['mimir', 'loki']);
+    });
+
+    it('should clear path with empty array', async () => {
+      await service.setNavScopePath(['mimir', 'loki']);
+      expect(service.state.navScopePath).toEqual(['mimir', 'loki']);
+
+      await service.setNavScopePath([]);
+      expect(service.state.navScopePath).toEqual([]);
+    });
+
+    it('should handle undefined path as empty array', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+
+      await service.setNavScopePath(undefined);
+      expect(service.state.navScopePath).toEqual([]);
+    });
+
+    it('should not update state if path is unchanged', async () => {
+      await service.setNavScopePath(['mimir']);
+
+      await service.setNavScopePath(['mimir']);
+      // Path should remain the same
+      expect(service.state.navScopePath).toEqual(['mimir']);
+    });
+  });
 });

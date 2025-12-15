@@ -51,7 +51,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
-  const children = editableElement.getOutlineChildren?.() ?? [];
+  const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
