@@ -1,9 +1,6 @@
-import { t } from '@grafana/i18n';
-import { UseIsIrmConfig } from 'app/features/gops/configuration-tracker/irmHooks';
-
 import { GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
 import { OnCallIntegrationDTO } from '../../../api/onCallApi';
-import { SupportedPlugin } from '../../../types/pluginBridges';
+import { getIrmIfPresentOrOnCallPluginId, getIsIrmPluginPresent } from '../../../utils/config';
 import { createBridgeURL } from '../../PluginBridge';
 
 import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from './types';
@@ -16,37 +13,38 @@ export interface ReceiverPluginMetadata {
   warning?: string;
 }
 
-export const onCallReceiverMeta = (pluginId: SupportedPlugin): ReceiverPluginMetadata => ({
-  title: t('alerting.on-call-receiver-meta.title.grafana-on-call', 'Grafana OnCall'),
-  icon: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[pluginId],
-});
+const onCallReceiverICon = GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[getIrmIfPresentOrOnCallPluginId()];
+const onCallReceiverTitle = 'Grafana OnCall';
+
+export const onCallReceiverMeta: ReceiverPluginMetadata = {
+  title: onCallReceiverTitle,
+  icon: onCallReceiverICon,
+};
 
 export function getOnCallMetadata(
   onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
   receiver: GrafanaManagedReceiverConfig,
-  hasAlertManagerConfigData = true,
-  irmConfig: UseIsIrmConfig
+  hasAlertManagerConfigData = true
 ): ReceiverPluginMetadata {
-  const pluginName = irmConfig.isIrmPluginPresent ? 'IRM' : 'OnCall';
-  const pluginId = irmConfig.onCallPluginId;
+  const pluginName = getIsIrmPluginPresent() ? 'IRM' : 'OnCall';
 
   if (!hasAlertManagerConfigData) {
-    return onCallReceiverMeta(pluginId);
+    return onCallReceiverMeta;
   }
 
   if (!receiver.settings?.url) {
-    return onCallReceiverMeta(pluginId);
+    return onCallReceiverMeta;
   }
 
   // oncall status is still loading
   if (onCallIntegrations === undefined) {
-    return onCallReceiverMeta(pluginId);
+    return onCallReceiverMeta;
   }
 
   // indication that onCall is not enabled
   if (onCallIntegrations == null) {
     return {
-      ...onCallReceiverMeta(pluginId),
+      ...onCallReceiverMeta,
       warning: `Grafana ${pluginName} is not installed or is disabled`,
     };
   }
@@ -56,10 +54,10 @@ export function getOnCallMetadata(
   );
 
   return {
-    ...onCallReceiverMeta(pluginId),
+    ...onCallReceiverMeta,
     description: matchingOnCallIntegration?.display_name,
     externalUrl: matchingOnCallIntegration
-      ? createBridgeURL(pluginId, `/integrations/${matchingOnCallIntegration.value}`)
+      ? createBridgeURL(getIrmIfPresentOrOnCallPluginId(), `/integrations/${matchingOnCallIntegration.value}`)
       : undefined,
     warning: matchingOnCallIntegration ? undefined : `${pluginName} Integration no longer exists`,
   };

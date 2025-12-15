@@ -30,10 +30,10 @@ export class ExposedComponentsRegistry extends Registry<
     super(options);
   }
 
-  mapToRegistry(
+  async mapToRegistry(
     registry: RegistryType<ExposedComponentRegistryItem>,
     { pluginId, configs }: PluginExtensionConfigs<PluginExtensionExposedComponentConfig>
-  ): RegistryType<ExposedComponentRegistryItem> {
+  ): Promise<RegistryType<ExposedComponentRegistryItem>> {
     if (!configs) {
       return registry;
     }
@@ -65,7 +65,7 @@ export class ExposedComponentsRegistry extends Registry<
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
+        (await isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog))
       ) {
         continue;
       }

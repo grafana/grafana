@@ -70,7 +70,8 @@ let llmHealthCheck: Promise<boolean> | undefined;
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
-  if (!getAppPluginMeta('grafana-llm-app')) {
+  const app = await getAppPluginMeta('grafana-llm-app');
+  if (!app) {
     return false;
   }
 

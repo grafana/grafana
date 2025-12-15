@@ -14,9 +14,10 @@ export const unstable = {};
 
 export {
   type AppPluginMetas,
-  type UseAppPluginMetasResult as UseAppPluginMetasCollectionResult,
+  type UseAppPluginMetaResult,
+  type UseAppPluginMetasResult,
   getAppPluginMeta,
-  getAppPluginConfig,
   getAppPluginMetas,
+  useAppPluginMeta,
   useAppPluginMetas,
 } from './services/plugins';

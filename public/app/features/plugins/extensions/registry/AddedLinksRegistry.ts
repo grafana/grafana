@@ -34,10 +34,10 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     super(options);
   }
 
-  mapToRegistry(
+  async mapToRegistry(
     registry: RegistryType<AddedLinkRegistryItem[]>,
     item: PluginExtensionConfigs<PluginExtensionAddedLinkConfig>
-  ): RegistryType<AddedLinkRegistryItem[]> {
+  ): Promise<RegistryType<AddedLinkRegistryItem[]>> {
     const { pluginId, configs } = item;
 
     for (const config of configs) {
@@ -66,7 +66,11 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        (await isAddedLinkMetaInfoMissing(pluginId, config, configLog))
+      ) {
         continue;
       }
 

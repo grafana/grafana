@@ -421,7 +421,7 @@ describe('ExposedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
@@ -474,7 +474,7 @@ describe('ExposedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
@@ -503,7 +503,7 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [componentConfig] } };

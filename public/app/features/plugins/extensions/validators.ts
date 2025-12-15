@@ -146,13 +146,13 @@ export const isExposedComponentDependencyMissing = (id: string, pluginContext: P
   return !exposedComponentsDependencies || !exposedComponentsDependencies.includes(id);
 };
 
-export const isAddedLinkMetaInfoMissing = (
+export const isAddedLinkMetaInfoMissing = async (
   pluginId: string,
   metaInfo: PluginExtensionAddedLinkConfig,
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
-  const app = getAppPluginMeta(pluginId);
+  const app = await getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -178,13 +178,13 @@ export const isAddedLinkMetaInfoMissing = (
   return false;
 };
 
-export const isAddedFunctionMetaInfoMissing = (
+export const isAddedFunctionMetaInfoMissing = async (
   pluginId: string,
   metaInfo: PluginExtensionAddedFunctionConfig,
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register function extension. Reason:';
-  const app = getAppPluginMeta(pluginId);
+  const app = await getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -210,13 +210,13 @@ export const isAddedFunctionMetaInfoMissing = (
   return false;
 };
 
-export const isAddedComponentMetaInfoMissing = (
+export const isAddedComponentMetaInfoMissing = async (
   pluginId: string,
   metaInfo: PluginExtensionAddedComponentConfig,
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register component extension. Reason:';
-  const app = getAppPluginMeta(pluginId);
+  const app = await getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app
     ? app.extensions.addedComponents.filter(({ title }) => title === metaInfo.title)
     : null;
@@ -244,13 +244,13 @@ export const isAddedComponentMetaInfoMissing = (
   return false;
 };
 
-export const isExposedComponentMetaInfoMissing = (
+export const isExposedComponentMetaInfoMissing = async (
   pluginId: string,
   metaInfo: PluginExtensionExposedComponentConfig,
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register exposed component extension. Reason:';
-  const app = getAppPluginMeta(pluginId);
+  const app = await getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.filter(({ id }) => id === metaInfo.id) : null;
 
   if (!app) {

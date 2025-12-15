@@ -1,6 +1,6 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginConfig } from '@grafana/runtime/unstable';
+import { getAppPluginMeta } from '@grafana/runtime/unstable';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
@@ -139,7 +139,7 @@ export async function getPluginLoadData(pluginId: string): Promise<SandboxPlugin
 
   //find it in apps
   //the information inside the apps object is more limited
-  const app = await getAppPluginConfig(pluginId);
+  const app = await getAppPluginMeta(pluginId);
   if (!app) {
     throw new Error(`Could not find plugin ${pluginId}`);
   }

@@ -1,7 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
-import { getAppPluginMeta } from '@grafana/runtime/unstable';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   AlertingRule,
@@ -273,7 +273,8 @@ export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): R
 }
 
 function isPluginInstalled(pluginId: string) {
-  return Boolean(getAppPluginMeta(pluginId));
+  // eslint-disable-next-line no-restricted-syntax
+  return Boolean(config.apps[pluginId]);
 }
 
 export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {

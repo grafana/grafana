@@ -14,7 +14,7 @@ function areAppsInitialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
-export async function initPluginMetas(): Promise<void> {
+async function initPluginMetas(): Promise<void> {
   if (appsPromise) {
     return appsPromise;
   }
@@ -44,15 +44,7 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
   return Object.values(cloneDeep(apps));
 }
 
-export function getAppPluginMeta(id: string): AppPluginConfig | undefined {
-  if (!apps[id]) {
-    return undefined;
-  }
-
-  return cloneDeep(apps[id]);
-}
-
-export async function getAppPluginConfig(id: string): Promise<AppPluginConfig | undefined> {
+export async function getAppPluginMeta(id: string): Promise<AppPluginConfig | undefined> {
   if (!areAppsInitialized()) {
     await initPluginMetas();
   }
@@ -84,4 +76,15 @@ export function useAppPluginMetas(filterByIds: string[] = []): UseAppPluginMetas
   const filtered = apps.filter((app) => filterByIds.includes(app.id));
 
   return { isAppPluginMetasLoading: loading, error, apps: filtered };
+}
+
+export interface UseAppPluginMetaResult {
+  isAppPluginMetaLoading: boolean;
+  error: Error | undefined;
+  app: AppPluginConfig | undefined;
+}
+
+export function useAppPluginMeta(filterById: string): UseAppPluginMetaResult {
+  const { loading, error, value: app } = useAsync(() => getAppPluginMeta(filterById));
+  return { isAppPluginMetaLoading: loading, error, app };
 }

@@ -261,7 +261,7 @@ describe('usePluginLinks()', () => {
   });
 
   // It can happen that core Grafana plugins (e.g. traces) reuse core components which implement extension points.
-  it('should not validate the extension point meta-info for core plugins', () => {
+  it('should not validate the extension point meta-info for core plugins', async () => {
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const linkConfig = {
@@ -272,7 +272,7 @@ describe('usePluginLinks()', () => {
     };
 
     // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };

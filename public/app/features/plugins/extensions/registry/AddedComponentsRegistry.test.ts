@@ -448,7 +448,7 @@ describe('AddedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
@@ -501,7 +501,7 @@ describe('AddedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
@@ -531,7 +531,7 @@ describe('AddedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [componentConfig] } };

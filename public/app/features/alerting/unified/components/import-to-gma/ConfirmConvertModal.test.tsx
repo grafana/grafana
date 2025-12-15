@@ -1,4 +1,4 @@
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
@@ -67,7 +67,8 @@ describe('filterRulerRulesConfig', () => {
   };
 
   it('should filter by namespace', () => {
-    setAppPluginMetas({ [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) });
+    // eslint-disable-next-line no-restricted-syntax
+    config.apps = { [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) };
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig, 'namespace1');
 
     expect(filteredConfig).toEqual({

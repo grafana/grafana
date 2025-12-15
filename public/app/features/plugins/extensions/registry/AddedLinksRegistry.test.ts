@@ -624,7 +624,7 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
@@ -679,7 +679,7 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
@@ -710,7 +710,7 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };

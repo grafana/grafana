@@ -14,11 +14,9 @@ import {
   PanelMenuItem,
   PluginExtensionAddedLinkConfig,
   urlUtil,
-  PluginExtensionPoints,
   ExtensionInfo,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
-import { getAppPluginMeta } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -30,11 +28,11 @@ import {
 } from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+import { PreloadAppPluginsPredicate } from '../pluginPreloader';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { UseLoadAppPluginsPredicate } from './useLoadAppPlugins';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -619,7 +617,7 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // Returns a list of app plugin ids that are registering extensions to this extension point.
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
-export const getExtensionPointPluginDependencies: UseLoadAppPluginsPredicate = (
+export const getExtensionPointPluginDependencies: PreloadAppPluginsPredicate = (
   apps: AppPluginConfig[],
   extensionPointId: string
 ): string[] => {
@@ -655,7 +653,7 @@ export const getExtensionPointPluginMeta = (
   return new Map(
     getExtensionPointPluginDependencies(apps, extensionPointId)
       .map((pluginId) => {
-        const app = getAppPluginMeta(pluginId);
+        const app = apps.find((a) => a.id === pluginId);
         // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
         if (
           !app ||
@@ -680,7 +678,7 @@ export const getExtensionPointPluginMeta = (
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
 // (It is first the plugin that exposes the component, and then the ones that it depends on.)
-export const getExposedComponentPluginDependencies: UseLoadAppPluginsPredicate = (
+export const getExposedComponentPluginDependencies: PreloadAppPluginsPredicate = (
   apps: AppPluginConfig[],
   exposedComponentId: string
 ) => {
@@ -719,29 +717,4 @@ export const getAppPluginDependencies = (
       // We don't want the plugin to "depend on itself"
       .filter((id) => id !== pluginId)
   );
-};
-
-// Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
-export const getAppPluginsToAwait = (apps: AppPluginConfig[]) => {
-  const pluginIds = [
-    // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
-    'cloud-home-app',
-  ];
-
-  return apps.filter((app) => pluginIds.includes(app.id));
-};
-
-// Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
-export const getAppPluginsToPreload = (apps: AppPluginConfig[]) => {
-  // The DashboardPanelMenu extension point is using the `getPluginExtensions()` API in scenes at the moment, which means that it cannot yet benefit from dynamic plugin loading.
-  const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(
-    apps,
-    PluginExtensionPoints.DashboardPanelMenu
-  );
-  const awaitedPluginIds = getAppPluginsToAwait(apps).map((app) => app.id);
-  const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
-
-  return apps.filter((app) => {
-    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
-  });
 };

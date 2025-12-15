@@ -30,10 +30,10 @@ export class AddedComponentsRegistry extends Registry<
     super(options);
   }
 
-  mapToRegistry(
+  async mapToRegistry(
     registry: RegistryType<AddedComponentRegistryItem[]>,
     item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
-  ): RegistryType<AddedComponentRegistryItem[]> {
+  ): Promise<RegistryType<AddedComponentRegistryItem[]>> {
     const { pluginId, configs } = item;
 
     for (const config of configs) {
@@ -51,7 +51,7 @@ export class AddedComponentsRegistry extends Registry<
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isAddedComponentMetaInfoMissing(pluginId, config, configLog)
+        (await isAddedComponentMetaInfoMissing(pluginId, config, configLog))
       ) {
         continue;
       }

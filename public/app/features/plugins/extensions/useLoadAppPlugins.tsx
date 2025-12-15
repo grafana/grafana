@@ -1,27 +1,12 @@
 import { useAsync } from 'react-use';
 
-import { AppPluginConfig } from '@grafana/data';
-import { useAppPluginMetas } from '@grafana/runtime/unstable';
+import { PreloadAppPluginsPredicate, preloadPluginsWithPredicate } from '../pluginPreloader';
 
-import { preloadPlugins } from '../pluginPreloader';
+export function useLoadAppPlugins(extensionId: string, predicate: PreloadAppPluginsPredicate): { isLoading: boolean } {
+  const { loading: isLoading } = useAsync(
+    () => preloadPluginsWithPredicate(extensionId, predicate),
+    [extensionId, predicate]
+  );
 
-export type UseLoadAppPluginsPredicate = (apps: AppPluginConfig[], filterById: string) => string[];
-
-const noop: UseLoadAppPluginsPredicate = () => [];
-
-export function useLoadAppPlugins(
-  filterById: string,
-  predicate: UseLoadAppPluginsPredicate = noop
-): { isLoading: boolean } {
-  const { isAppPluginMetasLoading, apps } = useAppPluginMetas();
-  const { isAppPluginMetasLoading: isFilteredLoading, apps: filtered } = useAppPluginMetas(predicate(apps, filterById));
-  const { loading: isLoading } = useAsync(async () => {
-    if (!filtered.length) {
-      return;
-    }
-
-    await preloadPlugins(filtered);
-  }, [filtered]);
-
-  return { isLoading: isLoading || isAppPluginMetasLoading || isFilteredLoading };
+  return { isLoading: isLoading };
 }

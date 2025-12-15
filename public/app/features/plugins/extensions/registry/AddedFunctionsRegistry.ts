@@ -28,11 +28,12 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
     super(options);
   }
 
-  mapToRegistry(
+  async mapToRegistry(
     registry: RegistryType<AddedFunctionsRegistryItem[]>,
     item: PluginExtensionConfigs<PluginExtensionAddedFunctionConfig>
-  ): RegistryType<AddedFunctionsRegistryItem[]> {
+  ): Promise<RegistryType<AddedFunctionsRegistryItem[]>> {
     const { pluginId, configs } = item;
+
     for (const config of configs) {
       const configLog = this.logger.child({
         title: config.title,
@@ -49,7 +50,11 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedFunctionMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        (await isAddedFunctionMetaInfoMissing(pluginId, config, configLog))
+      ) {
         continue;
       }
 

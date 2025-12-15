@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
-import { useAsync } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { getAppPluginConfig } from '@grafana/runtime/unstable';
 import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import {
+  getIrmIfPresentOrIncidentPluginId,
+  getIrmIfPresentOrOnCallPluginId,
+  getIsIrmPluginPresent,
+} from 'app/features/alerting/unified/utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -109,39 +111,6 @@ function useGetConfigurationForApps() {
   };
 }
 
-export interface UseIsIrmConfig {
-  isIrmPluginPresent: boolean;
-  incidentPluginId: SupportedPlugin;
-  onCallPluginId: SupportedPlugin;
-}
-export interface UseIsIrmConfigResult {
-  isIrmConfigLoading: boolean;
-  irmConfig: UseIsIrmConfig;
-}
-
-export function useIrmConfig(): UseIsIrmConfigResult {
-  const { loading, value: irmConfig } = useAsync(async () => {
-    const app = await getAppPluginConfig(SupportedPlugin.Irm);
-    const isIrmPluginPresent = Boolean(app);
-    const incidentPluginId = isIrmPluginPresent ? SupportedPlugin.Irm : SupportedPlugin.Incident;
-    const onCallPluginId = isIrmPluginPresent ? SupportedPlugin.Irm : SupportedPlugin.OnCall;
-    return { isIrmPluginPresent, incidentPluginId, onCallPluginId };
-  });
-
-  if (!irmConfig) {
-    return {
-      isIrmConfigLoading: loading,
-      irmConfig: {
-        isIrmPluginPresent: false,
-        incidentPluginId: SupportedPlugin.Incident,
-        onCallPluginId: SupportedPlugin.OnCall,
-      },
-    };
-  }
-
-  return { isIrmConfigLoading: loading, irmConfig };
-}
-
 export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const {
     alerting: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
@@ -150,10 +119,6 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     slo: { hasSlo, hasSloWithAlert },
     isLoading,
   } = useGetConfigurationForApps();
-  const {
-    irmConfig: { incidentPluginId, isIrmPluginPresent, onCallPluginId },
-    isIrmConfigLoading,
-  } = useIrmConfig();
 
   function onIntegrationClick(integrationId: string, url: RelativeUrl) {
     const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
@@ -186,7 +151,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
       },
     ];
 
-    if (isIrmPluginPresent) {
+    if (!getIsIrmPluginPresent()) {
       steps = [
         ...steps,
         {
@@ -301,8 +266,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
       },
       {
         title: t('gops.use-get-essentials-configuration.essential-content.title.respond', 'Respond'),
-        description: isIrmPluginPresent ? 'Configure IRM' : 'Configure OnCall and Incident',
-        steps: isIrmPluginPresent
+        description: getIsIrmPluginPresent() ? 'Configure IRM' : 'Configure OnCall and Incident',
+        steps: getIsIrmPluginPresent()
           ? [
               {
                 title: t(
@@ -336,11 +301,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${incidentPluginId}/integrations/apps/grate.irm.slack`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
                   urlLinkOnDone: {
-                    url: `/a/${incidentPluginId}/integrations/apps/grate.irm.slack`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
                   },
                   labelOnDone: 'View',
                 },
@@ -358,11 +323,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${onCallPluginId}/integrations/`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.add', 'Add'),
                   urlLinkOnDone: {
-                    url: `/a/${onCallPluginId}/integrations/`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
                   },
                   labelOnDone: 'View',
                 },
@@ -382,11 +347,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${incidentPluginId}/walkthrough/generate-key`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/walkthrough/generate-key`,
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.initialize', 'Initialize'),
                   urlLinkOnDone: {
-                    url: `/a/${incidentPluginId}`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
                   },
                   labelOnDone: 'View',
                 },
@@ -404,12 +369,12 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${onCallPluginId}/settings`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
                     queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
                   urlLinkOnDone: {
-                    url: `/a/${onCallPluginId}/settings`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
                     queryParams: { tab: 'ChatOps' },
                   },
                   labelOnDone: 'View',
@@ -426,11 +391,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${incidentPluginId}/integrations/grate.slack`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
                   urlLinkOnDone: {
-                    url: `/a/${incidentPluginId}/integrations`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
                   },
                 },
                 done: isChatOpsInstalled,
@@ -447,11 +412,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 button: {
                   type: 'openLink',
                   urlLink: {
-                    url: `/a/${onCallPluginId}/integrations/`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.add', 'Add'),
                   urlLinkOnDone: {
-                    url: `/a/${onCallPluginId}/integrations/`,
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
                   },
                   labelOnDone: 'View',
                 },
@@ -467,7 +432,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
         description: '',
         steps: [
           {
-            title: isIrmPluginPresent ? 'Send test alert' : 'Send OnCall demo alert via Alerting integration',
+            title: getIsIrmPluginPresent() ? 'Send test alert' : 'Send OnCall demo alert via Alerting integration',
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
@@ -476,7 +441,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 'Select integration'
               ),
               options: onCallOptions,
-              onClickOption: (value) => onIntegrationClick(value, `/a/${onCallPluginId}/integrations/`),
+              onClickOption: (value) =>
+                onIntegrationClick(value, `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`),
               stepNotAvailableText: 'No integrations available',
             },
           },
@@ -492,7 +458,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: `/a/${incidentPluginId}`,
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
                 queryParams: { declare: 'new', drill: '1' },
               },
               label: t('gops.use-get-essentials-configuration.essential-content.label.start-drill', 'Start drill'),
@@ -513,7 +479,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     },
     { stepsDone: 0, totalStepsToDo: 0 }
   );
-  return { essentialContent, stepsDone, totalStepsToDo, isLoading: isLoading || isIrmConfigLoading };
+  return { essentialContent, stepsDone, totalStepsToDo, isLoading };
 }
 interface UseConfigurationProps {
   dataSourceConfigurationData: DataSourceConfigurationData;

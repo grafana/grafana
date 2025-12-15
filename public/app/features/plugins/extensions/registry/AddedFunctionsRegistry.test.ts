@@ -640,7 +640,7 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
@@ -693,7 +693,7 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
@@ -723,7 +723,7 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [fnConfig] } };

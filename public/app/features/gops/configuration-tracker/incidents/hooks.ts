@@ -1,7 +1,6 @@
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-
-import { useIrmConfig } from '../irmHooks';
+import { getIrmIfPresentOrIncidentPluginId } from 'app/features/alerting/unified/utils/config';
 
 interface IncidentsPluginConfig {
   isInstalled: boolean;
@@ -11,18 +10,16 @@ interface IncidentsPluginConfig {
 }
 
 export function useGetIncidentPluginConfig(): IncidentsPluginConfig {
-  const {
-    irmConfig: { incidentPluginId },
-    isIrmConfigLoading,
-  } = useIrmConfig();
-  const { installed: incidentPluginInstalled, loading: loadingPluginSettings } = usePluginBridge(incidentPluginId);
+  const { installed: incidentPluginInstalled, loading: loadingPluginSettings } = usePluginBridge(
+    getIrmIfPresentOrIncidentPluginId()
+  );
   const { data: incidentsConfig, isLoading: loadingPluginConfig } =
-    incidentsApi(incidentPluginId).endpoints.getIncidentsPluginConfig.useQuery();
+    incidentsApi.endpoints.getIncidentsPluginConfig.useQuery();
 
   return {
     isInstalled: incidentPluginInstalled ?? false,
     isChatOpsInstalled: incidentsConfig?.isChatOpsInstalled ?? false,
     isIncidentCreated: incidentsConfig?.isIncidentCreated ?? false,
-    isLoading: loadingPluginSettings || loadingPluginConfig || isIrmConfigLoading,
+    isLoading: loadingPluginSettings || loadingPluginConfig,
   };
 }

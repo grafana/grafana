@@ -1,4 +1,13 @@
-import { Observable, ReplaySubject, Subject, distinctUntilChanged, firstValueFrom, map, scan, startWith } from 'rxjs';
+import {
+  Observable,
+  ReplaySubject,
+  Subject,
+  distinctUntilChanged,
+  firstValueFrom,
+  map,
+  mergeScan,
+  startWith,
+} from 'rxjs';
 
 import { ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';
@@ -44,7 +53,7 @@ export abstract class Registry<TRegistryValue extends object | unknown[] | Recor
     this.registrySubject = new ReplaySubject<RegistryType<TRegistryValue>>(1);
     this.resultSubject
       .pipe(
-        scan(this.mapToRegistry.bind(this), options.initialState ?? {}),
+        mergeScan(this.mapToRegistry.bind(this), options.initialState ?? {}),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith(options.initialState ?? {})
       )
@@ -55,7 +64,7 @@ export abstract class Registry<TRegistryValue extends object | unknown[] | Recor
   abstract mapToRegistry(
     registry: RegistryType<TRegistryValue>,
     item: PluginExtensionConfigs<TMapType>
-  ): RegistryType<TRegistryValue>;
+  ): Promise<RegistryType<TRegistryValue>>;
 
   register(result: PluginExtensionConfigs<TMapType>): void {
     if (this.isReadOnly) {

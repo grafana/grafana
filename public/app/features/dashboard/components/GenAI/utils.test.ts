@@ -17,9 +17,9 @@ jest.mock('@grafana/llm', () => ({
   },
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppPluginMeta: () => ({}),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getAppPluginMeta: () => Promise.resolve({}),
 }));
 
 describe('getDashboardChanges', () => {

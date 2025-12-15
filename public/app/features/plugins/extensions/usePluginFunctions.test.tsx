@@ -321,7 +321,7 @@ describe('usePluginFunctions()', () => {
   });
 
   // It can happen that core Grafana plugins (e.g. traces) reuse core components which implement extension points.
-  it('should not validate the extension point meta-info for core plugins', () => {
+  it('should not validate the extension point meta-info for core plugins', async () => {
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const functionConfig = {
@@ -332,7 +332,7 @@ describe('usePluginFunctions()', () => {
     };
 
     // The `AddedFunctionsRegistry` is validating if the function is registered in the plugin metadata.
-    const meta = getAppPluginMeta(pluginId);
+    const meta = await getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
     const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [functionConfig] } };

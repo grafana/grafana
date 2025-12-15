@@ -1,4 +1,4 @@
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   RulerAlertingRuleDTO,
@@ -137,7 +137,10 @@ describe('cloneRuleDefinition', () => {
 
   it('Should remove the origin label when cloning data source plugin-provided rules', () => {
     // Mock the plugin as installed
-    setAppPluginMetas({ [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) });
+    // eslint-disable-next-line no-restricted-syntax
+    config.apps = {
+      [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
+    };
 
     const rule: RulerAlertingRuleDTO = mockRulerAlertingRule({
       alert: 'slo-provider-alert',
@@ -172,7 +175,10 @@ describe('cloneRuleDefinition', () => {
   });
 
   it('Should remove the origin label when cloning Grafana-managed plugin-provided rules', () => {
-    setAppPluginMetas({ [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) });
+    // eslint-disable-next-line no-restricted-syntax
+    config.apps = {
+      [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
+    };
 
     const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
       {

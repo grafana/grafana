@@ -44,14 +44,12 @@ import {
 } from '@grafana/runtime';
 import {
   initOpenFeature,
-  initPluginMetas,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { getAppPluginMetas } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -101,10 +99,9 @@ import { usePluginComponent } from './features/plugins/extensions/usePluginCompo
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { preloadPluginsToBeAwaited, preloadPluginsToBePreloaded } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -177,13 +174,6 @@ export class GrafanaApp {
       await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-
-      try {
-        startMeasure('frontend_app_init_plugins');
-        await initPluginMetas();
-      } finally {
-        stopMeasure('frontend_app_init_plugins');
-      }
 
       setLocale(config.regionalFormat);
       setWeekStart(contextSrv.user.weekStart);
@@ -266,12 +256,8 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const apps = await getAppPluginMetas();
-        const appPluginsToAwait = getAppPluginsToAwait(apps);
-        const appPluginsToPreload = getAppPluginsToPreload(apps);
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+        preloadPluginsToBePreloaded();
+        await preloadPluginsToBeAwaited();
       }
 
       setHelpNavItemHook(useHelpNode);
