@@ -141,7 +141,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     idPrefix,
     emptyFolders,
   } = data;
-  const { item, isOpen, level, parentUID, disabled } = items[index];
+  const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
@@ -167,10 +167,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder' && !disabled) {
+    if (item.kind === 'folder') {
       onFolderSelect(item);
     }
-  }, [item, onFolderSelect, disabled]);
+  }, [item, onFolderSelect]);
 
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
@@ -205,15 +205,13 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       ref={rowRef}
       style={virtualStyles}
       className={cx(styles.row, {
-        [styles.rowFocused]: index === focusedItemIndex && !disabled,
+        [styles.rowFocused]: index === focusedItemIndex,
         [styles.rowSelected]: item.uid === selectedFolder,
-        [styles.rowDisabled]: disabled,
       })}
       tabIndex={-1}
       onClick={handleSelect}
       aria-expanded={isOpen}
       aria-selected={item.uid === selectedFolder}
-      aria-disabled={disabled}
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
@@ -307,11 +305,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
         backgroundImage: theme.colors.gradients.brandVertical,
       },
-    }),
-
-    rowDisabled: css({
-      opacity: 0.6,
-      cursor: 'not-allowed',
     }),
 
     rowBody,
