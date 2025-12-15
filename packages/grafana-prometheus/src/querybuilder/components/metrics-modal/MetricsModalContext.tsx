@@ -52,11 +52,13 @@ const MetricsModalContext = createContext<MetricsModalContextValue | undefined>(
 
 type MetricsModalContextProviderProps = {
   languageProvider: PrometheusLanguageProviderInterface;
+  timeRange: TimeRange;
 };
 
 export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalContextProviderProps>> = ({
   children,
   languageProvider,
+  timeRange,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [metricsData, setMetricsData] = useState<MetricsData>([]);
@@ -111,8 +113,16 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
       setIsLoading(true);
       const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
 
-      if (Object.keys(metadata).length === 0) {
-        setMetricsData([]);
+      // We receive ALERTS metadata in any case
+      if (Object.keys(metadata).length <= 1) {
+        const fetchedMetrics = await languageProvider.queryLabelValues(
+          timeRange,
+          METRIC_LABEL,
+          undefined,
+          PROMETHEUS_QUERY_BUILDER_MAX_RESULTS
+        );
+        const processedData = fetchedMetrics.map((m) => generateMetricData(m, languageProvider));
+        setMetricsData(processedData);
       } else {
         const processedData = Object.keys(metadata).map((m) => generateMetricData(m, languageProvider));
         setMetricsData(processedData);
@@ -122,7 +132,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     } finally {
       setIsLoading(false);
     }
-  }, [languageProvider]);
+  }, [languageProvider, timeRange]);
 
   const debouncedBackendSearch = useMemo(
     () =>
