@@ -828,4 +828,142 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		require.Error(t, result.Error(), "viewer should not be able to delete files")
 		require.True(t, apierrors.IsForbidden(result.Error()), "should return Forbidden error")
 	})
+
+	// Folder Authorization Tests
+	t.Run("POST folder (create) - Admin role should succeed", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/test-folder/", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to create folders")
+	})
+
+	t.Run("POST folder (create) - Editor role should succeed", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/editor-folder/", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to create folders via access checker")
+	})
+
+	t.Run("POST folder (create) - Viewer role should fail", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/viewer-folder/", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to create folders")
+	})
+
+	t.Run("DELETE folder on branch - Editor role should succeed", func(t *testing.T) {
+		// Create a folder first
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		createUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder-to-delete/", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, createUrl, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		resp.Body.Close()
+
+		// Delete on a branch (delete on configured branch is not allowed for folders)
+		deleteUrl := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder-to-delete/?ref=test-delete-folder-branch", addr, repo)
+		req, err = http.NewRequest(http.MethodDelete, deleteUrl, nil)
+		require.NoError(t, err)
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to delete folders on branches via access checker")
+	})
+
+	t.Run("DELETE folder on branch - Viewer role should fail", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/test-folder/?ref=test-delete-branch", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to delete folders")
+	})
+
+	// Move File Authorization Tests
+	t.Run("POST file (move) - Editor role should succeed", func(t *testing.T) {
+		// Create a file first
+		dashboardContent := helper.LoadFile("testdata/timeline-demo.json")
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "file-to-move.json").
+			Body(dashboardContent).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error())
+
+		// Move using editor role
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		targetUrl := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/moved-by-editor.json?originalPath=file-to-move.json", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, targetUrl, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to move files via access checker")
+	})
+
+	t.Run("POST file (move) - Viewer role should fail", func(t *testing.T) {
+		// Try to move using viewer role
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		targetUrl := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/moved-by-viewer.json?originalPath=dashboard1.json", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, targetUrl, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to move files")
+	})
+
+	// Move Folder Authorization Tests (on branches only, since configured branch is not allowed)
+	t.Run("POST folder (move) on branch - Editor role should succeed", func(t *testing.T) {
+		// Create a folder with files first
+		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "folder-to-move/file1.json")
+		helper.SyncAndWait(t, repo, nil)
+
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		targetUrl := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/moved-folder/?originalPath=folder-to-move/&ref=test-move-folder-branch", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, targetUrl, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to move folders on branches via access checker")
+	})
+
+	t.Run("POST folder (move) on branch - Viewer role should fail", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		targetUrl := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/moved-by-viewer-folder/?originalPath=test-folder/&ref=test-move-branch", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, targetUrl, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to move folders")
+	})
 }
