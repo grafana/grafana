@@ -666,7 +666,7 @@ export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQu
   dashboardUid?: string;
   filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
-  userId?: string;
+  userId?: number;
 }
 
 export interface DrilldownRecommendation {
