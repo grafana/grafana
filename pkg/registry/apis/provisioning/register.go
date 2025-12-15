@@ -356,6 +356,8 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.authorizeSettings(id)
 	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
 		return b.authorizeJobs(id)
+	case provisioning.ConnectionResourceInfo.GetName():
+		return b.authorizeConnectionSubresource(a, id)
 	default:
 		return b.authorizeDefault(id)
 	}
@@ -439,6 +441,28 @@ func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, 
 	return authorizer.DecisionDeny, "admin role is required", nil
 }
 
+// authorizeRepositorySubresource handles authorization for connections subresources.
+func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	case "":
+		// Doing something with the connection itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
 // authorizeDefault handles authorization for unmapped resources.
 func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decision, string, error) {
 	// We haven't bothered with this kind yet.
@@ -446,34 +470,6 @@ func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decisio
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
-			case provisioning.ConnectionResourceInfo.GetName():
-				switch a.GetSubresource() {
-				case "":
-					// Doing something with the connection itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-				case "status":
-					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
-				default:
-					if id.GetIsGrafanaAdmin() {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
-				}
-
-			default:
-				// We haven't bothered with this kind yet.
-				if id.GetIsGrafanaAdmin() {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
-			}
-		})
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
