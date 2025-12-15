@@ -67,7 +67,6 @@ export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
 
-  // TODO valiate this is correct with plugins
   const ComponentWithMeta: ComponentTypeWithExtensionMeta<Props> = Object.assign(Component, {
     meta: {
       pluginId: config.pluginId,
