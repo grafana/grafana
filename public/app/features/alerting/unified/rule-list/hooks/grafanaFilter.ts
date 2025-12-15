@@ -83,7 +83,8 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
       .map((label) => {
         try {
           return JSON.stringify(parseMatcher(label));
-        } catch {
+        } catch (error) {
+          console.warn('Failed to parse label matcher:', label, error);
           return undefined;
         }
       })
