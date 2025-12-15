@@ -366,7 +366,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// Auditing Options
 	serverConfig.AuditBackend = s.auditBackend
-	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(s.builders)
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
