@@ -664,6 +664,7 @@ export {
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
   type DataSourceGetDrilldownsApplicabilityOptions,
+  type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
