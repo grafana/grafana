@@ -79,7 +79,7 @@
 # Git Sync / App Platform Provisioning
 /apps/provisioning/ @grafana/grafana-app-platform-squad
 /pkg/operators @grafana/grafana-app-platform-squad
-/public/app/features/provisioning @grafana/grafana-app-platform-squad
+/public/app/features/provisioning @grafana/grafana-search-navigate-organise
 /pkg/registry/apis/provisioning @grafana/grafana-app-platform-squad
 /pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
