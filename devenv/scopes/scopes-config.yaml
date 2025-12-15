@@ -141,6 +141,7 @@ navigationTree:
         url: /d/edediimbjhdz4b
         scope: shoes
         subScope: frontend
+        preLoadSubScopeChildren: true
         children:
           - name: frontend-api
             title: API Metrics
@@ -175,6 +176,7 @@ navigationTree:
 
       - name: shoes-main-app
         title: Main App
+        expandOnLoad: true
         url: /d/WZ7AhQiVz
         scope: shoes
         subScope: main-app

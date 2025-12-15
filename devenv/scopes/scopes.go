@@ -83,6 +83,8 @@ type NavigationConfig struct {
 	Title                    string   `yaml:"title"`                    // Display title
 	Groups                   []string `yaml:"groups"`                   // Optional groups for categorization
 	DisableSubScopeSelection bool     `yaml:"disableSubScopeSelection"` // Makes the subscope not selectable
+	ExpandOnLoad             bool     `yaml:"expandOnLoad"`             // Automatically expand folder on load
+	PreLoadSubScopeChildren  bool     `yaml:"preLoadSubScopeChildren"` // Preload children of subScope without updating UI
 }
 
 // NavigationTreeNode represents a node in the navigation tree structure
@@ -94,6 +96,8 @@ type NavigationTreeNode struct {
 	SubScope                 string               `yaml:"subScope,omitempty"`
 	Groups                   []string             `yaml:"groups,omitempty"`
 	DisableSubScopeSelection bool                 `yaml:"disableSubScopeSelection,omitempty"`
+	ExpandOnLoad             bool                 `yaml:"expandOnLoad,omitempty"`             // Automatically expand folder on load
+	PreLoadSubScopeChildren  bool                 `yaml:"preLoadSubScopeChildren,omitempty"` // Preload children of subScope without updating UI
 	Children                 []NavigationTreeNode `yaml:"children,omitempty"`
 }
 
@@ -318,6 +322,8 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		URL:                      nav.URL,
 		Scope:                    prefixedScope,
 		DisableSubScopeSelection: nav.DisableSubScopeSelection,
+		ExpandOnLoad:             nav.ExpandOnLoad,
+		PreLoadSubScopeChildren:  nav.PreLoadSubScopeChildren,
 	}
 
 	if nav.SubScope != "" {
@@ -353,14 +359,53 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		return err
 	}
 
-	// Update status in a second request (status is a subresource)
-	if nav.Title != "" || len(nav.Groups) > 0 {
-		// Get the created resource to retrieve its resourceVersion and existing spec
-		createdNav, err := c.getScopeNavigation(prefixedName)
-		if err != nil {
-			return fmt.Errorf("failed to get created navigation: %w", err)
+	// Update spec and/or status in additional requests if needed
+	// Get the created resource to retrieve its resourceVersion
+	createdNav, err := c.getScopeNavigation(prefixedName)
+	if err != nil {
+		return fmt.Errorf("failed to get created navigation: %w", err)
+	}
+
+	// Update spec if we have ExpandOnLoad or PreLoadSubScopeChildren to ensure they're persisted
+	if nav.ExpandOnLoad || nav.PreLoadSubScopeChildren {
+		// Merge our spec with the created spec to preserve any server-side defaults
+		// but ensure our ExpandOnLoad and PreLoadSubScopeChildren values are set
+		mergedSpec := createdNav.Spec
+		mergedSpec.ExpandOnLoad = nav.ExpandOnLoad
+		mergedSpec.PreLoadSubScopeChildren = nav.PreLoadSubScopeChildren
+
+		specResource := v0alpha1.ScopeNavigation{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: apiVersion,
+				Kind:       "ScopeNavigation",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            prefixedName,
+				ResourceVersion: createdNav.ObjectMeta.ResourceVersion,
+			},
+			Spec:   mergedSpec,
+			Status: createdNav.Status, // Preserve existing status
 		}
 
+		specBody, err := json.Marshal(specResource)
+		if err != nil {
+			return fmt.Errorf("failed to marshal scope navigation spec: %w", err)
+		}
+
+		fmt.Printf("  Updating spec for: %s\n", prefixedName)
+		if err := c.makeRequest("PUT", fmt.Sprintf("/scopenavigations/%s", prefixedName), specBody); err != nil {
+			return err
+		}
+
+		// Re-fetch to get updated resourceVersion for status update
+		createdNav, err = c.getScopeNavigation(prefixedName)
+		if err != nil {
+			return fmt.Errorf("failed to get updated navigation: %w", err)
+		}
+	}
+
+	// Update status in a second request (status is a subresource)
+	if nav.Title != "" || len(nav.Groups) > 0 {
 		statusResource := v0alpha1.ScopeNavigation{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: apiVersion,
@@ -411,6 +456,8 @@ func treeToNavigations(node NavigationTreeNode, parentPath []string, dashboardCo
 		Scope:                    node.Scope,
 		Title:                    node.Title,
 		DisableSubScopeSelection: node.DisableSubScopeSelection,
+		ExpandOnLoad:             node.ExpandOnLoad,
+		PreLoadSubScopeChildren:  node.PreLoadSubScopeChildren,
 	}
 	if node.SubScope != "" {
 		nav.SubScope = node.SubScope
