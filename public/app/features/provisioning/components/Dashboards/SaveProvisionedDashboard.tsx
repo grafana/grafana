@@ -1,3 +1,5 @@
+import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -11,9 +13,16 @@ export interface SaveProvisionedDashboardProps {
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
   saveAsCopy?: boolean;
+  rawDashboardJSON?: Dashboard | DashboardV2Spec;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
+export function SaveProvisionedDashboard({
+  drawer,
+  changeInfo,
+  dashboard,
+  saveAsCopy,
+  rawDashboardJSON,
+}: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, workflowOptions, readOnly, repository } = useProvisionedDashboardData(
     dashboard,
     saveAsCopy
@@ -34,6 +43,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
       workflowOptions={workflowOptions}
       readOnly={readOnly}
       saveAsCopy={saveAsCopy}
+      rawDashboardJSON={rawDashboardJSON}
     />
   );
 }

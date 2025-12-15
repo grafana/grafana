@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
@@ -11,8 +11,10 @@ import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
   isNameExistsError,
@@ -105,16 +107,29 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const [isSaving, setIsSaving] = useState(false);
 
   const dashboard = model.getDashboard();
+  const isProvisionedNG = useIsProvisionedNG(dashboard);
 
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
   const onSave = async (overwrite: boolean) => {
+    const rawJSON: Dashboard | DashboardV2Spec = JSON.parse(model.state.jsonText);
+    // If this is a provisioned (Git sync) dashboard, open the SaveDashboardDrawer
+    if (isProvisionedNG) {
+      const drawer = new SaveDashboardDrawer({
+        dashboardRef: new SceneObjectRef(dashboard),
+        rawDashboardJSON: rawJSON,
+      });
+      dashboard.setState({ overlay: drawer });
+      return;
+    }
+
+    // Standard save flow for non-provisioned dashboards
     const result = await onSaveDashboard(dashboard, {
       folderUid: dashboard.state.meta.folderUid,
       overwrite,
-      rawDashboardJSON: JSON.parse(model.state.jsonText),
+      rawDashboardJSON: rawJSON,
       k8s: dashboard.state.meta.k8s,
     });
 

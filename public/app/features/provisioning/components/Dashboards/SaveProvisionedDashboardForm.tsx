@@ -6,6 +6,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
@@ -36,6 +37,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
   repository?: RepositoryView;
+  rawDashboardJSON?: Dashboard | DashboardV2Spec;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -48,6 +50,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  rawDashboardJSON,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -64,8 +67,8 @@ export function SaveProvisionedDashboardForm({
     register,
     formState: { dirtyFields },
   } = methods;
-  // button enabled if form comment is dirty or dashboard state is dirty
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
+  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
@@ -190,13 +193,15 @@ export function SaveProvisionedDashboardForm({
 
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-      copyTags,
-      saveAsCopy,
-    });
+    const body = rawDashboardJSON
+      ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
+      : dashboard.getSaveResource({
+          isNew,
+          title,
+          description,
+          copyTags,
+          saveAsCopy,
+        });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,

@@ -24,6 +24,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -853,22 +854,37 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.serializer.getSaveModel(this);
   }
 
-  // Get the dashboard in native K8s form (using the appropriate apiVersion)
-  getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
+  // Helper method to build K8s resource structure
+  private buildResourceForCreate(
+    spec: Dashboard | DashboardV2Spec,
+    apiVersion: string,
+    isNew: boolean
+  ): ResourceForCreate<unknown> {
     const { meta } = this.state;
-    const spec = this.getSaveAsModel(options);
-
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1'; // get from the dashboard?
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
-        name: options.isNew ? undefined : (meta.uid ?? meta.k8s?.name),
-        generateName: options.isNew ? 'd' : undefined,
+        name: isNew ? undefined : (meta.uid ?? meta.k8s?.name),
+        generateName: isNew ? 'd' : undefined,
       },
       spec,
     };
+  }
+
+  // Get the dashboard in native K8s form (using the appropriate apiVersion)
+  getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
+    const spec = this.getSaveAsModel(options);
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1';
+    return this.buildResourceForCreate(spec, apiVersion, options.isNew ?? false);
+  }
+
+  // Wrap a raw dashboard spec in K8s resource format
+  // Used by JSON model editor for Git sync dashboards
+  getSaveResourceFromSpec(rawSpec: Dashboard | DashboardV2Spec): ResourceForCreate<unknown> {
+    const apiVersion = isDashboardV2Spec(rawSpec) ? 'v2beta1' : 'v1beta1';
+    return this.buildResourceForCreate(rawSpec, apiVersion, false);
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
