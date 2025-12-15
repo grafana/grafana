@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneVariable, sceneUtils } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { VariableValueSelectWrapper } from './VariableControls';
 
@@ -71,17 +70,6 @@ export function DrilldownControls({ adHocVar, groupByVar }: DrilldownControlsPro
       <div className={styles.groupByContainer}>
         <VariableValueSelectWrapper variable={groupByVar} />
       </div>
-
-      <Button
-        aria-label={t('grafana-ui.drilldown-controls.clear-all', 'Clear all')}
-        onClick={clearAll}
-        variant="secondary"
-        size="md"
-        fill="text"
-        className={styles.clearAllButton}
-      >
-        <Trans i18nKey="grafana-ui.drilldown-controls.clear-all" defaults="Clear all" />
-      </Button>
     </div>
   );
 }
