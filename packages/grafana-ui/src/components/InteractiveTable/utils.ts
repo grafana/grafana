@@ -33,7 +33,7 @@ export function getColumns<K extends object>(
       disableSortBy: !Boolean(column.sortType),
       width: column.disableGrow ? 0 : undefined,
       visible: column.visible,
-      sortDescFirst: column.sortDescFirst,
+      ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && { Cell: column.cell }),
     })),
   ];
