@@ -154,9 +154,12 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	// Verify the final status includes warnings
 	require.NotNil(t, finalStatus.Warnings)
 	assert.Len(t, finalStatus.Warnings, 3)
-	assert.Contains(t, finalStatus.Warnings[0], "deprecated API used")
-	assert.Contains(t, finalStatus.Warnings[1], "missing optional field")
-	assert.Contains(t, finalStatus.Warnings[2], "validation warning")
+	expectedWarnings := []string{
+		"deprecated API used (file: dashboards/test.json, name: test-resource, action: updated)",
+		"missing optional field (file: dashboards/test2.json, name: test-resource-2, action: created)",
+		"validation warning (file: datasources/test.yaml, name: test-resource-3, action: created)",
+	}
+	assert.ElementsMatch(t, finalStatus.Warnings, expectedWarnings)
 
 	// Verify the state is set to Warning
 	assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)

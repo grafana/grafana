@@ -77,22 +77,24 @@ type TreeNode struct {
 }
 
 type NavigationConfig struct {
-	URL      string   `yaml:"url"`      // URL path (e.g., /d/abc123 or /explore)
-	Scope    string   `yaml:"scope"`    // Required scope
-	SubScope string   `yaml:"subScope"` // Optional subScope for hierarchical navigation
-	Title    string   `yaml:"title"`    // Display title
-	Groups   []string `yaml:"groups"`   // Optional groups for categorization
+	URL                      string   `yaml:"url"`                      // URL path (e.g., /d/abc123 or /explore)
+	Scope                    string   `yaml:"scope"`                    // Required scope
+	SubScope                 string   `yaml:"subScope"`                 // Optional subScope for hierarchical navigation
+	Title                    string   `yaml:"title"`                    // Display title
+	Groups                   []string `yaml:"groups"`                   // Optional groups for categorization
+	DisableSubScopeSelection bool     `yaml:"disableSubScopeSelection"` // Makes the subscope not selectable
 }
 
 // NavigationTreeNode represents a node in the navigation tree structure
 type NavigationTreeNode struct {
-	Name     string               `yaml:"name"`
-	Title    string               `yaml:"title"`
-	URL      string               `yaml:"url"`
-	Scope    string               `yaml:"scope"`
-	SubScope string               `yaml:"subScope,omitempty"`
-	Groups   []string             `yaml:"groups,omitempty"`
-	Children []NavigationTreeNode `yaml:"children,omitempty"`
+	Name                     string               `yaml:"name"`
+	Title                    string               `yaml:"title"`
+	URL                      string               `yaml:"url"`
+	Scope                    string               `yaml:"scope"`
+	SubScope                 string               `yaml:"subScope,omitempty"`
+	Groups                   []string             `yaml:"groups,omitempty"`
+	DisableSubScopeSelection bool                 `yaml:"disableSubScopeSelection,omitempty"`
+	Children                 []NavigationTreeNode `yaml:"children,omitempty"`
 }
 
 // Helper function to convert ScopeFilterConfig to v0alpha1.ScopeFilter
@@ -313,8 +315,9 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 	prefixedScope := prefix + "-" + nav.Scope
 
 	spec := v0alpha1.ScopeNavigationSpec{
-		URL:   nav.URL,
-		Scope: prefixedScope,
+		URL:                      nav.URL,
+		Scope:                    prefixedScope,
+		DisableSubScopeSelection: nav.DisableSubScopeSelection,
 	}
 
 	if nav.SubScope != "" {
@@ -404,9 +407,10 @@ func treeToNavigations(node NavigationTreeNode, parentPath []string, dashboardCo
 
 	// Create navigation for this node
 	nav := NavigationConfig{
-		URL:   url,
-		Scope: node.Scope,
-		Title: node.Title,
+		URL:                      url,
+		Scope:                    node.Scope,
+		Title:                    node.Title,
+		DisableSubScopeSelection: node.DisableSubScopeSelection,
 	}
 	if node.SubScope != "" {
 		nav.SubScope = node.SubScope
