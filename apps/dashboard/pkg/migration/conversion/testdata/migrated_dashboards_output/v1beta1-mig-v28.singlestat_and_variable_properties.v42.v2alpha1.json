@@ -81,7 +81,50 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "id": 1,
+                    "legend": true,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      },
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "B"
+                      }
+                    ],
+                    "thresholds": "10,20,30",
+                    "type": "stat"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -125,7 +168,46 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gauge": {
+                      "show": true,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "id": 2,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "thresholds": "10,20,30",
+                    "type": "stat"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -184,7 +266,73 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "id": 3,
+                    "legend": true,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      },
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "B"
+                      }
+                    ],
+                    "thresholds": "10,20,30",
+                    "type": "stat",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "test",
+                        "value": "20"
+                      },
+                      {
+                        "op": "=",
+                        "text": "test1",
+                        "value": "30"
+                      },
+                      {
+                        "op": "=",
+                        "text": "50",
+                        "value": "40"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

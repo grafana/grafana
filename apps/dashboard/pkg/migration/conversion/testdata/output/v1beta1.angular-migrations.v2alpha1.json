@@ -2,7 +2,7 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v2alpha1",
   "metadata": {
-    "name": "v0alpha1.migrations.v42"
+    "name": "angular-migrations-test"
   },
   "spec": {
     "annotations": [
@@ -1484,7 +1484,6 @@
                   "autoMigrateFrom": "graph",
                   "originalPanel": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
@@ -1559,7 +1558,7 @@
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
+                    "type": "graph",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2257,7 +2256,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v0alpha1"
+      "storedVersion": "v1beta1"
     }
   }
 }

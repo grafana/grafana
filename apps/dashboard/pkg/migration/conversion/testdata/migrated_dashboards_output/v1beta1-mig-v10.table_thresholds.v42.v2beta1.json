@@ -69,7 +69,47 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalPanel": {
+                    "autoMigrateFrom": "table-old",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "id": 1,
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "20",
+                          "30"
+                        ]
+                      },
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "200",
+                          "300"
+                        ]
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "type": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -115,7 +155,40 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalPanel": {
+                    "autoMigrateFrom": "table-old",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "id": 2,
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "50",
+                          "75"
+                        ]
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "type": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +234,40 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "id": 3,
+                    "styles": [
+                      {
+                        "thresholds": [
+                          "5",
+                          "10",
+                          "15"
+                        ]
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

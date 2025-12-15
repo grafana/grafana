@@ -186,7 +186,46 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "fieldConfig": {
+                      "defaults": {
+                        "custom": {}
+                      },
+                      "overrides": []
+                    },
+                    "gridPos": {
+                      "h": 6,
+                      "w": 8,
+                      "x": 0,
+                      "y": 9
+                    },
+                    "id": 4,
+                    "maxPerRow": 4,
+                    "repeat": "region",
+                    "repeatDirection": "h",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "title": "Panel in Row",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

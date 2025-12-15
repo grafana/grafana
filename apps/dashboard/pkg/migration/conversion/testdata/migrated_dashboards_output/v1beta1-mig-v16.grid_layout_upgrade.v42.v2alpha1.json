@@ -66,7 +66,38 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gridPos": {
+                      "h": 7,
+                      "w": 12,
+                      "x": 0,
+                      "y": 1
+                    },
+                    "id": 1,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "title": "CPU Usage",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -154,7 +185,38 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gridPos": {
+                      "h": 7,
+                      "w": 24,
+                      "x": 0,
+                      "y": 30
+                    },
+                    "id": 11,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "title": "Server Metrics",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -198,7 +260,38 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gridPos": {
+                      "h": 7,
+                      "w": 12,
+                      "x": 12,
+                      "y": 1
+                    },
+                    "id": 2,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "title": "Memory Usage",
+                    "type": "stat"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -254,7 +347,24 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "gridPos": {
+                      "h": 6,
+                      "w": 12,
+                      "x": 0,
+                      "y": 17
+                    },
+                    "height": 200,
+                    "id": 4,
+                    "title": "Network I/O",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -282,7 +392,24 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "gridPos": {
+                      "h": 6,
+                      "w": 12,
+                      "x": 12,
+                      "y": 17
+                    },
+                    "height": 200,
+                    "id": 5,
+                    "title": "Disk I/O",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

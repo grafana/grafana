@@ -66,7 +66,95 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {
+                      "A-series": "green"
+                    },
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "fill": 2,
+                    "fillGradient": 10,
+                    "gridPos": {
+                      "h": 8,
+                      "w": 24,
+                      "x": 0,
+                      "y": 15
+                    },
+                    "id": 10,
+                    "interval": "1m",
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 0,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Req/s",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -114,7 +202,95 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {
+                      "A-series": "rgb(87, 186, 242)"
+                    },
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "fill": 4,
+                    "fillGradient": 4,
+                    "gridPos": {
+                      "h": 15,
+                      "w": 13,
+                      "x": 11,
+                      "y": 0
+                    },
+                    "id": 11,
+                    "interval": "1m",
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Req/s",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -162,7 +338,95 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {
+                      "A-series": "rgb(48, 139, 237)"
+                    },
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "fill": 1,
+                    "fillGradient": 5,
+                    "gridPos": {
+                      "h": 8,
+                      "w": 11,
+                      "x": 0,
+                      "y": 0
+                    },
+                    "id": 2,
+                    "interval": "1m",
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Req/s",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -210,7 +474,95 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {
+                      "A-series": "red"
+                    },
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "fill": 1,
+                    "fillGradient": 5,
+                    "gridPos": {
+                      "h": 7,
+                      "w": 11,
+                      "x": 0,
+                      "y": 8
+                    },
+                    "id": 7,
+                    "interval": "1m",
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Memory",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "decgbytes",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

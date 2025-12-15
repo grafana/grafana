@@ -53,6 +53,7 @@ v0alpha1 (Legacy JSON) → v1beta1 (Migrated JSON) → v2alpha1/v2beta1 (Structu
 - Transforms JSON dashboards to structured dashboard format
 - v2 schema is the stable, typed schema with proper type definitions
 - Handles modern dashboard features and Kubernetes-native storage
+- Preserves Angular panel migration data for frontend processing (see [Angular Panel Migrations](#angular-panel-migrations))
 - See [V2 to V1 Layout Conversion](./conversion/v2_to_v1_layout_conversion.md) for details on how V2 layouts are converted back to V1 panel arrays
 
 #### v2 to v0/v1 Conversion:
@@ -60,6 +61,76 @@ v0alpha1 (Legacy JSON) → v1beta1 (Migrated JSON) → v2alpha1/v2beta1 (Structu
 - Chains through intermediate versions: v2 → v1beta1 → v0alpha1
 - v0alpha1 and v1beta1 share the same spec structure (only API version differs)
 - Enables backward compatibility when storing v2 dashboards in legacy format
+
+### Angular Panel Migrations
+
+When converting dashboards from v0/v1 to v2, panels with Angular types require special handling. The `autoMigrateFrom` field is used in v0 and v1 to indicate the panel was migrated from a deprecated plugin type, and the target plugin contains migration logic to transform the original panel's options and field configurations.
+
+Panel plugins define their own migration logic via `plugin.onPanelTypeChanged()`. This migration runs in the frontend when a panel type changes, transforming old options/fieldConfig to the new format. Examples:
+- `singlestat.format: "short"` → `stat.fieldConfig.defaults.unit: "short"`
+- `graph.legend.show: true` → `timeseries.options.legend.showLegend: true`
+
+The v2 schema doesn't include `autoMigrateFrom` as a typed field, so we need a mechanism to preserve the original panel data for the frontend to run these plugin migrations.
+
+#### `__angularMigration` Temporary Data
+
+The backend v1 → v2 conversion preserves the original panel data in a temporary field within `vizConfig.spec.options`. This works for **any** Angular panel, not just specific panel types:
+
+```json
+{
+  "vizConfig": {
+    "kind": "stat",
+    "spec": {
+      "options": {
+        "__angularMigration": {
+          "autoMigrateFrom": "singlestat",
+          "originalPanel": {
+            "type": "singlestat",
+            "format": "short",
+            "colorBackground": true,
+            "sparkline": { "show": true },
+            "fieldConfig": { ... },
+            "options": { ... }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+#### How It Works
+
+1. **Backend (v1 → v2):** The conversion detects panels that need Angular migration in two ways:
+   - If `autoMigrateFrom` is already set on the panel (from v0 → v1 migration) - panel type already converted
+   - If the panel type is a known Angular panel type (fallback for dashboards stored directly as v1 without v0 → v1 migration)
+   
+   In the second case, the conversion also transforms the panel type (e.g., `singlestat` → `stat`) and sets `autoMigrateFrom`. This replicates the same logic as the v0 → v1 migration.
+   
+   The entire original panel is stored under `options.__angularMigration` for the frontend to run plugin-specific migrations.
+
+2. **Frontend (v2 load):** When building a `VizPanel` from v2 data:
+   - Extracts `__angularMigration` from options
+   - Removes it from the options object (not persisted)
+   - Attaches a custom migration handler via `_UNSAFE_customMigrationHandler`
+
+3. **Plugin load (VizPanel activation):** When the plugin loads, the migration handler calls `plugin.onPanelTypeChanged()` with the original panel data, allowing the plugin's own migration code to run
+
+#### Key Points
+
+- Works for **any** panel with `autoMigrateFrom`, not limited to specific panel types
+- Each plugin defines its own migration logic - the backend just preserves the data
+- The `originalPanel` contains the complete panel data to ensure no information is lost
+- Migration data is removed from options after loaded in frontend
+- The 0v → v1 and v1 → v2 conversions automatically detects these Angular panel types if `autoMigrateFrom` is not set.
+
+#### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `apps/dashboard/pkg/migration/conversion/v1beta1_to_v2alpha1.go` | Injects `__angularMigration` during v1 → v2 |
+| `public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts` | Extracts and consumes `__angularMigration` |
+| `public/app/features/dashboard-scene/serialization/angularMigration.ts` | Creates migration handler for v2 path |
 
 ## Conversion Matrix
 

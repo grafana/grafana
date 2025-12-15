@@ -3,6 +3,31 @@ import { defaults, cloneDeep } from 'lodash';
 import { PanelModel as PanelModelFromData, PanelPlugin } from '@grafana/data';
 import { autoMigrateAngular, PanelModel } from 'app/features/dashboard/state/PanelModel';
 
+/**
+ * Data structure for Angular migration information stored in v2 schema options.
+ */
+export interface AngularMigrationData {
+  /** The original panel type before migration (e.g., "singlestat", "graph") */
+  autoMigrateFrom: string;
+  /** The entire original v1 panel data, preserved for migration handlers */
+  originalPanel: Record<string, unknown>;
+}
+
+/**
+ * Type guard to check if an unknown value is AngularMigrationData.
+ */
+export function isAngularMigrationData(value: unknown): value is AngularMigrationData {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (!('autoMigrateFrom' in value) || !('originalPanel' in value)) {
+    return false;
+  }
+
+  const { autoMigrateFrom, originalPanel } = value;
+  return typeof autoMigrateFrom === 'string' && typeof originalPanel === 'object';
+}
+
 export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
   return function handleAngularPanelMigrations(panel: PanelModelFromData, plugin: PanelPlugin) {
     if ('angularPanelCtrl' in plugin && plugin.angularPanelCtrl) {
@@ -33,6 +58,37 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
         const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
         Object.assign(panel.options, plugin.onPanelTypeChanged(panel, prevPluginId, prevOptions, panel.fieldConfig));
       }
+    }
+  };
+}
+
+/**
+ * Creates a migration handler for v2 schema panels that need Angular migrations.
+ *
+ * This is used when loading v2 dashboards that were converted from v1 and contain
+ * __angularMigration data. The handler invokes the plugin's onPanelTypeChanged
+ * to properly migrate options from the original Angular panel format.
+ *
+ * Example flow for singlestat -> stat:
+ * 1. v0 -> v1 migration converts panel type from "singlestat" to "stat" and sets autoMigrateFrom="singlestat"
+ *    (OR if dashboard was stored directly as v1 with "singlestat", the v1 -> v2 conversion does this)
+ * 2. v1 -> v2 conversion detects autoMigrateFrom and stores original panel in options.__angularMigration
+ * 3. Frontend loads v2 dashboard, extracts __angularMigration, and attaches this handler
+ * 4. Handler calls stat plugin's onPanelTypeChanged with { angular: originalPanel }
+ * 5. Plugin migrates format/valueName/etc to proper stat options
+ *
+ * @param migrationData The __angularMigration data extracted from panel options
+ */
+export function createV2AngularMigrationHandler(migrationData: AngularMigrationData) {
+  return function handleV2AngularMigration(panel: PanelModelFromData, plugin: PanelPlugin) {
+    const { autoMigrateFrom, originalPanel } = migrationData;
+    const wasAngular = autoMigrateAngular[autoMigrateFrom] != null;
+
+    if (plugin.onPanelTypeChanged) {
+      // For Angular panels, wrap in { angular: ... } to match expected format
+      // For React panels migrating from other React panels, pass options directly
+      const prevOptions = wasAngular ? { angular: originalPanel } : { options: originalPanel.options };
+      Object.assign(panel.options, plugin.onPanelTypeChanged(panel, autoMigrateFrom, prevOptions, panel.fieldConfig));
     }
   };
 }

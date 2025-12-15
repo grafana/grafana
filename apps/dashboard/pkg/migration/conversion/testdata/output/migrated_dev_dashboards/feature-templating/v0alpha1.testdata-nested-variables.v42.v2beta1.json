@@ -174,6 +174,97 @@
             "version": "",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {},
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "type": "grafana-testdata-datasource"
+                    },
+                    "fieldConfig": {
+                      "defaults": {
+                        "custom": {}
+                      },
+                      "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                      "h": 13,
+                      "w": 24,
+                      "x": 0,
+                      "y": 15
+                    },
+                    "hiddenSeries": false,
+                    "id": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                      "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "alias": "$datacenter.$server.$pod",
+                        "datasource": {
+                          "type": "grafana-testdata-datasource"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Panel Title",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "dataLinks": []
               },
               "fieldConfig": {
@@ -276,7 +367,95 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colorBackground": false,
+                    "colorValue": false,
+                    "colors": [
+                      "#299c46",
+                      "rgba(237, 129, 40, 0.89)",
+                      "#d44a3a"
+                    ],
+                    "datasource": {
+                      "type": "grafana-testdata-datasource"
+                    },
+                    "fieldConfig": {
+                      "defaults": {
+                        "custom": {}
+                      },
+                      "overrides": []
+                    },
+                    "format": "none",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "gridPos": {
+                      "h": 9,
+                      "w": 4,
+                      "x": 12,
+                      "y": 0
+                    },
+                    "id": 6,
+                    "links": [
+                      {
+                        "targetBlank": true,
+                        "title": "Drilldown detail dashboard",
+                        "url": "d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1\u0026${__all_variables}\u0026${__url_time_range}"
+                      }
+                    ],
+                    "mappingType": 1,
+                    "mappingTypes": [],
+                    "maxDataPoints": 100,
+                    "nullPointMode": "connected",
+                    "postfix": "",
+                    "postfixFontSize": "50%",
+                    "prefix": "",
+                    "prefixFontSize": "50%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": false,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "type": "grafana-testdata-datasource"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": "",
+                    "title": "Panel drilldown link test",
+                    "type": "stat",
+                    "valueFontSize": "80%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

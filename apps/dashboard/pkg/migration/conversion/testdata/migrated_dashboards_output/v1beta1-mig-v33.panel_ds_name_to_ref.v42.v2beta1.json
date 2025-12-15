@@ -361,7 +361,59 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "loki",
+                      "uid": "non-default-test-ds-uid"
+                    },
+                    "description": "Tests v33 target migration with various edge cases: null target (unchanged), valid string (migrated), non-existing string (preserved), missing datasource field (unchanged).",
+                    "id": 5,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "loki",
+                          "uid": "non-default-test-ds-uid"
+                        },
+                        "description": "Null target datasource should remain null",
+                        "refId": "A"
+                      },
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "description": "Valid string should migrate to object",
+                        "refId": "B"
+                      },
+                      {
+                        "datasource": {
+                          "uid": "non-existing-ds"
+                        },
+                        "description": "Non-existing datasource should be preserved as-is (migration returns nil)",
+                        "refId": "C"
+                      },
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "loki",
+                          "uid": "non-default-test-ds-uid"
+                        },
+                        "description": "Target without datasource field should remain unchanged",
+                        "refId": "D"
+                      }
+                    ],
+                    "title": "Target Datasources: mixed null/string/non-existing scenarios",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

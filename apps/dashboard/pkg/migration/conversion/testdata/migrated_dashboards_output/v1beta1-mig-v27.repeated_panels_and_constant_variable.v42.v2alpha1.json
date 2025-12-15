@@ -66,7 +66,32 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "id": 2,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "refId": "A"
+                      }
+                    ],
+                    "title": "Normal Panel",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -94,7 +119,17 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "id": 6,
+                    "title": "Normal nested panel",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

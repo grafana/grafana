@@ -71,7 +71,97 @@
             "group": "stat",
             "version": "6.2.0-pre",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colorBackground": false,
+                    "colorValue": false,
+                    "colors": [
+                      "#299c46",
+                      "rgba(237, 129, 40, 0.89)",
+                      "#d44a3a"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "asdasdas",
+                    "format": "none",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": true,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "gridPos": {
+                      "h": 4,
+                      "w": 6,
+                      "x": 11,
+                      "y": 8
+                    },
+                    "id": 10,
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "maxDataPoints": 100,
+                    "nullPointMode": "connected",
+                    "pluginVersion": "6.2.0-pre",
+                    "postfix": "",
+                    "postfixFontSize": "50%",
+                    "prefix": "",
+                    "prefixFontSize": "50%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": false,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": false
+                    },
+                    "tableColumn": "",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": "",
+                    "timeShift": "2h",
+                    "type": "stat",
+                    "valueFontSize": "80%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -268,7 +358,92 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {},
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "",
+                    "fill": 1,
+                    "gridPos": {
+                      "h": 6,
+                      "w": 13,
+                      "x": 11,
+                      "y": 22
+                    },
+                    "id": 13,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "slow_query",
+                        "stringInput": "5s"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -368,7 +543,96 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colorBackground": false,
+                    "colorValue": false,
+                    "colors": [
+                      "#299c46",
+                      "#5794F2",
+                      "#d44a3a"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "asdasdas",
+                    "format": "ms",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "gridPos": {
+                      "h": 4,
+                      "w": 13,
+                      "x": 11,
+                      "y": 0
+                    },
+                    "id": 2,
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "maxDataPoints": 100,
+                    "nullPointMode": "connected",
+                    "postfix": "",
+                    "postfixFontSize": "50%",
+                    "prefix": "",
+                    "prefixFontSize": "100%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": true,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": "",
+                    "timeShift": "2h",
+                    "type": "stat",
+                    "valueFontSize": "120%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -534,7 +798,97 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colorBackground": false,
+                    "colorValue": false,
+                    "colors": [
+                      "#299c46",
+                      "#5794F2",
+                      "#d44a3a"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "asdasdas",
+                    "format": "ms",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "gridPos": {
+                      "h": 4,
+                      "w": 11,
+                      "x": 0,
+                      "y": 4
+                    },
+                    "id": 4,
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "maxDataPoints": 100,
+                    "nullPointMode": "connected",
+                    "postfix": "",
+                    "postfixFontSize": "50%",
+                    "prefix": "",
+                    "prefixFontSize": "100%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": true,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": "",
+                    "timeShift": "2h",
+                    "title": "Panel Title",
+                    "type": "stat",
+                    "valueFontSize": "120%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -700,7 +1054,93 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {},
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "asdasdas",
+                    "fill": 1,
+                    "gridPos": {
+                      "h": 6,
+                      "w": 11,
+                      "x": 0,
+                      "y": 22
+                    },
+                    "id": 6,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "slow_query",
+                        "stringInput": "5s"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "My cool pane title",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -847,7 +1287,97 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "colorBackground": false,
+                    "colorValue": false,
+                    "colors": [
+                      "#299c46",
+                      "#5794F2",
+                      "#d44a3a"
+                    ],
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "description": "asdasdas",
+                    "format": "ms",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "gridPos": {
+                      "h": 4,
+                      "w": 11,
+                      "x": 0,
+                      "y": 0
+                    },
+                    "id": 8,
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "maxDataPoints": 100,
+                    "nullPointMode": "connected",
+                    "postfix": "",
+                    "postfixFontSize": "50%",
+                    "prefix": "",
+                    "prefixFontSize": "100%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": true,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "grafana-testdata-datasource",
+                          "uid": "testdata-type-uid"
+                        },
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "thresholds": "",
+                    "timeShift": "2h",
+                    "title": "Title",
+                    "type": "stat",
+                    "valueFontSize": "120%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

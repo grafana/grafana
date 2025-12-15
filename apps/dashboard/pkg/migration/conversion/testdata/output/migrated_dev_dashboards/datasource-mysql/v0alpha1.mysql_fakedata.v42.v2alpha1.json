@@ -128,6 +128,112 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {
+                      "total avg": "#6ed0e0"
+                    },
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "uid": "gdev-mysql"
+                    },
+                    "fill": 2,
+                    "fillGradient": 0,
+                    "gridPos": {
+                      "h": 9,
+                      "w": 12,
+                      "x": 0,
+                      "y": 0
+                    },
+                    "hiddenSeries": false,
+                    "id": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "options": {
+                      "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [
+                      {
+                        "alias": "total avg",
+                        "fill": 0,
+                        "pointradius": 3,
+                        "points": true
+                      }
+                    ],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "time_series",
+                        "hide": false,
+                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count' AND\n  hostname IN($host)\nGROUP BY 1, 3\nORDER BY 1",
+                        "refId": "A",
+                        "target": ""
+                      },
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "time_series",
+                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  min(value) as value,\n  'total avg' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count'\nGROUP BY 1\nORDER BY 1",
+                        "refId": "B"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Average logins / $summarize",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "dataLinks": []
               },
               "fieldConfig": {
@@ -179,6 +285,93 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {},
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "uid": "gdev-mysql"
+                    },
+                    "fill": 2,
+                    "fillGradient": 0,
+                    "gridPos": {
+                      "h": 9,
+                      "w": 12,
+                      "x": 0,
+                      "y": 9
+                    },
+                    "hiddenSeries": false,
+                    "id": 3,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "options": {
+                      "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "time_series",
+                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  max(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'cpu' AND\n  hostname IN($host)\nGROUP BY 1, 3\nORDER BY 1",
+                        "refId": "A",
+                        "target": ""
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Max CPU / $summarize",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "percent",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "dataLinks": []
               },
               "fieldConfig": {
@@ -249,6 +442,102 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "aliasColors": {},
+                    "autoMigrateFrom": "graph",
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": {
+                      "uid": "gdev-mysql"
+                    },
+                    "fill": 2,
+                    "fillGradient": 0,
+                    "gridPos": {
+                      "h": 18,
+                      "w": 12,
+                      "x": 12,
+                      "y": 0
+                    },
+                    "hiddenSeries": false,
+                    "id": 4,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "options": {
+                      "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "time_series",
+                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  'started' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.started'\nGROUP BY 1, 3\nORDER BY 1",
+                        "refId": "A",
+                        "target": ""
+                      },
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "time_series",
+                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  'ended' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.ended'\nGROUP BY 1, 3\nORDER BY 1",
+                        "refId": "B"
+                      }
+                    ],
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "title": "Average payments started/ended / $summarize",
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "type": "timeseries",
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "dataLinks": []
               },
               "fieldConfig": {
@@ -299,7 +588,71 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalPanel": {
+                    "autoMigrateFrom": "table-old",
+                    "columns": [],
+                    "datasource": {
+                      "uid": "gdev-mysql"
+                    },
+                    "fontSize": "100%",
+                    "gridPos": {
+                      "h": 9,
+                      "w": 24,
+                      "x": 0,
+                      "y": 18
+                    },
+                    "id": 6,
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "link": false,
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "alias": "",
+                        "datasource": {
+                          "uid": "gdev-mysql"
+                        },
+                        "format": "table",
+                        "rawSql": "SELECT createdAt as Time, source, datacenter, hostname, value FROM grafana_metric WHERE hostname in($host)",
+                        "refId": "A",
+                        "target": ""
+                      }
+                    ],
+                    "title": "Values",
+                    "transform": "table",
+                    "type": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

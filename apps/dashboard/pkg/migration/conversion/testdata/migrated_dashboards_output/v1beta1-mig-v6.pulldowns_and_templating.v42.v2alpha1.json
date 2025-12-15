@@ -108,7 +108,39 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gridPos": {
+                      "h": 8,
+                      "w": 12,
+                      "x": 0,
+                      "y": 0
+                    },
+                    "id": 1,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "expr": "cpu_usage{environment=\"$environment\", service=\"$service\"}",
+                        "refId": "A"
+                      }
+                    ],
+                    "title": "CPU Usage",
+                    "type": "timeseries"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -154,7 +186,39 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalPanel": {
+                    "autoMigrateFrom": "singlestat",
+                    "datasource": {
+                      "apiVersion": "v1",
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
+                    "gridPos": {
+                      "h": 8,
+                      "w": 12,
+                      "x": 12,
+                      "y": 0
+                    },
+                    "id": 2,
+                    "targets": [
+                      {
+                        "datasource": {
+                          "apiVersion": "v1",
+                          "type": "prometheus",
+                          "uid": "default-ds-uid"
+                        },
+                        "expr": "memory_usage{region=\"$region\"}",
+                        "refId": "B"
+                      }
+                    ],
+                    "title": "Memory Usage",
+                    "type": "stat"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

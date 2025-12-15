@@ -111,6 +111,21 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "id": 12,
+                    "options": {
+                      "legend": {
+                        "displayMode": "list",
+                        "showLegend": false
+                      }
+                    },
+                    "title": "Nested Panel with Hidden DisplayMode",
+                    "type": "timeseries"
+                  }
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false
@@ -207,6 +222,21 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalPanel": {
+                    "autoMigrateFrom": "graph",
+                    "id": 3,
+                    "options": {
+                      "legend": {
+                        "displayMode": "list",
+                        "showLegend": false
+                      }
+                    },
+                    "title": "Panel with Hidden DisplayMode",
+                    "type": "timeseries"
+                  }
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false
