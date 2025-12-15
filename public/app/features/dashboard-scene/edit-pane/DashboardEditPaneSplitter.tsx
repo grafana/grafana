@@ -191,11 +191,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
-    editPane: css({
-      flexDirection: 'column',
-      // borderLeft: `1px solid ${theme.colors.border.weak}`,
-      // background: theme.colors.background.primary,
-    }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {
         position: 'sticky',

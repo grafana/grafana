@@ -26,8 +26,7 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 				Source:        in,
 			},
 		}
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Convert v1beta1 → v0
@@ -43,8 +42,7 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 				Source:        in,
 			},
 		}
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Update the stored version to reflect the original source
@@ -68,9 +66,7 @@ func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboa
 				Source:        in,
 			},
 		}
-
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Set successful conversion status
@@ -129,8 +125,7 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 				Source:        in,
 			},
 		}
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Convert v1beta1 → v0
@@ -146,7 +141,7 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 				Source:        in,
 			},
 		}
-		return nil
+		return err
 	}
 
 	// Update the stored version to reflect the original source
@@ -172,8 +167,7 @@ func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard
 				Source:        in,
 			},
 		}
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Convert v2alpha1 → v1beta1
@@ -188,8 +182,7 @@ func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard
 				Source:        in,
 			},
 		}
-		// For errors, set status but don't return error
-		return nil
+		return err
 	}
 
 	// Set successful conversion status

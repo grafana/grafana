@@ -594,5 +594,10 @@
     "title": "Panel Tests - Geomap",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

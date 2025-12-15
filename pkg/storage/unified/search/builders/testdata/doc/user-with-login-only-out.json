@@ -1,0 +1,15 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "with-login-only"
+  },
+  "name": "with-login-only",
+  "rv": 1234,
+  "fields": {
+    "lastSeenAt": 0,
+    "login": "user.two",
+    "role": "Viewer"
+  }
+}

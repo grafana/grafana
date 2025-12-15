@@ -224,6 +224,7 @@ kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,fals
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-search-navigate-organise,false,false,false
+recentlyViewedDashboards,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false

@@ -94,17 +94,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
       const json = JSON.parse(String(result));
 
       if (json.spec?.elements) {
-        dispatch(importDashboardV2Json(json.spec));
-        return;
+        return dispatch(importDashboardV2Json(json.spec));
       } else if (json.elements) {
-        dispatch(importDashboardV2Json(json));
-        return;
+        return dispatch(importDashboardV2Json(json));
       }
 
       // check if it's a v1 resource format
       if (json.spec) {
-        this.props.importDashboardJson(json.spec);
-        return;
+        return this.props.importDashboardJson(json.spec);
       }
 
       this.props.importDashboardJson(json);
@@ -123,20 +120,26 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
+    if ((dashboard.spec?.elements || dashboard.elements) && !config.featureToggles.dashboardNewLayouts) {
+      return appEvents.emit(AppEvents.alertError, [
+        'Import failed',
+        'Dashboard using new layout cannot be imported because the feature is not enabled',
+      ]);
+    }
+
     // check if it's a v2 resource format
     if (dashboard.spec?.elements) {
-      dispatch(importDashboardV2Json(dashboard.spec));
-      return;
-      // check if it's just a v2 spec
-    } else if (dashboard.elements) {
-      dispatch(importDashboardV2Json(dashboard));
-      return;
+      return dispatch(importDashboardV2Json(dashboard.spec));
+    }
+
+    // check if it's just a v2 spec
+    if (dashboard.elements) {
+      return dispatch(importDashboardV2Json(dashboard));
     }
 
     // check if it's a v1 resource format
     if (dashboard.spec) {
-      this.props.importDashboardJson(dashboard.spec);
-      return;
+      return this.props.importDashboardJson(dashboard.spec);
     }
 
     this.props.importDashboardJson(dashboard);

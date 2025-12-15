@@ -274,6 +274,11 @@ func (s *Service) listDashboardVersionsThroughK8s(
 		continueToken = tempOut.GetContinue()
 	}
 
+	// Update the continue token on the response to reflect the actual position after all fetched items.
+	// Without this, the response would return the token from the first fetch, causing duplicate items
+	// on subsequent pages when multiple fetches were needed to fill the requested limit.
+	out.SetContinue(continueToken)
+
 	return out, nil
 }
 

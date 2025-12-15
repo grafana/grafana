@@ -5,6 +5,7 @@ import { map, distinctUntilChanged } from 'rxjs/operators';
 import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
 
 import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
 export interface State {
@@ -72,12 +73,21 @@ export class ScopesService implements ScopesContextValue {
     const queryParams = new URLSearchParams(locationService.getLocation().search);
     const scopeNodeId = queryParams.get('scope_node');
     const navigationScope = queryParams.get('navigation_scope');
+    const navScopePath = queryParams.get('nav_scope_path');
 
     if (navigationScope) {
-      this.dashboardsService.setNavigationScope(navigationScope);
+      this.dashboardsService.setNavigationScope(
+        navigationScope,
+        undefined,
+        navScopePath ? deserializeFolderPath(navScopePath) : undefined
+      );
     }
 
-    this.changeScopes(queryParams.getAll('scopes'), undefined, scopeNodeId ?? undefined);
+    this.changeScopes(queryParams.getAll('scopes'), undefined, scopeNodeId ?? undefined).then(() => {
+      if (navScopePath && !navigationScope) {
+        this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
+      }
+    });
 
     // Pre-load scope node (which loads parent too)
     const nodeToPreload = scopeNodeId;
@@ -99,6 +109,9 @@ export class ScopesService implements ScopesContextValue {
         const scopes = queryParams.getAll('scopes');
         const scopeNodeId = queryParams.get('scope_node');
 
+        const navigationScope = queryParams.get('navigation_scope');
+        const navScopePath = queryParams.get('nav_scope_path');
+
         // Check if new scopes are different from the old scopes
         const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
         if (scopes.length && !isEqual(scopes, currentScopes)) {
@@ -106,6 +119,31 @@ export class ScopesService implements ScopesContextValue {
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
           this.changeScopes(scopes, undefined, scopeNodeId ?? undefined);
+        }
+
+        // Handle navigation_scope and nav_scope_path changes from back/forward navigation
+        const currentNavigationScope = this.dashboardsService.state.navigationScope;
+        const currentNavScopePath = this.dashboardsService.state.navScopePath;
+        const newNavScopePath = navScopePath ? deserializeFolderPath(navScopePath) : undefined;
+        const decodedNavigationScope = navigationScope ? decodeURIComponent(navigationScope) : undefined;
+
+        const navigationScopeChanged = decodedNavigationScope !== currentNavigationScope;
+        const navScopePathChanged = !isEqual(newNavScopePath, currentNavScopePath);
+
+        if (navigationScopeChanged) {
+          // Navigation scope changed - do full update
+          if (decodedNavigationScope) {
+            this.dashboardsService.setNavigationScope(decodedNavigationScope, undefined, newNavScopePath);
+          } else if (newNavScopePath?.length) {
+            this.changeScopes(scopes, undefined, scopeNodeId ?? undefined).then(() => {
+              this.dashboardsService.setNavScopePath(newNavScopePath);
+            });
+          } else {
+            this.dashboardsService.setNavigationScope(undefined);
+          }
+        } else if (navScopePathChanged) {
+          // Navigation scope unchanged but path changed
+          this.dashboardsService.setNavScopePath(newNavScopePath);
         }
       })
     );
@@ -137,10 +175,17 @@ export class ScopesService implements ScopesContextValue {
     // Update the URL based on change in the navigation scope
     this.subscriptions.push(
       this.dashboardsService.subscribeToState((state, prevState) => {
-        if (state.navigationScope !== prevState.navigationScope) {
-          this.locationService.partial({
-            navigation_scope: state.navigationScope,
-          });
+        if (
+          state.navigationScope !== prevState.navigationScope ||
+          !isEqual(state.navScopePath, prevState.navScopePath)
+        ) {
+          this.locationService.partial(
+            {
+              navigation_scope: state.navigationScope ? encodeURIComponent(state.navigationScope) : null,
+              nav_scope_path: state.navScopePath?.length ? serializeFolderPath(state.navScopePath) : null,
+            },
+            true
+          );
         }
       })
     );

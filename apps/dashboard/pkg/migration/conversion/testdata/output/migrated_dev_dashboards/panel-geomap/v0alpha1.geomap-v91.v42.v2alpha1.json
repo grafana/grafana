@@ -457,5 +457,10 @@
     "title": "Panel Tests - Geomap 9.1",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

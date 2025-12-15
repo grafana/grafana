@@ -1926,3 +1926,100 @@ func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
 	finalCount := finalStats["stats.features.scim.has_successful_login.count"].(int)
 	require.Equal(t, int(1), finalCount)
 }
+
+func TestUserSync_SyncUserHook_SCIMAuthModuleMismatch(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+
+	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
+
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{
+		ID:            1,
+		Email:         "test@test.com",
+		IsProvisioned: true,
+	}, nil).Once()
+
+	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+		return q.AuthModule == "oauth_azuread"
+	})).Return(nil, user.ErrUserNotFound).Once()
+
+	s := ProvideUserSync(
+		userSrv,
+		authinfoimpl.ProvideOSSUserProtectionService(),
+		authInfoSrv,
+		&quotatest.FakeQuotaService{},
+		tracing.NewNoopTracerService(),
+		featuremgmt.WithFeatures(),
+		setting.NewCfg(),
+		nil,
+	)
+
+	email := "test@test.com"
+
+	err := s.SyncUserHook(context.Background(), &authn.Identity{
+		AuthenticatedBy: "oauth_azuread",
+		ClientParams: authn.ClientParams{
+			SyncUser:    true,
+			AllowSignUp: true,
+			LookUpParams: login.UserLookupParams{
+				Email: &email,
+			},
+		},
+	}, nil)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, errSCIMAuthModuleMismatch)
+	assert.Contains(t, err.Error(), "SCIM")
+	assert.Contains(t, err.Error(), "oauth_azuread")
+}
+
+func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+		return q.AuthModule == login.GrafanaComAuthModule && q.AuthId == "gcom-user-123"
+	})).Return(nil, user.ErrUserNotFound).Once()
+
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
+
+	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+		return q.AuthModule == login.GrafanaComAuthModule && q.AuthId == "gcom-user-123"
+	})).Return(nil, user.ErrUserNotFound).Once()
+
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{
+		ID:            1,
+		Email:         "test@test.com",
+		IsProvisioned: true,
+	}, nil).Once()
+
+	s := ProvideUserSync(
+		userSrv,
+		authinfoimpl.ProvideOSSUserProtectionService(),
+		authInfoSrv,
+		&quotatest.FakeQuotaService{},
+		tracing.NewNoopTracerService(),
+		featuremgmt.WithFeatures(),
+		setting.NewCfg(),
+		nil,
+	)
+
+	email := "test@test.com"
+
+	err := s.SyncUserHook(context.Background(), &authn.Identity{
+		AuthenticatedBy: login.GrafanaComAuthModule,
+		AuthID:          "gcom-user-123",
+		ClientParams: authn.ClientParams{
+			SyncUser:    true,
+			AllowSignUp: true,
+			LookUpParams: login.UserLookupParams{
+				Email: &email,
+			},
+		},
+	}, nil)
+
+	require.NoError(t, err)
+}

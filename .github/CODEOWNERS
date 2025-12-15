@@ -208,7 +208,7 @@
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/opentsdb/ @grafana/partner-datasources
+/pkg/tsdb/opentsdb/ @grafana/oss-big-tent
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
 
@@ -260,7 +260,7 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
-/devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
+/devenv/dev-dashboards/datasource-opentsdb/ @grafana/oss-big-tent
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-loki/ @grafana/plugins-platform-frontend
@@ -307,7 +307,7 @@
 /devenv/docker/blocks/mysql_exporter/ @grafana/oss-big-tent
 /devenv/docker/blocks/mysql_opendata/ @grafana/oss-big-tent
 /devenv/docker/blocks/mysql_tests/ @grafana/oss-big-tent
-/devenv/docker/blocks/opentsdb/ @grafana/partner-datasources
+/devenv/docker/blocks/opentsdb/ @grafana/oss-big-tent
 /devenv/docker/blocks/postgres/ @grafana/oss-big-tent
 /devenv/docker/blocks/postgres_tests/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus/ @grafana/oss-big-tent
@@ -520,7 +520,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
-/e2e-playwright/various-suite/visualization-suggestions.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/visualization-suggestions.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/perf-test.spec.ts @grafana/grafana-frontend-platform
 
 # Packages
@@ -956,6 +956,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-search-navigate-organise
 /public/app/features/org/ @grafana/grafana-search-navigate-organise
 /public/app/features/panel/ @grafana/dashboards-squad
+/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions.tsx @grafana/dataviz-squad
 /public/app/features/panel/suggestions/ @grafana/dataviz-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
@@ -1100,7 +1101,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
-/public/app/plugins/datasource/opentsdb/ @grafana/partner-datasources
+/public/app/plugins/datasource/opentsdb/ @grafana/oss-big-tent
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/oss-big-tent
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources

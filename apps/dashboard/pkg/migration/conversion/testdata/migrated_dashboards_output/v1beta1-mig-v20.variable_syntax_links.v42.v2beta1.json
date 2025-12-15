@@ -437,5 +437,10 @@
     "title": "V20 Variable Syntax Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

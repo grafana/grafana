@@ -343,7 +343,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 		Cfg:                  setting.NewCfg(),
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
-		Live:                 newTestLive(t, nil),
+		Live:                 newTestLive(t),
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1")
@@ -450,7 +450,7 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 				hs.Cfg = setting.NewCfg()
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}
-				hs.Live = newTestLive(t, hs.SQLStore)
+				hs.Live = newTestLive(t)
 				hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
 			})
 
