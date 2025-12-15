@@ -211,6 +211,12 @@ type ScopeNavigationSpec struct {
 	Scope string `json:"scope"`
 	// Used to navigate to a sub-scope of the main scope. URL will not be used if this is set.
 	SubScope string `json:"subScope,omitempty"`
+	// Preload the subscope children, as soon as the ScopeNavigation is loaded.
+	PreLoadSubScopeChildren bool `json:"preLoadSubScopeChildren,omitempty"`
+	// Expands to display the subscope children when the ScopeNavigation is loaded.
+	ExpandOnLoad bool `json:"expandOnLoad,omitempty"`
+	// Makes the subscope not selectable, only serving as a way to build the tree.
+	DisableSubScopeSelection bool `json:"disableSubScopeSelection,omitempty"`
 }
 
 // Type of the item.
