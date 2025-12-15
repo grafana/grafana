@@ -32,7 +32,7 @@ jobs:
     # If the source is not from a fork then dispatch the job to the workflow.
     # This will fail on forks when trying to broker a token, so instead, forks will create the required status and mark
     # it as a success
-    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    if: ${{ github.event.pull_request.head.repo.fork }}
     env:
       HEAD_REF: ${{ inputs.head_ref }}
       BASE_REF: ${{ github.base_ref }}
@@ -84,7 +84,7 @@ jobs:
     # If the source is not from a fork then dispatch the job to the workflow.
     # This will fail on forks when trying to broker a token, so instead, forks will create the required status and mark
     # it as a success
-    if: ${{ github.event.pull_request.head.repo.fork }}
+    if: ${{ ! github.event.pull_request.head.repo.fork }}
     permissions:
       statuses: write
     runs-on: ubuntu-latest
