@@ -2233,7 +2233,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 
 	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
 		// Check if panel type is an Angular type that needs migration
-		// This handles cases where v0→v1 migration didn't run (dashboard stored directly as v1)
 		if newType := getAngularPanelMigration(panelType, panelMap); newType != "" {
 			autoMigrateFrom = panelType // Original Angular type
 			panelType = newType         // New modern type
@@ -2693,60 +2692,9 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 	return result
 }
 
-// getAngularPanelMigration checks if a panel type is an Angular panel and returns the new type to migrate to.
-// This replicates the same logic as applyPanelAutoMigration() in frontend_defaults.go (v0→v1 migration).
+// getAngularPanelMigration is a convenience wrapper around schemaversion.GetAngularPanelMigration.
+// It checks if a panel type is an Angular panel and returns the new type to migrate to.
 // Returns the new panel type if migration is needed, empty string otherwise.
 func getAngularPanelMigration(panelType string, panelMap map[string]interface{}) string {
-	// Handle graph panel specially - it can migrate to different panel types
-	// based on xaxis.mode (matches getGraphAutoMigration in frontend_defaults.go)
-	if panelType == "graph" || panelType == "graphite" {
-		return getGraphMigrationTarget(panelMap)
-	}
-
-	// Map of Angular panel types to their modern equivalents
-	// (matches autoMigrateAngular in frontend_defaults.go)
-	angularPanelMigrations := map[string]string{
-		"singlestat":               "stat",
-		"grafana-singlestat-panel": "stat",
-		"table-old":                "table",
-		"grafana-piechart-panel":   "piechart",
-		"grafana-worldmap-panel":   "geomap",
-		"natel-discrete-panel":     "state-timeline",
-	}
-
-	if newType, isAngular := angularPanelMigrations[panelType]; isAngular {
-		return newType
-	}
-
-	return ""
-}
-
-// getGraphMigrationTarget determines the target panel type for graph panel migration.
-// This matches getGraphAutoMigration() in frontend_defaults.go.
-func getGraphMigrationTarget(panelMap map[string]interface{}) string {
-	// Default to timeseries
-	newType := "timeseries"
-
-	// Check xaxis mode for special cases
-	if xaxis, ok := panelMap["xaxis"].(map[string]interface{}); ok {
-		if mode, ok := xaxis["mode"].(string); ok {
-			switch mode {
-			case "series":
-				// Check legend values for bargauge vs barchart
-				if legend, ok := panelMap["legend"].(map[string]interface{}); ok {
-					if values, ok := legend["values"].(bool); ok && values {
-						newType = "bargauge"
-					} else {
-						newType = "barchart"
-					}
-				} else {
-					newType = "barchart"
-				}
-			case "histogram":
-				newType = "histogram"
-			}
-		}
-	}
-
-	return newType
+	return schemaversion.GetAngularPanelMigration(panelType, panelMap)
 }
