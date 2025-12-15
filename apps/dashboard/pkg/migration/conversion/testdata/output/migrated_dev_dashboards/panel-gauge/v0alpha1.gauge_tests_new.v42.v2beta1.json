@@ -1039,6 +1039,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": true,
@@ -1132,6 +1133,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": true,
@@ -1221,6 +1223,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1314,6 +1317,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1407,6 +1411,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1500,6 +1505,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1597,6 +1603,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.4,
                 "effects": {
                   "barGlow": true,
@@ -1686,6 +1693,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1779,6 +1787,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1876,6 +1885,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1973,6 +1983,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,

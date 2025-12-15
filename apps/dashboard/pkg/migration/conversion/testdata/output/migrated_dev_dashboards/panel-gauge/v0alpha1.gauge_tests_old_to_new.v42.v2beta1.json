@@ -914,7 +914,6 @@
                 "segmentCount": 70,
                 "segmentSpacing": 0.3,
                 "shape": "gauge",
-                "barShape": "flat",
                 "showThresholdLabels": false,
                 "showThresholdMarkers": true,
                 "sparkline": false

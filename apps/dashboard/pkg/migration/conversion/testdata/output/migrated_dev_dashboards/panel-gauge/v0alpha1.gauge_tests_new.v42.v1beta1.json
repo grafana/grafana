@@ -467,6 +467,7 @@
         "id": 22,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": true,
@@ -544,6 +545,7 @@
         "id": 23,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": true,
@@ -963,6 +965,7 @@
         "id": 25,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
@@ -1040,6 +1043,7 @@
         "id": 26,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
@@ -1117,6 +1121,7 @@
         "id": 29,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
@@ -1194,6 +1199,7 @@
         "id": 30,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
@@ -1271,6 +1277,7 @@
         "id": 28,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
@@ -1365,6 +1372,7 @@
         "id": 32,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
@@ -1446,6 +1454,7 @@
         "id": 34,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
@@ -1527,6 +1536,7 @@
         "id": 33,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,

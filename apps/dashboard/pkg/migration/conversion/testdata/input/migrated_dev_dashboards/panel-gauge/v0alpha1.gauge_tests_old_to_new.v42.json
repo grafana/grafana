@@ -967,7 +967,6 @@
         },
         "segmentCount": 70,
         "segmentSpacing": 0.3,
-        "barShape": "flat",
         "shape": "gauge",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
