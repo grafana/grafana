@@ -21,11 +21,16 @@ type Connection struct {
 }
 
 type ConnectionSecure struct {
-	// Reference to the private key for GitHub App authentication
+	// PrivateKey is the reference to the private key used for GitHub App authentication.
 	// This value is stored securely and cannot be read back
 	PrivateKey common.InlineSecureValue `json:"privateKey,omitzero,omitempty"`
 
-	// Reference to the webhook secret for validating GitHub webhook requests
+	// ClientSecret is the reference to the secret used for other providers authentication,
+	// and Github on-behalf-of authentication.
+	// This value is stored securely and cannot be read back
+	ClientSecret common.InlineSecureValue `json:"clientSecret,omitzero,omitempty"`
+
+	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
 	Token common.InlineSecureValue `json:"webhook,omitzero,omitempty"`
 }
@@ -40,6 +45,16 @@ type GitHubConnectionConfig struct {
 
 	// GitHub App installation ID
 	InstallationID string `json:"installationID"`
+}
+
+type BitbucketConnectionConfig struct {
+	// App client ID
+	ClientID string `json:"clientID"`
+}
+
+type GitlabConnectionConfig struct {
+	// App client ID
+	ClientID string `json:"clientID"`
 }
 
 // ConnectionType defines the types of Connection providers
@@ -60,6 +75,12 @@ type ConnectionSpec struct {
 	// GitHub connection configuration
 	// Only applicable when provider is "github"
 	GitHub *GitHubConnectionConfig `json:"github,omitempty"`
+	// Bitbucket connection configuration
+	// Only applicable when provider is "bitbucket"
+	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
+	// Gitlab connection configuration
+	// Only applicable when provider is "gitlab"
+	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
 }
 
 // ConnectionState defines the state of a Connection
@@ -68,8 +89,7 @@ type ConnectionState string
 
 // ConnectionState values
 const (
-	ConnectionStatePending      ConnectionState = "pending"
-	ConnectionStateActive       ConnectionState = "active"
+	ConnectionStateConnected    ConnectionState = "connected"
 	ConnectionStateDisconnected ConnectionState = "disconnected"
 )
 

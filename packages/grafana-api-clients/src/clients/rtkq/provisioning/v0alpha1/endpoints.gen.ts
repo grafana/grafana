@@ -1431,10 +1431,16 @@ export type InlineSecureValue =
       remove: boolean;
     };
 export type ConnectionSecure = {
-  /** Reference to the private key for GitHub App authentication This value is stored securely and cannot be read back */
+  /** ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back */
+  clientSecret?: InlineSecureValue;
+  /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
   privateKey?: InlineSecureValue;
-  /** Reference to the webhook secret for validating GitHub webhook requests This value is stored securely and cannot be read back */
+  /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
   webhook?: InlineSecureValue;
+};
+export type BitbucketConnectionConfig = {
+  /** App client ID */
+  clientID: string;
 };
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
@@ -1442,9 +1448,17 @@ export type GitHubConnectionConfig = {
   /** GitHub App installation ID */
   installationID: string;
 };
+export type GitlabConnectionConfig = {
+  /** App client ID */
+  clientID: string;
+};
 export type ConnectionSpec = {
+  /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
+  bitbucket?: BitbucketConnectionConfig;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
+  /** Gitlab connection configuration Only applicable when provider is "gitlab" */
+  gitlab?: GitlabConnectionConfig;
   /** The connection provider type
     
     Possible enum values:
@@ -1475,10 +1489,9 @@ export type ConnectionStatus = {
   /** Connection state
     
     Possible enum values:
-     - `"active"`
-     - `"disconnected"`
-     - `"pending"` */
-  state: 'active' | 'disconnected' | 'pending';
+     - `"connected"`
+     - `"disconnected"` */
+  state: 'connected' | 'disconnected';
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

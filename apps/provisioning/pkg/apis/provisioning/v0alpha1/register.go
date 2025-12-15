@@ -126,6 +126,7 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Type", Type: "string"},
 			{Name: "AppID", Type: "string"},
 			{Name: "InstallationID", Type: "string"},
+			{Name: "ClientID", Type: "string"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Connection)
@@ -133,12 +134,15 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				return nil, errors.New("expected Repository")
 			}
 
-			var appID, installationID string
+			var appID, installationID, clientID string
 			switch m.Spec.Type {
 			case GithubConnectionType:
 				appID = m.Spec.GitHub.AppID
 				installationID = m.Spec.GitHub.InstallationID
-			default:
+			case BitbucketConnectionType:
+				clientID = m.Spec.Bitbucket.ClientID
+			case GitlabConnectionType:
+				clientID = m.Spec.Gitlab.ClientID
 			}
 
 			return []interface{}{
@@ -147,6 +151,7 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.Spec.Type,
 				appID,
 				installationID,
+				clientID,
 			}, nil
 		},
 	})

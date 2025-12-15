@@ -18,6 +18,8 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=provisioning.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketConnectionConfig"):
+		return &provisioningv0alpha1.BitbucketConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketRepositoryConfig"):
 		return &provisioningv0alpha1.BitbucketRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Connection"):
@@ -36,6 +38,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitlabConnectionConfig"):
+		return &provisioningv0alpha1.GitlabConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):
 		return &provisioningv0alpha1.GitLabRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):

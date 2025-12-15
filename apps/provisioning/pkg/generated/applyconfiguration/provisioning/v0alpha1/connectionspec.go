@@ -11,8 +11,10 @@ import (
 // ConnectionSpecApplyConfiguration represents a declarative configuration of the ConnectionSpec type for use
 // with apply.
 type ConnectionSpecApplyConfiguration struct {
-	Type   *provisioningv0alpha1.ConnectionType      `json:"type,omitempty"`
-	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
+	Type      *provisioningv0alpha1.ConnectionType         `json:"type,omitempty"`
+	GitHub    *GitHubConnectionConfigApplyConfiguration    `json:"github,omitempty"`
+	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
+	Gitlab    *GitlabConnectionConfigApplyConfiguration    `json:"gitlab,omitempty"`
 }
 
 // ConnectionSpecApplyConfiguration constructs a declarative configuration of the ConnectionSpec type for use with
@@ -34,5 +36,21 @@ func (b *ConnectionSpecApplyConfiguration) WithType(value provisioningv0alpha1.C
 // If called multiple times, the GitHub field is set to the value of the last call.
 func (b *ConnectionSpecApplyConfiguration) WithGitHub(value *GitHubConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.GitHub = value
+	return b
+}
+
+// WithBitbucket sets the Bitbucket field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Bitbucket field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Bitbucket = value
+	return b
+}
+
+// WithGitlab sets the Gitlab field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Gitlab field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGitlab(value *GitlabConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Gitlab = value
 	return b
 }

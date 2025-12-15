@@ -4318,6 +4318,19 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "App client ID",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketRepositoryConfig": {
         "type": "object",
         "required": [
@@ -4442,8 +4455,17 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSecure": {
         "type": "object",
         "properties": {
+          "clientSecret": {
+            "description": "ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
+          },
           "privateKey": {
-            "description": "Reference to the private key for GitHub App authentication This value is stored securely and cannot be read back",
+            "description": "PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back",
             "default": {},
             "allOf": [
               {
@@ -4452,7 +4474,7 @@
             ]
           },
           "webhook": {
-            "description": "Reference to the webhook secret for validating GitHub webhook requests This value is stored securely and cannot be read back",
+            "description": "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
             "default": {},
             "allOf": [
               {
@@ -4468,11 +4490,27 @@
           "type"
         ],
         "properties": {
+          "bitbucket": {
+            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
+              }
+            ]
+          },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubConnectionConfig"
+              }
+            ]
+          },
+          "gitlab": {
+            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
               }
             ]
           },
@@ -4513,13 +4551,12 @@
             "default": 0
           },
           "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"active\"`\n - `\"disconnected\"`\n - `\"pending\"`",
+            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
             "type": "string",
             "default": "",
             "enum": [
-              "active",
-              "disconnected",
-              "pending"
+              "connected",
+              "disconnected"
             ]
           }
         }
@@ -4732,6 +4769,19 @@
           "url": {
             "description": "The repository URL (e.g. `https://github.com/example/test.git`).",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "App client ID",
+            "type": "string",
+            "default": ""
           }
         }
       },

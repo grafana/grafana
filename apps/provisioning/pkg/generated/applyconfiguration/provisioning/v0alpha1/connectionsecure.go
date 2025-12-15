@@ -11,8 +11,9 @@ import (
 // ConnectionSecureApplyConfiguration represents a declarative configuration of the ConnectionSecure type for use
 // with apply.
 type ConnectionSecureApplyConfiguration struct {
-	PrivateKey *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
-	Token      *commonv0alpha1.InlineSecureValue `json:"webhook,omitempty"`
+	PrivateKey   *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
+	ClientSecret *commonv0alpha1.InlineSecureValue `json:"clientSecret,omitempty"`
+	Token        *commonv0alpha1.InlineSecureValue `json:"webhook,omitempty"`
 }
 
 // ConnectionSecureApplyConfiguration constructs a declarative configuration of the ConnectionSecure type for use with
@@ -26,6 +27,14 @@ func ConnectionSecure() *ConnectionSecureApplyConfiguration {
 // If called multiple times, the PrivateKey field is set to the value of the last call.
 func (b *ConnectionSecureApplyConfiguration) WithPrivateKey(value commonv0alpha1.InlineSecureValue) *ConnectionSecureApplyConfiguration {
 	b.PrivateKey = &value
+	return b
+}
+
+// WithClientSecret sets the ClientSecret field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ClientSecret field is set to the value of the last call.
+func (b *ConnectionSecureApplyConfiguration) WithClientSecret(value commonv0alpha1.InlineSecureValue) *ConnectionSecureApplyConfiguration {
+	b.ClientSecret = &value
 	return b
 }
 
