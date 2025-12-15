@@ -147,11 +147,11 @@ export type DisabledWhenConfig = {
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
   | {
-    name: keyof SSOProvider['settings'];
-    dependsOn?: keyof SSOProvider['settings'];
-    disabledWhen?: DisabledWhenConfig;
-    hidden?: boolean;
-  };
+      name: keyof SSOProvider['settings'];
+      dependsOn?: keyof SSOProvider['settings'];
+      disabledWhen?: DisabledWhenConfig;
+      hidden?: boolean;
+    };
 
 export interface ServerDiscoveryFormData {
   url: string;
