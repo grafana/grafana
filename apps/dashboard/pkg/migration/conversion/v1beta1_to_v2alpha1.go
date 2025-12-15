@@ -2022,7 +2022,6 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
 	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
-	// Treat empty refId as missing and default to "A" to match frontend behavior
 	if refId == "" {
 		refId = "A"
 	}
