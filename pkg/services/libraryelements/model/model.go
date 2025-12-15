@@ -162,7 +162,7 @@ var (
 	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
 	ErrLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 	// ErrLibraryElementProvisionedFolder indicates that a library element cannot be created on a provisioned folder.
-	ErrLibraryElementProvisionedFolder = errors.New("cannot create or move a library element on a provisioned folder")
+	ErrLibraryElementProvisionedFolder = errors.New("resource type not supported in repository-managed folders")
 )
 
 // Commands
