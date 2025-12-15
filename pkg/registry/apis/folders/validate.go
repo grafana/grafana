@@ -165,35 +165,70 @@ func validateOnUpdate(ctx context.Context,
 	// any descendant folders to exceed the max depth.
 	//
 	// Calculate the maximum allowed subtree depth after the move.
-	// We only need to search one level beyond this to detect violations.
-	depthToCheck := (maxDepth + 1) - len(info.Items)
-	currentLevel := []string{obj.Name}
-	for depth := 1; depth <= depthToCheck; depth++ {
-		children, err := searchChildrenOfFolders(ctx, searcher, obj.Namespace, currentLevel)
+	allowedDepth := (maxDepth + 1) - len(info.Items)
+	if allowedDepth <= 0 {
+		return nil
+	}
+
+	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
+}
+
+// checkSubtreeDepth uses a hybrid DFS+batching approach:
+// 1. fetches one page of children for the current folder(s)
+// 2. batches all those children into one request to get their children
+// 3. continues depth-first (batching still) until max depth or violation
+// 4. only fetches more siblings after fully exploring current batch
+func checkSubtreeDepth(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, folderUID string, remainingDepth int, maxDepth int) error {
+	if remainingDepth <= 0 {
+		return nil
+	}
+
+	// Start with the folder being moved
+	return checkSubtreeDepthBatched(ctx, searcher, namespace, []string{folderUID}, remainingDepth, maxDepth)
+}
+
+// checkSubtreeDepthBatched checks depth for a batch of folders at the same level
+func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, remainingDepth int, maxDepth int) error {
+	if remainingDepth <= 0 || len(parentUIDs) == 0 {
+		return nil
+	}
+
+	const pageSize int64 = 1000
+	var offset int64
+
+	for {
+		children, hasMore, err := getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
-			return fmt.Errorf("failed to get children for depth validation: %w", err)
+			return fmt.Errorf("failed to get children: %w", err)
 		}
 
 		if len(children) == 0 {
-			break
+			return nil
 		}
 
-		// if descendants exist beyond the allowed depth, error
-		if depth == depthToCheck {
+		// if we are at the last allowed depth and children exist, we will hit the max
+		if remainingDepth == 1 {
 			return folder.ErrMaximumDepthReached.Errorf("maximum folder depth %d would be exceeded after move", maxDepth)
 		}
 
-		currentLevel = children
-	}
+		if err := checkSubtreeDepthBatched(ctx, searcher, namespace, children, remainingDepth-1, maxDepth); err != nil {
+			return err
+		}
 
-	return nil
+		if !hasMore {
+			return nil
+		}
+
+		offset += pageSize
+	}
 }
 
-// searchChildrenOfFolders returns all folder UIDs that have a parent in the given list.
-func searchChildrenOfFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string) ([]string, error) {
+// getChildrenBatch fetches children for multiple parents
+func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, limit int64, offset int64) ([]string, bool, error) {
 	if len(parentUIDs) == 0 {
-		return nil, nil
+		return nil, false, nil
 	}
+
 	resp, err := searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
@@ -207,18 +242,19 @@ func searchChildrenOfFolders(ctx context.Context, searcher resourcepb.ResourceIn
 				Values:   parentUIDs,
 			}},
 		},
-		Limit: 10000,
+		Limit:  limit,
+		Offset: offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to search folders: %w", err)
+		return nil, false, fmt.Errorf("failed to search folders: %w", err)
 	}
 
 	if resp.Error != nil {
-		return nil, fmt.Errorf("search error: %s", resp.Error.Message)
+		return nil, false, fmt.Errorf("search error: %s", resp.Error.Message)
 	}
 
 	if resp.Results == nil || len(resp.Results.Rows) == 0 {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	children := make([]string, 0, len(resp.Results.Rows))
@@ -228,9 +264,8 @@ func searchChildrenOfFolders(ctx context.Context, searcher resourcepb.ResourceIn
 		}
 	}
 
-	// TODO: handle continue tokens...
-
-	return children, nil
+	hasMore := resp.Results.NextPageToken != ""
+	return children, hasMore, nil
 }
 
 func validateOnDelete(ctx context.Context,
