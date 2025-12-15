@@ -75,7 +75,6 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -154,7 +153,6 @@
         "effects": {
           "barGlow": false,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -233,7 +231,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -312,7 +309,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -391,7 +387,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -639,7 +634,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -718,7 +712,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -797,7 +790,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -876,7 +868,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": false
         },
         "barShape": "rounded",
@@ -1634,7 +1625,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": true
         },
         "barShape": "rounded",
@@ -1719,7 +1709,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": true
         },
         "barShape": "rounded",
@@ -1818,7 +1807,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": true
         },
         "barShape": "rounded",
@@ -1988,7 +1976,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": true
         },
         "barShape": "rounded",
@@ -2073,7 +2060,6 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
-
           "gradient": true
         },
         "barShape": "rounded",
