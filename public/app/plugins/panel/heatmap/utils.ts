@@ -342,7 +342,6 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addAxis({
     scaleKey: yScaleKey,
-    show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
     placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,

@@ -108,7 +108,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
   const xFieldAxisPlacement =
     xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
-  const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   if (xField.type === FieldType.time) {
     builder.addScale({
@@ -136,7 +135,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         scaleKey: xScaleKey,
         isTime: true,
         placement: xFieldAxisPlacement,
-        show: xFieldAxisShow,
         label: xField.config.custom?.axisLabel,
         timeZone,
         theme,
@@ -178,7 +176,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     builder.addAxis({
       scaleKey: xScaleKey,
       placement: xFieldAxisPlacement,
-      show: xFieldAxisShow,
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
