@@ -34,7 +34,7 @@ import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { LogLineTimestampResolution } from './LogLine';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListOptions, LogListFontSize } from './LogList';
-import { reportInteractionOnce } from './analytics';
+import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
@@ -241,7 +241,7 @@ export const LogListContextProvider = ({
     if (noInteractions) {
       return;
     }
-    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
+    collectInsights(logs, app, {
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
