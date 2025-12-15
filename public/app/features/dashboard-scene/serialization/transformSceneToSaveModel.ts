@@ -699,9 +699,6 @@ export function rowItemToSaveModel(
     }
   }
 
-  // Keep Y positions non-decreasing to preserve alignment after absolute offsetting
-  ensureNonDecreasingPanelY(panelsInsideRow);
-
   if (collapsed) {
     // For collapsed rows, store panels inside the row
     rowPanel.panels = panelsInsideRow;
@@ -722,18 +719,15 @@ function flattenRowItemToPanels(row: RowItem, panelsArray: Panel[], isSnapshot =
   const rowLayout = row.state.layout;
 
   if (rowLayout instanceof DefaultGridLayoutManager) {
-    const flattenedPanels: Panel[] = [];
     for (const child of rowLayout.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         if (child.state.variableName) {
-          flattenedPanels.push(...panelRepeaterToPanels(child, isSnapshot));
+          panelsArray.push(...panelRepeaterToPanels(child, isSnapshot));
         } else {
-          flattenedPanels.push(gridItemToPanel(child, isSnapshot));
+          panelsArray.push(gridItemToPanel(child, isSnapshot));
         }
       }
     }
-    ensureNonDecreasingPanelY(flattenedPanels);
-    panelsArray.push(...flattenedPanels);
   } else if (rowLayout instanceof RowsLayoutManager) {
     // Recursively flatten nested rows
     for (const nestedRow of rowLayout.state.rows) {
@@ -830,7 +824,6 @@ export function tabItemToSaveModel(
       panel.gridPos.y = (panel.gridPos.y ?? 0) + panelBaseY;
     }
   }
-  ensureNonDecreasingPanelY(panelsInsideTab);
   panelsArray.push(...panelsInsideTab);
 
   // Next row starts after all content in this tab
@@ -845,18 +838,15 @@ function flattenTabItemToPanels(tab: TabItem, panelsArray: Panel[], isSnapshot =
   const tabLayout = tab.state.layout;
 
   if (tabLayout instanceof DefaultGridLayoutManager) {
-    const flattenedPanels: Panel[] = [];
     for (const child of tabLayout.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         if (child.state.variableName) {
-          flattenedPanels.push(...panelRepeaterToPanels(child, isSnapshot));
+          panelsArray.push(...panelRepeaterToPanels(child, isSnapshot));
         } else {
-          flattenedPanels.push(gridItemToPanel(child, isSnapshot));
+          panelsArray.push(gridItemToPanel(child, isSnapshot));
         }
       }
     }
-    ensureNonDecreasingPanelY(flattenedPanels);
-    panelsArray.push(...flattenedPanels);
   } else if (tabLayout instanceof RowsLayoutManager) {
     // Recursively flatten nested rows
     for (const nestedRow of tabLayout.state.rows) {
@@ -934,35 +924,6 @@ function autoGridLayoutToPanels(layout: AutoGridLayoutManager, isSnapshot = fals
   }
 
   return panels;
-}
-
-/**
- * Ensures panel Y positions do not decrease across the list, preserving relative alignment
- * while preventing backwards movement when offsets are applied.
- */
-function ensureNonDecreasingPanelY(panels: Panel[]) {
-  let hasPreviousY = false;
-  let previousY = 0;
-  let yAdjustment = 0;
-
-  for (const panel of panels) {
-    if (!panel.gridPos) {
-      continue;
-    }
-
-    const originalY = panel.gridPos.y ?? 0;
-    let adjustedY = originalY + yAdjustment;
-
-    if (hasPreviousY && adjustedY < previousY) {
-      const delta = previousY - adjustedY;
-      adjustedY += delta;
-      yAdjustment += delta;
-    }
-
-    panel.gridPos.y = adjustedY;
-    previousY = adjustedY;
-    hasPreviousY = true;
-  }
 }
 
 /**
