@@ -1740,7 +1740,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
 
-	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
 	require.NoError(t, err)
 	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
 	require.NoError(t, err)

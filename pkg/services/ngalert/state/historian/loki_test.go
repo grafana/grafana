@@ -1002,13 +1002,13 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	// Simple history generator to avoid repetitive code in test cases.
-	simpleHistory := func(guid string) map[string][]*models.AlertRule {
-		return map[string][]*models.AlertRule{
+	simpleHistory := func(guid string) map[string][]*models.AlertRuleVersion {
+		return map[string][]*models.AlertRuleVersion{
 			guid: {
-				models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
-				models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-1")).GenerateRef(),
-				models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-2")).GenerateRef(),
-				models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-3")).GenerateRef(),
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-current")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-1")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-2")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-3")).Generate()},
 			},
 		}
 	}
@@ -1040,7 +1040,7 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	cases := []struct {
 		name string
 		// Setup.
-		existingHistory map[string][]*models.AlertRule
+		existingHistory map[string][]*models.AlertRuleVersion
 		canReadAllRules bool
 		rule            *models.AlertRule
 
