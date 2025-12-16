@@ -73,16 +73,20 @@ func RouteOperationName(req *http.Request) (string, bool) {
 	return "", false
 }
 
-// Paths that don't need tracing spans applied to them because of the
-// little value that would provide us
-func SkipTracingPaths(req *http.Request) bool {
-	return strings.HasPrefix(req.URL.Path, "/public/") ||
+func ShouldTraceWithExceptions(req *http.Request) bool {
+	// Paths that don't need tracing spans applied to them because of the
+	// little value that would provide us
+	if strings.HasPrefix(req.URL.Path, "/public/") ||
 		req.URL.Path == "/robots.txt" ||
 		req.URL.Path == "/favicon.ico" ||
-		req.URL.Path == "/api/health"
+		req.URL.Path == "/api/health" {
+		return false
+	}
+
+	return true
 }
 
-func TraceAllPaths(req *http.Request) bool {
+func ShouldTraceAllPaths(req *http.Request) bool {
 	return true
 }
 

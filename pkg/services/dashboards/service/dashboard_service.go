@@ -67,6 +67,7 @@ var (
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardAccessService       = (*DashboardServiceImpl)(nil)
 
 	daysInTrash = 24 * 30 * time.Hour
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
@@ -98,6 +99,38 @@ type DashboardServiceImpl struct {
 	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
+}
+
+// CanViewDashboard uses the access control service to check if the requested user can see a dashboard
+func (dr *DashboardServiceImpl) HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error) {
+	ns, err := claims.ParseNamespace(namespace)
+	if err != nil {
+		return false, err
+	}
+	dash, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   name,
+		OrgID: ns.OrgID,
+	})
+	if err != nil || dash == nil {
+		return false, nil
+	}
+	var action string
+	switch verb {
+	case utils.VerbGet:
+		action = dashboards.ActionDashboardsRead
+	case utils.VerbUpdate:
+		action = dashboards.ActionDashboardsWrite
+	default:
+		return false, fmt.Errorf("unsupported verb")
+	}
+
+	evaluator := accesscontrol.EvalPermission(action,
+		dashboards.ScopeDashboardsProvider.GetResourceScopeUID(name))
+	canView, err := dr.ac.Evaluate(ctx, user, evaluator)
+	if err != nil || !canView {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (dr *DashboardServiceImpl) startK8sDeletedDashboardsCleanupJob(ctx context.Context) chan struct{} {

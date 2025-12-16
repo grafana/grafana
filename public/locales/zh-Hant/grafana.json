@@ -5114,6 +5114,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "設定",
       "menu-use-library-panel": "使用資料庫面板",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6124,7 +6125,10 @@
       "no-data-found": "找不到數據"
     },
     "inspect-json-tab": {
-      "apply": "套用"
+      "apply": "套用",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "透過將時間範圍除以指定的計數來動態計算間隔",

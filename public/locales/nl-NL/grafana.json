@@ -5133,6 +5133,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configureren",
       "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6146,10 @@
       "no-data-found": "Geen info gevonden"
     },
     "inspect-json-tab": {
-      "apply": "Toepassen"
+      "apply": "Toepassen",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Berekent het interval dynamisch door het tijdsbereik te delen door het opgegeven aantal",

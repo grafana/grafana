@@ -5,8 +5,9 @@ package dashboards
 import (
 	context "context"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 	mock "github.com/stretchr/testify/mock"
+
+	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	model "github.com/grafana/grafana/pkg/services/search/model"
 
@@ -527,6 +528,11 @@ func (_m *FakeDashboardService) ValidateDashboardRefreshInterval(minRefreshInter
 	}
 
 	return r0
+}
+
+// CanViewDashboard uses the access control service to check if the requested user can see a dashboard
+func (_m *FakeDashboardService) HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error) {
+	return true, nil
 }
 
 // NewFakeDashboardService creates a new instance of FakeDashboardService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
