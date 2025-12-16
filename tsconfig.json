@@ -14,7 +14,9 @@
     "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"],
+      "@grafana/schema/dashboard/v0": ["../packages/grafana-schema/src/schema/dashboard/v0/index"],
+      "@grafana/schema/dashboard/v2beta1": ["../packages/grafana-schema/src/schema/dashboard/v2beta1/index"]
     }
   },
   "ts-node": {

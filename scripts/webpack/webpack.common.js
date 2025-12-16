@@ -65,6 +65,12 @@ module.exports = {
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
+    new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dashboard\/v0$/, (resource) => {
+      resource.request = '@grafana/schema/src/schema/dashboard/v0/index';
+    }),
+    new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dashboard\/v2beta1$/, (resource) => {
+      resource.request = '@grafana/schema/src/schema/dashboard/v2beta1/index';
+    }),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
