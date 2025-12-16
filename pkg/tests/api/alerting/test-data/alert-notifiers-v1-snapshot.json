@@ -418,6 +418,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -490,7 +491,6 @@
           "is": ""
         },
         "required": true,
-        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -716,6 +716,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1764,6 +1765,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1810,7 +1812,6 @@
           "is": ""
         },
         "required": false,
-        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -2603,6 +2604,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -2639,7 +2641,6 @@
           "is": ""
         },
         "required": false,
-        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3029,7 +3030,6 @@
           "is": ""
         },
         "required": true,
-        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3281,6 +3281,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -3371,6 +3372,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3407,7 +3409,6 @@
           "is": ""
         },
         "required": true,
-        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -3426,7 +3427,6 @@
           "is": ""
         },
         "required": false,
-        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3897,6 +3897,7 @@
                   "is": ""
                 },
                 "required": true,
+                "protected": true,
                 "validationRule": "",
                 "secure": false,
                 "dependsOn": "",
@@ -3915,7 +3916,6 @@
                   "is": ""
                 },
                 "required": true,
-                "protected": true,
                 "validationRule": "",
                 "secure": false,
                 "dependsOn": "",
@@ -4096,6 +4096,7 @@
                       "is": ""
                     },
                     "required": false,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -4132,7 +4133,6 @@
                       "is": ""
                     },
                     "required": false,
-                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",

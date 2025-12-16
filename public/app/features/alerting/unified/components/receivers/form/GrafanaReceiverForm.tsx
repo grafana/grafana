@@ -27,7 +27,6 @@ import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
-
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
