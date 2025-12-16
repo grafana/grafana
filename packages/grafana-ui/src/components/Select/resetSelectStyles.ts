@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { CSSObjectWithLabel } from 'react-select';
+import { StylesConfig } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export default function resetSelectStyles(theme: GrafanaTheme2) {
+export default function resetSelectStyles(theme: GrafanaTheme2): Partial<StylesConfig> {
   return {
     clearIndicator: () => ({}),
     container: () => ({}),
@@ -13,7 +13,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     groupHeading: () => ({}),
     indicatorsContainer: () => ({}),
     indicatorSeparator: () => ({}),
-    input: function (originalStyles: CSSObjectWithLabel) {
+    input: function (originalStyles) {
       return {
         ...originalStyles,
         color: 'inherit',
@@ -27,7 +27,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     loadingIndicator: () => ({}),
     loadingMessage: () => ({}),
     menu: () => ({}),
-    menuList: ({ maxHeight }: { maxHeight: number }) => ({
+    menuList: ({ maxHeight }) => ({
       maxHeight,
     }),
     multiValue: () => ({}),
@@ -38,7 +38,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     multiValueRemove: () => ({}),
     noOptionsMessage: () => ({}),
     option: () => ({}),
-    placeholder: (originalStyles: CSSObjectWithLabel) => ({
+    placeholder: (originalStyles) => ({
       ...originalStyles,
       color: theme.colors.text.secondary,
     }),
@@ -47,11 +47,11 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | string | undefined) {
+export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | string | undefined): Partial<StylesConfig> {
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
-      menuPortal: (base: CSSObjectWithLabel) => {
+      menuPortal: (base) => {
         // Would like to correct top position when menu is placed bottom, but have props are not sent to this style function.
         // Only state is. https://github.com/JedWatson/react-select/blob/master/packages/react-select/src/components/Menu.tsx#L605
         return {
@@ -60,7 +60,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         };
       },
       //These are required for the menu positioning to function
-      menu: ({ top, bottom, position }: CSSObjectWithLabel) => {
+      menu: ({ top, bottom, position }) => {
         return {
           top,
           bottom,
@@ -73,7 +73,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         width: width ? theme.spacing(width) : '100%',
         display: width === 'auto' ? 'inline-flex' : 'flex',
       }),
-      option: (provided: CSSObjectWithLabel, state: any) => ({
+      option: (provided, state) => ({
         ...provided,
         opacity: state.isDisabled ? 0.5 : 1,
       }),
