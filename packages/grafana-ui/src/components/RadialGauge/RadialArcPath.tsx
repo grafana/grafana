@@ -102,6 +102,7 @@ export const RadialArcPath = memo(
 
     return (
       <>
+        {/* FIXME: optimize this by only using clippath + foreign obj for gradients */}
         <clipPath id={id}>
           <path d={path} />
         </clipPath>
