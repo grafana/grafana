@@ -503,35 +503,43 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 	}, parsed.Meta.GetFolder())
 	if err != nil || !rsp.Allowed {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to read the embedded file"))
+			fmt.Errorf("no access to perform %s on the resource", verb))
 	}
 
-	idType, _, err := authlib.ParseTypeID(id.GetID())
-	if err != nil {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
-	}
-	// only apply role based access if identity is not of type access policy
-	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-		fmt.Errorf("must be admin or editor to access files from provisioning"))
+	return nil
 }
 
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-	// Simple role based access for now
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
+	// Determine parent folder from path
+	parentFolder := ""
+	if path != "" {
+		parentPath := safepath.Dir(path)
+		if parentPath != "" {
+			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
+		} else {
+			parentFolder = RootFolder(r.repo.Config())
+		}
 	}
 
-	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-		fmt.Errorf("must be admin or editor to access folders with provisioning"))
+	// For folder create operations, use empty name to check parent folder permissions
+	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: id.GetNamespace(),
+		Name:      "", // Empty name for create operations
+		Verb:      utils.VerbCreate,
+	}, parentFolder)
+	if err != nil || !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), path,
+			fmt.Errorf("no access to create folder in parent folder '%s'", parentFolder))
+	}
+
+	return nil
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {

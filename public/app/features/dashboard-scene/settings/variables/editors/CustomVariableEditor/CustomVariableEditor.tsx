@@ -4,8 +4,8 @@ import { FormEvent, useCallback, useState } from 'react';
 import { CustomVariableModel, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { OptionsPaneItemDescriptor } from '../../../../../dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { CustomVariableForm } from '../../components/CustomVariableForm';
 
 import { PaneItem } from './PaneItem';
