@@ -15,12 +15,10 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
-import { DrilldownControls } from './DrilldownControls';
 import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-  const styles = useStyles2(getStyles);
 
   // Get visible variables for drilldown layout
   const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
@@ -28,25 +26,19 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
 
-  const showDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
+  const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   const restVariables = visibleVariables.filter(
     (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
   );
 
-  // Variables to render after the drilldown row (or all variables if not using drilldown layout)
-  const variablesToRender = showDrilldownControls
+  // Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
+  const variablesToRender = hasDrilldownControls
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
     : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   return (
     <>
-      {showDrilldownControls && (
-        <div className={styles.drilldownControlsWrapper}>
-          <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
-        </div>
-      )}
-
       <div>
         {variablesToRender.length > 0 &&
           variablesToRender.map((variable) => (
@@ -147,8 +139,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       className={cx(
         styles.container,
         isSelected && 'dashboard-selected-element',
-        isSelectable && !isSelected && 'dashboard-selectable-element',
-        config.featureToggles.dashboardAdHocAndGroupByWrapper && styles.allowShrinkForDrilldownInputs
+        isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
@@ -233,12 +224,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
-  }),
-  allowShrinkForDrilldownInputs: css({
-    minWidth: 0,
-    maxWidth: '100%',
-  }),
-  drilldownControlsWrapper: css({
-    display: 'inline-flex',
   }),
 });
