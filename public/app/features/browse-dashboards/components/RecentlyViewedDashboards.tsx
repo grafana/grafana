@@ -70,15 +70,18 @@ export function RecentlyViewedDashboards() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const accent = theme.visualization.getColorByName('purple');
+  const blue = theme.visualization.getColorByName('blue');
 
   return {
     title: css({
-      background: `linear-gradient(90deg, ${accent} 0%, #e478eaff 100%)`,
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-      color: 'transparent',
       '& button svg': {
         color: accent,
+      },
+      h3: {
+        background: `linear-gradient(90deg, ${accent} 0%, ${blue} 100%)`,
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        color: 'transparent',
       },
     }),
     content: css({

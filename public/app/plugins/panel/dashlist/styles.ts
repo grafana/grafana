@@ -33,6 +33,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.link,
         textDecoration: 'underline',
       },
+      height: '100%',
 
       '&:hover': {
         backgroundImage: gradient,
