@@ -26,7 +26,6 @@ export function SqlExpressionCard({
 
   return (
     <Card
-      // className={cardClasses}
       className={cx(styles.card, { [styles.cardDisabled]: isDisabled })}
       data-testid={testId}
       onClick={onClick}
