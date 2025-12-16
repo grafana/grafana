@@ -11199,7 +11199,8 @@
       },
       "error-loading-suggestions": {
         "message": "An error occurred when loading visualization suggestions.",
-        "title": "Error"
+        "title": "Error",
+        "try-again-button": "Try again"
       },
       "unknown-viz-type": "Unknown visualization type",
       "use-this-suggestion": "Use this suggestion"

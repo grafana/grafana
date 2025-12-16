@@ -30,6 +30,7 @@ export interface Props {
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
+  const [fetchSuggestionsCounter, setFetchSuggestionsCounter] = useState(0);
   const {
     value: result,
     loading,
@@ -40,7 +41,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
 
     return await getAllSuggestions(data);
-  }, [data]);
+  }, [data, fetchSuggestionsCounter]);
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
@@ -84,6 +85,10 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     },
     [onChange]
   );
+
+  const handleRetry = useCallback(() => {
+    setFetchSuggestionsCounter((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
@@ -136,9 +141,16 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     <>
       {hasLoadingErrors && (
         <Alert severity="warning" title={''}>
-          <Trans i18nKey="panel.visualization-suggestions.error-loading-some-suggestions.message">
-            Some suggestions could not be loaded
-          </Trans>
+          <div className={styles.alertContent}>
+            <Trans i18nKey="panel.visualization-suggestions.error-loading-some-suggestions.message">
+              Some suggestions could not be loaded
+            </Trans>
+            <Button variant="secondary" size="sm" onClick={handleRetry}>
+              <Trans i18nKey="panel.visualization-suggestions.error-loading-suggestions.try-again-button">
+                Try again
+              </Trans>
+            </Button>
+          </div>
         </Alert>
       )}
       <div className={styles.grid}>
@@ -228,6 +240,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       width: '100%',
       marginTop: theme.spacing(6),
+    }),
+    alertContent: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     }),
     filterRow: css({
       display: 'flex',
