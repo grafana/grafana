@@ -49,7 +49,7 @@ var (
 	sqlResourceInsertFromHistory        = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
