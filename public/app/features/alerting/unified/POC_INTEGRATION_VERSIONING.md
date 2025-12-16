@@ -1,18 +1,108 @@
 # POC: Integration Versioning for Single Alert Manager
 
+> **Documentation for the frontend implementation of integration versioning**  
+> Part of: [Single Alertmanager Project](https://github.com/grafana/alerting-squad/issues/1113)  
+> GitHub Issue: [Stage 2 - Show Mimir Config in UI](https://github.com/grafana/alerting-squad/issues/1153)  
+> Design Doc: [Migration of Mimir integrations to Grafana](https://docs.google.com/document/d/1kZ5uiNm0lqEPFUmG0ojlkbx7dYnGT2afcyucRdtLVOY/edit)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Architecture](#architecture)
+- [Implementation](#implementation)
+- [Testing Guide](#testing-guide)
+- [Demo Setup](#demo-setup)
+- [Troubleshooting](#troubleshooting)
+- [Backend Integration](#backend-integration)
+- [Migration to Production](#migration-to-production)
+- [Next Steps](#next-steps)
+
+---
+
 ## Overview
 
 This POC demonstrates the frontend implementation of integration versioning to support the migration from Mimir Alert Manager to a unified **Grafana Alert Manager**.
 
 ⚠️ **IMPORTANT:** This is ONLY for **Grafana Alert Manager** receivers, NOT for Cloud/External Alert Managers.
 
+### What's Been Implemented
+
+✅ **Integration Versioning (Stage 2)**
+
+- Visual badges for legacy (Mimir) integrations
+- Read-only state for imported integrations
+- Dropdown filtering (create vs edit mode)
+- Version detection and display
+- Mock data for testing without backend
+
+⏳ **Templates Versioning (Future)**
+
+- Filter templates by integration version
+- Visual indicators for template versions
+
+---
+
 ## Problem Statement
 
 When migrating from Mimir to Grafana Alert Manager, we need to support:
 
-1. **Multiple versions** of the same integration (e.g., Slack v0 from Mimir, Slack v1 from Grafana)
+1. **Multiple versions** of the same integration (e.g., Slack v0mimir1 from Mimir, Slack v1 from Grafana)
 2. **Legacy integrations** that should be maintained but not created
 3. **Seamless user experience** where version complexity is minimized
+4. **No breaking changes** during migration
+
+### Design Decision
+
+**Proposal 2: Versioned Integrations** (from design doc)
+
+- Mimir integrations = **v0mimir1** (legacy, read-only)
+- Grafana integrations = **v1** (current, editable)
+- Users can only create **v1**, but can view/use **v0mimir1**
+- Templates are also versioned and must match integration version
+
+---
+
+## Architecture
+
+### Version Naming Scheme
+
+| Version    | Description                    | Can Create? | Use Case                  |
+| ---------- | ------------------------------ | ----------- | ------------------------- |
+| `v1`       | Grafana integrations (current) | ✅ Yes      | All new contact points    |
+| `v0mimir1` | Mimir integrations (base)      | ❌ No       | Imported from Mimir       |
+| `v0mimir2` | Mimir MSTeams v2               | ❌ No       | Special Mimir integration |
+
+### Type Differentiation
+
+```typescript
+// Grafana v1
+type: 'slack'         version: 'v1'
+
+// Mimir v0
+type: 'slack_v0mimir1'  version: 'v0mimir1'
+```
+
+Using different `type` values ensures the system can distinguish versions without conflicts.
+
+### Data Flow
+
+```
+Backend API → enrichNotifiersWithVersionsPOC() → Notifiers with versions
+                                                       ↓
+                                      GrafanaReceiverForm
+                                                       ↓
+                                      ChannelSubForm
+                                                       ↓
+                              [Create Mode] → Filter to v1 only
+                              [Edit Mode]   → Show current + v1 options
+                                                       ↓
+                                      Visual Badges + Read-Only State
+```
+
+---
 
 ## Implementation
 
@@ -20,135 +110,402 @@ When migrating from Mimir to Grafana Alert Manager, we need to support:
 
 **File:** `types/alerting.ts`
 
-Extended `NotifierDTO` interface with:
+Simplified to use only `version` field (metadata derived from helpers):
 
 ```typescript
-version?: string;       // e.g., "v0" (legacy/mimir), "v1" (grafana)
-deprecated?: boolean;   // indicates if this is a legacy version
-canCreate?: boolean;    // indicates if new instances can be created
+export interface NotifierDTO {
+  // ... existing fields
+
+  // Integration versioning support
+  version?: string; // "v0mimir1", "v1"
+}
 ```
 
-### 2. POC Utilities
+### 2. Version Helpers
+
+**File:** `utils/integration-versions.ts` ⭐ NEW
+
+Centralized version metadata and logic:
+
+```typescript
+export const VERSION_INFO = {
+  v0mimir1: {
+    deprecated: true,
+    canCreate: false,
+    label: 'Mimir (Legacy)',
+  },
+  v1: {
+    deprecated: false,
+    canCreate: true,
+    label: 'Grafana',
+  },
+} as const;
+
+// Helper functions
+export function isDeprecatedVersion(version?: string): boolean;
+export function canCreateVersion(version?: string): boolean;
+export function isMimirVersion(version?: string): boolean;
+export function getLatestVersion(): IntegrationVersion;
+```
+
+**Benefits:**
+
+- ✅ Single source of truth for version semantics
+- ✅ Easy to add new versions (just update VERSION_INFO)
+- ✅ Type-safe with TypeScript
+- ✅ Centralized logic, used everywhere
+
+### 3. POC Utilities
 
 **File:** `utils/notifier-versions-poc.ts`
 
-This file contains utilities to simulate backend support:
+Simulates backend support by enriching notifiers:
 
-- `enrichNotifiersWithVersionsPOC()` - Creates legacy (v0) versions of selected integrations
-- `groupNotifiersByName()` - Groups notifiers by base name for version management
-- `filterNotifiersForContext()` - Filters based on create vs. edit context
-- `getLatestVersions()` - Returns only the latest creatable versions
+```typescript
+// Takes notifiers from backend (without versions)
+// Returns notifiers with v1 + v0mimir1 versions for selected integrations
+
+export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): NotifierDTO[];
+export function getLatestVersions(notifiers: NotifierDTO[]): NotifierDTO[];
+export function groupNotifiersByName(notifiers: NotifierDTO[]): Record<string, NotifierDTO[]>;
+```
 
 **Integrations with legacy versions:**
 
-- Slack
-- Webhook
-- Email
-- Telegram
-- Discord
+- `slack`
+- `webhook`
+- `email`
+- `telegram`
+- `discord`
 
-### 3. UI Changes
+**When to remove:** When backend provides `version` field in `/api/alert-notifiers`
+
+### 4. UI Changes
 
 **File:** `components/receivers/form/ChannelSubForm.tsx`
 
 #### Dropdown Filtering
 
-- **When creating:** Only shows latest (v1) versions
-- **When editing:** Shows all versions including legacy
+```typescript
+const typeOptions = useMemo(() => {
+  const latestVersions = getLatestVersions(notifierDTOs);
 
-#### Visual Indicators
+  // IMPORTANT: Also include currently selected type (for edit mode)
+  const notifiersToShow = notifiers.filter(
+    (notifier) => latestVersionsMap.has(notifier.dto.type) || notifier.dto.type === selectedType
+  );
 
-- Legacy integrations display an **orange badge** with "Legacy (Mimir) - Read Only" label
-- Badge includes warning icon and descriptive tooltip
-- **Info alert** displayed at the top explaining read-only state
+  // Show version in label if not v1
+  return notifiersToShow.map(({ dto: { name, type, version } }) => ({
+    label: `${name}${version && version !== 'v1' ? ` (${version})` : ''}`,
+    value: type,
+  }));
+}, [notifiers, selectedType]);
+```
 
-#### Read-Only Behavior (Stage 2)
+**Result:**
 
-- **All form fields are disabled** for legacy integrations
-- Integration type dropdown is disabled
-- Settings fields are read-only
-- Notification settings are read-only
-- User cannot edit until conversion (Stage 3)
+- **Create mode**: Only v1 (Slack, Email, Webhook...)
+- **Edit mode**: Current version + all v1 (Slack (v0mimir1), Email, Webhook...)
 
-### 4. Form Integration
+#### Visual Badges
 
-**File:** `components/receivers/form/GrafanaReceiverForm.tsx` (**ONLY**)
+```tsx
+{
+  isLegacyVersion && integrationVersion && (
+    <Stack direction="row" gap={0.5}>
+      <Badge
+        text="Legacy (Mimir)"
+        color="orange"
+        icon="exclamation-triangle"
+        tooltip="Settings are read-only but you can change to a different integration type"
+      />
+      <Badge
+        text={integrationVersion.toUpperCase()}
+        color="orange"
+        tooltip={`Integration version: ${integrationVersion}`}
+      />
+    </Stack>
+  );
+}
+```
 
-Enriches notifiers with version information before passing to the form.
+#### Read-Only State
 
-**Note:** `CloudReceiverForm.tsx` is **NOT modified** because:
+```typescript
+const isLegacyVersion = isDeprecatedVersion(notifier?.dto.version);
+const isLegacyReadOnly = isLegacyVersion && isEditable;
 
-- Cloud/External Alert Managers (Prometheus, Mimir as datasource) don't need this versioning
-- This is specific to the unified Grafana Alert Manager migration
-- Cloud receivers continue to work as before
+// Applied to all form fields
+<ChannelOptions readOnly={!isEditable || isLegacyReadOnly} />
+```
 
-## How to Test the POC
+#### Informational Alert
 
-### 1. Creating a New Contact Point
+```tsx
+{
+  isLegacyVersion && (
+    <Alert title="Legacy Integration - Read Only" severity="info">
+      This integration was imported from Mimir and is currently in read-only mode. To edit or update this integration,
+      you will need to convert it to the latest version first. This is part of the migration to the unified Grafana
+      Alert Manager.
+    </Alert>
+  );
+}
+```
 
-1. Navigate to **Alerting > Contact points**
+### 5. Form Integration
+
+**File:** `components/receivers/form/GrafanaReceiverForm.tsx`
+
+```typescript
+// POC: Enrich notifiers with version information
+const enrichedNotifiers = enrichNotifiersWithVersionsPOC(grafanaNotifiers);
+
+const notifiers: Notifier[] = enrichedNotifiers.map((n) => {
+  // ... map to Notifier format
+});
+```
+
+**Note:** `CloudReceiverForm.tsx` is **NOT modified** - this is specific to Grafana AM only.
+
+### 6. Mock Data
+
+**File:** `mocks/server/entities/alertmanager-config/grafana-alertmanager-config.ts`
+
+Two legacy contact points for testing:
+
+```javascript
+{
+  name: 'Legacy Slack from Mimir',
+  grafana_managed_receiver_configs: [{
+    type: 'slack_v0mimir1',  // ← Legacy type
+    settings: { recipient: '#alerts-legacy' },
+  }],
+},
+{
+  name: 'Legacy Webhook from Mimir',
+  grafana_managed_receiver_configs: [{
+    type: 'webhook_v0mimir1',  // ← Legacy type
+    settings: { url: 'https://example.com/webhook/mimir-legacy' },
+  }],
+}
+```
+
+---
+
+## Testing Guide
+
+### Test 1: Create New Contact Point (No Badges)
+
+**Steps:**
+
+1. Navigate to: `http://localhost:3000/alerting/notifications`
 2. Click **"New contact point"**
-3. Open the **Integration** dropdown
-4. **Expected:** You will see only the latest versions (no duplicates)
-5. **Expected:** You will NOT see any "Legacy (Mimir)" badges
+3. Open **Integration** dropdown
 
-### 2. Editing an Existing Contact Point (Simulating Legacy)
+**Expected:**
 
-To simulate editing a contact point with a legacy integration:
+- ✅ Only see each integration ONCE (Slack, Email, Webhook...)
+- ✅ NO duplicates
+- ✅ NO badges
+- ✅ NO legacy versions available
 
-1. You need to temporarily modify the code to create a legacy integration
-2. Or create a contact point with type `slack_v0`, `webhook_v0`, etc.
+**Why:** Users cannot create new legacy integrations, only v1.
 
-**Once you have a legacy integration:**
+### Test 2: Edit Legacy Contact Point (With Badges) ⭐
 
-1. Navigate to edit that contact point
-2. **Expected:** Next to the Integration dropdown, you'll see an orange badge saying "Legacy (Mimir)"
-3. **Expected:** Tooltip explains this is a legacy version
-4. If you change to another integration and back, you'll only see the latest versions available
+**Steps:**
 
-### 3. Console Inspection
+1. Navigate to: `http://localhost:3000/alerting/notifications`
+2. Find **"Legacy Slack from Mimir"** or **"Legacy Webhook from Mimir"**
+3. Click **Edit** (pencil icon)
 
-Open browser console and check:
+**Expected:**
 
-- Notifiers array should contain both v0 and v1 versions for selected integrations
-- Look for notifiers with `version: "v0"` and `deprecated: true`
+```
+Integration: [Slack (v0mimir1) ▼]
+🟠 Legacy (Mimir) ⚠️   🟠 V0MIMIR1
 
-## Key Behaviors
+ℹ️ Legacy Integration - Read Only
+This integration was imported from Mimir...
 
-### Creating New Integrations
+[All form fields DISABLED/grayed out]
+```
 
-- ✅ Only latest versions appear in dropdown
-- ✅ No legacy versions can be selected
-- ✅ No duplicate integration names
+### Test 3: Dropdown Behavior in Edit Mode
 
-### Editing Existing Integrations
+**Steps:**
 
-- ✅ All versions are available (including legacy)
-- ✅ Legacy versions show visual indicator
-- ✅ User cannot change version directly (would need "convert" action in Stage 3)
+1. While editing legacy contact point
+2. Open **Integration** dropdown
 
-### Version Metadata
+**Expected:**
 
-- **v1 (Grafana):** `version: "v1"`, `deprecated: false`, `canCreate: true`
-- **v0 (Mimir/Legacy):** `version: "v0"`, `deprecated: true`, `canCreate: false`
+- ✓ Slack (v0mimir1) ← Currently selected
+- Slack ← Can convert to v1
+- Email
+- Webhook
+- ...
 
-## Backend Integration Requirements
+**Note:** Selecting "Slack" (v1) acts as manual conversion.
 
-When backend is ready, replace the POC logic:
+### Test 4: Verify Mocks Loaded
 
-### 1. Remove POC Enrichment
+**Via UI:**
 
-In `GrafanaReceiverForm.tsx`, remove:
+- See "Legacy Slack from Mimir" in contact points list
+
+**Via API:**
+
+```bash
+curl http://localhost:3000/api/alertmanager/grafana/config/api/v1/alerts \
+  | jq '.alertmanager_config.receivers[] | select(.name | contains("Legacy"))'
+```
+
+---
+
+## Demo Setup
+
+### Using Included Mocks ⭐ RECOMMENDED
+
+The POC includes 2 legacy contact points in mocks:
+
+1. **"Legacy Slack from Mimir"** (`slack_v0mimir1`)
+2. **"Legacy Webhook from Mimir"** (`webhook_v0mimir1`)
+
+**To use:**
+
+```bash
+yarn start
+# Navigate to Alerting > Contact points
+# Edit "Legacy Slack from Mimir" → See badges!
+```
+
+### Creating Additional Legacy Contact Points
+
+Edit: `mocks/server/entities/alertmanager-config/grafana-alertmanager-config.ts`
+
+Add to `receivers` array:
+
+```javascript
+{
+  name: 'My Legacy Email',
+  grafana_managed_receiver_configs: [
+    {
+      uid: 'my-legacy-uid',
+      name: 'My Legacy Email',
+      type: 'email_v0mimir1',  // ← Must use _v0mimir1 suffix
+      settings: {
+        addresses: 'test@example.com',
+      },
+      secureFields: {},
+    },
+  ],
+},
+```
+
+**Available legacy types:**
+
+- `slack_v0mimir1`
+- `webhook_v0mimir1`
+- `email_v0mimir1`
+- `telegram_v0mimir1`
+- `discord_v0mimir1`
+
+---
+
+## Troubleshooting
+
+### Problem: Don't see legacy contact points in list
+
+**Solution:**
+
+1. Verify mocks are loaded:
+
+   ```bash
+   grep -n "Legacy Slack" public/app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config.ts
+   ```
+
+2. Check MSW is enabled (dev mode should have it by default)
+
+3. Restart Grafana: `yarn start`
+
+### Problem: Contact points exist but no badges
+
+**Debug Step 1:** Check if notifier is found
+
+Add to `ChannelSubForm.tsx` (line ~204):
+
+```typescript
+const notifier = notifiers.find(({ dto: { type } }) => type === selectedType);
+console.log('🔍 Looking for type:', selectedType);
+console.log('📦 Found notifier:', notifier);
+console.log(
+  '📋 Available types:',
+  notifiers.map((n) => n.dto.type)
+);
+```
+
+**Debug Step 2:** Check if enrichment is working
+
+Add to `GrafanaReceiverForm.tsx` (line ~141):
 
 ```typescript
 const enrichedNotifiers = enrichNotifiersWithVersionsPOC(grafanaNotifiers);
+console.log('🎨 Original:', grafanaNotifiers.length);
+console.log('✨ Enriched:', enrichedNotifiers.length);
+console.log(
+  '📝 Types:',
+  enrichedNotifiers.map((n) => n.type)
+);
 ```
 
-And use `grafanaNotifiers` directly.
+**Expected:** Enriched should have ~2x more notifiers (v1 + v0mimir1 for 5 integrations)
 
-### 2. Backend API Changes
+### Problem: Badges don't appear
 
-The `/api/alert-notifiers` endpoint should return:
+**Debug:** Check version detection
+
+Add to `ChannelSubForm.tsx` (line ~214):
+
+```typescript
+const integrationVersion = notifier?.dto.version;
+const isLegacyVersion = isDeprecatedVersion(integrationVersion);
+console.log('🔖 Version:', integrationVersion);
+console.log('🟠 Is legacy:', isLegacyVersion);
+```
+
+**Expected:**
+
+- Version: `"v0mimir1"`
+- Is legacy: `true`
+
+### Problem: Dropdown shows "Choose" instead of integration name
+
+**Cause:** The current type (`slack_v0mimir1`) is not in dropdown options.
+
+**Solution:** Already fixed! The dropdown now includes the currently selected type even if it's legacy.
+
+---
+
+## Backend Integration
+
+### What Backend Needs to Provide
+
+#### 1. Version Field in Notifiers API
+
+**Endpoint:** `/api/alert-notifiers`
+
+**Current response:**
+
+```json
+[
+  { "name": "Slack", "type": "slack", "options": [...] }
+]
+```
+
+**Required response:**
 
 ```json
 [
@@ -156,146 +513,217 @@ The `/api/alert-notifiers` endpoint should return:
     "name": "Slack",
     "type": "slack",
     "version": "v1",
-    "deprecated": false,
-    "canCreate": true,
     "options": [...]
   },
   {
     "name": "Slack",
-    "type": "slack_v0",
-    "version": "v0",
-    "deprecated": true,
-    "canCreate": false,
+    "type": "slack_v0mimir1",
+    "version": "v0mimir1",
     "options": [...]
   }
 ]
 ```
 
-### 3. Type Differentiation
+**Key points:**
 
-- Latest version: Use standard type name (e.g., `"slack"`)
-- Legacy version: Use suffixed type name (e.g., `"slack_v0"`)
+- Different `type` for different versions
+- `version` field indicates v1 / v0mimir1
+- Backend determines which integrations have legacy versions
 
-This ensures the frontend can distinguish between versions.
+#### 2. Contact Points with Legacy Types
 
-## Staged Rollout Plan
+When contact points are imported from Mimir, they should have:
 
-### Stage 1: Import (STAGED)
+```json
+{
+  "name": "Imported Slack",
+  "grafana_managed_receiver_configs": [
+    {
+      "type": "slack_v0mimir1", // ← Legacy type
+      "settings": { "recipient": "#alerts" }
+    }
+  ]
+}
+```
 
-- Mimir configurations imported and saved in DB
-- Grafana runs both configurations merged
-- **Frontend:** No changes needed yet
+#### 3. Templates with Version (Future)
 
-### Stage 2: Read-Only Display (CURRENT POC)
+**Endpoint:** `/api/alerting/notifications/templates` (or similar)
 
-- Imported integrations shown as provisioned/read-only
-- Legacy versions visible with badges
-- **Frontend:** This POC implements Stage 2
+```json
+[
+  {
+    "name": "my-template",
+    "content": "...",
+    "version": "v1" // ← or "v0mimir1"
+  }
+]
+```
 
-### Stage 3: Conversion
+### Testing with Real Backend
 
-- User converts imported config to editable
-- Version migration UI
-- **Frontend:** Future work - add "Convert" button and migration flow
+When backend is ready:
+
+1. **Remove POC enrichment** in `GrafanaReceiverForm.tsx`:
+
+   ```typescript
+   - const enrichedNotifiers = enrichNotifiersWithVersionsPOC(grafanaNotifiers);
+   + // Backend now provides version field directly
+   - const notifiers: Notifier[] = enrichedNotifiers.map((n) => {
+   + const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
+   ```
+
+2. **Delete POC file:**
+
+   ```bash
+   rm utils/notifier-versions-poc.ts
+   ```
+
+3. **Everything else stays the same!**
+   - `ChannelSubForm.tsx` already handles versions correctly
+   - `integration-versions.ts` helpers work with real data
+   - UI badges and read-only state work automatically
+
+---
+
+## Migration to Production
+
+### Phase 1: POC (Current) ✅
+
+- [x] Type extensions (`version` field)
+- [x] Helper utilities (`integration-versions.ts`)
+- [x] POC mock data (`notifier-versions-poc.ts`)
+- [x] UI implementation (badges, read-only, dropdown filtering)
+- [x] Testing with mocks
+
+### Phase 2: Backend Integration ⏳
+
+- [ ] Backend returns `version` field in notifiers API
+- [ ] Backend uses different types for versions (`slack` vs `slack_v0mimir1`)
+- [ ] Remove POC enrichment function
+- [ ] Test with real imported Mimir configurations
+
+### Phase 3: Templates Versioning ⏳
+
+- [ ] Backend returns `version` field in templates API
+- [ ] Filter templates by integration version
+- [ ] Visual badges for template versions
+- [ ] Prevent v0 template creation via UI
+
+### Phase 4: Conversion UI (Stage 3) ⏳
+
+- [ ] Add "Convert to Latest Version" button
+- [ ] Migration confirmation dialog
+- [ ] Preserve settings during conversion
+- [ ] Update integration type from v0mimir1 to v1
+
+---
 
 ## Files Modified
 
-1. ✅ `types/alerting.ts` - Type extensions
-2. ✅ `utils/notifier-versions-poc.ts` - POC utilities (NEW)
-3. ✅ `components/receivers/form/ChannelSubForm.tsx` - UI changes (used by both forms)
-4. ✅ `components/receivers/form/GrafanaReceiverForm.tsx` - Integration (**Grafana AM only**)
+### Core Implementation
 
-**NOT modified:**
+- ✅ `types/alerting.ts` - Added `version` field to NotifierDTO
+- ✅ `utils/integration-versions.ts` - Version metadata and helpers (NEW)
+- ✅ `utils/notifier-versions-poc.ts` - POC mock data (NEW, temporary)
+- ✅ `components/receivers/form/ChannelSubForm.tsx` - UI with badges and read-only state
+- ✅ `components/receivers/form/GrafanaReceiverForm.tsx` - POC integration
 
-- ❌ `components/receivers/form/CloudReceiverForm.tsx` - Cloud Alert Managers don't need versioning
+### Testing
 
-## Demo Script for Team
+- ✅ `mocks/server/entities/alertmanager-config/grafana-alertmanager-config.ts` - Legacy contact points
 
-### Script 1: Show Version Filtering
+### Documentation
 
-```
-1. Open Contact Points page
-2. Click "New contact point"
-3. Show the Integration dropdown
-4. Point out: No duplicates, only latest versions
-5. Show browser console with enriched notifiers
-```
+- ✅ `POC_INTEGRATION_VERSIONING.md` - This file
 
-### Script 2: Show Legacy Badge (Requires Setup)
+### NOT Modified
 
-```
-1. Temporarily edit data to simulate legacy integration
-2. Edit a contact point with legacy integration
-3. Show the orange "Legacy (Mimir)" badge
-4. Hover to show tooltip
-```
-
-### Script 3: Explain Backend Contract
-
-```
-1. Show the POC utilities file
-2. Explain what backend needs to return
-3. Show the NotifierDTO type extensions
-4. Discuss migration path to remove POC code
-```
-
-## Templates Versioning (Additional Requirement)
-
-### Background
-
-Per design decision: **Templates are also versioned** and must match integration versions:
-
-- **Mimir templates (v0)** → Can only be used in **v0 integrations**
-- **Grafana templates (v1)** → Can only be used in **v1 integrations**
-
-### Impact on Frontend
-
-1. **Template Selector / Autocomplete**
-   - Must filter available templates based on current integration version
-   - If editing Slack v0 → only show v0 templates
-   - If editing Slack v1 → only show v1 templates
-
-2. **Template Definition Page**
-   - Must display template version (v0 or v1)
-   - Visual indicator similar to integration badges
-
-3. **Backend Requirements**
-   - Templates API must return version information
-   - v0 templates cannot be created via regular API (only via import)
-
-### Files to Modify (Future Work)
-
-- `components/receivers/form/fields/TemplateSelector.tsx` - Filter templates by version
-- `components/receivers/form/fields/TemplateContentAndPreview.tsx` - Show version badge
-- Template definition pages - Display version information
-
-### Not Included in Current POC
-
-This POC focuses on **integration versioning only**. Template versioning will be implemented in a follow-up phase.
+- ❌ `components/receivers/form/CloudReceiverForm.tsx` - Cloud AM doesn't need versioning
 
 ---
 
 ## Next Steps
 
-1. ✅ Frontend POC complete (integrations versioning)
-2. ⏳ Backend implements version metadata in notifier endpoints
-3. ⏳ Backend implements version metadata in templates API
-4. ⏳ Frontend implements template filtering by version
-5. ⏳ Test with real Mimir imported configurations
-6. ⏳ Implement Stage 3: Conversion UI
-7. ⏳ Add telemetry for version usage
+### Immediate (This Sprint)
 
-## Questions?
+1. ✅ **POC Complete** - Integration versioning working
+2. ⏳ **Demo to Team** - Show working POC
+3. ⏳ **Feedback** - Gather UX feedback
 
-- **Q:** Can users manually change the version?
-- **A:** No. In Stage 2, they see the version but cannot change it. Stage 3 will add "Convert/Upgrade" action.
+### Short Term (1-2 Weeks)
 
-- **Q:** What happens to existing legacy integrations?
-- **A:** They continue to work and can be edited, but you cannot create new ones.
+4. ⏳ **Backend Implementation** - Version field in notifiers API
+5. ⏳ **Templates Versioning** - Similar pattern for templates
+6. ⏳ **Integration Testing** - Test with real Mimir imports
 
-- **Q:** Will this affect existing contact points?
-- **A:** No. Existing contact points continue to work. They'll show as v1 (Grafana) by default.
+### Medium Term (1-2 Months)
+
+7. ⏳ **Conversion UI** - Stage 3 implementation
+8. ⏳ **Routes (Two Trees)** - Show Grafana and Mimir routes separately
+9. ⏳ **Time Intervals** - Similar versioning for time intervals
+
+### Related GitHub Issues
+
+- [#1113](https://github.com/grafana/alerting-squad/issues/1113) - Single Alertmanager (Epic)
+- [#1153](https://github.com/grafana/alerting-squad/issues/1153) - Stage 2: Show Mimir Config in UI (Current)
+- [#1154](https://github.com/grafana/alerting-squad/issues/1154) - Stage 3: Convert Mimir to Grafana
+- [#1194](https://github.com/grafana/alerting-squad/issues/1194) - Expose Mimir receivers via K8s API
+- [#1214](https://github.com/grafana/alerting-squad/issues/1214) - Versioned alerting notifications integrations (Epic)
+
+---
+
+## FAQ
+
+### Q: Can users manually change the version?
+
+**A:** Not in Stage 2 (current POC). In Stage 3, there will be a "Convert to Latest Version" button.
+
+Currently, users can "convert" by changing the integration type (e.g., from Slack v0mimir1 to Email v1), but not upgrade within the same integration.
+
+### Q: What happens to existing legacy integrations?
+
+**A:** They continue to work and can be viewed, but:
+
+- Cannot edit settings (read-only)
+- Cannot create new ones
+- Can be used in routes/rules (if already assigned)
+- Will eventually be converted to v1
+
+### Q: Will this affect existing contact points?
+
+**A:** No. Existing contact points:
+
+- Continue to work exactly as before
+- Are treated as v1 (Grafana native)
+- No migration required
+
+### Q: Can I use legacy integrations in alert rules?
+
+**A:** Yes, if already assigned. But you cannot _newly assign_ a legacy integration to a rule.
+
+### Q: What if I need to edit a legacy integration urgently?
+
+**A:** In Stage 2 (current), you cannot edit settings. Options:
+
+1. Wait for Stage 3 (conversion UI)
+2. Create a new v1 integration with same settings
+3. Manual backend intervention (if critical)
+
+### Q: Does this work for Cloud Alert Managers?
+
+**A:** No. This is **only for Grafana Alert Manager**. Cloud/External Alert Managers (Prometheus, Mimir as datasource) are not affected.
+
+---
 
 ## Contact
 
-For questions about this POC, contact the Alerting team.
+For questions about this POC:
+
+- **Team:** Alerting Squad
+- **Channel:** [#alerting-xl-single-alertmanager](https://raintank-corp.slack.com/archives/C08PSLT263E)
+- **Design Doc:** [Migration of Mimir integrations to Grafana](https://docs.google.com/document/d/1kZ5uiNm0lqEPFUmG0ojlkbx7dYnGT2afcyucRdtLVOY/edit)
+
+---
+
+**Last Updated:** December 2024 (POC Phase 1 Complete)

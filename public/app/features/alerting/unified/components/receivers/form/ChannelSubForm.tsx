@@ -16,6 +16,7 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
+import { isDeprecatedVersion } from '../../../utils/integration-versions';
 import { getLatestVersions } from '../../../utils/notifier-versions-poc';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -173,14 +174,19 @@ export function ChannelSubForm<R extends ChannelValues>({
     const latestVersionsMap = new Map(latestVersions.map((dto) => [dto.type, dto]));
 
     // Filter notifiers to only include latest versions
-    const notifiersToShow = notifiers.filter((notifier) => latestVersionsMap.has(notifier.dto.type));
+    // IMPORTANT: Also include the currently selected type (even if it's a legacy version)
+    // This ensures the dropdown shows the current selection instead of "Choose"
+    const notifiersToShow = notifiers.filter((notifier) => 
+      latestVersionsMap.has(notifier.dto.type) || notifier.dto.type === selectedType
+    );
 
     return sortBy(notifiersToShow, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-      ({ dto: { name, type }, meta }) => ({
+      ({ dto: { name, type, version }, meta }) => ({
         // @ts-expect-error ReactNode is supported
         label: (
           <Stack alignItems="center" gap={1}>
             {name}
+            {version && version !== 'v1' && ` (${version})`}
             {meta?.badge}
           </Stack>
         ),
@@ -189,7 +195,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         isDisabled: meta ? !meta.enabled : false,
       })
     );
-  }, [notifiers]);
+  }, [notifiers, selectedType]);
 
   const handleTest = async () => {
     await trigger();
@@ -213,8 +219,8 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   // POC: Check if current integration is a legacy/Mimir version
   // Version naming: v0mimir1, v0mimir2 = Mimir versions; v1 = Grafana version
-  const isLegacyVersion = notifier?.dto.deprecated || notifier?.dto.version?.startsWith('v0');
   const integrationVersion = notifier?.dto.version;
+  const isLegacyVersion = isDeprecatedVersion(integrationVersion);
 
   // POC: Legacy integrations are read-only (Stage 2: imported/provisioned state)
   // In Stage 3, after conversion, they might become editable

@@ -8,6 +8,7 @@
  */
 
 import { NotifierDTO } from '../types/alerting';
+import { getLatestVersion, isDeprecatedVersion, canCreateVersion } from './integration-versions';
 
 /**
  * List of integration types that have legacy (mimir) versions
@@ -16,13 +17,10 @@ import { NotifierDTO } from '../types/alerting';
 const INTEGRATIONS_WITH_LEGACY_VERSIONS = ['slack', 'webhook', 'email', 'telegram', 'discord'];
 
 /**
- * Version naming per decision doc:
- * - v1: Grafana integrations (current)
- * - v0mimir1: Mimir integrations (legacy)
- * - v0mimir2: Mimir msteamsv2 integration (if needed)
+ * Version identifiers
  */
 const MIMIR_VERSION = 'v0mimir1';
-const GRAFANA_VERSION = 'v1';
+const GRAFANA_VERSION = getLatestVersion();
 
 /**
  * Simulates backend response with versioned integrations
@@ -39,8 +37,6 @@ export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): Notifi
     const grafanaVersion: NotifierDTO = {
       ...notifier,
       version: GRAFANA_VERSION,
-      deprecated: false,
-      canCreate: true,
     };
     result.push(grafanaVersion);
 
@@ -50,12 +46,10 @@ export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): Notifi
         ...notifier,
         // Use a different type identifier for Mimir version
         // In real implementation, backend would provide this
-        type: `${notifier.type}_v0mimir1` as any,
+        type: `${notifier.type}_${MIMIR_VERSION}` as any,
         name: notifier.name, // Keep same name for grouping
         description: `${notifier.description} (Mimir version)`,
         version: MIMIR_VERSION,
-        deprecated: true,
-        canCreate: false, // Cannot create new instances of Mimir versions
       };
       result.push(mimirVersion);
     }
@@ -92,7 +86,7 @@ export function filterNotifiersForContext(notifiers: NotifierDTO[], isEditing: b
     return notifiers;
   } else {
     // In create mode, only show versions that can be created
-    return notifiers.filter((notifier) => notifier.canCreate !== false);
+    return notifiers.filter((notifier) => canCreateVersion(notifier.version));
   }
 }
 
@@ -107,13 +101,16 @@ export function getLatestVersions(notifiers: NotifierDTO[]): NotifierDTO[] {
   Object.values(grouped).forEach((versions) => {
     // Sort by version descending (v1, v0, etc.) and take the first non-deprecated
     const sorted = versions.sort((a, b) => {
-      const versionA = a.version || 'v0';
-      const versionB = b.version || 'v0';
+      const versionA = a.version || 'v1';
+      const versionB = b.version || 'v1';
       return versionB.localeCompare(versionA);
     });
 
-    const latestVersion = sorted.find((v) => !v.deprecated) || sorted[0];
-    if (latestVersion.canCreate !== false) {
+    // Find first non-deprecated version, or fallback to first
+    const latestVersion = sorted.find((v) => !isDeprecatedVersion(v.version)) || sorted[0];
+    
+    // Only include if it can be created
+    if (canCreateVersion(latestVersion.version)) {
       latest.push(latestVersion);
     }
   });
