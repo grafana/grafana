@@ -99,7 +99,7 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
   const state = rule.state || 'firing';
   const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
   const alertsNavigationPrompt = config.featureToggles.alertingTriage
-    ? '\n- Include navigation to follow up on the alerts page'
+    ? '\n- Include navigation to the alerts page ONLY if the alert is firing or pending'
     : '';
 
   let prompt = `
