@@ -19,8 +19,8 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ResourceMigration                         │
-│        (Orchestrates per-organization migration)             │
+│                    ResourceMigration                        │
+│        (Orchestrates per-organization migration)            │
 └──────────────────────────┬──────────────────────────────────┘
                            │
        ┌───────────────────┼───────────────────┐
