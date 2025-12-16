@@ -2234,6 +2234,13 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": "This field is protected and can only be edited by users with elevated permissions"
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
