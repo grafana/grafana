@@ -111,7 +111,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{renderOrCallToRender(overlay)}</div>
+                <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
               </CSSTransition>
             </div>
           </FloatingFocusManager>
