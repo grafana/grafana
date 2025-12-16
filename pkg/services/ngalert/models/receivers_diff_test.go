@@ -260,11 +260,3 @@ func TestHasDifferentProtectedFields(t *testing.T) {
 		})
 	}
 }
-
-// TODO move to testing after patch is merged
-
-func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
-	return func(c *Integration) {
-		delete(c.Settings, key)
-	}
-}
