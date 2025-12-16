@@ -18,7 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { NotificationChannelOption, NotificationChannelSecureFields ,OptionMeta} from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -98,7 +98,9 @@ export const OptionField: FC<Props> = ({
       </Tooltip>
       {labelText}
     </Stack>
-  ) : labelText;
+  ) : (
+    labelText
+  );
 
   return (
     <Field

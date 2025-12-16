@@ -80,16 +80,16 @@ describe('ChannelSubForm', () => {
       <AlertmanagerProvider accessType="notification">
         <FormProvider {...form}>
           <ChannelSubForm
-           defaultValues={{ ...defaults, secureSettings: {} }}
-           initialValues={initial ? { ...initial, secureSettings: {} } : undefined}
-           pathPrefix={`items.0.`}
-           integrationIndex={0}
-           notifiers={notifiers}
-           onDuplicate={jest.fn()}
-           commonSettingsComponent={GrafanaCommonChannelSettings}
-           isEditable={true}
-           isTestable={false}
-           canEditProtectedFields={true}
+            defaultValues={{ ...defaults, secureSettings: {} }}
+            initialValues={initial ? { ...initial, secureSettings: {} } : undefined}
+            pathPrefix={`items.0.`}
+            integrationIndex={0}
+            notifiers={notifiers}
+            onDuplicate={jest.fn()}
+            commonSettingsComponent={GrafanaCommonChannelSettings}
+            isEditable={true}
+            isTestable={false}
+            canEditProtectedFields={true}
           />
         </FormProvider>
       </AlertmanagerProvider>

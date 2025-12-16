@@ -7,10 +7,7 @@ import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/t
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
-import {
-  GrafanaManagedContactPoint,
-  Receiver,
-} from 'app/plugins/datasource/alertmanager/types';
+import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';

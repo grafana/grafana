@@ -139,15 +139,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   const hasGlobalEditProtectedPermission = contextSrv.hasPermission(
     AccessControlAction.AlertingReceiversUpdateProtected
   );
- // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
- const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
- const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
- const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
- const isTestable = !readOnly;
- //  If we're using k8s API, we need to check the scoped permissions, otherwise we need to check the global permission
- const canEditProtectedField = useK8sAPI ? hasScopedEditProtectedPermissions : hasGlobalEditProtectedPermission;
- 
- if (isLoadingNotifiers || isLoadingOnCallIntegration) {
+  // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
+  const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
+  const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
+  const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
+  const isTestable = !readOnly;
+  //  If we're using k8s API, we need to check the scoped permissions, otherwise we need to check the global permission
+  const canEditProtectedField = useK8sAPI ? hasScopedEditProtectedPermissions : hasGlobalEditProtectedPermission;
+
+  if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
