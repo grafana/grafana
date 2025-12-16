@@ -50,7 +50,9 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Dropdown, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+
+import { PopupCard } from '../../components/HoverCard';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
@@ -203,27 +205,56 @@ export function SavedSearches({
     return undefined;
   }, [isOpen, activeAction]);
 
-  // Handle Escape key: cancel active action first, or close dropdown if no action is active
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (activeAction !== 'idle') {
-          // Cancel the active action and prevent Dropdown from closing
-          event.stopPropagation();
-          dispatch({ type: 'CANCEL_ACTION' });
+  // Handle click outside to close dropdown - excludes portal elements (like action menu)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && dialogRef.current && event.target instanceof Node && !dialogRef.current.contains(event.target)) {
+        // Check if click is on a portal element (action menu dropdown)
+        if (event.target instanceof Element) {
+          const isPortalClick =
+            event.target.closest('[data-popper-placement]') || event.target.closest('[role="menu"]');
+
+          if (!isPortalClick) {
+            dispatch({ type: 'CLOSE' });
+          }
         } else {
-          // No active action - close the dropdown
-          // (Grafana UI Dropdown may not handle Escape in all environments)
           dispatch({ type: 'CLOSE' });
         }
       }
-    },
-    [activeAction]
-  );
+    };
 
-  // Handlers - dispatch actions to the reducer
-  const handleVisibleChange = useCallback((visible: boolean) => {
-    dispatch({ type: 'SET_VISIBLE', visible });
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Handle Escape key: cancel active action first, or close dropdown if no action is active
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        if (activeAction !== 'idle') {
+          dispatch({ type: 'CANCEL_ACTION' });
+        } else {
+          dispatch({ type: 'CLOSE' });
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [isOpen, activeAction]);
+
+  // Handlers
+  const handleToggle = useCallback(() => {
+    dispatch({ type: isOpen ? 'CLOSE' : 'OPEN' });
+  }, [isOpen]);
+
+  const handleClose = useCallback(() => {
+    dispatch({ type: 'CLOSE' });
   }, []);
 
   const handleStartSave = useCallback(() => {
@@ -307,15 +338,13 @@ export function SavedSearches({
   const hasSearches = sortedSearches.length > 0;
   const canSave = currentSearchQuery.trim().length > 0;
 
-  const overlay = (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+  const content = (
     <div
       ref={dialogRef}
       className={styles.dropdown}
       role="dialog"
       aria-label={t('alerting.saved-searches.dropdown-aria-label', 'Saved searches')}
       tabIndex={-1}
-      onKeyDown={handleKeyDown}
     >
       <ListMode
         searches={sortedSearches}
@@ -336,12 +365,21 @@ export function SavedSearches({
         onDeleteConfirm={handleDeleteConfirm}
         onSetDefault={handleSetDefault}
         savedSearches={savedSearches}
+        menuPortalRoot={dialogRef.current}
       />
     </div>
   );
 
   return (
-    <Dropdown overlay={overlay} placement="bottom-end" onVisibleChange={handleVisibleChange}>
+    <PopupCard
+      content={content}
+      placement="bottom-end"
+      showOn="click"
+      isOpen={isOpen}
+      onClose={handleClose}
+      onToggle={handleToggle}
+      disableBlur
+    >
       <Button
         variant="secondary"
         icon="bookmark"
@@ -352,7 +390,7 @@ export function SavedSearches({
       >
         {buttonLabel}
       </Button>
-    </Dropdown>
+    </PopupCard>
   );
 }
 
@@ -379,6 +417,8 @@ interface ListModeProps {
   onDeleteConfirm: (id: string) => Promise<void>;
   onSetDefault: (id: string | null) => Promise<void>;
   savedSearches: SavedSearch[];
+  /** Portal root for action menus - renders inside the dropdown to prevent useDismiss issues */
+  menuPortalRoot: HTMLElement | null;
 }
 
 function ListMode({
@@ -400,6 +440,7 @@ function ListMode({
   onDeleteConfirm,
   onSetDefault,
   savedSearches,
+  menuPortalRoot,
 }: ListModeProps) {
   const styles = useStyles2(getStyles);
 
@@ -479,6 +520,7 @@ function ListMode({
                   onDeleteConfirm={() => onDeleteConfirm(search.id)}
                   onSetDefault={() => onSetDefault(search.isDefault ? null : search.id)}
                   savedSearches={savedSearches}
+                  menuPortalRoot={menuPortalRoot}
                 />
               );
             })}
@@ -511,11 +553,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     dropdown: css({
       width: '320px',
-      padding: theme.spacing(1.5),
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(0.5),
     }),
     list: css({
       maxHeight: '300px',

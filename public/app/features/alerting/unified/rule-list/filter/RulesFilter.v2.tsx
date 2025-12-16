@@ -144,12 +144,16 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     const defaultSearch = getAutoApplySearch();
     if (defaultSearch) {
       try {
-        handleApplySearch(defaultSearch);
+        // Apply filter directly without calling handleApplySearch to avoid double analytics tracking.
+        // getAutoApplySearch() already tracks the 'auto_apply' event, so we don't want to also
+        // fire the regular 'apply' event from handleApplySearch/trackSavedSearchApplied.
+        const parsedFilter = getSearchFilterFromQuery(defaultSearch.query);
+        updateFilters(parsedFilter);
       } catch (error) {
         console.error('Failed to auto-apply default search:', error);
       }
     }
-  }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, handleApplySearch]);
+  }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, updateFilters]);
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);

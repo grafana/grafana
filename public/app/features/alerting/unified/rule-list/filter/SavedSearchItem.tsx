@@ -25,6 +25,8 @@ export interface SavedSearchItemProps {
   onDeleteConfirm: () => Promise<void>;
   onSetDefault: () => void;
   savedSearches: SavedSearch[];
+  /** Portal root for the action menu - should be the outer dropdown container */
+  menuPortalRoot?: HTMLElement | null;
 }
 
 export function SavedSearchItem({
@@ -41,6 +43,7 @@ export function SavedSearchItem({
   onDeleteConfirm,
   onSetDefault,
   savedSearches,
+  menuPortalRoot,
 }: SavedSearchItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -137,6 +140,7 @@ export function SavedSearchItem({
             onSetDefault={onSetDefault}
             onRename={onStartRename}
             onDelete={onStartDelete}
+            portalRoot={menuPortalRoot}
           />
         </div>
       </Stack>
@@ -154,9 +158,11 @@ interface ActionMenuProps {
   onSetDefault: () => void;
   onRename: () => void;
   onDelete: () => void;
+  /** Portal root for the menu - renders inside the outer dropdown to prevent useDismiss issues */
+  portalRoot?: HTMLElement | null;
 }
 
-function ActionMenu({ isDefault, isDisabled, onSetDefault, onRename, onDelete }: ActionMenuProps) {
+function ActionMenu({ isDefault, isDisabled, onSetDefault, onRename, onDelete, portalRoot }: ActionMenuProps) {
   const menu = (
     <Menu>
       <Menu.Item
@@ -180,7 +186,7 @@ function ActionMenu({ isDefault, isDisabled, onSetDefault, onRename, onDelete }:
   );
 
   return (
-    <Dropdown overlay={menu} placement="bottom-end">
+    <Dropdown overlay={menu} placement="bottom-end" root={portalRoot ?? undefined}>
       <IconButton
         name="ellipsis-v"
         aria-label={t('alerting.saved-searches.actions-aria-label', 'Actions')}
