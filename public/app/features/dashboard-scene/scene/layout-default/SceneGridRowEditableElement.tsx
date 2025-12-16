@@ -107,7 +107,7 @@ function RowRepeatSelect({ row, dashboard, id }: { row: SceneGridRow; dashboard:
     <>
       <RepeatRowSelect2
         id={id}
-        sceneContext={dashboard}
+        sceneContext={row}
         repeat={repeatBehavior?.state.variableName}
         onChange={(repeat) => {
           if (repeat) {
