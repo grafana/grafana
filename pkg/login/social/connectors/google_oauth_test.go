@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -872,6 +873,39 @@ func TestSocialGoogle_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if use_refresh_token is enabled and login prompt is neither empty or 'consent'",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "login",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is consent",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "consent",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -887,7 +921,13 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
 			}
-			require.NoError(t, err)
+
+			if err != nil {
+				var e errutil.Error
+				require.True(t, errors.As(err, &e))
+				require.NoError(t, e, "expected no error, got %v", e.PublicMessage)
+				return
+			}
 		})
 	}
 }
