@@ -164,3 +164,4 @@ VACUUM;
 ```
 
 These operations require a lock on the table and may take significant time depending on the table size. Plan to run these during a low-traffic period.
+
