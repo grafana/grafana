@@ -53,6 +53,7 @@ type provisioningTestHelper struct {
 	ProvisioningPath string
 
 	Repositories       *apis.K8sResourceClient
+	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
@@ -703,6 +704,11 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
 	})
+	connections := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+	})
 	jobs := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
@@ -763,6 +769,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories:       repositories,
+		Connections:        connections,
 		AdminREST:          adminClient,
 		EditorREST:         editorClient,
 		ViewerREST:         viewerClient,
