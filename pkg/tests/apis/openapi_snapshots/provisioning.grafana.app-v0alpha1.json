@@ -5525,6 +5525,10 @@
               }
             ]
           },
+          "connection": {
+            "description": "The connection the repository references. This means the Repository is interacting with git via a Connection.",
+            "type": "string"
+          },
           "description": {
             "description": "Repository description",
             "type": "string"

@@ -256,6 +256,10 @@ type RepositorySpec struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+
+	// The connection the repository references.
+	// This means the Repository is interacting with git via a Connection.
+	Connection *string `json:"connection,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve

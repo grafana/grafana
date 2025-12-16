@@ -922,6 +922,11 @@ func (in *RepositorySpec) DeepCopyInto(out *RepositorySpec) {
 		*out = new(GitLabRepositoryConfig)
 		**out = **in
 	}
+	if in.Connection != nil {
+		in, out := &in.Connection, &out.Connection
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

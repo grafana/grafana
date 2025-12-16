@@ -1783,6 +1783,8 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
+  /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
+  connection?: string;
   /** Repository description */
   description?: string;
   /** The repository on Git. Mutually exclusive with local | github | git. */

@@ -1868,6 +1868,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig"),
 						},
 					},
+					"connection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"title", "workflows", "sync", "type"},
 			},
