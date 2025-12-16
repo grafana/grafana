@@ -1189,6 +1189,11 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchRawDSLQuery?: boolean;
+  /**
   * Enables app platform API for annotations
   * @default false
   */

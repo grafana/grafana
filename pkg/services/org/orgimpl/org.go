@@ -27,6 +27,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 			db:      db,
 			dialect: db.GetDialect(),
 			log:     log,
+			cfg:     cfg,
 		},
 		cfg: cfg,
 		log: log,
