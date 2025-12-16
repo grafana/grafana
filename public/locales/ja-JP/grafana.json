@@ -2326,8 +2326,10 @@
       "label-tenant-sources": "テナントソース"
     },
     "rule-details-matching-instances": {
-      "showing-count": "{{totalItems}}件中{{visibleItems}}件のインスタンスを表示",
-      "button-show-all_other": "すべてのアラートインスタンス（{{totalItems}}件）を表示"
+      "button-show-all": "",
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3689,6 +3691,10 @@
       "clear": "検索とフィルタをクリア",
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_other": "",
@@ -4762,6 +4768,8 @@
       "remove": "{{typeName}}を削除",
       "row-title": "",
       "switch-layout": "レイアウトを切り替え",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4791,7 +4799,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "カンマで区切った値"
         },
@@ -5065,12 +5075,17 @@
         "copy-or-duplicate": "コピーまたは複製",
         "delete": "削除",
         "duplicate": "複製",
-        "group-layout": "グループレイアウト",
-        "group-layout-disabled": "このレベルにグループはありません",
-        "panel-layout": "パネルレイアウト",
-        "panel-layout-disabled": "パネルレイアウトオプションを変更するには、行またはタブを選択してください"
+        "layout": "レイアウト"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5099,6 +5114,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5442,6 +5458,12 @@
         "label": "編集",
         "tooltip": "編集モードに入る"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "編集可能にする",
         "tooltip": "このダッシュボードは読み取り専用に設定されています"
@@ -5462,14 +5484,6 @@
         "discard-panel-new": "パネルを破棄",
         "edit-dashboard-v2-schema": {
           "tooltip": "ダッシュボードv2スキーマを編集"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "編集モードに入る"
-          },
-          "exit": {
-            "label": "編集モードを終了"
-          }
         },
         "enter-edit-mode": {
           "label": "編集可能にする",
@@ -5805,14 +5819,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "一覧に戻る",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "削除",
       "description-color-annotation-event-markers": "注釈イベントマーカーに使用する色",
       "description-enabled-annotation-query-issued-every-dashboard": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
-      "description-hidden": "ダッシュボード上部で、注釈クエリのオン/オフを切り替えられます。このオプションをオンにすると、このトグルは非表示になります。",
+      "label-annotation-controls-display": "",
       "label-color": "色",
       "label-data-source": "データソース",
       "label-enabled": "有効化",
-      "label-hidden": "非表示",
       "label-name": "名前",
       "label-show-in": "表示先",
       "placeholder-choose-panels": "パネルを選択",
@@ -5855,6 +5881,17 @@
       "label-value": "値",
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "カスタムオプション",
       "name-values-separated-comma": "カンマ区切りの値",
@@ -5868,6 +5905,7 @@
       "label-open-link-in-new-tab": "リンクを新しいタブで開く",
       "label-options": "オプション",
       "label-show-as-dropdown": "ドロップダウンリストとして表示",
+      "label-show-in-controls-menu": "",
       "label-title": "タイトル",
       "label-tooltip": "ツールチップ",
       "label-type": "タイプ",
@@ -5896,13 +5934,25 @@
       "title-error-loading-dashboard": "ダッシュボードの読み込み中にエラーが発生しました"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "パネルを編集",
         "view-panel": "パネルを表示"
       },
       "title": {
         "dashboard": "ダッシュボード",
-        "discard-changes-to-dashboard": "ダッシュボードへの変更を破棄しますか？"
+        "discard-changes-to-dashboard": "ダッシュボードへの変更を破棄しますか？",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6075,7 +6125,10 @@
       "no-data-found": "データが見つかりません"
     },
     "inspect-json-tab": {
-      "apply": "適用"
+      "apply": "適用",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "指定した数で時間範囲を分割して、間隔を動的に計算します",
@@ -6224,12 +6277,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "シリーズ名やメトリックノードセグメントの一部を抽出したい場合の任意設定です。",
+      "description-regex-apply-to": "",
       "label-data-source": "データソース",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "スタティックオプションの並び替え",
       "label-target-data-source": "ターゲットデータソース",
       "label-use-static-options": "スタティックオプションを使用",
       "name-regex": "正規表現",
       "query-options": "クエリオプション",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "選択オプション",
       "static-options-legend": "スタティックオプション"
     },
@@ -6427,6 +6488,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "変数エディタフォーム",
       "back-to-list": "一覧に戻る",
@@ -6535,7 +6615,7 @@
       "delete-button": "削除",
       "title": "削除"
     },
-    "delete-modal-restore-dashboards-text": "このアクションにより、ダッシュボードは30日後に削除されます。組織の管理者は、30日が経過する前であればいつでもそれを復元できます。",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "このダッシュボードを削除しますか？",
     "general": {
       "auto-refresh-description": "自動更新リストで使用可能な自動更新間隔を定義します。秒には「5s」、分には「1m」、時間には「1h」、日には「1d」の形式を使用します（例：「5s、10s、30s、1m、5m、15m、30m、1h、2h、1d」）。",
@@ -6741,8 +6821,8 @@
       "test": "テスト"
     },
     "cloud-info-box": {
-      "body-alert": "または、<6>永久無料のGrafana Cloudプラン</6>で、Grafana Labsからフルマネージドでスケーラブルなホスト済みデータソースの{{mainDS}}（および{{extraDS}}）を入手して、手間を省くことも可能です。",
-      "title-alert": "以下で{{mainDS}}データソースを設定します"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "ダッシュボードを削除する",
@@ -7280,6 +7360,14 @@
       },
       "title-failed-sample-query": "このクエリのログサンプルの読み込みに失敗しました",
       "tooltip": "視覚化されたメトリックに関連するログ行を表示"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "フィールドなし"
@@ -8177,6 +8265,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8726,6 +8820,13 @@
       "aria-label-default": "色を選択",
       "aria-label-selected-color": "{{colorLabel}}色"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "削除",
       "cancel": "キャンセル",
@@ -8923,6 +9024,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "すべての行を折りたたむ",
       "aria-label-expand-all": "すべての行を広げる",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "行の展開を切り替える",
       "tooltip-collapse-all": "すべての行を折りたたむ",
       "tooltip-expand-all": "すべての行を広げる"
@@ -9177,6 +9280,8 @@
       "actions-confirmation-label": "確認メッセージ",
       "actions-confirmation-message": "操作を確認またはキャンセルするための説明的なプロンプトを提供します。",
       "footer-add-annotation": "注釈を追加",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "クリックして{{actionTitle}}",
       "footer-click-to-navigate": "クリックして{{linkTitle}}を開く",
       "footer-filter-for-value": "{{value}}値でフィルタリング",
@@ -10584,7 +10689,6 @@
       "title": "新規"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "新しいダッシュボード"
     },
     "new-folder": {
@@ -11710,7 +11814,7 @@
       "modal-title-set-up-public-access": "公開アクセスを設定",
       "modal-title-set-up-required-features": "必要な機能を設定",
       "step-description-copy-url": "ngrokの出力から、https://ではじまる転送URLをコピーしてください。",
-      "step-description-enable-feature-toggles": "必要な機能を有効にするには、これらの設定をcustom.iniファイルに追加してください。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "このコマンドを実行して、ローカルのGrafanaへの安全なトンネルを作成します。",
       "step-description-update-grafana-config": "これをcustom.iniファイルに追加し、URLを実際のngrok URLに置き換えてください。",
       "step-title-copy-url": "公開URLをコピー",
@@ -11720,7 +11824,6 @@
       "title-setting-connection-could-cause-temporary-outage": "この接続設定を行うことで、一時的に停止する可能性があります"
     },
     "getting-started-page": {
-      "header": "プロビジョニング",
       "subtitle-provisioning-feature": "プロビジョニング接続を表示・管理"
     },
     "git": {
@@ -12305,12 +12408,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12483,7 +12586,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "インポート",
       "new": "新規",
       "new-dashboard": "新しいダッシュボード",

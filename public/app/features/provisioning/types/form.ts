@@ -15,4 +15,5 @@ export interface ProvisionedDashboardFormData extends BaseProvisionedFormData {
     uid?: string;
     title?: string;
   };
+  copyTags?: boolean;
 }

@@ -659,5 +659,10 @@
     "title": "V38 Table Migration Comprehensive Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -855,11 +855,18 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   // Return appropriate datasource reference based on element type
   if (type === 'query') {
     if ('datasource' in element && element.datasource) {
-      // If element has its own datasource, use that
-      return element.datasource;
+      // Check if datasource is empty object {} (no keys), treat it as missing
+      // and fall through to use panel datasource (matches backend behavior)
+      const isEmptyDatasourceObject =
+        typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
+
+      if (!isEmptyDatasourceObject) {
+        // If element has its own datasource (and it's not empty), use that
+        return element.datasource;
+      }
     }
 
-    // For queries missing a datasource but not in auto-assigned set, use datasource from context (queryRunner)
+    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
     return context?.state?.datasource;
   }
 

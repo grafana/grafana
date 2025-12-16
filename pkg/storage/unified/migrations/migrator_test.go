@@ -45,6 +45,7 @@ func TestIntegrationMigrations(t *testing.T) {
 
 	migrationTestCases := []resourceMigratorTestCase{
 		newFoldersAndDashboardsTestCase(),
+		newPlaylistsTestCase(),
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)

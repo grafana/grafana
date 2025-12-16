@@ -13,17 +13,18 @@ export interface Props {
 }
 
 export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
-  if (!options.length) {
-    return null;
-  }
-
-  if (hasMultiProps) {
-    return <VariableValuesWithPropsPreview options={options} />;
-  }
-
-  return <VariableValuesWithoutPropsPreview options={options} />;
+  const styles = useStyles2(getStyles);
+  const hasOptions = options.length > 0;
+  return (
+    <div className={styles.previewContainer} style={{ gap: '8px' }}>
+      <Text variant="bodySmall" weight="medium">
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
+        {hasOptions && hasMultiProps && <VariableValuesWithPropsPreview options={options} />}
+        {hasOptions && !hasMultiProps && <VariableValuesWithoutPropsPreview options={options} />}
+      </Text>
+    </div>
+  );
 };
-VariableValuesPreview.displayName = 'VariableValuesPreview';
 
 function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
@@ -32,18 +33,13 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
   const columns = Object.keys(data[1] || data[0]).map((id) => ({ id, header: id, sortType: 'alphanumeric' as const }));
 
   return (
-    <div className={styles.previewContainer} style={{ gap: '8px' }}>
-      <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
-      </Text>
-      <InteractiveTable
-        className={styles.table}
-        columns={columns}
-        data={data}
-        getRowId={(r) => String(r.value)}
-        pageSize={8}
-      />
-    </div>
+    <InteractiveTable
+      className={styles.table}
+      columns={columns}
+      data={data}
+      getRowId={(r) => String(r.value)}
+      pageSize={8}
+    />
   );
 }
 
@@ -61,15 +57,12 @@ function VariableValuesWithoutPropsPreview({ options }: { options: VariableValue
   useEffect(() => setPreviewOptions(options.slice(0, previewLimit)), [previewLimit, options]);
 
   return (
-    <div className={styles.previewContainer}>
-      <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
-      </Text>
+    <>
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
             <InlineLabel data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
-              <div className={styles.label}>{o.label}</div>
+              <div className={styles.label}>{o.label || String(o.value)}</div>
             </InlineLabel>
           </InlineFieldRow>
         ))}
@@ -81,7 +74,7 @@ function VariableValuesWithoutPropsPreview({ options }: { options: VariableValue
           </Button>
         </InlineFieldRow>
       )}
-    </div>
+    </>
   );
 }
 VariableValuesWithoutPropsPreview.displayName = 'VariableValuesWithoutPropsPreview';
@@ -91,6 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
     previewContainer: css({
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(1),
       marginTop: theme.spacing(2),
     }),
     optionContainer: css({

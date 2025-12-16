@@ -198,6 +198,7 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
+	Warnings []string `json:"warnings,omitempty"`
 
 	// Optional value 0-100 that can be set while running
 	Progress float64 `json:"progress,omitempty"`
@@ -225,18 +226,20 @@ type JobResourceSummary struct {
 	Kind  string `json:"kind,omitempty"`
 	Total int64  `json:"total,omitempty"` // the count (if known)
 
-	Create int64 `json:"create,omitempty"`
-	Update int64 `json:"update,omitempty"`
-	Delete int64 `json:"delete,omitempty"`
-	Write  int64 `json:"write,omitempty"` // Create or update (export)
-	Error  int64 `json:"error,omitempty"` // The error count
+	Create  int64 `json:"create,omitempty"`
+	Update  int64 `json:"update,omitempty"`
+	Delete  int64 `json:"delete,omitempty"`
+	Write   int64 `json:"write,omitempty"`   // Create or update (export)
+	Error   int64 `json:"error,omitempty"`   // The error count
+	Warning int64 `json:"warning,omitempty"` // The warning count
 
 	// No action required (useful for sync)
 	Noop int64 `json:"noop,omitempty"`
 
-	// Report errors for this resource type
+	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
-	Errors []string `json:"errors,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 // HistoricJob is an append only log, saving all jobs that have been processed.

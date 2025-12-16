@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/codes"
+
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 type OperationGroup string
@@ -118,4 +120,66 @@ func groupByOperation(operations []*authzextv1.MutateOperation) (map[OperationGr
 	}
 
 	return grouped, nil
+}
+
+func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) ([]*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) {
+	deduplicatedWriteTuples := make([]*openfgav1.TupleKey, 0)
+	deduplicatedDeleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
+
+	writeTupleMap := make(map[string]bool)
+
+	for _, writeTuple := range writeTuples {
+		id := getTupleKeyID(writeTuple)
+		if !writeTupleMap[id] {
+			writeTupleMap[id] = true
+			deduplicatedWriteTuples = append(deduplicatedWriteTuples, writeTuple)
+		}
+	}
+
+	// Prioritize writes over deletes. Deletes do not have a condition, so we don't know if write tuple is different from delete one.
+	for _, deleteTuple := range deleteTuples {
+		id := getTupleKeyID(deleteTuple)
+		if !writeTupleMap[id] {
+			writeTupleMap[id] = true
+			deduplicatedDeleteTuples = append(deduplicatedDeleteTuples, deleteTuple)
+		}
+	}
+
+	return deduplicatedWriteTuples, deduplicatedDeleteTuples
+}
+
+func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	writeReq := &openfgav1.WriteRequest{
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
+	}
+
+	writeTuples, deleteTuples = deduplicateTupleKeys(writeTuples, deleteTuples)
+
+	if len(writeTuples) > 0 {
+		writeReq.Writes = &openfgav1.WriteRequestWrites{
+			TupleKeys:   writeTuples,
+			OnDuplicate: "ignore",
+		}
+	}
+
+	if len(deleteTuples) > 0 {
+		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
+			TupleKeys: deleteTuples,
+			OnMissing: "ignore",
+		}
+	}
+
+	_, err := s.openfga.Write(ctx, writeReq)
+	return err
+}
+
+type TupleKey interface {
+	GetUser() string
+	GetRelation() string
+	GetObject() string
+}
+
+func getTupleKeyID(t TupleKey) string {
+	return fmt.Sprintf("%s:%s:%s", t.GetUser(), t.GetRelation(), t.GetObject())
 }

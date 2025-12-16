@@ -32,6 +32,8 @@ export enum VariableRefresh {
   onTimeRangeChanged,
 }
 
+export type VariableRegexApplyTo = 'value' | 'text';
+
 export enum VariableSort {
   disabled,
   alphabeticalAsc,
@@ -118,6 +120,7 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   queryValue?: string;
   query: any;
   regex: string;
+  regexApplyTo?: VariableRegexApplyTo;
   refresh: VariableRefresh;
   staticOptions?: VariableOption[];
   staticOptionsOrder?: 'before' | 'after' | 'sorted';

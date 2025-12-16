@@ -86,22 +86,30 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	)
 
 	if c.Bool("non-interactive") {
-		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
-
-		opts.WithHistory = true // always include history in non-interactive mode
-		rsp, err := migrator.Migrate(ctx, opts)
-		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
-			return exitErr
-		}
-
-		logger.Info("Migrated legacy resources successfully in", time.Since(start))
-		if rsp != nil {
-			jj, _ := json.MarshalIndent(rsp, "", "  ")
-			logger.Info("Migration summary:", string(jj))
-		}
-		return nil
+		return runNonInteractiveMigration(ctx, opts, dashboardAccess, grpcClient, start)
 	}
 
+	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
+}
+
+func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
+	migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
+
+	opts.WithHistory = true // always include history in non-interactive mode
+	rsp, err := migrator.Migrate(ctx, opts)
+	if exitErr := handleMigrationError(err, rsp); exitErr != nil {
+		return exitErr
+	}
+
+	logger.Info("Migrated legacy resources successfully in", time.Since(start))
+	if rsp != nil {
+		jj, _ := json.MarshalIndent(rsp, "", "  ")
+		logger.Info("Migration summary:", string(jj))
+	}
+	return nil
+}
+
+func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
 		return err
@@ -143,7 +151,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient)
 		start = time.Now()
-		last = time.Now()
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
@@ -187,7 +194,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		if yes {
 			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 			start = time.Now()
-			last = time.Now()
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
 				return err

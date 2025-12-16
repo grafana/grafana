@@ -139,6 +139,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     });
 
     keybindings.addBinding({
+      key: 't =',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
       key: 't -',
       type: 'keypress', // NOTE: Because some browsers/OS identify minus symbol differently.
       onTrigger: () => {

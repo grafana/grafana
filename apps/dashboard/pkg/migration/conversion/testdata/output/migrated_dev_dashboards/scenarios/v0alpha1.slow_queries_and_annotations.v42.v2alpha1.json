@@ -851,5 +851,10 @@
     "title": "Panel tests - Slow Queries \u0026 Annotations",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

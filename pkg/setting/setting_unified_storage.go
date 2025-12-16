@@ -8,9 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// nolint:unused
-var migratedUnifiedResources = []string{
-	//"playlists.playlist.grafana.app",
+var MigratedUnifiedResources = []string{
+	"playlists.playlist.grafana.app",
 	"folders.folder.grafana.app",
 	"dashboards.dashboard.grafana.app",
 }
@@ -63,7 +62,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs not yet enforced")
-		//cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
+		// cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
 	} else {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
@@ -101,6 +100,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
+	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
+	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }
@@ -116,7 +118,7 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		section.Key("enable_search").SetValue("true")
 		cfg.EnableSearch = true
 	}
-	for _, resource := range migratedUnifiedResources {
+	for _, resource := range MigratedUnifiedResources {
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		if oldCfg, ok := cfg.UnifiedStorage[resource]; ok {
 			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", oldCfg)

@@ -233,6 +233,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
+
 	t.Run("When updating uid with a dashboard already using that uid", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
@@ -265,6 +266,34 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
+	})
+
+	t.Run("When creating a dashboard that references a non-existent library panel", func(t *testing.T) {
+		originalCount := getDashboardCount(t, grafanaListedAddr, "admin", "admin")
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Bad dashboard",
+				"panels": []interface{}{
+					map[string]interface{}{
+						"gridPos": map[string]int{"h": 0, "w": 0, "x": 0, "y": 0},
+						"libraryPanel": map[string]string{
+							"name": "Bad panel",
+							"uid":  "invalid-uid",
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Contains(t, string(body), "library element could not be found")
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		// A new dashboard is not created in this situation.
+		require.Equal(t, originalCount, getDashboardCount(t, grafanaListedAddr, "admin", "admin"))
 	})
 }
 
@@ -980,6 +1009,21 @@ func postDashboard(t *testing.T, grafanaListedAddr, user, password string, paylo
 
 	u := fmt.Sprintf("http://%s:%s@%s/api/dashboards/db", user, password, grafanaListedAddr)
 	return http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+}
+
+func getDashboardCount(t *testing.T, grafanaListenAddr, user, password string) int {
+	endpoint := fmt.Sprintf("http://%s:%s@%s/apis/dashboard.grafana.app/v0alpha1/namespaces/default/search", user, password, grafanaListenAddr)
+	resp, err := http.Get(endpoint) //nolint:gosec
+	require.NoError(t, err)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(body, &payload))
+
+	return int(payload["totalHits"].(float64))
 }
 
 func TestIntegrationDashboardServicePermissions(t *testing.T) {

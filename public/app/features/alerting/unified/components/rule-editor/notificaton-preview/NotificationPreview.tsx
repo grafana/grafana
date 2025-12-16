@@ -140,7 +140,7 @@ export const NotificationPreview = ({
                   <div className={styles.firstAlertManagerLine} />
                   <div className={styles.alertManagerName}>
                     <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
-                    <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
+                    <img src={alertManagerSource.imgUrl || undefined} alt="" className={styles.img} />
                     {alertManagerSource.name}
                   </div>
                   <div className={styles.secondAlertManagerLine} />

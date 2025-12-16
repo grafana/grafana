@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -38,14 +39,14 @@ var (
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
-
-	pluginJSON           plugins.JSONData
-	client               PluginClient // will only ever be called with the same plugin id!
-	datasources          PluginDatasourceProvider
-	contextProvider      PluginContextWrapper
-	accessControl        accesscontrol.AccessControl
-	queryTypes           *queryV0.QueryTypeDefinitionList
-	configCrudUseNewApis bool
+	pluginJSON             plugins.JSONData
+	client                 PluginClient // will only ever be called with the same plugin id!
+	datasources            PluginDatasourceProvider
+	contextProvider        PluginContextWrapper
+	accessControl          accesscontrol.AccessControl
+	queryTypes             *queryV0.QueryTypeDefinitionList
+	configCrudUseNewApis   bool
+	dataSourceCRUDMetric   *prometheus.HistogramVec
 }
 
 func RegisterAPIService(
@@ -66,6 +67,16 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 
+	dataSourceCRUDMetric := metricutil.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "ds_config_handler_requests_duration_seconds",
+		Help:      "Duration of requests handled by datasource configuration handlers",
+	}, []string{"code_path", "handler"})
+	regErr := reg.Register(dataSourceCRUDMetric)
+	if regErr != nil && !errors.As(regErr, &prometheus.AlreadyRegisteredError{}) {
+		return nil, regErr
+	}
+
 	pluginJSONs, err := getDatasourcePlugins(pluginSources)
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
@@ -85,11 +96,13 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 		)
 		if err != nil {
 			return nil, err
 		}
+		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -160,6 +173,10 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.datasourceResourceInfo.GroupVersion()
 }
 
+func (b *DataSourceAPIBuilder) SetDataSourceCRUDMetrics(datasourceCRUDMetric *prometheus.HistogramVec) {
+	b.dataSourceCRUDMetric = datasourceCRUDMetric
+}
+
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasourceV0.DataSource{},
@@ -217,13 +234,9 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	if b.configCrudUseNewApis {
 		legacyStore := &legacyStorage{
-			datasources:  b.datasources,
-			resourceInfo: &ds,
-			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Name:      "ds_config_handler_requests_duration_seconds",
-				Help:      "Duration of requests handled by datasource configuration handlers",
-			}, []string{"code_path", "handler"}),
+			datasources:                     b.datasources,
+			resourceInfo:                    &ds,
+			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
