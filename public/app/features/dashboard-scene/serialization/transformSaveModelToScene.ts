@@ -108,7 +108,8 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
         rowItems.push(
           new RowItem({
             title: '',
-            collapse: panel.collapsed,
+            // Hidden header rows must stay expanded; collapsing them would hide the panels entirely.
+            collapse: false,
             layout: new DefaultGridLayoutManager({
               grid: new SceneGridLayout({
                 children: currentRowPanels,
