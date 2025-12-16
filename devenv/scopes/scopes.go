@@ -356,48 +356,10 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		return err
 	}
 
-	// Update spec and/or status in additional requests if needed
-	// Get the created resource to retrieve its resourceVersion
+	// Get the created resource to retrieve its resourceVersion for status update
 	createdNav, err := c.getScopeNavigation(prefixedName)
 	if err != nil {
 		return fmt.Errorf("failed to get created navigation: %w", err)
-	}
-
-	// Update spec if we have PreLoadSubScopeChildren to ensure it's persisted
-	if nav.PreLoadSubScopeChildren {
-		// Merge our spec with the created spec to preserve any server-side defaults
-		// but ensure our PreLoadSubScopeChildren value is set
-		mergedSpec := createdNav.Spec
-		mergedSpec.PreLoadSubScopeChildren = nav.PreLoadSubScopeChildren
-
-		specResource := v0alpha1.ScopeNavigation{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: apiVersion,
-				Kind:       "ScopeNavigation",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            prefixedName,
-				ResourceVersion: createdNav.ObjectMeta.ResourceVersion,
-			},
-			Spec:   mergedSpec,
-			Status: createdNav.Status, // Preserve existing status
-		}
-
-		specBody, err := json.Marshal(specResource)
-		if err != nil {
-			return fmt.Errorf("failed to marshal scope navigation spec: %w", err)
-		}
-
-		fmt.Printf("  Updating spec for: %s\n", prefixedName)
-		if err := c.makeRequest("PUT", fmt.Sprintf("/scopenavigations/%s", prefixedName), specBody); err != nil {
-			return err
-		}
-
-		// Re-fetch to get updated resourceVersion for status update
-		createdNav, err = c.getScopeNavigation(prefixedName)
-		if err != nil {
-			return fmt.Errorf("failed to get updated navigation: %w", err)
-		}
 	}
 
 	// Update status in a second request (status is a subresource)
