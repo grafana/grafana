@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection":                schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo":            schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionList":            schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure":          schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec":            schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
@@ -221,6 +222,26 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
 	}
 }
 
@@ -1871,8 +1892,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					"connection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
-							Type:        []string{"string"},
-							Format:      "",
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo"),
 						},
 					},
 				},
@@ -1880,7 +1900,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
 	}
 }
 

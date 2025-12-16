@@ -84,6 +84,9 @@ repository: {
 					// When non-zero, the sync will run periodically
 					intervalSeconds?: int
 				}
+				#ConnectionInfo: {
+					name: string
+				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
 					healthy: bool
@@ -154,7 +157,7 @@ repository: {
 					gitlab?: #GitLabRepositoryConfig
 					// The connection the repository references.
 					// This means the Repository is interacting with git via a Connection.
-					connection?: string
+					connection?: #ConnectionInfo
 				}
 				status: {
 					// The generation of the spec last time reconciliation ran

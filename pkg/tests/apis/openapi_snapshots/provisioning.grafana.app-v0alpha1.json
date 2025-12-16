@@ -4409,6 +4409,18 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionInfo": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionList": {
         "type": "object",
         "required": [
@@ -5527,7 +5539,11 @@
           },
           "connection": {
             "description": "The connection the repository references. This means the Repository is interacting with git via a Connection.",
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionInfo"
+              }
+            ]
           },
           "description": {
             "description": "Repository description",
