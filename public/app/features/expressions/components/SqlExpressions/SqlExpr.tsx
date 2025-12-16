@@ -331,7 +331,6 @@ LIMIT
                 schemas={schemas?.sqlSchemas ?? null}
                 loading={schemasLoading}
                 error={schemasError}
-                onClose={() => setIsSchemaInspectorOpen(false)}
               />
             </div>
           )}

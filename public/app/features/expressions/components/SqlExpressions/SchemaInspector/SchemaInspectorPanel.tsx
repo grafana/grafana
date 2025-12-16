@@ -32,10 +32,9 @@ interface SchemaInspectorPanelProps {
   schemas: SQLSchemas | null;
   loading: boolean;
   error: Error | null;
-  onClose: () => void;
 }
 
-export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: SchemaInspectorPanelProps) => {
+export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspectorPanelProps) => {
   const styles = useStyles2(getStyles);
 
   const schemaResponse: SQLSchemas = schemas ?? {};
