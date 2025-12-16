@@ -16,7 +16,7 @@ jest.mock('react-use', () => {
   return {
     ...reactUse,
     useMeasure: () => {
-      const ref = React.useRef();
+      const ref = React.useRef(null);
       return [ref, { width: 1600 }];
     },
   };
