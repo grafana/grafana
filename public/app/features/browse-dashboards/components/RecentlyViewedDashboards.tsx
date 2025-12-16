@@ -43,7 +43,7 @@ export function RecentlyViewedDashboards() {
     <CollapsableSection
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
-        <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+        <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
           <Text variant="h5" element="h3" onClick={() => setIsOpen(!isOpen)}>
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
