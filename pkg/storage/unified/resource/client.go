@@ -31,11 +31,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type SearchClient interface {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+}
+
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
@@ -100,8 +103,6 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceIndex_ServiceDesc,
-		&resourcepb.ManagedObjectIndex_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,

@@ -292,7 +292,7 @@ func (s *service) starting(ctx context.Context) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	server, err := NewResourceServer(serverOptions)
+	server, searchServer, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
@@ -309,8 +309,8 @@ func (s *service) starting(ctx context.Context) error {
 	srv := s.handler.GetServer()
 	resourcepb.RegisterResourceStoreServer(srv, server)
 	resourcepb.RegisterBulkStoreServer(srv, server)
-	resourcepb.RegisterResourceIndexServer(srv, server)
-	resourcepb.RegisterManagedObjectIndexServer(srv, server)
+	resourcepb.RegisterResourceIndexServer(srv, searchServer)
+	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
 	resourcepb.RegisterBlobStoreServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
 	resourcepb.RegisterQuotasServer(srv, server)

@@ -742,7 +742,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
-	client := resource.NewLocalResourceClient(server)
+	client := resource.NewLocalResourceClient(server, nil)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)

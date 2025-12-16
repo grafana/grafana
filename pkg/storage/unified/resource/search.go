@@ -127,7 +127,10 @@ type SearchBackend interface {
 	GetOpenIndexes() []NamespacedResource
 }
 
-// This supports indexing+search regardless of implementation
+var _ SearchServer = &searchSupport{}
+
+// This supports indexing+search regardless of implementation.
+// Implements SearchServer interface.
 type searchSupport struct {
 	log          log.Logger
 	storage      StorageBackend
@@ -159,6 +162,10 @@ var (
 	_ resourcepb.ResourceIndexServer      = (*searchSupport)(nil)
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
+
+func NewSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (SearchServer, error) {
+	return newSearchSupport(opts, storage, access, blob, indexMetrics, ownsIndexFn)
+}
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
 	// No backend search support
@@ -596,6 +603,15 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	}
 
 	return totalBatchesIndexed, nil
+}
+
+func (s *searchSupport) Init(ctx context.Context) error {
+	return s.init(ctx)
+}
+
+func (s *searchSupport) Stop(_ context.Context) error {
+	s.stop()
+	return nil
 }
 
 func (s *searchSupport) init(ctx context.Context) error {

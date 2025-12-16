@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -135,7 +136,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server, nil), nil
 
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
@@ -224,11 +225,11 @@ func newClient(opts options.StorageOptions,
 			serverOptions.OverridesService = overridesSvc
 		}
 
-		server, err := sql.NewResourceServer(serverOptions)
+		server, searchServer, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server, searchServer), nil
 	}
 }
 

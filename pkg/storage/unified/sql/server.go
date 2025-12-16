@@ -48,7 +48,7 @@ type ServerOptions struct {
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
 }
 
-func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.SearchServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
@@ -59,7 +59,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			nil, // not needed for gRPC client mode
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+			return nil, nil, fmt.Errorf("failed to create inline secure value service: %w", err)
 		}
 		opts.SecureValues = inlineSecureValueService
 	}
@@ -79,7 +79,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		serverOptions.Blob.URL = "file:///" + dir
 	}
@@ -96,13 +96,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	} else {
 		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if opts.Cfg.EnableSQLKVBackend {
 			sqlkv, err := resource.NewSQLKV(eDB)
 			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+				return nil, nil, fmt.Errorf("error creating sqlkv: %s", err)
 			}
 
 			kvBackendOpts := resource.KVBackendOptions{
@@ -114,12 +114,12 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			ctx := context.Background()
 			dbConn, err := eDB.Init(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("error initializing DB: %w", err)
+				return nil, nil, fmt.Errorf("error initializing DB: %w", err)
 			}
 
 			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 			if dialect == nil {
-				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+				return nil, nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 			}
 
 			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
@@ -127,14 +127,14 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				DB:      dbConn,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				return nil, nil, fmt.Errorf("failed to create resource version manager: %w", err)
 			}
 
 			// TODO add config to decide whether to pass RvManager or not
 			kvBackendOpts.RvManager = rvManager
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
-				return nil, fmt.Errorf("error creating kv backend: %s", err)
+				return nil, nil, fmt.Errorf("error creating kv backend: %s", err)
 			}
 
 			serverOptions.Backend = kvBackend
@@ -151,7 +151,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
 			})
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			serverOptions.Backend = backend
 			serverOptions.Diagnostics = backend
@@ -159,13 +159,24 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		}
 	}
 
-	serverOptions.Search = opts.SearchOptions
-	serverOptions.IndexMetrics = opts.IndexMetrics
+	search, err := resource.NewSearchServer(opts.SearchOptions, opts.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
+	}
+
+	if err := search.Init(context.Background()); err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
+	}
+
+	serverOptions.Search = search
 	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
 	serverOptions.OverridesService = opts.OverridesService
 
-	return resource.NewResourceServer(serverOptions)
+	rs, err := resource.NewResourceServer(serverOptions)
+	if err != nil {
+		_ = search.Stop(context.Background())
+	}
+	return rs, search, err
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should

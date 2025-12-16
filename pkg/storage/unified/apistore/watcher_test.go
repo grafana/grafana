@@ -156,7 +156,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	default:
 		t.Fatalf("unsupported storage type: %s", setupOpts.storageType)
 	}
-	client := resource.NewLocalResourceClient(server)
+	client := resource.NewLocalResourceClient(server, nil)
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 	store, destroyFunc, err := apistore.NewStorage(

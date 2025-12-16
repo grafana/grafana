@@ -34,12 +34,17 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
+type SearchServer interface {
+	LifecycleHooks
+
+	resourcepb.ResourceIndexServer
+	resourcepb.ManagedObjectIndexServer
+}
+
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	resourcepb.ResourceStoreServer
 	resourcepb.BulkStoreServer
-	resourcepb.ResourceIndexServer
-	resourcepb.ManagedObjectIndexServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
 	resourcepb.QuotasServer
@@ -222,7 +227,8 @@ type ResourceServerOptions struct {
 	Blob BlobConfig
 
 	// Search options
-	Search SearchOptions
+	SearchOptions SearchOptions // TODO: needed?
+	Search        SearchServer
 
 	// Quota service
 	OverridesService *OverridesService
@@ -251,16 +257,12 @@ type ResourceServerOptions struct {
 
 	storageMetrics *StorageMetrics
 
-	IndexMetrics *BleveIndexMetrics
-
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
-
-	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -343,23 +345,25 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		ctx:              ctx,
 		cancel:           cancel,
 		storageMetrics:   opts.storageMetrics,
-		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		search:           opts.Search,
 
-		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
+		artificialSuccessfulWriteDelay: opts.SearchOptions.IndexMinUpdateInterval,
 	}
 
-	if opts.Search.Resources != nil {
-		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
-		if err != nil {
-			return nil, err
+	/*
+		if opts.Search.Resources != nil {
+			var err error
+			s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+			if err != nil {
+				return nil, err
+			}
 		}
-	}
+	*/
 
 	err := s.Init(ctx)
 	if err != nil {
@@ -377,7 +381,7 @@ type server struct {
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
-	search           *searchSupport
+	search           SearchServer
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -424,11 +428,6 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.overridesService.init(ctx)
 		}
 
-		// initialize the search index
-		if s.initErr == nil && s.search != nil {
-			s.initErr = s.search.init(ctx)
-		}
-
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
@@ -451,10 +450,6 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
-	}
-
-	if s.search != nil {
-		s.search.stop()
 	}
 
 	if s.overridesService != nil {
@@ -1370,47 +1365,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			}
 		}
 	}
-}
-
-func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.Search(ctx, req)
-}
-
-// GetStats implements ResourceServer.
-func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(resourcepb.ResourceIndexServer)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
-	}
-	return s.search.GetStats(ctx, req)
-}
-
-func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.ListManagedObjects(ctx, req)
-}
-
-func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.CountManagedObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
