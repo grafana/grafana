@@ -1,3 +1,19 @@
+<!-- 11.6.9 START -->
+
+# 11.6.9 (2025-12-16)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting dependency [#114249](https://github.com/grafana/grafana/pull/114249), [@moustafab](https://github.com/moustafab)
+- **Dependencies:** Bump Go to v1.25.5 [#114757](https://github.com/grafana/grafana/pull/114757), [@macabu](https://github.com/macabu)
+- **PDFTables:** Dynamically shrink font to try and fit whole table in pdf page width (Enterprise)
+- **Plugins:** Add PluginContext to plugins when scenes is disabled [#115060](https://github.com/grafana/grafana/pull/115060), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Bug fixes
+
+- **Alerting:** Fix contacts point issues [#115409](https://github.com/grafana/grafana/pull/115409), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 11.6.9 END -->
 <!-- 12.3.0 START -->
 
 # 12.3.0 (2025-11-19)
