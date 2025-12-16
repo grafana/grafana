@@ -4,6 +4,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
 import { RadialColorDefs } from './RadialColorDefs';
+import { RadialShape } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
 export interface RadialBarSegmentedProps {
@@ -15,6 +16,7 @@ export interface RadialBarSegmentedProps {
   glowFilter?: string;
   segmentCount: number;
   segmentSpacing: number;
+  shape: RadialShape;
 }
 export function RadialBarSegmented({
   fieldDisplay,
@@ -25,6 +27,7 @@ export function RadialBarSegmented({
   segmentCount,
   segmentSpacing,
   colorDefs,
+  shape,
 }: RadialBarSegmentedProps) {
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -38,9 +41,9 @@ export function RadialBarSegmented({
 
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
-    const angleColor = colorDefs.getSegmentColor(angleValue, i);
+    // const angleColor = colorDefs.getSegmentColor(angleValue, i);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = angleValue >= value ? theme.colors.action.hover : angleColor;
+    const segmentColor = angleValue >= value ? theme.colors.action.hover : undefined;
 
     segments.push(
       <RadialArcPath
@@ -48,6 +51,8 @@ export function RadialBarSegmented({
         startAngle={segmentAngle}
         dimensions={dimensions}
         color={segmentColor}
+        shape={shape}
+        colorDefs={colorDefs}
         glowFilter={glowFilter}
         arcLengthDeg={segmentArcLengthDeg}
       />

@@ -155,6 +155,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
           colorDefs={colorDefs}
+          shape={shape}
         />
       );
     } else {
@@ -168,6 +169,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           startAngle={startAngle}
           roundedBars={roundedBars}
           glowFilter={`url(#${glowFilterId})`}
+          shape={shape}
         />
       );
     }
@@ -228,6 +230,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               roundedBars={roundedBars}
               glowFilter={`url(#${glowFilterId})`}
               colorDefs={colorDefs}
+              shape={shape}
             />
           );
         }

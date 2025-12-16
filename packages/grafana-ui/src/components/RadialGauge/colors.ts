@@ -1,6 +1,7 @@
 import tinycolor from 'tinycolor2';
 
-import { FieldColorModeId, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import { DisplayProcessor, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { RadialGradientMode } from './RadialGauge';
 
@@ -8,7 +9,8 @@ export function buildGradientColors(
   gradientMode: RadialGradientMode,
   baseColor: string,
   theme: GrafanaTheme2,
-  colorModeId?: FieldColorModeId | string,
+  displayProcessor: DisplayProcessor,
+  fieldDisplay: FieldDisplay,
   forSegment?: boolean
 ): Array<{ color: string; percent: number }> {
   if (gradientMode === 'none') {
@@ -18,15 +20,36 @@ export function buildGradientColors(
     ];
   }
 
-  const colorMode = getFieldColorMode(colorModeId);
+  const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode);
 
-  // TODO we need to return thresholded values here. those will have breakpoints
-  // which map to exact percentages, and we should show that correctly.
-  // Handle continuous color modes first
+  if (colorMode.id === FieldColorModeId.Thresholds) {
+    const thresholds = fieldDisplay.field.thresholds?.steps ?? [];
+    const min = fieldDisplay.field.min ?? 0;
+    const max = fieldDisplay.field.max ?? 100;
+
+    const result: Array<{ color: string; percent: number }> = [
+      { color: displayProcessor(min).color ?? baseColor, percent: 0 },
+    ];
+
+    for (const threshold of thresholds) {
+      if (threshold.value > min && threshold.value < max) {
+        const percent = (threshold.value - min) / (max - min);
+        result.push({ color: threshold.color, percent });
+      }
+    }
+
+    result.push({ color: displayProcessor(max).color ?? baseColor, percent: 1 });
+
+    return result;
+  }
+
   if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
+    // Handle continuous color modes first
     const colors = colorMode.getColors(theme);
     return colors.map((color, idx) => ({ color, percent: idx / (colors.length - 1) }));
-  } else if (colorMode.isByValue) {
+  }
+
+  if (colorMode.isByValue) {
     // For value based colors we want to stay more true to the specific color
     // So a radial gradient that adds a bit of light and shade works best
     const darkerColor = tinycolor(baseColor).darken(5);

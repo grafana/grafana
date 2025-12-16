@@ -1,15 +1,15 @@
 import { useId } from 'react';
 
-import { colorManipulator } from '@grafana/data';
-
 import { RadialColorDefs } from './RadialColorDefs';
+import { RadialShape } from './RadialGauge';
 import { GaugeDimensions, toRad } from './utils';
 
 export interface RadialArcPathPropsBase {
   startAngle: number;
   dimensions: GaugeDimensions;
-  colorDef: RadialColorDefs;
+  colorDefs: RadialColorDefs;
   arcLengthDeg: number;
+  shape: RadialShape;
   color?: string;
   gradient?: string;
   glowFilter?: string;
@@ -116,9 +116,10 @@ export function RadialArcPath({
   startAngle: angle,
   dimensions,
   color,
-  colorDef,
-  gradient,
+  colorDefs,
+  shape,
   arcLengthDeg,
+  glowFilter,
   roundedBars,
   showGuideDots,
   guideDotStartColor,
@@ -129,7 +130,7 @@ export function RadialArcPath({
 
   const startRadians = toRad(angle);
   const endRadians = toRad(angle + arcLengthDeg);
-  const gradientList = colorDef?.getGradient();
+  const [startColor, endColor] = colorDefs.getEndpointColors();
 
   const path = drawRadialArcPath({ angle, arcLengthDeg, dimensions, roundedBars });
   let x1 = centerX + radius * Math.cos(startRadians);
@@ -144,19 +145,34 @@ export function RadialArcPath({
       <clipPath id={id}>
         <path d={path} />
       </clipPath>
-      <foreignObject x="0" y="0" width={centerX * 2} height={centerY * 2} clipPath={`url(#${id})`}>
-        <div style={{ width: '100%', height: '100%', backgroundImage: gradient, backgroundColor: color }} />
-      </foreignObject>
+      <g filter={glowFilter}>
+        <foreignObject
+          x={centerX - radius - barWidth}
+          y={centerY - radius - barWidth}
+          width={(radius + barWidth) * 2}
+          height={(radius + barWidth) * 2}
+          clipPath={`url(#${id})`}
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundImage: color ? undefined : colorDefs.getGradientDef(),
+              backgroundColor: color,
+            }}
+          />
+        </foreignObject>
+      </g>
 
-      {roundedBars && gradientList && (
-        <>
-          <circle cx={x1} cy={y1} r={dotRadius} fill={gradientList[0].color} />
-          {/* this would actually need to be the color determined by the display */}
-          <circle cx={x2} cy={y2} r={dotRadius} fill={gradientList[gradientList.length - 1].color} />
-        </>
-      )}
       {showGuideDots && (
         <>
+          {shape === 'circle' && (
+            <>
+              <circle cx={x1} cy={y1} r={barWidth / 2} fill={startColor} />
+              <circle cx={x2} cy={y2} r={barWidth / 2} fill={endColor} />
+            </>
+          )}
+
           {arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotStartColor} />}
           <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotEndColor} />
         </>

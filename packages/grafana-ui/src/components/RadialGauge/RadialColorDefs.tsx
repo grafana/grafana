@@ -122,35 +122,24 @@ export class RadialColorDefs {
   }
 
   getGradient(baseColor = this.getFieldBaseColor(), forSegment?: boolean): Array<{ color: string; percent: number }> {
-    const { gradient, fieldDisplay, theme } = this.options;
-    return buildGradientColors(gradient, baseColor, theme, fieldDisplay.field.color?.mode, forSegment);
+    const { displayProcessor, gradient, fieldDisplay, theme } = this.options;
+    return buildGradientColors(gradient, baseColor, theme, displayProcessor, fieldDisplay, forSegment);
   }
 
   getGradientDef(): string {
     const gradientStops = this.getGradient();
     const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
     return this.options.shape === 'circle'
-      ? `conic-gradient(from -10deg, ${colorStrings.join(', ')})`
+      ? `conic-gradient(from 0deg, ${colorStrings.join(', ')})`
       : 'linear-gradient(90deg, ' + colorStrings.join(', ') + ')';
   }
 
-  getGuideDotColors(): [string, string] {
-    const { dimensions, fieldDisplay, shape } = this.options;
+  getEndpointColors(): [string, string] {
+    const { fieldDisplay } = this.options;
 
     const gradient = this.getGradient();
-    let valuePercent = fieldDisplay.display.percent ?? 0;
-
-    // the linear gradient used in circular gradients means that we want to use the
-    // y position of the edge of the bar to determine the color. If we ever address
-    // that shortcoming, we could delete this block.
-    if (shape === 'circle') {
-      const angleDeg = ((valuePercent - 0.25) % 1) * 360;
-      const angleRad = (angleDeg * Math.PI) / 180;
-      const yPos = dimensions.centerY + dimensions.radius * Math.sin(angleRad);
-      valuePercent = yPos / (dimensions.centerY * 2);
-    }
-
-    let startColor = gradient[0].color;
+    const valuePercent = fieldDisplay.display.percent ?? 0;
+    const startColor = gradient[0].color;
     let endColor = gradient[gradient.length - 1].color;
 
     // if we have a percentageFilled, use it to get a the correct end color based on where the bar terminates
@@ -161,7 +150,11 @@ export class RadialColorDefs {
           ? endColorByPercentage.toHexString()
           : endColorByPercentage.toHex8String();
     }
+    return [startColor, endColor];
+  }
 
+  getGuideDotColors(): [string, string] {
+    const [startColor, endColor] = this.getEndpointColors();
     return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
   }
 
