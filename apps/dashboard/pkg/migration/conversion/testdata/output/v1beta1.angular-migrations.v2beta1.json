@@ -1,20 +1,21 @@
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
-    "name": "v0alpha1.migrations.v42"
+    "name": "angular-migrations-test"
   },
   "spec": {
     "annotations": [
       {
         "kind": "AnnotationQuery",
         "spec": {
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
           "query": {
-            "kind": "grafana",
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
             "spec": {}
           },
           "enable": true,
@@ -46,7 +47,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -59,9 +62,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -94,7 +98,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk_table"
                       }
@@ -119,9 +125,10 @@
             }
           },
           "vizConfig": {
-            "kind": "table",
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "9.5.0-pre",
             "spec": {
-              "pluginVersion": "9.5.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
@@ -194,7 +201,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -209,9 +218,10 @@
             }
           },
           "vizConfig": {
-            "kind": "stat",
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "colorMode": "value",
                 "graphMode": "area",
@@ -277,7 +287,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk_table"
                       }
@@ -302,9 +314,10 @@
             }
           },
           "vizConfig": {
-            "kind": "piechart",
+            "kind": "VizConfig",
+            "group": "piechart",
+            "version": "9.5.0-pre",
             "spec": {
-              "pluginVersion": "9.5.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "grafana-piechart-panel",
@@ -351,7 +364,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -364,9 +379,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -399,7 +415,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
                         "scenarioId": "csv_file"
@@ -438,9 +456,10 @@
             }
           },
           "vizConfig": {
-            "kind": "geomap",
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "10.4.0-pre",
             "spec": {
-              "pluginVersion": "10.4.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "grafana-worldmap-panel",
@@ -569,7 +588,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -582,9 +603,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -617,7 +639,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          2.260951647569786,\n          1.887442338051216,\n          2.1526144400893514,\n          1.7287721375237766,\n          1.7262902137793208\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod1\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          1.589539045095202,\n          1.5914283506847613,\n          1.8976990616650726,\n          1.758223085999124,\n          2.2294649594813816\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod2\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          2.0914263380328766,\n          1.8164545521094575,\n          1.621111084665713,\n          1.3902653996444705,\n          1.482803315949775\n        ]\n      ]\n    }\n  }\n]",
                         "scenarioId": "raw_frame"
@@ -633,9 +657,10 @@
             }
           },
           "vizConfig": {
-            "kind": "barchart",
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
@@ -737,7 +762,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -750,9 +777,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -785,7 +813,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk",
                         "seriesCount": 3
@@ -801,9 +831,10 @@
             }
           },
           "vizConfig": {
-            "kind": "histogram",
+            "kind": "VizConfig",
+            "group": "histogram",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
@@ -903,7 +934,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -916,9 +949,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -951,14 +985,15 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "datasource",
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
                       "spec": {
                         "panelId": 28
                       }
-                    },
-                    "datasource": {
-                      "type": "datasource",
-                      "uid": "-- Dashboard --"
                     },
                     "refId": "A",
                     "hidden": false
@@ -970,9 +1005,10 @@
             }
           },
           "vizConfig": {
-            "kind": "bargauge",
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "11.3.0-pre",
             "spec": {
-              "pluginVersion": "11.3.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
@@ -1075,7 +1111,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -1088,9 +1126,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.3.0-pre",
             "spec": {
-              "pluginVersion": "11.3.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -1123,7 +1162,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk",
                         "seriesCount": 3
@@ -1139,9 +1180,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
@@ -1239,7 +1281,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -1252,9 +1296,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -1287,7 +1332,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -1300,9 +1347,10 @@
             }
           },
           "vizConfig": {
-            "kind": "text",
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "11.0.0-pre",
             "spec": {
-              "pluginVersion": "11.0.0-pre",
               "options": {
                 "code": {
                   "language": "plaintext",
@@ -1335,7 +1383,9 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
                       "spec": {}
                     },
                     "refId": "A",
@@ -1350,9 +1400,10 @@
             }
           },
           "vizConfig": {
-            "kind": "stat",
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
             "spec": {
-              "pluginVersion": "",
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "grafana-singlestat-panel",
@@ -1855,7 +1906,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v0alpha1"
+      "storedVersion": "v1beta1"
     }
   }
 }
