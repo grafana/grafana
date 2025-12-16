@@ -4,7 +4,9 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { CollapsableSection, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Grid, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
+import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { getRecentlyViewedDashboards } from './utils';
 
@@ -19,6 +21,7 @@ export function RecentlyViewedDashboards() {
     }
     return getRecentlyViewedDashboards(MAX_RECENT);
   }, []);
+  const { foldersByUid } = useDashboardLocationInfo(recentDashboards.length > 0);
 
   if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
     return null;
@@ -43,22 +46,26 @@ export function RecentlyViewedDashboards() {
         <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
       )}
 
-      {/* TODO: implement actual card content */}
       {!loading && recentDashboards.length > 0 && (
-        <>
+        <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap={2}>
           {recentDashboards.map((dash) => (
-            <div key={dash.uid}>
-              <Link href={dash.url}>{dash.name}</Link>
-            </div>
+            <DashListItem
+              key={dash.uid}
+              dashboard={dash}
+              url={dash.url}
+              showFolderNames={true}
+              locationInfo={foldersByUid[dash.location]}
+              layoutMode="card"
+            />
           ))}
-        </>
+        </Grid>
       )}
     </CollapsableSection>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const accent = theme.visualization.getColorByName('purple'); // or your own hex
+  const accent = theme.visualization.getColorByName('purple');
 
   return {
     title: css({
