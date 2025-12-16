@@ -721,6 +721,11 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	// k6-specific check to prevent folder move for a k6-app folder and its children
+	if cmd.UID == accesscontrol.K6FolderUID {
+		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
 		UID:          &cmd.UID,
 		OrgID:        cmd.OrgID,
@@ -728,10 +733,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
 	// Check that the user is allowed to move the folder to the destination folder

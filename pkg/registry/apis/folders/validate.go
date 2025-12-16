@@ -139,25 +139,8 @@ func validateOnUpdate(ctx context.Context,
 	// To try to save some computation, get the parents of the old parent (this is typically cheaper
 	// than looking at the children of the folder). If the old parent has more parents or the same
 	// number of parents as the new parent, we can return early, because we know the folder had to be
-	// safe from the creation validation.
-	oldParentDepth := 0
-	if oldFolder.GetFolder() != folder.RootFolderUID {
-		oldParentObj, err := getter.Get(ctx, oldFolder.GetFolder(), &metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("old parent not found %w", err)
-		}
-		oldParent, ok := oldParentObj.(*folders.Folder)
-		if !ok {
-			return fmt.Errorf("expected folder, found %T", oldParentObj)
-		}
-		oldInfo, err := parents(ctx, oldParent)
-		if err != nil {
-			return err
-		}
-		oldParentDepth = len(oldInfo.Items)
-	}
-	levelDifference := len(info.Items) - oldParentDepth
-	if levelDifference <= 0 {
+	// safe from the creation validation. If we cannot access the older parent, we will continue to check the children.
+	if canSkipChildrenCheck(ctx, oldFolder, getter, parents, len(info.Items)) {
 		return nil
 	}
 
@@ -171,6 +154,34 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
+}
+
+// canSkipChildrenCheck determines if we can skip the expensive children depth check.
+// If the old parent depth is >= the new parent depth, the folder was already valid
+// and this move won't make descendants exceed max depth.
+func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
+	if oldFolder.GetFolder() == folder.RootFolderUID {
+		return false
+	}
+
+	oldParentObj, err := getter.Get(ctx, oldFolder.GetFolder(), &metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+
+	oldParent, ok := oldParentObj.(*folders.Folder)
+	if !ok {
+		return false
+	}
+
+	oldInfo, err := parents(ctx, oldParent)
+	if err != nil {
+		return false
+	}
+
+	oldParentDepth := len(oldInfo.Items)
+	levelDifference := newParentDepth - oldParentDepth
+	return levelDifference <= 0
 }
 
 // checkSubtreeDepth uses a hybrid DFS+batching approach:
