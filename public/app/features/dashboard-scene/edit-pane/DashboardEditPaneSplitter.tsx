@@ -70,7 +70,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
-    hidden: isInKioskMode,
   });
 
   /**
@@ -194,9 +193,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
+      overflow: 'hidden',
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),
+      overflow: 'unset',
     }),
     scrollContainer: css({
       display: 'flex',

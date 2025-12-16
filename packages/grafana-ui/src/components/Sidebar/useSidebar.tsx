@@ -18,7 +18,6 @@ export interface SidebarContextValue {
   bottomMargin: number;
   edgeMargin: number;
   contentMargin: number;
-  hidden?: boolean;
   onToggleDock: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
@@ -50,10 +49,6 @@ export interface UseSideBarOptions {
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
    */
   persistanceKey?: string;
-  /**
-   * If true, the sidebar will be hidden entirely
-   */
-  hidden?: boolean;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -69,7 +64,6 @@ export function useSidebar({
   edgeMargin = 2,
   contentMargin = 2,
   persistanceKey,
-  hidden,
   onClosePane,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
@@ -126,10 +120,6 @@ export function useSidebar({
     [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
-  if (hidden) {
-    outerWrapperProps.style = {};
-  }
-
   return {
     isDocked,
     onToggleDock,
@@ -139,7 +129,6 @@ export function useSidebar({
     compact,
     hasOpenPane,
     tabsMode,
-    hidden,
     paneWidth,
     edgeMargin,
     bottomMargin,
