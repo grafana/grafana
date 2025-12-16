@@ -266,7 +266,8 @@ export function createDashboardSceneFromDashboardModel(
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
   const isReport = options?.route === DashboardRoutes.Report;
-  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1';
+  const serializerVersion =
+    options?.forceSerializerVersion ?? (shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1');
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
