@@ -13,7 +13,7 @@
       "label-resource-group": "Kaynak Grubu",
       "label-resource-name": "Kaynak Adı",
       "label-resource-number": "Kaynak {{resourceNum}}",
-      "label-resource-uri": "Kaynak URI'leri ",
+      "label-resource-uri": "",
       "label-subscription": "Abonelik",
       "placeholder-resource-name": "ad",
       "tooltip-region": "Kaynağın kod bölgesi. Bir kaynak için isteğe bağlıdır ancak birden fazla kaynak seçildiğinde zorunludur.",

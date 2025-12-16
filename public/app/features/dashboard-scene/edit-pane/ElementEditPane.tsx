@@ -22,7 +22,7 @@ export function ElementEditPane({ element, editPane, isNewElement }: Props) {
     <div className={styles.wrapper}>
       <EditPaneHeader element={element} editPane={editPane} />
       <ScrollContainer showScrollIndicators={true}>
-        <div className={styles.categories}>{categories.map((cat) => cat.render())}</div>
+        <div className={styles.categories}>{categories.map((cat) => cat.renderElement())}</div>
       </ScrollContainer>
     </div>
   );

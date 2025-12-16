@@ -133,12 +133,12 @@ export interface LegacyEmitter {
   /**
    * @deprecated use $on
    */
-  off<T>(event: AppEvent<T> | string, handler: (payload?: T) => void): void;
+  off<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>): void;
 }
 
 /** @public */
 export interface LegacyEventHandler<T> {
-  (payload: T): void;
+  (payload?: T): void;
   wrapper?: (event: BusEvent) => void;
 }
 

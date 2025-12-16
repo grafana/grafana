@@ -87,7 +87,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
+	element, err := l.CreateElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to create library element")
 	}
@@ -124,7 +124,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	id, err := l.DeleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to delete library element")
 	}
@@ -148,6 +148,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
 		l.k8sHandler.getK8sLibraryElement(c)
 		return nil // already handled in the k8s handler
@@ -252,7 +253,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		}
 	}
 
-	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
+	element, err := l.PatchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to update library element")
 	}
@@ -422,6 +423,9 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	}
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
+	}
+	if errors.Is(err, model.ErrLibraryElementProvisionedFolder) {
+		return response.Error(http.StatusConflict, model.ErrLibraryElementProvisionedFolder.Error(), err)
 	}
 	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
 		return response.Error(http.StatusForbidden, err.Error(), err)

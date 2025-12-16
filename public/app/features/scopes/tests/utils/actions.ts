@@ -22,16 +22,19 @@ import {
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
-  getResultCloudDevRadio,
   getResultCloudExpand,
-  getResultCloudOpsRadio,
   getResultCloudSelect,
+  getResultEnvironmentsExpand,
+  getResultEnvironmentsDevSelect,
+  getResultEnvironmentsProdSelect,
   getSelectorApply,
   getSelectorCancel,
   getSelectorClear,
   getSelectorInput,
   getTreeSearch,
   findResultApplicationsExpand,
+  getResultCloudDevLink,
+  getResultCloudOpsLink,
 } from './selectors';
 
 const click = async (selector: () => HTMLElement) => act(() => userEvent.click(selector()));
@@ -44,6 +47,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
 export const updateScopes = async (service: ScopesService, scopes: string[]) =>
   act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
+export const hoverSelector = async () => fireEvent.mouseOver(getSelectorInput());
 export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);
@@ -68,8 +72,12 @@ export const selectResultApplicationsMimir = async () => click(getResultApplicat
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
 export const selectResultCloud = async () => click(getResultCloudSelect);
-export const selectResultCloudDev = async () => click(getResultCloudDevRadio);
-export const selectResultCloudOps = async () => click(getResultCloudOpsRadio);
+export const selectResultCloudDev = async () => click(getResultCloudDevLink);
+export const selectResultCloudOps = async () => click(getResultCloudOpsLink);
+
+export const expandResultEnvironments = async () => click(getResultEnvironmentsExpand);
+export const selectResultEnvironmentsDev = async () => click(getResultEnvironmentsDevSelect);
+export const selectResultEnvironmentsProd = async () => click(getResultEnvironmentsProdSelect);
 
 export const toggleDashboards = async () => click(getDashboardsExpand);
 export const searchDashboards = async (value: string) => type(getDashboardsSearch, value);

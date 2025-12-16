@@ -309,13 +309,14 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 
-	oldReceiverName, fullRemoval, newReceiverCreated := stitchReceiver(revision.Config, mergedReceiver)
-	if oldReceiverName == "" {
-		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
+	oldReceiverNameRef, fullRemoval, newReceiverCreated := stitchReceiver(revision.Config, mergedReceiver)
+	if oldReceiverNameRef == nil {
+		return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, mergedReceiver.UID)
 	}
+	oldReceiverName := *oldReceiverNameRef
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if mergedReceiver.Name != oldReceiverName {
+		if mergedReceiver.Name != oldReceiverName && oldReceiverName != "" {
 			if newReceiverCreated {
 				// Copy receiver permissions
 				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, legacy_storage.NameToUid(oldReceiverName), legacy_storage.NameToUid(mergedReceiver.Name))
@@ -373,12 +374,12 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 			}
 		}
 	}
-	if fullRemoval && revision.ReceiverNameUsedByRoutes(name) {
+	if fullRemoval && name != "" && revision.ReceiverNameUsedByRoutes(name) {
 		return ErrContactPointReferenced.Errorf("")
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if fullRemoval {
+		if fullRemoval && name != "" {
 			used, err := ecp.notificationSettingsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
 			if err != nil {
 				return fmt.Errorf("failed to query alert rules for reference to the contact point '%s': %w", name, err)
@@ -443,7 +444,7 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
 // If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
-func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (oldReceiverName string, fullRemoval bool, newReceiverCreated bool) {
+func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (oldReceiverName *string, fullRemoval bool, newReceiverCreated bool) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 groupLoop:
@@ -451,7 +452,8 @@ groupLoop:
 		// Does the current group contain the grafana receiver we're interested in?
 		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == target.UID {
-				oldReceiverName = receiverGroup.Name
+				name := receiverGroup.Name
+				oldReceiverName = &name
 				// If it's a basic field change, simply replace it. Done!
 				//
 				// NOTE:
@@ -519,6 +521,9 @@ groupLoop:
 }
 
 func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+	if e.Name == "" {
+		return errors.New("name is required")
+	}
 	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
 	if err != nil {
 		return err

@@ -18,6 +18,7 @@ message AlertInstance {
     google.protobuf.Timestamp resolved_at = 9;
     string result_fingerprint = 10;
     google.protobuf.Timestamp fired_at = 11;
+    map<string, string> annotations = 12;
 }
 
 message AlertInstances {

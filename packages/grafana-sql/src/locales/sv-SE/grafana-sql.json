@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Automatisk max. inaktiv",
-        "content-auto-max-idle": "Om det är aktiverat ställer du automatiskt in antalet <1>Maximalt antal inaktiva anslutningar</1> till samma värde som<3> Max öppna anslutningar</3>. Om antalet maximala öppna anslutningar inte är inställt kommer det att ställas in på standard ({{defaultMaxIdle}}).",
-        "content-max-idle": "Det maximala antalet anslutningar i den inaktiva anslutningspoolen. Om <1>Max öppna anslutningar</1> är större än 0 men mindre än <3>Max inaktiva anslutningar</3> kommer <5>Max inaktiva anslutningar</5> att reduceras för att matcha gränsen för <8>Max öppna anslutningar</8>. Om inställningen är 0 behålls inga inaktiva anslutningar.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "Den maximala tiden i sekunder som en anslutning kan återanvändas. Om inställningen är 0 återanvänds anslutningarna för evigt.",
-        "content-max-open": "Det maximala antalet öppna anslutningar till databasen. Om <1>Max inaktiva anslutningar</1> är större än 0 och <3>Max öppna anslutningar</3> är mindre än <5>Max inaktiva anslutningar</5> kommer <7>Max inaktiva anslutningar</7> att reduceras för att matcha gränsen för <9>Max öppna anslutningar</9>. Om inställningen är 0 finns det ingen gräns för antalet öppna anslutningar.",
+        "content-max-open": "",
         "max-idle": "Max inaktiv",
         "max-lifetime": "Max livstid",
         "max-open": "Max öppen",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Din fråga är ogiltig. Se nedan för mer information. <1></1>Du kan däremot fortfarande köra denna fråga.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Kod"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formatera fråga"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Den här frågan kommer att behandla <2>{{bytes}}</2> när den körs.",
+        "query-will-process": "",
         "validating-query": "Validerar frågan …"
       },
       "raw-editor": {

@@ -29,6 +29,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/annotations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/annotations/
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
 # Annotate visualizations
@@ -139,7 +149,10 @@ To add a new annotation query to a dashboard, follow these steps:
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
 
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
-1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
+1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
+   - **Above dashboard** - The annotation toggle is displayed above the dashboard. This is the default.
+   - **Controls menu** - The annotation toggle is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
+   - **Hidden** - The annotation toggle is not displayed on the dashboard.
 1. Select a color for the event markers.
 1. In the **Show in** drop-down, choose one of the following options:
    - **All panels** - The annotations are displayed on all panels that support annotations.
@@ -148,9 +161,17 @@ To add a new annotation query to a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
 
-1. Configure the query.
+1. To create a query, do one of the following:
+   - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
+   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
 
-   The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
+1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
+1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and test them as many times as needed.
+
+   {{< admonition type="note" >}}
+   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   {{< /admonition >}}
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.

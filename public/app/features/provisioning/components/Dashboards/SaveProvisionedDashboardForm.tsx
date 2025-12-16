@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -6,7 +6,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -47,6 +47,7 @@ export function SaveProvisionedDashboardForm({
   workflowOptions,
   readOnly,
   repository,
+  saveAsCopy,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -55,8 +56,17 @@ export function SaveProvisionedDashboardForm({
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register } = methods;
-  const [workflow] = watch(['workflow']);
+  const {
+    handleSubmit,
+    watch,
+    control,
+    reset,
+    register,
+    formState: { dirtyFields },
+  } = methods;
+  // button enabled if form comment is dirty or dashboard state is dirty
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
+  const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
   useEffect(() => {
@@ -70,46 +80,35 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const handleNewDashboard = (upsert: Resource<Dashboard>) => {
-    // Navigation for new dashboards
-    const url = locationUtil.assureBaseUrl(
-      getDashboardUrl({
-        uid: upsert.metadata.name,
-        slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
-        currentQueryParams: window.location.search,
-      })
-    );
-    navigate(url);
-  };
+  const handleNewDashboard = useCallback(
+    (upsert: Resource<Dashboard>) => {
+      // Navigation for new dashboards
+      const url = locationUtil.assureBaseUrl(
+        getDashboardUrl({
+          uid: upsert.metadata.name,
+          slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
+          currentQueryParams: window.location.search,
+        })
+      );
+      navigate(url);
+    },
+    [navigate]
+  );
 
-  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss();
-    if (isNew && upsert?.metadata.name) {
-      handleNewDashboard(upsert);
-    } else {
-      locationService.partial({
-        viewPanel: null,
-        editPanel: null,
-      });
-    }
-  };
-
-  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-    handleDismiss();
-    if (isNew && upsert?.metadata?.name) {
-      handleNewDashboard(upsert);
-    } else {
+  const navigateToPreview = useCallback(
+    (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
         baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
-        repoType: info.repoType,
+        repoType,
       });
       navigate(url);
-    }
-  };
+    },
+    [navigate, defaultValues.repo]
+  );
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     panelEditor?.onDiscard();
 
     const model = dashboard.getSaveModel();
@@ -118,13 +117,48 @@ export function SaveProvisionedDashboardForm({
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
-  };
+  }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
+
+  const onWriteSuccess = useCallback(
+    (upsert: Resource<Dashboard>) => {
+      handleDismiss();
+      if (isNew && upsert?.metadata.name) {
+        handleNewDashboard(upsert);
+      }
+
+      // if pushed to an existing but non-configured branch, navigate to preview page
+      if (ref !== repository?.branch && ref) {
+        navigateToPreview(ref, path, repository?.type);
+        return;
+      }
+
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
+    },
+    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
+  );
+
+  const onBranchSuccess = useCallback(
+    (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+      handleDismiss();
+      if (isNew && upsert?.metadata?.name) {
+        handleNewDashboard(upsert);
+      } else {
+        navigateToPreview(ref, path, info.repoType);
+      }
+    },
+    [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
+  );
 
   useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
     request,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
@@ -140,7 +174,7 @@ export function SaveProvisionedDashboardForm({
     path,
     comment,
     ref,
-    folder,
+    copyTags,
   }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
@@ -160,7 +194,8 @@ export function SaveProvisionedDashboardForm({
       isNew,
       title,
       description,
-      copyTags: true,
+      copyTags,
+      saveAsCopy,
     });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
@@ -262,11 +297,17 @@ export function SaveProvisionedDashboardForm({
             isNew={isNew}
           />
 
+          {saveAsCopy && (
+            <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+              <Switch {...register('copyTags')} />
+            </Field>
+          )}
+
           <Stack gap={2}>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
+            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
               {request.isLoading
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}

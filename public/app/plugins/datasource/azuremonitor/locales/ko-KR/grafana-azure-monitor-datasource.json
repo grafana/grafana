@@ -13,7 +13,7 @@
       "label-resource-group": "리소스 그룹",
       "label-resource-name": "리소스 이름",
       "label-resource-number": "리소스 {{resourceNum}}개",
-      "label-resource-uri": "리소스 URI ",
+      "label-resource-uri": "",
       "label-subscription": "구독",
       "placeholder-resource-name": "이름",
       "tooltip-region": "리소스의 코드 리전입니다. 하나의 리소스에 대해서는 선택 사항이지만 여러 리소스를 선택할 때는 필수입니다.",

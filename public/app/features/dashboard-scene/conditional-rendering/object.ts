@@ -1,7 +1,7 @@
 import { capitalize, lowerCase } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
@@ -50,7 +50,7 @@ export function getLowerTranslatedObjectType(type: ObjectsWithConditionalRenderi
 export function extractObjectType(object: SceneObject | undefined): ObjectsWithConditionalRendering {
   if (!object) {
     return 'element';
-  } else if (object instanceof AutoGridItem) {
+  } else if (object instanceof AutoGridItem || object instanceof VizPanel) {
     return 'panel';
   } else if (object instanceof RowItem) {
     return 'row';

@@ -36,7 +36,7 @@ jobs:
           private_key: ${{ fromJSON(steps.secrets.outputs.secrets).APP_PEM }}
 
       - name: Download PR info artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         id: download-pr-info
         with:
           github-token: ${{ github.token }}

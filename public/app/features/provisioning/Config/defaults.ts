@@ -31,6 +31,7 @@ export function getDefaultValues({
         target: defaultTarget,
         intervalSeconds: 60,
       },
+      enablePushToConfiguredBranch: true,
     };
   }
   return specToData(repository);

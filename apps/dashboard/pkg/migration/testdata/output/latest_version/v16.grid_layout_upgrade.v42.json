@@ -128,6 +128,7 @@
           "type": "table"
         },
         {
+          "autoMigrateFrom": "graph",
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -137,9 +138,10 @@
           "height": 200,
           "id": 4,
           "title": "Network I/O",
-          "type": "graph"
+          "type": "timeseries"
         },
         {
+          "autoMigrateFrom": "graph",
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -149,7 +151,7 @@
           "height": 200,
           "id": 5,
           "title": "Disk I/O",
-          "type": "graph"
+          "type": "timeseries"
         }
       ],
       "targets": [

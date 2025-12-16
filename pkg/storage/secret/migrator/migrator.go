@@ -77,7 +77,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	}
 	tables = append(tables, secureValueTable)
 
-	tables = append(tables, migrator.Table{
+	keeperTable := migrator.Table{
 		Name: TableNameKeeper,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
@@ -100,7 +100,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
 		},
-	})
+	}
+	tables = append(tables, keeperTable)
 
 	dataKeyTable := migrator.Table{
 		Name: TableNameDataKey,
@@ -200,4 +201,27 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
 		Cols: []string{"lease_created"},
 	}))
+
+	mg.AddMigration("add data_key_id column to "+TableNameEncryptedValue, migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
+		Name:     "data_key_id",
+		Type:     migrator.DB_NVarchar,
+		Length:   100,
+		Nullable: false,
+		Default:  "''",
+	}))
+	mg.AddMigration("add data_key_id index to "+TableNameEncryptedValue, migrator.NewAddIndexMigration(encryptedValueTable, &migrator.Index{
+		Cols: []string{"data_key_id"},
+	}))
+	mg.AddMigration("add active column to "+TableNameKeeper, migrator.NewAddColumnMigration(keeperTable, &migrator.Column{
+		Name:     "active",
+		Type:     migrator.DB_Bool,
+		Nullable: false,
+		Default:  "false",
+	}))
+	mg.AddMigration("add active column index to "+TableNameKeeper, migrator.NewAddIndexMigration(keeperTable, &migrator.Index{
+		Cols: []string{"namespace", "name", "active"},
+	}))
+	mg.AddMigration("set secret_secure_value.keeper to 'system' where keeper is null in "+TableNameSecureValue, migrator.NewRawSQLMigration(
+		fmt.Sprintf("UPDATE %s SET keeper = '%s' WHERE keeper IS NULL", TableNameSecureValue, contracts.SystemKeeperName),
+	))
 }

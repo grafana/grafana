@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inactividad máxima automática",
-        "content-auto-max-idle": "Si está habilitado, establece automáticamente el número de <1>Conexiones inactivas máximas</1> en el mismo valor que<3> Conexiones abiertas máximas</3>. Si no se establece el número de conexiones abiertas máximas, se establecerá en el valor predeterminado ({{defaultMaxIdle}}).",
-        "content-max-idle": "El número máximo de conexiones en el grupo de conexiones inactivas. Si <1>Conexiones abiertas máximas</1> es mayor que 0 pero menor que <3>Conexiones inactivas máximas</3>, entonces <5>Conexiones inactivas máximas</5> se reducirá para que coincida con el límite de <8>Conexiones abiertas máximas</8>. Si se establece en 0, no se conservan las conexiones inactivas.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "La cantidad máxima de tiempo en segundos que se puede reutilizar una conexión. Si se establece en 0, las conexiones se reutilizan para siempre.",
-        "content-max-open": "El número máximo de conexiones abiertas a la base de datos. Si <1>Conexiones inactivas máximas</1> es mayor que 0 y <3>Conexiones abiertas máximas</3> es menor que <5>Conexiones inactivas máximas</5>, entonces <7>Conexiones inactivas máximas</7> se reducirá para que coincida con el límite de <9>Conexiones abiertas máximas</9>. Si se establece en 0, no hay límite en el número de conexiones abiertas.",
+        "content-max-open": "",
         "max-idle": "Máx. inactivas",
         "max-lifetime": "Vida útil máxima",
         "max-open": "Máx. abiertas",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Su consulta no es válida. A continuación podrá obtener más información. <1></1>En todo caso, puede ejecutar esta consulta.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Constructor",
           "label-code": "Código"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formatear consulta"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Esta consulta procesará <2>{{bytes}}</2> cuando se ejecute.",
+        "query-will-process": "",
         "validating-query": "Validando consulta..."
       },
       "raw-editor": {

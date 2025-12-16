@@ -35,12 +35,13 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name   string
-	Group  string
-	Kind   string
-	Path   string
-	Action repository.FileAction
-	Error  error
+	Name    string
+	Group   string
+	Kind    string
+	Path    string
+	Action  repository.FileAction
+	Error   error
+	Warning error
 }
 
 type jobProgressRecorder struct {
@@ -69,23 +70,35 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	}
 }
 
+func (r *jobProgressRecorder) Started() time.Time {
+	return r.started
+}
+
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+	var shouldLogError bool
+	var logErr error
+
 	r.mu.Lock()
 	r.resultCount++
 
-	logger := logging.FromContext(ctx).With("path", result.Path, "group", result.Group, "kind", result.Kind, "action", result.Action, "name", result.Name)
 	if result.Error != nil {
-		logger.Error("job resource operation failed", "err", result.Error)
+		shouldLogError = true
+		logErr = result.Error
 		if len(r.errors) < 20 {
 			r.errors = append(r.errors, result.Error.Error())
 		}
 		r.errorCount++
-	} else {
-		logger.Info("job resource operation succeeded")
 	}
 
 	r.updateSummary(result)
 	r.mu.Unlock()
+
+	logger := logging.FromContext(ctx).With("path", result.Path, "group", result.Group, "kind", result.Kind, "action", result.Action, "name", result.Name)
+	if shouldLogError {
+		logger.Error("job resource operation failed", "err", logErr)
+	} else {
+		logger.Info("job resource operation succeeded")
+	}
 
 	r.maybeNotify(ctx)
 }
@@ -145,9 +158,6 @@ func (r *jobProgressRecorder) StrictMaxErrors(maxErrors int) {
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	if r.maxErrors > 0 && r.errorCount >= r.maxErrors {
 		return fmt.Errorf("too many errors: %d", r.errorCount)
 	}
@@ -156,9 +166,6 @@ func (r *jobProgressRecorder) TooManyErrors() error {
 }
 
 func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	if len(r.summaries) == 0 {
 		return nil
 	}
@@ -187,6 +194,10 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
+	} else if result.Warning != nil {
+		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning.Error(), result.Path, result.Name, result.Action)
+		summary.Warnings = append(summary.Warnings, warningMsg)
+		summary.Warning++
 	} else {
 		switch result.Action {
 		case repository.FileActionDeleted:
@@ -247,13 +258,9 @@ func (r *jobProgressRecorder) maybeNotify(ctx context.Context) {
 
 func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provisioning.JobStatus {
 	r.mu.RLock()
-	defer r.mu.RUnlock()
 
-	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
-		Started: r.started.UnixMilli(),
-		// FIXME: if we call this method twice, the state will be different
-		// This results in sync status to be different from job status
+		Started:  r.started.UnixMilli(),
 		Finished: time.Now().UnixMilli(),
 		State:    provisioning.JobStateSuccess,
 		Message:  "completed successfully",
@@ -264,24 +271,40 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		jobStatus.Message = err.Error()
 	}
 
-	jobStatus.Summary = r.summary()
+	summaries := r.summary()
+	jobStatus.Summary = summaries
 	jobStatus.Errors = r.errors
+
+	// Extract warnings from summaries
+	warnings := make([]string, 0)
+	for _, summary := range summaries {
+		warnings = append(warnings, summary.Warnings...)
+	}
+	jobStatus.Warnings = warnings
+
 	jobStatus.URLs = r.refURLs
 
-	// Check for errors during execution
+	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
+	finalMessage := r.finalMessage
+
+	r.mu.RUnlock()
+
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
-		if r.TooManyErrors() != nil {
+		if tooManyErrors {
 			jobStatus.Message = "completed with too many errors"
 			jobStatus.State = provisioning.JobStateError
 		} else {
 			jobStatus.Message = "completed with errors"
 			jobStatus.State = provisioning.JobStateWarning
 		}
+	} else if len(jobStatus.Warnings) > 0 {
+		jobStatus.State = provisioning.JobStateWarning
+		jobStatus.Message = "completed with warnings"
 	}
 
 	// Override message if progress have a more explicit message
-	if r.finalMessage != "" && jobStatus.State != provisioning.JobStateError {
-		jobStatus.Message = r.finalMessage
+	if finalMessage != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = finalMessage
 	}
 
 	return jobStatus

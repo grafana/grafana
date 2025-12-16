@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Otomatik maksimum boşta bağlantı sayısı",
-        "content-auto-max-idle": "Etkinleştirilirse <1>Maksimum boşta bağlantı</1> sayısı, <3>Maksimum açık bağlantı</3> sayısıyla aynı değere otomatik olarak ayarlanır. Maksimum açık bağlantı sayısı ayarlanmamışsa varsayılan değere ayarlanır ({{defaultMaxIdle}}).",
-        "content-max-idle": "Bu, boşta bağlantı havuzundaki maksimum bağlantı sayısını belirtir. <1>Maksimum açık bağlantı</1> değeri 0'dan büyük ancak <3>Maksimum boşta bağlantı</3> değerinden küçükse <5>Maksimum boşta bağlantı</5> sayısı, <8>Maksimum açık bağlantı</8> sınırına uyacak şekilde azaltılır. 0 olarak ayarlanırsa boşta bağlantılar tutulmaz.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "Saniye cinsinden bir bağlantının yeniden kullanılabileceği maksimum süre. 0 olarak ayarlanırsa bağlantılar süresiz olarak yeniden kullanılır.",
-        "content-max-open": "Veri tabanına açılabilecek maksimum açık bağlantı sayısı. <1>Maksimum boşta bağlantı</1> sayısı 0'dan büyük ve <3>Maksimum açık bağlantı</3> sayısı <5>Maksimum boşta bağlantı</5> sayısından küçükse <7>Maksimum boşta bağlantı</7> değeri, <9>Maksimum açık bağlantı</9> sınırına uyacak şekilde azaltılır. 0 olarak ayarlanırsa açık bağlantı sayısı için bir sınır yoktur.",
+        "content-max-open": "",
         "max-idle": "Maks. boşta",
         "max-lifetime": "Maksimum kullanım süresi",
         "max-open": "Maks. açık",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Sorgunuz geçersiz. Ayrıntılar için aşağıya bakın. <1></1>Ancak yine de bu sorguyu çalıştırabilirsiniz.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Oluşturucu",
           "label-code": "Kod"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Sorguyu biçimlendir"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Bu sorgu çalıştırıldığında <2>{{bytes}}</2> işlenecek.",
+        "query-will-process": "",
         "validating-query": "Sorgu doğrulanıyor..."
       },
       "raw-editor": {

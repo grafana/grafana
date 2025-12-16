@@ -1,0 +1,14 @@
+{
+  "apiVersion": "iam.grafana.app/v0alpha1",
+  "kind": "ExternalGroupMapping",
+  "metadata": {
+    "name": "mapping-with-team-and-group",
+    "namespace": "default"
+  },
+  "spec": {
+    "teamRef": {
+      "name": "team1"
+    },
+    "externalGroupId": "group1"
+  }
+}

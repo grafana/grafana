@@ -13,7 +13,7 @@
       "label-resource-group": "Kelompok Sumber Daya",
       "label-resource-name": "Nama Sumber Daya",
       "label-resource-number": "Sumber Daya {{resourceNum}}",
-      "label-resource-uri": "URI Sumber Daya ",
+      "label-resource-uri": "",
       "label-subscription": "Berlangganan",
       "placeholder-resource-name": "nama",
       "tooltip-region": "Wilayah kode sumber daya. Opsional untuk satu sumber daya tetapi wajib saat memilih beberapa sumber daya.",

@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.3
+GO_VERSION = 1.25.5
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -178,7 +178,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \

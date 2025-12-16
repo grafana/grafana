@@ -156,4 +156,16 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.DropTitleUniqueIndexMigration(mg)
 
 	ualert.AddStateFiredAtColumn(mg)
+
+	ualert.CollateAlertRuleGroup(mg)
+
+	ualert.ExpandAlertRuleUpdatedByMigration(mg)
+
+	ualert.AddAlertRuleGroupIndexMigration(mg)
+
+	ualert.AddStateAnnotationsColumn(mg)
+
+	ualert.CollateBinAlertRuleNamespace(mg)
+
+	ualert.CollateBinAlertRuleGroup(mg)
 }

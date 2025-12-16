@@ -1,6 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -9,7 +8,7 @@ import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
 import { FieldConfig, Options } from './panelcfg.gen';
-import { TimeSeriesSuggestionsSupplier } from './suggestions';
+import { timeseriesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -17,10 +16,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
-
-    if (config.featureToggles.timeComparison && config.featureToggles.dashboardScene) {
-      commonOptionsBuilder.addTimeCompareOption(builder);
-    }
 
     builder.addCustomEditor({
       id: 'timezone',
@@ -31,5 +26,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       defaultValue: undefined,
     });
   })
-  .setSuggestionsSupplier(new TimeSeriesSuggestionsSupplier())
+  .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
   .setDataSupport({ annotations: true, alertStates: true });

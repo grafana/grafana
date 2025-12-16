@@ -1,7 +1,9 @@
+import { useCallback } from 'react';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -34,7 +36,7 @@ import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibra
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
@@ -83,6 +85,17 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     try {
       let datasource: DataSourceApi | undefined;
       let dsSettings: DataSourceInstanceSettings | undefined;
+
+      // If no panel-level datasource (V2 schema non-mixed case), infer from first query
+      // This also improves the V1 behavior because it doesn't make sense to rely on last used
+      // if underlying queries have different datasources
+      if (!datasourceToLoad) {
+        const queries = this.queryRunner.state.queries;
+        const firstQueryDs = queries[0]?.datasource;
+        if (firstQueryDs) {
+          datasourceToLoad = firstQueryDs;
+        }
+      }
 
       if (!datasourceToLoad) {
         const dashboardScene = getDashboardSceneFor(this);
@@ -337,11 +350,24 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: type,
+        context: 'panel_query_section',
+      });
+      model.onAddExpressionOfType(type);
+    },
+    [model]
+  );
+
   if (!datasource || !dsSettings || !data) {
     return null;
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
@@ -388,6 +414,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
+        panelRef={model.state.panelRef}
       />
 
       <Stack gap={2}>
@@ -421,7 +448,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>

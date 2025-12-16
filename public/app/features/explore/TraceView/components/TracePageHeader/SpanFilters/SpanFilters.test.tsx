@@ -52,16 +52,10 @@ describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
   const SpanFiltersWithProps = ({ showFilters = true, matches }: { showFilters?: boolean; matches?: Set<string> }) => {
     const [search, setSearch] = useState(DEFAULT_SPAN_FILTERS);
-    const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
-    const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
     const props = {
       trace: trace,
       showSpanFilters: showFilters,
       setShowSpanFilters: jest.fn(),
-      showSpanFilterMatchesOnly,
-      setShowSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
-      setShowCriticalPathSpansOnly,
       search,
       setSearch,
       spanFilterMatches: matches,
@@ -244,37 +238,6 @@ describe('SpanFilters', () => {
     await user.click(screen.getAllByLabelText('Remove tag')[0]);
     jest.advanceTimersByTime(1000);
     expect(screen.getAllByLabelText('Select tag key').length).toBe(1);
-  });
-
-  it('should allow resetting filters', async () => {
-    render(<SpanFiltersWithProps matches={new Set('1ed38015486087ca')} />);
-    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
-    expect(clearFiltersButton).toBeInTheDocument();
-    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
-
-    const serviceValue = screen.getByLabelText('Select service name');
-    const spanValue = screen.getByLabelText('Select span name');
-    const tagKey = screen.getByLabelText('Select tag key');
-    const tagValue = screen.getByLabelText('Select tag value');
-    await selectAndCheckValue(user, serviceValue, 'Service0');
-    await selectAndCheckValue(user, spanValue, 'Span0');
-    await selectAndCheckValue(user, tagKey, 'TagKey0');
-    await selectAndCheckValue(user, tagValue, 'TagValue0');
-
-    const matchesSwitch = screen.getByRole('switch', { name: 'Show matches only switch' });
-    expect(matchesSwitch).not.toBeChecked();
-    await user.click(matchesSwitch);
-    expect(matchesSwitch).toBeChecked();
-
-    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
-    await user.click(clearFiltersButton);
-    expect(screen.queryByText('Service0')).not.toBeInTheDocument();
-    expect(screen.queryByText('Span0')).not.toBeInTheDocument();
-    expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();
-    expect(screen.queryByText('TagValue0')).not.toBeInTheDocument();
-    expect(screen.queryByText('Add tag')).not.toBeInTheDocument();
-    expect(screen.queryByText('Remove tag')).not.toBeInTheDocument();
-    expect(matchesSwitch).not.toBeChecked();
   });
 
   it('renders buttons when span filters is collapsed', async () => {

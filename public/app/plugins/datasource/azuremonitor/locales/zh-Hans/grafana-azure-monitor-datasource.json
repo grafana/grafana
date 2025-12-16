@@ -13,7 +13,7 @@
       "label-resource-group": "资源组",
       "label-resource-name": "资源名称",
       "label-resource-number": "资源 {{resourceNum}}",
-      "label-resource-uri": "资源 URI ",
+      "label-resource-uri": "",
       "label-subscription": "订阅",
       "placeholder-resource-name": "姓名",
       "tooltip-region": "资源的代码区域。对于一个资源来说是可选的，但在选择多个资源时则是必须的。",

@@ -20,7 +20,7 @@ export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) =
       minWidth={CONTAINER_MIN_WIDTH}
     >
       <CollapsableSection
-        label={<Text element="h3">2. {CONFIG_SECTION_HEADERS[1].label}</Text>}
+        label={<Text element="h3">{CONFIG_SECTION_HEADERS[1].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[1].isOpen}
       >
         {!options.jsonData.version && (

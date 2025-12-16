@@ -340,6 +340,30 @@ export const TooltipPlugin2 = ({
         );
       }
 
+      // add zoom-in cursor during drag-to-zoom interaction
+      if (queryZoom != null || clientZoom) {
+        u.over.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0) {
+              u.over.classList.add('zoom-drag');
+
+              let onUp = () => {
+                u.over.classList.remove('zoom-drag');
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      }
+
       // this handles pinning, 0-width range selection, and one-click
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {

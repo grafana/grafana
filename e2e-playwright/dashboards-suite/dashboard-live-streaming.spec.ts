@@ -4,7 +4,8 @@ import testDashboard from '../dashboards/DashboardLiveTest.json';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

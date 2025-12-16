@@ -238,6 +238,7 @@ type ReleaseState string
 
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
+	ReleaseStateBeta  ReleaseState = "beta"
 )
 
 type SignatureType string
@@ -318,6 +319,7 @@ type PanelDTO struct {
 	HideFromList    bool              `json:"hideFromList"`
 	Sort            int               `json:"sort"`
 	SkipDataQuery   bool              `json:"skipDataQuery"`
+	Suggestions     bool              `json:"suggestions,omitempty"`
 	ReleaseState    string            `json:"state"`
 	BaseURL         string            `json:"baseUrl"`
 	Signature       string            `json:"signature"`
@@ -339,6 +341,7 @@ type AppDTO struct {
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
+	BuildMode       string            `json:"buildMode,omitempty"`
 }
 
 const (

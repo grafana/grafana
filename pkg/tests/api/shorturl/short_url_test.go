@@ -42,7 +42,7 @@ func TestShortURL(t *testing.T) {
 	// Test that the endpoint is accessible with authentication.
 	username, password := "viewer", "viewer"
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
+		DefaultOrgRole: string(org.RoleNone),
 		Password:       user.Password(password),
 		Login:          username,
 	})

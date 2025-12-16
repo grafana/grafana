@@ -40,13 +40,7 @@
       ]
     },
     "annotations": {
-      "list": [
-        {
-          "name": "Annotations & Alerts",
-          "datasource": "grafana",
-          "enable": true
-        }
-      ]
+      "list": []
     },
     "time": {
       "from": "now-6h",

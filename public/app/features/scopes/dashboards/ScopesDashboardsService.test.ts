@@ -1,20 +1,22 @@
 import { Location } from 'history';
 import { Subject } from 'rxjs';
 
-import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
+// Import mock data for subScope tests
+import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     featureToggles: {
-      useScopesNavigationEndpoint: false,
+      useScopesNavigationEndpoint: true,
     },
+    apps: {},
   },
   locationService: {
     getLocation: jest.fn(),
@@ -30,12 +32,17 @@ describe('ScopesDashboardsService', () => {
   let mockApiClient: jest.Mocked<ScopesApiClient>;
 
   beforeEach(() => {
+    const fetchScopeNavigationsMock = jest.fn().mockResolvedValue([]);
     mockApiClient = {
       fetchDashboards: jest.fn(),
-      fetchScopeNavigations: jest.fn(),
+      fetchScopeNavigations: fetchScopeNavigationsMock,
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     service = new ScopesDashboardsService(mockApiClient);
+  });
+
+  afterEach(() => {
+    config.featureToggles.useScopesNavigationEndpoint = true;
   });
 
   describe('folder expansion based on location', () => {
@@ -43,14 +50,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to be a dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -59,7 +66,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is expanded because the current dashboard ID matches
@@ -165,14 +172,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to not match any navigation
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/different-path' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -181,7 +188,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is not expanded because the current location doesn't match
@@ -194,14 +201,14 @@ describe('ScopesDashboardsService', () => {
         pathname: '/d/dashboard1/very-important',
       } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -210,7 +217,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is expanded because the current path starts with the dashboard ID
@@ -221,14 +228,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to be a specific dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -238,10 +245,10 @@ describe('ScopesDashboardsService', () => {
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard2',
+            url: '/d/dashboard2',
           },
           status: {
-            dashboardTitle: 'Another Dashboard',
+            title: 'Another Dashboard',
             groups: ['group2'],
           },
           metadata: {
@@ -250,7 +257,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that only the folder containing the current dashboard is expanded
@@ -388,6 +395,1101 @@ describe('ScopesDashboardsService', () => {
         expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
         expect(service.state.folders[''].folders['group2'].expanded).toBe(false);
       });
+    });
+  });
+
+  describe('groupSuggestedItems with subScopes', () => {
+    it('Creates subScope folders for items with subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1']).toEqual({
+        title: 'Mimir Dashboards',
+        expanded: false,
+        folders: {},
+        suggestedNavigations: {},
+        subScopeName: 'mimir',
+      });
+    });
+
+    it('Creates separate folders for multiple items with same subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope, navigationWithSubScope2]);
+
+      // Should create separate folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-2');
+
+      // Both should reference the same subScope
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
+      expect(result[''].folders['mimir-subscope-nav-2'].subScopeName).toBe('mimir');
+    });
+
+    it('Ignores groups for subScope items', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScopeAndGroups]);
+
+      // Should create folder, not add to group folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-groups');
+      expect(result[''].folders['mimir-subscope-nav-groups'].subScopeName).toBe('mimir');
+
+      // Should not add to any group folders
+      expect(Object.keys(result[''].folders).length).toBe(1);
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Does not add navigation items for subScope entries', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      // Should only create folder, not add navigation item
+      expect(result[''].folders['mimir-subscope-nav-1'].suggestedNavigations).toEqual({});
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Mixes subScope and regular items correctly', () => {
+      const regularItem: ScopeNavigation = {
+        metadata: { name: 'regular-nav' },
+        spec: {
+          scope: 'grafana',
+          url: '/d/regular-dashboard',
+        },
+        status: {
+          title: 'Regular Dashboard',
+          groups: ['General'],
+        },
+      };
+
+      const result = service.groupSuggestedItems([navigationWithSubScope, regularItem]);
+
+      // Should have subScope folder
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
+
+      // Should have regular group folder
+      expect(result[''].folders).toHaveProperty('General');
+      expect(result[''].folders['General'].subScopeName).toBeUndefined();
+
+      // Regular item should be in group folder
+      expect(result[''].folders['General'].suggestedNavigations).toHaveProperty('/d/regular-dashboard');
+    });
+  });
+
+  describe('fetchSubScopeItems infinite loop prevention', () => {
+    beforeEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = false;
+    });
+
+    it('should filter out items with subScope matching any subScope in the path', async () => {
+      // Mock current location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      // Create initial navigation with subScope 'mimir'
+      const initialNavigation: ScopeNavigation = {
+        metadata: { name: 'subscope-nav-1' },
+        spec: {
+          scope: 'grafana',
+          subScope: 'mimir',
+          url: '/d/mimir-dashboards',
+        },
+        status: {
+          title: 'Mimir Dashboards',
+        },
+      };
+
+      // Mock items returned when fetching 'mimir' subScope
+      // One of them has the same subScope 'mimir', which should be filtered out
+      const subScopeItemsWithSameSubScope: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-1',
+          },
+          status: {
+            title: 'Mimir Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'mimir-item-2' },
+          spec: {
+            scope: 'mimir',
+            subScope: 'mimir', // This should be filtered out - same subScope as in path
+            url: '/d/mimir-dashboard-2',
+          },
+          status: {
+            title: 'Mimir Dashboard 2',
+          },
+        },
+        {
+          metadata: { name: 'mimir-item-3' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-3',
+          },
+          status: {
+            title: 'Mimir Dashboard 3',
+            groups: ['Observability'],
+          },
+        },
+      ];
+
+      // Set up mock to return items based on scope being fetched
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([initialNavigation]);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(subScopeItemsWithSameSubScope);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Initial fetch to create the subScope folder
+      await service.fetchDashboards(['grafana']);
+
+      // The folder key is based on the pattern: ${subScope}-${metadata.name}
+      const subScopeFolderKey = 'mimir-subscope-nav-1';
+
+      // Test the filtering logic directly
+      const filteredItems = filterItemsWithSubScopesInPath(
+        subScopeItemsWithSameSubScope,
+        ['', subScopeFolderKey],
+        'mimir',
+        service.state.folders
+      );
+
+      // Verify that the item with the same subScope was filtered out
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-item-2'
+      );
+      expect(hasFilteredItem).toBe(false);
+
+      // Verify that valid items are still present
+      expect(filteredItems.length).toBe(2); // Should have 2 items (mimir-item-1 and mimir-item-3)
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-1')).toBe(true);
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-3')).toBe(true);
+    });
+
+    it('should filter out items with subScope matching nested subScope in the path', async () => {
+      // Mock current location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      // Create nested subScope structure: grafana -> mimir -> loki
+      const grafanaNavigation: ScopeNavigation = {
+        metadata: { name: 'mimir-nav' },
+        spec: {
+          scope: 'grafana',
+          subScope: 'mimir',
+          url: '/d/mimir-dashboards',
+        },
+        status: {
+          title: 'Mimir Dashboards',
+        },
+      };
+
+      // Mock items returned when fetching 'mimir' subScope
+      // One of them has subScope 'loki', which is fine
+      const mimirSubScopeItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-1',
+          },
+          status: {
+            title: 'Mimir Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'loki-nav' },
+          spec: {
+            scope: 'mimir',
+            subScope: 'loki', // This is fine - different subScope
+            url: '/d/loki-dashboards',
+          },
+          status: {
+            title: 'Loki Dashboards',
+          },
+        },
+      ];
+
+      // Mock items returned when fetching 'loki' subScope
+      // One of them has subScope 'mimir', which should be filtered out since 'mimir' is already in the path
+      const lokiSubScopeItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'loki-item-1' },
+          spec: {
+            scope: 'loki',
+            url: '/d/loki-dashboard-1',
+          },
+          status: {
+            title: 'Loki Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'mimir-nav-again' },
+          spec: {
+            scope: 'loki',
+            subScope: 'mimir', // This should be filtered out - 'mimir' is already in the path
+            url: '/d/mimir-dashboards-again',
+          },
+          status: {
+            title: 'Mimir Dashboards Again',
+          },
+        },
+      ];
+
+      // Set up mock to return items based on scope being fetched
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([grafanaNavigation]);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirSubScopeItems);
+        }
+        if (scopeNames.includes('loki')) {
+          return Promise.resolve(lokiSubScopeItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Initial fetch to create the first subScope folder
+      await service.fetchDashboards(['grafana']);
+
+      // Set up the folder structure to simulate nested path
+      const folders = service.groupSuggestedItems([grafanaNavigation]);
+      const mimirFolders = service.groupSuggestedItems(mimirSubScopeItems);
+
+      // Manually construct the nested folder structure for testing
+      const testFolders: typeof service.state.folders = {
+        '': {
+          ...folders[''],
+          folders: {
+            ...folders[''].folders,
+            'mimir-mimir-nav': {
+              ...folders[''].folders['mimir-mimir-nav'],
+              folders: {
+                ...mimirFolders[''].folders,
+              },
+            },
+          },
+        },
+      };
+
+      // Test the filtering logic for nested path
+      const filteredItems = filterItemsWithSubScopesInPath(
+        lokiSubScopeItems,
+        ['', 'mimir-mimir-nav', 'loki-loki-nav'],
+        'loki',
+        testFolders
+      );
+
+      // Verify that the item with 'mimir' subScope was filtered out
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-nav-again'
+      );
+
+      expect(hasFilteredItem).toBe(false);
+
+      // Verify that valid items are still present
+      expect(filteredItems.length).toBe(1); // Should have 1 item (loki-item-1)
+      expect(filteredItems.some((item) => item.metadata.name === 'loki-item-1')).toBe(true);
+    });
+  });
+
+  describe('setNavigationScope', () => {
+    beforeEach(() => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+      // Reset mocks but keep the mock functions
+      mockApiClient.fetchDashboards.mockClear();
+      // Note: fetchScopeNavigations mock is set up in top-level beforeEach
+      // Individual tests will override it with their own mockResolvedValue calls
+    });
+
+    it('should set navigation scope and fetch dashboards', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(service.state.navigationScope).toBe('navScope1');
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope1']);
+    });
+
+    it('should clear navigation scope and use fallback scope names', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'fallbackScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      // Set an initial navigation scope
+      await service.setNavigationScope('initialScope');
+      expect(service.state.navigationScope).toBe('initialScope');
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['initialScope']);
+
+      await service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['fallbackScope1', 'fallbackScope2']);
+    });
+
+    it('should not run if previous and next navigation scopes are undefined and we provide fallback scope names', async () => {
+      await service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(false);
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should close drawer when navigation scope is cleared without fallback', async () => {
+      // When setNavigationScope is called with undefined and no fallback,
+      // it calls fetchDashboards([]), which returns early without calling the API
+      await service.setNavigationScope(undefined);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(false);
+      // fetchDashboards([]) returns early, so API client is not called
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should not update state if navigation scope has not changed', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope('navScope1');
+
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should update navigation scope when changing from one scope to another', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope('navScope2');
+
+      expect(service.state.navigationScope).toBe('navScope2');
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2']);
+    });
+
+    it('should update navigation scope when clearing an existing scope', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope(undefined, ['fallbackScope']);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['fallbackScope']);
+    });
+
+    it('should open drawer when navigation scope is set', async () => {
+      // Mock to return non-empty results so drawer stays open
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(service.state.drawerOpened).toBe(true);
+    });
+
+    it('should open drawer when fallback scopes are provided', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'fallbackScope', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await service.setNavigationScope('initialScope');
+
+      await service.setNavigationScope(undefined, ['fallbackScope']);
+
+      expect(service.state.drawerOpened).toBe(true);
+    });
+  });
+
+  describe('setNavScopePath', () => {
+    beforeEach(() => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+    });
+
+    it('should set nav scope path', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+    });
+
+    it('should replace existing path with new path', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+
+      await service.setNavScopePath(['loki']);
+      expect(service.state.navScopePath).toEqual(['loki']);
+    });
+
+    it('should handle multiple scopes in path', async () => {
+      await service.setNavScopePath(['mimir', 'loki']);
+      expect(service.state.navScopePath).toEqual(['mimir', 'loki']);
+    });
+
+    it('should clear path with empty array', async () => {
+      await service.setNavScopePath(['mimir', 'loki']);
+      expect(service.state.navScopePath).toEqual(['mimir', 'loki']);
+
+      await service.setNavScopePath([]);
+      expect(service.state.navScopePath).toEqual([]);
+    });
+
+    it('should handle undefined path as empty array', async () => {
+      await service.setNavScopePath(['mimir']);
+      expect(service.state.navScopePath).toEqual(['mimir']);
+
+      await service.setNavScopePath(undefined);
+      expect(service.state.navScopePath).toEqual([]);
+    });
+
+    it('should not update state if path is unchanged', async () => {
+      await service.setNavScopePath(['mimir']);
+
+      await service.setNavScopePath(['mimir']);
+      // Path should remain the same
+      expect(service.state.navScopePath).toEqual(['mimir']);
+    });
+  });
+
+  describe('preLoadSubScopeChildren', () => {
+    beforeEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = true;
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+    });
+
+    afterEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = false;
+    });
+
+    it('should set preLoadSubScopeChildren on folder when navigation has it set to true', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.preLoadSubScopeChildren).toBe(true);
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should set preLoadSubScopeChildren to false when navigation has it set to false', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            preLoadSubScopeChildren: false,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.preLoadSubScopeChildren).toBe(false);
+      }
+    });
+
+    it('should set preLoadSubScopeChildren to undefined when navigation does not have it', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.preLoadSubScopeChildren).toBeUndefined();
+      }
+    });
+
+    it('should automatically fetch subScope items for folders with preLoadSubScopeChildren set to true', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'mimir',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Mimir Dashboards',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      // Mock items returned when fetching 'mimir' subScope
+      const mimirItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-1',
+          },
+          status: {
+            title: 'Mimir Dashboard 1',
+            groups: ['General'],
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.fetchDashboards(['scope1']);
+
+      // Wait for the preload to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify that fetchScopeNavigations was called for the subScope
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir']);
+
+      // Verify the folder now has content from the preloaded items
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('mimir'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        // The preloaded items should be in the folder
+        expect(folder.folders['General']).toBeDefined();
+        expect(folder.folders['General'].suggestedNavigations['/d/mimir-dashboard-1']).toBeDefined();
+      }
+    });
+
+    it('should not fetch subScope items for folders without preLoadSubScopeChildren', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'mimir',
+            // preLoadSubScopeChildren is not set
+          },
+          status: {
+            title: 'Mimir Dashboards',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      // Wait to ensure no additional fetch happens
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify that fetchScopeNavigations was only called once (for the initial fetch)
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledTimes(1);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['scope1']);
+    });
+
+    it('should recursively preload nested folders with preLoadSubScopeChildren', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'level1',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Level 1 Folder',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      // Level 1 items include a folder with preLoadSubScopeChildren
+      const level1Items: ScopeNavigation[] = [
+        {
+          metadata: { name: 'level2-nav' },
+          spec: {
+            scope: 'level1',
+            subScope: 'level2',
+            url: '/d/level2-dashboard',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Level 2 Folder',
+          },
+        },
+      ];
+
+      // Level 2 items
+      const level2Items: ScopeNavigation[] = [
+        {
+          metadata: { name: 'level2-item-1' },
+          spec: {
+            scope: 'level2',
+            url: '/d/level2-dashboard-1',
+          },
+          status: {
+            title: 'Level 2 Dashboard 1',
+            groups: ['Deep'],
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('level1')) {
+          return Promise.resolve(level1Items);
+        }
+        if (scopeNames.includes('level2')) {
+          return Promise.resolve(level2Items);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.fetchDashboards(['scope1']);
+
+      // Wait for all preloads to complete (need to wait for both levels)
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Verify all levels were fetched
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level1']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level2']);
+    });
+
+    it('should handle multiple folders with preLoadSubScopeChildren', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'mimir',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Mimir Dashboards',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+        {
+          spec: {
+            url: '/d/dashboard2',
+            scope: 'scope1',
+            subScope: 'loki',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Loki Dashboards',
+          },
+          metadata: {
+            name: 'nav2',
+          },
+        },
+      ];
+
+      const mimirItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: { scope: 'mimir', url: '/d/mimir-dashboard-1' },
+          status: { title: 'Mimir Dashboard 1', groups: ['General'] },
+        },
+      ];
+
+      const lokiItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'loki-item-1' },
+          spec: { scope: 'loki', url: '/d/loki-dashboard-1' },
+          status: { title: 'Loki Dashboard 1', groups: ['General'] },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirItems);
+        }
+        if (scopeNames.includes('loki')) {
+          return Promise.resolve(lokiItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.fetchDashboards(['scope1']);
+
+      // Wait for preloads to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify both subScopes were fetched
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['loki']);
+    });
+
+    it('should handle preload errors gracefully', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'failing-scope',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Failing Folder',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('failing-scope')) {
+          return Promise.reject(new Error('Network error'));
+        }
+        return Promise.resolve([]);
+      });
+
+      // Should not throw
+      await service.fetchDashboards(['scope1']);
+
+      // Wait for preload to attempt
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify the folder was still created (even though preload failed)
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('failing-scope'));
+      expect(folderKey).toBeDefined();
+    });
+
+    it('should preload children after fetching subScope items when parent folder has items with preLoadSubScopeChildren', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'parent',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Parent Folder',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      // Parent items include a child with preLoadSubScopeChildren
+      const parentItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'child-nav' },
+          spec: {
+            scope: 'parent',
+            subScope: 'child',
+            url: '/d/child-dashboard',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Child Folder',
+          },
+        },
+      ];
+
+      const childItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'child-item-1' },
+          spec: {
+            scope: 'child',
+            url: '/d/child-dashboard-1',
+          },
+          status: {
+            title: 'Child Dashboard 1',
+            groups: ['Nested'],
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('parent')) {
+          return Promise.resolve(parentItems);
+        }
+        if (scopeNames.includes('child')) {
+          return Promise.resolve(childItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.fetchDashboards(['scope1']);
+
+      // Wait for cascading preloads
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      // Verify the chain of preloads occurred
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['scope1']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['parent']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['child']);
+    });
+  });
+
+  describe('disableSubScopeSelection', () => {
+    it('should set disableSubScopeSelection on folder when navigation has it set to true', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: true,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      // Find the folder created for this subScope
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBe(true);
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should set disableSubScopeSelection to false when navigation has it set to false', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: false,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBe(false);
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should set disableSubScopeSelection to undefined when navigation does not have it', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBeUndefined();
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should handle multiple navigations with different disableSubScopeSelection values', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: true,
+          },
+          status: {
+            title: 'Disabled Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+        {
+          spec: {
+            url: '/d/dashboard2',
+            scope: 'scope1',
+            subScope: 'subScope2',
+            disableSubScopeSelection: false,
+          },
+          status: {
+            title: 'Enabled Navigation',
+          },
+          metadata: {
+            name: 'nav2',
+          },
+        },
+        {
+          spec: {
+            url: '/d/dashboard3',
+            scope: 'scope1',
+            subScope: 'subScope3',
+          },
+          status: {
+            title: 'Default Navigation',
+          },
+          metadata: {
+            name: 'nav3',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folders = service.state.folders[''].folders;
+      const folder1Key = Object.keys(folders).find((key) => key.includes('subScope1'));
+      const folder2Key = Object.keys(folders).find((key) => key.includes('subScope2'));
+      const folder3Key = Object.keys(folders).find((key) => key.includes('subScope3'));
+
+      expect(folder1Key).toBeDefined();
+      expect(folder2Key).toBeDefined();
+      expect(folder3Key).toBeDefined();
+
+      expect(folders[folder1Key!].disableSubScopeSelection).toBe(true);
+      expect(folders[folder2Key!].disableSubScopeSelection).toBe(false);
+      expect(folders[folder3Key!].disableSubScopeSelection).toBeUndefined();
     });
   });
 });

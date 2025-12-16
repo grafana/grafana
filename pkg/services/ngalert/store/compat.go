@@ -10,11 +10,38 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// We only care about the data source UIDs.
+type compactQuery struct {
+	DatasourceUID string `json:"datasourceUid"`
+}
+
 func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
+	return convertAlertRuleToModel(ar, l, false)
+}
+
+// alertRuleToModelsAlertRuleCompact transforms an alertRule to a models.AlertRule
+// ignoring alert queries (except for data source UIDs), notification settings, and metadata.
+func alertRuleToModelsAlertRuleCompact(ar alertRule, l log.Logger) (models.AlertRule, error) {
+	return convertAlertRuleToModel(ar, l, true)
+}
+
+// convertAlertRuleToModel creates a models.AlertRule from an alertRule.
+// When 'compact' is set to 'true', it skips parsing the alert queries (except for the data source UID), notification
+// settings, and metadata, thus reducing the number of JSON serializations needed.
+func convertAlertRuleToModel(ar alertRule, l log.Logger, compact bool) (models.AlertRule, error) {
 	var data []models.AlertQuery
-	err := json.Unmarshal([]byte(ar.Data), &data)
-	if err != nil {
-		return models.AlertRule{}, fmt.Errorf("failed to parse data: %w", err)
+	if compact {
+		var cqs []compactQuery
+		if err := json.Unmarshal([]byte(ar.Data), &cqs); err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to parse data: %w", err)
+		}
+		for _, cq := range cqs {
+			data = append(data, models.AlertQuery{DatasourceUID: cq.DatasourceUID})
+		}
+	} else {
+		if err := json.Unmarshal([]byte(ar.Data), &data); err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to parse data: %w", err)
+		}
 	}
 
 	result := models.AlertRule{
@@ -52,6 +79,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
 	}
 
+	var err error
 	if ar.NoDataState != "" {
 		result.NoDataState, err = models.NoDataStateFromString(ar.NoDataState)
 		if err != nil {
@@ -90,7 +118,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		}
 	}
 
-	if ar.NotificationSettings != "" {
+	if !compact && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)
@@ -98,7 +126,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		result.NotificationSettings = ns
 	}
 
-	if ar.Metadata != "" {
+	if !compact && ar.Metadata != "" {
 		err = json.Unmarshal([]byte(ar.Metadata), &result.Metadata)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to metadata: %w", err)
@@ -210,6 +238,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Version:                     rule.Version,
 		Created:                     rule.Updated, // assuming the Updated time as the creation time
 		CreatedBy:                   rule.UpdatedBy,
+		Message:                     "", // Message is set by caller when creating versions
 		Title:                       rule.Title,
 		Condition:                   rule.Condition,
 		Data:                        rule.Data,
@@ -260,4 +289,16 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		Metadata:                    version.Metadata,
 		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}
+}
+
+func alertRuleVersionToModelsAlertRuleVersion(version alertRuleVersion, l log.Logger) (models.AlertRuleVersion, error) {
+	result, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(version), l)
+	if err != nil {
+		return models.AlertRuleVersion{}, err
+	}
+
+	return models.AlertRuleVersion{
+		AlertRule: result,
+		Message:   version.Message,
+	}, nil
 }

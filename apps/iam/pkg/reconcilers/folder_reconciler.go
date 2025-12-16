@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/authz"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // PermissionStore interface for managing folder permissions
@@ -34,9 +36,9 @@ type FolderReconciler struct {
 	metrics         *ReconcilerMetrics
 }
 
-func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
+func NewFolderReconciler(cfg ReconcilerConfig, reg prometheus.Registerer) (operator.Reconciler, error) {
 	// Create Zanzana client
-	zanzanaClient, err := authz.NewZanzanaClient("*", cfg.ZanzanaCfg)
+	zanzanaClient, err := authz.NewRemoteZanzanaClient(cfg.ZanzanaCfg, reg)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create zanzana client: %w", err)

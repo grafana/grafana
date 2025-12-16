@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';

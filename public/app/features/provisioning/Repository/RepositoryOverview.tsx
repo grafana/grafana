@@ -2,13 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -68,6 +67,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
+                <Box paddingTop={2}>
+                  <FreeTierLimitNote limitType="resource" />
+                </Box>
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
@@ -140,13 +142,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
         </Grid>
 
-        {/* job status is not ready for Cloud yet */}
-        {(config.buildInfo.edition === GrafanaEdition.OpenSource ||
-          config.buildInfo.edition === GrafanaEdition.Enterprise) && (
-          <div className={styles.cardContainer}>
-            <RecentJobs repo={repo} />
-          </div>
-        )}
+        <div className={styles.cardContainer}>
+          <RecentJobs repo={repo} />
+        </div>
       </Stack>
     </Box>
   );
@@ -168,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     actions: css({
       marginTop: 'auto',
@@ -180,6 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridColumn: 'span 9',
     }),
     pullStatusCard: css({
+      height: '100%',
       gridColumn: 'span 2',
 
       [theme.breakpoints.down('lg')]: {

@@ -55,7 +55,12 @@ The basic streaming example included in Grafana core streams frames with some ge
 
 ### Data streaming from Telegraf
 
-A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in Influx format from Telegraf. These metrics are transformed into Grafana data frames and published to channels.
+A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in InfluxDB line protocol format from Telegraf. These metrics are transformed into Grafana data frames and published to channels.
+
+**Important:** When streaming data from Telegraf, ensure that:
+
+- The data format is set to `influx` in your Telegraf configuration
+- Timestamps are in nanoseconds (Unix epoch time)
 
 Refer to the tutorial about [streaming metrics from Telegraf to Grafana](/tutorials/stream-metrics-from-telegraf-to-grafana/) for more information.
 
@@ -87,7 +92,44 @@ Channels are lightweight and ephemeral - they are created automatically on user 
 
 ### Data format
 
-All data travelling over Live channels must be JSON-encoded.
+Data sent over Live channels supports multiple formats depending on the endpoint:
+
+#### WebSocket channels
+
+Data transmitted through WebSocket channels for real-time streaming to frontend clients must be **JSON-encoded**. This applies to:
+
+- Dashboard change notifications
+- Data source plugin streaming (`ds` scope channels)
+- Custom application channels
+
+#### HTTP Push API
+
+The `/api/live/push/:streamId` endpoint accepts metrics data in **InfluxDB line protocol format**. This is particularly useful for streaming metrics from tools like Telegraf.
+
+The line protocol format follows this structure:
+
+```
+<measurement>[,<tag_key>=<tag_value>[,<tag_key>=<tag_value>]] <field_key>=<field_value>[,<field_key>=<field_value>] [<timestamp>]
+```
+
+**Important:** Timestamps must be encoded in **nanoseconds** (Unix epoch time in nanoseconds).
+
+**Example:**
+
+```
+temperature,location=room1,sensor=A temp_celsius=23.5,humidity=45 1651498849000000000
+```
+
+In this example:
+
+- `temperature` is the measurement name
+- `location=room1` and `sensor=A` are tags
+- `temp_celsius=23.5` and `humidity=45` are fields
+- `1651498849000000000` is the timestamp in nanoseconds
+
+When data is received via the HTTP Push API, it is automatically transformed into Grafana data frames and published to the appropriate channels for visualization.
+
+For more information about the InfluxDB line protocol format, refer to the [InfluxDB line protocol documentation](https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_tutorial/).
 
 ## Configure Grafana Live
 

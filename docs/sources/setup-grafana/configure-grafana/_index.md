@@ -475,6 +475,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
+#### `skip_dashboard_uid_migration_on_startup`
+
+Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
+
 <hr />
 
 ### `[remote_cache]`
@@ -657,11 +661,15 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
-<hr />
+#### `application_insights_auto_route_tracking`
+
+Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
 
 #### `feedback_links_enabled`
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
+
+<hr />
 
 ### `[security]`
 
@@ -978,15 +986,6 @@ This option is deprecated - assign your viewers as editors, if you are using RBA
 {{< /admonition >}}
 
 Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
-
-#### `editors_can_admin`
-
-{{< admonition type="note" >}}
-This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
-{{< /admonition >}}
-
-Editors can administrate dashboards, folders and teams they create.
-Default is `false`.
 
 #### `user_invite_max_lifetime_duration`
 
@@ -1777,6 +1776,13 @@ Specify the frequency of polling for Alertmanager configuration changes. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
 
+#### `alertmanager_max_template_output_bytes`
+
+Maximum size in bytes that the expanded result of any single template expression (e.g. {{ .CommonAnnotations.description }}, {{ .ExternalURL }}, etc.) may reach during notification rendering.
+The limit is checked after template execution for each templated field, but before the value is inserted into the final notification payload sent to the receiver.
+If exceeded, the notification will contain output truncated up to the limit and a warning will be logged.
+The default value is 10,485,760 bytes (10Mb).
+
 #### `ha_redis_address`
 
 Redis server address or addresses. It can be a single Redis address if using Redis standalone,
@@ -1934,6 +1940,10 @@ The initial delay before retrying a failed alert evaluation. Default is `1s`.
 
 This value is the starting point for exponential backoff.
 
+#### `initialization_timeout`
+
+Allows the context deadline for the `AlertNG` service to be configurable. The default timeout is 30s.
+
 #### `max_retry_delay`
 
 The maximum delay between retries during exponential backoff. Default is `4s`.
@@ -1968,6 +1978,12 @@ If a rule frequency is lower than this value, then this value is enforced.
 {{< /admonition >}}
 
 <hr>
+
+#### `rule_version_record_limit`
+
+Defines the limits for how many alert rule versions are stored in the database per alert rule.
+
+The default `0` value means there's no limit.
 
 ### `[unified_alerting.screenshots]`
 
@@ -2133,17 +2149,13 @@ Configures settings around the short link feature.
 
 #### `expire_time`
 
-Short links that are never accessed are considered expired or stale and are deleted as cleanup.
+Short links that are never accessed are considered expired or stale and can be deleted as cleanup.
 Set the expiration time in days.
-The default is `7` days.
+The default is `-1` days (never expire).
 The maximum is `365` days.
-A setting above the maximum uses the value `365` instead.
-Setting `0` means the short links are cleaned up approximately every 10 minutes.
-A negative value such as `-1` disables expiry.
 
-{{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
-{{< /admonition >}}
+A setting above the maximum uses the value `365` instead.
+A negative value such as `-1` disables expiry.
 
 <hr>
 
@@ -2559,7 +2571,7 @@ Available to Grafana administrators only, enables installing, uninstalling, and 
 Set to `true` by default.
 Setting it to `false` hides the controls.
 
-For more information, refer to [Plugin catalog](../../administration/plugin-management/#plugin-catalog).
+For more information, refer to [Plugin catalog](../../administration/plugin-management/#access-the-plugin-catalog).
 
 #### `plugin_admin_external_manage_enabled`
 
@@ -2615,6 +2627,15 @@ These will be installed before starting Grafana. Useful when used with provision
 #### `preinstall_disabled`
 
 This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
+
+#### `preinstall_auto_update`
+
+Enable automatic updates for preinstalled plugins on start-up.
+When enabled, preinstalled plugins without a pinned version are automatically updated to the latest version when Grafana starts.
+
+The default is `true`.
+
+To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
 
 <hr>
 

@@ -31,10 +31,12 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	jobsvalidation "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -59,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -87,7 +90,8 @@ type APIBuilder struct {
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
-	onlyApiServer bool
+	onlyApiServer                       bool
+	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
@@ -107,7 +111,7 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	legacyMigrator   legacy.LegacyMigrator
+	dashboardAccess  legacy.MigrationDashboardAccessor
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
@@ -133,7 +137,7 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
@@ -147,6 +151,7 @@ func NewAPIBuilder(
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	useExclusivelyAccessCheckerForAuthz bool,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -155,29 +160,31 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 	parsers := resources.NewParserFactory(clients)
+	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
-		onlyApiServer:       onlyApiServer,
-		tracer:              tracer,
-		usageStats:          usageStats,
-		features:            features,
-		repoFactory:         repoFactory,
-		clients:             clients,
-		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
-		resourceLister:      resourceLister,
-		legacyMigrator:      legacyMigrator,
-		storageStatus:       storageStatus,
-		unified:             unified,
-		access:              access,
-		jobHistoryConfig:    jobHistoryConfig,
-		extraWorkers:        extraWorkers,
-		restConfigGetter:    restConfigGetter,
-		allowedTargets:      allowedTargets,
-		allowImageRendering: allowImageRendering,
-		registry:            registry,
-		validator:           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		onlyApiServer:                       onlyApiServer,
+		tracer:                              tracer,
+		usageStats:                          usageStats,
+		features:                            features,
+		repoFactory:                         repoFactory,
+		clients:                             clients,
+		parsers:                             parsers,
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
+		resourceLister:                      resourceLister,
+		dashboardAccess:                     dashboardAccess,
+		storageStatus:                       storageStatus,
+		unified:                             unified,
+		access:                              access,
+		jobHistoryConfig:                    jobHistoryConfig,
+		extraWorkers:                        extraWorkers,
+		restConfigGetter:                    restConfigGetter,
+		allowedTargets:                      allowedTargets,
+		allowImageRendering:                 allowImageRendering,
+		registry:                            registry,
+		validator:                           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
 	for _, builder := range extraBuilders {
@@ -230,7 +237,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
@@ -254,7 +261,7 @@ func RegisterAPIService(
 		features,
 		client,
 		configProvider,
-		legacyMigrator, storageStatus,
+		dashboardAccess, storageStatus,
 		usageStats,
 		access,
 		tracer,
@@ -267,6 +274,7 @@ func RegisterAPIService(
 		cfg.ProvisioningMinSyncInterval,
 		reg,
 		nil,
+		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -282,8 +290,20 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 
+			// Check if any extra authorizer has a decision.
+			// Since the move to access checker when useExclusivelyAccessCheckerForAuthz=true, extra authorizers
+			// need to run first because access checker is not aware of the extras logic
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			info, ok := authlib.AuthInfoFrom(ctx)
-			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
+			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
+			// so we allow it to use the access checker if there is any auth info available
+			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.useExclusivelyAccessCheckerForAuthz) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
 					Verb:        a.GetVerb(),
 					Group:       a.GetAPIGroup(),
@@ -291,6 +311,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
+					Path:        a.GetPath(),
 				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
@@ -302,102 +323,152 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 				return authorizer.DecisionAllow, "", nil
 			}
-			// Different routes may need different permissions.
-			// * Reading and modifying a repository's configuration requires administrator privileges.
-			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
-			// * Reading a repository's files requires viewer privileges.
-			// * Reading a repository's refs requires viewer privileges.
-			// * Editing a repository's files requires editor privileges.
-			// * Syncing a repository requires editor privileges.
-			// * Exporting a repository requires administrator privileges.
-			// * Migrating a repository requires administrator privileges.
-			// * Testing a repository configuration requires administrator privileges.
-			// * Viewing a repository's history requires editor privileges.
 
 			id, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "failed to find requester", err
 			}
 
-			// Check if any extra authorizer has a decision.
-			for _, extra := range b.extras {
-				decision, reason, err := extra.Authorize(ctx, a)
-				if decision != authorizer.DecisionNoOpinion {
-					return decision, reason, err
-				}
-			}
-
-			switch a.GetResource() {
-			case provisioning.RepositoryResourceInfo.GetName():
-				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
-				switch a.GetSubresource() {
-				case "", "test", "jobs":
-					// Doing something with the repository itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "refs":
-					// This is strictly a read operation. It is handy on the frontend for viewers.
-					if id.GetOrgRole().Includes(identity.RoleViewer) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "viewer role is required", nil
-				case "files":
-					// Access to files is controlled by the AccessClient
-					return authorizer.DecisionAllow, "", nil
-
-				case "resources", "sync", "history":
-					// These are strictly read operations.
-					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
-					if id.GetOrgRole().Includes(identity.RoleEditor) {
-						return authorizer.DecisionAllow, "", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required", nil
-					}
-				case "status":
-					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
-				default:
-					if id.GetIsGrafanaAdmin() {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
-				}
-
-			case "stats":
-				// This can leak information one shouldn't necessarily have access to.
-				if id.GetOrgRole().Includes(identity.RoleAdmin) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "admin role is required", nil
-
-			case "settings":
-				// This is strictly a read operation. It is handy on the frontend for viewers.
-				if id.GetOrgRole().Includes(identity.RoleViewer) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "viewer role is required", nil
-
-			case provisioning.JobResourceInfo.GetName(),
-				provisioning.HistoricJobResourceInfo.GetName():
-				// Jobs are shown on the configuration page.
-				if id.GetOrgRole().Includes(identity.RoleAdmin) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "admin role is required", nil
-
-			default:
-				// We haven't bothered with this kind yet.
-				if id.GetIsGrafanaAdmin() {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
-			}
+			return b.authorizeResource(ctx, a, id)
 		})
+}
+
+// authorizeResource handles authorization for different resources.
+// Different routes may need different permissions.
+// * Reading and modifying a repository's configuration requires administrator privileges.
+// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
+// * Reading a repository's files requires viewer privileges.
+// * Reading a repository's refs requires viewer privileges.
+// * Editing a repository's files requires editor privileges.
+// * Syncing a repository requires editor privileges.
+// * Exporting a repository requires administrator privileges.
+// * Migrating a repository requires administrator privileges.
+// * Testing a repository configuration requires administrator privileges.
+// * Viewing a repository's history requires editor privileges.
+func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetResource() {
+	case provisioning.RepositoryResourceInfo.GetName():
+		return b.authorizeRepositorySubresource(a, id)
+	case "stats":
+		return b.authorizeStats(id)
+	case "settings":
+		return b.authorizeSettings(id)
+	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
+		return b.authorizeJobs(id)
+	case provisioning.ConnectionResourceInfo.GetName():
+		return b.authorizeConnectionSubresource(a, id)
+	default:
+		return b.authorizeDefault(id)
+	}
+}
+
+// authorizeRepositorySubresource handles authorization for repository subresources.
+func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+	switch a.GetSubresource() {
+	case "", "test":
+		// Doing something with the repository itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+
+	case "jobs":
+		// Posting jobs requires editor privileges (for syncing).
+		if id.GetOrgRole().Includes(identity.RoleAdmin) || id.GetOrgRole().Includes(identity.RoleEditor) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "editor role is required", nil
+
+	case "refs":
+		// This is strictly a read operation. It is handy on the frontend for viewers.
+		if id.GetOrgRole().Includes(identity.RoleViewer) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "viewer role is required", nil
+
+	case "files":
+		// Access to files is controlled by the AccessClient
+		return authorizer.DecisionAllow, "", nil
+
+	case "resources", "sync", "history":
+		// These are strictly read operations.
+		// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
+		if id.GetOrgRole().Includes(identity.RoleEditor) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "editor role is required", nil
+
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
+
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
+// authorizeStats handles authorization for stats resource.
+func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
+	// This can leak information one shouldn't necessarily have access to.
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeSettings handles authorization for settings resource.
+func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
+	// This is strictly a read operation. It is handy on the frontend for viewers.
+	if id.GetOrgRole().Includes(identity.RoleViewer) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "viewer role is required", nil
+}
+
+// authorizeJobs handles authorization for job resources.
+func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, string, error) {
+	// Jobs are shown on the configuration page.
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeRepositorySubresource handles authorization for connections subresources.
+func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	case "":
+		// Doing something with the connection itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
+// authorizeDefault handles authorization for unmapped resources.
+func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decision, string, error) {
+	// We haven't bothered with this kind yet.
+	if id.GetIsGrafanaAdmin() {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -474,9 +545,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
+	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create connection storage: %w", err)
+	}
+	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+
+	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
@@ -519,6 +599,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
+	}
+	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+	c, ok := obj.(*provisioning.Connection)
+	if ok {
+		return connectionvalidation.MutateConnection(c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -569,10 +654,15 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	// FIXME: Do nothing for Jobs for now
-	_, ok = obj.(*provisioning.Job)
+	connection, ok := obj.(*provisioning.Connection)
 	if ok {
-		return nil
+		return connectionvalidation.ValidateConnection(connection)
+	}
+
+	// Validate Jobs
+	job, ok := obj.(*provisioning.Job)
+	if ok {
+		return jobsvalidation.ValidateJob(job)
 	}
 
 	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
@@ -696,7 +786,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -711,7 +801,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
-				b.legacyMigrator,
+				b.dashboardAccess,
 				signerFactory,
 				b.clients,
 				export.ExportAll,
@@ -764,13 +854,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
+
+			// Create job cleanup controller
+			jobExpiry := 30 * time.Second
+			jobCleanupController := jobs.NewJobCleanupController(
+				b.jobs,
+				jobHistoryWriter,
+				jobExpiry,
+			)
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
-				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
-				30*time.Second, // Lease renewal interval
+				jobExpiry,      // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
@@ -786,6 +884,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			go func() {
+				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
+				}
+			}()
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -798,6 +902,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.statusPatcher,
 				b.registry,
 				b.tracer,
+				10,
 			)
 			if err != nil {
 				return err
@@ -809,7 +914,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
-				historyJobExpiration := 30 * time.Second
+				historyJobExpiration := 10 * time.Minute
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
@@ -1215,8 +1320,9 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		return nil
 	}
 
-	// Count how many things exist
-	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+	// Count how many things exist - create a migrator on-demand for this
+	legacyMigrator := migrations.ProvideUnifiedMigrator(b.dashboardAccess, b.unified)
+	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
 		Resources: []schema.GroupResource{{
 			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,

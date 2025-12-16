@@ -271,24 +271,13 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
-	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	err := hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.GetOrgID(), ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
 	if err != nil {
 		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(http.StatusForbidden, "Folder could not be deleted because it contains library elements in use", err)
 		}
-		return apierrors.ToFolderErrorResponse(err)
-	}
-	/* TODO: after a decision regarding folder deletion permissions has been made
-	(https://github.com/grafana/grafana-enterprise/issues/5144),
-	remove the previous call to hs.LibraryElementService.DeleteLibraryElementsInFolder
-	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
-	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
-	*/
-
-	uid := web.Params(c.Req)[":uid"]
-	err = hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.GetOrgID(), ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
-	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 

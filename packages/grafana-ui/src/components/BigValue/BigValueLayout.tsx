@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 

@@ -15,8 +15,19 @@ import {
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
+import {
+  CloudWatchAnnotationQuery,
+  CloudWatchLogsAnomaliesQuery,
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+} from './dataquery.gen';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
-import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
+import {
+  isCloudWatchAnnotationQuery,
+  isCloudWatchLogsQuery,
+  isCloudWatchMetricsQuery,
+  isLogsAnomaliesQuery,
+} from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import {
   LogsSQLCompletionItemProvider,
@@ -37,13 +48,7 @@ import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnota
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { CloudWatchMetricsQueryRunner } from './query-runner/CloudWatchMetricsQueryRunner';
 import { ResourcesAPI } from './resources/ResourcesAPI';
-import {
-  CloudWatchAnnotationQuery,
-  CloudWatchJsonData,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-} from './types';
+import { CloudWatchQuery, CloudWatchJsonData } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
 export class CloudWatchDatasource
@@ -104,11 +109,14 @@ export class CloudWatchDatasource
 
     const logQueries: CloudWatchLogsQuery[] = [];
     const metricsQueries: CloudWatchMetricsQuery[] = [];
+    const logsAnomaliesQueries: CloudWatchLogsAnomaliesQuery[] = [];
     const annotationQueries: CloudWatchAnnotationQuery[] = [];
 
     queries.forEach((query) => {
       if (isCloudWatchAnnotationQuery(query)) {
         annotationQueries.push(query);
+      } else if (isLogsAnomaliesQuery(query)) {
+        logsAnomaliesQueries.push(query);
       } else if (isCloudWatchLogsQuery(query)) {
         logQueries.push(query);
       } else {
@@ -124,6 +132,12 @@ export class CloudWatchDatasource
     if (metricsQueries.length) {
       dataQueryResponses.push(
         this.metricsQueryRunner.handleMetricQueries(metricsQueries, options, super.query.bind(this))
+      );
+    }
+
+    if (logsAnomaliesQueries.length) {
+      dataQueryResponses.push(
+        this.logsQueryRunner.handleLogAnomaliesQueries(logsAnomaliesQueries, options, super.query.bind(this))
       );
     }
 

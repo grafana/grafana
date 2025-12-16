@@ -185,5 +185,24 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "UQE_resource_last_import_time_last_import_time",
 	}))
 
+	mg.AddMigration("Add key_path column to resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, Default: "''", IsLatin: true,
+	}))
+
+	resource_events_table := migrator.Table{
+		Name: "resource_events",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
+
+	mg.AddMigration("Add IDX_resource_history_key_path index", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"key_path"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_key_path",
+	}))
+
 	return marker
 }

@@ -13,7 +13,7 @@
       "label-resource-group": "Brongroep",
       "label-resource-name": "Naam van het object",
       "label-resource-number": "Bron {{resourceNum}}",
-      "label-resource-uri": "Bron-URI('s) ",
+      "label-resource-uri": "",
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "naam",
       "tooltip-region": "Het codegebied van de bron. Optioneel voor één bron, maar verplicht bij het selecteren van meerdere bronnen.",

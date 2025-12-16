@@ -13,7 +13,7 @@
       "label-resource-group": "Grupa zasobów",
       "label-resource-name": "Nazwa zasobu",
       "label-resource-number": "Zasób {{resourceNum}}",
-      "label-resource-uri": "Identyfikatory URI zasobów ",
+      "label-resource-uri": "",
       "label-subscription": "Subskrypcja",
       "placeholder-resource-name": "nazwa",
       "tooltip-region": "Kod regionu zasobu. Opcjonalny w przypadku jednego zasobu, ale wymagany przy wielu zasobach.",

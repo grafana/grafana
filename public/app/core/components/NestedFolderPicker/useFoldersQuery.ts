@@ -22,7 +22,13 @@ export function useFoldersQuery({
   rootFolderItem,
 }: UseFoldersQueryProps) {
   const resultLegacy = useFoldersQueryLegacy({ isBrowsing, openFolders, permission, rootFolderUID, rootFolderItem });
-  const resultAppPlatform = useFoldersQueryAppPlatform({ isBrowsing, openFolders, rootFolderUID, rootFolderItem });
+  const resultAppPlatform = useFoldersQueryAppPlatform({
+    isBrowsing,
+    openFolders,
+    permission,
+    rootFolderUID,
+    rootFolderItem,
+  });
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other
   // requestNextPage function from the result

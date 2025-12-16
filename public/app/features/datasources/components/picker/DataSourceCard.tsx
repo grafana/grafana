@@ -41,6 +41,7 @@ export function DataSourceCard({
             <small className={styles.type}>{description || ds.meta.name}</small>
             {onToggleFavorite && !ds.meta.builtIn && (
               <Icon
+                key={(isFavorite ? 'favorite' : 'star') + '-' + ds.uid}
                 name={isFavorite ? 'favorite' : 'star'}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -53,7 +54,7 @@ export function DataSourceCard({
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
+        <img src={ds.meta.info.logos.small || undefined} alt={`${ds.meta.name} Logo`} />
       </Card.Figure>
     </Card>
   );
@@ -89,6 +90,12 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       justifyContent: 'space-between',
       columnGap: theme.spacing(1),
       alignItems: 'center',
+
+      [theme.breakpoints.down('sm')]: {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridTemplateRows: 'repeat(2, 1fr)',
+      },
     }),
     rightSection: css({
       display: 'flex',
@@ -99,6 +106,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       justifyContent: 'flex-end',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      [theme.breakpoints.down('sm')]: {
+        justifyContent: 'flex-start',
+      },
     }),
     logo: css({
       width: '32px',

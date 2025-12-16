@@ -19,7 +19,7 @@ interface RenderParams<T = ActionImpl | string> {
 interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
-  onRender: (params: RenderParams) => React.ReactElement;
+  onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
 }
 

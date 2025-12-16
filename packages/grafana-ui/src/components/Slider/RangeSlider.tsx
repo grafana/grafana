@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider, { SliderProps } from 'rc-slider';
+import Slider, { SliderProps } from '@rc-component/slider';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -15,6 +15,8 @@ import { RangeSliderProps } from './types';
  * @public
  *
  * RichHistoryQueriesTab uses this Range Component
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-rangeslider--docs
  */
 export const RangeSlider = ({
   min,

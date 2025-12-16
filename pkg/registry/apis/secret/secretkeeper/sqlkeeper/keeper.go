@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -26,20 +29,36 @@ func NewSQLKeeper(
 	tracer trace.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
+	migrationExecutor contracts.EncryptedValueMigrationExecutor,
 	reg prometheus.Registerer,
-) *SQLKeeper {
+	cfg *setting.Cfg,
+) (*SQLKeeper, error) {
+	// Only run the migration if running as an MT api server
+	if cfg.SecretsManagement.RunDataKeyMigration && cfg.SecretsManagement.RunSecretsDBMigrations {
+		// Run the encrypted value store migration before anything else, otherwise operations may fail
+		// TODO: This does not need to be here forever, but we may currently have on-prem deployments using GSM, so it needs to be here for now.
+		// Periodically assess whether it is safe to remove - most likely for G13 should be fine.
+		log := logging.FromContext(context.Background())
+		log.Debug("sqlkeeper: executing encrypted value store migration")
+		rowsAffected, err := migrationExecutor.Execute(context.Background())
+		log.Debug("sqlkeeper: encrypted value store migration completed", "rows_affected", rowsAffected)
+		if err != nil {
+			return nil, fmt.Errorf("error encountered during encrypted value store migration: %w", err)
+		}
+	}
+
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
 		metrics:           metrics.NewKeeperMetrics(reg),
-	}
+	}, nil
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store",
 		trace.WithAttributes(
-			attribute.String("namespace", namespace),
+			attribute.String("namespace", namespace.String()),
 			attribute.String("name", name),
 			attribute.Int64("version", version)),
 	)
@@ -63,9 +82,9 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 	return contracts.ExternalID(""), nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -77,7 +96,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
 	}
 
-	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedData)
+	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedPayload)
 	if err != nil {
 		return "", fmt.Errorf("unable to decrypt value: %w", err)
 	}
@@ -88,9 +107,9 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))
@@ -107,9 +126,9 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return nil
 }
 
-func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) error {
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
-		attribute.String("namespace", namespace),
+		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
 		attribute.Int64("version", version),
 	))

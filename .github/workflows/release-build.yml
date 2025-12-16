@@ -187,12 +187,12 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
           path: ${{ steps.build.outputs.file }}
           retention-days: 1
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
@@ -212,6 +212,7 @@ jobs:
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
+      runs-on: ubuntu-x64-small
 
   publish-dockerhub:
     if: github.ref_name == 'main'
@@ -224,27 +225,27 @@ jobs:
       - build
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-amd64
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-arm64
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-armv7
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-amd64
           path: dist
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-arm64
           path: dist
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-armv7
           path: dist
@@ -320,13 +321,21 @@ jobs:
           repositories: '["grafana"]'
           permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
       - name: Find PR
+        continue-on-error: true
+        id: find-pr
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
-        run: echo "ISSUE_NUMBER=$(gh api "/repos/grafana/grafana/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
+          REPO: ${{ github.repository }}
+        run: |
+          set -eo pipefail
+          gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number' | tee issue_number.txt
+          echo "ISSUE_NUMBER=$(cat issue_number.txt)" >> "$GITHUB_ENV"
       - name: Find Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        if: ${{ steps.find-pr.outcome == 'success' }}
         id: fc
+        continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
           comment-author: 'grafana-delivery-bot[bot]'
@@ -334,6 +343,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        if: ${{ steps.find-pr.outcome == 'success' }} # Run even if comment wasn't found
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}

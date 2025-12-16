@@ -44,12 +44,16 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
           (name) => fields.find((field) => field.name === name) ?? suggestedFields.find((field) => field.name === name)
         )
         .filter((field) => field !== undefined),
-      ...suggestedFields.filter((suggestedField) => !activeFields.includes(suggestedField.name)),
     ],
     [activeFields, fields, suggestedFields]
   );
 
-  if (active.length) {
+  const suggested = useMemo(
+    () => suggestedFields.filter((suggestedField) => !activeFields.includes(suggestedField.name)),
+    [activeFields, suggestedFields]
+  );
+
+  if (active.length || suggested.length) {
     return (
       <>
         <div className={styles.columnHeader}>
@@ -96,6 +100,20 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
             )}
           </Droppable>
         </DragDropContext>
+        {suggested.length > 0 && (
+          <>
+            <div className={styles.columnSubHeader}>
+              <Trans i18nKey="explore.logs-table-multi-select.suggested-fields">Suggested</Trans>
+            </div>
+            <div className={styles.columnWrapper}>
+              {suggested.map((field) => (
+                <div className={styles.wrap} key={field.name}>
+                  <Field field={field} toggle={toggle} />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </>
     );
   }
@@ -128,6 +146,10 @@ export function getLogsFieldsStyles(theme: GrafanaTheme2) {
       paddingLeft: theme.spacing(1.5),
       zIndex: 3,
       marginBottom: theme.spacing(2),
+    }),
+    columnSubHeader: css({
+      padding: theme.spacing(0, 0, 0.75, 0.5),
+      color: theme.colors.text.secondary,
     }),
     columnHeaderButton: css({
       appearance: 'none',

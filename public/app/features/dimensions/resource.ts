@@ -7,8 +7,8 @@ import { findField, getLastNotNullFieldValue } from './utils';
 //---------------------------------------------------------
 // Resource dimension
 //---------------------------------------------------------
-export function getPublicOrAbsoluteUrl(path: string): string {
-  if (!path) {
+export function getPublicOrAbsoluteUrl(path: unknown): string {
+  if (!path || typeof path !== 'string') {
     return '';
   }
 
@@ -55,18 +55,25 @@ export function getResourceDimension(
   }
 
   // mode === ResourceDimensionMode.Field case
-  const getIcon = (value: string): string => {
-    if (field && field.display) {
-      const icon = field.display(value).icon;
-      return getPublicOrAbsoluteUrl(icon ?? '');
+  const getImageOrIcon = (value: unknown): string => {
+    if (typeof value !== 'string') {
+      return '';
     }
 
-    return '';
+    let url = value;
+    if (field && field.display) {
+      const displayValue = field.display(value);
+      if (displayValue.icon) {
+        url = displayValue.icon;
+      }
+    }
+
+    return getPublicOrAbsoluteUrl(url);
   };
 
   return {
     field,
-    get: (index: number): string => getIcon(field.values[index]),
-    value: () => getIcon(getLastNotNullFieldValue(field)),
+    get: (index: number): string => getImageOrIcon(field.values[index]),
+    value: () => getImageOrIcon(getLastNotNullFieldValue(field)),
   };
 }

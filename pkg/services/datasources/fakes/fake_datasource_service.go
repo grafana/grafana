@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/authlib/types"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -14,6 +15,9 @@ type FakeDataSourceService struct {
 	lastID                int64
 	DataSources           []*datasources.DataSource
 	SimulatePluginFailure bool
+
+	// UID -> Headers
+	DataSourceHeaders map[string]http.Header
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
@@ -24,6 +28,19 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
 		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
 		if idMatch || nameMatch || uidMatch {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+	for _, dataSource := range s.DataSources {
+		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
 			return dataSource, nil
 		}
 	}
@@ -138,5 +155,5 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 }
 
 func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
-	return nil, nil
+	return s.DataSourceHeaders[ds.UID], nil
 }

@@ -24,6 +24,9 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   invalid?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-checkbox--docs
+ */
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   (
     { label, description, value, htmlValue, onChange, disabled, className, indeterminate, invalid, ...inputProps },

@@ -206,6 +206,30 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var ExternalGroupMappingResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"externalgroupmappings", "externalgroupmapping", "ExternalGroupMapping",
+	func() runtime.Object { return &ExternalGroupMapping{} },
+	func() runtime.Object { return &ExternalGroupMappingList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			mapping, ok := obj.(*ExternalGroupMapping)
+			if ok {
+				if mapping != nil {
+					return []interface{}{
+						mapping.Name,
+						mapping.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected external group mapping")
+		},
+	},
+)
+
 var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"rolebindings", "rolebinding", "RoleBinding",
 	func() runtime.Object { return &RoleBinding{} },
@@ -293,8 +317,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
+		&GetSearchTeams{},
 		&TeamBinding{},
 		&TeamBindingList{},
+		&ExternalGroupMapping{},
+		&ExternalGroupMappingList{},
+		&GetGroups{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},

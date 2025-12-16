@@ -18,6 +18,10 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?: "inControlsMenu";
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	legacyOptions?: Record<string, any>;
 }
@@ -29,6 +33,7 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	iconColor: "",
 	name: "",
 	builtIn: false,
+	placement: AnnotationQueryPlacement,
 });
 
 export interface DataQueryKind {
@@ -60,6 +65,24 @@ export interface AnnotationPanelFilter {
 export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
+});
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+export const AnnotationQueryPlacement = "inControlsMenu";
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -155,7 +178,7 @@ export interface PanelQuerySpec {
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	refId: "",
+	refId: "A",
 	hidden: false,
 });
 
@@ -219,6 +242,7 @@ export interface QueryOptionsSpec {
 	interval?: string;
 	cacheTimeout?: string;
 	hideTimeOverride?: boolean;
+	timeCompare?: string;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
@@ -258,6 +282,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
@@ -456,7 +482,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -485,7 +512,12 @@ export const defaultFieldColor = (): FieldColor => ({
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -497,7 +529,7 @@ export const defaultFieldColor = (): FieldColor => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
@@ -1079,6 +1111,7 @@ export interface QueryVariableSpec {
 	description?: string;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1099,6 +1132,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1134,6 +1168,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:
@@ -1274,7 +1314,7 @@ export interface IntervalVariableSpec {
 	auto: boolean;
 	auto_min: string;
 	auto_count: number;
-	refresh: VariableRefresh;
+	refresh: "onTimeRangeChanged";
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;
@@ -1289,7 +1329,7 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto: false,
 	auto_min: "",
 	auto_count: 0,
-	refresh: "never",
+	refresh: "onTimeRangeChanged",
 	hide: "dontHide",
 	skipUrlSync: false,
 });

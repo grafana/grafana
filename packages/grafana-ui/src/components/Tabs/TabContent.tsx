@@ -9,6 +9,9 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const TabContent = ({ children, className, ...restProps }: Props) => {
   const styles = useStyles2(getTabContentStyle);
 
