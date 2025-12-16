@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"google.golang.org/protobuf/proto"
-
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -116,9 +115,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		// Respond with raw protobuf when requested
 		for _, accept := range req.Header.Values("Accept") {
-			if accept == "application/vnd.grafana.protobuf" {
-				conv := backend.ConvertToProtobuf{}
-				p, err := conv.QueryDataResponse(rsp)
+			if accept == query.PROTOBUF_CONTENT_TYPE { // pluginv2.QueryDataResponse
+				p, err := backend.ToProto().QueryDataResponse(rsp)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -128,9 +126,12 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 					responder.Error(err)
 					return
 				}
-				w.Header().Add("Content-Type", "application/vnd.grafana.protobuf")
+				w.Header().Add("Content-Type", query.PROTOBUF_CONTENT_TYPE)
 				w.WriteHeader(code)
-				_, _ = w.Write(data)
+				_, err = w.Write(data)
+				if err != nil {
+					logging.FromContext(ctx).Warn("unable to write protobuf result", "err", err)
+				}
 				return
 			}
 		}

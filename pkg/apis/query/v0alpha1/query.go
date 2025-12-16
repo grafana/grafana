@@ -10,6 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 )
 
+// Get results as raw protobuf
+const PROTOBUF_CONTENT_TYPE = "application/vnd.grafana.pluginv2.QueryDataResponse"
+
 // Generic query request with shared time across all values
 // Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
