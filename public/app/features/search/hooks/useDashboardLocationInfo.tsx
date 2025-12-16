@@ -1,13 +1,12 @@
-import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { LocationInfo } from 'app/features/search/service/types';
 
 export function useDashboardLocationInfo(enabled: boolean) {
-  const searcher = useMemo(() => getGrafanaSearcher(), []);
+  const searcher = getGrafanaSearcher();
   const {
-    value: folders,
+    value: foldersByUid,
     loading,
     error,
   } = useAsync(async (): Promise<Record<string, LocationInfo>> => {
@@ -18,7 +17,7 @@ export function useDashboardLocationInfo(enabled: boolean) {
   }, [enabled, searcher]);
 
   return {
-    foldersByUid: folders ?? {},
+    foldersByUid: foldersByUid ?? {},
     loading,
     error,
   };

@@ -5,21 +5,15 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { Dashboard } from './DashList';
 import { getStyles } from './styles';
 
-export function DashListItem({
-  dashboard,
-  url,
-  showFolderNames,
-  locationInfo,
-  layoutMode,
-  onStarChange,
-}: {
+interface Props {
   dashboard: Dashboard;
   url: string;
   showFolderNames: boolean;
   locationInfo?: LocationInfo;
   layoutMode: 'list' | 'card';
   onStarChange?: (id: string, isStarred: boolean) => void;
-}) {
+}
+export function DashListItem({ dashboard, url, showFolderNames, locationInfo, layoutMode, onStarChange }: Props) {
   const css = useStyles2(getStyles);
 
   return (
@@ -59,7 +53,7 @@ export function DashListItem({
 
           {showFolderNames && locationInfo && (
             <Stack alignItems="center" direction="row" gap={0}>
-              <Icon name="folder" size="sm" className={css.dashlistCardIcon} />
+              <Icon name="folder" size="sm" className={css.dashlistCardIcon} aria-hidden="true" />
               <Text color="secondary" variant="bodySmall" element="p">
                 {locationInfo?.name}
               </Text>

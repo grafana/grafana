@@ -47,18 +47,22 @@ export function RecentlyViewedDashboards() {
       )}
 
       {!loading && recentDashboards.length > 0 && (
-        <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap={2}>
-          {recentDashboards.map((dash) => (
-            <DashListItem
-              key={dash.uid}
-              dashboard={dash}
-              url={dash.url}
-              showFolderNames={true}
-              locationInfo={foldersByUid[dash.location]}
-              layoutMode="card"
-            />
-          ))}
-        </Grid>
+        <ul className={styles.list}>
+          <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap={2}>
+            {recentDashboards.map((dash) => (
+              <li key={dash.uid} className={styles.listItem}>
+                <DashListItem
+                  key={dash.uid}
+                  dashboard={dash}
+                  url={dash.url}
+                  showFolderNames={true}
+                  locationInfo={foldersByUid[dash.location]}
+                  layoutMode="card"
+                />
+              </li>
+            ))}
+          </Grid>
+        </ul>
       )}
     </CollapsableSection>
   );
@@ -79,6 +83,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     content: css({
       paddingTop: theme.spacing(0),
+    }),
+    list: css({
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+      display: 'grid',
+      gap: theme.spacing(2),
+    }),
+    listItem: css({
+      margin: 0,
     }),
   };
 };
