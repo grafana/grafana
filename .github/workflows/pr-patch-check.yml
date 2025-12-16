@@ -97,3 +97,4 @@ jobs:
           status: success
           context: "Test Patches (event)"
           description: "Test Patches (event) on a fork"
+          allowForks: true

@@ -18,11 +18,11 @@ permissions:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@main
+    uses: kminehart/grafana/.github/workflows/pr-patch-check.yml@main
     with:
       head_ref: ${{ github.head_ref }}
       base_ref: ${{ github.base_ref }}
-      repo: ${{ github.repository }}
+      repo: ${{ github.event.pull_request.head.repo }}
       sender_login: ${{ github.event.sender.login }}
       sha: ${{ github.sha }}
       pr_commit_sha: ${{ github.event.pull_request.head.sha }}
