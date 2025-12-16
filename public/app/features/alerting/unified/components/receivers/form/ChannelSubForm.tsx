@@ -6,7 +6,7 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans , t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { NotificationChannelOption } from 'app/types';
 
 import {

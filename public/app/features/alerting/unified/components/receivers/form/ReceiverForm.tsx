@@ -171,7 +171,7 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
-           const pathPrefix = `items.${index}.` as const;
+          const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
