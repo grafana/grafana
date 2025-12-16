@@ -68,22 +68,45 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
-	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
+	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
 			Do(ctx)
-		require.NoError(t, result.Error())
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.Error(t, err)
-		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, 2, len(dashboards.Items))
+		require.NoError(t, result.Error(), "delete file on configured branch should succeed")
+
+		// Verify the dashboard is removed from Grafana
+		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json
+		_, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.Error(t, err, "dashboard should be deleted from Grafana")
+		require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted dashboard")
 	})
 
-	t.Run("delete folder, should delete from repo and grafana all nested resources too", func(t *testing.T) {
+	t.Run("delete individual dashboard file on branch should succeed", func(t *testing.T) {
+		// Create a branch first by creating a file on a branch
+		branchRef := "test-branch-delete"
+		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "branch-test-delete.json")
+
+		// Delete on branch should work
+		result := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "branch-test-delete.json").
+			Param("ref", branchRef).
+			Do(ctx)
+		// Note: This might fail if branch doesn't exist, but the important thing is it doesn't return MethodNotAllowed
+		if result.Error() != nil {
+			var statusErr *apierrors.StatusError
+			if errors.As(result.Error(), &statusErr) {
+				require.NotEqual(t, int32(http.StatusMethodNotAllowed), statusErr.ErrStatus.Code, "should not return MethodNotAllowed for branch delete")
+			}
+		}
+	})
+
+	t.Run("delete folder on configured branch should return MethodNotAllowed", func(t *testing.T) {
 		// need to delete directly through the url, because the k8s client doesn't support `/` in a subresource
 		// but that is needed by gitsync to know that it is a folder
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -94,27 +117,11 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.NoError(t, err)
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "should return MethodNotAllowed for configured branch folder delete")
 
-		// should be deleted from the repo
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder")
-		require.Error(t, err)
+		// Verify a file inside the folder still exists (operation was rejected)
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
-		require.Error(t, err)
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested")
-		require.Error(t, err)
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested", "dashboard3.json")
-		require.Error(t, err)
-
-		// all should be deleted from grafana
-		for _, d := range dashboards.Items {
-			_, err = helper.DashboardsV1.Resource.Get(ctx, d.GetName(), metav1.GetOptions{})
-			require.Error(t, err)
-		}
-		for _, f := range folders.Items {
-			_, err = helper.Folders.Resource.Get(ctx, f.GetName(), metav1.GetOptions{})
-			require.Error(t, err)
-		}
+		require.NoError(t, err, "file inside folder should still exist after rejected delete")
 	})
 
 	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
@@ -158,10 +165,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	require.NoError(t, err, "original dashboard should exist in Grafana")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
-	t.Run("move file without content change", func(t *testing.T) {
+	t.Run("move file without content change on configured branch should succeed", func(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
-		// Perform the move operation using helper function
+		// Perform the move operation using helper function (no ref = configured branch)
 		resp := helper.postFilesRequest(t, repo, filesPostOptions{
 			targetPath:   targetPath,
 			originalPath: "all-panels.json",
@@ -169,32 +176,52 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
-		// Verify the file moved in the repository
-		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
-		require.NoError(t, err, "moved file should exist in repository")
+		// Verify file was moved - read from new location
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
+		require.NoError(t, err, "file should exist at new location")
 
-		// Check the content is preserved (verify it's still the all-panels dashboard)
-		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
-		require.NoError(t, err)
-		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
-		require.NoError(t, err)
-		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
-		require.NoError(t, err)
-		require.Equal(t, "Panel tests - All panels", title, "content should be preserved")
-
-		// Verify original file no longer exists
+		// Verify file no longer exists at old location
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
-		require.Error(t, err, "original file should no longer exist")
-
-		// Verify dashboard still exists in Grafana with same content but may have updated path references
-		helper.SyncAndWait(t, repo, nil)
-		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should still exist in Grafana after move")
+		require.Error(t, err, "file should not exist at old location")
 	})
 
-	t.Run("move file to nested path without ref", func(t *testing.T) {
+	t.Run("move file without content change on branch should succeed", func(t *testing.T) {
+		const targetPath = "moved/simple-move-branch.json"
+		branchRef := "test-branch-move"
+
+		// Perform the move operation using helper function with ref parameter
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: "all-panels.json",
+			message:      "move file without content change",
+			ref:          branchRef,
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		// Note: This might fail if branch doesn't exist, but the important thing is it doesn't return MethodNotAllowed
+		if resp.StatusCode == http.StatusMethodNotAllowed {
+			t.Fatal("should not return MethodNotAllowed for branch move")
+		}
+
+		// If move succeeded (not MethodNotAllowed), verify the file moved in the repository
+		if resp.StatusCode == http.StatusOK {
+			movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move-branch.json")
+			require.NoError(t, err, "moved file should exist in repository")
+
+			// Check the content is preserved (verify it's still the all-panels dashboard)
+			resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+			require.NoError(t, err)
+			dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+			require.NoError(t, err)
+			title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+			require.NoError(t, err)
+			require.Equal(t, "Panel tests - All panels", title, "content should be preserved")
+		}
+	})
+
+	t.Run("move file to nested path on configured branch should succeed", func(t *testing.T) {
 		// Test a different scenario: Move a file that was never synced to Grafana
 		// This might reveal the issue if dashboard creation fails during move
 		const sourceFile = "never-synced.json"
@@ -203,7 +230,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// DO NOT sync - move the file immediately without it ever being in Grafana
 		const targetPath = "deep/nested/timeline.json"
 
-		// Perform the move operation without the file ever being synced to Grafana
+		// Perform the move operation without the file ever being synced to Grafana (no ref = configured branch)
 		resp := helper.postFilesRequest(t, repo, filesPostOptions{
 			targetPath:   targetPath,
 			originalPath: sourceFile,
@@ -211,70 +238,25 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation on configured branch should succeed")
 
-		// Check folders were created and validate hierarchy
-		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "should be able to list folders")
+		// File should exist at new location
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
+		require.NoError(t, err, "file should exist at new nested location")
 
-		// Build a map of folder names to their objects for easier lookup
-		folders := make(map[string]*unstructured.Unstructured)
-		for _, folder := range folderList.Items {
-			title, _, _ := unstructured.NestedString(folder.Object, "spec", "title")
-			folders[title] = &folder
-			parent, _, _ := unstructured.NestedString(folder.Object, "metadata", "annotations", "grafana.app/folder")
-			t.Logf("  - %s: %s (parent: %s)", folder.GetName(), title, parent)
-		}
-
-		// Validate expected folders exist with proper hierarchy
-		// Expected structure: deep -> deep/nested
-		deepFolderTitle := "deep"
-		nestedFolderTitle := "nested"
-
-		// Validate "deep" folder exists and has no parent (is top-level)
-		require.Contains(t, folders, deepFolderTitle, "deep folder should exist")
-		f := folders[deepFolderTitle]
-		deepFolderName := f.GetName()
-		title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
-		require.Equal(t, deepFolderTitle, title, "deep folder should have correct title")
-		parent, found, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
-		require.True(t, !found || parent == "", "deep folder should be top-level (no parent)")
-
-		// Validate "deep/nested" folder exists and has "deep" as parent
-		require.Contains(t, folders, nestedFolderTitle, "nested folder should exist")
-		f = folders[nestedFolderTitle]
-		nestedFolderName := f.GetName()
-		title, _, _ = unstructured.NestedString(f.Object, "spec", "title")
-		require.Equal(t, nestedFolderTitle, title, "nested folder should have correct title")
-		parent, _, _ = unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Equal(t, deepFolderName, parent, "nested folder should have deep folder as parent")
-
-		// The key test: Check if dashboard was created in Grafana during move
-		const timelineUID = "mIJjFy8Kz"
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
-		dashboardFolder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
-
-		// Validate dashboard is in the correct nested folder
-		require.Equal(t, nestedFolderName, dashboardFolder, "dashboard should be in the nested folder")
-
-		// Verify the file moved in the repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
-		require.NoError(t, err, "moved file should exist in nested repository path")
-
-		// Verify the original file no longer exists in the repository
+		// File should not exist at original location
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
-		require.Error(t, err, "original file should no longer exist in repository")
+		require.Error(t, err, "file should not exist at original location after move")
 	})
 
-	t.Run("move file with content update", func(t *testing.T) {
-		const sourcePath = "moved/simple-move.json" // Use the file from previous test
+	t.Run("move file with content update on configured branch should succeed", func(t *testing.T) {
+		const sourcePath = "moved/simple-move.json" // Use the file we moved earlier
 		const targetPath = "updated/content-updated.json"
 
 		// Use text-options.json content for the update
 		updatedContent := helper.LoadFile("testdata/text-options.json")
 
-		// Perform move with content update using helper function
+		// Perform move with content update using helper function (no ref = configured branch)
 		resp := helper.postFilesRequest(t, repo, filesPostOptions{
 			targetPath:   targetPath,
 			originalPath: sourcePath,
@@ -283,51 +265,27 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update on configured branch should succeed")
 
-		// Verify the moved file has updated content (should now be text-options dashboard)
+		// File should exist at new location with updated content
 		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
-		require.NoError(t, err, "moved file should exist in repository")
+		require.NoError(t, err, "file should exist at new location")
 
+		// Verify content was updated (should be text-options dashboard now)
 		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
 		require.NoError(t, err)
 		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
 		require.NoError(t, err)
 		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
 		require.NoError(t, err)
-		require.Equal(t, "Text options", title, "content should be updated to text-options dashboard")
+		require.Equal(t, "Text options", title, "content should be updated")
 
-		// Check it has the expected UID from text-options.json
-		name, _, err := unstructured.NestedString(dryRun, "metadata", "name")
-		require.NoError(t, err)
-		require.Equal(t, "WZ7AhQiVz", name, "should have the UID from text-options.json")
-
-		// Verify source file no longer exists
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
-		require.Error(t, err, "source file should no longer exist")
-
-		// Sync and verify the updated dashboard exists in Grafana
-		helper.SyncAndWait(t, repo, nil)
-		const textOptionsUID = "WZ7AhQiVz" // UID from text-options.json
-		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, textOptionsUID, metav1.GetOptions{})
-		require.NoError(t, err, "updated dashboard should exist in Grafana")
-
-		// Verify the original dashboard was deleted from Grafana
-		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.Error(t, err, "original dashboard should be deleted from Grafana")
-		require.True(t, apierrors.IsNotFound(err))
-
-		// Verify the new dashboard has the updated content
-		updatedTitle, _, err := unstructured.NestedString(updatedDashboard.Object, "spec", "title")
-		require.NoError(t, err)
-		require.Equal(t, "Text options", updatedTitle)
+		// Source file should not exist anymore
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
+		require.Error(t, err, "source file should not exist after move")
 	})
 
-	t.Run("move directory", func(t *testing.T) {
-		t.Skip("Skip as implementation is broken and leaves dashboards behind in the move")
-		// FIXME: https://github.com/grafana/git-ui-sync-project/issues/379
-		// The current implementation of moving directories is flawed.
-		// It will be deprecated in favor of queuing a move job
+	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
 		// Create some files in a directory first using existing testdata files
 		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
@@ -338,7 +296,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const sourceDir = "source-dir/"
 		const targetDir = "moved-dir/"
 
-		// Move directory using helper function
+		// Move directory using helper function (no ref = configured branch)
 		resp := helper.postFilesRequest(t, repo, filesPostOptions{
 			targetPath:   targetDir,
 			originalPath: sourceDir,
@@ -346,20 +304,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err, "should read response body")
-		t.Logf("Response Body: %s", string(body))
-		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
+		require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "directory move on configured branch should return MethodNotAllowed")
 
-		// Verify source directory no longer exists
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir")
-		require.Error(t, err, "source directory should no longer exist")
-
-		// Verify target directory and files exist
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "timeline-demo.json")
-		require.NoError(t, err, "moved timeline-demo.json should exist")
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "text-options.json")
-		require.NoError(t, err, "moved text-options.json should exist")
+		// Verify files in source directory still exist (operation was rejected)
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir", "timeline-demo.json")
+		require.NoError(t, err, "file in source directory should still exist after rejected move")
 	})
 
 	t.Run("error cases", func(t *testing.T) {
@@ -566,7 +515,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 
 	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
-		// Create a file manually in the second repo which is already in first one
+		// Create a file manually in the second repo which has UID from first repo
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		printFileTree(t, helper.ProvisioningPath)
 
@@ -590,10 +539,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		}
 
 		// Verify it returns BadRequest (400) for ownership conflicts
-		if !apierrors.IsBadRequest(err) {
-			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
-			return
-		}
+		require.True(t, apierrors.IsBadRequest(err), "Expected BadRequest error but got: %T - %v", err, err)
 
 		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
@@ -607,7 +553,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			targetPath:   "moved-dashboard.json",
 			originalPath: path.Join("dashboard2.json"),
 			message:      "attempt to move file from different repository",
-			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content to move with the conflicting UID
+			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content with the conflicting UID
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()

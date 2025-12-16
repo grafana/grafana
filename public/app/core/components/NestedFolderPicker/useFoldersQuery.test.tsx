@@ -12,7 +12,7 @@ import { DashboardViewItem } from '../../../features/search/types';
 import { useFoldersQuery } from './useFoldersQuery';
 import { getCustomRootFolderItem, getRootFolderItem } from './utils';
 
-const [_, { folderA, folderB, folderC }] = getFolderFixtures();
+const [_, { folderA, folderB, folderC, folderD }] = getFolderFixtures();
 
 runtime.setBackendSrv(backendSrv);
 setupMockServer();
@@ -44,7 +44,7 @@ describe('useFoldersQuery', () => {
       const [_dashboardsContainer, ...items] = await testFn();
 
       const sortedItemTitles = items.map((item) => (item.item as DashboardViewItem).title).sort();
-      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title].sort();
+      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title, folderD.item.title].sort();
 
       expect(sortedItemTitles).toEqual(expectedTitles);
     });
