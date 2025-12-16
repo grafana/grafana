@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { alpha } from '../../../../../packages/grafana-data/src/themes/colorManipulator';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   const accent = theme.visualization.getColorByName('purple');
+  const blue = theme.visualization.getColorByName('blue');
   const gradient = `linear-gradient(
     90deg,
-    ${alpha(accent, 0.28)} 0%,
-    ${alpha('#9578eaff', 0.28)} 100%
+    ${colorManipulator.alpha(accent, 0.28)} 0%,
+    ${colorManipulator.alpha(blue, 0.28)} 100%
   )`;
   return {
     dashlistLink: css({

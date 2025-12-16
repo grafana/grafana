@@ -19,7 +19,6 @@ export function DashListItem({ dashboard, url, showFolderNames, locationInfo, la
   return (
     <>
       {layoutMode === 'list' ? (
-        // list mode
         <div className={css.dashlistLink}>
           <Box flex={1}>
             <Link href={url}>{dashboard.name}</Link>
@@ -38,7 +37,6 @@ export function DashListItem({ dashboard, url, showFolderNames, locationInfo, la
           />
         </div>
       ) : (
-        // card mode
         <Card className={css.dashlistCard} noMargin>
           <Stack justifyContent="space-between" alignItems="center">
             <Link href={url}>{dashboard.name}</Link>
