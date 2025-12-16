@@ -48,7 +48,6 @@ func TestSQLKV(t *testing.T) {
 		NSPrefix: "sql-kv-test",
 		SkipTests: map[string]bool{
 			TestKVSave:           true,
-			TestKVDelete:         true,
 			TestKVKeys:           true,
 			TestKVKeysWithLimits: true,
 			TestKVKeysWithSort:   true,
