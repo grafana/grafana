@@ -53,6 +53,7 @@ type provisioningTestHelper struct {
 	ProvisioningPath string
 
 	Repositories       *apis.K8sResourceClient
+	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
@@ -703,6 +704,11 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
 	})
+	connections := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+	})
 	jobs := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
@@ -763,6 +769,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories:       repositories,
+		Connections:        connections,
 		AdminREST:          adminClient,
 		EditorREST:         editorClient,
 		ViewerREST:         viewerClient,
@@ -956,4 +963,50 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		}
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 	}, waitTimeoutDefault, waitIntervalDefault, "repositories should be cleaned up between subtests")
+}
+
+func postHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPost, path, body, user)
+}
+
+func patchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func requestHelper(
+	t *testing.T,
+	helper apis.K8sTestHelper,
+	method string,
+	path string,
+	body interface{},
+	user apis.User,
+) (map[string]interface{}, int, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:        user,
+		Method:      method,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		res := map[string]interface{}{}
+		err := json.Unmarshal(resp.Body, &res)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+		}
+
+		return res, resp.Response.StatusCode, fmt.Errorf("failure when making request: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, resp.Response.StatusCode, nil
 }
