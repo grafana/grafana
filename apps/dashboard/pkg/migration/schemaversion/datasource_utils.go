@@ -3,8 +3,6 @@ package schemaversion
 import (
 	"context"
 	"time"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // Shared utility functions for datasource migrations across different schema versions.
@@ -36,7 +34,7 @@ func WrapIndexProviderWithCache(provider DataSourceIndexProvider, cacheTTL time.
 		return provider
 	}
 	return &cachedIndexProvider{
-		newCachedProvider[*DatasourceIndex](provider.Index, defaultCacheSize, cacheTTL, log.New("schemaversion.dsindexprovider")),
+		newCachedProvider[*DatasourceIndex](provider.Index, defaultCacheSize, cacheTTL),
 	}
 }
 
@@ -46,7 +44,7 @@ func WrapLibraryElementProviderWithCache(provider LibraryElementIndexProvider, c
 		return provider
 	}
 	return &cachedLibraryElementProvider{
-		newCachedProvider[[]LibraryElementInfo](provider.GetLibraryElementInfo, defaultCacheSize, cacheTTL, log.New("schemaversion.leindexprovider")),
+		newCachedProvider[[]LibraryElementInfo](provider.GetLibraryElementInfo, defaultCacheSize, cacheTTL),
 	}
 }
 
