@@ -6,12 +6,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 const defaultCacheSize = 1000
@@ -52,14 +50,13 @@ func newCachedProvider[T any](fetch func(context.Context) T, size int, cacheTTL 
 // Get returns the cached value if it's still valid, otherwise calls fetch and caches the result.
 func (p *cachedProvider[T]) Get(ctx context.Context) T {
 	// Get namespace info from ctx
-	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
 		// No namespace, fall back to direct fetch call without caching
-		logging.FromContext(ctx).Warn("Unable to get namespace info from context, skipping cache", "error", err)
+		logging.FromContext(ctx).Warn("Unable to get namespace info from context, skipping cache")
 		return p.fetch(ctx)
 	}
 
-	namespace := nsInfo.Value
 	// Fast path: check if cache is still valid
 	if entry, ok := p.cache.Get(namespace); ok {
 		return entry
@@ -98,6 +95,6 @@ func (p *cachedProvider[T]) Preload(ctx context.Context, nsInfos []types.Namespa
 		logging.FromContext(ctx).Info("finished preloading cache", "nsInfos", len(nsInfos), "elapsed", time.Since(startedAt))
 	}()
 	for _, nsInfo := range nsInfos {
-		p.cache.Add(nsInfo.Value, p.fetch(k8srequest.WithNamespace(ctx, nsInfo.Value)))
+		p.cache.Add(nsInfo.Value, p.fetch(request.WithNamespace(ctx, nsInfo.Value)))
 	}
 }
