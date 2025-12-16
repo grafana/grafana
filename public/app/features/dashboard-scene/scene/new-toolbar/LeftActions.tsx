@@ -4,6 +4,7 @@ import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction'
 import { DashboardScene } from '../DashboardScene';
 import { ManagedDashboardNavBarBadge } from '../ManagedDashboardNavBarBadge';
 
+import { AnalyzeDashboardButton } from './actions/AnalyzeDashboardButton';
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';
 import { PublicDashboardBadge } from './actions/PublicDashboardBadge';
 import { StarButton } from './actions/StarButton';
@@ -49,6 +50,12 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         component: OpenSnapshotOriginButton,
         group: 'actions',
         condition: isSnapshot && !isEditingDashboard,
+      },
+      {
+        key: 'analyze-dashboard-button',
+        component: AnalyzeDashboardButton,
+        group: 'actions',
+        condition: hasUid && isShowingDashboard && !isEditingDashboard,
       },
     ],
     dashboard
