@@ -1,8 +1,10 @@
 import { FieldDisplay, Threshold } from '@grafana/data';
 
+import { useTheme2 } from '../../themes/ThemeContext';
+
 import { RadialArcPath } from './RadialArcPath';
 import { RadialColorDefs } from './RadialColorDefs';
-import { RadialShape } from './RadialGauge';
+import { RadialGradientMode, RadialShape } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
 export interface Props {
@@ -16,6 +18,7 @@ export interface Props {
   glowFilter?: string;
   colorDefs: RadialColorDefs;
   thresholds: Threshold[];
+  gradientMode: RadialGradientMode;
 }
 export function ThresholdsBar({
   dimensions,
@@ -27,7 +30,9 @@ export function ThresholdsBar({
   colorDefs,
   thresholds,
   shape,
+  gradientMode,
 }: Props) {
+  const theme = useTheme2();
   const fieldConfig = fieldDisplay.field;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
@@ -59,6 +64,7 @@ export function ThresholdsBar({
         startAngle={currentStart}
         arcLengthDeg={lengthDeg}
         colorDefs={colorDefs}
+        color={gradientMode === 'none' ? threshold.color : undefined}
         shape={shape}
         dimensions={thresholdDimensions}
         roundedBars={roundedBars}
@@ -69,10 +75,5 @@ export function ThresholdsBar({
     currentStart += lengthDeg;
   }
 
-  return (
-    <>
-      <g>{paths}</g>
-      <defs>{colorDefs.getDefs()}</defs>
-    </>
-  );
+  return <g>{paths}</g>;
 }

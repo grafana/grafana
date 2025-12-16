@@ -156,6 +156,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           segmentSpacing={segmentSpacing}
           colorDefs={colorDefs}
           shape={shape}
+          gradientMode={gradient}
         />
       );
     } else {
@@ -231,6 +232,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               glowFilter={`url(#${glowFilterId})`}
               colorDefs={colorDefs}
               shape={shape}
+              gradientMode={gradient}
             />
           );
         }

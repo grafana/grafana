@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useEffect } from 'react';
 
 import { RadialColorDefs } from './RadialColorDefs';
 import { RadialShape } from './RadialGauge';
@@ -11,7 +11,6 @@ export interface RadialArcPathPropsBase {
   arcLengthDeg: number;
   shape: RadialShape;
   color?: string;
-  gradient?: string;
   glowFilter?: string;
   roundedBars?: boolean;
   showGuideDots?: boolean;

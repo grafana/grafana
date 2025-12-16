@@ -1,11 +1,4 @@
-import {
-  colorManipulator,
-  DisplayProcessor,
-  FALLBACK_COLOR,
-  FieldDisplay,
-  getFieldColorMode,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { colorManipulator, DisplayProcessor, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2 } from '@grafana/data';
 
 import { RadialGradientMode, RadialShape } from './RadialGauge';
 import { buildGradientColors } from './colors';
@@ -29,96 +22,15 @@ const getGuideDotColor = (color: string): string => {
 };
 
 export class RadialColorDefs {
-  private colorToIds: Record<string, string> = {};
-  private defs: React.ReactNode[] = [];
-
   constructor(private options: RadialColorDefsOptions) {}
 
-  getSegmentColor(forValue: number, segmentIdx: number): string {
+  getSegmentColor(forValue: number): string {
     const { displayProcessor } = this.options;
-    const baseColor = displayProcessor(forValue).color ?? FALLBACK_COLOR;
-    return this.getColor(baseColor, segmentIdx);
-  }
-
-  getColor(baseColor: string, segmentIdx?: number): string {
-    const { gradient, dimensions, gaugeId, fieldDisplay, shape } = this.options;
-
-    let id = `value-color-${baseColor}-${gaugeId}`;
-    const forSegment = segmentIdx !== undefined;
-    if (forSegment) {
-      id += `-segment-${segmentIdx}`;
-    }
-
-    if (this.colorToIds[id]) {
-      return this.colorToIds[id];
-    }
-
-    // If no gradient, just return the base color
-    if (gradient === 'none') {
-      this.colorToIds[id] = baseColor;
-      return baseColor;
-    }
-
-    const returnColor = (this.colorToIds[id] = `url(#${id})`);
-    const colorModeId = fieldDisplay.field.color?.mode;
-    const colorMode = getFieldColorMode(colorModeId);
-    const valuePercent = fieldDisplay.display.percent ?? 0;
-
-    const gradientStops = this.getGradient(baseColor, forSegment);
-    const stops = gradientStops.map((stop, i) => (
-      <stop key={i} offset={`${(stop.percent * 100).toFixed(2)}%`} stopColor={stop.color} stopOpacity={1} />
-    ));
-
-    // circular gradients are a little awkward today. we don't exactly have the result we
-    // want for continuous color modes, which would be to have the radial bar fill from the top
-    // around the circle. But SVG doesn't support that kind of gradient on stroke paths out-of-the-box,
-    // we'd need to implement something like https://gist.github.com/mbostock/4163057
-
-    // Handle continusous color modes first
-    // If it's a segment color we don't want to do continuous gradients
-    if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
-      this.defs.push(
-        <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-          {stops}
-        </linearGradient>
-      );
-
-      return returnColor;
-    }
-
-    // For value based colors we want to stay more true to the specific color
-    // So a radial gradient that adds a bit of light and shade works best
-    if (colorMode.isByValue) {
-      const x2 = shape === 'circle' ? 0 : 1 / valuePercent;
-      const y2 = shape === 'circle' ? 1 : 0;
-      this.defs.push(
-        <radialGradient key={id} id={id} x1="0" y1="0" x2={x2} y2={y2}>
-          {stops}
-        </radialGradient>
-      );
-      return returnColor;
-    }
-
-    // For fixed / palette based color scales we can create a more fun
-    // hue and light based linear gradient that we rotate/move with the value
-    const x2 = shape === 'circle' ? 0 : dimensions.centerX + dimensions.radius;
-    const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
-
-    this.defs.push(
-      <linearGradient key={id} id={id} x1="0" y1="0" x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
-        {stops}
-      </linearGradient>
-    );
-
-    return returnColor;
+    return displayProcessor(forValue).color ?? FALLBACK_COLOR;
   }
 
   getFieldBaseColor(): string {
     return this.options.fieldDisplay.display.color ?? FALLBACK_COLOR;
-  }
-
-  getMainBarColor(): string {
-    return this.getColor(this.getFieldBaseColor());
   }
 
   getGradient(baseColor = this.getFieldBaseColor(), forSegment?: boolean): Array<{ color: string; percent: number }> {
@@ -131,7 +43,7 @@ export class RadialColorDefs {
     const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
     return this.options.shape === 'circle'
       ? `conic-gradient(from 0deg, ${colorStrings.join(', ')})`
-      : 'linear-gradient(90deg, ' + colorStrings.join(', ') + ')';
+      : `linear-gradient(90deg, ${colorStrings.join(', ')})`;
   }
 
   getEndpointColors(): [string, string] {
@@ -156,9 +68,5 @@ export class RadialColorDefs {
   getGuideDotColors(): [string, string] {
     const [startColor, endColor] = this.getEndpointColors();
     return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
-  }
-
-  getDefs(): React.ReactNode[] {
-    return this.defs;
   }
 }

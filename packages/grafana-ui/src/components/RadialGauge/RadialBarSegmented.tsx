@@ -4,7 +4,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
 import { RadialColorDefs } from './RadialColorDefs';
-import { RadialShape } from './RadialGauge';
+import { RadialGradientMode, RadialShape } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
 export interface RadialBarSegmentedProps {
@@ -17,6 +17,7 @@ export interface RadialBarSegmentedProps {
   segmentCount: number;
   segmentSpacing: number;
   shape: RadialShape;
+  gradientMode: RadialGradientMode;
 }
 export function RadialBarSegmented({
   fieldDisplay,
@@ -28,6 +29,7 @@ export function RadialBarSegmented({
   segmentSpacing,
   colorDefs,
   shape,
+  gradientMode,
 }: RadialBarSegmentedProps) {
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -41,9 +43,13 @@ export function RadialBarSegmented({
 
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
-    // const angleColor = colorDefs.getSegmentColor(angleValue, i);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = angleValue >= value ? theme.colors.action.hover : undefined;
+    let segmentColor: string | undefined;
+    if (angleValue >= value) {
+      segmentColor = theme.colors.action.hover;
+    } else if (gradientMode === 'none') {
+      segmentColor = colorDefs.getSegmentColor(angleValue);
+    }
 
     segments.push(
       <RadialArcPath
@@ -59,12 +65,7 @@ export function RadialBarSegmented({
     );
   }
 
-  return (
-    <>
-      <g>{segments}</g>
-      <defs>{colorDefs.getDefs()}</defs>
-    </>
-  );
+  return <g>{segments}</g>;
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {

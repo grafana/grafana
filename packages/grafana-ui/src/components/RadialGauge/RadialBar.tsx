@@ -47,7 +47,6 @@ export function RadialBar({
           startAngle={startAngle}
           arcLengthDeg={angle}
           colorDefs={colorDefs}
-          gradient={colorDefs.getGradientDef()}
           roundedBars={roundedBars}
           glowFilter={glowFilter}
           showGuideDots={roundedBars}
@@ -56,7 +55,6 @@ export function RadialBar({
           shape={shape}
         />
       </g>
-      <defs>{colorDefs.getDefs()}</defs>
     </>
   );
 }
