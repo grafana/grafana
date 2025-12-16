@@ -59,23 +59,5 @@ export function asapSmooth(data: Array<DataPoint | [number, number]>, options: A
     }
   }
 
-  // always preserve first and last points to maintain complete time range
-  if (result.length > 0 && inputData.length > 0) {
-    const firstInput = inputData[0];
-    const lastInput = inputData[inputData.length - 1];
-    const firstResult = result[0];
-    const lastResult = result[result.length - 1];
-
-    // always add first point if it's not already there
-    if (firstResult && firstResult.x !== firstInput[0]) {
-      result.unshift({ x: firstInput[0], y: firstInput[1] });
-    }
-
-    // always add last point if it's not already there
-    if (lastResult && lastResult.x !== lastInput[0]) {
-      result.push({ x: lastInput[0], y: lastInput[1] });
-    }
-  }
-
   return result;
 }
