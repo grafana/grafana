@@ -7,7 +7,7 @@ import { UserStorage } from '@grafana/runtime/internal';
 
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { contextSrv } from '../../../../../core/services/context_srv';
-import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
+import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
 import { SavedSearch, ValidationError, savedSearchesArraySchema, validateSearchName } from './SavedSearches.types';
 
@@ -172,7 +172,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
 
   // Use useAsync for loading state management
   const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearches, []);
-  const isLoading = isLoadingState(loadState);
+  const isLoading = isLoadingState(loadState) || isUninitialized(loadState);
 
   // Load saved searches from storage on mount
   useEffect(() => {

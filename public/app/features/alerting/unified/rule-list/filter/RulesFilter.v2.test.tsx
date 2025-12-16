@@ -467,4 +467,90 @@ describe('RulesFilterV2', () => {
       expect(analytics.trackFilterButtonClick).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Saved Searches', () => {
+    it('Should auto-apply default saved search on first navigation', async () => {
+      // Set up a saved search marked as default
+      const defaultSavedSearch = {
+        id: 'test-id',
+        name: 'Default Search',
+        query: 'state:firing',
+        isDefault: true,
+        createdAt: Date.now(),
+      };
+      mockStorageData.savedSearches = JSON.stringify([defaultSavedSearch]);
+
+      // Clear session storage to simulate fresh navigation (not a refresh)
+      sessionStorage.removeItem('grafana.alerting.alertRules.visited.123');
+
+      render(<RulesFilterV2 />);
+
+      // Wait for the auto-apply to happen
+      await waitFor(() => {
+        expect(mockUpdateFilters).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ruleState: 'firing',
+          })
+        );
+      });
+    });
+
+    it('Should not auto-apply default saved search on page refresh', async () => {
+      // Set up a saved search marked as default
+      const defaultSavedSearch = {
+        id: 'test-id',
+        name: 'Default Search',
+        query: 'state:firing',
+        isDefault: true,
+        createdAt: Date.now(),
+      };
+      mockStorageData.savedSearches = JSON.stringify([defaultSavedSearch]);
+
+      // Set session storage to simulate a page refresh (already visited)
+      sessionStorage.setItem('grafana.alerting.alertRules.visited.123', 'true');
+
+      render(<RulesFilterV2 />);
+
+      // Wait for component to fully render
+      await waitFor(() => {
+        expect(ui.searchInput.get()).toBeInTheDocument();
+      });
+
+      // updateFilters should not have been called with the saved search
+      expect(mockUpdateFilters).not.toHaveBeenCalled();
+    });
+
+    it('Should not auto-apply default saved search when URL has search parameter', async () => {
+      // Set up a saved search marked as default
+      const defaultSavedSearch = {
+        id: 'test-id',
+        name: 'Default Search',
+        query: 'state:firing',
+        isDefault: true,
+        createdAt: Date.now(),
+      };
+      mockStorageData.savedSearches = JSON.stringify([defaultSavedSearch]);
+
+      // Clear session storage to simulate fresh navigation
+      sessionStorage.removeItem('grafana.alerting.alertRules.visited.123');
+
+      // Set URL search parameter
+      locationService.replace({ search: '?search=state:pending' });
+
+      render(<RulesFilterV2 />);
+
+      // Wait for component to fully render
+      await waitFor(() => {
+        expect(ui.searchInput.get()).toBeInTheDocument();
+      });
+
+      // updateFilters should not have been called with the default saved search
+      // (URL parameter takes precedence)
+      expect(mockUpdateFilters).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          ruleState: 'firing',
+        })
+      );
+    });
+  });
 });
