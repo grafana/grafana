@@ -350,22 +350,6 @@ LIMIT
     </div>
   );
 
-  const renderStandaloneEditor = () => (
-    <AutoSizer>
-      {({ width, height }) => (
-        <SQLEditor
-          query={query.expression || initialQuery}
-          onChange={onEditorChange}
-          width={width}
-          height={height ? height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height : undefined}
-          language={EDITOR_LANGUAGE_DEFINITION}
-        >
-          {({ formatQuery }) => renderToolbox(formatQuery)}
-        </SQLEditor>
-      )}
-    </AutoSizer>
-  );
-
   return (
     <>
       {renderSQLEditor()}
@@ -373,13 +357,13 @@ LIMIT
         <Modal
           title={t('expressions.sql-expr.modal-title', 'SQL Editor')}
           closeOnBackdropClick={false}
-          closeOnEscape={false}
+          closeOnEscape={true}
           className={styles.modal}
           contentClassName={styles.modalContent}
           isOpen={isExpanded}
           onDismiss={() => setIsExpanded(false)}
         >
-          {renderStandaloneEditor()}
+          <AutoSizer>{({ width, height }) => renderMainContent(width, height)}</AutoSizer>
         </Modal>
       )}
     </>
