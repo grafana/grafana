@@ -267,5 +267,4 @@ func makeFlags(tt struct {
 	}
 
 	return config, []FeatureFlag{orig}
-
 }

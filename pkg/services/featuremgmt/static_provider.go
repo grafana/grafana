@@ -3,10 +3,11 @@ package featuremgmt
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	"strconv"
 )
 
 // inMemoryBulkProvider is a wrapper around memprovider.InMemoryProvider that

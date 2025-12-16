@@ -34,7 +34,6 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	// TODO IsFeatureToggleEnabled has been deprecated for 2 years now, we should remove this function completely
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
-
 		toggle, ok := toggles[key]
 		if !ok {
 			return false
