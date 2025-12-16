@@ -106,6 +106,7 @@ export const RadialArcPath = memo(
         <clipPath id={id}>
           <path d={path} />
         </clipPath>
+
         <g filter={glowFilter}>
           <foreignObject
             x={centerX - radius - barWidth}
@@ -116,16 +117,12 @@ export const RadialArcPath = memo(
           >
             <div style={bgDivStyle} />
           </foreignObject>
+          {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
+          {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
         </g>
 
-        {showGuideDots && (
-          <>
-            {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
-            {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
-            {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
-            {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
-          </>
-        )}
+        {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
+        {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
       </>
     );
   }
