@@ -13,6 +13,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/google/uuid"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -2384,6 +2385,157 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				require.ElementsMatch(t, tt.expectedRules, result)
 			})
 		}
+	})
+
+	t.Run("filter by LabelMatchers", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		ruleLower := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"team": "alerting", "severity": "warning"}),
+			ruleGen.WithTitle("rule_lowercase")))
+		ruleUpper := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"team": "Alerting", "severity": "critical"}),
+			ruleGen.WithTitle("rule_uppercase")))
+		ruleSpecial := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"key": `value"with"quotes`}),
+			ruleGen.WithTitle("rule_special")))
+		ruleGlob := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"glob": "*[?]"}),
+			ruleGen.WithTitle("rule_glob")))
+		ruleSpecialChars := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"json": "line1\nline2\\end\"quote"}),
+			ruleGen.WithTitle("rule_special_chars")))
+		ruleEmpty := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"empty": ""}),
+			ruleGen.WithTitle("rule_empty")))
+		ruleNonempty := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
+			ruleGen.WithTitle("rule_nonempty")))
+
+		tc := []struct {
+			name          string
+			labelMatchers labels.Matchers
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name: "equality matcher is case-sensitive",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower},
+			},
+			{
+				name: "equality matcher matches uppercase when specified",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "Alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper},
+			},
+			{
+				name: "inequality matcher is case-sensitive",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+			},
+			{
+				name: "special characters in labels are handled correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchEqual, "key", `value"with"quotes`)
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleSpecial},
+			},
+			{
+				name: "matcher with non-existent label returns no rules",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "nonexistent", "value"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name: "multiple matchers are ANDed",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "Alerting"); return m }(),
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "severity", "critical"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper},
+			},
+			{
+				name: "GLOB special characters are escaped correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "glob", "*[?]"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleGlob},
+			},
+			{
+				name: "JSON escape characters are handled correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchEqual, "json", "line1\nline2\\end\"quote")
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleSpecialChars},
+			},
+			{
+				name: "empty string value matches correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+			},
+			{
+				name: "inequality matcher on non-existent label matches all rules",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchNotEqual, "nonexistent", "value")
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:         orgID,
+					LabelMatchers: tt.labelMatchers,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+
+		t.Run("regex matcher returns error from store", func(t *testing.T) {
+			query := &models.ListAlertRulesQuery{
+				OrgID: orgID,
+				LabelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchRegexp, "team", "alert.*"); return m }(),
+				},
+			}
+			_, err := store.ListAlertRules(context.Background(), query)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "is not supported")
+		})
+
+		t.Run("not-regex matcher returns error from store", func(t *testing.T) {
+			query := &models.ListAlertRulesQuery{
+				OrgID: orgID,
+				LabelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotRegexp, "team", "alert.*"); return m }(),
+				},
+			}
+			_, err := store.ListAlertRules(context.Background(), query)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "is not supported")
+		})
 	})
 }
 

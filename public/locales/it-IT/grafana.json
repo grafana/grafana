@@ -5133,6 +5133,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configura",
       "menu-use-library-panel": "Usa il pannello della libreria",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6146,10 @@
       "no-data-found": "Nessun dato trovato"
     },
     "inspect-json-tab": {
-      "apply": "Applica"
+      "apply": "Applica",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcola dinamicamente l'intervallo dividendo l'intervallo di tempo per il conteggio specificato",

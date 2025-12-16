@@ -33,6 +33,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const (
+	queryIncludeInternalLabels = "includeInternalLabels"
+	queryRuleMatcher           = "rule_matcher"
+	queryInstanceMatcher       = "matcher"
+)
+
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
 	ListAlertRulesStoreV2
@@ -62,6 +68,20 @@ type PrometheusSrv struct {
 // Package-level OpenTelemetry tracer per Grafana instrumentation conventions.
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ngalert/api/prometheus")
 
+// badRequestError returns a Prometheus-compatible error response for bad request data.
+func badRequestError(err error) apimodels.RuleResponse {
+	return apimodels.RuleResponse{
+		DiscoveryBase: apimodels.DiscoveryBase{
+			Status:    "error",
+			Error:     err.Error(),
+			ErrorType: apiv1.ErrBadData,
+		},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []apimodels.RuleGroup{},
+		},
+	}
+}
+
 func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
 		log,
@@ -72,8 +92,6 @@ func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status
 		provenanceStore,
 	}
 }
-
-const queryIncludeInternalLabels = "includeInternalLabels"
 
 func getBoolWithDefault(vals url.Values, field string, d bool) bool {
 	f := vals.Get(field)
@@ -188,15 +206,15 @@ func getPanelIDFromQuery(v url.Values) (int64, error) {
 	return 0, nil
 }
 
-func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
+func getMatchersFromQuery(v url.Values, paramName string) (labels.Matchers, error) {
 	var matchers labels.Matchers
-	for _, s := range v["matcher"] {
+	for _, s := range v[paramName] {
 		var m labels.Matcher
 		if err := json.Unmarshal([]byte(s), &m); err != nil {
 			return nil, err
 		}
 		if len(m.Name) == 0 {
-			return nil, errors.New("bad matcher: the name cannot be blank")
+			return nil, fmt.Errorf("bad %s: the name cannot be blank", paramName)
 		}
 		matchers = append(matchers, &m)
 	}
@@ -454,6 +472,7 @@ type paginationContext struct {
 	stateFilterSet     map[eval.State]struct{}
 	healthFilterSet    map[string]struct{}
 	matchers           labels.Matchers
+	ruleLabelMatchers  labels.Matchers
 	labelOptions       []ngmodels.LabelOption
 	limitAlertsPerRule int64
 	limitRulesPerGroup int64
@@ -476,6 +495,9 @@ func accumulateTotals(dest, source map[string]int64) {
 
 // fetchAndFilterPage fetches one page from the store and applies filters
 func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+	// Split matchers: only equality/inequality are supported by the store
+	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:           ctx.opts.OrgID,
@@ -488,6 +510,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			DataSourceUIDs:  ctx.dataSourceUIDs,
 			SearchTitle:     ctx.title,
 			SearchRuleGroup: ctx.searchRuleGroup,
+			LabelMatchers:   storeMatchers,
 		},
 		RuleType:      ctx.ruleType,
 		Limit:         remainingGroups,
@@ -534,6 +557,8 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			filterRulesByHealth(ruleGroup, ctx.healthFilterSet)
 		}
 
+		filterRulesByLabelMatchers(ruleGroup, ctx.ruleLabelMatchers)
+
 		if ctx.limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > ctx.limitRulesPerGroup {
 			ruleGroup.Rules = ruleGroup.Rules[0:ctx.limitRulesPerGroup]
 		}
@@ -544,6 +569,17 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 	}
 
 	return result, nil
+}
+
+func filterOutRegexMatchers(matchers labels.Matchers) labels.Matchers {
+	var result labels.Matchers
+	for _, m := range matchers {
+		if m.Type == labels.MatchEqual || m.Type == labels.MatchNotEqual {
+			result = append(result, m)
+		}
+	}
+
+	return result
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
@@ -644,21 +680,30 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		attribute.Int64("limit_rules", limitRulesPerGroup),
 		attribute.Int64("limit_alerts", limitAlertsPerRule),
 	)
-	matchers, err := getMatchersFromQuery(opts.Query)
+	matchers, err := getMatchersFromQuery(opts.Query, queryInstanceMatcher)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
 	}
 	span.SetAttributes(attribute.Int("matcher_count", len(matchers)))
 
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, queryRuleMatcher)
+	if err != nil {
+		return badRequestError(err)
+	}
+	regexCount := 0
+	for _, m := range ruleLabelMatchers {
+		if m.Type == labels.MatchRegexp || m.Type == labels.MatchNotRegexp {
+			regexCount++
+		}
+	}
+	span.SetAttributes(
+		attribute.Int("rule_matcher_count", len(ruleLabelMatchers)),
+		attribute.Int("rule_matcher_regex_count", regexCount),
+	)
+
 	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
 	}
 	span.SetAttributes(
 		attribute.Int("state_filter_count", len(stateFilterSet)),
@@ -667,10 +712,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
 	}
 	span.SetAttributes(
 		attribute.Int("health_filter_count", len(healthFilterSet)),
@@ -808,6 +850,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		stateFilterSet:     stateFilterSet,
 		healthFilterSet:    healthFilterSet,
 		matchers:           matchers,
+		ruleLabelMatchers:  ruleLabelMatchers,
 		labelOptions:       labelOptions,
 		limitAlertsPerRule: limitAlertsPerRule,
 		limitRulesPerGroup: limitRulesPerGroup,
@@ -833,6 +876,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	return ruleResponse
 }
 
+// nolint:gocyclo
 func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -846,41 +890,30 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	dashboardUID := opts.Query.Get("dashboard_uid")
 	panelID, err := getPanelIDFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(fmt.Errorf("invalid panel_id: %w", err))
 	}
 	if dashboardUID == "" && panelID != 0 {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = "panel_id must be set with dashboard_uid"
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(errors.New("panel_id must be set with dashboard_uid"))
 	}
 
 	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
 	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
-	matchers, err := getMatchersFromQuery(opts.Query)
+	matchers, err := getMatchersFromQuery(opts.Query, queryInstanceMatcher)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
+	}
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, queryRuleMatcher)
+	if err != nil {
+		return badRequestError(err)
 	}
 	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
 	}
 
 	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = err.Error()
-		ruleResponse.ErrorType = apiv1.ErrBadData
-		return ruleResponse
+		return badRequestError(err)
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -913,6 +946,9 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	dataSourceUIDs := opts.Query["datasource_uid"]
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
+	// Split matchers: only equality/inequality are supported by the store
+	storeMatchers := filterOutRegexMatchers(ruleLabelMatchers)
+
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:           opts.OrgID,
 		NamespaceUIDs:   namespaceUIDs,
@@ -924,6 +960,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		SearchTitle:     title,
 		SearchRuleGroup: searchRuleGroup,
 		DataSourceUIDs:  dataSourceUIDs,
+		LabelMatchers:   storeMatchers,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -976,6 +1013,10 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 		if len(healthFilterSet) > 0 {
 			filterRulesByHealth(ruleGroup, healthFilterSet)
+		}
+
+		if len(ruleLabelMatchers) > 0 {
+			filterRulesByLabelMatchers(ruleGroup, ruleLabelMatchers)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
@@ -1102,6 +1143,30 @@ func filterRulesByHealth(ruleGroup *apimodels.RuleGroup, withHealthFast map[stri
 			filteredRules = append(filteredRules, rule)
 		}
 	}
+	ruleGroup.Rules = filteredRules
+}
+
+func filterRulesByLabelMatchers(ruleGroup *apimodels.RuleGroup, matchers labels.Matchers) {
+	if len(matchers) == 0 {
+		return
+	}
+
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+
+	for _, rule := range ruleGroup.Rules {
+		ruleLabels := rule.Labels.Map()
+		matches := true
+		for _, m := range matchers {
+			if !m.Matches(ruleLabels[m.Name]) {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+
 	ruleGroup.Rules = filteredRules
 }
 

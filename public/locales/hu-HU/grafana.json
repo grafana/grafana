@@ -5133,6 +5133,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurálás",
       "menu-use-library-panel": "Könyvtárpanel használata",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6146,10 @@
       "no-data-found": "Nem található adat"
     },
     "inspect-json-tab": {
-      "apply": "Alkalmaz"
+      "apply": "Alkalmaz",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Dinamikusan kiszámítja az intervallumot úgy, hogy az időtartományt elosztja a megadott számmal",
