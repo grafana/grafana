@@ -643,7 +643,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		require.NoError(t, resp.Body.Close())
 	}
 
 	// Grant view permission to viewer and editor roles, and edit permission to editor role
