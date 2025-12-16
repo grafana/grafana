@@ -18,6 +18,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -32,6 +33,7 @@ const (
 
 type receiversAuthz interface {
 	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, ReceiverStatus) error
 }
 
 type AlertmanagerSrv struct {
@@ -210,7 +212,9 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers); err != nil {
+	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers, func(receiverName string, paths []models.IntegrationFieldPath) error {
+		return srv.receiverAuthz.AuthorizeUpdateProtected(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiverName})
+	}); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")

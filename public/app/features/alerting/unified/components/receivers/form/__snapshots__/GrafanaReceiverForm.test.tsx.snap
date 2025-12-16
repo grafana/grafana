@@ -8,11 +8,7 @@ exports[`GrafanaReceiverForm handles nested secure fields correctly 1`] = `
       {
         "disableResolveMessage": false,
         "name": "mqtt contact point",
-        "secureFields": {
-          "password": true,
-          "tlsConfig.clientCertificate": true,
-          "tlsConfig.clientKey": true,
-        },
+        "secureFields": {},
         "settings": {
           "brokerUrl": "broker url",
           "retain": false,

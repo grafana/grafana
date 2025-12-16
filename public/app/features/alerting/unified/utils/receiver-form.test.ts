@@ -1,7 +1,7 @@
 import { NotifierDTO } from 'app/types';
 
 import { GrafanaManagedContactPoint, Receiver } from '../../../../plugins/datasource/alertmanager/types';
-import { grafanaAlertNotifiers, grafanaAlertNotifiersMock } from '../mockGrafanaNotifiers';
+import { grafanaAlertNotifiers } from '../mockGrafanaNotifiers';
 import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
 import {
@@ -172,7 +172,6 @@ describe('formValuesToGrafanaReceiver', () => {
       items: [
         {
           __id: '1',
-          secureSettings: {},
           secureFields: {},
           type: 'discord',
           settings: {
@@ -186,7 +185,6 @@ describe('formValuesToGrafanaReceiver', () => {
     const channelMap = {
       '1': {
         uid: 'abc123',
-        secureSettings: {},
         secureFields: {},
         type: 'discord',
         settings: {
@@ -222,7 +220,6 @@ describe('formValuesToCloudReceiver', () => {
             fields: [{ __id: '10', title: 'priority', value: '1' }],
           },
           secureFields: {},
-          secureSettings: {},
           sendResolved: true,
         },
       ],
@@ -235,7 +232,6 @@ describe('formValuesToCloudReceiver', () => {
         url: 'https://slack.example.com/',
       },
       secureFields: {},
-      secureSettings: {},
       sendResolved: true,
     };
 
@@ -256,7 +252,7 @@ describe('formValuesToCloudReceiver', () => {
 });
 
 describe('grafanaReceiverToFormValues', () => {
-  const { googlechat, slack, sns } = grafanaAlertNotifiers;
+  const { slack, sns } = grafanaAlertNotifiers;
 
   it('should convert fields from settings and secureFields', () => {
     const slackReceiver: GrafanaManagedContactPoint = {
@@ -274,11 +270,10 @@ describe('grafanaReceiverToFormValues', () => {
       ],
     };
 
-    const [formValues, _] = grafanaReceiverToFormValues(slackReceiver, grafanaAlertNotifiersMock);
+    const [formValues, _] = grafanaReceiverToFormValues(slackReceiver);
     expect(formValues.items[0].type).toBe(slack.type);
     expect(formValues.items[0].settings.recipient).toBe('#alerting-ops');
     expect(formValues.items[0].secureFields.token).toBe(true);
-    expect(formValues.items[0].secureSettings).toEqual({});
   });
 
   it('should convert nested settings and secureFields', () => {
@@ -300,33 +295,13 @@ describe('grafanaReceiverToFormValues', () => {
       ],
     };
 
-    const [formValues, _] = grafanaReceiverToFormValues(snsReceiver, grafanaAlertNotifiersMock);
+    const [formValues, _] = grafanaReceiverToFormValues(snsReceiver);
 
     expect(formValues.items[0].settings.api_url).toBe('https://sns.example.com/');
     expect(formValues.items[0].settings.phone_number).toBe('+1234567890');
     expect(formValues.items[0].settings.sigv4.region).toBe('us-east-1');
     expect(formValues.items[0].secureFields['sigv4.access_key']).toBe(true);
     expect(formValues.items[0].secureFields['sigv4.secret_key']).toBe(true);
-  });
-
-  // Some receivers have migrated options that are now marked as secure but were standard fields in the past
-  // We need to handle the case where the field is still present in settings but marked as secure
-  it('should convert fields from settings to secureSettings for migrated options', () => {
-    const googleChatReceiver: GrafanaManagedContactPoint = {
-      name: 'googlechat-receiver',
-      grafana_managed_receiver_configs: [
-        {
-          type: googlechat.type,
-          settings: {
-            url: 'https://googlechat.example.com/',
-          },
-        },
-      ],
-    };
-
-    const [formValues, _] = grafanaReceiverToFormValues(googleChatReceiver, grafanaAlertNotifiersMock);
-    expect(formValues.items[0].secureSettings.url).toBe('https://googlechat.example.com/');
-    expect(formValues.items[0].settings.url).toBeUndefined();
   });
 });
 

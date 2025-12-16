@@ -25,6 +25,7 @@ type NotifierOption struct {
 	Secure         bool             `json:"secure"`
 	DependsOn      string           `json:"dependsOn"`
 	SubformOptions []NotifierOption `json:"subformOptions"`
+	Protected      bool             `json:"protected"`
 }
 
 // ElementType is the type of element that can be rendered in the frontend.

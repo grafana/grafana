@@ -44,7 +44,7 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
-const getTemplatePreviewContent = async () => within(screen.getByTestId('template-preview')).getByTestId('mockeditor');
+const getTemplatePreviewContent = async () => within(screen.getByTestId('template-preview')).findByTestId('mockeditor');
 
 const templatesSelectorTestId = 'existing-templates-selector';
 

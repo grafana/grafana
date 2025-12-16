@@ -1547,6 +1547,16 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": "Open external link"
+    },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": "This field is protected and can only be editor by users with elevated permissions"
+        }
+      }
+    },
     "receivers-section": {
       "new-menu": {
         "label-export-all": "Export all"

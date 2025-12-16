@@ -6,10 +6,10 @@ exports[`formValuesToGrafanaReceiver should migrate regular settings to secure s
     {
       "disableResolveMessage": false,
       "name": "my-receiver",
-      "secureSettings": {
+      "secureFields": {},
+      "settings": {
         "url": "https://foo.bar/",
       },
-      "settings": {},
       "type": "discord",
       "uid": "abc123",
     },
