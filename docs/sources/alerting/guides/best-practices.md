@@ -1,23 +1,25 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/
-description: This section provides a set of guides for useful alerting practices and recommendations
+aliases:
+  - ../best-practices/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/
+canonical: https://grafana.com/docs/grafana/latest/alerting/guides/best-practices/
+description: Learn how to detect missing metrics and design alerts that handle gaps in data in Prometheus and Grafana Alerting.
 keywords:
   - grafana
+  - alerting
+  - guide
+  - rules
+  - create
 labels:
   products:
     - cloud
     - enterprise
     - oss
 menuTitle: Best practices
-title: Grafana Alerting best practices
-weight: 170
+title: Best practices
+weight: 1010
 ---
 
-# Grafana Alerting best practices
-
-This section provides a set of guides and examples of best practices for Grafana Alerting. Here you can learn more about how to handle common alert management problems and you can see examples of more advanced usage of Grafana Alerting.
-
-{{< section >}}
+# Best practices
 
 Designing and configuring an alert management set up that works takes time. Here are some additional tips on how to create an effective alert management set up:
 
