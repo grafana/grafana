@@ -26,6 +26,8 @@ import {
   getLogoUrl,
   buildDashboardDetails,
   onUseCommunityDashboard,
+  COMMUNITY_PAGE_SIZE_QUERY,
+  COMMUNITY_RESULT_SIZE,
 } from './utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
@@ -44,7 +46,6 @@ type SuggestedDashboardsResult = {
 
 // Constants for suggested dashboards API params
 const MAX_SUGGESTED_DASHBOARDS_PREVIEW = 2;
-const COMMUNITY_PAGE_SIZE = 6;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_SCREENSHOTS = true;
@@ -92,14 +93,14 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
           orderBy: DEFAULT_SORT_ORDER,
           direction: DEFAULT_SORT_DIRECTION,
           page: 1,
-          pageSize: COMMUNITY_PAGE_SIZE,
+          pageSize: COMMUNITY_PAGE_SIZE_QUERY,
           includeScreenshots: INCLUDE_SCREENSHOTS,
           dataSourceSlugIn: ds.type,
           includeLogo: INCLUDE_LOGO,
         }),
       ]);
 
-      const community = communityResponse.items;
+      const community = communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE);
 
       // Mix: 1 provisioned + 2 community
       const mixed: MixedDashboard[] = [];
