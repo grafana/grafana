@@ -103,7 +103,8 @@ class ScenarioContext {
       timeRange: getDefaultTimeRange(),
     };
 
-    this.suggestions = await getAllSuggestions(panelData);
+    const result = await getAllSuggestions(panelData);
+    this.suggestions = result.suggestions;
   }
 
   names() {

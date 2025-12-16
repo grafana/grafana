@@ -11194,6 +11194,9 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "error-loading-some-suggestions": {
+        "message": "Some suggestions could not be loaded"
+      },
       "error-loading-suggestions": {
         "message": "An error occurred when loading visualization suggestions.",
         "title": "Error"

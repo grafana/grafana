@@ -1,4 +1,5 @@
 import {
+  AppEvents,
   getPanelDataSummary,
   PanelData,
   PanelDataSummary,
@@ -8,16 +9,22 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin, isBuiltInPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getAllPanelPluginMeta } from '../state/util';
 
 import { panelsToCheckFirst } from './consts';
 
+interface PluginLoadResult {
+  plugins: PanelPlugin[];
+  hasErrors: boolean;
+}
+
 /**
  * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
  */
-async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
+async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
   // list of plugins to load is determined by the feature flag
   const pluginIds: string[] = config.featureToggles.externalVizSuggestions
     ? getAllPanelPluginMeta()
@@ -27,21 +34,27 @@ async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
 
   // import the plugins in parallel using Promise.allSettled
   const plugins: PanelPlugin[] = [];
-  const settledPromises = await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)));
+  let hasErrors = false;
+  const settledPromises = await Promise.allSettled(
+    pluginIds.map((id) => Promise.resolve().then(() => importPanelPlugin(id)))
+  );
+
   for (let i = 0; i < settledPromises.length; i++) {
     const settled = settledPromises[i];
-
     if (settled.status === 'fulfilled') {
       plugins.push(settled.value);
+    } else {
+      const pluginId = pluginIds[i];
+      if (isBuiltInPlugin(pluginId)) {
+        hasErrors = true;
+        console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
+      } else {
+        appEvents.emit(AppEvents.alertError, [`Failed to load panel plugin: ${pluginId}.`]);
+      }
     }
-    // TODO: do we want to somehow log if there were errors loading some of the plugins?
   }
 
-  if (plugins.length === 0) {
-    throw new Error('No panel plugins with visualization suggestions found');
-  }
-
-  return plugins;
+  return { plugins, hasErrors };
 }
 
 /**
@@ -89,16 +102,23 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
   });
 }
 
+export interface SuggestionsResult {
+  suggestions: PanelPluginVisualizationSuggestion[];
+  hasErrors: boolean;
+}
+
 /**
  * given PanelData, return a sorted list of Suggestions from all plugins which support it.
  * @param {PanelData} data queried and transformed data for the panel
- * @returns {PanelPluginVisualizationSuggestion[]} sorted list of suggestions
+ * @returns {SuggestionsResult} sorted list of suggestions and error status
  */
-export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
+export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsResult> {
   const dataSummary = getPanelDataSummary(data?.series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
-  for (const plugin of await getPanelsWithSuggestions()) {
+  const { plugins, hasErrors: pluginLoadErrors } = await getPanelsWithSuggestions();
+
+  for (const plugin of plugins) {
     const suggestions = plugin.getSuggestions(dataSummary);
     if (suggestions) {
       list.push(...suggestions);
@@ -125,5 +145,5 @@ export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVi
 
   sortSuggestions(list, dataSummary);
 
-  return list;
+  return { suggestions: list, hasErrors: pluginLoadErrors };
 }

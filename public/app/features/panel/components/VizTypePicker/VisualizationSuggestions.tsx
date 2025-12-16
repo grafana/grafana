@@ -31,16 +31,18 @@ export interface Props {
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const {
-    value: suggestions,
+    value: result,
     loading,
     error,
   } = useAsync(async () => {
     if (!hasData(data)) {
-      return [];
+      return { suggestions: [], hasErrors: false };
     }
 
     return await getAllSuggestions(data);
   }, [data]);
+  const suggestions = result?.suggestions;
+  const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
@@ -131,80 +133,90 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   }
 
   return (
-    <div className={styles.grid}>
-      {isNewVizSuggestionsEnabled
-        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
-            <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
-              <div className={styles.vizTypeHeader}>
-                <Text variant="body" weight="medium">
-                  {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
-                  {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
-                </Text>
-              </div>
-              {vizTypeSuggestions?.map((suggestion, index) => {
-                const isCardSelected = suggestionHash === suggestion.hash;
-                return (
-                  <div
-                    key={suggestion.hash}
-                    className={styles.cardContainer}
-                    tabIndex={0}
-                    role="button"
-                    aria-pressed={isCardSelected}
-                    onKeyDown={(ev) => {
-                      if (ev.key === 'Enter' || ev.key === ' ') {
-                        ev.preventDefault();
-                        applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
-                      }
-                    }}
-                    ref={index === 0 ? firstCardRef : undefined}
-                  >
-                    {isCardSelected && (
-                      <Button
-                        // rather than allow direct focus, we handle ketboard events in the card.
-                        tabIndex={-1}
-                        variant="primary"
-                        size={'md'}
-                        className={styles.applySuggestionButton}
-                        aria-label={t(
-                          'panel.visualization-suggestions.apply-suggestion-aria-label',
-                          'Apply {{suggestionName}} visualization',
-                          { suggestionName: suggestion.name }
-                        )}
-                        onClick={() =>
-                          onChange({
-                            pluginId: suggestion.pluginId,
-                            withModKey: false,
-                          })
+    <>
+      {hasLoadingErrors && (
+        <Alert severity="warning" title={''}>
+          <Trans i18nKey="panel.visualization-suggestions.error-loading-some-suggestions.message">
+            Some suggestions could not be loaded
+          </Trans>
+        </Alert>
+      )}
+      <div className={styles.grid}>
+        {isNewVizSuggestionsEnabled
+          ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
+              <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
+                <div className={styles.vizTypeHeader}>
+                  <Text variant="body" weight="medium">
+                    {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
+                    {vizType?.name ||
+                      t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
+                  </Text>
+                </div>
+                {vizTypeSuggestions?.map((suggestion, index) => {
+                  const isCardSelected = suggestionHash === suggestion.hash;
+                  return (
+                    <div
+                      key={suggestion.hash}
+                      className={styles.cardContainer}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={isCardSelected}
+                      onKeyDown={(ev) => {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault();
+                          applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
                         }
-                      >
-                        {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
-                      </Button>
-                    )}
-                    <VisualizationSuggestionCard
-                      data={data}
-                      suggestion={suggestion}
-                      width={width}
-                      isSelected={isCardSelected}
-                      onClick={() => applySuggestion(suggestion, true)}
-                    />
-                  </div>
-                );
-              })}
-            </Fragment>
-          ))
-        : suggestions?.map((suggestion, index) => (
-            <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-              <VisualizationSuggestionCard
-                key={index}
-                data={data}
-                suggestion={suggestion}
-                width={width}
-                tabIndex={index}
-                onClick={() => applySuggestion(suggestion)}
-              />
-            </div>
-          ))}
-    </div>
+                      }}
+                      ref={index === 0 ? firstCardRef : undefined}
+                    >
+                      {isCardSelected && (
+                        <Button
+                          // rather than allow direct focus, we handle ketboard events in the card.
+                          tabIndex={-1}
+                          variant="primary"
+                          size={'md'}
+                          className={styles.applySuggestionButton}
+                          aria-label={t(
+                            'panel.visualization-suggestions.apply-suggestion-aria-label',
+                            'Apply {{suggestionName}} visualization',
+                            { suggestionName: suggestion.name }
+                          )}
+                          onClick={() =>
+                            onChange({
+                              pluginId: suggestion.pluginId,
+                              withModKey: false,
+                            })
+                          }
+                        >
+                          {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                        </Button>
+                      )}
+                      <VisualizationSuggestionCard
+                        data={data}
+                        suggestion={suggestion}
+                        width={width}
+                        isSelected={isCardSelected}
+                        onClick={() => applySuggestion(suggestion, true)}
+                      />
+                    </div>
+                  );
+                })}
+              </Fragment>
+            ))
+          : suggestions?.map((suggestion, index) => (
+              <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+                <VisualizationSuggestionCard
+                  key={index}
+                  data={data}
+                  suggestion={suggestion}
+                  width={width}
+                  tabIndex={index}
+                  onClick={() => applySuggestion(suggestion)}
+                />
+              </div>
+            ))}
+      </div>
+    </>
   );
 }
 
