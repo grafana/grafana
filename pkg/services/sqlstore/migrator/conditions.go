@@ -60,7 +60,6 @@ func (c *IfColumnExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
 type IfPrimaryKeyNotExistsCondition struct {
 	NotExistsMigrationCondition
 	TableName  string
-	ColumnName string
 }
 
 func (c *IfPrimaryKeyNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
