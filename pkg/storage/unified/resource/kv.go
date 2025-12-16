@@ -87,6 +87,9 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
+	if key == "" {
+		return nil, fmt.Errorf("key is required")
+	}
 
 	key = section + "/" + key
 
