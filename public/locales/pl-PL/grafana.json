@@ -3739,6 +3739,10 @@
       "clear": "Wyczyść wyszukiwanie i filtry",
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5992,13 +5996,25 @@
       "title-error-loading-dashboard": "Błąd wczytywania pulpitu"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Edytuj panel",
         "view-panel": "Wyświetl panel"
       },
       "title": {
         "dashboard": "Pulpit",
-        "discard-changes-to-dashboard": "Odrzucić zmiany dotyczące pulpitu?"
+        "discard-changes-to-dashboard": "Odrzucić zmiany dotyczące pulpitu?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -10798,7 +10814,6 @@
       "title": "Nowy"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nowy pulpit"
     },
     "new-folder": {
@@ -11958,7 +11973,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Skonfigurowanie tego połączenia może spowodować tymczasową niedostępność"
     },
     "getting-started-page": {
-      "header": "Konfiguracja",
       "subtitle-provisioning-feature": "Wyświetlaj połączenia aprowizacyjne i nimi zarządzaj"
     },
     "git": {
@@ -12730,7 +12744,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importuj",
       "new": "Nowy",
       "new-dashboard": "Nowy pulpit",
