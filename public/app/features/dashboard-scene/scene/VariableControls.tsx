@@ -15,29 +15,35 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
-import { DrilldownControls, shouldUseDrilldownLayout } from './DrilldownControls';
+import { DrilldownControls } from './DrilldownControls';
 import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const styles = useStyles2(getStyles);
 
-  const useDrilldownLayout = shouldUseDrilldownLayout(variables);
-
   // Get visible variables for drilldown layout
   const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
-  const [firstVar, secondVar, ...restVariables] = visibleVariables;
+
+  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const showDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
+
+  const restVariables = visibleVariables.filter(
+    (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
+  );
 
   // Variables to render after the drilldown row (or all variables if not using drilldown layout)
-  const variablesToRender = useDrilldownLayout
+  const variablesToRender = showDrilldownControls
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
     : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   return (
     <>
-      {useDrilldownLayout && (
+      {showDrilldownControls && (
         <div className={styles.drilldownControlsWrapper}>
-          <DrilldownControls adHocVar={firstVar} groupByVar={secondVar} />
+          <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
         </div>
       )}
 
