@@ -32,22 +32,40 @@ export function DrilldownControls({ adHocVar, groupByVar }: DrilldownControlsPro
 const getStyles = (theme: GrafanaTheme2) => ({
   drilldownRow: css({
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: theme.spacing(0, 1),
+    flexWrap: 'nowrap',
+    [theme.breakpoints.down('xl')]: {
+      flexWrap: 'wrap',
+    },
+    gap: theme.spacing(1),
     width: '100%',
   }),
   adHocContainer: css({
-    maxWidth: '700px',
-    // Override the inner container's alignItems to keep label at top
+    flex: '7 1 0%', // 70% of available space
+    minWidth: 0,
+    [theme.breakpoints.down('xl')]: {
+      // Force full width, causing groupBy to wrap
+      flex: '1 1 100%',
+    },
+    display: 'flex',
+    // Make the wrapper and its children take full width
     '& > div': {
       alignItems: 'flex-start',
+      width: '100%',
+      flex: 1,
     },
   }),
   groupByContainer: css({
-    maxWidth: '400px',
-    // Override the inner container's alignItems to keep label at top
+    flex: '3 1 0%', // 30% of available space
+    minWidth: 0,
+    display: 'flex',
+    // Make the wrapper and its children take full width
     '& > div': {
       alignItems: 'flex-start',
+      width: '100%',
+      flex: 1,
+    },
+    [theme.breakpoints.down('sm')]: {
+      minWidth: '200px',
     },
   }),
   clearAllButton: css({
