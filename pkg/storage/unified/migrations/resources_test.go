@@ -15,18 +15,18 @@ func TestRegisterMigrations(t *testing.T) {
 	t.Cleanup(func() { migrationRegistry = origRegistry })
 
 	// helper to build a fake registry with custom register funcs that bump counters
-	makeFakeRegistry := func(migrationCalls map[string]int) []migrationRegistration {
-		return []migrationRegistration{
+	makeFakeRegistry := func(migrationCalls map[string]int) []migrationDefinition {
+		return []migrationDefinition{
 			{
 				name:      "playlists",
-				resources: []string{setting.PlaylistResourceConfig},
+				resources: []string{setting.PlaylistResource},
 				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 					migrationCalls["playlists"]++
 				},
 			},
 			{
 				name:      "folders and dashboards",
-				resources: []string{setting.FolderResourceConfig, setting.DashboardResourceConfig},
+				resources: []string{setting.FolderResource, setting.DashboardResource},
 				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 					migrationCalls["folders and dashboards"]++
 				},
@@ -71,9 +71,9 @@ func TestRegisterMigrations(t *testing.T) {
 			migrationRegistry = makeFakeRegistry(migrationCalls)
 
 			cfg := makeCfg(map[string]bool{
-				setting.PlaylistResourceConfig:  tt.enablePlaylist,
-				setting.FolderResourceConfig:    tt.enableFolder,
-				setting.DashboardResourceConfig: tt.enableDashboard,
+				setting.PlaylistResource:  tt.enablePlaylist,
+				setting.FolderResource:    tt.enableFolder,
+				setting.DashboardResource: tt.enableDashboard,
 			})
 
 			// We pass nils for migrator dependencies because our fake registerFuncs don't use them

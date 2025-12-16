@@ -19,13 +19,13 @@ type ResourceDefinition struct {
 	MigratorFunc  string // Name of the method: "MigrateFolders", "MigrateDashboards", etc.
 }
 
-type migrationRegistration struct {
+type migrationDefinition struct {
 	name         string
 	resources    []string
 	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient)
 }
 
-var registeredResources = []ResourceDefinition{
+var resourceRegistry = []ResourceDefinition{
 	{
 		GroupResource: schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE},
 		MigratorFunc:  "MigrateFolders",
@@ -44,15 +44,15 @@ var registeredResources = []ResourceDefinition{
 	},
 }
 
-var migrationRegistry = []migrationRegistration{
+var migrationRegistry = []migrationDefinition{
 	{
 		name:         "playlists",
-		resources:    []string{setting.PlaylistResourceConfig},
+		resources:    []string{setting.PlaylistResource},
 		registerFunc: registerPlaylistMigration,
 	},
 	{
 		name:         "folders and dashboards",
-		resources:    []string{setting.FolderResourceConfig, setting.DashboardResourceConfig},
+		resources:    []string{setting.FolderResource, setting.DashboardResource},
 		registerFunc: registerDashboardAndFolderMigration,
 	},
 }
@@ -86,8 +86,8 @@ func registerMigrations(cfg *setting.Cfg, mg *sqlstoremigrator.Migrator, migrato
 }
 
 func getResourceDefinition(group, resource string) *ResourceDefinition {
-	for i := range registeredResources {
-		r := &registeredResources[i]
+	for i := range resourceRegistry {
+		r := &resourceRegistry[i]
 		if r.GroupResource.Group == group && r.GroupResource.Resource == resource {
 			return r
 		}
@@ -129,7 +129,7 @@ func getMigratorFunc(accessor legacy.MigrationDashboardAccessor, group, resource
 
 func validateRegisteredResources() error {
 	registeredMap := make(map[string]bool)
-	for _, gr := range registeredResources {
+	for _, gr := range resourceRegistry {
 		key := fmt.Sprintf("%s.%s", gr.GroupResource.Resource, gr.GroupResource.Group)
 		registeredMap[key] = true
 	}
