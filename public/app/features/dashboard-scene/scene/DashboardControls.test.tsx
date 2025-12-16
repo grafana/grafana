@@ -1,10 +1,20 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  playlistSrv: {
+    useState: jest.fn().mockReturnValue({ isPlaying: false }),
+    state: { isPlaying: false },
+    stop: jest.fn(),
+  },
+}));
 
 describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
@@ -221,7 +231,84 @@ describe('DashboardControls', () => {
       expect(setState).toHaveBeenCalledTimes(0);
     });
   });
+
+  describe('DashboardControlActions editable flag', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('should show EditDashboardSwitch when editable is true', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByRole('button', { name: /edit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
+    it('should show MakeDashboardEditableButton when editable is false', async () => {
+      const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show edit buttons when canEditDashboard returns false', async () => {
+      const controls = buildTestSceneWithEditable({
+        editable: true,
+        canEdit: false,
+        canMakeEditable: false,
+        isSnapshot: true,
+      });
+      render(<controls.Component model={controls} />);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show edit buttons when playlist is playing', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      render(<controls.Component model={controls} />);
+
+      expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+    });
+  });
 });
+
+function buildTestSceneWithEditable(options: {
+  editable: boolean;
+  canEdit?: boolean;
+  canMakeEditable?: boolean;
+  isSnapshot?: boolean;
+}): DashboardControls {
+  const { editable, canEdit = true, canMakeEditable = false, isSnapshot = false } = options;
+
+  const dashboard = new DashboardScene({
+    uid: 'test-uid',
+    editable,
+    meta: {
+      canEdit,
+      canMakeEditable,
+      isSnapshot,
+    },
+    controls: new DashboardControls({}),
+  });
+
+  dashboard.activate();
+
+  return dashboard.state.controls as DashboardControls;
+}
 
 function buildTestScene(state?: Partial<DashboardControlsState>): DashboardControls {
   const variable = new TextBoxVariable({

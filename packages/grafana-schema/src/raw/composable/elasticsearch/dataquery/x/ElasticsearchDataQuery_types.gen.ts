@@ -388,6 +388,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   bucketAggs?: Array<BucketAggregation>;
   /**
+   * Editor type
+   */
+  editorType?: string;
+  /**
    * List of metric aggregations
    */
   metrics?: Array<MetricAggregation>;
@@ -395,6 +399,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Lucene query
    */
   query?: string;
+  /**
+   * Raw DSL query
+   */
+  rawDSLQuery?: string;
   /**
    * Name of time field
    */
