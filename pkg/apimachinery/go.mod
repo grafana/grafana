@@ -8,8 +8,8 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
-	k8s.io/apimachinery v0.34.2
-	k8s.io/apiserver v0.34.2
+	k8s.io/apimachinery v0.34.3
+	k8s.io/apiserver v0.34.3
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
