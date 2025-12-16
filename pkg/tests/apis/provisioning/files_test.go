@@ -649,7 +649,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	// Grant view permission to viewer and editor roles, and edit permission to editor role
 	setDashboardPermissions([]map[string]interface{}{
 		{"role": "Viewer", "permission": 1}, // View permission
-		{"role": "Editor", "permission": 2},  // Edit permission
+		{"role": "Editor", "permission": 2}, // Edit permission
 	})
 
 	t.Run("GET operations", func(t *testing.T) {
