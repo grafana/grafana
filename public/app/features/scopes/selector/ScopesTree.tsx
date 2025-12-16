@@ -55,21 +55,22 @@ export function ScopesTree({
   const anyChildExpanded = childrenArray.some(({ expanded }) => expanded);
 
   // Nodes that are already selected (not applied) are always shown if we are in their category, even if they are
-  // filtered out by query filter
+  // filtered out by query filter. Only consider the first selected scope for this display logic.
   let selectedNodesToShow: TreeNode[] = [];
-  if (selectedScopes.length > 0 && selectedScopes[0].scopeNodeId) {
-    if (tree.scopeNodeId === scopeNodes[selectedScopes[0].scopeNodeId]?.spec.parentName) {
-      selectedNodesToShow = selectedScopes
-        // We filter out those which are still shown in the normal list of results
-        .filter((s) => !childrenArray.map((c) => c.scopeNodeId).includes(s.scopeNodeId!))
-        .map((s) => ({
-          // Because we had to check the parent with the use of scopeNodeId we know we have it. (we may not have it
-          // if the selected scopes are from url persistence, in which case we don't show them)
-          scopeNodeId: s.scopeNodeId!,
-          query: '',
-          expanded: false,
-        }));
-    }
+  const firstSelectedScope = selectedScopes[0];
+  if (
+    firstSelectedScope?.scopeNodeId &&
+    scopeNodes[firstSelectedScope.scopeNodeId] &&
+    tree.scopeNodeId === scopeNodes[firstSelectedScope.scopeNodeId]?.spec.parentName &&
+    !childrenArray.map((c) => c.scopeNodeId).includes(firstSelectedScope.scopeNodeId)
+  ) {
+    selectedNodesToShow = [
+      {
+        scopeNodeId: firstSelectedScope.scopeNodeId,
+        query: '',
+        expanded: false,
+      },
+    ];
   }
 
   const { highlightedId, ariaActiveDescendant, enableHighlighting, disableHighlighting } = useScopesHighlighting({
