@@ -323,11 +323,18 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       width: '100%',
       marginBottom: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
     }),
     drilldownControlsContainer: css({
       flex: 1,
       minWidth: 0,
       display: 'flex',
+      [theme.breakpoints.down('sm')]: {
+        order: 1, // Move below the time controls
+        flex: '1 1 100%', // Take full width to force new line
+      },
     }),
     embedded: css({
       background: 'unset',

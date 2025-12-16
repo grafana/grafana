@@ -33,12 +33,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   drilldownRow: css({
     display: 'flex',
     flexWrap: 'nowrap',
+    [theme.breakpoints.down('xl')]: {
+      flexWrap: 'wrap',
+    },
     gap: theme.spacing(1),
     width: '100%',
   }),
   adHocContainer: css({
     flex: '7 1 0%', // 70% of available space
     minWidth: 0,
+    [theme.breakpoints.down('xl')]: {
+      // Force full width, causing groupBy to wrap
+      flex: '1 1 100%',
+    },
     display: 'flex',
     // Make the wrapper and its children take full width
     '& > div': {
@@ -56,6 +63,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       alignItems: 'flex-start',
       width: '100%',
       flex: 1,
+    },
+    [theme.breakpoints.down('sm')]: {
+      minWidth: '200px',
     },
   }),
   clearAllButton: css({
