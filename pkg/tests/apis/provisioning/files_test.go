@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -627,8 +628,21 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		dashboardUID = dashboards.Items[0].GetName()
 	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards after sync")
 
-	// Grant permissions to test users for the dashboard
+	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them
+	// Using wildcard "*" to grant permissions to all dashboards (including ones created during tests)
+	// Note: Viewer role gets permissions via HTTP API below, Editor gets them here via SetPermissions
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+
+	// Grant view permission to Viewer role via HTTP API (for the initial dashboard)
+	// Note: This only grants permissions to the initial dashboard, but viewers should be able to read all
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 	setDashboardPermissions := func(permissions []map[string]interface{}) {
 		payload := map[string]interface{}{
@@ -646,10 +660,9 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 	}
 
-	// Grant view permission to viewer and editor roles, and edit permission to editor role
+	// Grant view permission to Viewer role for the initial dashboard
 	setDashboardPermissions([]map[string]interface{}{
 		{"role": "Viewer", "permission": 1}, // View permission
-		{"role": "Editor", "permission": 2}, // Edit permission
 	})
 
 	t.Run("GET operations", func(t *testing.T) {
