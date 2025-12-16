@@ -86,10 +86,9 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   }, [transformsWrongType]);
 
   // Check if SQL expressions are applicable (all datasources must be backend datasources)
+  const queryRunner = model.getQueryRunner();
+  const { queries } = queryRunner.useState();
   const isSqlApplicable = useMemo(() => {
-    const queryRunner = model.getQueryRunner();
-    const queries = queryRunner.state.queries;
-
     if (!queries || queries.length === 0) {
       return true; // If no queries, SQL is theoretically applicable
     }
@@ -112,7 +111,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     }
 
     return true;
-  }, [model]);
+  }, [queries]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);

@@ -62,7 +62,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
-  const isSqlApplicable = props.isSqlApplicable !== false; // Default to true if not provided
+  const isSqlApplicable = props.isSqlApplicable ?? true; // Default to true if not provided
 
   // Get transformations from registry
   const transformations = useMemo(() => {

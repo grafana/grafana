@@ -23,10 +23,15 @@ export function SqlExpressionCard({
   disabledTooltip,
 }: SqlExpressionCardProps) {
   const styles = useStyles2(getSqlExpressionCardStyles);
-  const cardClasses = isDisabled ? cx(styles.card, styles.cardDisabled) : styles.card;
 
   return (
-    <Card className={cardClasses} data-testid={testId} onClick={onClick} noMargin>
+    <Card
+      // className={cardClasses}
+      className={cx(styles.card, { [styles.cardDisabled]: isDisabled })}
+      data-testid={testId}
+      onClick={onClick}
+      noMargin
+    >
       <Card.Heading className={styles.heading}>
         <div className={styles.titleRow}>
           <span>{name}</span>
