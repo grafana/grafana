@@ -328,89 +328,122 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "failed to find requester", err
 			}
 
-			// Different routes may need different permissions.
-			// * Reading and modifying a repository's configuration requires administrator privileges.
-			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
-			// * Reading a repository's files requires viewer privileges.
-			// * Reading a repository's refs requires viewer privileges.
-			// * Editing a repository's files requires editor privileges.
-			// * Syncing a repository requires editor privileges.
-			// * Exporting a repository requires administrator privileges.
-			// * Migrating a repository requires administrator privileges.
-			// * Testing a repository configuration requires administrator privileges.
-			// * Viewing a repository's history requires editor privileges.
-
-			switch a.GetResource() {
-			case provisioning.RepositoryResourceInfo.GetName():
-				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
-				switch a.GetSubresource() {
-				case "", "test", "jobs":
-					// Doing something with the repository itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "refs":
-					// This is strictly a read operation. It is handy on the frontend for viewers.
-					if id.GetOrgRole().Includes(identity.RoleViewer) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "viewer role is required", nil
-				case "files":
-					// Access to files is controlled by the AccessClient
-					return authorizer.DecisionAllow, "", nil
-
-				case "resources", "sync", "history":
-					// These are strictly read operations.
-					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
-					if id.GetOrgRole().Includes(identity.RoleEditor) {
-						return authorizer.DecisionAllow, "", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required", nil
-					}
-				case "status":
-					if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
-				default:
-					if id.GetIsGrafanaAdmin() {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
-				}
-
-			case "stats":
-				// This can leak information one shouldn't necessarily have access to.
-				if id.GetOrgRole().Includes(identity.RoleAdmin) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "admin role is required", nil
-
-			case "settings":
-				// This is strictly a read operation. It is handy on the frontend for viewers.
-				if id.GetOrgRole().Includes(identity.RoleViewer) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "viewer role is required", nil
-
-			case provisioning.JobResourceInfo.GetName(),
-				provisioning.HistoricJobResourceInfo.GetName():
-				// Jobs are shown on the configuration page.
-				if id.GetOrgRole().Includes(identity.RoleAdmin) {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "admin role is required", nil
-
-			default:
-				// We haven't bothered with this kind yet.
-				if id.GetIsGrafanaAdmin() {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
-			}
+			return b.authorizeResource(ctx, a, id)
 		})
+}
+
+// authorizeResource handles authorization for different resources.
+// Different routes may need different permissions.
+// * Reading and modifying a repository's configuration requires administrator privileges.
+// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
+// * Reading a repository's files requires viewer privileges.
+// * Reading a repository's refs requires viewer privileges.
+// * Editing a repository's files requires editor privileges.
+// * Syncing a repository requires editor privileges.
+// * Exporting a repository requires administrator privileges.
+// * Migrating a repository requires administrator privileges.
+// * Testing a repository configuration requires administrator privileges.
+// * Viewing a repository's history requires editor privileges.
+func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetResource() {
+	case provisioning.RepositoryResourceInfo.GetName():
+		return b.authorizeRepositorySubresource(a, id)
+	case "stats":
+		return b.authorizeStats(id)
+	case "settings":
+		return b.authorizeSettings(id)
+	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
+		return b.authorizeJobs(id)
+	default:
+		return b.authorizeDefault(id)
+	}
+}
+
+// authorizeRepositorySubresource handles authorization for repository subresources.
+func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+	switch a.GetSubresource() {
+	case "", "test":
+		// Doing something with the repository itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+
+	case "jobs":
+		// Posting jobs requires editor privileges (for syncing).
+		if id.GetOrgRole().Includes(identity.RoleAdmin) || id.GetOrgRole().Includes(identity.RoleEditor) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "editor role is required", nil
+
+	case "refs":
+		// This is strictly a read operation. It is handy on the frontend for viewers.
+		if id.GetOrgRole().Includes(identity.RoleViewer) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "viewer role is required", nil
+
+	case "files":
+		// Access to files is controlled by the AccessClient
+		return authorizer.DecisionAllow, "", nil
+
+	case "resources", "sync", "history":
+		// These are strictly read operations.
+		// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
+		if id.GetOrgRole().Includes(identity.RoleEditor) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "editor role is required", nil
+
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
+
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
+// authorizeStats handles authorization for stats resource.
+func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
+	// This can leak information one shouldn't necessarily have access to.
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeSettings handles authorization for settings resource.
+func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
+	// This is strictly a read operation. It is handy on the frontend for viewers.
+	if id.GetOrgRole().Includes(identity.RoleViewer) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "viewer role is required", nil
+}
+
+// authorizeJobs handles authorization for job resources.
+func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, string, error) {
+	// Jobs are shown on the configuration page.
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeDefault handles authorization for unmapped resources.
+func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decision, string, error) {
+	// We haven't bothered with this kind yet.
+	if id.GetIsGrafanaAdmin() {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
