@@ -91,7 +91,7 @@ func TestFeatureToggles(t *testing.T) {
 
 		if err == nil {
 			for k, v := range featureToggles {
-				toggle, _ := tc.expectedToggles[k]
+				toggle := tc.expectedToggles[k]
 				require.Equal(t, toggle, v, tc.name)
 			}
 		}
