@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -33,8 +34,11 @@ func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInf
 
 	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil && ns.OrgID > 0 && d.live != nil {
-		if err := d.live.DashboardSaved(ns.OrgID, name); err != nil {
-			logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
+		m, err := utils.MetaAccessor(obj)
+		if err == nil {
+			if err := d.live.DashboardSaved(ns.OrgID, name, m.GetResourceVersion()); err != nil {
+				logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
+			}
 		}
 	}
 	return obj, created, err

@@ -482,7 +482,7 @@ type GrafanaLive struct {
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
 	// Called when a dashboard is saved
-	DashboardSaved(orgID int64, uid string) error
+	DashboardSaved(orgID int64, uid string, rv string) error
 
 	// Called when a dashboard is deleted
 	DashboardDeleted(orgID int64, uid string) error
