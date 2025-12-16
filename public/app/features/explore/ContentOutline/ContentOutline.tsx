@@ -46,6 +46,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   );
   const styles = useStyles2(getStyles, contentOutlineExpanded);
   const scrollerRef = useRef(scroller || null);
+  // TODO remove when react-use is fixed
+  // see https://github.com/streamich/react-use/issues/2612
+  // @ts-expect-error
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
