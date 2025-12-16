@@ -940,7 +940,6 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 		return
 	}
 
-	// Use shared utility to determine migration target
 	// Graph needs special logic as it can be migrated to multiple panels
 	// Including graphite which was previously migrated to graph in the schema version 2 migration in DashboardMigrator.ts
 	// but this was a bug because in there graphite was set to graph, but since those migrations run

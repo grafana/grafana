@@ -204,6 +204,9 @@ type Panel struct {
 	Options map[string]any `json:"options,omitempty"`
 	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
+	// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+	// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+	AutoMigrateFrom *string `json:"autoMigrateFrom,omitempty"`
 }
 
 // NewPanel creates a new Panel object.

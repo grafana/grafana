@@ -557,6 +557,23 @@ export function buildPanelKind(p: Panel): PanelKind {
     fieldConfig.defaults.thresholds.steps[0]!.value = null;
   }
 
+  // Build options with Angular migration data if needed (matches backend behavior)
+  // autoMigrateFrom is set during v0->v1 migration when Angular panels are converted
+  const { autoMigrateFrom } = p;
+  let options = p.options ?? {};
+
+  // When autoMigrateFrom is present, compose __angularMigration using the entire panel
+  // This preserves the original panel data for frontend migration handlers
+  if (autoMigrateFrom) {
+    options = {
+      ...options,
+      __angularMigration: {
+        autoMigrateFrom,
+        originalPanel: p,
+      },
+    };
+  }
+
   const panelKind: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -569,7 +586,7 @@ export function buildPanelKind(p: Panel): PanelKind {
         version: p.pluginVersion ?? '',
         spec: {
           fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
-          options: p.options ?? {},
+          options,
         },
       },
       links:
