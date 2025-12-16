@@ -140,8 +140,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** Kiosk mode */
-  kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
   /** Renders panels in grid and filtered */

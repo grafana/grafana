@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -33,6 +32,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const isInKioskMode = kioskMode === KioskMode.Full;
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -70,7 +70,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
-    hidden: kioskMode === KioskMode.Full,
+    hidden: isInKioskMode,
   });
 
   /**
@@ -100,15 +100,19 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         <div className={cx(styles.controlsWrapperSticky)} onPointerDown={onClearSelection}>
           {controls}
         </div>
-        <div className={styles.bodyWrapper} {...sidebarContext.outerWrapperProps}>
-          <div
-            className={styles.bodyWithToolbar}
-            data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-            ref={onBodyRef}
-            onPointerDown={onClearSelection}
-          >
-            {body}
-          </div>
+        <div
+          className={styles.bodyWrapper}
+          {...sidebarContext.outerWrapperProps}
+          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        >
+          {/** In kiosk mode the document body is scrollable */}
+          {isInKioskMode ? (
+            <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
+          ) : (
+            <div className={styles.bodyWithToolbar} ref={onBodyRef} onPointerDown={onClearSelection}>
+              {body}
+            </div>
+          )}
           <Sidebar contextValue={sidebarContext}>
             <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
           </Sidebar>
@@ -172,7 +176,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
     bodyWrapper: css({
       label: 'body-wrapper',
       display: 'flex',
-      flexDirection: 'row',
+      flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
