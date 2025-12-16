@@ -174,7 +174,6 @@ export function DashList(props: PanelProps<Options>) {
     setDashboards(updatedDashboards);
   };
 
-  // const css = useStyles2(getStyles);
   const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
@@ -186,23 +185,6 @@ export function DashList(props: PanelProps<Options>) {
         const locationInfo = showFolderNames && dash.location ? foldersByUid[dash.location] : undefined;
         return (
           <li key={`dash-${dash.uid}`}>
-            {/* <div className={css.dashlistLink}>
-              <Box flex={1}>
-                <Link href={url}>{dash.name}</Link>
-                {showFolderNames && locationInfo && (
-                  <Text color="secondary" variant="bodySmall" element="p">
-                    {locationInfo?.name}
-                  </Text>
-                )}
-              </Box>
-              <StarToolbarButton
-                title={dash.name}
-                group="dashboard.grafana.app"
-                kind="Dashboard"
-                id={dash.uid}
-                onStarChange={handleStarChange}
-              />
-            </div> */}
             <DashListItem
               dashboard={dash}
               url={url}
