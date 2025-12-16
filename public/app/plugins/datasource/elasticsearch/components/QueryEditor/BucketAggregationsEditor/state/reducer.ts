@@ -6,7 +6,7 @@ import { defaultBucketAgg } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -85,6 +85,10 @@ export const createReducer =
         return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
       }
       return state;
+    }
+
+    if (changeEditorTypeAndResetQuery.match(action)) {
+        return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
     }
 
     if (changeBucketAggregationSetting.match(action)) {
