@@ -1,25 +1,16 @@
 import tinycolor from 'tinycolor2';
 
-import {
-  colorManipulator,
-  DisplayProcessor,
-  FALLBACK_COLOR,
-  FieldDisplay,
-  getFieldColorMode,
-  GradientStop,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { RadialGradientMode, RadialShape } from './RadialGauge';
+import { GradientStop, RadialGradientMode, RadialShape } from './types';
+import { getFieldConfigMinMax, getFieldDisplayProcessor } from './utils';
 
 export function buildGradientColors(
   gradientMode: RadialGradientMode,
   theme: GrafanaTheme2,
-  displayProcessor: DisplayProcessor,
   fieldDisplay: FieldDisplay,
-  baseColor = FALLBACK_COLOR,
-  forSegment?: boolean
+  baseColor = FALLBACK_COLOR
 ): GradientStop[] {
   if (gradientMode === 'none') {
     return [
@@ -30,13 +21,14 @@ export function buildGradientColors(
 
   const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode);
 
+  // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {
+    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
     const thresholds = fieldDisplay.field.thresholds?.steps ?? [];
-    const min = fieldDisplay.field.min ?? 0;
-    const max = fieldDisplay.field.max ?? 100;
 
     const result: Array<{ color: string; percent: number }> = [
-      { color: displayProcessor(min).color ?? FALLBACK_COLOR, percent: 0 },
+      { color: displayProcessor(min).color ?? baseColor, percent: 0 },
     ];
 
     for (const threshold of thresholds) {
@@ -51,15 +43,15 @@ export function buildGradientColors(
     return result;
   }
 
-  if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
-    // Handle continuous color modes first
+  // Handle continuous color modes before other by-value modes
+  if (colorMode.isContinuous && colorMode.getColors) {
     const colors = colorMode.getColors(theme);
     return colors.map((color, idx) => ({ color, percent: idx / (colors.length - 1) }));
   }
 
+  // For value-based colors, we want to stay more true to the specific color,
+  // so a radial gradient that adds a bit of light and shade works best
   if (colorMode.isByValue) {
-    // For value based colors we want to stay more true to the specific color
-    // So a radial gradient that adds a bit of light and shade works best
     const darkerColor = tinycolor(baseColor).darken(5);
     const lighterColor = tinycolor(baseColor).spin(20).lighten(10);
 
@@ -73,8 +65,7 @@ export function buildGradientColors(
     ];
   }
 
-  // For value based colors we want to stay more true to the specific color
-  // So a radial gradient that adds a bit of light and shade works best
+  // for fixed colors and other modes, we create a simple two-color gradient
   // we set the highest contrast color second based on the theme.
   const darkerColor = tinycolor(baseColor).spin(-20).darken(5);
   const lighterColor = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
@@ -89,13 +80,74 @@ export function buildGradientColors(
       ];
 }
 
-export function getEndpointColors(gradientStops: GradientStop[], percent = 0): [string, string] {
+function clamp(value: number, min = 0, max = 1) {
+  if (process.env.NODE_ENV !== 'production') {
+    if (value < min || value > max) {
+      console.error(`The value provided ${value} is out of range [${min}, ${max}].`);
+    }
+  }
+
+  return Math.min(Math.max(min, value), max);
+}
+
+/**
+ * @alpha - perhaps this should go in colorManipulator.ts
+ * Given color stops (each with a color and percentage 0..1) returns the color at a given percentage.
+ * Uses tinycolor.mix for interpolation.
+ * @params stops - array of color stops (percentages 0..1)
+ * @params percent - percentage 0..1
+ * @returns color at the given percentage
+ */
+export function colorAtGradientPercent(stops: GradientStop[], percent: number): tinycolor.Instance {
+  if (!stops || stops.length < 2) {
+    throw new Error('colorAtGradientPercent requires at least two color stops');
+  }
+
+  // normalize and sort stops by percent
+  const sorted = stops
+    .map((s) => ({ color: s.color, percent: clamp(s.percent, 0, 1) }))
+    .sort((a, b) => a.percent - b.percent);
+
+  // percent outside range
+  if (percent <= sorted[0].percent) {
+    return tinycolor(sorted[0].color);
+  }
+  if (percent >= sorted[sorted.length - 1].percent) {
+    return tinycolor(sorted[sorted.length - 1].color);
+  }
+
+  // find surrounding stops
+  let left = sorted[0];
+  let right = sorted[sorted.length - 1];
+  for (let i = 1; i < sorted.length; i++) {
+    if (percent <= sorted[i].percent) {
+      left = sorted[i - 1];
+      right = sorted[i];
+      break;
+    }
+  }
+
+  const range = right.percent - left.percent;
+  const t = range === 0 ? 0 : (percent - left.percent) / range; // 0..1
+
+  // tinycolor.mix expects amount as percentage of the second color
+  const mixed = tinycolor.mix(left.color, right.color, t * 100);
+
+  // return hex6 if opaque, hex8 if has alpha
+  return mixed;
+}
+
+export function getEndpointColors(gradientStops: GradientStop[], percent = 1): [string, string] {
+  if (gradientStops.length === 0) {
+    throw new Error('getEndpointColors requires at least one color stop');
+  }
+
   const startColor = gradientStops[0].color;
   let endColor = gradientStops[gradientStops.length - 1].color;
 
   // if we have a percentageFilled, use it to get a the correct end color based on where the bar terminates
   if (gradientStops.length >= 2) {
-    const endColorByPercentage = colorManipulator.colorAtGradientPercent(gradientStops, percent);
+    const endColorByPercentage = colorAtGradientPercent(gradientStops, percent);
     endColor =
       endColorByPercentage.getAlpha() === 1 ? endColorByPercentage.toHexString() : endColorByPercentage.toHex8String();
   }
@@ -109,14 +161,18 @@ export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape
     : `linear-gradient(90deg, ${colorStrings.join(', ')})`;
 }
 
+// the theme does not make the full palette available to us, and we
+// don't want transparent colors which our grays usually have.
+const GRAY_05 = '#111217';
+const GRAY_90 = '#fbfbfb';
 const CONTRAST_THRESHOLD_MAX = 4.5;
 const getGuideDotColor = (color: string): string => {
-  const darkColor = '#111217'; // gray05
-  const lightColor = '#fbfbfb'; // gray90
+  const darkColor = GRAY_05;
+  const lightColor = GRAY_90;
   return colorManipulator.getContrastRatio(darkColor, color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor;
 };
 
-export function getGuideDotColors(gradientStops: GradientStop[], percent = 0): [string, string] {
+export function getGuideDotColors(gradientStops: GradientStop[], percent: number): [string, string] {
   const [startColor, endColor] = getEndpointColors(gradientStops, percent);
   return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
 }

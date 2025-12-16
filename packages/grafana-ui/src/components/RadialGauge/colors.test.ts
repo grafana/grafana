@@ -1,0 +1,286 @@
+import { defaultsDeep } from 'lodash';
+
+import { createTheme, FALLBACK_COLOR, Field, FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
+
+import {
+  buildGradientColors,
+  colorAtGradientPercent,
+  getEndpointColors,
+  getGradientCss,
+  getGuideDotColors,
+} from './colors';
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
+describe('RadialGauge color utils', () => {
+  describe('buildGradientColors', () => {
+    const createField = (colorMode: FieldColorModeId): Field =>
+      ({
+        type: FieldType.number,
+        name: 'Test Field',
+        config: {
+          color: {
+            mode: colorMode,
+          },
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 50, color: 'yellow' },
+              { value: 80, color: 'red' },
+            ],
+          },
+        },
+        values: [70, 40, 30, 90, 55],
+      }) satisfies Field;
+
+    const buildFieldDisplay = (field: Field, part = {}): FieldDisplay =>
+      defaultsDeep(part, {
+        field: field.config,
+        colIndex: 0,
+        view: {
+          getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: undefined }))),
+        },
+        display: {
+          numeric: 75,
+        },
+      });
+
+    it('should return the baseColor if gradientMode is none', () => {
+      expect(
+        buildGradientColors('none', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
+      ).toEqual([
+        { color: '#FF0000', percent: 0 },
+        { color: '#FF0000', percent: 1 },
+      ]);
+    });
+
+    it('uses the fallback color if no baseColor is set', () => {
+      expect(
+        buildGradientColors('none', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)))
+      ).toEqual([
+        { color: FALLBACK_COLOR, percent: 0 },
+        { color: FALLBACK_COLOR, percent: 1 },
+      ]);
+    });
+
+    it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
+      expect(
+        buildGradientColors(
+          'auto',
+          createTheme(),
+          buildFieldDisplay(createField(FieldColorModeId.Thresholds), {
+            view: { getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: '#444444' }))) },
+          })
+        )
+      ).toEqual([
+        { color: '#444444', percent: 0 },
+        { color: '#FADE2A', percent: 0.5 },
+        { color: '#F2495C', percent: 0.8 },
+        { color: '#444444', percent: 1 },
+      ]);
+    });
+
+    it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
+      expect(
+        buildGradientColors(
+          'auto',
+          createTheme(),
+          buildFieldDisplay(createField(FieldColorModeId.Thresholds)),
+          '#FF0000'
+        )
+      ).toEqual([
+        { color: '#FF0000', percent: 0 },
+        { color: '#FADE2A', percent: 0.5 },
+        { color: '#F2495C', percent: 0.8 },
+        { color: '#FF0000', percent: 1 },
+      ]);
+    });
+
+    it('should return gradient colors for continuous color modes', () => {
+      expect(
+        buildGradientColors(
+          'auto',
+          createTheme(),
+          buildFieldDisplay(createField(FieldColorModeId.ContinuousCividis)),
+          '#00FF00'
+        )
+      ).toEqual([
+        {
+          color: 'rgb(0, 32, 81)',
+          percent: 0,
+        },
+        {
+          color: 'rgb(17, 54, 108)',
+          percent: 0.125,
+        },
+        {
+          color: 'rgb(60, 77, 110)',
+          percent: 0.25,
+        },
+        {
+          color: 'rgb(98, 100, 111)',
+          percent: 0.375,
+        },
+        {
+          color: 'rgb(127, 124, 117)',
+          percent: 0.5,
+        },
+        {
+          color: 'rgb(154, 148, 120)',
+          percent: 0.625,
+        },
+        {
+          color: 'rgb(187, 175, 113)',
+          percent: 0.75,
+        },
+        {
+          color: 'rgb(226, 203, 92)',
+          percent: 0.875,
+        },
+        {
+          color: 'rgb(253, 234, 69)',
+          percent: 1,
+        },
+      ]);
+    });
+
+    it('should return gradient colors for by-value color modes', () => {
+      expect(
+        buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues)))
+      ).toEqual([
+        { color: '#181b1f', percent: 0 },
+        { color: '#1F60C4', percent: 1 },
+      ]);
+    });
+
+    it('should return gradient colors for fixed color mode', () => {
+      expect(
+        buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#442299')
+      ).toEqual([
+        { color: '#14175a', percent: 0 },
+        { color: '#a146da', percent: 1 },
+      ]);
+    });
+  });
+
+  describe('colorAtGradientPercent', () => {
+    it('should calculate the color at a given percent in a gradient of two colors', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, 0).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 0.25).toHexString()).toBe('#bf0040');
+      expect(colorAtGradientPercent(gradient, 0.5).toHexString()).toBe('#800080');
+      expect(colorAtGradientPercent(gradient, 0.75).toHexString()).toBe('#4000bf');
+      expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
+    });
+
+    it('should calculate the color at a given percent in a gradient of multiple colors', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, 0).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 0.25).toHexString()).toBe('#808000');
+      expect(colorAtGradientPercent(gradient, 0.5).toHexString()).toBe('#00ff00');
+      expect(colorAtGradientPercent(gradient, 0.75).toHexString()).toBe('#008080');
+      expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
+    });
+
+    it('should not throw an error when percent is outside 0-1 range', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      expect(colorAtGradientPercent(gradient, -0.5).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 1.5).toHexString()).toBe('#0000ff');
+    });
+
+    it('should throw an error when less than two stops are provided', () => {
+      expect(() => {
+        colorAtGradientPercent([], 0.5);
+      }).toThrow('colorAtGradientPercent requires at least two color stops');
+      expect(() => {
+        colorAtGradientPercent([{ color: '#ff0000', percent: 0 }], 0.5);
+      }).toThrow('colorAtGradientPercent requires at least two color stops');
+    });
+  });
+
+  describe('getEndpointColors', () => {
+    it('should return the first and last colors in the gradient', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const [startColor, endColor] = getEndpointColors(gradient);
+      expect(startColor).toBe('#ff0000');
+      expect(endColor).toBe('#0000ff');
+    });
+
+    it('should return the correct end color based on percent', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const [startColor, endColor] = getEndpointColors(gradient, 0.25);
+      expect(startColor).toBe('#ff0000');
+      expect(endColor).toBe('#808000');
+    });
+
+    it('should handle gradients with only one colors', () => {
+      const gradient = [{ color: '#ff0000', percent: 0 }];
+      const [startColor, endColor] = getEndpointColors(gradient);
+      expect(startColor).toBe('#ff0000');
+      expect(endColor).toBe('#ff0000');
+    });
+
+    it('should throw an error when no colors are provided', () => {
+      expect(() => {
+        getEndpointColors([]);
+      }).toThrow('getEndpointColors requires at least one color stop');
+    });
+  });
+
+  describe('getGradientCss', () => {
+    it('should return conic-gradient CSS for circle shape', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const css = getGradientCss(gradient, 'circle');
+      expect(css).toBe('conic-gradient(from 0deg, #ff0000 0.00%, #00ff00 50.00%, #0000ff 100.00%)');
+    });
+
+    it('should return linear-gradient CSS for arc shape', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const css = getGradientCss(gradient, 'gauge');
+      expect(css).toBe('linear-gradient(90deg, #ff0000 0.00%, #00ff00 50.00%, #0000ff 100.00%)');
+    });
+  });
+
+  describe('getGuideDotColors', () => {
+    it('should return contrasting guide dot colors based on the gradient endpoints and percent', () => {
+      const gradient = [
+        { color: '#000000', percent: 0 },
+        { color: '#ffffff', percent: 0.5 },
+        { color: '#ffffff', percent: 1 },
+      ];
+      const [startDotColor, endDotColor] = getGuideDotColors(gradient, 0.35);
+      expect(startDotColor).toBe('#fbfbfb');
+      expect(endDotColor).toBe('#111217');
+    });
+  });
+});

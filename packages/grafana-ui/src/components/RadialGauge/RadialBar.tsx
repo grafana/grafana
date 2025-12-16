@@ -1,16 +1,14 @@
-import { DisplayProcessor, FieldDisplay } from '@grafana/data';
+import { FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialGradientMode, RadialShape } from './RadialGauge';
-import { GaugeDimensions } from './utils';
+import { RadialGradientMode, RadialShape, RadialGaugeDimensions } from './types';
 
 export interface RadialBarProps {
   angle: number;
   angleRange: number;
-  dimensions: GaugeDimensions;
-  displayProcessor: DisplayProcessor;
+  dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
   glowFilter?: string;
   gradientMode: RadialGradientMode;
@@ -22,7 +20,6 @@ export function RadialBar({
   angle,
   angleRange,
   dimensions,
-  displayProcessor,
   fieldDisplay,
   glowFilter,
   gradientMode,
@@ -36,10 +33,9 @@ export function RadialBar({
       {/** Track */}
       <RadialArcPath
         arcLengthDeg={angleRange - angle}
+        fieldDisplay={fieldDisplay}
         color={theme.colors.action.hover}
         dimensions={dimensions}
-        displayProcessor={displayProcessor}
-        fieldDisplay={fieldDisplay}
         gradientMode="none"
         roundedBars={roundedBars}
         shape={shape}
@@ -50,7 +46,6 @@ export function RadialBar({
         arcLengthDeg={angle}
         color={gradientMode === 'none' ? fieldDisplay.display.color : undefined}
         dimensions={dimensions}
-        displayProcessor={displayProcessor}
         fieldDisplay={fieldDisplay}
         glowFilter={glowFilter}
         gradientMode={gradientMode}

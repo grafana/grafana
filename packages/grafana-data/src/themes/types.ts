@@ -59,9 +59,3 @@ export interface ThemeRichColor {
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
-
-/** @alpha */
-export interface GradientStop {
-  color: string;
-  percent: number;
-}

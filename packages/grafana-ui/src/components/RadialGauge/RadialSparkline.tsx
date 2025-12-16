@@ -3,17 +3,25 @@ import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana
 
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { RadialShape, RadialTextMode } from './RadialGauge';
-import { GaugeDimensions } from './utils';
+import { RadialShape, RadialTextMode, RadialGaugeDimensions } from './types';
 
 interface RadialSparklineProps {
   sparkline: FieldDisplay['sparkline'];
-  dimensions: GaugeDimensions;
+  dimensions: RadialGaugeDimensions;
   theme: GrafanaTheme2;
   color?: string;
   shape?: RadialShape;
   textMode: Exclude<RadialTextMode, 'auto'>;
 }
+
+const SPARKLINE_HEIGHT_DIVISOR = 4;
+const SPARKLINE_HEIGHT_DIVISOR_NAME_AND_VALUE = 4;
+const SPARKLINE_WIDTH_FACTOR_ARC = 1.4;
+const SPARKLINE_WIDTH_FACTOR_CIRCLE = 1.6;
+const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE = 4;
+const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE_NAME_AND_VALUE = 3.3;
+const SPARKLINE_SPACING = 8;
+
 export function RadialSparkline({ sparkline, dimensions, theme, color, shape, textMode }: RadialSparklineProps) {
   const { radius, barWidth } = dimensions;
 
@@ -22,12 +30,12 @@ export function RadialSparkline({ sparkline, dimensions, theme, color, shape, te
   }
 
   const showNameAndValue = textMode === 'value_and_name';
-  const height = radius / (showNameAndValue ? 4 : 3);
-  const width = radius * (shape === 'gauge' ? 1.6 : 1.4) - barWidth;
+  const height = radius / (showNameAndValue ? SPARKLINE_HEIGHT_DIVISOR_NAME_AND_VALUE : SPARKLINE_HEIGHT_DIVISOR);
+  const width = radius * (shape === 'gauge' ? SPARKLINE_WIDTH_FACTOR_ARC : SPARKLINE_WIDTH_FACTOR_CIRCLE) - barWidth;
   const topPos =
     shape === 'gauge'
-      ? `${dimensions.gaugeBottomY - height}px`
-      : `calc(50% + ${radius / (showNameAndValue ? 3.3 : 4)}px)`;
+      ? dimensions.gaugeBottomY - height - SPARKLINE_SPACING
+      : `calc(50% + ${radius / (showNameAndValue ? SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE_NAME_AND_VALUE : SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE)}px)`;
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: {

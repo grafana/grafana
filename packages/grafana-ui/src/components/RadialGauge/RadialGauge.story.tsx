@@ -13,7 +13,8 @@ import { FieldColorModeId } from '@grafana/schema';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { RadialGauge, RadialGaugeProps, RadialGradientMode, RadialShape, RadialTextMode } from './RadialGauge';
+import { RadialGauge, RadialGaugeProps } from './RadialGauge';
+import { RadialGradientMode, RadialShape, RadialTextMode } from './types';
 
 interface StoryProps extends RadialGaugeProps {
   value: number;

@@ -1,18 +1,17 @@
 import { useId, useMemo, memo } from 'react';
 
-import { DisplayProcessor, FieldDisplay } from '@grafana/data';
+import { FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { RadialGradientMode, RadialShape } from './RadialGauge';
 import { buildGradientColors, getEndpointColors, getGradientCss, getGuideDotColors } from './colors';
-import { drawRadialArcPath, GaugeDimensions, toRad } from './utils';
+import { RadialGradientMode, RadialShape, RadialGaugeDimensions } from './types';
+import { drawRadialArcPath, toRad } from './utils';
 
 export interface RadialArcPathPropsBase {
   arcLengthDeg: number;
   color?: string;
-  dimensions: GaugeDimensions;
-  displayProcessor: DisplayProcessor;
+  dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
   glowFilter?: string;
   gradientMode: RadialGradientMode;
@@ -38,7 +37,6 @@ export const RadialArcPath = memo(
     arcLengthDeg,
     color,
     dimensions,
-    displayProcessor,
     fieldDisplay,
     glowFilter,
     gradientMode,
@@ -54,8 +52,8 @@ export const RadialArcPath = memo(
       if (gradientMode === 'none') {
         return [];
       }
-      return buildGradientColors(gradientMode, theme, displayProcessor, fieldDisplay, fieldDisplay.display.color);
-    }, [gradientMode, fieldDisplay, theme, displayProcessor]);
+      return buildGradientColors(gradientMode, theme, fieldDisplay, fieldDisplay.display.color);
+    }, [gradientMode, fieldDisplay, theme]);
 
     const { guideDotColors, endpointColors } = useMemo(() => {
       if (!showGuideDots || gradientStops.length === 0) {
@@ -67,7 +65,7 @@ export const RadialArcPath = memo(
       return {
         guideDotColors: getGuideDotColors(gradientStops, fieldDisplay.display.percent ?? 0),
         endpointColors:
-          shape === 'circle' ? getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 0) : undefined,
+          shape === 'circle' ? getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 1) : undefined,
       };
     }, [showGuideDots, fieldDisplay, gradientStops, shape]);
 

@@ -1,14 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import {
-  DisplayValueAlignmentFactors,
-  FieldDisplay,
-  getDisplayProcessor,
-  GrafanaTheme2,
-  TimeRange,
-} from '@grafana/data';
+import { DisplayValueAlignmentFactors, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -21,6 +14,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { GlowGradient, MiddleCircleGlow } from './effects';
+import { RadialGradientMode, RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
@@ -71,10 +65,6 @@ export interface RadialGaugeProps {
   onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
 }
-
-export type RadialGradientMode = 'none' | 'auto';
-export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
-export type RadialShape = 'circle' | 'gauge';
 
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-radialgauge--docs
@@ -130,7 +120,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       showScaleLabels
     );
 
-    const displayProcessor = getFieldDisplayProcessor(displayValue);
     const glowFilterId = `glow-${gaugeId}`;
 
     if (segmentCount > 1) {
@@ -146,7 +135,6 @@ export function RadialGauge(props: RadialGaugeProps) {
           segmentSpacing={segmentSpacing}
           shape={shape}
           gradientMode={gradient}
-          displayProcessor={displayProcessor}
         />
       );
     } else {
@@ -161,7 +149,6 @@ export function RadialGauge(props: RadialGaugeProps) {
           glowFilter={`url(#${glowFilterId})`}
           shape={shape}
           gradientMode={gradient}
-          displayProcessor={displayProcessor}
           fieldDisplay={displayValue}
         />
       );
@@ -224,7 +211,6 @@ export function RadialGauge(props: RadialGaugeProps) {
               glowFilter={`url(#${glowFilterId})`}
               shape={shape}
               gradientMode={gradient}
-              displayProcessor={displayProcessor}
             />
           );
         }
@@ -268,17 +254,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       {body}
     </div>
   );
-}
-
-function getFieldDisplayProcessor(displayValue: FieldDisplay) {
-  if (displayValue.view && isNumber(displayValue.colIndex)) {
-    const dp = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex);
-    if (dp) {
-      return dp;
-    }
-  }
-
-  return getDisplayProcessor();
 }
 
 function getStyles(theme: GrafanaTheme2) {

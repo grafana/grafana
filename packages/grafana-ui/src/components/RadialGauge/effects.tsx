@@ -1,4 +1,4 @@
-import { GaugeDimensions } from './utils';
+import { RadialGaugeDimensions } from './types';
 
 export interface GlowGradientProps {
   id: string;
@@ -27,7 +27,7 @@ const CENTER_GLOW_OPACITY = 0.15;
 
 export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
   return (
-    <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
+    <radialGradient id={`circle-glow-${gaugeId}`} r="50%" fr="0%">
       <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
       <stop offset="90%" stopColor={color} stopOpacity={0} />
     </radialGradient>
@@ -35,7 +35,7 @@ export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color:
 }
 
 export interface CenterGlowProps {
-  dimensions: GaugeDimensions;
+  dimensions: RadialGaugeDimensions;
   gaugeId: string;
   color?: string;
 }
@@ -46,7 +46,7 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
   return (
     <>
       <defs>
-        <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
+        <radialGradient id={gradientId} r="50%" fr="0%">
           <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
           <stop offset="90%" stopColor={color} stopOpacity={0} />
         </radialGradient>
