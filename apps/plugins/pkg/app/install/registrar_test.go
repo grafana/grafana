@@ -26,7 +26,6 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 		Spec: pluginsv0alpha1.PluginSpec{
 			Id:      "plugin-1",
 			Version: "1.0.0",
-			Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 		},
 	}
 
@@ -135,7 +134,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Spec: pluginsv0alpha1.PluginSpec{
 					Id:      "plugin-1",
 					Version: "1.0.0",
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			},
 			expectedUpdates: 1,
@@ -160,7 +158,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Spec: pluginsv0alpha1.PluginSpec{
 					Id:      "plugin-1",
 					Version: "1.0.0",
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			},
 		},
@@ -434,19 +431,6 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "core class is mapped correctly",
-			install: PluginInstall{
-				ID:      "plugin-core",
-				Version: "2.0.0",
-				Class:   ClassCore,
-				Source:  SourcePluginStore,
-			},
-			namespace: "org-2",
-			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
-				require.Equal(t, pluginsv0alpha1.PluginSpecClass(ClassCore), p.Spec.Class)
-			},
-		},
-		{
 			name: "source annotation is set correctly",
 			install: PluginInstall{
 				ID:      "plugin-1",
@@ -614,7 +598,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 					Id:      "plugin-1",
 					Version: "1.0.0",
 					Url:     tt.existingURL,
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			}
 
@@ -705,7 +688,6 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 						Spec: pluginsv0alpha1.PluginSpec{
 							Id:      "plugin-1",
 							Version: "1.0.0",
-							Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 						},
 					}, nil
 				}
