@@ -8,7 +8,7 @@ import { RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 
-function CorrelationsPageLegacy() {
+export function CorrelationsPageLegacy() {
   const { remove, get } = useCorrelations();
   return (
     <CorrelationsPage

@@ -23,7 +23,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource } from '../alerting/unified/mocks';
 
-import CorrelationsPage from './CorrelationsPage';
+import { CorrelationsPageLegacy } from './CorrelationsPageWrapper';
 import {
   createCreateCorrelationResponse,
   createFetchCorrelationsError,
@@ -33,7 +33,6 @@ import {
   MockDataSourceSrv,
 } from './mocks/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
-import { toEnrichedCorrelationData, useCorrelations } from './useCorrelations';
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
@@ -111,19 +110,9 @@ const renderWithContext = async (
 
   setDataSourceSrv(dsServer);
 
-  // const { remove, get } = useCorrelations();
-
-  const enhCorrData = correlations.map(toEnrichedCorrelationData).filter((i) => i !== undefined);
-
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
-      <CorrelationsPage
-        fetchCorrelations={() => new Promise((c) => c)}
-        correlations={{ correlations: enhCorrData, limit: 100, page: 0, totalCount: correlations.length }}
-        isLoading={false}
-        error={undefined}
-        removeFn={undefined}
-      />
+      <CorrelationsPageLegacy />
     </TestProvider>,
     {
       queries: {
