@@ -243,67 +243,59 @@ LIMIT
   );
 
   const renderSQLButtons = () => (
-    <div className={styles.sqlButtons}>
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-        {isSchemasFeatureEnabled && !isSchemaInspectorOpen && (
-          <Button
-            icon="table-expand-all"
-            onClick={() => setIsSchemaInspectorOpen(true)}
-            size="sm"
-            variant="secondary"
-            fill="outline"
-          >
-            <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
-          </Button>
-        )}
-        <Button icon="play" onClick={executeQuery} size="sm">
-          {t('expressions.sql-expr.button-run-query', 'Run query')}
+    <Stack direction="row" gap={1} alignItems="center" justifyContent="start" wrap>
+      {isSchemasFeatureEnabled && !isSchemaInspectorOpen && (
+        <Button
+          icon="table-expand-all"
+          onClick={() => setIsSchemaInspectorOpen(true)}
+          size="sm"
+          variant="secondary"
+          fill="outline"
+        >
+          <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
         </Button>
-        <Suspense fallback={null}>
-          {shouldShowViewExplanation ? (
-            <Button
-              fill="outline"
-              icon="gf-movepane-right"
-              onClick={handleOpenExplanation}
-              size="sm"
-              variant="secondary"
-            >
-              <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
-            </Button>
-          ) : (
-            <GenAISQLExplainButton
-              currentQuery={query.expression || ''}
-              onExplain={handleExplain}
-              queryContext={queryContext}
-              refIds={vars}
-              // schemas={schemas} // Will be added when schema extraction is implemented
-            />
-          )}
-        </Suspense>
-        <Suspense fallback={null}>
-          <GenAISQLSuggestionsButton
+      )}
+      <Button icon="play" onClick={executeQuery} size="sm">
+        {t('expressions.sql-expr.button-run-query', 'Run query')}
+      </Button>
+      <Suspense fallback={null}>
+        {shouldShowViewExplanation ? (
+          <Button fill="outline" icon="gf-movepane-right" onClick={handleOpenExplanation} size="sm" variant="secondary">
+            <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+          </Button>
+        ) : (
+          <GenAISQLExplainButton
             currentQuery={query.expression || ''}
-            initialQuery={initialQuery}
-            onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-            onHistoryUpdate={handleHistoryUpdate}
+            onExplain={handleExplain}
             queryContext={queryContext}
             refIds={vars}
-            errorContext={errorContext} // Will be added when error tracking is implemented
             // schemas={schemas} // Will be added when schema extraction is implemented
           />
-        </Suspense>
-      </Stack>
+        )}
+      </Suspense>
+      <Suspense fallback={null}>
+        <GenAISQLSuggestionsButton
+          currentQuery={query.expression || ''}
+          initialQuery={initialQuery}
+          onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+          onHistoryUpdate={handleHistoryUpdate}
+          queryContext={queryContext}
+          refIds={vars}
+          errorContext={errorContext} // Will be added when error tracking is implemented
+          // schemas={schemas} // Will be added when schema extraction is implemented
+        />
+      </Suspense>
       {suggestions.length > 0 && (
         <Suspense fallback={null}>
           <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
         </Suspense>
       )}
-    </div>
+    </Stack>
   );
 
   const renderSQLEditor = (width?: number, height?: number) => (
-    <>
-      <div className={styles.sqlContainer}>
+    <div className={styles.sqlContainer}>
+      <Stack direction="column" gap={1}>
         {renderSQLButtons()}
         <div
           className={cx(styles.contentContainer, {
@@ -332,7 +324,7 @@ LIMIT
             </div>
           )}
         </div>
-      </div>
+      </Stack>
       <Suspense fallback={null}>
         <GenAISuggestionsDrawer
           isOpen={isDrawerOpen}
@@ -344,7 +336,7 @@ LIMIT
       <Suspense fallback={null}>
         <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
       </Suspense>
-    </>
+    </div>
   );
 
   const renderStandaloneEditor = () => (
@@ -385,13 +377,7 @@ LIMIT
 
 const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   sqlContainer: css({
-    display: 'grid',
-    gap: theme.spacing(1),
-    gridTemplateRows: 'auto 1fr',
-    gridTemplateAreas: `
-      "buttons"
-      "content"
-    `,
+    marginTop: theme.spacing(0.5),
   }),
 
   contentContainer: css({
@@ -427,17 +413,12 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
   // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
   // can be prioritized later.
-  sqlButtons: css({
-    gridArea: 'buttons',
-    justifySelf: 'end',
-    transform: `translateY(${theme.spacing(-4)})`,
-    marginBottom: theme.spacing(-4), // Prevent affecting editor position
-    zIndex: 10, // Ensure buttons appear above other elements
-    position: 'relative', // Required for z-index to work
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
+  // sqlButtons: css({
+  //   gridArea: 'buttons',
+  //   // display: 'flex',
+  //   // alignItems: 'center',
+  //   // gap: theme.spacing(1),
+  // }),
   schemaInspector: css({
     gridArea: 'schema',
     height: editorHeight,
