@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 
 import { LogRowModel, store } from '@grafana/data';
 
-import { getSidebarWidth } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { LogListModel } from './processing';
@@ -56,6 +56,7 @@ export interface Props {
   logs: LogRowModel[];
   logOptionsStorageKey?: string;
   showControls: boolean;
+  showFieldSelector?: boolean;
 }
 
 export const LogDetailsContextProvider = ({
@@ -68,12 +69,13 @@ export const LogDetailsContextProvider = ({
     : getDefaultDetailsMode(containerElement),
   logs,
   showControls,
+  showFieldSelector,
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
 
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
   const [detailsWidth, setDetailsWidthState] = useState(
-    getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
+    getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls, showFieldSelector)
   );
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
     detailsModeProp ?? getDefaultDetailsMode(containerElement)
@@ -101,8 +103,10 @@ export const LogDetailsContextProvider = ({
 
   // Sync log details inline and sidebar width
   useEffect(() => {
-    setDetailsWidthState(getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsMode, showControls));
-  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+    setDetailsWidthState(
+      getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsMode, showControls, showFieldSelector)
+    );
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls, showFieldSelector]);
 
   // Sync log details width
   useEffect(() => {
@@ -111,13 +115,20 @@ export const LogDetailsContextProvider = ({
     }
     const handleResize = debounce(() => {
       setDetailsWidthState((detailsWidth) =>
-        getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth, detailsMode, showControls)
+        getDetailsWidth(
+          containerElement,
+          logOptionsStorageKey,
+          detailsWidth,
+          detailsMode,
+          showControls,
+          showFieldSelector
+        )
       );
     }, 50);
     const observer = new ResizeObserver(() => handleResize());
     observer.observe(containerElement);
     return () => observer.disconnect();
-  }, [containerElement, detailsMode, logOptionsStorageKey, showControls, showDetails]);
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls, showDetails, showFieldSelector]);
 
   const closeDetails = useCallback(() => {
     showDetails.forEach((log) => removeDetailsScrollPosition(log));
@@ -158,7 +169,10 @@ export const LogDetailsContextProvider = ({
         return;
       }
 
-      const maxWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey) - LOG_LIST_MIN_WIDTH;
+      const maxWidth =
+        containerElement.clientWidth -
+        (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0) -
+        LOG_LIST_MIN_WIDTH;
       if (width > maxWidth) {
         return;
       }
@@ -166,7 +180,7 @@ export const LogDetailsContextProvider = ({
       store.set(`${logOptionsStorageKey}.detailsWidth`, width);
       setDetailsWidthState(width);
     },
-    [containerElement, logOptionsStorageKey]
+    [containerElement, logOptionsStorageKey, showFieldSelector]
   );
 
   return (
@@ -196,12 +210,14 @@ export function getDetailsWidth(
   logOptionsStorageKey?: string,
   currentWidth?: number,
   detailsMode: LogLineDetailsMode = 'sidebar',
-  showControls?: boolean
+  showControls?: boolean,
+  showFieldSelector?: boolean
 ) {
   if (!containerElement) {
     return 0;
   }
-  const availableWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey);
+  const availableWidth =
+    containerElement.clientWidth - (showFieldSelector ? getFieldSelectorWidth(logOptionsStorageKey) : 0);
   if (detailsMode === 'inline') {
     return availableWidth - getScrollbarWidth() - (showControls ? LOG_LIST_CONTROLS_WIDTH : 0);
   }

@@ -462,4 +462,10 @@ type GetGrafanaRuleStatusesParams struct {
 	// in: query
 	// required: false
 	Matchers []string `json:"matcher"`
+
+	// Filter rules by their static labels (not alert instance labels). Each value is a JSON-encoded Prometheus-like matcher (for example, {"type":0,"name":"severity","value":"critical"}).
+	// For equality matchers with empty string values (e.g., name=""), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).
+	// in: query
+	// required: false
+	RuleLabelMatchers []string `json:"rule_matcher"`
 }

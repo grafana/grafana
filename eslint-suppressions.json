@@ -804,11 +804,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1822,7 +1817,7 @@
   },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 4
+      "count": 5
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -1832,11 +1827,6 @@
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2917,11 +2907,6 @@
   },
   "public/app/features/plugins/admin/components/PluginDashboards.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/PluginDetailsPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },

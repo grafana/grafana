@@ -75,9 +75,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": false,
           "rounded": true,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -154,9 +154,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -233,9 +233,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -312,9 +312,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -391,9 +391,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -470,9 +470,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": false,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -549,9 +549,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": false,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -641,9 +641,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -720,9 +720,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -799,9 +799,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -878,9 +878,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": false,
           "rounded": true,
-          "spotlight": true,
-          "gradient": false
+          "spotlight": true
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -974,9 +974,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": false,
           "rounded": false,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1053,9 +1053,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": false,
           "rounded": false,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1132,9 +1132,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": true,
           "rounded": false,
-          "spotlight": false,
-          "gradient": true
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1211,9 +1211,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": false,
           "rounded": false,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1290,9 +1290,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": false,
           "rounded": false,
-          "spotlight": false,
-          "gradient": false
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1386,9 +1386,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": true,
           "rounded": false,
-          "spotlight": false,
-          "gradient": true
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1469,9 +1469,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": true,
           "rounded": false,
-          "spotlight": false,
-          "gradient": true
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1552,9 +1552,9 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
+          "gradient": true,
           "rounded": false,
-          "spotlight": false,
-          "gradient": true
+          "spotlight": false
         },
         "orientation": "auto",
         "reduceOptions": {
@@ -1603,7 +1603,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1644,9 +1643,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -1671,7 +1670,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 98,
           "min": 5,
           "noise": 22,
@@ -1689,7 +1687,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1730,9 +1727,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -1757,7 +1754,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 98,
           "min": 5,
           "noise": 22,
@@ -1788,7 +1784,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1830,9 +1825,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -1857,7 +1852,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 8,
           "min": 1,
           "noise": 2,
@@ -1875,7 +1869,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1917,9 +1910,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -1944,7 +1937,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 12,
           "min": 1,
           "noise": 2,
@@ -1962,7 +1954,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2003,9 +1994,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -2030,7 +2021,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 100,
           "min": 10,
           "noise": 22,
@@ -2048,7 +2038,6 @@
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2089,9 +2078,9 @@
         "effects": {
           "barGlow": true,
           "centerGlow": true,
+          "gradient": true,
           "rounded": true,
-          "spotlight": true,
-          "gradient": true
+          "spotlight": true
         },
         "glow": "both",
         "orientation": "auto",
@@ -2116,7 +2105,6 @@
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "hide": false,
           "max": 100,
           "min": 10,
           "noise": 22,
@@ -2129,6 +2117,151 @@
       ],
       "title": "Backend",
       "type": "radialbar"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
+      "id": 35,
+      "panels": [],
+      "title": "Empty data",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 67
+      },
+      "id": 36,
+      "options": {
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": true,
+          "rounded": false,
+          "spotlight": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sparkline": true
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 0
+        }
+      ],
+      "title": "Numeric, no series",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 67
+      },
+      "id": 37,
+      "options": {
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": true,
+          "rounded": false,
+          "spotlight": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sparkline": true
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "logs"
+        }
+      ],
+      "title": "Non-numeric",
+      "type": "gauge"
     }
   ],
   "preload": false,

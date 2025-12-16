@@ -44,6 +44,11 @@ type DashboardService interface {
 	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }
 
+type DashboardAccessService interface {
+	// The user as access to {VERB} the requested dashboard
+	HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error)
+}
+
 type PermissionsRegistrationService interface {
 	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 

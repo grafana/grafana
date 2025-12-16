@@ -1,6 +1,6 @@
 import { defaultDataQueryKind, PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { getRuntimePanelDataSource } from './utils';
+import { ensureUniqueRefIds, getRuntimePanelDataSource } from './utils';
 
 describe('getRuntimePanelDataSource', () => {
   it('should return uid and type when explicit datasource UID is provided', () => {
@@ -138,5 +138,78 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('ensureUniqueRefIds', () => {
+  const createQuery = (refId: string): PanelQueryKind => ({
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: 'prometheus',
+        spec: {},
+      },
+    },
+  });
+
+  it('should assign unique refIds to queries without refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery(''), createQuery(''), createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('C');
+  });
+
+  it('should preserve existing refIds and fill gaps', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery(''), createQuery('D'), createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('D');
+    expect(result[3].spec.refId).toBe('C');
+  });
+
+  it('should handle all queries having existing refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery('B'), createQuery('C')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('C');
+  });
+
+  it('should only modify queries without refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery(''), createQuery('C')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    // Existing refIds should be preserved
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[2].spec.refId).toBe('C');
+    // Missing refId should be assigned
+    expect(result[1].spec.refId).toBe('B');
+  });
+
+  it('should handle empty array', () => {
+    const result = ensureUniqueRefIds([]);
+
+    expect(result).toEqual([]);
+  });
+
+  it('should handle single query without refId', () => {
+    const queries: PanelQueryKind[] = [createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
   });
 });

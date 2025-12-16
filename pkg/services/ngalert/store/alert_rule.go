@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -631,7 +632,13 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+			var converted ngmodels.AlertRule
+			if query.Compact {
+				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
+			} else {
+				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
+			}
+
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
 				continue
@@ -796,6 +803,15 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 	return result, nextToken, err
 }
 
+func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool {
+	for _, m := range matchers {
+		if !m.Matches(lbls[m.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
 // nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
@@ -914,6 +930,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if len(query.LabelMatchers) > 0 {
+		q, err = st.filterByLabelMatchers(query.LabelMatchers, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
 	// FIXME: record is nullable but we don't save it as null when it's nil
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
@@ -958,6 +981,11 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 	}
 	if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
 		if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
+			return nil, false
+		}
+	}
+	if len(query.LabelMatchers) > 0 { // remove false-positive hits from the result
+		if !matchersMatchLabels(query.LabelMatchers, converted.Labels) {
 			return nil, false
 		}
 	}
@@ -1347,6 +1375,23 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 		"%prometheus_style_rule%",
 		"%original_rule_definition%",
 	), nil
+}
+
+// filterByLabelMatchers adds filtering for equality and inequality label matchers.
+// Returns error if regex matchers are passed.
+func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Session) (*xorm.Session, error) {
+	for _, m := range matchers {
+		if m.Type != labels.MatchEqual && m.Type != labels.MatchNotEqual {
+			return nil, fmt.Errorf("matcher %q %s %q is not supported", m.Name, m.Type, m.Value)
+		}
+
+		sql, args, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", m)
+		if err != nil {
+			return nil, err
+		}
+		sess = sess.And(sql, args...)
+	}
+	return sess, nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {

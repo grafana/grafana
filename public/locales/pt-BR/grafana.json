@@ -3707,6 +3707,10 @@
       "clear": "Limpar busca e filtros",
       "text": "Nenhum resultado encontrado para sua consulta"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -5129,6 +5133,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configuração",
       "menu-use-library-panel": "Usar painel da biblioteca",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5950,13 +5955,25 @@
       "title-error-loading-dashboard": "Erro ao carregar o painel de controle"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar painel",
         "view-panel": "Visualizar painel"
       },
       "title": {
         "dashboard": "Painel de controle",
-        "discard-changes-to-dashboard": "Deseja descartar as alterações no painel?"
+        "discard-changes-to-dashboard": "Deseja descartar as alterações no painel?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6129,7 +6146,10 @@
       "no-data-found": "Nenhum dado encontrado"
     },
     "inspect-json-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcula dinamicamente o intervalo ao dividir o intervalo de tempo pela contagem especificada",
@@ -10712,7 +10732,6 @@
       "title": "Novo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Novo painel de controle"
     },
     "new-folder": {
@@ -11856,7 +11875,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Estabelecer esta conexão pode causar uma interrupção temporária"
     },
     "getting-started-page": {
-      "header": "Aprovisionamento",
       "subtitle-provisioning-feature": "Visualize e gerencie suas conexões de provisionamento"
     },
     "git": {
@@ -12622,7 +12640,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Novo",
       "new-dashboard": "Novo painel de controle",

@@ -17,7 +17,6 @@ export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) =
       }}
       tooltip={t('dashboard.toolbar.new.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
       variant="secondary"
-      size="sm"
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
     >
       <Trans i18nKey="dashboard.toolbar.new.enter-edit-mode.label">Make editable</Trans>
