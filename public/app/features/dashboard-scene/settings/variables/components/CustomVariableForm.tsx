@@ -102,11 +102,11 @@ export function ValuesFormatSelector({ valuesFormat, onValuesFormatChange }: Val
         options={[
           {
             value: 'csv',
-            label: t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma'),
+            label: t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'CSV'),
           },
           {
             value: 'json',
-            label: t('dashboard-scene.custom-variable-form.name-json-values', 'Object values in a JSON array'),
+            label: t('dashboard-scene.custom-variable-form.name-json-values', 'JSON'),
           },
         ]}
       />

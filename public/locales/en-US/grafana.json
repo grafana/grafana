@@ -4819,7 +4819,6 @@
       "variable": {
         "custom-options": {
           "apply": "Apply",
-          "change-value": "Change variable value",
           "discard": "Discard",
           "modal-title": "Custom Variable",
           "values": "Values separated by comma"
@@ -5915,9 +5914,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
-      "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
-      "name-json-values": "Object values in a JSON array",
-      "name-values-separated-comma": "Values separated by comma",
+      "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br />Check <4>our docs</4> for more information.",
+      "name-json-values": "JSON",
+      "name-values-separated-comma": "CSV",
       "selection-options": "Selection options"
     },
     "dashboard-link-form": {
@@ -6499,6 +6498,11 @@
         "text": {
           "settings": "Settings"
         }
+      }
+    },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": "Change variable query"
       }
     },
     "use-save-dashboard": {
