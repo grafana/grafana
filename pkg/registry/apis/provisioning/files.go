@@ -105,7 +105,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 		folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
+		authorizer := resources.NewRepositoryAuthorizer(repo.Config(), c.access)
+		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, authorizer)
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
 			Ref:          query.Get("ref"),
