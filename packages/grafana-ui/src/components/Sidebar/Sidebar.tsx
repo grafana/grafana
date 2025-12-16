@@ -44,6 +44,10 @@ export function SidebarComp({ children, contextValue }: Props) {
     }
   });
 
+  if (contextValue.hidden) {
+    return null;
+  }
+
   return (
     <SidebarContext.Provider value={contextValue}>
       <div ref={ref} className={className} style={style}>

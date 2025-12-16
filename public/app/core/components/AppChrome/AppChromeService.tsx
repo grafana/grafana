@@ -72,6 +72,8 @@ export class AppChromeService {
       ...current,
     };
 
+    console.log('AppChromeService.update', { update });
+
     // when route change update props from route and clear fields
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
