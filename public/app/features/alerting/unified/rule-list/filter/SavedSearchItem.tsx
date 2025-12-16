@@ -133,7 +133,7 @@ export function SavedSearchItem({
 
         {/* Action menu - stop propagation to prevent parent Dropdown from closing */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <div onClick={(e) => e.stopPropagation()}>
+        <div className={styles.actionMenuWrapper} onClick={(e) => e.stopPropagation()}>
           <ActionMenu
             isDefault={search.isDefault}
             isDisabled={isDisabled}
@@ -217,6 +217,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     deleteIcon: css({
       color: theme.colors.error.main,
+    }),
+    actionMenuWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
     }),
   };
 }

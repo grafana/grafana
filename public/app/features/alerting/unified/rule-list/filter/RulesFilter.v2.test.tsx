@@ -469,6 +469,14 @@ describe('RulesFilterV2', () => {
   });
 
   describe('Saved Searches', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingSavedSearches = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.alertingSavedSearches = false;
+    });
+
     it('Should auto-apply default saved search on first navigation', async () => {
       // Set up a saved search marked as default
       const defaultSavedSearch = {
@@ -534,8 +542,13 @@ describe('RulesFilterV2', () => {
       // Clear session storage to simulate fresh navigation
       sessionStorage.removeItem('grafana.alerting.alertRules.visited.123');
 
-      // Set URL search parameter
-      locationService.replace({ search: '?search=state:pending' });
+      // Mock URL with search parameter using Object.defineProperty
+      // (locationService.replace doesn't update window.location.search in jsdom)
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, search: '?search=state:pending' },
+        writable: true,
+      });
 
       render(<RulesFilterV2 />);
 
@@ -551,6 +564,12 @@ describe('RulesFilterV2', () => {
           ruleState: 'firing',
         })
       );
+
+      // Restore original location
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+      });
     });
   });
 });
