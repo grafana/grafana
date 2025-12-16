@@ -12,7 +12,6 @@ import {
   lighten,
   asRgbString,
   onBackground,
-  colorAtGradientPercent,
 } from './colorManipulator';
 
 describe('utils/colorManipulator', () => {
