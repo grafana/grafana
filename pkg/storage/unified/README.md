@@ -1346,4 +1346,34 @@ Key metrics for monitoring Unified Search:
 - `unified_search_shadow_requests_total`: Shadow traffic request counts
 - `unified_search_ring_members`: Number of active search server instances
 
+## Data migrations
 
+Unified storage includes an automated migration system that transfers resources from legacy SQL tables to unified storage. Migrations run automatically during Grafana startup when enabled.
+
+### Supported resources
+
+- Folders
+- Dashboards
+- Library panels
+- Playlists
+
+### Validation
+
+Built-in validators ensure data integrity after migration:
+
+- **CountValidator**: Verifies resource counts match between legacy and unified storage
+- **FolderTreeValidator**: Validates folder parent-child relationships are preserved
+
+### Configuration
+
+Enable migrations in `grafana.ini`:
+
+```ini
+[unified_storage]
+disable_data_migrations = false
+```
+
+### Documentation
+
+For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).
+ 
