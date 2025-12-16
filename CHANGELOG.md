@@ -1,3 +1,22 @@
+<!-- 12.0.8 START -->
+
+# 12.0.8 (2025-12-16)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting dependency [#114252](https://github.com/grafana/grafana/pull/114252), [@moustafab](https://github.com/moustafab)
+- **Dependencies:** Bump Go to v1.25.5 [#114756](https://github.com/grafana/grafana/pull/114756), [@macabu](https://github.com/macabu)
+- **Docs:** Clarify section title for repeating rows and tabs [#115343](https://github.com/grafana/grafana/pull/115343), [@imatwawana](https://github.com/imatwawana)
+- **Plugins:** Add PluginContext to plugins when scenes is disabled [#115061](https://github.com/grafana/grafana/pull/115061), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Bug fixes
+
+- **Alerting:** Fix contact points issue [#115410](https://github.com/grafana/grafana/pull/115410), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Azure:** Fix `dcount` aggregation [#114904](https://github.com/grafana/grafana/pull/114904), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix `percentile` syntax [#114704](https://github.com/grafana/grafana/pull/114704), [@aangelisc](https://github.com/aangelisc)
+- **Postgresql:** Fix variable interpolation logic when the variable has multiple values [#114873](https://github.com/grafana/grafana/pull/114873), [@itsmylife](https://github.com/itsmylife)
+
+<!-- 12.0.8 END -->
 <!-- 11.6.9 START -->
 
 # 11.6.9 (2025-12-16)
