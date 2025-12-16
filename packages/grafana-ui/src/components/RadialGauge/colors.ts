@@ -36,13 +36,13 @@ export function buildGradientColors(
     const max = fieldDisplay.field.max ?? 100;
 
     const result: Array<{ color: string; percent: number }> = [
-      { color: displayProcessor(min).color ?? baseColor, percent: 0 },
+      { color: displayProcessor(min).color ?? FALLBACK_COLOR, percent: 0 },
     ];
 
     for (const threshold of thresholds) {
       if (threshold.value > min && threshold.value < max) {
         const percent = (threshold.value - min) / (max - min);
-        result.push({ color: threshold.color, percent });
+        result.push({ color: theme.visualization.getColorByName(threshold.color), percent });
       }
     }
 

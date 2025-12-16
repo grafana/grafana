@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, memo } from 'react';
 
 import { DisplayProcessor, FieldDisplay } from '@grafana/data';
 
@@ -30,94 +30,104 @@ interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
 
 type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDot;
 
+const DOT_RADIUS_FACTOR = 0.4;
 const MAX_DOT_RADIUS = 8;
 
-export function RadialArcPath({
-  arcLengthDeg,
-  color,
-  dimensions,
-  displayProcessor,
-  fieldDisplay,
-  glowFilter,
-  gradientMode,
-  roundedBars,
-  shape,
-  showGuideDots,
-  startAngle: angle,
-}: RadialArcPathProps) {
-  const theme = useTheme2();
-  const id = useId();
+export const RadialArcPath = memo(
+  ({
+    arcLengthDeg,
+    color,
+    dimensions,
+    displayProcessor,
+    fieldDisplay,
+    glowFilter,
+    gradientMode,
+    roundedBars,
+    shape,
+    showGuideDots,
+    startAngle: angle,
+  }: RadialArcPathProps) => {
+    const theme = useTheme2();
+    const id = useId();
 
-  const { radius, centerX, centerY, barWidth } = dimensions;
+    const gradientStops = useMemo(() => {
+      if (gradientMode === 'none') {
+        return [];
+      }
+      return buildGradientColors(gradientMode, theme, displayProcessor, fieldDisplay, fieldDisplay.display.color);
+    }, [gradientMode, fieldDisplay, theme, displayProcessor]);
 
-  const gradientStops = useMemo(() => {
-    if (gradientMode === 'none') {
-      return [];
-    }
-    return buildGradientColors(gradientMode, theme, displayProcessor, fieldDisplay, fieldDisplay.display.color);
-  }, [gradientMode, fieldDisplay, theme, displayProcessor]);
-
-  const { guideDotColors, endpointColors } = useMemo(() => {
-    if (!showGuideDots || shape !== 'circle' || gradientStops.length === 0) {
+    const { guideDotColors, endpointColors } = useMemo(() => {
+      if (!showGuideDots || gradientStops.length === 0) {
+        return {
+          guideDotStartColor: undefined,
+          guideDotEndColor: undefined,
+        };
+      }
       return {
-        guideDotStartColor: undefined,
-        guideDotEndColor: undefined,
+        guideDotColors: getGuideDotColors(gradientStops, fieldDisplay.display.percent ?? 0),
+        endpointColors:
+          shape === 'circle' ? getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 0) : undefined,
       };
-    }
-    return {
-      guideDotColors: getGuideDotColors(gradientStops, fieldDisplay.display.percent ?? 0),
-      endpointColors: getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 0),
-    };
-  }, [showGuideDots, shape, fieldDisplay, gradientStops]);
+    }, [showGuideDots, fieldDisplay, gradientStops, shape]);
 
-  const bgDivStyle = useMemo(() => {
-    const baseStyles = { width: '100%', height: '100%' };
-    if (color) {
-      return { backgroundColor: color, ...baseStyles };
-    }
-    const gradientCss = getGradientCss(gradientStops, shape);
-    return { backgroundImage: gradientCss, ...baseStyles };
-  }, [color, gradientStops, shape]);
+    const bgDivStyle = useMemo(() => {
+      const baseStyles = { width: '100%', height: '100%' };
+      if (color) {
+        return { backgroundColor: color, ...baseStyles };
+      }
+      const gradientCss = getGradientCss(gradientStops, shape);
+      return { backgroundImage: gradientCss, ...baseStyles };
+    }, [color, gradientStops, shape]);
 
-  const startRadians = toRad(angle);
-  const endRadians = toRad(angle + arcLengthDeg);
+    const { radius, centerX, centerY, barWidth } = dimensions;
 
-  const path = useMemo(
-    () => drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars),
-    [angle, arcLengthDeg, dimensions, roundedBars]
-  );
-  let x1 = centerX + radius * Math.cos(startRadians);
-  let y1 = centerY + radius * Math.sin(startRadians);
-  let x2 = centerX + radius * Math.cos(endRadians);
-  let y2 = centerY + radius * Math.sin(endRadians);
+    const path = useMemo(
+      () => drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars),
+      [angle, arcLengthDeg, dimensions, roundedBars]
+    );
 
-  const dotRadius = Math.min((barWidth / 2) * 0.4, MAX_DOT_RADIUS);
+    const { x1, x2, y1, y2 } = useMemo(() => {
+      const startRadians = toRad(angle);
+      const endRadians = toRad(angle + arcLengthDeg);
 
-  return (
-    <>
-      <clipPath id={id}>
-        <path d={path} />
-      </clipPath>
-      <g filter={glowFilter}>
-        <foreignObject
-          x={centerX - radius - barWidth}
-          y={centerY - radius - barWidth}
-          width={(radius + barWidth) * 2}
-          height={(radius + barWidth) * 2}
-          clipPath={`url(#${id})`}
-        >
-          <div style={bgDivStyle} />
-        </foreignObject>
-      </g>
+      let x1 = centerX + radius * Math.cos(startRadians);
+      let y1 = centerY + radius * Math.sin(startRadians);
+      let x2 = centerX + radius * Math.cos(endRadians);
+      let y2 = centerY + radius * Math.sin(endRadians);
+      return { x1, y1, x2, y2 };
+    }, [angle, arcLengthDeg, centerX, centerY, radius]);
 
-      {showGuideDots && (
-        <>
-          {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
-          {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
-          {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
-          {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
-        </>
-      )}
-    </>
-  );
-}
+    const dotRadius = Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS);
+
+    return (
+      <>
+        <clipPath id={id}>
+          <path d={path} />
+        </clipPath>
+        <g filter={glowFilter}>
+          <foreignObject
+            x={centerX - radius - barWidth}
+            y={centerY - radius - barWidth}
+            width={(radius + barWidth) * 2}
+            height={(radius + barWidth) * 2}
+            clipPath={`url(#${id})`}
+          >
+            <div style={bgDivStyle} />
+          </foreignObject>
+        </g>
+
+        {showGuideDots && (
+          <>
+            {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
+            {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
+            {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
+            {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
+          </>
+        )}
+      </>
+    );
+  }
+);
+
+RadialArcPath.displayName = 'RadialArcPath';
