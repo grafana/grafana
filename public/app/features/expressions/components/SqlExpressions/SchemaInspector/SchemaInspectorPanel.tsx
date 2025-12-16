@@ -1,25 +1,24 @@
 import { css } from '@emotion/css';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
-  Stack,
-  Tab,
-  TabsBar,
-  TabContent,
-  Icon,
+  Alert,
   Badge,
-  Text,
-  useStyles2,
+  Icon,
   InteractiveTable,
   ScrollContainer,
-  Alert,
   Spinner,
-  IconButton,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+  useStyles2,
 } from '@grafana/ui';
 
-import { SQLSchemas, SQLSchemaField, SQLSchemaData } from '../hooks/useSQLSchemas';
+import { SQLSchemaData, SQLSchemaField, SQLSchemas } from '../hooks/useSQLSchemas';
 
 import { getFieldTypeIcon } from './utils';
 
@@ -206,15 +205,6 @@ export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: Schem
             ))}
           </TabsBar>
         )}
-        <IconButton
-          name="times"
-          onClick={onClose}
-          tooltip={t('expressions.sql-schema.close-schema-inspector', 'Close schema inspector')}
-          aria-label={t(
-            'expressions.schema-inspector-panel.aria-label-close-schema-inspector',
-            'Close schema inspector'
-          )}
-        />
       </div>
       {renderContent()}
     </div>

@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef, useEffect, useState, lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
-import { useStyles2, Stack, Button, Modal } from '@grafana/ui';
+import { Button, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
@@ -287,15 +287,19 @@ LIMIT
           </Suspense>
         )}
       </Stack>
-      {isSchemasFeatureEnabled && !isSchemaInspectorOpen && (
+      {isSchemasFeatureEnabled && (
         <Button
-          icon="table-expand-all"
-          onClick={() => setIsSchemaInspectorOpen(true)}
+          icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
+          onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
           size="sm"
           variant="secondary"
           fill="outline"
         >
-          <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
+          {isSchemaInspectorOpen ? (
+            <Trans i18nKey="expressions.sql-schema.close-schema-inspector">Close schema inspector</Trans>
+          ) : (
+            <Trans i18nKey="expressions.sql-schema.open-schema-inspector">Open schema inspector</Trans>
+          )}
         </Button>
       )}
     </Stack>
@@ -417,15 +421,6 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
     height: '100%',
     paddingTop: 0,
   }),
-  // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
-  // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
-  // can be prioritized later.
-  // sqlButtons: css({
-  //   gridArea: 'buttons',
-  //   // display: 'flex',
-  //   // alignItems: 'center',
-  //   // gap: theme.spacing(1),
-  // }),
   schemaInspector: css({
     gridArea: 'schema',
     height: editorHeight,

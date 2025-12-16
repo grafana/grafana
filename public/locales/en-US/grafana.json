@@ -7875,11 +7875,11 @@
     "sql-schema": {
       "close-schema-inspector": "Close schema inspector",
       "error-title": "Error",
-      "inspect-button": "Inspect schema",
       "loading": "Loading schema information...",
       "no-data-title": "No schema information available",
       "no-fields-desc": "This query returned no schema information.",
       "no-fields-title": "No schema information",
+      "open-schema-inspector": "Open schema inspector",
       "query-error-title": "Query error"
     },
     "threshold": {
