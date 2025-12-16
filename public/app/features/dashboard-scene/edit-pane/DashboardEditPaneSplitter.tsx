@@ -94,29 +94,43 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     }
   };
 
+  function renderBody() {
+    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
+    if (isInKioskMode) {
+      return (
+        <div
+          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
+          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        >
+          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={styles.bodyWrapper}
+        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        {...sidebarContext.outerWrapperProps}
+      >
+        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+          {body}
+        </div>
+
+        <Sidebar contextValue={sidebarContext}>
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+        </Sidebar>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <ElementSelectionContext.Provider value={selectionContext}>
-        <div className={cx(styles.controlsWrapperSticky)} onPointerDown={onClearSelection}>
+        <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
           {controls}
         </div>
-        <div
-          className={styles.bodyWrapper}
-          {...sidebarContext.outerWrapperProps}
-          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        >
-          {/** In kiosk mode the document body is scrollable */}
-          {isInKioskMode ? (
-            <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
-          ) : (
-            <div className={styles.bodyWithToolbar} ref={onBodyRef} onPointerDown={onClearSelection}>
-              {body}
-            </div>
-          )}
-          <Sidebar contextValue={sidebarContext}>
-            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
-          </Sidebar>
-        </div>
+        {renderBody()}
       </ElementSelectionContext.Provider>
     </div>
   );
@@ -180,9 +194,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
-      overflow: 'hidden',
     }),
-    bodyWithToolbar: css({
+    bodyWrapperKiosk: css({
+      padding: theme.spacing(0, 2, 2, 2),
+    }),
+    scrollContainer: css({
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
