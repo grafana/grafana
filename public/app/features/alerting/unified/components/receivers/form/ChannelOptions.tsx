@@ -29,8 +29,8 @@ export interface Props<R extends ChannelValues> {
    * This is used to access the settings and secure fields for the integration in a type-safe way.
    */
   integrationPrefix: `items.${number}`;
+  canEditProtectedFields: boolean;
   readOnly?: boolean;
-
   customValidators?: Record<string, React.ComponentProps<typeof OptionField>['customValidator']>;
 }
 
@@ -43,6 +43,7 @@ export function ChannelOptions<R extends ChannelValues>({
   integrationPrefix,
   readOnly = false,
   customValidators = {},
+  canEditProtectedFields,
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
@@ -53,7 +54,7 @@ export function ChannelOptions<R extends ChannelValues>({
 
   const getOptionMeta = (option: NotificationChannelOption): OptionMeta => ({
     required: determineRequired(option, settings, secureFields),
-    readOnly: determineReadOnly(option, settings, secureFields),
+    readOnly: determineReadOnly(option, settings, secureFields, canEditProtectedFields),
   });
 
   return (
@@ -77,6 +78,7 @@ export function ChannelOptions<R extends ChannelValues>({
               label={option.label}
               description={option.description}
               htmlFor={`${settingsPath}${option.propertyName}`}
+              noMargin
             >
               <SecretInput
                 id={`${settingsPath}${option.propertyName}`}
@@ -87,9 +89,10 @@ export function ChannelOptions<R extends ChannelValues>({
           );
         }
 
-        const error: FieldError | DeepMap<any, FieldError> | undefined = (
-          (option.secure ? errors?.secureFields : errors?.settings) as DeepMap<any, FieldError> | undefined
-        )?.[option.secureFieldKey ?? option.propertyName];
+        const errorSource = option.secure ? errors?.secureFields : errors?.settings;
+        const propertyKey = option.secureFieldKey ?? option.propertyName;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const error = (errorSource as Record<string, FieldError | DeepMap<Record<string, unknown>, FieldError>> | undefined)?.[propertyKey];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
@@ -139,8 +142,15 @@ const determineRequired = (
 const determineReadOnly = (
   option: NotificationChannelOption,
   settings: Record<string, unknown>,
-  secureFields: NotificationChannelSecureFields
+  secureFields: NotificationChannelSecureFields,
+  canEditProtectedFields: boolean,
 ) => {
+
+if (option.protected && !canEditProtectedFields) {
+  return true;
+}
+
+  // Handle fields with dependencies (e.g., field B depends on field A being set)
   if (!option.dependsOn) {
     return false;
   }
