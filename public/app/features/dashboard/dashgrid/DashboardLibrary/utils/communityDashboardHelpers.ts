@@ -138,7 +138,7 @@ function canPanelContainJS(panel: PanelModel): boolean {
     /\bon\w+="[^"]*"/i,
     /javascript:/i,
     /\bfunction\b/,
-    /=>/,
+    /=>\s*\{/,
     /\breturn\b/,
     /\bsetTimeout\b/i,
     /\bsetInterval\b/i,
