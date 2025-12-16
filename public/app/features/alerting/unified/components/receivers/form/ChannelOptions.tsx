@@ -92,7 +92,9 @@ export function ChannelOptions<R extends ChannelValues>({
         const errorSource = option.secure ? errors?.secureFields : errors?.settings;
         const propertyKey = option.secureFieldKey ?? option.propertyName;
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const error = (errorSource as Record<string, FieldError | DeepMap<Record<string, unknown>, FieldError>> | undefined)?.[propertyKey];
+        const error = (
+          errorSource as Record<string, FieldError | DeepMap<Record<string, unknown>, FieldError>> | undefined
+        )?.[propertyKey];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
@@ -143,12 +145,11 @@ const determineReadOnly = (
   option: NotificationChannelOption,
   settings: Record<string, unknown>,
   secureFields: NotificationChannelSecureFields,
-  canEditProtectedFields: boolean,
+  canEditProtectedFields: boolean
 ) => {
-
-if (option.protected && !canEditProtectedFields) {
-  return true;
-}
+  if (option.protected && !canEditProtectedFields) {
+    return true;
+  }
 
   // Handle fields with dependencies (e.g., field B depends on field A being set)
   if (!option.dependsOn) {
