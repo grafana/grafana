@@ -3707,6 +3707,10 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "recently-viewed": {
+      "empty": "Nothing viewed yet",
+      "title": "Recently viewed"
+    },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard",
       "all-failed_other": "Failed to restore {{count}} dashboards",
@@ -5128,6 +5132,7 @@
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
+      "missing-config": "Missing panel configuration",
       "suggestions": {
         "empty-state-message": "Run a query to start seeing suggested visualizations"
       }
@@ -6143,7 +6148,10 @@
       "no-data-found": "No data found"
     },
     "inspect-json-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "error-invalid-json": "Invalid JSON",
+      "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "validation-error": "Validation error"
     },
     "interval-variable-form": {
       "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified",
@@ -10726,7 +10734,6 @@
       "title": "New"
     },
     "new-dashboard": {
-      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -11870,7 +11877,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
     },
     "getting-started-page": {
-      "header": "Provisioning",
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
     "git": {
@@ -12636,7 +12642,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",

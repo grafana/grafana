@@ -58,6 +58,13 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
+	RelationCanGet            string = "can_get"
+	RelationCanCreate         string = "can_create"
+	RelationCanUpdate         string = "can_update"
+	RelationCanDelete         string = "can_delete"
+	RelationCanGetPermissions string = "can_get_permissions"
+	RelationCanSetPermissions string = "can_set_permissions"
+
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
@@ -132,6 +139,26 @@ var RelationToVerbMapping = map[string]string{
 	RelationDelete:         utils.VerbDelete,
 	RelationGetPermissions: utils.VerbGetPermissions,
 	RelationSetPermissions: utils.VerbSetPermissions,
+}
+
+// FolderPermissionRelation returns the optimized folder relation for permission management.
+func FolderPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanGet
+	case RelationCreate:
+		return RelationCanCreate
+	case RelationUpdate:
+		return RelationCanUpdate
+	case RelationDelete:
+		return RelationCanDelete
+	case RelationGetPermissions:
+		return RelationCanGetPermissions
+	case RelationSetPermissions:
+		return RelationCanSetPermissions
+	default:
+		return relation
+	}
 }
 
 func IsGroupResourceRelation(relation string) bool {
@@ -228,6 +255,9 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
 		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 

@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import { Box, Button, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -30,6 +31,7 @@ import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
@@ -171,14 +173,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} />
           </div>
         )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
+      {config.featureToggles.scopeFilters && !editPanel && (
+        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+      )}
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
+      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
@@ -187,7 +192,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 }
 
 function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
-  const { isEditing, editPanel, uid, meta } = dashboard.useState();
+  const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
 
   if (editPanel) {
@@ -197,13 +202,17 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEditable = Boolean(editable);
   const showShareButton = hasUid && !isSnapshot && !isPlaying;
 
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {isEditing && <SaveDashboard dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
+        <MakeDashboardEditableButton dashboard={dashboard} />
+      )}
       {isPlaying && (
         <Button
           variant="secondary"
@@ -242,6 +251,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
+      display: 'inline-block',
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
@@ -286,6 +296,10 @@ function getStyles(theme: GrafanaTheme2) {
     rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
+    }),
+    contextualNavToggle: css({
+      display: 'inline-flex',
+      margin: theme.spacing(0, 1, 1, 0),
     }),
   };
 }

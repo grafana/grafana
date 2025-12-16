@@ -496,6 +496,9 @@ export const versionedComponents = {
         },
       },
       TableNG: {
+        RowExpander: {
+          '12.4.0': 'data-testid tableng row expander',
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
