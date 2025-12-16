@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	_ "embed"
 	"errors"
 	"fmt"
 	"path"
