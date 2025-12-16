@@ -78,29 +78,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "datasource": {
-                      "type": "prometheus",
-                      "uid": "gdev-prometheus"
-                    },
-                    "id": 4,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "prometheus",
-                          "uid": "gdev-prometheus"
-                        },
-                        "editorMode": "builder",
-                        "expr": "{\"a.utf8.metric 🤘\", job=\"prometheus-utf8\"}",
-                        "instant": false,
-                        "legendFormat": "__auto",
-                        "range": true,
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {

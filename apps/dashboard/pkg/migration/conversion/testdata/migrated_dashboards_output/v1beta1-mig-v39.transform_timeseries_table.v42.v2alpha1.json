@@ -220,39 +220,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "id": 3,
-                    "title": "Panel with TimeSeriesTable Transformation - Mixed with Other Transforms",
-                    "transformations": [
-                      {
-                        "id": "reduce",
-                        "options": {
-                          "reducers": [
-                            "mean"
-                          ]
-                        }
-                      },
-                      {
-                        "id": "timeSeriesTable",
-                        "options": {
-                          "A": {
-                            "stat": "last"
-                          },
-                          "B": {
-                            "stat": "first"
-                          }
-                        }
-                      },
-                      {
-                        "id": "organize",
-                        "options": {
-                          "excludeByName": {}
-                        }
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {
@@ -436,12 +404,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "id": 8,
-                    "title": "Panel with No Transformations (Should Remain Unchanged)",
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {

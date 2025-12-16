@@ -162,23 +162,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 12,
-                      "y": 7
-                    },
-                    "id": 10,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -199,25 +188,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '5m', 10.0), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "timeGroup macro 5m with fill(10.0)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -294,23 +270,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 6,
-                      "y": 13
-                    },
-                    "id": 12,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -331,25 +296,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', NULL), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Metrics - timeGroup macro $summarize with fill(NULL)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -425,23 +377,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 12,
-                      "y": 13
-                    },
-                    "id": 13,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -462,25 +403,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', 100.0), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Metrics - timeGroup macro $summarize with fill(100.0)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -556,23 +484,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 59
-                    },
-                    "id": 14,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -595,25 +512,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - series mode",
                     "tooltip": {
                       "shared": false,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "bargauge",
                     "xaxis": {
                       "mode": "series",
                       "show": true,
@@ -692,23 +596,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 59
-                    },
-                    "id": 15,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -731,25 +624,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - series mode",
                     "tooltip": {
                       "shared": false,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "bargauge",
                     "xaxis": {
                       "mode": "series",
                       "show": true,
@@ -828,23 +708,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 0,
-                      "y": 13
-                    },
-                    "id": 16,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -865,25 +734,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '$summarize'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Metrics - timeGroup macro $summarize without fill",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -959,23 +815,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 51
-                    },
-                    "id": 17,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1000,25 +845,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - stacked percent",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1095,23 +927,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 43
-                    },
-                    "id": 18,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1134,25 +955,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - stacked",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1229,23 +1037,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 43
-                    },
-                    "id": 19,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1270,25 +1067,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - stacked",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1365,20 +1149,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 4,
-                      "w": 24,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 2,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -1401,20 +1174,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT * from mysql_types",
-                        "refId": "A"
-                      }
-                    ],
-                    "title": "Data types",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -1470,23 +1230,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 51
-                    },
-                    "id": 20,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1509,25 +1258,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - stacked percent",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1604,23 +1340,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 75
-                    },
-                    "id": 21,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1643,25 +1368,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - histogram stacked",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 20,
                       "mode": "histogram",
@@ -1741,23 +1453,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 67
-                    },
-                    "id": 22,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1780,25 +1481,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - histogram",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 100,
                       "mode": "histogram",
@@ -1878,23 +1566,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 83
-                    },
-                    "id": 23,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1917,25 +1594,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - histogram stacked percent",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 20,
                       "mode": "histogram",
@@ -2015,23 +1679,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 83
-                    },
-                    "id": 24,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2054,25 +1707,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - histogram stacked percent",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 20,
                       "mode": "histogram",
@@ -2152,23 +1792,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 67
-                    },
-                    "id": 25,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2191,25 +1820,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column - histogram",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 50,
                       "mode": "histogram",
@@ -2289,23 +1905,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 75
-                    },
-                    "id": 26,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2328,25 +1933,12 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column - histogram stacked",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "histogram",
                     "xaxis": {
                       "buckets": 20,
                       "mode": "histogram",
@@ -2426,23 +2018,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 19
-                    },
-                    "id": 27,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2467,25 +2048,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column using timeGroup macro ($summarize)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2562,23 +2130,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 35
-                    },
-                    "id": 28,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2601,25 +2158,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2697,20 +2241,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 3,
-                      "w": 6,
-                      "x": 0,
-                      "y": 4
-                    },
-                    "id": 32,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -2740,21 +2273,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT cast(null as unsigned integer) as time_sec",
-                        "refId": "A",
-                        "target": ""
-                      }
-                    ],
-                    "title": "cast(null as unsigned integer) as time",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -2811,20 +2330,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 3,
-                      "w": 6,
-                      "x": 6,
-                      "y": 4
-                    },
-                    "id": 33,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -2854,21 +2362,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT cast(null as datetime) as time_sec",
-                        "refId": "A",
-                        "target": ""
-                      }
-                    ],
-                    "title": "cast(null as datetime) as time",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -2925,20 +2419,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 3,
-                      "w": 6,
-                      "x": 12,
-                      "y": 4
-                    },
-                    "id": 34,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -2968,21 +2451,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT cast(NOW() as datetime) as time_sec",
-                        "refId": "A",
-                        "target": ""
-                      }
-                    ],
-                    "title": "cast()NOW() as datetime) as time",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -3039,20 +2508,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 3,
-                      "w": 6,
-                      "x": 18,
-                      "y": 4
-                    },
-                    "id": 35,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -3082,21 +2540,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT NOW() as time",
-                        "refId": "A",
-                        "target": ""
-                      }
-                    ],
-                    "title": "NOW() as time",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -3152,23 +2596,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 18,
-                      "y": 7
-                    },
-                    "id": 36,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -3189,25 +2622,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '5m', previous), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "timeGroup macro 5m with fill(previous)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3284,23 +2704,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 18,
-                      "y": 13
-                    },
-                    "id": 37,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -3321,25 +2730,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', previous), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Metrics - timeGroup macro $summarize with fill(previous)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3415,23 +2811,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 27
-                    },
-                    "id": 38,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -3456,25 +2841,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  measurement, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1, 2",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column using unixEpochGroup macro ($summarize)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3551,23 +2923,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 27
-                    },
-                    "id": 39,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -3602,25 +2963,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  measurement in($metric)\nGROUP BY 1\nORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column using unixEpochGroup macro ($summarize)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3697,23 +3045,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 35
-                    },
-                    "id": 4,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -3738,25 +3075,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series with metric column",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3833,23 +3157,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 19
-                    },
-                    "id": 5,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -3884,25 +3197,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  measurement IN($metric)\nGROUP BY 1\nORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Multiple series without metric column using timeGroup macro ($summarize)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3979,23 +3279,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 0,
-                      "y": 7
-                    },
-                    "id": 7,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -4016,25 +3305,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '5m'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "timeGroup macro 5m without fill",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -4111,23 +3387,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mysql-ds-tests"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 6,
-                      "x": 6,
-                      "y": 7
-                    },
-                    "id": 9,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -4148,25 +3413,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": true,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mysql-ds-tests"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT $__timeGroupAlias(time, '5m', NULL), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "timeGroup macro 5m with fill(NULL) and null as zero",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

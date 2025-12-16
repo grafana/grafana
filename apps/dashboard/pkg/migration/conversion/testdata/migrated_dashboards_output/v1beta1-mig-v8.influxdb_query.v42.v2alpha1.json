@@ -122,78 +122,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 1,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "groupBy": [
-                          {
-                            "params": [
-                              "1m"
-                            ],
-                            "type": "time"
-                          },
-                          {
-                            "params": [
-                              "host"
-                            ],
-                            "type": "tag"
-                          },
-                          {
-                            "params": [
-                              "null"
-                            ],
-                            "type": "fill"
-                          }
-                        ],
-                        "refId": "A",
-                        "select": [
-                          [
-                            {
-                              "params": [
-                                "value"
-                              ],
-                              "type": "field"
-                            },
-                            {
-                              "params": [],
-                              "type": "mean"
-                            },
-                            {
-                              "params": [
-                                "*2"
-                              ],
-                              "type": "math"
-                            },
-                            {
-                              "params": [
-                                "doubled"
-                              ],
-                              "type": "alias"
-                            }
-                          ]
-                        ],
-                        "tags": [
-                          {
-                            "key": "host",
-                            "value": "server1"
-                          }
-                        ]
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {
@@ -256,39 +185,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 2,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "groupBy": [
-                          {
-                            "interval": "1m",
-                            "type": "time"
-                          }
-                        ],
-                        "rawQuery": true,
-                        "refId": "A",
-                        "tags": [
-                          {
-                            "key": "host",
-                            "value": "server1"
-                          }
-                        ]
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {

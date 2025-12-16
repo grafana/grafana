@@ -97,57 +97,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "fieldConfig": {
-                      "defaults": {},
-                      "overrides": [
-                        {
-                          "matcher": {
-                            "id": "byName",
-                            "options": "Field2"
-                          },
-                          "properties": [
-                            {
-                              "id": "custom.hideFrom",
-                              "value": {
-                                "legend": false,
-                                "tooltip": true,
-                                "viz": true
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "__systemRef": "hideSeriesFrom",
-                          "matcher": {
-                            "id": "byNames",
-                            "options": {
-                              "mode": "exclude",
-                              "names": [
-                                "foo"
-                              ],
-                              "prefix": "All except:",
-                              "readOnly": true
-                            }
-                          },
-                          "properties": [
-                            {
-                              "id": "custom.hideFrom",
-                              "value": {
-                                "legend": false,
-                                "tooltip": true,
-                                "viz": true
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "id": 2,
-                    "title": "Panel with multiple overrides",
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {

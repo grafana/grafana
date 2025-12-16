@@ -72,27 +72,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
-                    "description": "",
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 8,
-                      "y": 23
-                    },
-                    "id": 10,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -105,9 +91,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -116,27 +99,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,10000000000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 1B (unit bytes)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -214,26 +183,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 16,
-                      "y": 0
-                    },
-                    "id": 11,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -246,9 +202,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -257,27 +210,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit bytes IEC)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -355,26 +294,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 0,
-                      "y": 7
-                    },
-                    "id": 12,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -387,9 +313,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -398,27 +321,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit none)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -496,26 +405,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 16,
-                      "y": 7
-                    },
-                    "id": 13,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -528,9 +424,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -539,27 +432,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit ms)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -637,26 +516,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 16,
-                      "y": 36
-                    },
-                    "id": 14,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -669,9 +535,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -680,27 +543,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1100,1200,1300"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 12000 - 30000 (unit ms)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -776,26 +625,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 0,
-                      "y": 14
-                    },
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -808,9 +644,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -819,27 +652,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit short)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -917,26 +736,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 8,
-                      "y": 14
-                    },
-                    "id": 3,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -949,9 +755,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -960,27 +763,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0.001,0.0002,0.0003"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0.0002 - 0.001 (unit short)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1056,26 +845,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1088,9 +864,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1099,27 +872,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit none)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1197,26 +956,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 8,
-                      "y": 7
-                    },
-                    "id": 5,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1229,9 +975,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1240,27 +983,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit bytes metric)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1338,26 +1067,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 16,
-                      "y": 14
-                    },
-                    "id": 6,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1370,9 +1086,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1381,27 +1094,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "12000,15000,20000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 12000 - 30000 (unit ms)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1477,26 +1176,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 8,
-                      "y": 0
-                    },
-                    "id": 7,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1509,9 +1195,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1520,27 +1203,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,500,1000,3000,2500,4000,4500,5000,7000,7500,8000,8500,9000,9500,10000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 10K (unit short)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1618,26 +1287,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 13,
-                      "w": 8,
-                      "x": 16,
-                      "y": 23
-                    },
-                    "id": 8,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1650,9 +1306,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1661,27 +1314,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "12000,15000,20000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 12000 - 30000 (unit ms)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1757,27 +1396,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
-                    "description": "",
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 8,
-                      "x": 0,
-                      "y": 23
-                    },
-                    "id": 9,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1790,9 +1415,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1801,27 +1423,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "0,10000000000"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Data from 0 - 1B (unit short)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

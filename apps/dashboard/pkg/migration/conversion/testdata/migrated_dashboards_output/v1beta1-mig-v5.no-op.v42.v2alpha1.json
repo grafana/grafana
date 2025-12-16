@@ -69,26 +69,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 1,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "stat"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {
@@ -137,26 +118,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 2,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "stat"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {
@@ -205,26 +167,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 3,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
+                  "originalOptions": {}
                 }
               },
               "fieldConfig": {

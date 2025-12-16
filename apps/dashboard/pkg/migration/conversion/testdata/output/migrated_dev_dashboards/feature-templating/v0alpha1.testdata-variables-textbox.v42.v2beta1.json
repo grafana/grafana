@@ -179,33 +179,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
-                    "fieldConfig": {
-                      "defaults": {
-                        "custom": {}
-                      },
-                      "overrides": []
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -218,11 +199,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.2.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -230,27 +207,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "${query}",
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Query: ${query}",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

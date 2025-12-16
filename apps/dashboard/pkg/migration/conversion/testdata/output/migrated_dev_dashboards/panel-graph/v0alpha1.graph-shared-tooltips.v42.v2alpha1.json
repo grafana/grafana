@@ -65,27 +65,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 12,
-                      "x": 12,
-                      "y": 14
-                    },
                     "hiddenSeries": false,
-                    "id": 10,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -98,11 +85,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -110,25 +93,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "flot panel (no units)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -790,33 +761,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
-                    "fieldConfig": {
-                      "defaults": {
-                        "unit": "celsius"
-                      },
-                      "overrides": []
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 12,
-                      "x": 0,
-                      "y": 14
-                    },
                     "hiddenSeries": false,
-                    "id": 8,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -829,11 +781,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -841,28 +789,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 25,
-                        "min": 1,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "flot panel (temperature)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

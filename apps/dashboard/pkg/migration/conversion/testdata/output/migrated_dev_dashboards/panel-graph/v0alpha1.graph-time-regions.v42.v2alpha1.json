@@ -64,23 +64,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -101,16 +90,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [
                       {
@@ -126,13 +105,11 @@
                         "toDayOfWeek": 5
                       }
                     ],
-                    "title": "Business Hours",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -201,25 +178,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "#d683ce"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 16
-                    },
-                    "id": 3,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -240,16 +206,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [
                       {
@@ -325,13 +281,11 @@
                         "toDayOfWeek": 7
                       }
                     ],
-                    "title": "Each day of week",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -403,23 +357,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 8
-                    },
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -440,19 +383,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "time_series",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [
                       {
@@ -468,13 +398,11 @@
                         "toDayOfWeek": 7
                       }
                     ],
-                    "title": "Sunday's 20-23",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -546,23 +474,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 2,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 24
-                    },
-                    "id": 5,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -583,19 +500,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "time_series",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [
                       {
@@ -606,13 +510,11 @@
                         "op": "time"
                       }
                     ],
-                    "title": "05:00",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -680,23 +582,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 32
-                    },
-                    "id": 7,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -717,15 +608,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [
                       {
@@ -739,13 +621,11 @@
                         "to": "00:30"
                       }
                     ],
-                    "title": "From 22:00 to 00:30 (crossing midnight)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

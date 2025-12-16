@@ -93,26 +93,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 9,
-                      "x": 6,
-                      "y": 0
-                    },
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -125,15 +112,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": [
-                        {
-                          "targetBlank": false,
-                          "title": "Drill it down",
-                          "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}\u0026var-labelDatacenter=${__field.labels.datacenter}\u0026var-labelDatacenterRegion=${__field.labels[\"datacenter.region\"]}\u0026var-valueTime=${__value.time}\u0026var-valueNumeric=${__value.numeric}\u0026var-valueText=${__value.text}"
-                        }
-                      ]
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -142,39 +120,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "Foo datacenter",
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "labels": "datacenter=foo,datacenter.region=us-east-1",
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "alias": "Bar datacenter",
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "labels": "datacenter=bar,datacenter.region=us-east-2",
-                        "refId": "B",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Multiple series",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -475,26 +427,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 9,
-                      "x": 15,
-                      "y": 0
-                    },
-                    "id": 9,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -507,15 +446,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": [
-                        {
-                          "targetBlank": false,
-                          "title": "Drill it down",
-                          "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}\u0026var-valueTime=${__value.time}\u0026var-valueNumeric=${__value.numeric}\u0026var-valueText=${__value.text}\u0026var-fieldName=${__field.name}"
-                        }
-                      ]
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -524,29 +454,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "Foo datacenter",
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "labels": "datacenter=foo,datacenter.region=us-east-1",
-                        "refId": "A",
-                        "scenarioId": "random_walk_table",
-                        "stringInput": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Multiple fields",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

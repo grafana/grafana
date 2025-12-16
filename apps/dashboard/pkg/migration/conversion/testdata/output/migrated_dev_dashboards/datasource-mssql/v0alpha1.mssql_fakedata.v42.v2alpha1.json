@@ -131,27 +131,16 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "total avg": "#6ed0e0"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mssql"
-                    },
                     "fill": 2,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 12,
-                      "x": 0,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -164,9 +153,6 @@
                     "lines": true,
                     "linewidth": 2,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 5,
                     "points": false,
@@ -182,35 +168,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time,\n  avg(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count' AND\n  hostname IN($host)\nGROUP BY $__timeGroup(createdAt,'$summarize'), hostname\nORDER BY 1",
-                        "refId": "A"
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time,\n  min(value) as value,\n  'total avg' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count'\nGROUP BY $__timeGroup(createdAt,'$summarize')\nORDER BY 1",
-                        "refId": "B"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Average logins / $summarize",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -285,20 +249,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "uid": "gdev-mssql"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 10,
-                      "w": 24,
-                      "x": 0,
-                      "y": 18
-                    },
-                    "id": 4,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -328,20 +281,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "table",
-                        "rawSql": "SELECT createdAt as Time, source, datacenter, hostname, value FROM grafana_metric WHERE hostname in($host)",
-                        "refId": "A"
-                      }
-                    ],
-                    "title": "Values",
-                    "transform": "table",
-                    "type": "table"
+                    "transform": "table"
                   }
                 }
               },
@@ -395,25 +335,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mssql"
-                    },
                     "fill": 2,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 12,
-                      "x": 0,
-                      "y": 9
-                    },
                     "hiddenSeries": false,
-                    "id": 6,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -426,9 +355,6 @@
                     "lines": true,
                     "linewidth": 2,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 5,
                     "points": false,
@@ -437,26 +363,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time,\n  max(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'cpu' AND\n  hostname IN($host)\nGROUP BY $__timeGroup(createdAt,'$summarize'), hostname\nORDER BY 1",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Max CPU / $summarize",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -550,25 +463,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-mssql"
-                    },
                     "fill": 2,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 18,
-                      "w": 12,
-                      "x": 12,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 8,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -581,9 +483,6 @@
                     "lines": true,
                     "linewidth": 2,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 5,
                     "points": false,
@@ -592,35 +491,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time,\n  avg(value) as value,\n  'started' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.started'\nGROUP BY $__timeGroup(createdAt,'$summarize')\nORDER BY 1",
-                        "refId": "A"
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "uid": "gdev-mssql"
-                        },
-                        "format": "time_series",
-                        "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time,\n  avg(value) as value,\n  'ended' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.ended'\nGROUP BY $__timeGroup(createdAt,'$summarize')\nORDER BY 1",
-                        "refId": "B"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Average payments started/ended / $summarize",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

@@ -172,25 +172,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": true,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-influxdb1-influxql"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 24,
-                      "x": 0,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -203,9 +192,6 @@
                     "lines": false,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -214,57 +200,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "Count",
-                        "datasource": {
-                          "uid": "gdev-influxdb1-influxql"
-                        },
-                        "groupBy": [
-                          {
-                            "params": [
-                              "1m"
-                            ],
-                            "type": "time"
-                          },
-                          {
-                            "params": [
-                              "null"
-                            ],
-                            "type": "fill"
-                          }
-                        ],
-                        "measurement": "t_logs",
-                        "orderByTime": "ASC",
-                        "policy": "default",
-                        "refId": "A",
-                        "resultFormat": "time_series",
-                        "select": [
-                          [
-                            {
-                              "params": [
-                                "message"
-                              ],
-                              "type": "field"
-                            },
-                            {
-                              "params": [],
-                              "type": "count"
-                            }
-                          ]
-                        ],
-                        "tags": []
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Log messages over time",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

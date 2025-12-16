@@ -88,44 +88,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colors": [
                       "#FF0000",
                       "green",
                       "orange"
                     ],
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
                     "grid": {
                       "max": 10,
                       "min": 1
                     },
-                    "id": 1,
                     "legend": true,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      },
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "B"
-                      }
-                    ],
-                    "thresholds": "10,20,30",
-                    "type": "stat"
+                    "thresholds": "10,20,30"
                   }
                 }
               },
@@ -193,44 +167,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colors": [
                       "#FF0000",
                       "green",
                       "orange"
                     ],
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
                     "grid": {
                       "max": 10,
                       "min": 1
                     },
-                    "id": 2,
                     "legend": true,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      },
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "B"
-                      }
-                    ],
-                    "thresholds": "",
-                    "type": "stat"
+                    "thresholds": ""
                   }
                 }
               },
@@ -282,18 +230,12 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colors": [
                       "#FF0000",
                       "green",
                       "orange"
                     ],
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
                     "gauge": {
                       "show": true,
                       "thresholdLabels": false,
@@ -303,19 +245,7 @@
                       "max": 10,
                       "min": 1
                     },
-                    "id": 3,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "thresholds": "10,20,30",
-                    "type": "stat"
+                    "thresholds": "10,20,30"
                   }
                 }
               },
@@ -383,23 +313,16 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colors": [
                       "#FF0000",
                       "green",
                       "orange"
                     ],
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
                     "grid": {
                       "max": 10,
                       "min": 1
                     },
-                    "id": 4,
                     "legend": true,
                     "mappingTypes": [
                       {
@@ -407,26 +330,7 @@
                         "value": 1
                       }
                     ],
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      },
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "B"
-                      }
-                    ],
                     "thresholds": "10,20,30",
-                    "type": "stat",
                     "valueMaps": [
                       {
                         "op": "=",
@@ -497,8 +401,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "grafana-singlestat-panel",
-                  "originalPanel": {
-                    "autoMigrateFrom": "grafana-singlestat-panel",
+                  "originalOptions": {
                     "colorBackground": false,
                     "colorValue": true,
                     "colors": [
@@ -506,9 +409,6 @@
                       "rgba(237, 129, 40, 0.89)",
                       "#d44a3a"
                     ],
-                    "datasource": {
-                      "type": "prometheus"
-                    },
                     "format": "areaF2",
                     "gauge": {
                       "maxValue": 100,
@@ -517,13 +417,6 @@
                       "thresholdLabels": false,
                       "thresholdMarkers": true
                     },
-                    "gridPos": {
-                      "h": 8,
-                      "w": 8,
-                      "x": 0,
-                      "y": 43
-                    },
-                    "id": 5,
                     "mappingType": 1,
                     "mappingTypes": [
                       {
@@ -535,7 +428,6 @@
                         "value": 2
                       }
                     ],
-                    "maxDataPoints": 100,
                     "nullPointMode": "connected",
                     "postfix": "b",
                     "postfixFontSize": "50%",
@@ -555,18 +447,7 @@
                       "show": true
                     },
                     "tableColumn": "",
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "prometheus",
-                          "uid": "PD8C576611E62080A"
-                        },
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": "",
-                    "title": "grafana-singlestat-panel",
-                    "type": "stat",
                     "valueFontSize": "80%",
                     "valueMaps": [
                       {

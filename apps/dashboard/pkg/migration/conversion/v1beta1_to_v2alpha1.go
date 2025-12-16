@@ -2198,6 +2198,32 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 	return result
 }
 
+// knownPanelProperties lists all properties defined in the Panel schema (dashboard_kind.cue)
+// that should NOT be passed to Angular migration handlers. Only "unknown" Angular-specific
+// properties should be passed to migration handlers.
+var knownPanelProperties = map[string]bool{
+	"type": true, "id": true, "pluginVersion": true, "targets": true,
+	"title": true, "description": true, "transparent": true, "datasource": true,
+	"gridPos": true, "links": true, "repeat": true, "repeatDirection": true,
+	"maxPerRow": true, "maxDataPoints": true, "transformations": true,
+	"interval": true, "timeFrom": true, "timeShift": true, "hideTimeOverride": true,
+	"timeCompare": true, "libraryPanel": true, "cacheTimeout": true,
+	"queryCachingTTL": true, "options": true, "fieldConfig": true, "autoMigrateFrom": true,
+}
+
+// extractAngularOptions extracts only the Angular-specific options from a panel map,
+// filtering out all known Panel schema properties. This is used to pass just the
+// Angular options to migration handlers (e.g., sparkline, valueName, format for singlestat).
+func extractAngularOptions(panelMap map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range panelMap {
+		if !knownPanelProperties[key] {
+			result[key] = value
+		}
+	}
+	return result
+}
+
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
 	panelType := schemaversion.GetStringValue(panelMap, "type", "timeseries")
 	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
@@ -2242,7 +2268,7 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	if autoMigrateFrom != "" {
 		options["__angularMigration"] = map[string]interface{}{
 			"autoMigrateFrom": autoMigrateFrom,
-			"originalPanel":   panelMap, // Keep entire original panel for migration handlers
+			"originalOptions": extractAngularOptions(panelMap),
 		}
 	}
 

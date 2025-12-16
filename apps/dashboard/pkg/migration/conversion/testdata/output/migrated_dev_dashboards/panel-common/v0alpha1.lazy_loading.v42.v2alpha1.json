@@ -135,8 +135,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colorBackground": false,
                     "colorValue": true,
                     "colors": [
@@ -144,9 +143,6 @@
                       "#73BF69",
                       "#d44a3a"
                     ],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "format": "ms",
                     "gauge": {
                       "maxValue": 100,
@@ -155,13 +151,6 @@
                       "thresholdLabels": false,
                       "thresholdMarkers": true
                     },
-                    "gridPos": {
-                      "h": 4,
-                      "w": 6,
-                      "x": 0,
-                      "y": 7
-                    },
-                    "id": 20,
                     "mappingType": 1,
                     "mappingTypes": [
                       {
@@ -173,9 +162,7 @@
                         "value": 2
                       }
                     ],
-                    "maxDataPoints": 100,
                     "nullPointMode": "connected",
-                    "pluginVersion": "6.2.0-pre",
                     "postfix": "",
                     "postfixFontSize": "50%",
                     "prefix": "p99",
@@ -194,17 +181,7 @@
                       "show": true
                     },
                     "tableColumn": "",
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": "",
-                    "type": "stat",
                     "valueFontSize": "120%",
                     "valueMaps": [
                       {
@@ -263,8 +240,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colorBackground": false,
                     "colorValue": true,
                     "colors": [
@@ -272,9 +248,6 @@
                       "#73BF69",
                       "#d44a3a"
                     ],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "format": "ms",
                     "gauge": {
                       "maxValue": 100,
@@ -283,13 +256,6 @@
                       "thresholdLabels": false,
                       "thresholdMarkers": true
                     },
-                    "gridPos": {
-                      "h": 4,
-                      "w": 6,
-                      "x": 6,
-                      "y": 7
-                    },
-                    "id": 23,
                     "mappingType": 1,
                     "mappingTypes": [
                       {
@@ -301,9 +267,7 @@
                         "value": 2
                       }
                     ],
-                    "maxDataPoints": 100,
                     "nullPointMode": "connected",
-                    "pluginVersion": "6.2.0-pre",
                     "postfix": "",
                     "postfixFontSize": "50%",
                     "prefix": "p95",
@@ -322,17 +286,7 @@
                       "show": true
                     },
                     "tableColumn": "",
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": "",
-                    "type": "stat",
                     "valueFontSize": "120%",
                     "valueMaps": [
                       {
@@ -391,8 +345,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colorBackground": false,
                     "colorValue": true,
                     "colors": [
@@ -400,9 +353,6 @@
                       "#73BF69",
                       "#d44a3a"
                     ],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "format": "ms",
                     "gauge": {
                       "maxValue": 100,
@@ -411,13 +361,6 @@
                       "thresholdLabels": false,
                       "thresholdMarkers": true
                     },
-                    "gridPos": {
-                      "h": 4,
-                      "w": 6,
-                      "x": 12,
-                      "y": 7
-                    },
-                    "id": 24,
                     "mappingType": 1,
                     "mappingTypes": [
                       {
@@ -429,9 +372,7 @@
                         "value": 2
                       }
                     ],
-                    "maxDataPoints": 100,
                     "nullPointMode": "connected",
-                    "pluginVersion": "6.2.0-pre",
                     "postfix": "",
                     "postfixFontSize": "50%",
                     "prefix": "p90",
@@ -450,17 +391,7 @@
                       "show": true
                     },
                     "tableColumn": "",
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": "",
-                    "type": "stat",
                     "valueFontSize": "120%",
                     "valueMaps": [
                       {
@@ -556,29 +487,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue",
                       "B-series": "dark-purple",
                       "C-series": "purple",
                       "Q-series": "dark-blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 3,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 24,
-                      "x": 0,
-                      "y": 11
-                    },
-                    "id": 26,
                     "legend": {
                       "alignAsTable": true,
                       "avg": false,
@@ -593,11 +513,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
-                    "pluginVersion": "6.2.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -605,36 +521,6 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
                     "tooltip": {
@@ -642,7 +528,6 @@
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -712,26 +597,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 21
-                    },
-                    "id": 28,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -744,9 +618,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -755,25 +626,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -843,26 +702,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "red"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 10,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 45
-                    },
-                    "id": 29,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -875,9 +723,6 @@
                     "lines": true,
                     "linewidth": 0,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -886,25 +731,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (5s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1013,29 +846,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue",
                       "B-series": "dark-purple",
                       "C-series": "purple",
                       "Q-series": "dark-blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 3,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 37
-                    },
-                    "id": 43,
                     "legend": {
                       "alignAsTable": true,
                       "avg": false,
@@ -1050,11 +872,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
-                    "pluginVersion": "6.2.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -1062,46 +880,13 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow query",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1171,24 +956,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 8,
-                    "gridPos": {
-                      "h": 5,
-                      "w": 24,
-                      "x": 0,
-                      "y": 53
-                    },
-                    "id": 44,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1201,9 +975,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1212,25 +983,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (5s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1301,8 +1060,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "singlestat",
-                  "originalPanel": {
-                    "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
                     "colorBackground": false,
                     "colorValue": true,
                     "colors": [
@@ -1310,9 +1068,6 @@
                       "#73BF69",
                       "#d44a3a"
                     ],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "format": "ms",
                     "gauge": {
                       "maxValue": 100,
@@ -1321,13 +1076,6 @@
                       "thresholdLabels": false,
                       "thresholdMarkers": true
                     },
-                    "gridPos": {
-                      "h": 4,
-                      "w": 6,
-                      "x": 18,
-                      "y": 7
-                    },
-                    "id": 45,
                     "mappingType": 1,
                     "mappingTypes": [
                       {
@@ -1339,9 +1087,7 @@
                         "value": 2
                       }
                     ],
-                    "maxDataPoints": 100,
                     "nullPointMode": "connected",
-                    "pluginVersion": "6.2.0-pre",
                     "postfix": "",
                     "postfixFontSize": "50%",
                     "prefix": "p90",
@@ -1360,17 +1106,7 @@
                       "show": true
                     },
                     "tableColumn": "",
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": "",
-                    "type": "stat",
                     "valueFontSize": "120%",
                     "valueMaps": [
                       {
@@ -1428,26 +1164,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "green"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 21
-                    },
-                    "id": 46,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1460,9 +1185,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1471,25 +1193,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1559,26 +1269,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 12,
-                      "y": 29
-                    },
-                    "id": 47,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1591,9 +1290,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1602,25 +1298,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1690,26 +1374,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "green"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 29
-                    },
-                    "id": 48,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1722,9 +1395,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1733,25 +1403,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1821,26 +1479,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "green"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 0,
-                      "y": 58
-                    },
-                    "id": 49,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1853,9 +1500,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1864,25 +1508,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1952,26 +1584,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 6,
-                      "y": 58
-                    },
-                    "id": 50,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1984,9 +1605,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -1995,25 +1613,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2083,26 +1689,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "purple"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 12,
-                      "y": 58
-                    },
-                    "id": 51,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2115,9 +1710,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2126,25 +1718,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2214,26 +1794,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "orange"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 18,
-                      "y": 58
-                    },
-                    "id": 52,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2246,9 +1815,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2257,25 +1823,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2384,29 +1938,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue",
                       "B-series": "dark-purple",
                       "C-series": "purple",
                       "Q-series": "dark-blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 3,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 66
-                    },
-                    "id": 53,
                     "legend": {
                       "alignAsTable": true,
                       "avg": false,
@@ -2421,11 +1964,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
-                    "pluginVersion": "6.2.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -2433,46 +1972,13 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "Q",
-                        "scenarioId": "slow_query",
-                        "stringInput": "2s"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "random_walk"
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow query",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2542,26 +2048,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "green"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 0,
-                      "y": 74
-                    },
-                    "id": 54,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2574,9 +2069,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2585,25 +2077,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2673,26 +2153,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "blue"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 6,
-                      "y": 74
-                    },
-                    "id": 55,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2705,9 +2174,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2716,25 +2182,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2804,26 +2258,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "purple"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 12,
-                      "y": 74
-                    },
-                    "id": 56,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2836,9 +2279,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2847,25 +2287,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2935,26 +2363,15 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {
                       "A-series": "orange"
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fill": 1,
                     "fillGradient": 5,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 6,
-                      "x": 18,
-                      "y": 74
-                    },
-                    "id": 57,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2967,9 +2384,6 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "dataLinks": []
-                    },
                     "percentage": false,
                     "pointradius": 2,
                     "points": false,
@@ -2978,25 +2392,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "slow_query",
-                        "stringInput": "5s"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Slow Query (2s)",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

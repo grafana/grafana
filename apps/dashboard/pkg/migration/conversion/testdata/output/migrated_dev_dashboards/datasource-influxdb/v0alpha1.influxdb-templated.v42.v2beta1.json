@@ -120,30 +120,18 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
                     "annotate": {
                       "enable": false
                     },
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-influxdb1-influxql"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 2,
                     "grid": {},
-                    "gridPos": {
-                      "h": 9,
-                      "w": 24,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 1,
-                    "interval": "$summarize",
                     "legend": {
                       "alignAsTable": true,
                       "avg": false,
@@ -168,65 +156,8 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "$tag_hostname",
-                        "datasource": {
-                          "uid": "gdev-influxdb1-influxql"
-                        },
-                        "dsType": "influxdb",
-                        "groupBy": [
-                          {
-                            "params": [
-                              "auto"
-                            ],
-                            "type": "time"
-                          },
-                          {
-                            "params": [
-                              "hostname"
-                            ],
-                            "type": "tag"
-                          }
-                        ],
-                        "measurement": "logins.count",
-                        "policy": "default",
-                        "query": "SELECT mean(\"value\") FROM \"logins.count\" WHERE \"hostname\" =~ /$Hostname$/ AND $timeFilter GROUP BY time($interval), \"hostname\"",
-                        "refId": "A",
-                        "resultFormat": "time_series",
-                        "select": [
-                          [
-                            {
-                              "params": [
-                                "value"
-                              ],
-                              "type": "field"
-                            },
-                            {
-                              "params": [],
-                              "type": "mean"
-                            }
-                          ]
-                        ],
-                        "tags": [
-                          {
-                            "key": "datacenter",
-                            "operator": "=~",
-                            "value": "/^$datacenter$/"
-                          },
-                          {
-                            "condition": "AND",
-                            "key": "hostname",
-                            "operator": "=~",
-                            "value": "/^$host$/"
-                          }
-                        ],
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Selected Servers",
                     "tooltip": {
                       "msResolution": false,
                       "query_as_alias": true,
@@ -234,7 +165,6 @@
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

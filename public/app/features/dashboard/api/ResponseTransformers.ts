@@ -528,6 +528,56 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
+/**
+ * Known Panel properties from the Panel schema (dashboard_kind.cue).
+ * These should NOT be passed to Angular migration handlers.
+ * Only "unknown" Angular-specific properties should be passed.
+ */
+const knownPanelProperties = new Set([
+  'type',
+  'id',
+  'pluginVersion',
+  'targets',
+  'title',
+  'description',
+  'transparent',
+  'datasource',
+  'gridPos',
+  'links',
+  'repeat',
+  'repeatDirection',
+  'maxPerRow',
+  'maxDataPoints',
+  'transformations',
+  'interval',
+  'timeFrom',
+  'timeShift',
+  'hideTimeOverride',
+  'timeCompare',
+  'libraryPanel',
+  'cacheTimeout',
+  'queryCachingTTL',
+  'options',
+  'fieldConfig',
+  'autoMigrateFrom',
+]);
+
+/**
+ * Extracts only the Angular-specific options from a panel,
+ * filtering out all known Panel schema properties.
+ * This is used to pass just the Angular options to migration handlers
+ * (e.g., sparkline, valueName, format for singlestat).
+ */
+function extractAngularOptions(panel: Panel): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(panel)) {
+    if (!knownPanelProperties.has(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function buildPanelKind(p: Panel): PanelKind {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
@@ -562,14 +612,14 @@ export function buildPanelKind(p: Panel): PanelKind {
   const { autoMigrateFrom } = p;
   let options = p.options ?? {};
 
-  // When autoMigrateFrom is present, compose __angularMigration using the entire panel
-  // This preserves the original panel data for frontend migration handlers
+  // When autoMigrateFrom is present, compose __angularMigration with only Angular-specific options
+  // This filters out known Panel schema properties, passing only the Angular options to migration handlers
   if (autoMigrateFrom) {
     options = {
       ...options,
       __angularMigration: {
         autoMigrateFrom,
-        originalPanel: p,
+        originalOptions: extractAngularOptions(p),
       },
     };
   }

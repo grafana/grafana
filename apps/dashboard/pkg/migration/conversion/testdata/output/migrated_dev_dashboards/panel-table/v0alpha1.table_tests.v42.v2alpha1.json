@@ -83,20 +83,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 8,
-                      "w": 24,
-                      "x": 0,
-                      "y": 18
-                    },
-                    "id": 2,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -166,32 +155,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "ColorValue",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "table",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0,20,10"
-                      },
-                      {
-                        "alias": "ColorCell",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "5,1,2,3,4,5,10,20"
-                      }
-                    ],
-                    "title": "Column style thresholds \u0026 units",
-                    "transform": "timeseries_to_columns",
-                    "type": "table"
+                    "transform": "timeseries_to_columns"
                   }
                 }
               },
@@ -259,20 +223,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 11,
-                      "w": 12,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 3,
                     "pageSize": 10,
                     "scroll": true,
                     "showHeader": true,
@@ -343,32 +296,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "server1",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "table",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0,20,10"
-                      },
-                      {
-                        "alias": "server2",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0"
-                      }
-                    ],
-                    "title": "Time series to rows (2 pages)",
-                    "transform": "timeseries_to_rows",
-                    "type": "table"
+                    "transform": "timeseries_to_rows"
                   }
                 }
               },
@@ -436,8 +364,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [
                       {
                         "text": "Avg",
@@ -452,17 +379,7 @@
                         "value": "current"
                       }
                     ],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 11,
-                      "w": 12,
-                      "x": 12,
-                      "y": 0
-                    },
-                    "id": 4,
                     "pageSize": 10,
                     "scroll": true,
                     "showHeader": true,
@@ -533,32 +450,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "server1",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "table",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0,20,10"
-                      },
-                      {
-                        "alias": "server2",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0"
-                      }
-                    ],
-                    "title": "Time series aggregations",
-                    "transform": "timeseries_aggregations",
-                    "type": "table"
+                    "transform": "timeseries_aggregations"
                   }
                 }
               },
@@ -611,20 +503,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 7,
-                      "w": 24,
-                      "x": 0,
-                      "y": 11
-                    },
-                    "id": 5,
                     "scroll": true,
                     "showHeader": true,
                     "sort": {
@@ -674,23 +555,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "ColorValue",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "table",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0,20,10"
-                      }
-                    ],
-                    "title": "color row by threshold",
-                    "transform": "timeseries_to_columns",
-                    "type": "table"
+                    "transform": "timeseries_to_columns"
                   }
                 }
               },
@@ -758,20 +623,9 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
+                  "originalOptions": {
                     "columns": [],
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "fontSize": "100%",
-                    "gridPos": {
-                      "h": 10,
-                      "w": 24,
-                      "x": 0,
-                      "y": 26
-                    },
-                    "id": 6,
                     "pageSize": 20,
                     "scroll": true,
                     "showHeader": true,
@@ -848,32 +702,7 @@
                         "unit": "short"
                       }
                     ],
-                    "targets": [
-                      {
-                        "alias": "ColorValue",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "expr": "",
-                        "format": "table",
-                        "intervalFactor": 1,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "null,1,20,90,30,5,0,20,10"
-                      },
-                      {
-                        "alias": "ColorCell",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "null,5,1,2,3,4,5,10,20"
-                      }
-                    ],
-                    "title": "Column style thresholds and links",
-                    "transform": "timeseries_to_columns",
-                    "type": "table"
+                    "transform": "timeseries_to_columns"
                   }
                 }
               },

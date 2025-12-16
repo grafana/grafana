@@ -184,27 +184,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 12,
-                      "x": 0,
-                      "y": 19
-                    },
                     "hiddenSeries": false,
-                    "id": 11,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -217,11 +204,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -229,19 +212,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 20,
-                        "min": 0,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:14",
@@ -263,13 +233,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular thresholds  only lines",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -465,27 +433,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 12,
-                      "x": 0,
-                      "y": 13
-                    },
                     "hiddenSeries": false,
-                    "id": 13,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -498,11 +453,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -510,19 +461,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 20,
-                        "min": 0,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:109",
@@ -544,13 +482,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular thresholds less then ",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1076,27 +1012,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 0,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 5,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1109,11 +1032,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -1121,19 +1040,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 20,
-                        "min": 0,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:14",
@@ -1155,13 +1061,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular Line + Area ",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1242,27 +1146,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 6,
-                      "w": 12,
-                      "x": 0,
-                      "y": 7
-                    },
                     "hiddenSeries": false,
-                    "id": 6,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1275,11 +1166,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -1287,19 +1174,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 20,
-                        "min": 0,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:109",
@@ -1321,13 +1195,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular thresholds  no lines",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1410,27 +1282,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 0,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 0,
-                      "y": 25
-                    },
                     "hiddenSeries": false,
-                    "id": 7,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1442,13 +1301,8 @@
                     },
                     "lines": true,
                     "linewidth": 1,
-                    "maxDataPoints": 30,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 1,
                     "points": true,
                     "renderer": "flot",
@@ -1456,19 +1310,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 80,
-                        "min": 40,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:14",
@@ -1499,13 +1340,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular bands with gap ",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1588,27 +1427,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata-type-uid"
-                    },
                     "fill": 0,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 8,
-                      "w": 12,
-                      "x": 0,
-                      "y": 32
-                    },
                     "hiddenSeries": false,
-                    "id": 8,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1620,13 +1446,8 @@
                     },
                     "lines": true,
                     "linewidth": 1,
-                    "maxDataPoints": 30,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "7.5.0-pre",
                     "pointradius": 1,
                     "points": true,
                     "renderer": "flot",
@@ -1634,19 +1455,6 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "grafana-testdata-datasource",
-                          "uid": "testdata-type-uid"
-                        },
-                        "max": 80,
-                        "min": 40,
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                      }
-                    ],
                     "thresholds": [
                       {
                         "$$hashKey": "object:14",
@@ -1672,13 +1480,11 @@
                       }
                     ],
                     "timeRegions": [],
-                    "title": "Angular custom colors",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

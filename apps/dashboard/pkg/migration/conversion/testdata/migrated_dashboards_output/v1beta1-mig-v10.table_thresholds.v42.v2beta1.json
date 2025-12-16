@@ -72,14 +72,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 1,
+                  "originalOptions": {
                     "styles": [
                       {
                         "align": "auto",
@@ -95,18 +88,7 @@
                           "300"
                         ]
                       }
-                    ],
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "table"
+                    ]
                   }
                 }
               },
@@ -158,14 +140,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "table-old",
-                  "originalPanel": {
-                    "autoMigrateFrom": "table-old",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 2,
+                  "originalOptions": {
                     "styles": [
                       {
                         "align": "auto",
@@ -174,18 +149,7 @@
                           "75"
                         ]
                       }
-                    ],
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "table"
+                    ]
                   }
                 }
               },
@@ -237,14 +201,7 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
-                    "autoMigrateFrom": "graph",
-                    "datasource": {
-                      "apiVersion": "v1",
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
-                    "id": 3,
+                  "originalOptions": {
                     "styles": [
                       {
                         "thresholds": [
@@ -253,18 +210,7 @@
                           "15"
                         ]
                       }
-                    ],
-                    "targets": [
-                      {
-                        "datasource": {
-                          "apiVersion": "v1",
-                          "type": "prometheus",
-                          "uid": "default-ds-uid"
-                        },
-                        "refId": "A"
-                      }
-                    ],
-                    "type": "timeseries"
+                    ]
                   }
                 }
               },

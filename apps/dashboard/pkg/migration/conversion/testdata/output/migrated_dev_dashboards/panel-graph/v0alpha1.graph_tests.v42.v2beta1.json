@@ -70,25 +70,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 0,
-                      "y": 0
-                    },
-                    "id": 1,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -109,26 +98,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenario": "random_walk",
-                        "scenarioId": "no_data_points",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "No Data Points Warning",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -201,25 +177,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 8,
-                      "y": 23
-                    },
-                    "id": 10,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -240,26 +205,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "null value null as zero",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -369,25 +321,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 16,
-                      "x": 0,
-                      "y": 37
-                    },
-                    "id": 12,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -413,50 +354,13 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Stacking all series null segment",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -718,24 +622,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "decimals": 3,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 0,
-                      "y": 58
-                    },
-                    "id": 16,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -757,52 +650,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "D",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Legend Table No Scroll Visible",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1028,24 +881,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "decimals": 3,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 12,
-                      "y": 58
-                    },
-                    "id": 17,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1067,106 +909,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "D",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "E",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "F",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "G",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "H",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "I",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "J",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Legend Table Should Scroll",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1290,24 +1038,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "decimals": 3,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 0,
-                      "y": 65
-                    },
-                    "id": 18,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1330,52 +1067,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "D",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Legend Table No Scroll Visible",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1635,24 +1332,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "decimals": 3,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 12,
-                      "x": 12,
-                      "y": 65
-                    },
-                    "id": 19,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -1675,124 +1361,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "D",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "E",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "F",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "G",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "H",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "I",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "J",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "K",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "L",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Legend Table No Scroll Visible",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1865,25 +1439,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 8,
-                      "y": 0
-                    },
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -1904,26 +1467,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenario": "random_walk",
-                        "scenarioId": "datapoints_outside_range",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Datapoints Outside Range Warning",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -1996,24 +1546,13 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "decimals": 3,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 24,
-                      "x": 0,
-                      "y": 51
-                    },
-                    "id": 20,
                     "legend": {
                       "alignAsTable": true,
                       "avg": true,
@@ -2035,25 +1574,12 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Legend Table Single Series Should Take Minimum Height",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2145,25 +1671,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 0,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 16,
-                      "x": 0,
-                      "y": 44
-                    },
-                    "id": 21,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2189,39 +1704,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,null,40,null,90,null,null,100,null,null,100,null,null,80,null",
-                        "target": ""
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "20,null40,null,null,50,null,70,null,100,null,10,null,30,null",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Null between points",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2340,25 +1829,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 16,
-                      "y": 0
-                    },
-                    "id": 3,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2379,26 +1857,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenario": "random_walk",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Random walk series",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2473,25 +1938,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 16,
-                      "x": 0,
-                      "y": 7
-                    },
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2512,27 +1966,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenario": "random_walk",
-                        "scenarioId": "random_walk",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "timeFrom": "2s",
-                    "title": "Millisecond res x-axis and tooltip",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2622,25 +2062,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 16,
-                      "x": 0,
-                      "y": 14
-                    },
-                    "id": 5,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2666,35 +2095,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,0",
-                        "target": ""
-                      },
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "2000,3000,4000,1000,3000,10000",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "2 yaxis and axis labels",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -2861,25 +2268,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 0,
-                      "y": 23
-                    },
-                    "id": 8,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -2900,26 +2296,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "null value connected",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -3028,25 +2411,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "type": "grafana-testdata-datasource"
-                    },
                     "editable": true,
                     "error": false,
                     "fill": 1,
-                    "gridPos": {
-                      "h": 7,
-                      "w": 16,
-                      "x": 0,
-                      "y": 30
-                    },
-                    "id": 9,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -3072,49 +2444,13 @@
                     "spaceLength": 10,
                     "stack": true,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "B",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
-                        "target": ""
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "A",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
-                        "target": ""
-                      },
-                      {
-                        "alias": "",
-                        "datasource": {
-                          "type": "grafana-testdata-datasource"
-                        },
-                        "hide": false,
-                        "refId": "C",
-                        "scenarioId": "csv_metric_values",
-                        "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
-                        "target": ""
-                      }
-                    ],
                     "thresholds": [],
-                    "title": "Stacking value ontop of nulls",
                     "tooltip": {
                       "msResolution": false,
                       "shared": true,
                       "sort": 0,
                       "value_type": "cumulative"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,

@@ -86,31 +86,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-opentsdb-v2.3"
-                    },
-                    "fieldConfig": {
-                      "defaults": {
-                        "links": []
-                      },
-                      "overrides": []
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 12,
-                      "x": 0,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 2,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -123,11 +106,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "8.1.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -135,43 +114,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "aggregator": "sum",
-                        "alias": "$tag_hostname",
-                        "currentFilterGroupBy": false,
-                        "currentFilterKey": "",
-                        "currentFilterType": "literal_or",
-                        "currentFilterValue": "",
-                        "datasource": {
-                          "uid": "gdev-opentsdb-v2.3"
-                        },
-                        "disableDownsampling": false,
-                        "downsampleAggregator": "avg",
-                        "downsampleFillPolicy": "none",
-                        "explicitTags": false,
-                        "filters": [
-                          {
-                            "filter": "*",
-                            "groupBy": true,
-                            "tagk": "hostname",
-                            "type": "wildcard"
-                          }
-                        ],
-                        "metric": "cpu",
-                        "refId": "A",
-                        "shouldComputeRate": false
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "CPU per host",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
@@ -260,31 +209,14 @@
               "options": {
                 "__angularMigration": {
                   "autoMigrateFrom": "graph",
-                  "originalPanel": {
+                  "originalOptions": {
                     "aliasColors": {},
-                    "autoMigrateFrom": "graph",
                     "bars": false,
                     "dashLength": 10,
                     "dashes": false,
-                    "datasource": {
-                      "uid": "gdev-opentsdb-v2.3"
-                    },
-                    "fieldConfig": {
-                      "defaults": {
-                        "links": []
-                      },
-                      "overrides": []
-                    },
                     "fill": 1,
                     "fillGradient": 0,
-                    "gridPos": {
-                      "h": 9,
-                      "w": 12,
-                      "x": 12,
-                      "y": 0
-                    },
                     "hiddenSeries": false,
-                    "id": 4,
                     "legend": {
                       "avg": false,
                       "current": false,
@@ -297,11 +229,7 @@
                     "lines": true,
                     "linewidth": 1,
                     "nullPointMode": "null",
-                    "options": {
-                      "alertThreshold": true
-                    },
                     "percentage": false,
-                    "pluginVersion": "8.1.0-pre",
                     "pointradius": 2,
                     "points": false,
                     "renderer": "flot",
@@ -309,40 +237,13 @@
                     "spaceLength": 10,
                     "stack": false,
                     "steppedLine": false,
-                    "targets": [
-                      {
-                        "aggregator": "sum",
-                        "alias": "$tag_hostname",
-                        "currentFilterGroupBy": false,
-                        "currentFilterKey": "",
-                        "currentFilterType": "literal_or",
-                        "currentFilterValue": "",
-                        "datasource": {
-                          "uid": "gdev-opentsdb-v2.3"
-                        },
-                        "downsampleAggregator": "avg",
-                        "downsampleFillPolicy": "none",
-                        "filters": [
-                          {
-                            "filter": "*",
-                            "groupBy": true,
-                            "tagk": "hostname",
-                            "type": "wildcard"
-                          }
-                        ],
-                        "metric": "logins.count",
-                        "refId": "A"
-                      }
-                    ],
                     "thresholds": [],
                     "timeRegions": [],
-                    "title": "Login Count per host",
                     "tooltip": {
                       "shared": true,
                       "sort": 0,
                       "value_type": "individual"
                     },
-                    "type": "timeseries",
                     "xaxis": {
                       "mode": "time",
                       "show": true,
