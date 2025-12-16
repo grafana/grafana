@@ -57,11 +57,16 @@ interface Props2 {
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
   const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
-  const existingRepeat = useExistingRepeat(sceneContext);
 
   const variableOptions = useMemo(() => {
     const options: ComboboxOption[] = variables
-      .filter((item) => !existingRepeat.has(item.state.name))
+      .filter((item) => {
+        if (sceneContext.parent) {
+          // filter out local value variables (which are only set on repeated items)
+          return !(sceneGraph.lookupVariable(item.state.name, sceneContext.parent) instanceof LocalValueVariable);
+        }
+        return true;
+      })
       .map((item) => ({
         label: item.state.name,
         value: item.state.name,
@@ -73,7 +78,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [existingRepeat, variables]);
+  }, [sceneContext, variables]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
@@ -97,42 +102,3 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     />
   );
 };
-
-function useExistingRepeat(sceneContext: SceneObject) {
-  return useMemo<Set<string>>(() => {
-    const repeats = new Set<string>();
-
-    findRepeatedAncestors(sceneContext, repeats);
-    findRepeatedDescendent(sceneContext, repeats);
-
-    return repeats;
-  }, [sceneContext]);
-}
-
-function findRepeatedAncestors(o: SceneObject, repeats: Set<string>) {
-  let p = o.parent;
-
-  while (p) {
-    const localVar = p.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
-    if (localVar) {
-      repeats.add(localVar.state.name);
-    }
-    p = p.parent;
-  }
-}
-
-function findRepeatedDescendent(o: SceneObject, repeats: Set<string>) {
-  o.forEachChild((c) => {
-    // skip clones
-    if ('repeatSourceKey' in c.state && c.state.repeatSourceKey) {
-      return;
-    }
-
-    const localVar = c.state.$variables?.state.variables.find((v) => v instanceof LocalValueVariable);
-    if (localVar) {
-      repeats.add(localVar.state.name);
-    }
-
-    findRepeatedDescendent(c, repeats);
-  });
-}
