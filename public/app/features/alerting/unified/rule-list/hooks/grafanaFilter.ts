@@ -1,3 +1,5 @@
+import { attempt, isError } from 'lodash';
+
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
@@ -77,19 +79,10 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   }
 
   // Convert labels to JSON-encoded matchers for backend filtering
-  let ruleLabels: string[] | undefined = undefined;
-  if (shouldUseBackendFilters() && normalizedFilterState.labels.length > 0) {
-    ruleLabels = normalizedFilterState.labels
-      .map((label) => {
-        try {
-          return JSON.stringify(parseMatcher(label));
-        } catch (error) {
-          console.warn('Failed to parse label matcher:', label, error);
-          return undefined;
-        }
-      })
-      .filter((matcher): matcher is string => matcher !== undefined);
-  }
+  const ruleLabelsBackendFilter: string[] | undefined =
+    ruleFilterConfig.labels || normalizedFilterState.labels.length === 0
+      ? undefined
+      : labelMatchersToBackendFormat(normalizedFilterState.labels);
 
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
@@ -101,7 +94,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
-    ruleLabels,
+    ruleLabels: ruleLabelsBackendFilter,
   };
 
   return {
@@ -145,4 +138,22 @@ function buildGrafanaFilterConfigs() {
   };
 
   return { ruleFilterConfig, groupFilterConfig };
+}
+
+/**
+ * Converts label matchers to JSON-encoded strings for backend filtering.
+ * Invalid matchers are logged and filtered out.
+ */
+function labelMatchersToBackendFormat(labels: string[]): string[] {
+  return labels.reduce<string[]>((acc, label) => {
+    const result = attempt(() => JSON.stringify(parseMatcher(label)));
+
+    if (isError(result)) {
+      console.warn('Failed to parse label matcher:', label, result);
+    } else {
+      acc.push(result);
+    }
+
+    return acc;
+  }, []);
 }
