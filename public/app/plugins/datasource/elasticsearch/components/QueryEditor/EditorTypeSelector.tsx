@@ -24,6 +24,6 @@ export const EditorTypeSelector = () => {
   };
 
   return (
-    <RadioButtonGroup<EditorType> fullWidth={false} options={BASE_OPTIONS} value={editorType} onChange={onChange} />
+      <RadioButtonGroup<EditorType> size="sm" options={BASE_OPTIONS} value={editorType} onChange={onChange} />
   );
 };
