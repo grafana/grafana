@@ -97,6 +97,8 @@ Query the migration log table to check status:
 SELECT * FROM unifiedstorage_migration_log WHERE migration_id LIKE '%folders-dashboards%';
 ```
 
+The `migration_id` is defined in `service.go` during registration. Ideally, it should be the resource type(s) being migrated.
+
 ## Development
 
 ### Adding a new validator
