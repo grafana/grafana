@@ -49,6 +49,9 @@ type DataKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+
+	// needed to maintain backwards compatibility with unified/sql
+	GUID string
 }
 
 // GroupResource represents a unique group/resource combination

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -168,6 +169,7 @@ type sqlKV struct {
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
+	rvManager  *rvmanager.ResourceVersionManager
 }
 
 func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
@@ -297,7 +299,62 @@ func (k *sqlKV) TestingSave(ctx context.Context, key string, value []byte) error
 }
 
 func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
-	panic("not implemented!")
+	if section == "" {
+		return nil, errors.New("section is required")
+	}
+
+	if section != dataSection && section != eventsSection {
+		return nil, errors.New("invalid section")
+	}
+
+	if key == "" {
+		return nil, errors.New("key is required")
+	}
+
+	return &sqlWriteCloser{
+		kv:      k,
+		ctx:     ctx,
+		section: section,
+		key:     key,
+		buf:     &bytes.Buffer{},
+		closed:  false,
+	}, nil
+}
+
+type sqlWriteCloser struct {
+	kv      *sqlKV
+	ctx     context.Context
+	section string
+	key     string
+	buf     *bytes.Buffer
+	closed  bool
+}
+
+func (w *sqlWriteCloser) Write(value []byte) (int, error) {
+	if w.closed {
+		return 0, errors.New("write to closed writer")
+	}
+
+	return w.buf.Write(value)
+}
+
+func (w *sqlWriteCloser) Close() error {
+	if w.closed {
+		return nil
+	}
+
+	w.closed = true
+
+	tx, ok := rvmanager.TxFromCtx(w.ctx)
+	if !ok {
+		// do regular kv save
+		return nil
+	}
+
+	// write everything but resourceversion and key_path
+	// same for resource
+
+	return nil
 }
 
 func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
