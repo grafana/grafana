@@ -642,6 +642,11 @@ You must also provide the `rudderstack_write_key` to enable this feature.
 Optional.
 If tracking with RudderStack is enabled, you can provide a custom URL to load the RudderStack SDK.
 
+#### `rudderstack_v3_sdk_url`
+
+Optional.
+If tracking with RudderStack v3 is enabled, you can provide a custom URL to load the RudderStack v3 SDK.
+
 #### `rudderstack_config_url`
 
 Optional.
