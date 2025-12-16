@@ -242,23 +242,14 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 // Returned slice is ordered with more recent folders first.
 func (st DBstore) GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error) {
 	folders := make([]string, 0)
-	dedup := make(map[string]struct{})
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).Desc("id").Cols("rule_namespace_uid").Rows(new(alertRuleVersion))
-		if err != nil {
+		if err := sess.Table(new(alertRuleVersion)).
+			Select("rule_namespace_uid").
+			Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).
+			GroupBy("rule_namespace_uid").
+			OrderBy("MAX(version) DESC").
+			Find(&folders); err != nil {
 			return err
-		}
-		for rows.Next() {
-			rule := new(alertRuleVersion)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersionFolders", "error", err)
-				continue
-			}
-			if _, ok := dedup[rule.RuleNamespaceUID]; !ok {
-				dedup[rule.RuleNamespaceUID] = struct{}{}
-				folders = append(folders, rule.RuleNamespaceUID)
-			}
 		}
 		return nil
 	})
