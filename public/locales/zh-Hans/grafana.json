@@ -5114,6 +5114,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "配置",
       "menu-use-library-panel": "使用库面板",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6124,7 +6125,10 @@
       "no-data-found": "未找到数据"
     },
     "inspect-json-tab": {
-      "apply": "应用"
+      "apply": "应用",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "通过将时间范围除以指定的计数来动态计算间隔",

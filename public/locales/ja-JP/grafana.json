@@ -5114,6 +5114,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6124,7 +6125,10 @@
       "no-data-found": "データが見つかりません"
     },
     "inspect-json-tab": {
-      "apply": "適用"
+      "apply": "適用",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "指定した数で時間範囲を分割して、間隔を動的に計算します",
