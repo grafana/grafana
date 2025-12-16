@@ -5133,6 +5133,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Yapılandır",
       "menu-use-library-panel": "Kütüphane panelini kullan",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6146,10 @@
       "no-data-found": "Veri bulunamadı"
     },
     "inspect-json-tab": {
-      "apply": "Uygula"
+      "apply": "Uygula",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Zaman aralığını belirtilen sayıya bölerek aralığı dinamik olarak hesaplar",

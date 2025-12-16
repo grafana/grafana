@@ -5114,6 +5114,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurasikan",
       "menu-use-library-panel": "Gunakan panel pustaka",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6124,7 +6125,10 @@
       "no-data-found": "Tidak ada data yang ditemukan"
     },
     "inspect-json-tab": {
-      "apply": "Terapkan"
+      "apply": "Terapkan",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Menghitung interval secara dinamis dengan membagi rentang waktu dengan jumlah yang ditentukan",

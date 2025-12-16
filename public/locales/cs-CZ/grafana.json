@@ -5171,6 +5171,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurovat",
       "menu-use-library-panel": "Použít panel knihovny",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6187,7 +6188,10 @@
       "no-data-found": "Nebyla nalezena žádná data"
     },
     "inspect-json-tab": {
-      "apply": "Použít"
+      "apply": "Použít",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Dynamicky vypočítá interval vydělením časového rozsahu zadaným počtem",

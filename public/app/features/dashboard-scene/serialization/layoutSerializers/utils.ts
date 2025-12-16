@@ -1,3 +1,4 @@
+import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataProvider,
@@ -164,12 +165,15 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     return undefined;
   }
 
+  // Ensure all queries have unique refIds before converting to scene queries
+  const queriesWithUniqueRefIds = ensureUniqueRefIds(targets);
+
   let dataProvider: SceneDataProvider | undefined = undefined;
   const datasource = getPanelDataSource(panelKind);
 
   dataProvider = new SceneQueryRunner({
     datasource,
-    queries: targets.map(panelQueryKindToSceneQuery),
+    queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
@@ -339,6 +343,21 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
     uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
     type: dsList[defaultDatasource].meta.id,
   };
+}
+
+export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] {
+  // Adapter to make PanelQueryKind[] work with getNextRefId (which expects { refId }[])
+  const refIdAdapter = queries.map((q) => ({ refId: q.spec.refId }));
+
+  for (let i = 0; i < queries.length; i++) {
+    if (!queries[i].spec.refId) {
+      const newRefId = getNextRefId(refIdAdapter);
+      queries[i] = { ...queries[i], spec: { ...queries[i].spec, refId: newRefId } };
+      refIdAdapter[i] = { refId: newRefId };
+    }
+  }
+
+  return queries;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {

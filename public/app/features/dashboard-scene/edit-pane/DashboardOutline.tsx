@@ -51,11 +51,16 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
-  const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
+  const visibleChildren = useMemo(() => {
+    const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
+    return isEditing
+      ? children
+      : children.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
+  }, [editableElement, isEditing]);
 
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -73,6 +78,10 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     evt.stopPropagation();
     setIsCollapsed(!isCollapsed);
   };
+
+  if (elementInfo.isHidden && !isEditing) {
+    return null;
+  }
 
   return (
     // todo: add proper keyboard navigation
@@ -130,8 +139,8 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
       {isContainer && !isCollapsed && (
         <ul className={styles.nodeChildren} role="group">
-          {children.length > 0 ? (
-            children.map((child, i) => (
+          {visibleChildren.length > 0 ? (
+            visibleChildren.map((child, i) => (
               <DashboardOutlineNode
                 key={child.state.key}
                 sceneObject={child}
