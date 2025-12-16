@@ -237,7 +237,7 @@ describe('OptionField', () => {
 
       // The subform should be rendered with the nested field
       expect(screen.getByText('Test Subform')).toBeInTheDocument();
-      
+
       // Verify that getOptionMeta was called for the nested field
       // This ensures it was passed through to the SubformField component
       expect(getOptionMeta).toHaveBeenCalled();
@@ -380,7 +380,7 @@ describe('OptionField', () => {
 
       // The subform array should be rendered
       expect(screen.getByText('Test Subform Array (1)')).toBeInTheDocument();
-      
+
       // Verify that getOptionMeta was called
       expect(getOptionMeta).toHaveBeenCalled();
     });

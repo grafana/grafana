@@ -98,8 +98,10 @@ export const OptionField: FC<Props> = ({
       </Tooltip>
       {labelText}
     </Stack>
-  ) : labelText;
-  
+  ) : (
+    labelText
+  );
+
   return (
     <Field
       label={label}
