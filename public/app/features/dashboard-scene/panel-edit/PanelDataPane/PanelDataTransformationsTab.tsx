@@ -104,8 +104,15 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
       const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceRef);
 
-      // If we can't get datasource settings or it's not a backend datasource, SQL is not applicable
-      if (!dsSettings || (!dsSettings.meta.backend && !dsSettings.meta.isBackend)) {
+      // If we can't get datasource settings, default to allowing SQL expressions
+      // (we'd rather let the user try than incorrectly block them)
+      if (!dsSettings) {
+        continue;
+      }
+
+      // Only disable for datasources we KNOW are frontend-only
+      // This is a conservative deny-list approach - we may expand this in future
+      if (!dsSettings.meta.backend && !dsSettings.meta.isBackend) {
         return false;
       }
     }
