@@ -27,7 +27,7 @@ const sessionId = uuidv4();
 class DashboardWatcher {
   channel?: LiveChannelAddress; // path to the channel
   uid?: string;
-  ignoreSave?: boolean;
+  ignoreSave = 0; // save any events until this time passes
   editing = false;
   lastEditing?: DashboardEvent;
   subscription?: Unsubscribable;
@@ -84,8 +84,9 @@ class DashboardWatcher {
     this.uid = undefined;
   }
 
+  // ignore the next 5 seconds of save events
   ignoreNextSave() {
-    this.ignoreSave = true;
+    this.ignoreSave = Date.now() + 5000;
   }
 
   getRecentEditingEvent() {
@@ -115,8 +116,11 @@ class DashboardWatcher {
           case DashboardEventAction.EditingStarted:
           case DashboardEventAction.Saved: {
             if (this.ignoreSave) {
-              this.ignoreSave = false;
-              return;
+              if (this.ignoreSave < Date.now()) {
+                this.ignoreSave = 0; // process the event
+              } else {
+                return;
+              }
             }
 
             const dash = getDashboardSrv().getCurrent();
