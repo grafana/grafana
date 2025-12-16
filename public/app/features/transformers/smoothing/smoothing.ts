@@ -25,8 +25,10 @@ export const getSmoothingTransformer: () => SynchronousDataTransformerInfo<Smoot
     'transformers.smoothing.description',
     'Reduce noise in time series data through adaptive downsampling.'
   ),
-  operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => getSmoothingTransformer().transformer(options, ctx)(data))),
+  operator: (options, ctx) => {
+    const transformer = getSmoothingTransformer().transformer(options, ctx);
+    return (source) => source.pipe(map(transformer));
+  },
   transformer: (options, ctx) => {
     return (frames: DataFrame[]) => {
       // clamp resolution to valid range to handle edge cases from API/plugins
