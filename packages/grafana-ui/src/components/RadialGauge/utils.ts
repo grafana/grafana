@@ -155,3 +155,81 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
     y: centerY + radius * Math.sin(radian),
   };
 }
+
+export function drawRadialArcPath(
+  angle: number,
+  arcLengthDeg: number,
+  dimensions: GaugeDimensions,
+  roundedBars?: boolean
+): string {
+  const { radius, centerX, centerY, barWidth } = dimensions;
+
+  if (arcLengthDeg === 360) {
+    // For some reason a 100% full arc cannot be rendered
+    arcLengthDeg = 359.99;
+  }
+
+  const startRadians = toRad(angle);
+  const endRadians = toRad(angle + arcLengthDeg);
+
+  const largeArc = arcLengthDeg > 180 ? 1 : 0;
+
+  const outerR = radius + barWidth / 2;
+  const innerR = Math.max(0, radius - barWidth / 2);
+
+  const ox1 = centerX + outerR * Math.cos(startRadians);
+  const oy1 = centerY + outerR * Math.sin(startRadians);
+  const ox2 = centerX + outerR * Math.cos(endRadians);
+  const oy2 = centerY + outerR * Math.sin(endRadians);
+
+  const ix1 = centerX + innerR * Math.cos(startRadians);
+  const iy1 = centerY + innerR * Math.sin(startRadians);
+  const ix2 = centerX + innerR * Math.cos(endRadians);
+  const iy2 = centerY + innerR * Math.sin(endRadians);
+
+  const capR = barWidth / 2;
+
+  const pathParts = [
+    // start at outer start
+    'M',
+    ox1,
+    oy1,
+    // outer arc from start to end (clockwise)
+    'A',
+    outerR,
+    outerR,
+    0,
+    largeArc,
+    1,
+    ox2,
+    oy2,
+  ];
+
+  if (roundedBars) {
+    // rounded end cap: small arc connecting outer end to inner end
+    pathParts.push('A', capR, capR, 0, 0, 1, ix2, iy2);
+  } else {
+    // straight line to inner end
+    pathParts.push('L', ix2, iy2);
+  }
+
+  if (innerR <= 0) {
+    // if inner radius collapsed to center, line to center and close
+    pathParts.push('L', centerX, centerY, 'Z');
+  } else {
+    // inner arc from end back to start (counter-clockwise)
+    pathParts.push('A', innerR, innerR, 0, largeArc, 0, ix1, iy1);
+
+    if (roundedBars) {
+      // rounded start cap: small arc connecting inner start back to outer start
+      pathParts.push('A', capR, capR, 0, 0, 1, ox1, oy1);
+    } else {
+      // straight line back to outer start
+      pathParts.push('L', ox1, oy1);
+    }
+
+    pathParts.push('Z');
+  }
+
+  return pathParts.join(' ');
+}

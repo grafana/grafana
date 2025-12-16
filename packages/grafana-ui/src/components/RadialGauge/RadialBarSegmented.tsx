@@ -1,16 +1,15 @@
-import { FieldDisplay } from '@grafana/data';
+import { DisplayProcessor, FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialColorDefs } from './RadialColorDefs';
 import { RadialGradientMode, RadialShape } from './RadialGauge';
 import { GaugeDimensions } from './utils';
 
 export interface RadialBarSegmentedProps {
   fieldDisplay: FieldDisplay;
+  displayProcessor: DisplayProcessor;
   dimensions: GaugeDimensions;
-  colorDefs: RadialColorDefs;
   angleRange: number;
   startAngle: number;
   glowFilter?: string;
@@ -21,13 +20,13 @@ export interface RadialBarSegmentedProps {
 }
 export function RadialBarSegmented({
   fieldDisplay,
+  displayProcessor,
   dimensions,
   startAngle,
   angleRange,
   glowFilter,
   segmentCount,
   segmentSpacing,
-  colorDefs,
   shape,
   gradientMode,
 }: RadialBarSegmentedProps) {
@@ -48,7 +47,7 @@ export function RadialBarSegmented({
     if (angleValue >= value) {
       segmentColor = theme.colors.action.hover;
     } else if (gradientMode === 'none') {
-      segmentColor = colorDefs.getSegmentColor(angleValue);
+      segmentColor = displayProcessor(angleValue).color ?? FALLBACK_COLOR;
     }
 
     segments.push(
@@ -58,9 +57,11 @@ export function RadialBarSegmented({
         dimensions={dimensions}
         color={segmentColor}
         shape={shape}
-        colorDefs={colorDefs}
         glowFilter={glowFilter}
         arcLengthDeg={segmentArcLengthDeg}
+        gradientMode={gradientMode}
+        fieldDisplay={fieldDisplay}
+        displayProcessor={displayProcessor}
       />
     );
   }
@@ -89,44 +90,3 @@ function getOptimalSegmentCount(
 
   return Math.min(maxSegments, segmentCount);
 }
-
-// export function RadialSegmentLine({
-//   gaugeId,
-//   center,
-//   angle,
-//   size,
-//   color,
-//   barWidth,
-//   roundedBars,
-//   glow,
-//   margin,
-//   segmentWidth,
-// }: RadialSegmentProps) {
-//   const arcSize = size - barWidth;
-//   const radius = arcSize / 2 - margin;
-
-//   const angleRad = (Math.PI * (angle - 90)) / 180;
-//   const lineLength = radius - barWidth;
-
-//   const x1 = center + radius * Math.cos(angleRad);
-//   const y1 = center + radius * Math.sin(angleRad);
-//   const x2 = center + lineLength * Math.cos(angleRad);
-//   const y2 = center + lineLength * Math.sin(angleRad);
-
-//   return (
-//     <line
-//       x1={x1}
-//       y1={y1}
-//       x2={x2}
-//       y2={y2}
-//       fill="none"
-//       fillOpacity="0.85"
-//       stroke={color}
-//       strokeOpacity="1"
-//       strokeLinecap={roundedBars ? 'round' : 'butt'}
-//       strokeWidth={segmentWidth}
-//       strokeDasharray="0"
-//       filter={glow ? `url(#glow-${gaugeId})` : undefined}
-//     />
-//   );
-// }

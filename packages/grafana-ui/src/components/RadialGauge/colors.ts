@@ -1,18 +1,26 @@
 import tinycolor from 'tinycolor2';
 
-import { DisplayProcessor, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  DisplayProcessor,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  getFieldColorMode,
+  GradientStop,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { RadialGradientMode } from './RadialGauge';
+import { RadialGradientMode, RadialShape } from './RadialGauge';
 
 export function buildGradientColors(
   gradientMode: RadialGradientMode,
-  baseColor: string,
   theme: GrafanaTheme2,
   displayProcessor: DisplayProcessor,
   fieldDisplay: FieldDisplay,
+  baseColor = FALLBACK_COLOR,
   forSegment?: boolean
-): Array<{ color: string; percent: number }> {
+): GradientStop[] {
   if (gradientMode === 'none') {
     return [
       { color: baseColor, percent: 0 },
@@ -79,4 +87,36 @@ export function buildGradientColors(
         { color: lighterColor.lighten(10).toString(), percent: 0 },
         { color: darkerColor.toString(), percent: 1 },
       ];
+}
+
+export function getEndpointColors(gradientStops: GradientStop[], percent = 0): [string, string] {
+  const startColor = gradientStops[0].color;
+  let endColor = gradientStops[gradientStops.length - 1].color;
+
+  // if we have a percentageFilled, use it to get a the correct end color based on where the bar terminates
+  if (gradientStops.length >= 2) {
+    const endColorByPercentage = colorManipulator.colorAtGradientPercent(gradientStops, percent);
+    endColor =
+      endColorByPercentage.getAlpha() === 1 ? endColorByPercentage.toHexString() : endColorByPercentage.toHex8String();
+  }
+  return [startColor, endColor];
+}
+
+export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
+  const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
+  return shape === 'circle'
+    ? `conic-gradient(from 0deg, ${colorStrings.join(', ')})`
+    : `linear-gradient(90deg, ${colorStrings.join(', ')})`;
+}
+
+const CONTRAST_THRESHOLD_MAX = 4.5;
+const getGuideDotColor = (color: string): string => {
+  const darkColor = '#111217'; // gray05
+  const lightColor = '#fbfbfb'; // gray90
+  return colorManipulator.getContrastRatio(darkColor, color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor;
+};
+
+export function getGuideDotColors(gradientStops: GradientStop[], percent = 0): [string, string] {
+  const [startColor, endColor] = getEndpointColors(gradientStops, percent);
+  return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
 }

@@ -1,21 +1,25 @@
-import { useId, useEffect } from 'react';
+import { useId, useMemo } from 'react';
 
-import { RadialColorDefs } from './RadialColorDefs';
-import { RadialShape } from './RadialGauge';
-import { GaugeDimensions, toRad } from './utils';
+import { DisplayProcessor, FieldDisplay } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+
+import { RadialGradientMode, RadialShape } from './RadialGauge';
+import { buildGradientColors, getEndpointColors, getGradientCss, getGuideDotColors } from './colors';
+import { drawRadialArcPath, GaugeDimensions, toRad } from './utils';
 
 export interface RadialArcPathPropsBase {
-  startAngle: number;
-  dimensions: GaugeDimensions;
-  colorDefs: RadialColorDefs;
   arcLengthDeg: number;
-  shape: RadialShape;
   color?: string;
+  dimensions: GaugeDimensions;
+  displayProcessor: DisplayProcessor;
+  fieldDisplay: FieldDisplay;
   glowFilter?: string;
+  gradientMode: RadialGradientMode;
   roundedBars?: boolean;
+  shape: RadialShape;
   showGuideDots?: boolean;
-  guideDotStartColor?: string;
-  guideDotEndColor?: string;
+  startAngle: number;
 }
 
 interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
@@ -28,110 +32,60 @@ type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDo
 
 const MAX_DOT_RADIUS = 8;
 
-function drawRadialArcPath({
-  angle,
-  arcLengthDeg,
-  dimensions,
-  roundedBars,
-}: {
-  angle: number;
-  dimensions: GaugeDimensions;
-  arcLengthDeg: number;
-  roundedBars?: boolean;
-}): string {
-  const { radius, centerX, centerY, barWidth } = dimensions;
-
-  if (arcLengthDeg === 360) {
-    // For some reason a 100% full arc cannot be rendered
-    arcLengthDeg = 359.99;
-  }
-
-  const startRadians = toRad(angle);
-  const endRadians = toRad(angle + arcLengthDeg);
-
-  const largeArc = arcLengthDeg > 180 ? 1 : 0;
-
-  const outerR = radius + barWidth / 2;
-  const innerR = Math.max(0, radius - barWidth / 2);
-
-  const ox1 = centerX + outerR * Math.cos(startRadians);
-  const oy1 = centerY + outerR * Math.sin(startRadians);
-  const ox2 = centerX + outerR * Math.cos(endRadians);
-  const oy2 = centerY + outerR * Math.sin(endRadians);
-
-  const ix1 = centerX + innerR * Math.cos(startRadians);
-  const iy1 = centerY + innerR * Math.sin(startRadians);
-  const ix2 = centerX + innerR * Math.cos(endRadians);
-  const iy2 = centerY + innerR * Math.sin(endRadians);
-
-  const capR = barWidth / 2;
-
-  const pathParts = [
-    // start at outer start
-    'M',
-    ox1,
-    oy1,
-    // outer arc from start to end (clockwise)
-    'A',
-    outerR,
-    outerR,
-    0,
-    largeArc,
-    1,
-    ox2,
-    oy2,
-  ];
-
-  if (roundedBars) {
-    // rounded end cap: small arc connecting outer end to inner end
-    pathParts.push('A', capR, capR, 0, 0, 1, ix2, iy2);
-  } else {
-    // straight line to inner end
-    pathParts.push('L', ix2, iy2);
-  }
-
-  if (innerR <= 0) {
-    // if inner radius collapsed to center, line to center and close
-    pathParts.push('L', centerX, centerY, 'Z');
-  } else {
-    // inner arc from end back to start (counter-clockwise)
-    pathParts.push('A', innerR, innerR, 0, largeArc, 0, ix1, iy1);
-
-    if (roundedBars) {
-      // rounded start cap: small arc connecting inner start back to outer start
-      pathParts.push('A', capR, capR, 0, 0, 1, ox1, oy1);
-    } else {
-      // straight line back to outer start
-      pathParts.push('L', ox1, oy1);
-    }
-
-    pathParts.push('Z');
-  }
-
-  return pathParts.join(' ');
-}
-
 export function RadialArcPath({
-  startAngle: angle,
-  dimensions,
-  color,
-  colorDefs,
-  shape,
   arcLengthDeg,
+  color,
+  dimensions,
+  displayProcessor,
+  fieldDisplay,
   glowFilter,
+  gradientMode,
   roundedBars,
+  shape,
   showGuideDots,
-  guideDotStartColor,
-  guideDotEndColor,
+  startAngle: angle,
 }: RadialArcPathProps) {
+  const theme = useTheme2();
   const id = useId();
+
   const { radius, centerX, centerY, barWidth } = dimensions;
+
+  const gradientStops = useMemo(() => {
+    if (gradientMode === 'none') {
+      return [];
+    }
+    return buildGradientColors(gradientMode, theme, displayProcessor, fieldDisplay, fieldDisplay.display.color);
+  }, [gradientMode, fieldDisplay, theme, displayProcessor]);
+
+  const { guideDotColors, endpointColors } = useMemo(() => {
+    if (!showGuideDots || shape !== 'circle' || gradientStops.length === 0) {
+      return {
+        guideDotStartColor: undefined,
+        guideDotEndColor: undefined,
+      };
+    }
+    return {
+      guideDotColors: getGuideDotColors(gradientStops, fieldDisplay.display.percent ?? 0),
+      endpointColors: getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 0),
+    };
+  }, [showGuideDots, shape, fieldDisplay, gradientStops]);
+
+  const bgDivStyle = useMemo(() => {
+    const baseStyles = { width: '100%', height: '100%' };
+    if (color) {
+      return { backgroundColor: color, ...baseStyles };
+    }
+    const gradientCss = getGradientCss(gradientStops, shape);
+    return { backgroundImage: gradientCss, ...baseStyles };
+  }, [color, gradientStops, shape]);
 
   const startRadians = toRad(angle);
   const endRadians = toRad(angle + arcLengthDeg);
-  const [startColor, endColor] = colorDefs.getEndpointColors();
 
-  const path = drawRadialArcPath({ angle, arcLengthDeg, dimensions, roundedBars });
+  const path = useMemo(
+    () => drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars),
+    [angle, arcLengthDeg, dimensions, roundedBars]
+  );
   let x1 = centerX + radius * Math.cos(startRadians);
   let y1 = centerY + radius * Math.sin(startRadians);
   let x2 = centerX + radius * Math.cos(endRadians);
@@ -152,28 +106,16 @@ export function RadialArcPath({
           height={(radius + barWidth) * 2}
           clipPath={`url(#${id})`}
         >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundImage: color ? undefined : colorDefs.getGradientDef(),
-              backgroundColor: color,
-            }}
-          />
+          <div style={bgDivStyle} />
         </foreignObject>
       </g>
 
       {showGuideDots && (
         <>
-          {shape === 'circle' && (
-            <>
-              <circle cx={x1} cy={y1} r={barWidth / 2} fill={startColor} />
-              <circle cx={x2} cy={y2} r={barWidth / 2} fill={endColor} />
-            </>
-          )}
-
-          {arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotStartColor} />}
-          <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotEndColor} />
+          {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
+          {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
+          {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
+          {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
         </>
       )}
     </>
