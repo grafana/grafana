@@ -327,6 +327,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Enum:        []interface{}{"bitbucket", "github", "gitlab"},
 						},
 					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection URL",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub connection configuration Only applicable when provider is \"github\"",

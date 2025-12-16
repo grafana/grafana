@@ -12,6 +12,7 @@ import (
 // with apply.
 type ConnectionSpecApplyConfiguration struct {
 	Type      *provisioningv0alpha1.ConnectionType         `json:"type,omitempty"`
+	URL       *string                                      `json:"url,omitempty"`
 	GitHub    *GitHubConnectionConfigApplyConfiguration    `json:"github,omitempty"`
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	Gitlab    *GitlabConnectionConfigApplyConfiguration    `json:"gitlab,omitempty"`
@@ -28,6 +29,14 @@ func ConnectionSpec() *ConnectionSpecApplyConfiguration {
 // If called multiple times, the Type field is set to the value of the last call.
 func (b *ConnectionSpecApplyConfiguration) WithType(value provisioningv0alpha1.ConnectionType) *ConnectionSpecApplyConfiguration {
 	b.Type = &value
+	return b
+}
+
+// WithURL sets the URL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the URL field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithURL(value string) *ConnectionSpecApplyConfiguration {
+	b.URL = &value
 	return b
 }
 

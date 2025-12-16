@@ -52,6 +52,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		assert.Equal(t, "default", output.GetNamespace(), "namespace should be equal")
 		spec := output.Object["spec"].(map[string]any)
 		assert.Equal(t, "github", spec["type"], "type should be equal")
+		assert.Equal(t, "https://github.com/settings/installations/454545", spec["url"], "url should be equal")
 		require.Contains(t, spec, "github")
 		githubInfo := spec["github"].(map[string]any)
 		assert.Equal(t, "123456", githubInfo["appID"], "appID should be equal")

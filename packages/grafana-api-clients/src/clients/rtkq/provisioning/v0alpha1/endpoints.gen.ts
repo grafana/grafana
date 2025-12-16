@@ -1466,6 +1466,8 @@ export type ConnectionSpec = {
      - `"github"`
      - `"gitlab"` */
   type: 'bitbucket' | 'github' | 'gitlab';
+  /** The connection URL */
+  url?: string;
 };
 export type HealthStatus = {
   /** When the health was checked last time */

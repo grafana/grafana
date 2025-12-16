@@ -4523,6 +4523,10 @@
               "github",
               "gitlab"
             ]
+          },
+          "url": {
+            "description": "The connection URL",
+            "type": "string"
           }
         }
       },

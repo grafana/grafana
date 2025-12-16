@@ -46,6 +46,8 @@ connection: {
 				spec: {
 					// The connection provider type
 					type: "github" | "bitbucket" | "gitlab"
+					// The connection URL
+					url: *"" | string
 					// GitHub connection configuration
 					// Only applicable when provider is "github"
 					github?: #GitHubConnectionConfig

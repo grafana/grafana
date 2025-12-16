@@ -229,7 +229,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
-	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
+// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -600,10 +600,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
-	// TODO: add this as part of https://github.com/grafana/git-ui-sync-project/issues/700
-	_, ok = obj.(*provisioning.Connection)
+	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return nil
+		return connectionvalidation.MutateConnection(c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)

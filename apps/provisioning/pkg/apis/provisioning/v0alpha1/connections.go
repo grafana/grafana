@@ -71,6 +71,8 @@ const (
 type ConnectionSpec struct {
 	// The connection provider type
 	Type ConnectionType `json:"type"`
+	// The connection URL
+	URL string `json:"url,omitempty"`
 
 	// GitHub connection configuration
 	// Only applicable when provider is "github"
