@@ -28,6 +28,10 @@ const (
 	TestKVUnixTimestamp  = "unix timestamp"
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
+
+	// Use `eventsSection` as the section for the tests, as the sqlkv implementation
+	// needs a real section to determine which table to use.
+	testSection = "unified/events"
 )
 
 // NewKVFunc is a function that creates a new KV instance for testing
@@ -84,22 +88,21 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 	}
 }
 
+func prefixKey(nsPrefix, key string) string {
+	return nsPrefix + "/" + key
+}
+
 func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	// Use `eventsSection` as the section for these tests, as the sqlkv implementation
-	// needs a real section to determine which table to use, and apply `nsPrefix` on
-	// the key itself.
-	section := "unified/events"
-	keyPrefix := nsPrefix + "-get"
-	prefixed := func(name string) string { return keyPrefix + "/" + name }
 
 	t.Run("get existing key", func(t *testing.T) {
 		// First save a key
+		existingKey := prefixKey(nsPrefix, "existing-key")
 		testValue := "test value for get"
-		saveKVHelper(t, kv, ctx, section, prefixed("existing-key"), strings.NewReader(testValue))
+		saveKVHelper(t, kv, ctx, testSection, existingKey, strings.NewReader(testValue))
 
 		// Now get it
-		reader, err := kv.Get(ctx, section, prefixed("existing-key"))
+		reader, err := kv.Get(ctx, testSection, existingKey)
 		require.NoError(t, err)
 
 		// Read the value
@@ -113,19 +116,19 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
-		_, err := kv.Get(ctx, section, prefixed("non-existent-key"))
+		_, err := kv.Get(ctx, testSection, prefixKey(nsPrefix, "non-existent-key"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("get with empty section", func(t *testing.T) {
-		_, err := kv.Get(ctx, "", prefixed("some-key"))
+		_, err := kv.Get(ctx, "", prefixKey(nsPrefix, "some-key"))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
 	})
 
 	t.Run("get with empty key", func(t *testing.T) {
-		_, err := kv.Get(ctx, section, "")
+		_, err := kv.Get(ctx, testSection, "")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "key is required")
 	})
@@ -209,36 +212,42 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-delete"
 
 	t.Run("delete existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "delete-key", strings.NewReader("delete me"))
+		deleteKey := prefixKey(nsPrefix, "delete-key")
+		saveKVHelper(t, kv, ctx, testSection, deleteKey, strings.NewReader("delete me"))
 
 		// Verify it exists
-		_, err := kv.Get(ctx, section, "delete-key")
+		_, err := kv.Get(ctx, testSection, deleteKey)
 		require.NoError(t, err)
 
 		// Delete it
-		err = kv.Delete(ctx, section, "delete-key")
+		err = kv.Delete(ctx, testSection, deleteKey)
 		require.NoError(t, err)
 
 		// Verify it's gone
-		_, err = kv.Get(ctx, section, "delete-key")
+		_, err = kv.Get(ctx, testSection, deleteKey)
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("delete non-existent key", func(t *testing.T) {
-		err := kv.Delete(ctx, section, "non-existent-delete-key")
+		err := kv.Delete(ctx, testSection, prefixKey(nsPrefix, "non-existent-delete-key"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("delete with empty section", func(t *testing.T) {
-		err := kv.Delete(ctx, "", "some-key")
+		err := kv.Delete(ctx, "", prefixKey(nsPrefix, "some-key"))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("delete with empty key", func(t *testing.T) {
+		err := kv.Delete(ctx, testSection, "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "key is required")
 	})
 }
 
