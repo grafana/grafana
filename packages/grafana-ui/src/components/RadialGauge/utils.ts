@@ -195,7 +195,7 @@ export function drawRadialArcPath(
   const outerR = radius + barWidth / 2;
   const innerR = Math.max(0, radius - barWidth / 2);
   if (innerR <= 0) {
-    throw new Error('Inner radius collapsed to zero or below, cannot draw radial arc path');
+    return ''; // cannot draw arc with 0 inner radius
   }
 
   // get points for both an inner and outer arc. we draw

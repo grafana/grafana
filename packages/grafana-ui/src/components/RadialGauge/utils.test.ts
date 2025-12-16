@@ -325,11 +325,9 @@ describe('RadialGauge utils', () => {
         expect(drawRadialArcPath(0, 380, defaultDims)).toEqual(drawRadialArcPath(0, 380, defaultDims));
       });
 
-      it('should throw an error if inner radius collapses to zero or below', () => {
+      it('should return empty string if inner radius collapses to zero or below', () => {
         const smallRadiusDims = { ...defaultDims, radius: 5, barWidth: 20 };
-        expect(() => drawRadialArcPath(0, 180, smallRadiusDims)).toThrow(
-          'Inner radius collapsed to zero or below, cannot draw radial arc path'
-        );
+        expect(drawRadialArcPath(0, 180, smallRadiusDims)).toBe('');
       });
     });
   });

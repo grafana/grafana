@@ -34,7 +34,9 @@ const MAX_TEXT_WIDTH_DIVISOR = 7;
 const MAX_NAME_HEIGHT_DIVISOR = 4;
 const VALUE_SPACE_PERCENTAGE = 0.7;
 const SPARKLINE_SPACING = 8;
-const MIN_UNIT_FONT_SIZE = 5;
+const MIN_VALUE_FONT_SIZE = 1;
+const MIN_NAME_FONT_SIZE = 10;
+const MIN_UNIT_FONT_SIZE = 6;
 
 export const RadialText = memo(
   ({
@@ -71,27 +73,31 @@ export const RadialText = memo(
       maxNameHeight = NAME_TO_HEIGHT_FACTOR * Math.pow(radius, LARGE_RADIUS_SCALING_DECAY);
     }
 
-    const valueFontSize =
+    const valueFontSize = Math.max(
       valueManualFontSize ??
-      calculateFontSize(
-        valueToAlignTo,
-        maxTextWidth,
-        maxValueHeight,
-        LINE_HEIGHT_FACTOR,
-        undefined,
-        theme.typography.body.fontWeight
-      );
+        calculateFontSize(
+          valueToAlignTo,
+          maxTextWidth,
+          maxValueHeight,
+          LINE_HEIGHT_FACTOR,
+          undefined,
+          theme.typography.body.fontWeight
+        ),
+      MIN_VALUE_FONT_SIZE
+    );
 
-    const nameFontSize =
+    const nameFontSize = Math.max(
       nameManualFontSize ??
-      calculateFontSize(
-        nameToAlignTo,
-        maxTextWidth,
-        maxNameHeight,
-        LINE_HEIGHT_FACTOR,
-        undefined,
-        theme.typography.body.fontWeight
-      );
+        calculateFontSize(
+          nameToAlignTo,
+          maxTextWidth,
+          maxNameHeight,
+          LINE_HEIGHT_FACTOR,
+          undefined,
+          theme.typography.body.fontWeight
+        ),
+      MIN_NAME_FONT_SIZE
+    );
 
     const unitFontSize = Math.max(valueFontSize * VALUE_SPACE_PERCENTAGE, MIN_UNIT_FONT_SIZE);
     const valueHeight = valueFontSize * LINE_HEIGHT_FACTOR;

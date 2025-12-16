@@ -8,12 +8,12 @@ import { Sparkline } from '../Sparkline/Sparkline';
 import { RadialShape, RadialTextMode, RadialGaugeDimensions } from './types';
 
 interface RadialSparklineProps {
-  sparkline: FieldDisplay['sparkline'];
-  dimensions: RadialGaugeDimensions;
-  theme: GrafanaTheme2;
   color?: string;
-  shape?: RadialShape;
+  dimensions: RadialGaugeDimensions;
+  shape: RadialShape;
+  sparkline: FieldDisplay['sparkline'];
   textMode: Exclude<RadialTextMode, 'auto'>;
+  theme: GrafanaTheme2;
 }
 
 const SPARKLINE_HEIGHT_DIVISOR = 4;
@@ -24,13 +24,23 @@ const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE = 4;
 const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE_NAME_AND_VALUE = 3.3;
 const SPARKLINE_SPACING = 8;
 
+export function getSparklineDimensions(
+  radius: number,
+  barWidth: number,
+  showNameAndValue: boolean,
+  shape: RadialShape
+): { width: number; height: number } {
+  const height = radius / (showNameAndValue ? SPARKLINE_HEIGHT_DIVISOR_NAME_AND_VALUE : SPARKLINE_HEIGHT_DIVISOR);
+  const width = radius * (shape === 'gauge' ? SPARKLINE_WIDTH_FACTOR_ARC : SPARKLINE_WIDTH_FACTOR_CIRCLE) - barWidth;
+  return { width, height };
+}
+
 export const RadialSparkline = memo(
   ({ sparkline, dimensions, theme, color, shape, textMode }: RadialSparklineProps) => {
     const { radius, barWidth } = dimensions;
 
     const showNameAndValue = textMode === 'value_and_name';
-    const height = radius / (showNameAndValue ? SPARKLINE_HEIGHT_DIVISOR_NAME_AND_VALUE : SPARKLINE_HEIGHT_DIVISOR);
-    const width = radius * (shape === 'gauge' ? SPARKLINE_WIDTH_FACTOR_ARC : SPARKLINE_WIDTH_FACTOR_CIRCLE) - barWidth;
+    const { width, height } = getSparklineDimensions(radius, barWidth, showNameAndValue, shape);
     const topPos =
       shape === 'gauge'
         ? dimensions.gaugeBottomY - height - SPARKLINE_SPACING
