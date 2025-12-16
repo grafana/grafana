@@ -117,4 +117,102 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
     });
   });
+
+  describe('SQL card disabled state', () => {
+    beforeEach(() => {
+      config.featureToggles.transformationsEmptyPlaceholder = true;
+      config.featureToggles.sqlExpressions = true;
+    });
+
+    // Helper to check if the info icon button is present (rendered when disabled)
+    const getInfoIconButton = (container: HTMLElement) => {
+      // The IconButton for info renders as a button with an SVG icon
+      // When disabled, there are 2 buttons: the card button and the info icon button
+      const buttons = container.querySelectorAll('button');
+      return buttons.length > 1 ? buttons[1] : null;
+    };
+
+    it('should show disabled SQL card with info icon when isSqlApplicable is false', () => {
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          isSqlApplicable={false}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('go-to-queries-button');
+      // Should show info icon button when disabled (2 buttons total)
+      expect(getInfoIconButton(sqlCard)).toBeInTheDocument();
+    });
+
+    it('should not call onGoToQueries when SQL card is disabled and clicked', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          isSqlApplicable={false}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('go-to-queries-button');
+      const button = sqlCard.querySelector('button');
+      await user.click(button!);
+
+      // onGoToQueries should NOT be called when disabled
+      expect(onGoToQueries).not.toHaveBeenCalled();
+    });
+
+    it('should call onGoToQueries when SQL card is enabled and clicked', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          isSqlApplicable={true}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('go-to-queries-button');
+      const button = sqlCard.querySelector('button');
+      await user.click(button!);
+
+      expect(onGoToQueries).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not show info icon when SQL card is enabled', () => {
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          isSqlApplicable={true}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('go-to-queries-button');
+      // Should NOT show info icon button when enabled (only 1 button)
+      expect(getInfoIconButton(sqlCard)).toBeNull();
+    });
+
+    it('should default to enabled when isSqlApplicable is not provided', () => {
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('go-to-queries-button');
+      // Should NOT show info icon button when default (enabled)
+      expect(getInfoIconButton(sqlCard)).toBeNull();
+    });
+  });
 });
