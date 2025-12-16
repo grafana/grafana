@@ -5,6 +5,7 @@ export interface NotifierMetadata {
   order: number;
   description?: string;
   iconUrl?: string;
+  badge?: React.ReactNode;
 }
 
 export interface Notifier {

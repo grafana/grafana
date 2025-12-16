@@ -293,6 +293,14 @@
         "title": "Unable to display all events"
       }
     },
+    "channel-sub-form": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "label-integration": "Integration",
+      "label-notification-settings": "Notification settings",
+      "label-section": "Optional {{name}} settings",
+      "test": "Test"
+    },
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
@@ -367,6 +375,11 @@
           }
         }
       }
+    },
+    "global-config-form": {
+      "save-global-config": "Save global config",
+      "saving": "Saving...",
+      "title-error-saving-receiver": "Error saving receiver"
     },
     "group-actions": {
       "actions-trigger": "Rule group actions",
@@ -503,6 +516,16 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "receiver-form": {
+      "label-name": "Name"
+    },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": "This field is protected and can only be edited by users with elevated permissions"
+        }
+      }
     },
     "rule-form": {
       "evaluation": {
@@ -663,6 +686,14 @@
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "subform-array-field": {
+      "add": "Add",
+      "tooltip-delete": "delete"
+    },
+    "subform-field": {
+      "add": "Add",
+      "tooltip-delete": "delete"
     },
     "templates": {
       "editor": {

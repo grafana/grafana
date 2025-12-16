@@ -136,6 +136,7 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
+  AlertingReceiversUpdateProtected = 'alert.notifications.receivers.protected:write',
 
   // Alerting routes actions
   AlertingRoutesRead = 'alert.notifications.routes:read',

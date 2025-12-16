@@ -50,6 +50,7 @@ beforeEach(() => {
     AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.AlertingNotificationsExternalRead,
     AccessControlAction.AlertingNotificationsExternalWrite,
+    AccessControlAction.AlertingReceiversRead,
   ]);
 
   setupVanillaAlertmanagerServer(server);

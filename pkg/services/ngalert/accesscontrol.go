@@ -290,12 +290,13 @@ var (
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting:admin",
 			DisplayName: "Full admin access",
-			Description: "Full write access in Grafana and all external providers, including their permissions and secrets",
+			Description: "Full write access in Grafana and all external providers, including their permissions, protected fields and secrets",
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(alertingWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsRead, Scope: ac.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: ac.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: ac.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: ac.ScopeReceiversAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
