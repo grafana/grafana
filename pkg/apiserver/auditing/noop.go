@@ -19,10 +19,17 @@ func (NoopBackend) Shutdown() {}
 
 func (NoopBackend) String() string { return "" }
 
+// NoopPolicyRuleProvider is a no-op implementation of PolicyRuleProvider
+type NoopPolicyRuleProvider struct{}
+
+func ProvideNoopPolicyRuleProvider() PolicyRuleProvider { return &NoopPolicyRuleProvider{} }
+
+func (NoopPolicyRuleProvider) PolicyRuleProvider(PolicyRuleEvaluators) audit.PolicyRuleEvaluator {
+	return NoopPolicyRuleEvaluator{}
+}
+
 // NoopPolicyRuleEvaluator is a no-op implementation of audit.PolicyRuleEvaluator
 type NoopPolicyRuleEvaluator struct{}
-
-func ProvideNoopPolicyRuleEvaluator() audit.PolicyRuleEvaluator { return &NoopPolicyRuleEvaluator{} }
 
 func (NoopPolicyRuleEvaluator) EvaluatePolicyRule(authorizer.Attributes) audit.RequestAuditConfig {
 	return audit.RequestAuditConfig{Level: auditinternal.LevelNone}

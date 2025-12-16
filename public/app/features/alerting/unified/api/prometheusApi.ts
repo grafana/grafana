@@ -48,6 +48,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   searchGroupName?: string;
   type?: 'alerting' | 'recording';
   compact?: boolean;
+  ruleMatchers?: string[];
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -104,6 +105,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         searchGroupName,
         dashboardUid,
         compact,
+        ruleMatchers,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -123,6 +125,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           'search.rule_group': searchGroupName,
           dashboard_uid: dashboardUid,
           compact: compact,
+          rule_matcher: ruleMatchers,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {

@@ -495,6 +495,9 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		currentY = getMaxYFromPanels(nestedPanels, currentY)
 	} else if tab.Spec.Layout.GridLayoutKind != nil {
 		// GridLayout inside tab
+		baseY := currentY
+		maxY := currentY
+
 		for _, item := range tab.Spec.Layout.GridLayoutKind.Spec.Items {
 			element, ok := elements[item.Spec.Element.Name]
 			if !ok {
@@ -502,7 +505,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 			}
 
 			adjustedItem := item
-			adjustedItem.Spec.Y = item.Spec.Y + currentY
+			adjustedItem.Spec.Y = item.Spec.Y + baseY
 
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
@@ -511,10 +514,12 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 			panels = append(panels, panel)
 
 			panelEndY := adjustedItem.Spec.Y + item.Spec.Height
-			if panelEndY > currentY {
-				currentY = panelEndY
+			if panelEndY > maxY {
+				maxY = panelEndY
 			}
 		}
+
+		currentY = maxY
 	} else if tab.Spec.Layout.AutoGridLayoutKind != nil {
 		// AutoGridLayout inside tab - convert with Y offset
 		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, tab.Spec.Layout.AutoGridLayoutKind, currentY)

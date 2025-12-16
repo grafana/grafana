@@ -1,8 +1,11 @@
+import { attempt, isError } from 'lodash';
+
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
 import { RulesFilter } from '../../search/rulesSearchParser';
+import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
 import {
@@ -75,6 +78,12 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     hasInvalidDataSourceNames = datasourceUids.length === 0;
   }
 
+  // Convert labels to JSON-encoded matchers for backend filtering
+  const ruleMatchersBackendFilter: string[] | undefined =
+    ruleFilterConfig.labels || normalizedFilterState.labels.length === 0
+      ? undefined
+      : labelMatchersToBackendFormat(normalizedFilterState.labels);
+
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
@@ -85,6 +94,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
+    ruleMatchers: ruleMatchersBackendFilter,
   };
 
   return {
@@ -115,7 +125,7 @@ function buildGrafanaFilterConfigs() {
     ruleState: null,
     ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
     dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
-    labels: labelsFilter,
+    labels: useBackendFilters ? null : labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: pluginsFilter,
@@ -128,4 +138,22 @@ function buildGrafanaFilterConfigs() {
   };
 
   return { ruleFilterConfig, groupFilterConfig };
+}
+
+/**
+ * Converts label matchers to JSON-encoded strings for backend filtering.
+ * Invalid matchers are logged and filtered out.
+ */
+function labelMatchersToBackendFormat(labels: string[]): string[] {
+  return labels.reduce<string[]>((acc, label) => {
+    const result = attempt(() => JSON.stringify(parseMatcher(label)));
+
+    if (isError(result)) {
+      console.warn('Failed to parse label matcher:', label, result);
+    } else {
+      acc.push(result);
+    }
+
+    return acc;
+  }, []);
 }

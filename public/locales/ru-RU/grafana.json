@@ -5171,6 +5171,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Настроить",
       "menu-use-library-panel": "Использовать панель библиотеки",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6187,7 +6188,10 @@
       "no-data-found": "Данные не найдены"
     },
     "inspect-json-tab": {
-      "apply": "Применить"
+      "apply": "Применить",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Динамически рассчитывает интервал путем деления временного диапазона на указанное количество",
