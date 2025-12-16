@@ -1,15 +1,20 @@
 package migrator
 
 import (
+	"context"
 	"database/sql"
+	"embed"
+	_ "embed"
 	"errors"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
@@ -316,4 +321,88 @@ func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
 	}
 
 	return cfg.DBName, nil
+}
+
+//go:embed snapshot/*.sql
+var sqlFiles embed.FS
+
+func (db *MySQLDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error {
+	// Entire schema is generated only when called with "migration_log" table.
+	// Normally if schema creates other "*_migration_log" tables, we don't get here. However if new migration table is introduced by later migration,
+	// CreateDatabaseFromSnapshot may be called for given table, but if it wasn't part of original schema, we can't do anything here.
+	if migrationLogTableName != "migration_log" {
+		return nil
+	}
+
+	entries, err := sqlFiles.ReadDir("snapshot")
+	if err != nil {
+		return err
+	}
+
+	logger.Info("creating database schema from snapshot")
+
+	for _, entry := range entries {
+		logger.Debug("using snapshot file", "file", entry.Name())
+		data, err := sqlFiles.ReadFile(path.Join("snapshot", entry.Name()))
+		if err != nil {
+			return err
+		}
+
+		statements := extractStatements(string(data))
+		if err := db.executeStatements(engine, statements); err != nil {
+			return err
+		}
+	}
+
+	logger.Info("successfully created database schema from snapshot")
+	return nil
+}
+
+func extractStatements(schema string) []string {
+	lines := strings.Split(schema, "\n")
+
+	statements := make([]string, 0, len(lines))
+
+	sb := strings.Builder{}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "--") {
+			continue
+		}
+
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		endOfStatement := false
+		if strings.HasSuffix(line, ";") {
+			endOfStatement = true
+			line = strings.TrimSuffix(line, ";")
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteRune('\n')
+		}
+		sb.WriteString(line)
+		if endOfStatement && sb.Len() > 0 {
+			statements = append(statements, sb.String())
+			sb.Reset()
+		}
+	}
+
+	if sb.Len() > 0 {
+		statements = append(statements, sb.String())
+	}
+	return statements
+}
+
+func (s *MySQLDialect) executeStatements(engine *xorm.Engine, statements []string) error {
+	sess := engine.NewSession()
+	for _, s := range statements {
+		_, err := sess.Exec(s)
+		if err != nil {
+			return fmt.Errorf("statement %s failed with error: %v", s, err)
+		}
+	}
+	return nil
 }
