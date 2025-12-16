@@ -44,7 +44,7 @@ export const getSmoothingTransformerRegistryItem: () => TransformerRegistryItem<
     transformation: smoothingTransformer,
     name: smoothingTransformer.name,
     description: smoothingTransformer.description,
-    categories: new Set([TransformerCategory.Reformat]),
+    categories: new Set([TransformerCategory.CalculateNewFields]),
     imageDark: darkImage,
     imageLight: lightImage,
     help: getTransformationContent(DataTransformerID.smoothing).helperDocs,
