@@ -16,7 +16,6 @@ import { getFormattedThresholds } from '../Gauge/utils';
 
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
-import { RadialColorDefs } from './RadialColorDefs';
 import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
@@ -133,15 +132,6 @@ export function RadialGauge(props: RadialGaugeProps) {
 
     const displayProcessor = getFieldDisplayProcessor(displayValue);
     const glowFilterId = `glow-${gaugeId}`;
-    const colorDefs = new RadialColorDefs({
-      gradient,
-      fieldDisplay: displayValue,
-      theme,
-      dimensions,
-      shape,
-      gaugeId,
-      displayProcessor,
-    });
 
     if (segmentCount > 1) {
       graphics.push(
@@ -154,7 +144,9 @@ export function RadialGauge(props: RadialGaugeProps) {
           glowFilter={`url(#${glowFilterId})`}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
-          colorDefs={colorDefs}
+          shape={shape}
+          gradientMode={gradient}
+          displayProcessor={displayProcessor}
         />
       );
     } else {
@@ -162,12 +154,15 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          colorDefs={colorDefs}
           angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
           roundedBars={roundedBars}
           glowFilter={`url(#${glowFilterId})`}
+          shape={shape}
+          gradientMode={gradient}
+          displayProcessor={displayProcessor}
+          fieldDisplay={displayValue}
         />
       );
     }
@@ -227,7 +222,9 @@ export function RadialGauge(props: RadialGaugeProps) {
               angleRange={angleRange}
               roundedBars={roundedBars}
               glowFilter={`url(#${glowFilterId})`}
-              colorDefs={colorDefs}
+              shape={shape}
+              gradientMode={gradient}
+              displayProcessor={displayProcessor}
             />
           );
         }

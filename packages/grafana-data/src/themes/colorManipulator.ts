@@ -4,6 +4,8 @@
 
 import tinycolor from 'tinycolor2';
 
+import { GradientStop } from './types';
+
 /**
  * Returns a number whose value is limited to the given range.
  * @param value The value to be clamped
@@ -393,16 +395,14 @@ export const onBackground = (
 };
 
 /**
+ * @alpha
  * Given color stops (each with a color and percentage 0..1) returns the color at a given percentage.
  * Uses tinycolor.mix for interpolation.
  * @params stops - array of color stops (percentages 0..1)
  * @params percent - percentage 0..1
  * @returns color at the given percentage
  */
-export function colorAtGradientPercent(
-  stops: Array<{ color: string; percent: number }>,
-  percent: number
-): tinycolor.Instance {
+export function colorAtGradientPercent(stops: GradientStop[], percent: number): tinycolor.Instance {
   if (!stops || stops.length < 2) {
     throw new Error('colorAtGradientPercent requires at least two color stops');
   }
