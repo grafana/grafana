@@ -15,7 +15,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
@@ -165,8 +164,8 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	searchRequest := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     team.TeamResourceGroup,
-				Resource:  team.TeamResource,
+				Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+				Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
 				Namespace: requester.GetNamespace(),
 			},
 		},
@@ -176,9 +175,10 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		Page:    int64(page),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
-			builders.TEAM_SEARCH_EMAIL,
-			builders.TEAM_SEARCH_PROVISIONED,
-			builders.TEAM_SEARCH_EXTERNAL_UID,
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
 		},
 	}
 

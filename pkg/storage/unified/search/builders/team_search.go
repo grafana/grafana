@@ -46,8 +46,8 @@ func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 
 	return resource.DocumentBuilderInfo{
 		GroupResource: schema.GroupResource{
-			Group:    "iam.grafana.app",
-			Resource: "searchTeams",
+			Group:    v0alpha1.TeamResourceInfo.GroupResource().Group,
+			Resource: v0alpha1.TeamResourceInfo.GroupResource().Resource,
 		},
 		Fields:  fields,
 		Builder: new(teamSearchBuilder),
@@ -72,6 +72,7 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 
+	doc.Title = team.Spec.Title
 	doc.Fields = make(map[string]any)
 	if team.Spec.Email != "" {
 		doc.Fields[TEAM_SEARCH_EMAIL] = team.Spec.Email
