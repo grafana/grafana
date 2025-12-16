@@ -1,3 +1,26 @@
+<!-- 12.3.1 START -->
+
+# 12.3.1 (2025-12-16)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting dependency [#114259](https://github.com/grafana/grafana/pull/114259), [@moustafab](https://github.com/moustafab)
+- **Azure:** Improved column handling in logs query builder [#114841](https://github.com/grafana/grafana/pull/114841), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Include aggregate columns in logs builder [#114835](https://github.com/grafana/grafana/pull/114835), [@aangelisc](https://github.com/aangelisc)
+- **Dependencies:** Bump Go to v1.25.5 [#114751](https://github.com/grafana/grafana/pull/114751), [@macabu](https://github.com/macabu)
+- **Docs:** Clarify section title for repeating rows and tabs [#115346](https://github.com/grafana/grafana/pull/115346), [@imatwawana](https://github.com/imatwawana)
+- **Plugins:** Add PluginContext to plugins when scenes is disabled [#115064](https://github.com/grafana/grafana/pull/115064), [@hugohaggmark](https://github.com/hugohaggmark)
+- **QueryEditorRows:** Clear hideSeriesFrom override on query edit [#114628](https://github.com/grafana/grafana/pull/114628), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+
+### Bug fixes
+
+- **Azure:** Fix `dcount` aggregation [#114907](https://github.com/grafana/grafana/pull/114907), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix `percentile` syntax [#114707](https://github.com/grafana/grafana/pull/114707), [@aangelisc](https://github.com/aangelisc)
+- **Dashboards:** Fix empty space under time controls when a dashboard has a lot of variables [#114730](https://github.com/grafana/grafana/pull/114730), [@oscarkilhed](https://github.com/oscarkilhed)
+- **Plugins:** Datasource breadcrumb link should link to settings tab [#113910](https://github.com/grafana/grafana/pull/113910), [@wbrowne](https://github.com/wbrowne)
+- **Postgresql:** Fix variable interpolation logic when the variable has multiple values [#114876](https://github.com/grafana/grafana/pull/114876), [@itsmylife](https://github.com/itsmylife)
+
+<!-- 12.3.1 END -->
 <!-- 12.2.3 START -->
 
 # 12.2.3 (2025-12-16)
