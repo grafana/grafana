@@ -1,24 +1,39 @@
 import { css } from '@emotion/css';
-import { useAsync } from 'react-use';
+import { useState } from 'react';
+import { useAsyncRetry } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { CollapsableSection, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, Link, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getRecentlyViewedDashboards } from './utils';
 
 const MAX_RECENT = 5;
 
+const recentDashboardsKey = `dashboard_impressions-${config.bootData.user.orgId}`;
+
 export function RecentlyViewedDashboards() {
+  const [isOpen, setIsOpen] = useState(true);
+
   const styles = useStyles2(getStyles);
 
-  const { value: recentDashboards = [], loading } = useAsync(async () => {
+  const {
+    value: recentDashboards = [],
+    loading,
+    retry,
+  } = useAsyncRetry(async () => {
     if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
       return [];
     }
     return getRecentlyViewedDashboards(MAX_RECENT);
   }, []);
+
+  const handleClearHistory = () => {
+    store.set(recentDashboardsKey, JSON.stringify([]));
+    retry();
+  };
 
   if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
     return null;
@@ -28,11 +43,18 @@ export function RecentlyViewedDashboards() {
     <CollapsableSection
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
-        <Text variant="h5" element="h3">
-          <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
-        </Text>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+          <Text variant="h5" element="h3" onClick={() => setIsOpen(!isOpen)}>
+            <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
+          </Text>
+          <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+            {t('browse-dashboards.recently-viewed.clear', 'Clear history')}
+          </Button>
+        </Stack>
       }
-      isOpen={true}
+      isOpen={isOpen}
+      // passing empty function to disable controlled mode, we only want to control isOpen when click on label
+      onToggle={() => {}}
       className={styles.title}
       contentClassName={styles.content}
     >
@@ -62,11 +84,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     title: css({
-      background: `linear-gradient(90deg, ${accent} 0%, #e478eaff 100%)`,
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-      color: 'transparent',
-      '& button svg': {
+      cursor: 'default',
+      h3: {
+        background: `linear-gradient(90deg, ${accent} 0%, #e478eaff 100%)`,
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        color: 'transparent',
+        cursor: 'pointer',
+      },
+      '& [id^="collapse-button-"] svg': {
         color: accent,
       },
     }),
