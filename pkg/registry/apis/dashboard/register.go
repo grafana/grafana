@@ -222,7 +222,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
@@ -231,6 +231,7 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		search:                 search,
 		isStandalone:           true,
 	}
 }
