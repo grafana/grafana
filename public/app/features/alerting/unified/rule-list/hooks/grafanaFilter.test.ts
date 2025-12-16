@@ -419,12 +419,12 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.groupMatches(group)).toBe(true);
       });
 
-      it('should include ruleLabels in backend filter when labels are provided', () => {
+      it('should include ruleMatchers in backend filter when labels are provided', () => {
         const { backendFilter } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
 
-        expect(backendFilter.ruleLabels).toBeDefined();
-        expect(backendFilter.ruleLabels).toHaveLength(1);
-        expect(backendFilter.ruleLabels).toEqual([
+        expect(backendFilter.ruleMatchers).toBeDefined();
+        expect(backendFilter.ruleMatchers).toHaveLength(1);
+        expect(backendFilter.ruleMatchers).toEqual([
           '{"name":"severity","value":"critical","isRegex":false,"isEqual":true}',
         ]);
       });

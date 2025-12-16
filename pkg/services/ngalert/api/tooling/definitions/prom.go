@@ -467,5 +467,5 @@ type GetGrafanaRuleStatusesParams struct {
 	// For equality matchers with empty string values (e.g., name=""), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).
 	// in: query
 	// required: false
-	RuleLabelMatchers []string `json:"rule_label"`
+	RuleLabelMatchers []string `json:"rule_matcher"`
 }

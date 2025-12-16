@@ -521,9 +521,9 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Len(t, result.Data.RuleGroups, 0, "should return no groups")
 	})
 
-	t.Run("with rule_label filter returns only matching rules", func(t *testing.T) {
+	t.Run("with rule_matcher filter returns only matching rules", func(t *testing.T) {
 		matcher := url.QueryEscape(`{"name":"team","value":"frontend","isRegex":false,"isEqual":true}`)
-		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_label=%s", grafanaListedAddr, matcher)
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_matcher=%s", grafanaListedAddr, matcher)
 		// nolint:gosec
 		resp, err := http.Get(promRulesURL)
 		require.NoError(t, err)
@@ -548,10 +548,10 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Equal(t, 3, total)
 	})
 
-	t.Run("with rule_label regex filter", func(t *testing.T) {
+	t.Run("with rule_matcher regex filter", func(t *testing.T) {
 		// Filter with regex team=~plat.* (should match group-3 with team=platform)
 		matcher := url.QueryEscape(`{"name":"team","value":"plat.*","isRegex":true,"isEqual":true}`)
-		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_label=%s", grafanaListedAddr, matcher)
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_matcher=%s", grafanaListedAddr, matcher)
 		// nolint:gosec
 		resp, err := http.Get(promRulesURL)
 		require.NoError(t, err)

@@ -7568,7 +7568,7 @@
       "items": {
        "type": "string"
       },
-      "name": "rule_label",
+      "name": "rule_matcher",
       "type": "array"
      }
     ],

@@ -676,7 +676,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	}
 	span.SetAttributes(attribute.Int("matcher_count", len(matchers)))
 
-	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_label")
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_matcher")
 	if err != nil {
 		return badRequestError(err)
 	}
@@ -687,8 +687,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		}
 	}
 	span.SetAttributes(
-		attribute.Int("rule_label_matcher_count", len(ruleLabelMatchers)),
-		attribute.Int("rule_label_matcher_regex_count", regexCount),
+		attribute.Int("rule_matcher_count", len(ruleLabelMatchers)),
+		attribute.Int("rule_matcher_regex_count", regexCount),
 	)
 
 	stateFilterSet, err := GetStatesFromQuery(opts.Query)
@@ -889,7 +889,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	if err != nil {
 		return badRequestError(err)
 	}
-	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_label")
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_matcher")
 	if err != nil {
 		return badRequestError(err)
 	}

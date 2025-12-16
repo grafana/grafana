@@ -2887,7 +2887,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	})
 
-	t.Run("with rule_label filter", func(t *testing.T) {
+	t.Run("with rule_matcher filter", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
@@ -2982,9 +2982,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				reqURL := "/api/v1/rules"
 				for i, matcher := range tc.matchers {
 					if i == 0 {
-						reqURL += "?rule_label=" + url.QueryEscape(matcher)
+						reqURL += "?rule_matcher=" + url.QueryEscape(matcher)
 					} else {
-						reqURL += "&rule_label=" + url.QueryEscape(matcher)
+						reqURL += "&rule_matcher=" + url.QueryEscape(matcher)
 					}
 				}
 
@@ -3014,7 +3014,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	})
 
-	t.Run("pagination with rule_label in-memory filtering", func(t *testing.T) {
+	t.Run("pagination with rule_matcher in-memory filtering", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 
 		// Create 3 groups with 2 rules each:
@@ -3041,9 +3041,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
 			gen.WithUID("rule6"), gen.WithLabels(map[string]string{"team": "alerting"}), gen.WithGroupKey(group3Key), gen.WithNoNotificationSettings())
 
-		// Request with regex rule_label filter for team=~"alerting" and group_limit=1 to force pagination
+		// Request with regex rule_matcher filter for team=~"alerting" and group_limit=1 to force pagination
 		matcher := `{"name":"team","value":"alerting","isRegex":true,"isEqual":true}`
-		reqURL := "/api/v1/rules?rule_label=" + url.QueryEscape(matcher) + "&group_limit=1"
+		reqURL := "/api/v1/rules?rule_matcher=" + url.QueryEscape(matcher) + "&group_limit=1"
 
 		req, err := http.NewRequest("GET", reqURL, nil)
 		require.NoError(t, err)

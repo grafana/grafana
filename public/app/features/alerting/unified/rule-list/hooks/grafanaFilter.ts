@@ -79,7 +79,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   }
 
   // Convert labels to JSON-encoded matchers for backend filtering
-  const ruleLabelsBackendFilter: string[] | undefined =
+  const ruleMatchersBackendFilter: string[] | undefined =
     ruleFilterConfig.labels || normalizedFilterState.labels.length === 0
       ? undefined
       : labelMatchersToBackendFormat(normalizedFilterState.labels);
@@ -94,7 +94,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
-    ruleLabels: ruleLabelsBackendFilter,
+    ruleMatchers: ruleMatchersBackendFilter,
   };
 
   return {
