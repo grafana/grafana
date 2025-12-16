@@ -1,9 +1,9 @@
 import { AnnotationQuery } from '@grafana/data';
 import {
-  AnnotationQueryKind,
+  type AnnotationQueryKind,
   defaultAnnotationQuerySpec,
   defaultDataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 
 import { getRuntimePanelDataSource } from './layoutSerializers/utils';
 

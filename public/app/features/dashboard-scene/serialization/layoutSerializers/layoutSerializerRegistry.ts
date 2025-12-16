@@ -1,5 +1,5 @@
 import { Registry, RegistryItem } from '@grafana/data';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { Spec as DashboardV2Spec } from '@grafana/schema/dashboard/v2beta1';
 
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 

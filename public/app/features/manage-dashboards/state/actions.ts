@@ -1,11 +1,11 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
-import {
-  Spec as DashboardV2Spec,
+import type {
   QueryVariableKind,
   PanelQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+  Spec as DashboardV2Spec,
+} from '@grafana/schema/dashboard/v2beta1';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';

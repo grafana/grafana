@@ -14,41 +14,41 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh } from '@grafana/schema';
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
+  type PanelKind,
+  type PanelQueryKind,
+  type TransformationKind,
+  type FieldConfigSource,
+  type DataTransformerConfig,
+  type PanelQuerySpec,
+  type DataQueryKind,
+  type QueryOptionsSpec,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type IntervalVariableKind,
+  type DatasourceVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type GroupByVariableKind,
+  type AdhocVariableKind,
+  type AnnotationQueryKind,
+  type DataLink,
+  type LibraryPanelKind,
+  type Element,
+  type DashboardCursorSync,
+  type FieldColor,
+  type SwitchVariableKind,
   defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
-  PanelKind,
-  PanelQueryKind,
-  TransformationKind,
-  FieldConfigSource,
-  DataTransformerConfig,
-  PanelQuerySpec,
-  DataQueryKind,
-  QueryOptionsSpec,
-  QueryVariableKind,
-  TextVariableKind,
-  IntervalVariableKind,
-  DatasourceVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  GroupByVariableKind,
-  AdhocVariableKind,
-  AnnotationQueryKind,
-  DataLink,
-  LibraryPanelKind,
-  Element,
-  DashboardCursorSync,
-  FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
-  SwitchVariableKind,
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';

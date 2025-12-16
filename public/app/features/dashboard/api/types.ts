@@ -1,5 +1,5 @@
 import { UrlQueryMap } from '@grafana/data';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import type { Status } from '@grafana/schema/dashboard/v2beta1';
 import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types/dashboard';

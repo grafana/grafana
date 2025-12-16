@@ -11,7 +11,7 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { ConditionalRenderingDataKind } from '@grafana/schema/dashboard/v2beta1';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';

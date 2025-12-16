@@ -1,10 +1,10 @@
-import { VariableModel } from '@grafana/schema/dist/esm/index';
-import {
+import type {
   AdhocVariableKind,
   DatasourceVariableKind,
   QueryVariableKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
+import { VariableModel } from '@grafana/schema/dist/esm/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';

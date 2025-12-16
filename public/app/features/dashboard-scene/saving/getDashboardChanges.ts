@@ -2,13 +2,13 @@
 
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
-import {
+import type {
   AdHocFilterWithLabels,
   AdhocVariableSpec,
   Spec as DashboardV2Spec,
   TextVariableSpec,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';

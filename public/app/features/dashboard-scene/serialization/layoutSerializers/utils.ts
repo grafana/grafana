@@ -9,19 +9,19 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
-  Spec as DashboardV2Spec,
-  AutoGridLayoutItemKind,
-  RowsLayoutRowKind,
-  LibraryPanelKind,
-  PanelKind,
-  PanelQueryKind,
-  QueryVariableKind,
-  TabsLayoutTabKind,
-  DataQueryKind,
+  type Spec as DashboardV2Spec,
+  type AutoGridLayoutItemKind,
+  type RowsLayoutRowKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type PanelQueryKind,
+  type QueryVariableKind,
+  type TabsLayoutTabKind,
+  type DataQueryKind,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
+import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';

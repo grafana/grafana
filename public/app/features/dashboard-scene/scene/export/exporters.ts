@@ -3,15 +3,15 @@ import { defaults, each, sortBy } from 'lodash';
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import {
-  Spec as DashboardV2Spec,
+import type {
   PanelKind,
   PanelQueryKind,
   AnnotationQueryKind,
   QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+  Spec as DashboardV2Spec,
+} from '@grafana/schema/dashboard/v2beta1';
 import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';

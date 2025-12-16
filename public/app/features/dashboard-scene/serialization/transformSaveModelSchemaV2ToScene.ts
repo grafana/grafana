@@ -20,11 +20,19 @@ import {
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type DatasourceVariableKind,
+  type GroupByVariableKind,
+  type IntervalVariableKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type SwitchVariableKind,
+  type TextVariableKind,
+  type AnnotationQueryKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
@@ -35,16 +43,8 @@ import {
   defaultTextVariableKind,
   defaultSwitchVariableKind,
   defaultTimeSettingsSpec,
-  GroupByVariableKind,
-  IntervalVariableKind,
-  LibraryPanelKind,
-  PanelKind,
-  QueryVariableKind,
-  SwitchVariableKind,
-  TextVariableKind,
   defaultDataQueryKind,
-  AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,

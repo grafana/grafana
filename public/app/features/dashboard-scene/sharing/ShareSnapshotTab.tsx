@@ -5,6 +5,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
+import type { Spec as DashboardV2Spec } from '@grafana/schema/dashboard/v2beta1';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -12,7 +13,6 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 import { dispatch } from 'app/store/store';
 
-import { Spec as DashboardV2Spec } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import {

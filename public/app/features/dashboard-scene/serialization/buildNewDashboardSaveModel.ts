@@ -2,14 +2,14 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import {
-  AdhocVariableKind,
+  type AdhocVariableKind,
+  type GroupByVariableKind,
+  type Spec as DashboardV2Spec,
   defaultAdhocVariableSpec,
   defaultSpec as defaultDashboardV2Spec,
   defaultGroupByVariableSpec,
   defaultTimeSettingsSpec,
-  GroupByVariableKind,
-  Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

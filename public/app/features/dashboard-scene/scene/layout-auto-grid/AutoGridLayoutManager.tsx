@@ -8,7 +8,7 @@ import {
   VizPanel,
   SceneGridItemLike,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { Spec as DashboardV2Spec } from '@grafana/schema/dashboard/v2beta1';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

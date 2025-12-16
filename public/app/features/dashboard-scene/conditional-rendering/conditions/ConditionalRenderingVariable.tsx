@@ -8,10 +8,10 @@ import {
   SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import {
+import type {
   ConditionalRenderingVariableKind,
   ConditionalRenderingVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';

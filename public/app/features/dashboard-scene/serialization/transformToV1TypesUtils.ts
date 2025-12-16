@@ -7,7 +7,7 @@ import {
   MappingType as MappingTypeV1,
   ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
-import {
+import type {
   DashboardCursorSync,
   VariableHide,
   VariableRefresh,
@@ -15,7 +15,7 @@ import {
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {

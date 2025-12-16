@@ -13,13 +13,11 @@ import {
   MappingType as MappingTypeV1,
   SpecialValueMatch as SpecialValueMatchV1,
 } from '@grafana/schema';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dashboard/v0';
 import {
   AnnotationQueryKind,
-  Spec as DashboardV2Spec,
   DataLink,
   DatasourceVariableKind,
-  defaultSpec as defaultDashboardV2Spec,
-  defaultTimeSettingsSpec,
   PanelQueryKind,
   QueryVariableKind,
   TransformationKind,
@@ -37,15 +35,17 @@ import {
   LibraryPanelKind,
   PanelKind,
   GridLayoutItemKind,
-  defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+  defaultTimeSettingsSpec,
+  defaultDataQueryKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
   defaultFieldConfigSource,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+} from '@grafana/schema/dashboard/v2beta1';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,

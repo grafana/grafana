@@ -13,22 +13,22 @@ import {
   VariableSort as OldVariableSort,
 } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  DataQueryKind,
-  DatasourceVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type DataQueryKind,
+  type DatasourceVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
+  type VariableOption,
+  type AdHocFilterWithLabels,
+  type SwitchVariableKind,
   defaultVariableHide,
-  VariableOption,
   defaultDataQueryKind,
-  AdHocFilterWithLabels,
-  SwitchVariableKind,
   defaultIntervalVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';

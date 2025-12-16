@@ -11,7 +11,7 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { RowsLayoutRowKind } from '@grafana/schema/dashboard/v2beta1';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';

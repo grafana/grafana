@@ -3,7 +3,7 @@ import {
   defaultQueryGroupKind,
   defaultPanelQueryKind,
   defaultVizConfigKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/dashboard/v2beta1';
 
 import { isPanelKindV2 } from './validation';
 

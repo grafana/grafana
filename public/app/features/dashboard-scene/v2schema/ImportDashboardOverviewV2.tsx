@@ -1,10 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import {
-  AnnotationQueryKind,
-  Spec as DashboardV2Spec,
-  defaultDataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { AnnotationQueryKind, Spec as DashboardV2Spec, defaultDataQueryKind } from '@grafana/schema/dashboard/v2beta1';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
