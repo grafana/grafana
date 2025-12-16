@@ -30,6 +30,8 @@ type SearchRequestBuilder struct {
 	aggBuilders  []AggBuilder
 	customProps  map[string]any
 	timeRange    backend.TimeRange
+	// rawBody contains the raw Elasticsearch Query DSL JSON for raw DSL queries
+	rawBody map[string]any
 }
 
 // NewSearchRequestBuilder create a new search request builder
@@ -53,6 +55,12 @@ func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 		Size:        b.size,
 		Sort:        b.sort,
 		CustomProps: b.customProps,
+		RawBody:     b.rawBody,
+	}
+
+	// If RawBody is set, skip building query and aggs as they're in the raw body
+	if len(b.rawBody) > 0 {
+		return &sr, nil
 	}
 
 	if b.queryBuilder != nil {
@@ -138,6 +146,19 @@ func (b *SearchRequestBuilder) AddSearchAfter(value any) *SearchRequestBuilder {
 		b.customProps["search_after"] = append(b.customProps["search_after"].([]any), value)
 	}
 
+	return b
+}
+
+// AddCustomProp adds a custom property to the search request
+func (b *SearchRequestBuilder) AddCustomProp(key string, value any) *SearchRequestBuilder {
+	b.customProps[key] = value
+	return b
+}
+
+// SetRawBody sets the raw Elasticsearch Query DSL body directly
+// This bypasses all builder logic and sends the query as-is to Elasticsearch
+func (b *SearchRequestBuilder) SetRawBody(rawBody map[string]any) *SearchRequestBuilder {
+	b.rawBody = rawBody
 	return b
 }
 

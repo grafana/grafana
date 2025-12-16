@@ -216,12 +216,10 @@ github.com/google/pprof v0.0.0-20250403155104-27863c87afa6/go.mod h1:boTsfXsheKC
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grafana/grafana-app-sdk v0.48.5 h1:MS8l9fTZz+VbTfgApn09jw27GxhQ6fNOWGhC4ydvZmM=
-github.com/grafana/grafana-app-sdk v0.48.5/go.mod h1:HJsMOSBmt/D/Ihs1SvagOwmXKi0coBMVHlfvdd+qe9Y=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
-github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba h1:psKWNETD5nGxmFAlqnWsXoRyUwSa2GHNEMSEDKGKfQ4=
-github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba/go.mod h1:l7v67cgP7x72ajB9UPZlumdrHqNztpKoqQ52cU8T3LU=
+github.com/grafana/alerting v0.0.0-20251212143239-491433b332b7 h1:ZzG/gCclEit9w0QUfQt9GURcOycAIGcsQAhY1u0AEX0=
+github.com/grafana/alerting v0.0.0-20251212143239-491433b332b7/go.mod h1:l7v67cgP7x72ajB9UPZlumdrHqNztpKoqQ52cU8T3LU=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz223WDlXOinmuLAIPI0z2vtq8EgI=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
 github.com/grafana/grafana-app-sdk v0.48.5 h1:MS8l9fTZz+VbTfgApn09jw27GxhQ6fNOWGhC4ydvZmM=
