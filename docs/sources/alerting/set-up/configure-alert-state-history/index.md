@@ -62,6 +62,9 @@ The following steps describe a basic configuration:
 
    # The URL of the Loki server
    loki_remote_url = http://localhost:3100
+
+   [feature_toggles]
+   enable = alertingCentralAlertHistory
    ```
 
 1. **Configure the Loki data source in Grafana**

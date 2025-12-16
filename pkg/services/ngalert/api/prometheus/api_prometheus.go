@@ -457,6 +457,7 @@ type paginationContext struct {
 	labelOptions       []ngmodels.LabelOption
 	limitAlertsPerRule int64
 	limitRulesPerGroup int64
+	compact            bool
 }
 
 // pageResult is the result of fetching and filtering of one page
@@ -492,6 +493,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		Limit:         remainingGroups,
 		RuleLimit:     remainingRules,
 		ContinueToken: token,
+		Compact:       ctx.compact,
 	}
 
 	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
@@ -519,7 +521,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleStatusMutator, ctx.alertStateMutator,
+			ctx.ruleStatusMutator, ctx.alertStateMutator, ctx.compact,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -785,6 +787,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	}
 	span.SetAttributes(attribute.Int("rule_name_count", len(ruleNamesSet)))
 
+	compact := getBoolWithDefault(opts.Query, "compact", false)
+	span.SetAttributes(attribute.Bool("compact", compact))
 	pagCtx := &paginationContext{
 		opts:               opts,
 		provenanceRecords:  provenanceRecords,
@@ -807,6 +811,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		labelOptions:       labelOptions,
 		limitAlertsPerRule: limitAlertsPerRule,
 		limitRulesPerGroup: limitRulesPerGroup,
+		compact:            compact,
 	}
 
 	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
@@ -959,7 +964,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1110,7 +1115,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1126,10 +1131,14 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
 			provenance = prov
 		}
+		var query string
+		if !compact {
+			query = ruleToQuery(log, rule)
+		}
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
 			Name:                  rule.Title,
-			Query:                 ruleToQuery(log, rule),
+			Query:                 query,
 			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
 			Duration:              rule.For.Seconds(),
 			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
