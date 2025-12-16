@@ -52,8 +52,6 @@ func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) respons
 	}
 }
 
-// TODO remove this when change is moved to schema
-
 type Field struct {
 	Element        schema.ElementType    `json:"element"`
 	InputType      schema.InputType      `json:"inputType"`
