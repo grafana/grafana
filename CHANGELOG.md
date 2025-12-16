@@ -1,3 +1,24 @@
+<!-- 12.2.3 START -->
+
+# 12.2.3 (2025-12-16)
+
+### Features and enhancements
+
+- **Alerting:** Update alerting dependency [#114256](https://github.com/grafana/grafana/pull/114256), [@moustafab](https://github.com/moustafab)
+- **Azure:** Improved column handling in logs query builder [#114840](https://github.com/grafana/grafana/pull/114840), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Include aggregate columns in logs builder [#114834](https://github.com/grafana/grafana/pull/114834), [@aangelisc](https://github.com/aangelisc)
+- **Dependencies:** Bump Go to v1.25.5 [#114753](https://github.com/grafana/grafana/pull/114753), [@macabu](https://github.com/macabu)
+- **Plugins:** Add PluginContext to plugins when scenes is disabled [#115063](https://github.com/grafana/grafana/pull/115063), [@hugohaggmark](https://github.com/hugohaggmark)
+- **QueryEditorRows:** Clear hideSeriesFrom override on query edit [#114629](https://github.com/grafana/grafana/pull/114629), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+
+### Bug fixes
+
+- **Alerting:** Fix contact points issue [#115412](https://github.com/grafana/grafana/pull/115412), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Azure:** Fix `dcount` aggregation [#114906](https://github.com/grafana/grafana/pull/114906), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix `percentile` syntax [#114706](https://github.com/grafana/grafana/pull/114706), [@aangelisc](https://github.com/aangelisc)
+- **Postgresql:** Fix variable interpolation logic when the variable has multiple values [#114875](https://github.com/grafana/grafana/pull/114875), [@itsmylife](https://github.com/itsmylife)
+
+<!-- 12.2.3 END -->
 <!-- 12.1.5 START -->
 
 # 12.1.5 (2025-12-16)
