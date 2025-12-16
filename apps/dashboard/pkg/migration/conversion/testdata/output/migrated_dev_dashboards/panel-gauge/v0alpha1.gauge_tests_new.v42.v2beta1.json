@@ -1603,7 +1603,7 @@
             "version": "13.0.0-pre",
             "spec": {
               "options": {
-                "barShape": "flat",
+                "barShape": "rounded",
                 "barWidthFactor": 0.4,
                 "effects": {
                   "barGlow": true,

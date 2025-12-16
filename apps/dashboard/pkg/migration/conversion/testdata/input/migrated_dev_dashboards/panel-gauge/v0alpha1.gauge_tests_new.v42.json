@@ -71,13 +71,13 @@
       "id": 1,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -149,13 +149,13 @@
       "id": 4,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -227,13 +227,13 @@
       "id": 3,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -305,13 +305,13 @@
       "id": 5,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [

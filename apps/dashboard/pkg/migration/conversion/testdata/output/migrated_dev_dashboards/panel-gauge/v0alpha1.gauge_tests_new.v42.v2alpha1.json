@@ -1005,6 +1005,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": true,
@@ -1095,6 +1096,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": true,
@@ -1181,6 +1183,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1271,6 +1274,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1361,6 +1365,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1451,6 +1456,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.72,
                 "effects": {
                   "barGlow": false,
@@ -1632,6 +1638,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1722,6 +1729,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1816,6 +1824,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
@@ -1910,6 +1919,7 @@
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
+                "barShape": "flat",
                 "barWidthFactor": 0.9,
                 "effects": {
                   "barGlow": false,
