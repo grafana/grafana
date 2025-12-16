@@ -887,4 +887,161 @@ describe('ScopesDashboardsService', () => {
       expect(service.state.navScopePath).toEqual(['mimir']);
     });
   });
+
+  describe('disableSubScopeSelection', () => {
+    it('should set disableSubScopeSelection on folder when navigation has it set to true', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: true,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      // Find the folder created for this subScope
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBe(true);
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should set disableSubScopeSelection to false when navigation has it set to false', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: false,
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBe(false);
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should set disableSubScopeSelection to undefined when navigation does not have it', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+          },
+          status: {
+            title: 'Test Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('subScope1'));
+      expect(folderKey).toBeDefined();
+
+      if (folderKey) {
+        const folder = service.state.folders[''].folders[folderKey];
+        expect(folder.disableSubScopeSelection).toBeUndefined();
+        expect(folder.subScopeName).toBe('subScope1');
+      }
+    });
+
+    it('should handle multiple navigations with different disableSubScopeSelection values', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'subScope1',
+            disableSubScopeSelection: true,
+          },
+          status: {
+            title: 'Disabled Navigation',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+        {
+          spec: {
+            url: '/d/dashboard2',
+            scope: 'scope1',
+            subScope: 'subScope2',
+            disableSubScopeSelection: false,
+          },
+          status: {
+            title: 'Enabled Navigation',
+          },
+          metadata: {
+            name: 'nav2',
+          },
+        },
+        {
+          spec: {
+            url: '/d/dashboard3',
+            scope: 'scope1',
+            subScope: 'subScope3',
+          },
+          status: {
+            title: 'Default Navigation',
+          },
+          metadata: {
+            name: 'nav3',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await service.fetchDashboards(['scope1']);
+
+      const folders = service.state.folders[''].folders;
+      const folder1Key = Object.keys(folders).find((key) => key.includes('subScope1'));
+      const folder2Key = Object.keys(folders).find((key) => key.includes('subScope2'));
+      const folder3Key = Object.keys(folders).find((key) => key.includes('subScope3'));
+
+      expect(folder1Key).toBeDefined();
+      expect(folder2Key).toBeDefined();
+      expect(folder3Key).toBeDefined();
+
+      expect(folders[folder1Key!].disableSubScopeSelection).toBe(true);
+      expect(folders[folder2Key!].disableSubScopeSelection).toBe(false);
+      expect(folders[folder3Key!].disableSubScopeSelection).toBeUndefined();
+    });
+  });
 });

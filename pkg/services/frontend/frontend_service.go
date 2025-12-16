@@ -134,7 +134,7 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(s.tracer, middleware.TraceAllPaths))
+	m.Use(middleware.RequestTracing(s.tracer, middleware.ShouldTraceAllPaths))
 	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
 
 	m.UseMiddleware(s.contextMiddleware())
