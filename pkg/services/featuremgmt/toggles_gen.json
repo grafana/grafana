@@ -1713,7 +1713,8 @@
       "metadata": {
         "name": "investigationsBackend",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-18T08:31:03Z"
+        "creationTimestamp": "2024-12-18T08:31:03Z",
+        "deletionTimestamp": "2025-12-16T16:06:24Z"
       },
       "spec": {
         "description": "Enable the investigations backend API",
