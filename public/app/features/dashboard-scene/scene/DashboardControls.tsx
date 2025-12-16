@@ -171,9 +171,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         data-testid={selectors.pages.Dashboard.Controls}
         className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
       >
-        {/* Render hidden variables like ScopesVariable that need React context */}
-        {renderHiddenVariables(dashboard)}
-        {/* Top row: scopes button, drilldown controls, time controls */}
         <div className={styles.topRow}>
           {config.featureToggles.scopeFilters && !editPanel && (
             <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
@@ -217,8 +214,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      {/* Render hidden variables like ScopesVariable that need React context */}
-      {renderHiddenVariables(dashboard)}
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
