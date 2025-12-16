@@ -5,11 +5,13 @@ import { ScopeNode } from '@grafana/data';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 
-// Mock the ScopesTreeItem component to simplify testing
-jest.mock('./ScopesTreeItem', () => ({
-  ScopesTreeItem: ({ treeNode }: { treeNode: TreeNode }) => (
-    <div data-testid={`tree-item-${treeNode.scopeNodeId}`}>{treeNode.scopeNodeId}</div>
-  ),
+// Mock the ScopesContextProvider hook since it requires a full context setup
+jest.mock('../ScopesContextProvider', () => ({
+  useScopesServices: () => ({
+    scopesSelectorService: {
+      closeAndApply: jest.fn(),
+    },
+  }),
 }));
 
 describe('ScopesTreeItemList', () => {
@@ -32,14 +34,14 @@ describe('ScopesTreeItemList', () => {
     toggleExpandedNode: mockToggleExpandedNode,
   };
 
-  const createMockScopeNode = (name: string): ScopeNode => ({
+  const createMockScopeNode = (name: string, parentName = 'parent'): ScopeNode => ({
     metadata: { name },
     spec: {
-      title: name,
+      title: `Title ${name}`,
       nodeType: 'leaf',
       linkType: 'scope',
       linkId: `scope-${name}`,
-      parentName: 'parent',
+      parentName,
     },
   });
 
@@ -62,12 +64,16 @@ describe('ScopesTreeItemList', () => {
     const scopeNodes: NodesMap = {
       'node-1': createMockScopeNode('node-1'),
       'node-2': createMockScopeNode('node-2'),
+      parent: {
+        metadata: { name: 'parent' },
+        spec: { title: 'Parent', nodeType: 'container', parentName: '' },
+      },
     };
 
     render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
 
-    expect(screen.getByTestId('tree-item-node-1')).toBeInTheDocument();
-    expect(screen.getByTestId('tree-item-node-2')).toBeInTheDocument();
+    expect(screen.getByText('Title node-1')).toBeInTheDocument();
+    expect(screen.getByText('Title node-2')).toBeInTheDocument();
   });
 
   it('should skip rendering items when node data is not available in scopeNodes', () => {
@@ -80,17 +86,21 @@ describe('ScopesTreeItemList', () => {
     const scopeNodes: NodesMap = {
       'node-1': createMockScopeNode('node-1'),
       'node-2': createMockScopeNode('node-2'),
+      parent: {
+        metadata: { name: 'parent' },
+        spec: { title: 'Parent', nodeType: 'container', parentName: '' },
+      },
       // 'missing-node' is intentionally not included
     };
 
     render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
 
     // Should render the available nodes
-    expect(screen.getByTestId('tree-item-node-1')).toBeInTheDocument();
-    expect(screen.getByTestId('tree-item-node-2')).toBeInTheDocument();
+    expect(screen.getByText('Title node-1')).toBeInTheDocument();
+    expect(screen.getByText('Title node-2')).toBeInTheDocument();
 
     // Should NOT crash and should skip the missing node
-    expect(screen.queryByTestId('tree-item-missing-node')).not.toBeInTheDocument();
+    expect(screen.queryByText('Title missing-node')).not.toBeInTheDocument();
   });
 
   it('should handle all items having missing node data gracefully', () => {
@@ -104,13 +114,12 @@ describe('ScopesTreeItemList', () => {
     // Should not crash
     const { container } = render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
 
-    // Container should have the tree div but no items rendered inside
+    // Container should have the tree div but no visible items rendered inside
     expect(container.querySelector('[role="tree"]')).toBeInTheDocument();
-    expect(screen.queryByTestId('tree-item-missing-1')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('tree-item-missing-2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('treeitem')).not.toBeInTheDocument();
   });
 
-  it('should handle undefined scopeNodeId gracefully', () => {
+  it('should handle empty string scopeNodeId gracefully', () => {
     const items: TreeNode[] = [
       { scopeNodeId: '', expanded: false, query: '' }, // Empty string scopeNodeId
     ];
@@ -118,9 +127,10 @@ describe('ScopesTreeItemList', () => {
     const scopeNodes: NodesMap = {};
 
     // Should not crash
-    render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
+    const { container } = render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
 
-    // Should skip the item with empty scopeNodeId
-    expect(screen.queryByTestId('tree-item-')).not.toBeInTheDocument();
+    // Should have tree container but no items
+    expect(container.querySelector('[role="tree"]')).toBeInTheDocument();
+    expect(screen.queryByRole('treeitem')).not.toBeInTheDocument();
   });
 });

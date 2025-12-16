@@ -18,7 +18,7 @@ export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes, scop
 
   if (
     anyChildExpanded ||
-    (resultsNodes.some((n) => scopeNodes[n.scopeNodeId].spec.nodeType === 'container') && !query)
+    (resultsNodes.some((n) => scopeNodes[n.scopeNodeId]?.spec.nodeType === 'container') && !query)
   ) {
     return null;
   }

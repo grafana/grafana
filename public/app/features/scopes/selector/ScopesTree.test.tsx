@@ -5,37 +5,12 @@ import { ScopeNode } from '@grafana/data';
 import { ScopesTree } from './ScopesTree';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 
-// Mock child components to simplify testing
-jest.mock('./ScopesTreeSearch', () => ({
-  ScopesTreeSearch: () => <div data-testid="scopes-tree-search">Search</div>,
-}));
-
-jest.mock('./ScopesTreeHeadline', () => ({
-  ScopesTreeHeadline: () => <div data-testid="scopes-tree-headline">Headline</div>,
-}));
-
-jest.mock('./ScopesTreeItemList', () => ({
-  ScopesTreeItemList: ({ items, id }: { items: TreeNode[]; id: string }) => (
-    <div data-testid={`item-list-${id}`}>
-      {items.map((item) => (
-        <div key={item.scopeNodeId} data-testid={`item-${item.scopeNodeId}`}>
-          {item.scopeNodeId}
-        </div>
-      ))}
-    </div>
-  ),
-}));
-
-jest.mock('./RecentScopes', () => ({
-  RecentScopes: () => <div data-testid="recent-scopes">Recent Scopes</div>,
-}));
-
-jest.mock('./useScopesHighlighting', () => ({
-  useScopesHighlighting: () => ({
-    highlightedId: undefined,
-    ariaActiveDescendant: undefined,
-    enableHighlighting: jest.fn(),
-    disableHighlighting: jest.fn(),
+// Mock the ScopesContextProvider hook since it requires a full context setup
+jest.mock('../ScopesContextProvider', () => ({
+  useScopesServices: () => ({
+    scopesSelectorService: {
+      closeAndApply: jest.fn(),
+    },
   }),
 }));
 
@@ -48,24 +23,13 @@ describe('ScopesTree', () => {
   const createMockScopeNode = (name: string, parentName?: string): ScopeNode => ({
     metadata: { name },
     spec: {
-      title: name,
+      title: `Title ${name}`,
       nodeType: 'leaf',
       linkType: 'scope',
       linkId: `scope-${name}`,
       parentName: parentName ?? '',
     },
   });
-
-  const defaultTree: TreeNode = {
-    scopeNodeId: 'parent-container',
-    expanded: true,
-    query: '',
-    children: {
-      'child-1': { scopeNodeId: 'child-1', expanded: false, query: '' },
-      'child-2': { scopeNodeId: 'child-2', expanded: false, query: '' },
-    },
-    childrenLoaded: true,
-  };
 
   const defaultScopeNodes: NodesMap = {
     'parent-container': {
@@ -78,6 +42,17 @@ describe('ScopesTree', () => {
     },
     'child-1': createMockScopeNode('child-1', 'parent-container'),
     'child-2': createMockScopeNode('child-2', 'parent-container'),
+  };
+
+  const defaultTree: TreeNode = {
+    scopeNodeId: 'parent-container',
+    expanded: true,
+    query: '',
+    children: {
+      'child-1': { scopeNodeId: 'child-1', expanded: false, query: '' },
+      'child-2': { scopeNodeId: 'child-2', expanded: false, query: '' },
+    },
+    childrenLoaded: true,
   };
 
   const defaultProps = {
@@ -99,11 +74,9 @@ describe('ScopesTree', () => {
     it('should not show selectedNodesToShow when no scopes are selected', () => {
       render(<ScopesTree {...defaultProps} selectedScopes={[]} />);
 
-      // The first ScopesTreeItemList (for selectedNodesToShow) should be empty
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists.length).toBe(2);
-      // First list should have no items
-      expect(itemLists[0].children.length).toBe(0);
+      // Both child-1 and child-2 should be visible in the regular children list
+      expect(screen.getByText('Title child-1')).toBeInTheDocument();
+      expect(screen.getByText('Title child-2')).toBeInTheDocument();
     });
 
     it('should only consider first selected scope for selectedNodesToShow', () => {
@@ -126,11 +99,10 @@ describe('ScopesTree', () => {
 
       render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
 
-      // First ScopesTreeItemList (selectedNodesToShow) should only have child-1 (the first selected scope)
-      // NOT child-2 (the second selected scope)
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists[0].children.length).toBe(1);
-      expect(screen.getByTestId('item-child-1')).toBeInTheDocument();
+      // child-1 should be shown (from selectedNodesToShow - only first scope is considered)
+      expect(screen.getByText('Title child-1')).toBeInTheDocument();
+      // child-2 should also be shown (from regular children)
+      expect(screen.getByText('Title child-2')).toBeInTheDocument();
     });
 
     it('should not show selectedNodesToShow when first scope has no scopeNodeId', () => {
@@ -139,11 +111,19 @@ describe('ScopesTree', () => {
         { scopeId: 'scope-2', scopeNodeId: 'child-2' },
       ];
 
-      render(<ScopesTree {...defaultProps} selectedScopes={selectedScopes} />);
+      // Tree with no children to make it obvious if selectedNodesToShow is populated
+      const tree: TreeNode = {
+        scopeNodeId: 'parent-container',
+        expanded: true,
+        query: '',
+        children: {},
+        childrenLoaded: true,
+      };
 
-      // First ScopesTreeItemList (selectedNodesToShow) should be empty
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists[0].children.length).toBe(0);
+      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+
+      // child-2 should NOT appear because only first scope is considered and it has no scopeNodeId
+      expect(screen.queryByText('Title child-2')).not.toBeInTheDocument();
     });
 
     it('should not show selectedNodesToShow when first scope node is not in scopeNodes cache', () => {
@@ -152,11 +132,20 @@ describe('ScopesTree', () => {
         { scopeId: 'scope-2', scopeNodeId: 'child-2' },
       ];
 
-      render(<ScopesTree {...defaultProps} selectedScopes={selectedScopes} />);
+      // Tree with no children
+      const tree: TreeNode = {
+        scopeNodeId: 'parent-container',
+        expanded: true,
+        query: '',
+        children: {},
+        childrenLoaded: true,
+      };
 
-      // First ScopesTreeItemList (selectedNodesToShow) should be empty
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists[0].children.length).toBe(0);
+      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+
+      // Neither should appear since first scope's node is missing from cache
+      expect(screen.queryByText('Title missing-node')).not.toBeInTheDocument();
+      expect(screen.queryByText('Title child-2')).not.toBeInTheDocument();
     });
 
     it('should not show selectedNodesToShow when tree scopeNodeId does not match first scope parent', () => {
@@ -183,9 +172,8 @@ describe('ScopesTree', () => {
 
       render(<ScopesTree {...defaultProps} tree={tree} scopeNodes={scopeNodes} selectedScopes={selectedScopes} />);
 
-      // First ScopesTreeItemList (selectedNodesToShow) should be empty
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists[0].children.length).toBe(0);
+      // child-1 should NOT appear since tree's scopeNodeId doesn't match child-1's parent
+      expect(screen.queryByText('Title child-1')).not.toBeInTheDocument();
     });
 
     it('should not duplicate scope in selectedNodesToShow if already in children', () => {
@@ -205,26 +193,31 @@ describe('ScopesTree', () => {
 
       render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
 
-      // First ScopesTreeItemList (selectedNodesToShow) should be empty since child-1 is already in children
-      const itemLists = screen.getAllByTestId(/^item-list-/);
-      expect(itemLists[0].children.length).toBe(0);
-
-      // child-1 should appear in the second list (regular children)
-      expect(itemLists[1].children.length).toBe(2);
+      // child-1 should appear exactly once (in regular children, not duplicated)
+      const child1Elements = screen.getAllByText('Title child-1');
+      expect(child1Elements).toHaveLength(1);
     });
   });
 
   describe('graceful handling of missing data', () => {
     it('should not crash when scopeNodes is empty', () => {
-      render(<ScopesTree {...defaultProps} scopeNodes={{}} />);
+      const tree: TreeNode = {
+        scopeNodeId: '',
+        expanded: true,
+        query: '',
+        children: {},
+        childrenLoaded: true,
+      };
 
-      // Should render without crashing
-      expect(screen.getByTestId('scopes-tree-search')).toBeInTheDocument();
+      render(<ScopesTree {...defaultProps} tree={tree} scopeNodes={{}} />);
+
+      // Should render without crashing - search input should be present
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
 
     it('should handle tree with children referencing missing nodes', () => {
       const tree: TreeNode = {
-        scopeNodeId: 'parent',
+        scopeNodeId: 'parent-container',
         expanded: true,
         query: '',
         children: {
@@ -235,18 +228,21 @@ describe('ScopesTree', () => {
       };
 
       const scopeNodes: NodesMap = {
-        parent: {
-          metadata: { name: 'parent' },
+        'parent-container': {
+          metadata: { name: 'parent-container' },
           spec: { title: 'Parent', nodeType: 'container', parentName: '' },
         },
-        'existing-node': createMockScopeNode('existing-node', 'parent'),
+        'existing-node': createMockScopeNode('existing-node', 'parent-container'),
         // 'missing-node' intentionally not included
       };
 
       // Should render without crashing
       render(<ScopesTree {...defaultProps} tree={tree} scopeNodes={scopeNodes} />);
 
-      expect(screen.getByTestId('scopes-tree-search')).toBeInTheDocument();
+      // Existing node should be rendered
+      expect(screen.getByText('Title existing-node')).toBeInTheDocument();
+      // Missing node should be gracefully skipped
+      expect(screen.queryByText('Title missing-node')).not.toBeInTheDocument();
     });
   });
 });
