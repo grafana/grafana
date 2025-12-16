@@ -2522,7 +2522,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			}
 			_, err := store.ListAlertRules(context.Background(), query)
 			require.Error(t, err)
-			require.ErrorContains(t, err, "regex matchers (=~, !~) are not supported")
+			require.ErrorContains(t, err, "is not supported")
 		})
 
 		t.Run("not-regex matcher returns error from store", func(t *testing.T) {
@@ -2534,7 +2534,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			}
 			_, err := store.ListAlertRules(context.Background(), query)
 			require.Error(t, err)
-			require.ErrorContains(t, err, "regex matchers (=~, !~) are not supported")
+			require.ErrorContains(t, err, "is not supported")
 		})
 	})
 }

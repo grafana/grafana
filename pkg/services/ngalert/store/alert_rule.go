@@ -1381,8 +1381,8 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 // Returns error if regex matchers are passed.
 func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Session) (*xorm.Session, error) {
 	for _, m := range matchers {
-		if m.Type == labels.MatchRegexp || m.Type == labels.MatchNotRegexp {
-			return nil, fmt.Errorf("regex matchers (=~, !~) are not supported, got matcher %q %s %q", m.Name, m.Type, m.Value)
+		if m.Type != labels.MatchEqual && m.Type != labels.MatchNotEqual {
+			return nil, fmt.Errorf("matcher %q %s %q is not supported", m.Name, m.Type, m.Value)
 		}
 
 		sql, args, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", m)

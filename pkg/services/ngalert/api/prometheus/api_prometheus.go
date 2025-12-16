@@ -33,6 +33,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const (
+	queryIncludeInternalLabels = "includeInternalLabels"
+	queryRuleMatcher           = "rule_matcher"
+	queryInstanceMatcher       = "matcher"
+)
+
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
 	ListAlertRulesStoreV2
@@ -86,8 +92,6 @@ func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status
 		provenanceStore,
 	}
 }
-
-const queryIncludeInternalLabels = "includeInternalLabels"
 
 func getBoolWithDefault(vals url.Values, field string, d bool) bool {
 	f := vals.Get(field)
@@ -492,12 +496,7 @@ func accumulateTotals(dest, source map[string]int64) {
 // fetchAndFilterPage fetches one page from the store and applies filters
 func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
 	// Split matchers: only equality/inequality are supported by the store
-	var storeMatchers labels.Matchers
-	for _, m := range ctx.ruleLabelMatchers {
-		if m.Type == labels.MatchEqual || m.Type == labels.MatchNotEqual {
-			storeMatchers = append(storeMatchers, m)
-		}
-	}
+	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
@@ -558,9 +557,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			filterRulesByHealth(ruleGroup, ctx.healthFilterSet)
 		}
 
-		if len(ctx.ruleLabelMatchers) > 0 {
-			filterRulesByLabelMatchers(ruleGroup, ctx.ruleLabelMatchers)
-		}
+		filterRulesByLabelMatchers(ruleGroup, ctx.ruleLabelMatchers)
 
 		if ctx.limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > ctx.limitRulesPerGroup {
 			ruleGroup.Rules = ruleGroup.Rules[0:ctx.limitRulesPerGroup]
@@ -572,6 +569,17 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 	}
 
 	return result, nil
+}
+
+func filterOutRegexMatchers(matchers labels.Matchers) labels.Matchers {
+	var result labels.Matchers
+	for _, m := range matchers {
+		if m.Type == labels.MatchEqual || m.Type == labels.MatchNotEqual {
+			result = append(result, m)
+		}
+	}
+
+	return result
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
@@ -672,13 +680,13 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		attribute.Int64("limit_rules", limitRulesPerGroup),
 		attribute.Int64("limit_alerts", limitAlertsPerRule),
 	)
-	matchers, err := getMatchersFromQuery(opts.Query, "matcher")
+	matchers, err := getMatchersFromQuery(opts.Query, queryInstanceMatcher)
 	if err != nil {
 		return badRequestError(err)
 	}
 	span.SetAttributes(attribute.Int("matcher_count", len(matchers)))
 
-	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_matcher")
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, queryRuleMatcher)
 	if err != nil {
 		return badRequestError(err)
 	}
@@ -890,11 +898,11 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
 	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
-	matchers, err := getMatchersFromQuery(opts.Query, "matcher")
+	matchers, err := getMatchersFromQuery(opts.Query, queryInstanceMatcher)
 	if err != nil {
 		return badRequestError(err)
 	}
-	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, "rule_matcher")
+	ruleLabelMatchers, err := getMatchersFromQuery(opts.Query, queryRuleMatcher)
 	if err != nil {
 		return badRequestError(err)
 	}
@@ -939,12 +947,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	// Split matchers: only equality/inequality are supported by the store
-	var storeMatchers labels.Matchers
-	for _, m := range ruleLabelMatchers {
-		if m.Type == labels.MatchEqual || m.Type == labels.MatchNotEqual {
-			storeMatchers = append(storeMatchers, m)
-		}
-	}
+	storeMatchers := filterOutRegexMatchers(ruleLabelMatchers)
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:           opts.OrgID,
