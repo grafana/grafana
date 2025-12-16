@@ -8,7 +8,8 @@
  */
 
 import { NotifierDTO } from '../types/alerting';
-import { getLatestVersion, isDeprecatedVersion, canCreateVersion } from './integration-versions';
+
+import { canCreateVersion, getLatestVersion, isDeprecatedVersion } from './integration-versions';
 
 /**
  * List of integration types that have legacy (mimir) versions

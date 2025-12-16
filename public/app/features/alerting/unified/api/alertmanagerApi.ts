@@ -108,7 +108,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     }),
 
     grafanaNotifiers: build.query<NotifierDTO[], void>({
-      query: () => ({ url: '/api/alert-notifiers' }),
+      // NOTE: version=2 parameter required for versioned schema (PR #109969)
+      // This parameter will be removed in future when v2 becomes default
+      query: () => ({ url: '/api/alert-notifiers?version=2' }),
       transformResponse: (response: NotifierDTO[]) => {
         const populateSecureFieldKey = (
           option: NotificationChannelOption,
