@@ -39,7 +39,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
-import { createV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
+import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -96,7 +96,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   // Set up Angular migration handler if migration data is present
   // This enables proper migration of options from Angular panels (e.g., singlestat format/valueName)
   if (angularMigration) {
-    vizPanelState._UNSAFE_customMigrationHandler = createV2AngularMigrationHandler(angularMigration);
+    vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
   }
 
   if (!config.publicDashboardAccessToken) {

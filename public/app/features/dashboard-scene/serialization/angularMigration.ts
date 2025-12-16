@@ -63,7 +63,7 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
 }
 
 /**
- * Creates a migration handler for v2 schema panels that need Angular migrations.
+ * Returns a migration handler for v2 schema panels that need Angular migrations.
  *
  * This is used when loading v2 dashboards that were converted from v1 and contain
  * __angularMigration data. The handler invokes the plugin's onPanelTypeChanged
@@ -79,7 +79,7 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
  *
  * @param migrationData The __angularMigration data extracted from panel options
  */
-export function createV2AngularMigrationHandler(migrationData: AngularMigrationData) {
+export function getV2AngularMigrationHandler(migrationData: AngularMigrationData) {
   return function handleV2AngularMigration(panel: PanelModelFromData, plugin: PanelPlugin) {
     const { autoMigrateFrom, originalPanel } = migrationData;
     const wasAngular = autoMigrateAngular[autoMigrateFrom] != null;

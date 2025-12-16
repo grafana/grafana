@@ -2,7 +2,7 @@ import { PanelTypeChangedHandler } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { createV2AngularMigrationHandler, getAngularPanelMigrationHandler } from './angularMigration';
+import { getV2AngularMigrationHandler, getAngularPanelMigrationHandler } from './angularMigration';
 
 describe('getAngularPanelMigrationHandler', () => {
   describe('Given an old angular panel', () => {
@@ -55,7 +55,7 @@ describe('getAngularPanelMigrationHandler', () => {
   });
 });
 
-describe('createV2AngularMigrationHandler', () => {
+describe('getV2AngularMigrationHandler', () => {
   describe('Given v2 migration data for an old angular panel (singlestat)', () => {
     it('Should call migration handler with angular wrapper for original panel', () => {
       const onPanelTypeChanged: PanelTypeChangedHandler = (panel, prevPluginId, prevOptions) => {
@@ -89,7 +89,7 @@ describe('createV2AngularMigrationHandler', () => {
         fieldConfig: { defaults: {}, overrides: [] },
       };
 
-      createV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
 
       expect(mutatedModel.options).toEqual({ reduceOptions: { calcs: ['mean'] }, orientation: 'horizontal' });
       expect(mutatedModel.fieldConfig).toEqual({ defaults: { unit: 'short' }, overrides: [] });
@@ -126,7 +126,7 @@ describe('createV2AngularMigrationHandler', () => {
         fieldConfig: { defaults: {}, overrides: [] },
       };
 
-      createV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
 
       expect(mutatedModel.options).toEqual({ drawStyle: 'bars' });
     });
@@ -160,7 +160,7 @@ describe('createV2AngularMigrationHandler', () => {
         fieldConfig: { defaults: {}, overrides: [] },
       };
 
-      createV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
 
       expect(mutatedModel.options).toEqual({ newOption: 'value' });
     });
