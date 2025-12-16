@@ -46,7 +46,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 				assert.Equal(t, UnifiedStorageConfig{
 					DualWriterMode:                      5,
 					DualWriterMigrationDataSyncDisabled: true,
-					EnableMigration:                     &isEnabled,
+					EnableMigration:                     isEnabled,
 				}, resourceCfg, migratedResource)
 			}
 		}

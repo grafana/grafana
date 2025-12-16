@@ -7,7 +7,9 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -15,6 +17,12 @@ import (
 type ResourceDefinition struct {
 	GroupResource schema.GroupResource
 	MigratorFunc  string // Name of the method: "MigrateFolders", "MigrateDashboards", etc.
+}
+
+type migrationRegistration struct {
+	name         string
+	resources    []string
+	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient)
 }
 
 var registeredResources = []ResourceDefinition{
@@ -34,6 +42,47 @@ var registeredResources = []ResourceDefinition{
 		GroupResource: schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"},
 		MigratorFunc:  "MigratePlaylists",
 	},
+}
+
+var migrationRegistry = []migrationRegistration{
+	{
+		name:         "playlists",
+		resources:    []string{setting.PlaylistResourceConfig},
+		registerFunc: registerPlaylistMigration,
+	},
+	{
+		name:         "folders and dashboards",
+		resources:    []string{setting.FolderResourceConfig, setting.DashboardResourceConfig},
+		registerFunc: registerDashboardAndFolderMigration,
+	},
+}
+
+func registerMigrations(cfg *setting.Cfg, mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) error {
+	for _, migration := range migrationRegistry {
+		var (
+			hasValue   bool
+			allEnabled bool
+		)
+
+		for _, res := range migration.resources {
+			enabled := cfg.UnifiedStorage[res].EnableMigration
+			if !hasValue {
+				allEnabled = enabled
+				hasValue = true
+				continue
+			}
+			if enabled != allEnabled {
+				return fmt.Errorf("cannot migrate resources separately: %v migration must be either all enabled or all disabled", migration.resources)
+			}
+		}
+
+		if !allEnabled {
+			logger.Info("Migration is disabled in config, skipping", "migration", migration.name)
+			continue
+		}
+		migration.registerFunc(mg, migrator, client)
+	}
+	return nil
 }
 
 func getResourceDefinition(group, resource string) *ResourceDefinition {

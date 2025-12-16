@@ -8,11 +8,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
+const (
+	PlaylistResourceConfig  = "playlists.playlist.grafana.app"
+	FolderResourceConfig    = "folders.folder.grafana.app"
+	DashboardResourceConfig = "dashboards.dashboard.grafana.app"
+)
+
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	"playlists.playlist.grafana.app":   true, // enabled by default
-	"folders.folder.grafana.app":       false,
-	"dashboards.dashboard.grafana.app": false,
+	PlaylistResourceConfig:  true, // enabled by default
+	FolderResourceConfig:    false,
+	DashboardResourceConfig: false,
 }
 
 // read storage configs from ini file. They look like:
@@ -48,10 +54,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
 
 		// parse EnableMigration from resource section
-		var enableMigrationPtr *bool
+		enableMigration := MigratedUnifiedResources[resourceName]
 		if section.HasKey("enableMigration") {
-			enableMigration := section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
-			enableMigrationPtr = &enableMigration
+			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
 		storageConfig[resourceName] = UnifiedStorageConfig{
@@ -60,7 +65,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			DualWriterMigrationDataSyncDisabled:  dualWriterMigrationDataSyncDisabled,
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
-			EnableMigration:                      enableMigrationPtr,
+			EnableMigration:                      enableMigration,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -126,30 +131,22 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		section.Key("enable_search").SetValue("true")
 		cfg.EnableSearch = true
 	}
-	trueVal := true
-	for resource, isEnabledByDefault := range MigratedUnifiedResources {
+	for resource, enabledByDefault := range MigratedUnifiedResources {
 		resourceCfg, ok := cfg.UnifiedStorage[resource]
-
-		shouldEnable := isEnabledByDefault // start with default
-		if ok && resourceCfg.EnableMigration != nil {
-			shouldEnable = *resourceCfg.EnableMigration // explicit setting overrides
-		}
-		if !shouldEnable {
-			if ok && resourceCfg.EnableMigration != nil {
-				cfg.Logger.Info("Resource migration explicitly disabled", "resource", resource)
-			} else {
-				cfg.Logger.Info("Resource migration not enabled", "resource", resource)
+		if ok {
+			if !resourceCfg.EnableMigration {
+				cfg.Logger.Info("Resource migration disabled", "resource", resource)
+				continue
 			}
+			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
+		} else if !enabledByDefault {
 			continue
 		}
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
-		if ok {
-			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
-		}
 		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
 			DualWriterMode:                      5,
 			DualWriterMigrationDataSyncDisabled: true,
-			EnableMigration:                     &trueVal,
+			EnableMigration:                     true,
 		}
 	}
 }
@@ -170,11 +167,4 @@ func (cfg *Cfg) getUnifiedStorageType() string {
 		return cfg.Raw.Section(grafanaAPIServerSectionName).Key(storageTypeKeyName).Value()
 	}
 	return defaultStorageType
-}
-
-func (cfg *UnifiedStorageConfig) IsMigrationEnabled() bool {
-	if cfg.EnableMigration == nil {
-		return false
-	}
-	return *cfg.EnableMigration
 }

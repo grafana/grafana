@@ -633,8 +633,8 @@ type UnifiedStorageConfig struct {
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
 	DataSyncerRecordsLimit int
 	// EnableMigration indicates whether migration is enabled for the resource.
-	// If nil, will use the default from MigratedUnifiedResources.
-	EnableMigration *bool
+	// If not set, will use the default from MigratedUnifiedResources.
+	EnableMigration bool
 }
 
 type InstallPlugin struct {

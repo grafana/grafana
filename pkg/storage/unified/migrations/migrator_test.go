@@ -168,10 +168,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		for _, tc := range testCases {
 			for _, gvr := range tc.resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-				falseVal := false
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					DualWriterMode:  grafanarest.Mode5,
-					EnableMigration: &falseVal,
+					EnableMigration: false,
 				}
 			}
 		}
@@ -230,9 +229,8 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		for _, tc := range testCases {
 			for _, gvr := range tc.resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-				trueValue := true
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					EnableMigration: &trueValue,
+					EnableMigration: true,
 				}
 			}
 		}
@@ -266,13 +264,13 @@ const (
 	migrationScope = "unifiedstorage"
 	migrationTable = migrationScope + "_migration_log"
 
-	PlaylistsID            = "playlists migration"
-	FoldersAndDashboardsID = "folders and dashboards migration"
+	playlistsID            = "playlists migration"
+	foldersAndDashboardsID = "folders and dashboards migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
-	PlaylistsID:            true,
-	FoldersAndDashboardsID: false,
+	playlistsID:            true,
+	foldersAndDashboardsID: false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {

@@ -41,9 +41,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 
 	unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 	for _, resource := range []string{"folders.folder.grafana.app", "dashboards.dashboard.grafana.app"} {
-		trueValue := true
 		unifiedConfig[resource] = setting.UnifiedStorageConfig{
-			EnableMigration: &trueValue,
+			EnableMigration: true,
 		}
 	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

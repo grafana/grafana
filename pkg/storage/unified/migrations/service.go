@@ -79,21 +79,8 @@ func RegisterMigrations(
 		return err
 	}
 
-	if migrationEnabled("playlists.playlist.grafana.app", cfg) {
-		registerPlaylistMigration(mg, migrator, client)
-	} else {
-		logger.Info("Playlists migration is disabled in config, skipping")
-	}
-
-	dashboardsEnabled := migrationEnabled("dashboards.dashboard.grafana.app", cfg)
-	foldersEnabled := migrationEnabled("folders.folder.grafana.app", cfg)
-	if foldersEnabled != dashboardsEnabled {
-		return fmt.Errorf("cannot migrate folders and dashboards separately: foldersEnabled=%t, dashboardsEnabled=%t", foldersEnabled, dashboardsEnabled)
-	}
-	if dashboardsEnabled && foldersEnabled {
-		registerDashboardAndFolderMigration(mg, migrator, client)
-	} else {
-		logger.Info("Dashboards and folders migration is disabled in config, skipping")
+	if err := registerMigrations(cfg, mg, migrator, client); err != nil {
+		return err
 	}
 
 	// Run all registered migrations (blocking)
@@ -145,11 +132,6 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
-}
-
-func migrationEnabled(resource string, cfg *setting.Cfg) bool {
-	resourceCfg, ok := cfg.UnifiedStorage[resource]
-	return ok && resourceCfg.IsMigrationEnabled()
 }
 
 func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
