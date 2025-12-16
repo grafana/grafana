@@ -52,7 +52,7 @@ SELECT
 For MySQL, run the following query:
 
 ```sql
-SELECT 
+SELECT
     ROUND(data_length / 1024 / 1024, 2) AS table_size_mb,
     ROUND(index_length / 1024 / 1024, 2) AS indexes_size_mb,
     ROUND((data_length + index_length) / 1024 / 1024, 2) AS total_size_mb
@@ -75,11 +75,11 @@ Before you upgrade, take the following steps:
 
 1. **Verify available disk space**: Ensure you have at least 2-3 times the current `annotation` table size available as free disk space on your database data volume.
 
-2. **Review your annotation data**: Consider whether you need to retain all historical annotations.
+1. **Review your annotation data**: Consider whether you need to retain all historical annotations.
 
-3. **Clean up old annotations (optional)**: If you have annotations you don't need, remove them before upgrading.
+1. **Clean up old annotations (optional)**: If you have annotations you don't need, remove them before upgrading.
 
-4. **Back up your database**: Always back up your Grafana database before performing an upgrade. For more information, refer to [Back up Grafana](#back-up-grafana).
+1. **Back up your database**: Always back up your Grafana database before performing an upgrade. For more information, refer to [Back up Grafana](#back-up-grafana).
 
 #### What should I do after upgrading?
 
