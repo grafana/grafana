@@ -29,6 +29,46 @@ try {
       types: './dist/*',
       default: './dist/*',
     };
+    // Support @grafana/scenes that imports from dist/esm paths which webpack transforms to src paths
+    // (see webpack.common.js NormalModuleReplacementPlugin that replaces @grafana/schema/dist/esm with @grafana/schema/src)
+    exports['./src/*'] = {
+      types: './src/*',
+      default: './src/*',
+    };
+    // Add sub-path exports for dashboard v0
+    exports['./dashboard/v0'] = {
+      import: {
+        types: './dist/types/schema/dashboard/v0/index.d.ts',
+        default: './dist/esm/schema/dashboard/v0.mjs',
+      },
+      require: {
+        types: './dist/types/schema/dashboard/v0/index.d.ts',
+        default: './dist/cjs/schema/dashboard/v0.cjs',
+      },
+    };
+    // Add sub-path exports for dashboard v2beta1
+    exports['./dashboard/v2beta1'] = {
+      import: {
+        types: './dist/types/schema/dashboard/v2beta1/index.d.ts',
+        default: './dist/esm/schema/dashboard/v2beta1.mjs',
+      },
+      require: {
+        types: './dist/types/schema/dashboard/v2beta1/index.d.ts',
+        default: './dist/cjs/schema/dashboard/v2beta1.cjs',
+      },
+    };
+
+    // Add typesVersions for backwards compatibility with moduleResolution: "node"
+    // This allows TypeScript to resolve types for sub-path imports even without
+    // modern moduleResolution settings (bundler/node16/nodenext)
+    pkgJson.update({
+      typesVersions: {
+        '*': {
+          'dashboard/v0': ['./dist/types/schema/dashboard/v0/index.d.ts'],
+          'dashboard/v2beta1': ['./dist/types/schema/dashboard/v2beta1/index.d.ts'],
+        },
+      },
+    });
   }
 
   // Fix for @grafana/i18n so eslint-plugin can be imported by consumers

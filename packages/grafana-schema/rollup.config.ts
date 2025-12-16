@@ -48,4 +48,44 @@ export default [
     },
     treeshake: false,
   },
+  // Build sub-path exports for dashboard v0
+  {
+    input: {
+      'schema/dashboard/v0': fileURLToPath(new URL('src/schema/dashboard/v0/index.ts', import.meta.url)),
+    },
+    plugins: [noderesolve, esbuild],
+    output: [
+      {
+        format: 'esm',
+        dir: path.dirname(pkg.publishConfig.module),
+        entryFileNames: '[name].mjs',
+      },
+      {
+        format: 'cjs',
+        dir: path.dirname(pkg.publishConfig.main),
+        entryFileNames: '[name].cjs',
+      },
+    ],
+    treeshake: false,
+  },
+  // Build sub-path exports for dashboard v2beta1
+  {
+    input: {
+      'schema/dashboard/v2beta1': fileURLToPath(new URL('src/schema/dashboard/v2beta1/index.ts', import.meta.url)),
+    },
+    plugins: [noderesolve, esbuild],
+    output: [
+      {
+        format: 'esm',
+        dir: path.dirname(pkg.publishConfig.module),
+        entryFileNames: '[name].mjs',
+      },
+      {
+        format: 'cjs',
+        dir: path.dirname(pkg.publishConfig.main),
+        entryFileNames: '[name].cjs',
+      },
+    ],
+    treeshake: false,
+  },
 ];
