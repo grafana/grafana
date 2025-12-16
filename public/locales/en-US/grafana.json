@@ -2247,6 +2247,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Open external link"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": "This field is protected and can only be edited by users with elevated permissions"
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {

@@ -107,10 +107,11 @@ func convertToK8sResource(
 }
 
 var permissionMapper = map[ngmodels.ReceiverPermission]string{
-	ngmodels.ReceiverPermissionReadSecret: "canReadSecrets",
-	ngmodels.ReceiverPermissionAdmin:      "canAdmin",
-	ngmodels.ReceiverPermissionWrite:      "canWrite",
-	ngmodels.ReceiverPermissionDelete:     "canDelete",
+	ngmodels.ReceiverPermissionReadSecret:      "canReadSecrets",
+	ngmodels.ReceiverPermissionAdmin:           "canAdmin",
+	ngmodels.ReceiverPermissionWrite:           "canWrite",
+	ngmodels.ReceiverPermissionDelete:          "canDelete",
+	ngmodels.ReceiverPermissionModifyProtected: "canModifyProtected",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {

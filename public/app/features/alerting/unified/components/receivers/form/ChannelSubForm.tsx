@@ -36,6 +36,7 @@ interface Props<R extends ChannelValues> {
   onDelete?: () => void;
   isEditable?: boolean;
   isTestable?: boolean;
+  canEditProtectedFields: boolean;
 
   customValidators?: React.ComponentProps<typeof ChannelOptions>['customValidators'];
 }
@@ -53,6 +54,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
+  canEditProtectedFields,
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
@@ -181,6 +183,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             label={t('alerting.channel-sub-form.label-integration', 'Integration')}
             htmlFor={contactPointTypeInputId}
             data-testid={`${pathPrefix}type`}
+            noMargin
           >
             <Controller
               name={typeFieldPath}
@@ -258,6 +261,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
             readOnly={!isEditable}
+            canEditProtectedFields={canEditProtectedFields}
             customValidators={customValidators}
           />
           {!!(mandatoryOptions.length && optionalOptions.length) && (
@@ -279,6 +283,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 errors={errors}
                 integrationPrefix={channelFieldPath}
                 readOnly={!isEditable}
+                canEditProtectedFields={canEditProtectedFields}
                 customValidators={customValidators}
               />
             </CollapsibleSection>

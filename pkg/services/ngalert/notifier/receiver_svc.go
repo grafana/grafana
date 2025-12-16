@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -73,6 +74,9 @@ type receiverAccessControlService interface {
 	AuthorizeCreate(context.Context, identity.Requester) error
 	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+
+	HasUpdateProtected(context.Context, identity.Requester, *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, *models.Receiver) error
 
 	Access(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error)
 }
@@ -433,6 +437,18 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
+	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
+	if !canUpdateProtected {
+		diff := models.HasReceiversDifferentProtectedFields(existing, r)
+		if len(diff) > 0 {
+			err = rs.authz.AuthorizeUpdateProtected(ctx, user, r)
+			if err != nil {
+				return nil, makeProtectedFieldsAuthzError(err, diff)
+			}
+		}
+	}
+
 	// We need to perform two important steps to process settings on an updated integration:
 	// 1. Encrypt new or updated secret fields as they will arrive in plain text.
 	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
@@ -720,4 +736,24 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func makeProtectedFieldsAuthzError(err error, diff map[string][]models.IntegrationFieldPath) error {
+	var authzErr errutil.Error
+	if !errors.As(err, &authzErr) {
+		return err
+	}
+	if authzErr.PublicPayload == nil {
+		authzErr.PublicPayload = map[string]interface{}{}
+	}
+	fields := make(map[string][]string, len(diff))
+	for field, paths := range diff {
+		fields[field] = make([]string, len(paths))
+		for i, path := range paths {
+			fields[field][i] = path.String()
+		}
+		slices.Sort(fields[field])
+	}
+	authzErr.PublicPayload["changed_protected_fields"] = fields
+	return authzErr
 }

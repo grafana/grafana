@@ -204,6 +204,33 @@ func TestReceiverAccess(t *testing.T) {
 				recv3.UID: permissions(),
 			},
 		},
+		{
+			name: "update protected cannot update receivers",
+			user: newEmptyUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversAll},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "update protected receivers",
+			user: newEmptyUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionModifyProtected),
+				recv2.UID: permissions(models.ReceiverPermissionWrite),
+				recv3.UID: permissions(),
+			},
+		},
 		// Receiver delete.
 		{
 			name: "global receiver delete should have delete but no write",
