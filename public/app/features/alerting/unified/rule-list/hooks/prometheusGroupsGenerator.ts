@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { MergeExclusive } from 'type-fest';
 
-import { config } from '@grafana/runtime';
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -16,6 +15,11 @@ interface UseGeneratorHookOptions {
    */
   populateCache?: boolean;
   limitAlerts?: number;
+  /**
+   * Whether to use compact response format from the API.
+   * Typically controlled by the alertingCompactRulesResponse feature toggle.
+   */
+  compact?: boolean;
 }
 
 export function usePrometheusGroupsGenerator() {
@@ -77,7 +81,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         ...fetchOptions,
         limitAlerts: hookOptions.limitAlerts,
         ...fetchOptions.filter,
-        compact: config.featureToggles.alertingCompactRulesResponse,
+        compact: hookOptions.compact,
       }).unwrap();
 
       if (hookOptions.populateCache) {
@@ -86,7 +90,13 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
 
       return response;
     },
-    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
+    [
+      getGrafanaGroups,
+      hookOptions.limitAlerts,
+      hookOptions.compact,
+      hookOptions.populateCache,
+      populateGroupsResponseCache,
+    ]
   );
 
   return useCallback(

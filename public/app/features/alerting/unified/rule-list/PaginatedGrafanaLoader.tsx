@@ -7,6 +7,7 @@ import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-ale
 
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
+import { shouldUseCompactRulesResponse } from '../featureToggles';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -47,6 +48,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
     populateCache: needsClientSideFiltering ? false : true,
     limitAlerts: 0,
+    compact: shouldUseCompactRulesResponse(),
   });
 
   // If there are no filters we can match one frontend page to one API page.

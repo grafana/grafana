@@ -26,3 +26,5 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
+
+export const shouldUseCompactRulesResponse = () => config.featureToggles.alertingCompactRulesResponse ?? false;
