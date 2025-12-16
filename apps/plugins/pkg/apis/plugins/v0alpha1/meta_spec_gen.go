@@ -209,6 +209,7 @@ func NewMetaExtensions() *MetaExtensions {
 // +k8s:openapi-gen=true
 type MetaSpec struct {
 	PluginJson   MetaJSONData               `json:"pluginJson"`
+	Class        MetaSpecClass              `json:"class"`
 	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
 	BaseURL      *string                    `json:"baseURL,omitempty"`
 	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
@@ -503,6 +504,14 @@ const (
 	MetaIncludeRoleAdmin  MetaIncludeRole = "Admin"
 	MetaIncludeRoleEditor MetaIncludeRole = "Editor"
 	MetaIncludeRoleViewer MetaIncludeRole = "Viewer"
+)
+
+// +k8s:openapi-gen=true
+type MetaSpecClass string
+
+const (
+	MetaSpecClassCore     MetaSpecClass = "core"
+	MetaSpecClassExternal MetaSpecClass = "external"
 )
 
 // +k8s:openapi-gen=true

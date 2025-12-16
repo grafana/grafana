@@ -6,6 +6,7 @@ metaV0Alpha1: {
 	schema: {
 		spec: {
 			pluginJson: #JSONData
+			class: "core" | "external"
 			module?: {
 				path:             string
 				hash?:            string

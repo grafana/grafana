@@ -493,6 +493,15 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
 
+	// Set Class - default to External if not specified
+	var c pluginsv0alpha1.MetaSpecClass
+	if plugin.Class == plugins.ClassCore {
+		c = pluginsv0alpha1.MetaSpecClassCore
+	} else {
+		c = pluginsv0alpha1.MetaSpecClassExternal
+	}
+	metaSpec.Class = c
+
 	if plugin.Module != "" {
 		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
@@ -591,6 +600,15 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
 
+	// Set Class - default to External if not specified
+	var c pluginsv0alpha1.MetaSpecClass
+	if plugin.Class == plugins.ClassCore {
+		c = pluginsv0alpha1.MetaSpecClassCore
+	} else {
+		c = pluginsv0alpha1.MetaSpecClassExternal
+	}
+	metaSpec.Class = c
+
 	// Set module information
 	if plugin.Module != "" {
 		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
@@ -684,6 +702,7 @@ type grafanaComPluginVersionMeta struct {
 func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON,
+		Class:      pluginsv0alpha1.MetaSpecClassExternal,
 	}
 
 	if gcomMeta.SignatureType != "" {
