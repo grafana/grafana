@@ -172,7 +172,7 @@ const getGuideDotColor = (color: string): string => {
   return colorManipulator.getContrastRatio(darkColor, color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor;
 };
 
-export function getGuideDotColors(gradientStops: GradientStop[], percent: number): [string, string] {
+export function getGuideDotColors(gradientStops: GradientStop[], percent = 1): [string, string] {
   const [startColor, endColor] = getEndpointColors(gradientStops, percent);
   return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
 }

@@ -45,6 +45,7 @@ export const RadialBarSegmented = memo(
     const value = fieldDisplay.display.numeric;
     const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, angleRange);
     const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
+    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
 
     for (let i = 0; i < segmentCountAdjusted; i++) {
       const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
@@ -53,7 +54,7 @@ export const RadialBarSegmented = memo(
       if (angleValue >= value) {
         segmentColor = theme.colors.action.hover;
       } else if (gradientMode === 'none') {
-        segmentColor = getFieldDisplayProcessor(fieldDisplay)(angleValue).color ?? FALLBACK_COLOR;
+        segmentColor = displayProcessor(angleValue).color ?? FALLBACK_COLOR;
       }
 
       segments.push(

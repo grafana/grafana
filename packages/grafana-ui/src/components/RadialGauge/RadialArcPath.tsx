@@ -1,4 +1,4 @@
-import { useId, useMemo, memo } from 'react';
+import { useId, memo, HTMLAttributes } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
@@ -48,53 +48,36 @@ export const RadialArcPath = memo(
     const theme = useTheme2();
     const id = useId();
 
-    const gradientStops = useMemo(() => {
-      if (gradientMode === 'none') {
-        return [];
-      }
-      return buildGradientColors(gradientMode, theme, fieldDisplay, fieldDisplay.display.color);
-    }, [gradientMode, fieldDisplay, theme]);
+    const gradientStops = buildGradientColors(gradientMode, theme, fieldDisplay, fieldDisplay.display.color);
 
-    const { guideDotColors, endpointColors } = useMemo(() => {
-      if (!showGuideDots || gradientStops.length === 0) {
-        return {
-          guideDotStartColor: undefined,
-          guideDotEndColor: undefined,
-        };
-      }
-      return {
-        guideDotColors: getGuideDotColors(gradientStops, fieldDisplay.display.percent ?? 0),
-        endpointColors:
-          shape === 'circle' ? getEndpointColors(gradientStops, fieldDisplay.display.percent ?? 1) : undefined,
-      };
-    }, [showGuideDots, fieldDisplay, gradientStops, shape]);
+    let guideDotColors: [string, string] | undefined;
+    let endpointColors: [string, string] | undefined;
 
-    const bgDivStyle = useMemo(() => {
-      const baseStyles = { width: '100%', height: '100%' };
-      if (color) {
-        return { backgroundColor: color, ...baseStyles };
+    if (showGuideDots && gradientStops.length > 0) {
+      guideDotColors = getGuideDotColors(gradientStops, fieldDisplay.display.percent);
+      if (shape === 'circle') {
+        endpointColors = getEndpointColors(gradientStops, fieldDisplay.display.percent);
       }
-      const gradientCss = getGradientCss(gradientStops, shape);
-      return { backgroundImage: gradientCss, ...baseStyles };
-    }, [color, gradientStops, shape]);
+    }
+
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: '100%', height: '100%' };
+    if (color) {
+      bgDivStyle.backgroundColor = color;
+    } else {
+      bgDivStyle.backgroundImage = getGradientCss(gradientStops, shape);
+    }
 
     const { radius, centerX, centerY, barWidth } = dimensions;
 
-    const path = useMemo(
-      () => drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars),
-      [angle, arcLengthDeg, dimensions, roundedBars]
-    );
+    const path = drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars);
 
-    const { x1, x2, y1, y2 } = useMemo(() => {
-      const startRadians = toRad(angle);
-      const endRadians = toRad(angle + arcLengthDeg);
+    const startRadians = toRad(angle);
+    const endRadians = toRad(angle + arcLengthDeg);
 
-      let x1 = centerX + radius * Math.cos(startRadians);
-      let y1 = centerY + radius * Math.sin(startRadians);
-      let x2 = centerX + radius * Math.cos(endRadians);
-      let y2 = centerY + radius * Math.sin(endRadians);
-      return { x1, y1, x2, y2 };
-    }, [angle, arcLengthDeg, centerX, centerY, radius]);
+    const x1 = centerX + radius * Math.cos(startRadians);
+    const y1 = centerY + radius * Math.sin(startRadians);
+    const x2 = centerX + radius * Math.cos(endRadians);
+    const y2 = centerY + radius * Math.sin(endRadians);
 
     const dotRadius = Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS);
 
