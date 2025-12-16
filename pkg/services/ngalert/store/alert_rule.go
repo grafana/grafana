@@ -1374,37 +1374,16 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 // filterByLabelMatchers adds filtering for equality and inequality label matchers.
 // Returns error if regex matchers are passed.
 func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Session) (*xorm.Session, error) {
-	dialect := st.SQLStore.GetDialect()
-	isSQLite := dialect.DriverName() == migrator.SQLite
-
 	for _, m := range matchers {
-		switch m.Type {
-		case labels.MatchEqual, labels.MatchNotEqual:
-			if isSQLite {
-				pattern, err := buildGlobPattern(dialect, m.Name, m.Value)
-				if err != nil {
-					return nil, err
-				}
-				if m.Type == labels.MatchEqual {
-					sess = sess.And("labels GLOB ?", "*"+pattern+"*")
-				} else {
-					sess = sess.And("labels NOT GLOB ?", "*"+pattern+"*")
-				}
-			} else {
-				jsonExtract, err := jsonExtractText(dialect, "labels")
-				if err != nil {
-					return nil, err
-				}
-				if m.Type == labels.MatchEqual {
-					sess = sess.And(jsonExtract+" = ?", m.Name, m.Value)
-				} else {
-					sess = sess.And("("+jsonExtract+" IS NULL OR "+jsonExtract+" != ?)", m.Name, m.Name, m.Value)
-				}
-			}
-
-		case labels.MatchRegexp, labels.MatchNotRegexp:
+		if m.Type == labels.MatchRegexp || m.Type == labels.MatchNotRegexp {
 			return nil, fmt.Errorf("regex matchers (=~, !~) are not supported, got matcher %q %s %q", m.Name, m.Type, m.Value)
 		}
+
+		sql, args, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", m)
+		if err != nil {
+			return nil, err
+		}
+		sess = sess.And(sql, args...)
 	}
 	return sess, nil
 }

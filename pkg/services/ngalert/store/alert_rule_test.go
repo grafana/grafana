@@ -2410,6 +2410,9 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleEmpty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": ""}),
 			ruleGen.WithTitle("rule_empty")))
+		ruleNonempty := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
+			ruleGen.WithTitle("rule_nonempty")))
 
 		tc := []struct {
 			name          string
@@ -2435,7 +2438,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
 			},
 			{
 				name: "special characters in labels are handled correctly",
@@ -2484,7 +2487,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
 			},
 			{
 				name: "inequality matcher on non-existent label matches all rules",
@@ -2494,7 +2497,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 						return m
 					}(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
 			},
 		}
 

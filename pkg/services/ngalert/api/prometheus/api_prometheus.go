@@ -1149,13 +1149,7 @@ func filterRulesByLabelMatchers(ruleGroup *apimodels.RuleGroup, matchers labels.
 		ruleLabels := rule.Labels.Map()
 		matches := true
 		for _, m := range matchers {
-			val, exists := ruleLabels[m.Name]
-			// For MatchEqual with empty value, require label to actually exist
-			if m.Type == labels.MatchEqual && m.Value == "" && !exists {
-				matches = false
-				break
-			}
-			if !m.Matches(val) {
+			if !m.Matches(ruleLabels[m.Name]) {
 				matches = false
 				break
 			}

@@ -2903,6 +2903,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
 			gen.WithUID("rule_empty"), gen.WithLabels(map[string]string{"empty": ""}), gen.WithNoNotificationSettings())
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule_nonempty"), gen.WithLabels(map[string]string{"empty": "nonempty"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
 			gen.WithUID("rule_multiline"), gen.WithLabels(map[string]string{"description": "line1\nline2\\end\"quote"}), gen.WithNoNotificationSettings())
 
 		testCases := []struct {
@@ -2918,7 +2920,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			{
 				name:         "inequality matcher filters severity!=warning",
 				matchers:     []string{`{"name":"severity","value":"warning","isRegex":false,"isEqual":false}`},
-				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
+				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
 			},
 			{
 				name:         "regex matcher filters team=~plat.*",
@@ -2928,7 +2930,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			{
 				name:         "not-regex matcher filters severity!~warn.*",
 				matchers:     []string{`{"name":"severity","value":"warn.*","isRegex":true,"isEqual":false}`},
-				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
+				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
 			},
 			{
 				name: "multiple matchers are ANDed",
@@ -2956,12 +2958,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			{
 				name:         "no matchers returns all rules",
 				matchers:     []string{},
-				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
 			},
 			{
 				name:         "empty string value matches correctly",
 				matchers:     []string{`{"name":"empty","value":"","isRegex":false,"isEqual":true}`},
-				expectedUIDs: []string{"rule_empty"},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
 			},
 			{
 				name:         "special characters in label value are handled correctly",
@@ -2971,7 +2973,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			{
 				name:         "inequality matcher on non-existent label matches all rules",
 				matchers:     []string{`{"name":"nonexistent","value":"value","isRegex":false,"isEqual":false}`},
-				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
 			},
 		}
 

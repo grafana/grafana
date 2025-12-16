@@ -8,49 +8,94 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var (
-	errJSONNotSupported = fmt.Errorf("JSON extraction not supported")
-	errGlobNotSupported = fmt.Errorf("GLOB pattern matching is not supported")
-)
+// JSON functions for MySQL/PostgreSQL
 
-// jsonExtractText returns dialect-specific SQL for extracting a JSON text value.
-// The returned SQL contains a ? placeholder for the key parameter.
-// Supports only MySQL and PostgreSQL.
-func jsonExtractText(dialect migrator.Dialect, column string) (string, error) {
+func jsonEquals(dialect migrator.Dialect, column, key, value string) (string, []any) {
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(%s, CONCAT('$.', ?)))", column), nil
+		return fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(%s, CONCAT('$.', ?))) = ?", column), []any{key, value}
 	case migrator.Postgres:
-		return fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?)", column), nil
+		return fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?) = ?", column), []any{key, value}
 	default:
-		return "", errJSONNotSupported
+		return "", nil
 	}
 }
 
-// buildGlobPattern creates a pattern for GLOB (sqlite only) matching for "key":"value"
-// Escapes GLOB special characters: * → [*], ? → [?], [ → [[]
-func buildGlobPattern(dialect migrator.Dialect, key, value string) (string, error) {
-	if dialect.DriverName() != migrator.SQLite {
-		return "", errGlobNotSupported
+func jsonNotEquals(dialect migrator.Dialect, column, key, value string) (string, []any) {
+	var jx string
+	switch dialect.DriverName() {
+	case migrator.MySQL:
+		jx = fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(%s, CONCAT('$.', ?)))", column)
+	case migrator.Postgres:
+		jx = fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?)", column)
+	default:
+		return "", nil
 	}
+	return fmt.Sprintf("(%s IS NULL OR %s != ?)", jx, jx), []any{key, key, value}
+}
 
-	// Marshal key and value to get proper JSON escaping
+func jsonKeyMissing(dialect migrator.Dialect, column, key string) (string, []any) {
+	switch dialect.DriverName() {
+	case migrator.MySQL:
+		return fmt.Sprintf("JSON_EXTRACT(%s, CONCAT('$.', ?)) IS NULL", column), []any{key}
+	case migrator.Postgres:
+		return fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?) IS NULL", column), []any{key}
+	default:
+		return "", nil
+	}
+}
+
+// GLOB functions for SQLite
+
+func globEquals(column, key, value string) (string, []any, error) {
+	pattern, err := buildGlobPattern(key, value)
+	if err != nil {
+		return "", nil, err
+	}
+	return column + " GLOB ?", []any{"*" + pattern + "*"}, nil
+}
+
+func globNotEquals(column, key, value string) (string, []any, error) {
+	pattern, err := buildGlobPattern(key, value)
+	if err != nil {
+		return "", nil, err
+	}
+	return column + " NOT GLOB ?", []any{"*" + pattern + "*"}, nil
+}
+
+func globKeyMissing(column, key string) (string, []any, error) {
+	pattern, err := buildGlobKeyPattern(key)
+	if err != nil {
+		return "", nil, err
+	}
+	return column + " NOT GLOB ?", []any{"*" + pattern + "*"}, nil
+}
+
+// Search for `"key":"value"`
+func buildGlobPattern(key, value string) (string, error) {
 	keyJSON, err := json.Marshal(key)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal label key: %w", err)
+		return "", fmt.Errorf("failed to marshal key: %w", err)
 	}
 	valueJSON, err := json.Marshal(value)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal label value: %w", err)
+		return "", fmt.Errorf("failed to marshal value: %w", err)
 	}
+	return escapeGlobPattern(fmt.Sprintf(`%s:%s`, string(keyJSON), string(valueJSON))), nil
+}
 
-	// Build pattern: "key":"value"
-	pattern := fmt.Sprintf(`%s:%s`, string(keyJSON), string(valueJSON))
+// Search for `"key":`
+func buildGlobKeyPattern(key string) (string, error) {
+	keyJSON, err := json.Marshal(key)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal key: %w", err)
+	}
+	return escapeGlobPattern(string(keyJSON) + ":"), nil
+}
 
-	// Escape GLOB special characters
+func escapeGlobPattern(pattern string) string {
 	pattern = strings.ReplaceAll(pattern, "[", "[[]")
 	pattern = strings.ReplaceAll(pattern, "*", "[*]")
 	pattern = strings.ReplaceAll(pattern, "?", "[?]")
-
-	return pattern, nil
+	return pattern
 }
