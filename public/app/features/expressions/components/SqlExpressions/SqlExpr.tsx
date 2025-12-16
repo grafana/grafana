@@ -305,36 +305,36 @@ LIMIT
     </Stack>
   );
 
+  const renderMainContent = (width?: number, height?: number) => (
+    <div
+      className={cx(styles.contentContainer, {
+        [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
+      })}
+    >
+      <div ref={containerRef} className={styles.editorContainer}>
+        <SQLEditor
+          query={query.expression || initialQuery}
+          onChange={onEditorChange}
+          width={width}
+          height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+          language={EDITOR_LANGUAGE_DEFINITION}
+        >
+          {({ formatQuery }) => renderToolbox(formatQuery)}
+        </SQLEditor>
+      </div>
+      {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
+        <div className={cx(styles.schemaInspector, { [styles.schemaInspectorOpen]: isSchemaInspectorOpen })}>
+          <SchemaInspectorPanel schemas={schemas?.sqlSchemas ?? null} loading={schemasLoading} error={schemasError} />
+        </div>
+      )}
+    </div>
+  );
+
   const renderSQLEditor = (width?: number, height?: number) => (
     <div className={styles.sqlContainer}>
       <Stack direction="column" gap={1}>
         {renderSQLButtons()}
-        <div
-          className={cx(styles.contentContainer, {
-            [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
-          })}
-        >
-          <div ref={containerRef} className={styles.editorContainer}>
-            <SQLEditor
-              query={query.expression || initialQuery}
-              onChange={onEditorChange}
-              width={width}
-              height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-              language={EDITOR_LANGUAGE_DEFINITION}
-            >
-              {({ formatQuery }) => renderToolbox(formatQuery)}
-            </SQLEditor>
-          </div>
-          {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
-            <div className={cx(styles.schemaInspector, { [styles.schemaInspectorOpen]: isSchemaInspectorOpen })}>
-              <SchemaInspectorPanel
-                schemas={schemas?.sqlSchemas ?? null}
-                loading={schemasLoading}
-                error={schemasError}
-              />
-            </div>
-          )}
-        </div>
+        {renderMainContent(width, height)}
       </Stack>
       <Suspense fallback={null}>
         <GenAISuggestionsDrawer
