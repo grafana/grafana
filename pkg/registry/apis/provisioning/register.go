@@ -600,7 +600,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
-	// FIXME: Do nothing for Connections for now
+	// TODO: add this as part of https://github.com/grafana/git-ui-sync-project/issues/700
 	_, ok = obj.(*provisioning.Connection)
 	if ok {
 		return nil

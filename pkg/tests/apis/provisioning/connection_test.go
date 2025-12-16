@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func TestIntegrationProvisioning_ConnectionsCRUDL(t *testing.T) {
+func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
@@ -149,7 +149,7 @@ func TestIntegrationProvisioning_ConnectionsCRUDL(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioning_Validation(t *testing.T) {
+func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
@@ -173,7 +173,29 @@ func TestIntegrationProvisioning_Validation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.type must be specified")
+		assert.Contains(t, err.Error(), "type must be specified")
+	})
+
+	t.Run("should fail when type is invalid", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "some-invalid-type",
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "spec.type: Unsupported value: \"some-invalid-type\"")
 	})
 
 	t.Run("should fail when type is github but 'github' field is not there", func(t *testing.T) {
@@ -195,7 +217,57 @@ func TestIntegrationProvisioning_Validation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.github must be specified")
+		assert.Contains(t, err.Error(), "github info must be specified for GitHub connection")
+	})
+
+	t.Run("should fail when type is github but private key is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "privateKey must be specified for GitHub connection")
+	})
+
+	t.Run("should fail when type is github but a client Secret is specified", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "clientSecret is forbidden in GitHub connection")
 	})
 
 	t.Run("should fail when type is bitbucket but 'bitbucket' field is not there", func(t *testing.T) {
@@ -210,14 +282,62 @@ func TestIntegrationProvisioning_Validation(t *testing.T) {
 				"type": "bitbucket",
 			},
 			"secure": map[string]any{
-				"privateKey": map[string]any{
+				"clientSecret": map[string]any{
 					"create": "someSecret",
 				},
 			},
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.bitbucket must be specified")
+		assert.Contains(t, err.Error(), "bitbucket info must be specified in Bitbucket connection")
+	})
+
+	t.Run("should fail when type is bitbucket but client secret is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "bitbucket",
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "clientSecret must be specified for Bitbucket connection")
+	})
+
+	t.Run("should fail when type is bitbucket but a private key is specified", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "bitbucket",
+				"bitbucket": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "privateKey is forbidden in Bitbucket connection")
 	})
 
 	t.Run("should fail when type is gitlab but 'gitlab' field is not there", func(t *testing.T) {
@@ -232,13 +352,61 @@ func TestIntegrationProvisioning_Validation(t *testing.T) {
 				"type": "gitlab",
 			},
 			"secure": map[string]any{
-				"privateKey": map[string]any{
+				"clientSecret": map[string]any{
 					"create": "someSecret",
 				},
 			},
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.gitlab must be specified")
+		assert.Contains(t, err.Error(), "gitlab info must be specified in Gitlab connection")
+	})
+
+	t.Run("should fail when type is gitlab but client secret is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "gitlab",
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "clientSecret must be specified for Gitlab connection")
+	})
+
+	t.Run("should fail when type is gitlab but a private key is specified", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "gitlab",
+				"gitlab": map[string]any{
+					"clientID": "123456",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "privateKey is forbidden in Gitlab connection")
 	})
 }
