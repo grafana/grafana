@@ -138,7 +138,7 @@ const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] =
       item.downloads < MIN_DOWNLOADS_FILTER
     ) {
       console.warn(
-        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavasScript`
+        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavaScript`
       );
       return false;
     }
