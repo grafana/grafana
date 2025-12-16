@@ -9,12 +9,14 @@ labels:
     - enterprise
     - oss
 menuTitle: Examples
-title: Grafana Alerting examples
+title: Examples
 weight: 180
 ---
 
-# Grafana Alerting examples
+# Examples
 
-This section provides a set of guides and examples of best practices for Grafana Alerting. Here you can learn more about how to handle common alert management problems and you can see examples of more advanced usage of Grafana Alerting.
+This section provides practical examples that show how to work with different types of alerting data, apply alert design patterns, reuse alert logic, and take advantage of specific Grafana Alerting features.
+
+This section includes:
 
 {{< section >}}
