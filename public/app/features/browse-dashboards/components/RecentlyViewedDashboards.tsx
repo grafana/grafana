@@ -53,7 +53,8 @@ export function RecentlyViewedDashboards() {
         </Stack>
       }
       isOpen={isOpen}
-      // passing empty function to disable controlled mode, we only want to control isOpen when click on label
+      // passing empty function to disable controlled mode, we only want to control isOpen when click on title
+      // this avoid entire header section being clickable which can be confusing with the Clear history button
       onToggle={() => {}}
       className={styles.title}
       contentClassName={styles.content}
