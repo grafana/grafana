@@ -15,7 +15,7 @@ import {
   type MonacoEditor,
 } from '@grafana/ui';
 
-import { fetchDashboardV2Schema } from './dashboardSchemaFetcher';
+import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 export type EditorFormat = 'json' | 'yaml';
 
@@ -140,7 +140,7 @@ export function DashboardSchemaEditor({
 
   // Fetch schema on mount
   useEffect(() => {
-    fetchDashboardV2Schema()
+    fetchDashboardSchema()
       .then((fetchedSchema) => {
         setSchema(fetchedSchema);
         setIsSchemaLoading(false);
@@ -413,27 +413,6 @@ export function DashboardSchemaEditor({
       </div>
     </div>
   );
-}
-
-/**
- * Hook to use the dashboard schema editor's validation state.
- * Returns whether the editor has validation errors.
- */
-export function useDashboardSchemaValidation() {
-  const [hasErrors, setHasErrors] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardV2Schema()
-      .then(() => setIsLoading(false))
-      .catch(() => setIsLoading(false));
-  }, []);
-
-  return {
-    hasErrors,
-    isLoading,
-    onValidationChange: setHasErrors,
-  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

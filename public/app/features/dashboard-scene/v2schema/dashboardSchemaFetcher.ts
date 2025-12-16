@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 
 interface OpenAPISchema {
   components?: {
@@ -23,19 +24,25 @@ interface JSONSchema {
   [key: string]: unknown;
 }
 
-const DASHBOARD_SPEC_SCHEMA_KEY = 'com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSpec';
-const OPENAPI_ENDPOINT = '/openapi/v3/apis/dashboard.grafana.app/v2beta1';
+/**
+ * Builds the OpenAPI endpoint URL for a given API group and version.
+ */
+function getOpenAPIEndpoint(group: string, version: string): string {
+  return `/openapi/v3/apis/${group}/${version}`;
+}
+
+/**
+ * Builds the schema key for DashboardSpec based on the API version.
+ * The key format follows the OpenAPI schema naming convention used by Grafana's API server.
+ */
+function getDashboardSpecSchemaKey(version: string): string {
+  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.DashboardSpec`;
+}
 
 let cachedSchema: JSONSchema | null = null;
 let fetchPromise: Promise<JSONSchema> | null = null;
 
-/**
- * Fetches the dashboard v2beta1 OpenAPI schema and converts it to a JSON Schema
- * format suitable for Monaco editor validation.
- *
- * The schema is cached after the first successful fetch.
- */
-export async function fetchDashboardV2Schema(): Promise<JSONSchema> {
+export async function fetchDashboardSchema(): Promise<JSONSchema> {
   if (cachedSchema) {
     return cachedSchema;
   }
@@ -55,17 +62,21 @@ export async function fetchDashboardV2Schema(): Promise<JSONSchema> {
 }
 
 async function doFetchSchema(): Promise<JSONSchema> {
-  const openApiSchema = await getBackendSrv().get<OpenAPISchema>(OPENAPI_ENDPOINT);
+  const { group, version } = K8S_V2_DASHBOARD_API_CONFIG;
+  const endpoint = getOpenAPIEndpoint(group, version);
+  const schemaKey = getDashboardSpecSchemaKey(version);
+
+  const openApiSchema = await getBackendSrv().get<OpenAPISchema>(endpoint);
 
   if (!openApiSchema.components?.schemas) {
     throw new Error('OpenAPI schema does not contain component schemas');
   }
 
   const schemas = openApiSchema.components.schemas;
-  const specSchema = schemas[DASHBOARD_SPEC_SCHEMA_KEY];
+  const specSchema = schemas[schemaKey];
 
   if (!specSchema) {
-    throw new Error(`Dashboard spec schema not found: ${DASHBOARD_SPEC_SCHEMA_KEY}`);
+    throw new Error(`Dashboard spec schema not found: ${schemaKey}`);
   }
 
   // Build a JSON Schema with definitions for all referenced schemas
