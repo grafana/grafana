@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -53,6 +55,7 @@ type sqlStore struct {
 	//TODO: moved to service
 	log     log.Logger
 	deletes []string
+	cfg     *setting.Cfg
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -560,6 +563,14 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
+		if query.ExcludeHiddenUsers {
+			cond, params := buildHiddenUsersFilter(query.User, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
 		if query.Query != "" {
 			sql1, param1 := ss.dialect.LikeOperator("email", true, query.Query, true)
 			sql2, param2 := ss.dialect.LikeOperator("name", true, query.Query, true)
@@ -824,4 +835,24 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.
 func (ss *sqlStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+func buildHiddenUsersFilter(requester identity.Requester, hiddenUsersMap map[string]struct{}) (string, []any) {
+	if requester != nil && requester.GetIsGrafanaAdmin() {
+		return "", nil
+	}
+
+	hiddenUsers := make([]any, 0)
+	for user := range hiddenUsersMap {
+		if requester != nil && user == requester.GetLogin() {
+			continue
+		}
+		hiddenUsers = append(hiddenUsers, user)
+	}
+
+	if len(hiddenUsers) > 0 {
+		return "u.login NOT IN (?" + strings.Repeat(",?", len(hiddenUsers)-1) + ")", hiddenUsers
+	}
+
+	return "", nil
 }

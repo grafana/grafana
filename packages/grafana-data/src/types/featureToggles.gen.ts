@@ -1189,9 +1189,19 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
+  /**
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchRawDSLQuery?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false

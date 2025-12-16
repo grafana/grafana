@@ -762,6 +762,10 @@ const (
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
+
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
