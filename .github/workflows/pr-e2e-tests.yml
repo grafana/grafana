@@ -209,12 +209,9 @@ jobs:
           path: .
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - name: Load & Push Docker image
-        env:
-          BUILD_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
-          VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
           DOCKER_IMAGE="grafana/grafana:12.4.0-react19"
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
