@@ -71,13 +71,13 @@
       "id": 1,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -147,13 +147,13 @@
       "id": 4,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -223,13 +223,13 @@
       "id": 3,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -293,19 +293,19 @@
       "gridPos": {
         "h": 6,
         "w": 4,
-        "x": 16,
+        "x": 12,
         "y": 1
       },
       "id": 8,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -369,19 +369,19 @@
       "gridPos": {
         "h": 6,
         "w": 4,
-        "x": 0,
-        "y": 7
+        "x": 16,
+        "y": 1
       },
       "id": 22,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -445,19 +445,19 @@
       "gridPos": {
         "h": 6,
         "w": 4,
-        "x": 4,
-        "y": 7
+        "x": 20,
+        "y": 1
       },
       "id": 23,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -496,7 +496,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 7
       },
       "id": 17,
       "panels": [],
@@ -533,20 +533,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
+        "w": 4,
         "x": 0,
-        "y": 14
+        "y": 8
       },
       "id": 18,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.1,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -609,20 +609,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
-        "x": 5,
-        "y": 14
+        "w": 4,
+        "x": 4,
+        "y": 8
       },
       "id": 19,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.32,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -685,20 +685,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
-        "x": 10,
-        "y": 14
+        "w": 4,
+        "x": 8,
+        "y": 8
       },
       "id": 20,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.57,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -761,20 +761,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
-        "x": 15,
-        "y": 14
+        "w": 4,
+        "x": 12,
+        "y": 8
       },
       "id": 21,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.8,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -813,7 +813,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 14
       },
       "id": 24,
       "panels": [],
@@ -854,20 +854,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
+        "w": 4,
         "x": 0,
-        "y": 21
+        "y": 15
       },
       "id": 25,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -930,20 +930,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
-        "x": 6,
-        "y": 21
+        "w": 4,
+        "x": 4,
+        "y": 15
       },
       "id": 26,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1006,20 +1006,20 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
-        "x": 12,
-        "y": 21
+        "w": 4,
+        "x": 8,
+        "y": 15
       },
       "id": 29,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1081,21 +1081,21 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 27
+        "h": 6,
+        "w": 4,
+        "x": 12,
+        "y": 15
       },
       "id": 30,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1157,21 +1157,21 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 6,
-        "y": 27
+        "h": 6,
+        "w": 4,
+        "x": 16,
+        "y": 15
       },
       "id": 28,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1206,7 +1206,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 21
       },
       "id": 31,
       "panels": [],
@@ -1253,18 +1253,18 @@
         "h": 10,
         "w": 7,
         "x": 0,
-        "y": 35
+        "y": 22
       },
       "id": 32,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1333,18 +1333,18 @@
         "h": 10,
         "w": 7,
         "x": 7,
-        "y": 35
+        "y": 22
       },
       "id": 34,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1413,18 +1413,18 @@
         "h": 10,
         "w": 6,
         "x": 14,
-        "y": 35
+        "y": 22
       },
       "id": 33,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1459,7 +1459,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 32
       },
       "id": 6,
       "panels": [],
@@ -1500,11 +1500,12 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 33
       },
       "id": 9,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.4,
         "effects": {
@@ -1512,7 +1513,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1580,11 +1580,12 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 39
       },
       "id": 11,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.4,
         "effects": {
@@ -1592,7 +1593,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1632,7 +1632,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 45
       },
       "id": 12,
       "panels": [],
@@ -1674,11 +1674,12 @@
         "h": 7,
         "w": 4,
         "x": 0,
-        "y": 59
+        "y": 46
       },
       "id": 13,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.49,
         "effects": {
@@ -1686,7 +1687,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1755,11 +1755,12 @@
         "h": 7,
         "w": 5,
         "x": 4,
-        "y": 59
+        "y": 46
       },
       "id": 14,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.49,
         "effects": {
@@ -1767,7 +1768,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1835,11 +1835,12 @@
         "h": 7,
         "w": 5,
         "x": 9,
-        "y": 59
+        "y": 46
       },
       "id": 15,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.84,
         "effects": {
@@ -1847,7 +1848,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1915,11 +1915,12 @@
         "h": 7,
         "w": 6,
         "x": 14,
-        "y": 59
+        "y": 46
       },
       "id": 16,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.66,
         "effects": {
@@ -1927,7 +1928,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1967,7 +1967,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 53
       },
       "id": 35,
       "panels": [],
@@ -1998,20 +1998,20 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 5,
+        "w": 12,
         "x": 0,
-        "y": 67
+        "y": 54
       },
       "id": 36,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.5,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -2063,20 +2063,20 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 67
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 54
       },
       "id": 37,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.5,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -2115,5 +2115,6 @@
   "timezone": "browser",
   "title": "Panel tests - Gauge (new)",
   "uid": "panel-tests-gauge-new",
-  "version": 9
+  "version": 22,
+  "weekStart": ""
 }

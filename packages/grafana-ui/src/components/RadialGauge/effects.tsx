@@ -5,9 +5,12 @@ export interface GlowGradientProps {
   barWidth: number;
 }
 
+const MIN_GLOW_SIZE = 0.75;
+const GLOW_FACTOR = 0.08;
+
 export function GlowGradient({ id, barWidth }: GlowGradientProps) {
   // 0.75 is the minimum glow size, and it scales with bar width
-  const glowSize = 0.75 + barWidth * 0.08;
+  const glowSize = MIN_GLOW_SIZE + barWidth * GLOW_FACTOR;
 
   return (
     <filter id={id} filterUnits="userSpaceOnUse">
@@ -20,10 +23,12 @@ export function GlowGradient({ id, barWidth }: GlowGradientProps) {
   );
 }
 
+const CENTER_GLOW_OPACITY = 0.15;
+
 export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
   return (
     <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-      <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+      <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
       <stop offset="90%" stopColor={color} stopOpacity={0} />
     </radialGradient>
   );
@@ -42,7 +47,7 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
     <>
       <defs>
         <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
-          <stop offset="0%" stopColor={color} stopOpacity={0.15} />
+          <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
           <stop offset="90%" stopColor={color} stopOpacity={0} />
         </radialGradient>
       </defs>

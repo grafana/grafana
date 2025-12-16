@@ -7955,11 +7955,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds",
-      "style": {
-        "circular": "Glowing",
-        "simple": "Simple"
-      }
+      "no-thresholds": "Gauge - no thresholds"
     },
     "threshold": "Threshold {{value}}"
   },
