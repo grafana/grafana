@@ -138,16 +138,26 @@ export const prometheusApi = alertingApi.injectEndpoints({
   }),
 });
 
+export interface PopulateCacheOptions {
+  limitAlerts?: number;
+  compact?: boolean;
+}
+
 export function usePopulateGrafanaPrometheusApiCache() {
   const dispatch = useDispatch();
 
   const populateGroupsResponseCache = useCallback(
-    (groups: GrafanaPromRuleGroupDTO[]) => {
+    (groups: GrafanaPromRuleGroupDTO[], options: PopulateCacheOptions = {}) => {
       dispatch(
         prometheusApi.util.upsertQueryEntries(
           groups.map((group) => ({
             endpointName: 'getGrafanaGroups',
-            arg: { folderUid: group.folderUid, groupName: group.name, limitAlerts: 0 },
+            arg: {
+              folderUid: group.folderUid,
+              groupName: group.name,
+              limitAlerts: options.limitAlerts ?? 0,
+              compact: options.compact,
+            },
             value: { data: { groups: [group] }, status: 'success' },
           }))
         )

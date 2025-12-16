@@ -85,7 +85,10 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
       }).unwrap();
 
       if (hookOptions.populateCache) {
-        populateGroupsResponseCache(response.data.groups);
+        populateGroupsResponseCache(response.data.groups, {
+          limitAlerts: hookOptions.limitAlerts,
+          compact: hookOptions.compact,
+        });
       }
 
       return response;
