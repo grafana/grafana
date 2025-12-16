@@ -335,7 +335,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
           yesButtonVariant: 'destructive',
           onAltAction: () => {
-            this.openSaveDrawer({});
+            this.openSaveDrawer({
+              onSaveSuccess: () => {
+                this.exitEditModeConfirmed(false);
+              },
+            });
           },
           onConfirm: () => {
             this.exitEditModeConfirmed();
