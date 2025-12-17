@@ -26,7 +26,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
-  logError,
   trackAlertRuleFilterEvent,
   trackFilterButtonApplyClick,
   trackFilterButtonClearClick,
@@ -83,7 +82,7 @@ type SearchQueryForm = {
   query: string;
 };
 
-export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
+export default function RulesFilter({ viewMode, onViewModeChange, savedSearchesResult }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -95,6 +94,8 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const savedSearchesEnabled = shouldUseSavedSearches();
 
   // Saved searches hook with UserStorage persistence
+  // Use prop if provided (from RuleListPage), otherwise call hook internally
+  const internalSavedSearches = useSavedSearches();
   const {
     savedSearches,
     isLoading: savedSearchesLoading,
@@ -102,11 +103,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     renameSearch,
     deleteSearch,
     setDefaultSearch,
-    getAutoApplySearch,
-  } = useSavedSearches();
-
-  // Track whether we've already attempted to auto-apply default search (prevents double-apply)
-  const hasAttemptedAutoApplyRef = useRef(false);
+  } = savedSearchesResult ?? internalSavedSearches;
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
@@ -131,56 +128,8 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     [updateFilters]
   );
 
-  // Auto-apply default search on first load (navigation, not refresh)
-  // We use a ref to ensure this only runs once, preventing re-application when dependencies change
-  //
-  // ⚠️ KNOWN LIMITATION: Double-render on initial load with default search
-  //
-  // Using useEffect for auto-applying the default search has a significant drawback:
-  // it fires AFTER the initial render. This means the page renders first without filters
-  // (which may trigger API requests), then the useEffect applies the default filter,
-  // causing a second render that triggers API requests again with the correct filters.
-  //
-  // ALTERNATIVE CONSIDERED: Moving this logic to the routing layer (e.g., React Router loader)
-  // was explored but deferred due to complexity:
-  // 1. Saved searches are loaded asynchronously from UserStorage
-  // 2. The auto-apply logic depends on multiple conditions (feature toggle, first navigation,
-  //    no existing URL search params)
-  // 3. Integrating async data fetching with route loaders would require significant
-  //    architectural changes across the alerting routing configuration
-  //
-  // POTENTIAL FUTURE IMPROVEMENT:
-  // To eliminate the double-render, consider one of these approaches:
-  // - Create a shared context/hook that RuleList can use to delay rendering FilterView
-  //   until the auto-apply decision has been made
-  // - Move saved searches initialization to a route loader using React Router's defer()
-  //   pattern, allowing the component to wait for the data before first render
-  // - Use React Suspense with a promise-based check for default search
-  //
-  useEffect(() => {
-    // Skip if feature is disabled, still loading, or we've already attempted
-    if (!savedSearchesEnabled || savedSearchesLoading || hasAttemptedAutoApplyRef.current) {
-      return;
-    }
-
-    // Mark as attempted immediately to prevent any possibility of double-apply
-    hasAttemptedAutoApplyRef.current = true;
-
-    const defaultSearch = getAutoApplySearch();
-    if (defaultSearch) {
-      try {
-        // Apply filter directly without calling handleApplySearch to avoid double analytics tracking.
-        // getAutoApplySearch() already tracks the 'auto_apply' event, so we don't want to also
-        // fire the regular 'apply' event from handleApplySearch/trackSavedSearchApplied.
-        const parsedFilter = getSearchFilterFromQuery(defaultSearch.query);
-        updateFilters(parsedFilter);
-      } catch (error) {
-        logError(error instanceof Error ? error : new Error('Failed to auto-apply default search'), {
-          context: 'RulesFilter.autoApplyDefaultSearch',
-        });
-      }
-    }
-  }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, updateFilters]);
+  // NOTE: Auto-apply of default search is now handled in RuleListPage
+  // This ensures the filter is applied BEFORE FilterView mounts, avoiding double API requests
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
