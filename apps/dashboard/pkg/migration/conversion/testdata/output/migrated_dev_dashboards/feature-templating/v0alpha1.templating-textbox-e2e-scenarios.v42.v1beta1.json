@@ -26,7 +26,6 @@
     "links": [],
     "panels": [
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "uid": "${DS_GDEV-TESTDATA}"
         },

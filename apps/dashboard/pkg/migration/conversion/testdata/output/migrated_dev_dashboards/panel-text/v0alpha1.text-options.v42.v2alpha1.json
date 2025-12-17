@@ -70,10 +70,6 @@
             "spec": {
               "pluginVersion": "9.2.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -124,10 +120,6 @@
             "spec": {
               "pluginVersion": "9.2.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "json",
                   "showLineNumbers": true,
@@ -178,10 +170,6 @@
             "spec": {
               "pluginVersion": "9.2.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -232,10 +220,6 @@
             "spec": {
               "pluginVersion": "9.2.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "markdown",
                   "showLineNumbers": true,

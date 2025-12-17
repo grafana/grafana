@@ -808,7 +808,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },

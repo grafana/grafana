@@ -27,7 +27,6 @@
     "links": [],
     "panels": [
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "apiVersion": "v1",
           "type": "grafana-testdata-datasource",
@@ -60,7 +59,6 @@
         "type": "text"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -197,7 +195,6 @@
         "type": "state-timeline"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -388,7 +385,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -584,7 +580,6 @@
         "type": "status-history"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -835,7 +830,6 @@
         "type": "barchart"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -865,7 +859,6 @@
         "type": "text"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -1270,7 +1263,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -1630,7 +1622,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -1887,7 +1878,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -2737,7 +2727,6 @@
         "type": "timeseries"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },

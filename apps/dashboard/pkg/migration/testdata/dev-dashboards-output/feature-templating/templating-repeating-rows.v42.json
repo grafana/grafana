@@ -35,7 +35,6 @@
       "type": "row"
     },
     {
-      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -173,7 +172,6 @@
       "id": 25,
       "panels": [
         {
-          "autoMigrateFrom": "text",
           "gridPos": {
             "h": 2,
             "w": 24,

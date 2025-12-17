@@ -67,10 +67,6 @@
             "version": "7.4.0-pre",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "# variable: ${text}\n         ",
                 "mode": "markdown"
               },

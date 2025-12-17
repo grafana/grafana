@@ -35,7 +35,6 @@
     "liveNow": false,
     "panels": [
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -69,7 +68,6 @@
         "type": "text"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -103,7 +101,6 @@
         "type": "text"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -137,7 +134,6 @@
         "type": "text"
       },
       {
-        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },

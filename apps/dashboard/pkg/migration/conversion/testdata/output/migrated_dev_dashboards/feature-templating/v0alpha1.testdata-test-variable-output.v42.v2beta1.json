@@ -72,10 +72,6 @@
             "version": "8.4.0-pre",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "VariableUnderTest: $VariableUnderTest",
                 "mode": "markdown"
               },
@@ -125,10 +121,6 @@
             "version": "8.4.0-pre",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "VariableUnderTestText: ${VariableUnderTest:text}",
                 "mode": "markdown"
               },
@@ -178,10 +170,6 @@
             "version": "8.4.0-pre",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "VariableUnderTestRaw: ${VariableUnderTest:raw}",
                 "mode": "markdown"
               },

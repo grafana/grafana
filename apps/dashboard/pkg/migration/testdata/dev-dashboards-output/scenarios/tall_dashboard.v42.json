@@ -22,7 +22,6 @@
   "links": [],
   "panels": [
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -58,7 +57,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -94,7 +92,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -130,7 +127,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -166,7 +162,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -202,7 +197,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -238,7 +232,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -274,7 +267,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -310,7 +302,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -346,7 +337,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -382,7 +372,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -418,7 +407,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -454,7 +442,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -490,7 +477,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -526,7 +512,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -562,7 +547,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -598,7 +582,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -634,7 +617,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -670,7 +652,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -706,7 +687,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -742,7 +722,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -778,7 +757,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -814,7 +792,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -850,7 +827,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -886,7 +862,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -922,7 +897,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -958,7 +932,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -994,7 +967,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1030,7 +1002,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1066,7 +1037,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1102,7 +1072,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1138,7 +1107,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1174,7 +1142,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1210,7 +1177,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1246,7 +1212,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1282,7 +1247,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1318,7 +1282,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1354,7 +1317,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1390,7 +1352,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1426,7 +1387,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1462,7 +1422,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1498,7 +1457,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1534,7 +1492,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1570,7 +1527,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1606,7 +1562,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1642,7 +1597,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1678,7 +1632,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1714,7 +1667,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1750,7 +1702,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"
@@ -1786,7 +1737,6 @@
       "type": "text"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana",
         "uid": "grafana"

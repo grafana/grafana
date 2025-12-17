@@ -69,10 +69,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -127,10 +123,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -185,10 +177,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -243,10 +231,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -301,10 +285,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -359,10 +339,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -417,10 +393,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -475,10 +447,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -533,10 +501,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -591,10 +555,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -649,10 +609,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -707,10 +663,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -765,10 +717,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -823,10 +771,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -881,10 +825,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -939,10 +879,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -997,10 +933,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1055,10 +987,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1113,10 +1041,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1171,10 +1095,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1229,10 +1149,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1287,10 +1203,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1345,10 +1257,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1403,10 +1311,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1461,10 +1365,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1519,10 +1419,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1577,10 +1473,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1635,10 +1527,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1693,10 +1581,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1751,10 +1635,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1809,10 +1689,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1867,10 +1743,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1925,10 +1797,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -1983,10 +1851,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2041,10 +1905,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2099,10 +1959,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2157,10 +2013,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2215,10 +2067,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2273,10 +2121,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2331,10 +2175,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2389,10 +2229,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2447,10 +2283,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2505,10 +2337,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2563,10 +2391,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2621,10 +2445,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2679,10 +2499,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2737,10 +2553,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2795,10 +2607,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2853,10 +2661,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2911,10 +2715,6 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,

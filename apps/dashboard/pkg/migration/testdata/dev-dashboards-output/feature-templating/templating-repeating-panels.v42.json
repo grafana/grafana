@@ -22,7 +22,6 @@
   "liveNow": false,
   "panels": [
     {
-      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -136,7 +135,6 @@
       "type": "timeseries"
     },
     {
-      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 20,
         "w": 16,

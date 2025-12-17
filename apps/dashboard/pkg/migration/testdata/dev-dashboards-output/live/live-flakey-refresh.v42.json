@@ -38,7 +38,6 @@
   "liveNow": true,
   "panels": [
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "datasource",
         "uid": "grafana"

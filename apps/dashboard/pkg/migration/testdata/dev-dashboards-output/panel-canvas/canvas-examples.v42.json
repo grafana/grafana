@@ -1142,7 +1142,6 @@
       "type": "canvas"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -3326,7 +3325,6 @@
       "type": "canvas"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -3602,7 +3600,6 @@
       "type": "canvas"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -3816,7 +3813,6 @@
       "type": "canvas"
     },
     {
-      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },

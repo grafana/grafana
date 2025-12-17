@@ -26,7 +26,6 @@
     "links": [],
     "panels": [
       {
-        "autoMigrateFrom": "text",
         "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
         "datasource": {
           "apiVersion": "v1",

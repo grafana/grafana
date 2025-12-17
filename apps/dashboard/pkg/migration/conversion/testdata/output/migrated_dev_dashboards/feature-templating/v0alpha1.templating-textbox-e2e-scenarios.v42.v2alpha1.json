@@ -63,10 +63,6 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "# variable: ${text}\n         ",
                 "mode": "markdown"
               },
