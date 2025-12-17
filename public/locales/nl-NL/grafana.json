@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Externe link openen"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Meer",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Waarden gescheiden door komma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -11413,6 +11419,12 @@
         "latestReleaseDate": "Uiterste releasedatum:",
         "latestVersion": "Nieuwste versie",
         "license": "Licentie",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Een probleem melden",
         "reportAbuse": "",
         "reportAbuseTooltip": "Meld problemen met kwaadaardige of schadelijke plug-ins rechtstreeks aan Grafana Labs.",
