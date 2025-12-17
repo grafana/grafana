@@ -367,6 +367,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 	query.Limit = 0
 	query.Page = 1
 	res, err = c.dashboardStore.FindDashboards(ctx, query)
+	if err != nil {
+		return nil, err
+	}
 	list.TotalHits = int64(len(res))
 
 	return list, nil
