@@ -102,7 +102,7 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
     throw new Error('colorAtGradientPercent requires at least two color stops');
   }
 
-  // normalize and sort stops by percent
+  // normalize and sort stops by percent. TODO: is this necessary? is gradientstops always sorted?
   const sorted = stops
     .map((s) => ({ color: s.color, percent: clamp(s.percent, 0, 1) }))
     .sort((a, b) => a.percent - b.percent);
@@ -115,25 +115,24 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
     return tinycolor(sorted[sorted.length - 1].color);
   }
 
-  // find surrounding stops
-  let left = sorted[0];
-  let right = sorted[sorted.length - 1];
-  for (let i = 1; i < sorted.length; i++) {
-    if (percent <= sorted[i].percent) {
-      left = sorted[i - 1];
-      right = sorted[i];
-      break;
+  // find surrounding stops using binary search
+  let lo = 0;
+  let hi = sorted.length - 1;
+  while (lo + 1 < hi) {
+    const mid = (lo + hi) >> 1;
+    if (percent <= sorted[mid].percent) {
+      hi = mid;
+    } else {
+      lo = mid;
     }
   }
 
+  const left = sorted[lo];
+  const right = sorted[hi];
+
   const range = right.percent - left.percent;
   const t = range === 0 ? 0 : (percent - left.percent) / range; // 0..1
-
-  // tinycolor.mix expects amount as percentage of the second color
-  const mixed = tinycolor.mix(left.color, right.color, t * 100);
-
-  // return hex6 if opaque, hex8 if has alpha
-  return mixed;
+  return tinycolor.mix(left.color, right.color, t * 100);
 }
 
 export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): [string, string] {

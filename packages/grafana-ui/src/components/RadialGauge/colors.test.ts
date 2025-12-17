@@ -151,6 +151,19 @@ describe('RadialGauge color utils', () => {
       expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
     });
 
+    it('will still work if unsorted', () => {
+      const gradient = [
+        { color: '#0000ff', percent: 1 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#ff0000', percent: 0 },
+      ];
+      expect(colorAtGradientPercent(gradient, 0).toHexString()).toBe('#ff0000');
+      expect(colorAtGradientPercent(gradient, 0.25).toHexString()).toBe('#808000');
+      expect(colorAtGradientPercent(gradient, 0.5).toHexString()).toBe('#00ff00');
+      expect(colorAtGradientPercent(gradient, 0.75).toHexString()).toBe('#008080');
+      expect(colorAtGradientPercent(gradient, 1).toHexString()).toBe('#0000ff');
+    });
+
     it('should not throw an error when percent is outside 0-1 range', () => {
       const gradient = [
         { color: '#ff0000', percent: 0 },
