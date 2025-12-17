@@ -39,7 +39,8 @@ jest.mock('@grafana/runtime/internal', () => ({
 
 // Set up contextSrv.user.id for useSavedSearches session storage key.
 // The hook uses this ID to create a per-user session storage key.
-// Note: hasPermission is handled by grantUserPermissions via jest.spyOn, not mocked here.
+// Note: hasPermission must be mocked here because RulesFilter.v1.tsx calls it at module load time,
+// before grantUserPermissions can set up the spy. grantUserPermissions still works for runtime checks.
 jest.mock('app/core/services/context_srv', () => {
   const actual = jest.requireActual('app/core/services/context_srv');
   return {
@@ -50,6 +51,7 @@ jest.mock('app/core/services/context_srv', () => {
         ...actual.contextSrv.user,
         id: 123,
       },
+      hasPermission: jest.fn().mockReturnValue(true),
     },
   };
 });

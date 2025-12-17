@@ -33,14 +33,9 @@ const ui = {
   duplicateNameError: byText(/a saved search with this name already exists/i),
 };
 
+// Mock data is ordered as it will appear after sorting by useSavedSearches:
+// default search first, then alphabetically by name
 const mockSavedSearches: SavedSearch[] = [
-  {
-    id: '1',
-    name: 'My Firing Rules',
-    query: 'state:firing',
-    isDefault: false,
-    createdAt: Date.now() - 1000,
-  },
   {
     id: '2',
     name: 'Default Search',
@@ -54,6 +49,13 @@ const mockSavedSearches: SavedSearch[] = [
     query: 'label:severity=critical state:firing',
     isDefault: false,
     createdAt: Date.now() - 3000,
+  },
+  {
+    id: '1',
+    name: 'My Firing Rules',
+    query: 'state:firing',
+    isDefault: false,
+    createdAt: Date.now() - 1000,
   },
 ];
 
@@ -184,7 +186,7 @@ describe('SavedSearches', () => {
 
       await user.click(ui.savedSearchesButton.get());
       const applyButtons = await ui.applyButtons.findAll();
-      // Click the apply button for "My Firing Rules" (third in sorted list: Default, Critical, My Firing)
+      // Click the apply button for "My Firing Rules" (third in list: Default, Critical, My Firing)
       await user.click(applyButtons[2]);
 
       expect(props.onApply).toHaveBeenCalledWith(
@@ -206,19 +208,19 @@ describe('SavedSearches', () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-      // Use a non-default search's menu (second item after sorting)
+      // Use a non-default search's menu (second item: "Critical Alerts")
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[1]);
       await user.click(await ui.setAsDefaultMenuItem.find());
 
-      expect(props.onSetDefault).toHaveBeenCalled();
+      expect(props.onSetDefault).toHaveBeenCalledWith('3');
     });
 
     it('removes default from a search', async () => {
       const { user, props } = setup();
 
       await user.click(ui.savedSearchesButton.get());
-      // Default Search is first item
+      // Default Search is first item (index 0)
       const menuButtons = await ui.actionMenuButtons.findAll();
       await user.click(menuButtons[0]);
       await user.click(await ui.removeDefaultMenuItem.find());
@@ -274,6 +276,7 @@ describe('SavedSearches', () => {
 
       await user.click(ui.savedSearchesButton.get());
       const menuButtons = await ui.actionMenuButtons.findAll();
+      // Delete the first item (Default Search, id: '2')
       await user.click(menuButtons[0]);
       await user.click(await ui.deleteMenuItem.find());
 

@@ -78,20 +78,22 @@ jest.mock('../../../../../core/services/context_srv', () => ({
   },
 }));
 
+// Mock data is ordered as it will appear after sorting by useSavedSearches:
+// default search first, then alphabetically by name
 const mockSavedSearches = [
-  {
-    id: '1',
-    name: 'Test Search 1',
-    query: 'state:firing',
-    isDefault: false,
-    createdAt: Date.now() - 1000,
-  },
   {
     id: '2',
     name: 'Default Search',
     query: 'label:team=A',
     isDefault: true,
     createdAt: Date.now() - 2000,
+  },
+  {
+    id: '1',
+    name: 'Test Search 1',
+    query: 'state:firing',
+    isDefault: false,
+    createdAt: Date.now() - 1000,
   },
 ];
 
@@ -212,7 +214,7 @@ describe('useSavedSearches', () => {
       expect(mockStorageData.savedSearches).toContain('"name":"New Search"');
     });
 
-    it('should return validation error for duplicate name (case-insensitive)', async () => {
+    it('should throw validation error for duplicate name (case-insensitive)', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
@@ -221,14 +223,11 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      let validationError;
       await act(async () => {
-        validationError = await result.current.saveSearch('TEST SEARCH 1', 'state:pending');
-      });
-
-      expect(validationError).toEqual({
-        field: 'name',
-        message: expect.stringContaining('already exists'),
+        await expect(result.current.saveSearch('TEST SEARCH 1', 'state:pending')).rejects.toEqual({
+          field: 'name',
+          message: expect.stringContaining('already exists'),
+        });
       });
     });
 
@@ -274,7 +273,7 @@ describe('useSavedSearches', () => {
       expect(mockStorageData.savedSearches).toContain('"name":"Renamed Search"');
     });
 
-    it('should return validation error for duplicate name on rename', async () => {
+    it('should throw validation error for duplicate name on rename', async () => {
       setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
@@ -283,14 +282,11 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      let validationError;
       await act(async () => {
-        validationError = await result.current.renameSearch('1', 'Default Search');
-      });
-
-      expect(validationError).toEqual({
-        field: 'name',
-        message: expect.stringContaining('already exists'),
+        await expect(result.current.renameSearch('1', 'Default Search')).rejects.toEqual({
+          field: 'name',
+          message: expect.stringContaining('already exists'),
+        });
       });
     });
   });
