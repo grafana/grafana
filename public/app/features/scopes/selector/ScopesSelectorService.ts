@@ -577,8 +577,17 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Check if there are recent scopes - if so, we want to show them instead of expanding
     const recentScopes = this.getRecentScopes();
+    console.log(
+      '[OPEN] Recent scopes count:',
+      recentScopes.length,
+      'Applied scopes:',
+      this.state.appliedScopes.length,
+      'Selected scopes:',
+      this.state.selectedScopes.length
+    );
     const shouldExpandToSelection =
       this.state.selectedScopes.length > 0 && this.state.selectedScopes[0].scopeNodeId && recentScopes.length === 0; // Only expand if no recent scopes to show
+    console.log('[OPEN] Should expand:', shouldExpandToSelection);
 
     if (shouldExpandToSelection) {
       let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
