@@ -363,7 +363,10 @@ LIMIT
           isOpen={isExpanded}
           onDismiss={() => setIsExpanded(false)}
         >
-          <AutoSizer>{({ width, height }) => renderMainContent(width, height)}</AutoSizer>
+          <Stack direction="column" gap={1}>
+            {renderSQLButtons()}
+            {renderMainContent()}
+          </Stack>
         </Modal>
       )}
     </>
