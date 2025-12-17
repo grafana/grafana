@@ -38,6 +38,54 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
+jest.mock('../ScopesApiClient', () => ({
+  ScopesApiClient: jest.fn().mockImplementation(() => ({
+    fetchScope: jest.fn().mockImplementation((name: string) => {
+      const { mocksScopes } = jest.requireActual('./utils/mocks');
+      return Promise.resolve(mocksScopes.find((s: { metadata: { name: string } }) => s.metadata.name === name));
+    }),
+    fetchMultipleScopes: jest.fn().mockImplementation((names: string[]) => {
+      const { mocksScopes } = jest.requireActual('./utils/mocks');
+      return Promise.resolve(
+        names
+          .map((name) => mocksScopes.find((s: { metadata: { name: string } }) => s.metadata.name === name))
+          .filter(Boolean)
+      );
+    }),
+    fetchMultipleScopeNodes: jest.fn().mockResolvedValue([]),
+    fetchNodes: jest.fn().mockImplementation((options: { parent?: string; query?: string }) => {
+      const { mocksNodes } = jest.requireActual('./utils/mocks');
+      return Promise.resolve(
+        mocksNodes.filter(
+          (node: { spec: { parentName: string; title: string } }) =>
+            node.spec.parentName === (options.parent ?? '') &&
+            node.spec.title.toLowerCase().includes((options.query ?? '').toLowerCase())
+        )
+      );
+    }),
+    fetchDashboards: jest.fn().mockImplementation((scopeNames: string[]) => {
+      const { mocksScopeDashboardBindings } = jest.requireActual('./utils/mocks');
+      return Promise.resolve(
+        mocksScopeDashboardBindings.filter((b: { spec: { scope: string } }) => scopeNames.includes(b.spec.scope))
+      );
+    }),
+    fetchScopeNavigations: jest.fn().mockImplementation((scopeNames: string[]) => {
+      const { subScopeMimirItems, subScopeLokiItems } = jest.requireActual('./utils/mocks');
+      if (scopeNames.includes('mimir')) {
+        return Promise.resolve(subScopeMimirItems);
+      }
+      if (scopeNames.includes('loki')) {
+        return Promise.resolve(subScopeLokiItems);
+      }
+      return Promise.resolve([]);
+    }),
+    fetchScopeNode: jest.fn().mockImplementation((name: string) => {
+      const { mocksNodes } = jest.requireActual('./utils/mocks');
+      return Promise.resolve(mocksNodes.find((n: { metadata: { name: string } }) => n.metadata.name === name));
+    }),
+  })),
+}));
+
 describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
   let dashboardReloadSpy: jest.SpyInstance;
