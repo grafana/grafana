@@ -85,7 +85,7 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
-  serializerVersion?: 'v1' | 'v2';
+  targetVersion?: 'v1' | 'v2';
 }
 
 export type HomeDashboardDTO = DashboardDTO & {

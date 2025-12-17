@@ -227,7 +227,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
             dashboard: { ...v1SaveModel, title: v1SaveModel.title ?? '', uid: v1SaveModel.uid ?? '' },
             meta: scene.state.meta,
           },
-          { uid: scene.state.uid ?? '', route: DashboardRoutes.Normal, serializerVersion: 'v2' }
+          { uid: scene.state.uid ?? '', route: DashboardRoutes.Normal, targetVersion: 'v2' }
         );
       }
 
