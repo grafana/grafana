@@ -410,20 +410,19 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           newScopesState[scope.metadata.name] = scope;
         }
 
-        // TODO: Re-enable pre-fetching once expansion logic is fixed
         // Pre-fetch the first scope's defaultPath to improve performance
         // This makes the selector open instantly since all nodes are already cached
         // We only need the first scope since that's what's used for expansion
-        // const firstScope = fetchedScopes[0];
-        // if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
-        //   // Deduplicate and filter out already cached nodes
-        //   const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
-        //   const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
-        //
-        //   if (nodesToFetch.length > 0) {
-        //     await this.getScopeNodes(nodesToFetch);
-        //   }
-        // }
+        const firstScope = fetchedScopes[0];
+        if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
+          // Deduplicate and filter out already cached nodes
+          const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
+          const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+
+          if (nodesToFetch.length > 0) {
+            await this.getScopeNodes(nodesToFetch);
+          }
+        }
 
         const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
@@ -575,21 +574,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // First close all nodes
     let newTree = closeNodes(this.state.tree);
 
-    // Check if there are recent scopes - if so, we want to show them instead of expanding
-    const recentScopes = this.getRecentScopes();
-    console.log(
-      '[OPEN] Recent scopes count:',
-      recentScopes.length,
-      'Applied scopes:',
-      this.state.appliedScopes.length,
-      'Selected scopes:',
-      this.state.selectedScopes.length
-    );
-    const shouldExpandToSelection =
-      this.state.selectedScopes.length > 0 && this.state.selectedScopes[0].scopeNodeId && recentScopes.length === 0; // Only expand if no recent scopes to show
-    console.log('[OPEN] Should expand:', shouldExpandToSelection);
-
-    if (shouldExpandToSelection) {
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
       let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
