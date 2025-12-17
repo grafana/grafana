@@ -302,13 +302,6 @@
       },
       "id": 6,
       "mode": "markdown",
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        }
-      },
       "pluginVersion": "11.0.0-pre",
       "targets": [
         {
