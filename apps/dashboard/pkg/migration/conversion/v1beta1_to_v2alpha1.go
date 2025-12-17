@@ -2240,23 +2240,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		}
 	}
 
-	// Handle old Angular-style text panels where content and mode are at the root level
-	// instead of inside the options object. This matches the frontend migration in
-	// textPanelMigrationHandler.ts. Text panels don't change type (text → text), but
-	// the properties need to be moved into options.
-	if panelType == "text" {
-		if content, ok := panelMap["content"].(string); ok {
-			if _, hasContent := options["content"]; !hasContent {
-				options["content"] = content
-			}
-		}
-		if mode, ok := panelMap["mode"].(string); ok {
-			if _, hasMode := options["mode"]; !hasMode {
-				options["mode"] = mode
-			}
-		}
-	}
-
 	// Add frontend-style default options to match frontend behavior
 	if legend, ok := options["legend"].(map[string]interface{}); ok {
 		// Add showLegend: true to match frontend behavior
@@ -2267,9 +2250,14 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 
 	// Handle Angular panel migrations
 	// This replicates the v0→v1 migration logic for panels that weren't migrated yet.
-	// We check two cases:
-	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
-	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
+	// 1. Panels that change type (singlestat→stat, graph→timeseries, etc.):
+	//    - Detected via AngularPanelMigrations map or autoMigrateFrom field
+	//    - Original Angular options stored in __angularMigration for frontend handlers
+	//
+	// 2. Text panels (special case - type stays "text"):
+	//    - Old Angular text panels have content/mode at root level instead of in options
+	//    - We move these properties into options directly (no __angularMigration needed)
+	//    - This matches frontend's textPanelMigrationHandler.ts behavior
 	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
 
 	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
@@ -2284,6 +2272,21 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		options["__angularMigration"] = map[string]interface{}{
 			"autoMigrateFrom": autoMigrateFrom,
 			"originalOptions": extractAngularOptions(panelMap),
+		}
+	}
+
+	// Handle old Angular-style text panels where content and mode are at the root level
+	// instead of inside the options object.
+	if panelType == "text" {
+		if content, ok := panelMap["content"].(string); ok {
+			if _, hasContent := options["content"]; !hasContent {
+				options["content"] = content
+			}
+		}
+		if mode, ok := panelMap["mode"].(string); ok {
+			if _, hasMode := options["mode"]; !hasMode {
+				options["mode"] = mode
+			}
 		}
 	}
 
