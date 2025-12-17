@@ -15,7 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -234,20 +233,9 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), 30*time.Second), nil
 }
 
-// listFolderFiles returns a list of files in a folder
+// listFolderFiles returns a list of files in a folder.
+// Authorization is handled at the route level via authorizeRepositorySubresource.
 func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, apierrors.NewUnauthorized("missing auth info in context")
-	}
-
-	// Check admin access - the frontend provisioning pages require admin access (controlled by navtree).
-	// AccessPolicy identities (ST->MT flow) are trusted internal callers.
-	if !isAccessPolicy(id) && !id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
-			fmt.Errorf("admin role is required"))
-	}
-
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {
 		return nil, apierrors.NewBadRequest("folder navigation not yet supported")

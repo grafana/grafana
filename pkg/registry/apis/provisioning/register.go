@@ -343,42 +343,72 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // authorizeResource handles authorization for different resources.
-// Different routes may need different permissions:
+// Uses fine-grained permissions defined in accesscontrol.go:
 //
-// Admin-only:
-//   - Repository CRUD, test, files, refs, jobs, resources, history
-//   - Stats, settings, jobs, historic jobs
-//   - Connection CRUD
+// Repositories:
+//   - CRUD: repositories:create/read/write/delete
+//   - Subresources (files, refs, resources, history, status): repositories:read
+//   - Test: repositories:write
+//   - Jobs subresource: jobs:create/read
 //
-// Viewer:
-//   - Repository/connection status (GET only)
+// Connections:
+//   - CRUD: connections:create/read/write/delete
+//   - Status: connections:read
+//
+// Other resources (stats, settings, jobs, historicjobs):
+//   - Admin role or AccessPolicy required
 func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
-		return b.authorizeRepositorySubresource(a, id)
+		return b.authorizeRepositorySubresource(ctx, a, id)
 	case "stats", "settings", provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
 		return allowForAdminsOrAccessPolicy(id)
 	case provisioning.ConnectionResourceInfo.GetName():
-		return b.authorizeConnectionSubresource(a, id)
+		return b.authorizeConnectionSubresource(ctx, a, id)
 	default:
 		return b.authorizeDefault(id)
 	}
 }
 
 // authorizeRepositorySubresource handles authorization for repository subresources.
-// Subresources are grouped by required role level.
-func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
-	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+// Uses the access checker with verb-based authorization.
+func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
-	// Admin-only: repository CRUD and all subresources
-	case "", "test", "files", "refs", "jobs", "resources", "history":
-		return allowForAdminsOrAccessPolicy(id)
-	// Viewer: status GET only
-	case "status":
-		if a.GetVerb() == apiutils.VerbGet {
-			return allowForViewersOrAccessPolicy(id)
+	// Repository CRUD - use access checker with the actual verb
+	case "":
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+
+	// Test requires write permission (testing before save)
+	case "test":
+		return b.checkAccess(ctx, id, "update", provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+
+	// Read-only subresources: files listing, refs, resources, history, status
+	case "files", "refs", "resources", "history", "status":
+		return b.checkAccess(ctx, id, "get", provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+
+	// Jobs subresource - check jobs permissions with the verb
+	case "jobs":
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", "", a.GetNamespace())
+
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
+// authorizeConnectionSubresource handles authorization for connection subresources.
+// Uses the access checker with verb-based authorization.
+func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	// Connection CRUD - use access checker with the actual verb
+	case "":
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
+
+	// Status is read-only
+	case "status":
+		return b.checkAccess(ctx, id, "get", provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
 
 	default:
 		if id.GetIsGrafanaAdmin() {
@@ -389,58 +419,56 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 }
 
 // ----------------------------------------------------------------------------
-// Role-based authorization helpers
+// Authorization helpers
 // ----------------------------------------------------------------------------
-// These helpers check both the traditional org role AND AccessPolicy identity.
-// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT)
-// and don't have org roles, so we allow them through.
-// The frontend provisioning pages require admin access (controlled by navtree in admin.go).
 
 func isAccessPolicy(id identity.Requester) bool {
 	return authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
 }
 
+// checkAccess uses the access checker to verify permissions.
+// Falls back to admin role for backwards compatibility.
+func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
+	// AccessPolicy identities are trusted internal callers (ST->MT flow)
+	if isAccessPolicy(id) {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Use the access checker
+	res, err := b.access.Check(ctx, id, authlib.CheckRequest{
+		Verb:      verb,
+		Group:     group,
+		Resource:  resource,
+		Name:      name,
+		Namespace: namespace,
+	}, "")
+
+	if err != nil {
+		// Fall back to admin role on error
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "failed to check access: " + err.Error(), nil
+	}
+
+	if res.Allowed {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Fall back to admin role for backwards compatibility
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	return authorizer.DecisionDeny, "permission denied", nil
+}
+
+// allowForAdminsOrAccessPolicy is used for resources without fine-grained permissions.
 func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
 	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-func allowForEditorsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleEditor) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "editor role is required", nil
-}
-
-func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleViewer) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "viewer role is required", nil
-}
-
-// authorizeConnectionSubresource handles authorization for connection subresources.
-func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
-	switch a.GetSubresource() {
-	// Admin-only: connection CRUD
-	case "":
-		return allowForAdminsOrAccessPolicy(id)
-
-	// Viewer: status GET only
-	case "status":
-		if a.GetVerb() == apiutils.VerbGet {
-			return allowForViewersOrAccessPolicy(id)
-		}
-		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
-
-	default:
-		if id.GetIsGrafanaAdmin() {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
-	}
 }
 
 // authorizeDefault handles authorization for unmapped resources.
