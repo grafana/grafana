@@ -243,7 +243,7 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 
 	// Check admin access - the frontend provisioning pages require admin access (controlled by navtree).
 	// AccessPolicy identities (ST->MT flow) are trusted internal callers.
-	if !isAdminOrAccessPolicy(id) {
+	if !isAccessPolicy(id) && !id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
 			fmt.Errorf("admin role is required"))
 	}

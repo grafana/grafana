@@ -358,12 +358,8 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
 		return b.authorizeRepositorySubresource(a, id)
-	case "stats":
-		return b.authorizeStats(id)
-	case "settings":
-		return b.authorizeSettings(id)
-	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
-		return b.authorizeJobs(id)
+	case "stats", "settings", provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
+		return allowForAdminsOrAccessPolicy(id)
 	case provisioning.ConnectionResourceInfo.GetName():
 		return b.authorizeConnectionSubresource(a, id)
 	default:
@@ -422,42 +418,17 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 	}
 }
 
-// isAdminOrAccessPolicy checks if the requester is either an admin user or an AccessPolicy identity.
-// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT) and don't have org roles,
-// so we allow them through. Regular users must have admin role.
-func isAdminOrAccessPolicy(id identity.Requester) bool {
-	// AccessPolicy identities are trusted internal callers (ST->MT flow)
-	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) {
-		return true
-	}
-	// Regular users need admin role
-	return id.GetOrgRole().Includes(identity.RoleAdmin)
+// isAccessPolicy checks if the requester is an AccessPolicy identity.
+// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT) and don't have org roles.
+func isAccessPolicy(id identity.Requester) bool {
+	return authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
 }
 
-// authorizeStats handles authorization for stats resource.
-func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
-	// Stats is a read-only endpoint that returns resource counts.
-	// The frontend provisioning pages require admin access (controlled by navtree).
-	if isAdminOrAccessPolicy(id) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-// authorizeSettings handles authorization for settings resource.
-func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
-	// Settings is a read-only endpoint that returns available repository types and configuration.
-	// The frontend provisioning pages require admin access (controlled by navtree).
-	if isAdminOrAccessPolicy(id) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-// authorizeJobs handles authorization for job resources.
-func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, string, error) {
-	// Jobs are shown on the configuration page.
-	if isAdminOrAccessPolicy(id) {
+// allowForAdminsOrAccessPolicy allows access for admin users or AccessPolicy identities.
+// The frontend provisioning pages require admin access (controlled by navtree in admin.go).
+// AccessPolicy identities (ST->MT flow) are trusted internal callers without org roles.
+func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
+	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
