@@ -101,15 +101,24 @@ describe('RadialGauge color utils', () => {
       ).toMatchSnapshot();
     });
 
-    it('should return gradient colors for by-value color modes', () => {
+    it.each(['dark', 'light'] as const)('should return gradient colors for by-value color mode in %s theme', (mode) => {
       expect(
-        buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues)))
+        buildGradientColors(
+          'auto',
+          createTheme({ colors: { mode } }),
+          buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues))
+        )
       ).toMatchSnapshot();
     });
 
-    it('should return gradient colors for fixed color mode', () => {
+    it.each(['dark', 'light'] as const)('should return gradient colors for fixed color mode in %s theme', (mode) => {
       expect(
-        buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#442299')
+        buildGradientColors(
+          'auto',
+          createTheme({ colors: { mode } }),
+          buildFieldDisplay(createField(FieldColorModeId.Fixed)),
+          '#442299'
+        )
       ).toMatchSnapshot();
     });
   });
