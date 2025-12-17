@@ -18,7 +18,7 @@ func TestJitter(t *testing.T) {
 			baseInterval := 10 * time.Second
 
 			for _, r := range rules {
-				offset := jitterOffsetInTicks(r, baseInterval, JitterNever)
+				offset := JitterOffsetInTicks(r, baseInterval, JitterNever)
 				require.Zero(t, offset, "unexpected offset, should be zero with jitter disabled; got %d", offset)
 			}
 		})
@@ -28,11 +28,11 @@ func TestJitter(t *testing.T) {
 		t.Run("offset is stable for the same rule", func(t *testing.T) {
 			rule := genWithInterval10to600.GenerateRef()
 			baseInterval := 10 * time.Second
-			original := jitterOffsetInTicks(rule, baseInterval, JitterByGroup)
+			original := JitterOffsetInTicks(rule, baseInterval, JitterByGroup)
 
 			for i := 0; i < 100; i++ {
-				offset := jitterOffsetInTicks(rule, baseInterval, JitterByGroup)
-				require.Equal(t, original, offset, "jitterOffsetInTicks should return the same value for the same rule")
+				offset := JitterOffsetInTicks(rule, baseInterval, JitterByGroup)
+				require.Equal(t, original, offset, "JitterOffsetInTicks should return the same value for the same rule")
 			}
 		})
 
@@ -41,7 +41,7 @@ func TestJitter(t *testing.T) {
 			rules := genWithInterval10to600.GenerateManyRef(1000)
 
 			for _, r := range rules {
-				offset := jitterOffsetInTicks(r, baseInterval, JitterByGroup)
+				offset := JitterOffsetInTicks(r, baseInterval, JitterByGroup)
 				require.GreaterOrEqual(t, offset, int64(0), "offset cannot be negative, got %d for rule with interval %d", offset, r.IntervalSeconds)
 				upperLimit := r.IntervalSeconds / int64(baseInterval.Seconds())
 				require.Less(t, offset, upperLimit, "offset cannot be equal to or greater than interval/baseInterval of %d", upperLimit)
@@ -55,14 +55,14 @@ func TestJitter(t *testing.T) {
 			rules1 := gen.With(gen.WithInterval(60*time.Second), gen.WithGroupKey(group1)).GenerateManyRef(1000)
 			rules2 := gen.With(gen.WithInterval(1*time.Hour), gen.WithGroupKey(group2)).GenerateManyRef(1000)
 
-			group1Offset := jitterOffsetInTicks(rules1[0], baseInterval, JitterByGroup)
+			group1Offset := JitterOffsetInTicks(rules1[0], baseInterval, JitterByGroup)
 			for _, r := range rules1 {
-				offset := jitterOffsetInTicks(r, baseInterval, JitterByGroup)
+				offset := JitterOffsetInTicks(r, baseInterval, JitterByGroup)
 				require.Equal(t, group1Offset, offset)
 			}
-			group2Offset := jitterOffsetInTicks(rules2[0], baseInterval, JitterByGroup)
+			group2Offset := JitterOffsetInTicks(rules2[0], baseInterval, JitterByGroup)
 			for _, r := range rules2 {
-				offset := jitterOffsetInTicks(r, baseInterval, JitterByGroup)
+				offset := JitterOffsetInTicks(r, baseInterval, JitterByGroup)
 				require.Equal(t, group2Offset, offset)
 			}
 		})
@@ -72,11 +72,11 @@ func TestJitter(t *testing.T) {
 		t.Run("offset is stable for the same rule", func(t *testing.T) {
 			rule := genWithInterval10to600.GenerateRef()
 			baseInterval := 10 * time.Second
-			original := jitterOffsetInTicks(rule, baseInterval, JitterByRule)
+			original := JitterOffsetInTicks(rule, baseInterval, JitterByRule)
 
 			for i := 0; i < 100; i++ {
-				offset := jitterOffsetInTicks(rule, baseInterval, JitterByRule)
-				require.Equal(t, original, offset, "jitterOffsetInTicks should return the same value for the same rule")
+				offset := JitterOffsetInTicks(rule, baseInterval, JitterByRule)
+				require.Equal(t, original, offset, "JitterOffsetInTicks should return the same value for the same rule")
 			}
 		})
 
@@ -85,7 +85,7 @@ func TestJitter(t *testing.T) {
 			rules := genWithInterval10to600.GenerateManyRef(1000)
 
 			for _, r := range rules {
-				offset := jitterOffsetInTicks(r, baseInterval, JitterByRule)
+				offset := JitterOffsetInTicks(r, baseInterval, JitterByRule)
 				require.GreaterOrEqual(t, offset, int64(0), "offset cannot be negative, got %d for rule with interval %d", offset, r.IntervalSeconds)
 				upperLimit := r.IntervalSeconds / int64(baseInterval.Seconds())
 				require.Less(t, offset, upperLimit, "offset cannot be equal to or greater than interval/baseInterval of %d", upperLimit)

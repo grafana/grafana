@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,9 +36,9 @@ func JitterStrategyFrom(cfg setting.UnifiedAlertingSettings, toggles featuremgmt
 	return strategy
 }
 
-// jitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
+// JitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
 // The resulting number of ticks is non-negative. We assume the rule is well-formed and has an IntervalSeconds greater to or equal than baseInterval.
-func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
+func JitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
 	if strategy == JitterNever {
 		return 0
 	}
