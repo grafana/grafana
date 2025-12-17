@@ -7561,6 +7561,15 @@
       },
       "name": "matcher",
       "type": "array"
+     },
+     {
+      "description": "Filter rules by their static labels (not alert instance labels). Each value is a JSON-encoded Prometheus-like matcher (for example, {\"type\":0,\"name\":\"severity\",\"value\":\"critical\"}).\nFor equality matchers with empty string values (e.g., name=\"\"), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "rule_matcher",
+      "type": "array"
      }
     ],
     "responses": {

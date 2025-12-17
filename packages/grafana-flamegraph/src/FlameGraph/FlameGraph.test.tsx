@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import * as React from 'react';
+import { type ComponentProps, useRef } from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
@@ -16,14 +16,14 @@ jest.mock('react-use', () => {
   return {
     ...reactUse,
     useMeasure: () => {
-      const ref = React.useRef(null);
+      const ref = useRef(null);
       return [ref, { width: 1600 }];
     },
   };
 });
 
 describe('FlameGraph', () => {
-  function setup(props?: Partial<React.ComponentProps<typeof FlameGraph>>) {
+  function setup(props?: Partial<ComponentProps<typeof FlameGraph>>) {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 

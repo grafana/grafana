@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": ""
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Daha Fazla",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Virgülle ayrılmış değerler"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Ad filtresi",
@@ -11413,6 +11419,12 @@
         "latestReleaseDate": "Son yayın tarihi:",
         "latestVersion": "En Son Sürüm",
         "license": "Lisans",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Sorun bildir",
         "reportAbuse": "",
         "reportAbuseTooltip": "Zararlı veya kötü amaçlı eklentilere ilişkin sorunları doğrudan Grafana Labs'a bildirin.",
