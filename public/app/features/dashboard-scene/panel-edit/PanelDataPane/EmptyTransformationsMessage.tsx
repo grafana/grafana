@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
+import { DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -16,7 +16,6 @@ interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
-  data?: DataFrame[];
   isSqlApplicable?: boolean;
 }
 

@@ -191,7 +191,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
-          data={sourceData.data.series}
           isSqlApplicable={isSqlApplicable}
         />
         {transformationsDrawer}
