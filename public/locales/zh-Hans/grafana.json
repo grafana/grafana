@@ -2224,6 +2224,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "打开外部链接"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "更多",
       "new-menu": {
@@ -4802,8 +4809,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "以逗号分隔的值"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "名称筛选器",
@@ -11367,6 +11373,12 @@
         "latestReleaseDate": "最新发布日期：",
         "latestVersion": "最新版本",
         "license": "许可",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "报告问题",
         "reportAbuse": "",
         "reportAbuseTooltip": "直接向 Grafana Labs 报告与恶意或有害插件相关的问题。",

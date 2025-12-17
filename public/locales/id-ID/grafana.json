@@ -2224,6 +2224,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Buka tautan eksternal"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Lebih banyak",
       "new-menu": {
@@ -4802,8 +4809,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Nilai dipisahkan dengan koma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -11367,6 +11373,12 @@
         "latestReleaseDate": "Tanggal rilis terbaru:",
         "latestVersion": "Versi Terbaru",
         "license": "Lisensi",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Kemukakan masalah",
         "reportAbuse": "",
         "reportAbuseTooltip": "Laporkan masalah yang terkait dengan plugin jahat atau berbahaya langsung ke Grafana Labs.",

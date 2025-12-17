@@ -239,6 +239,27 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 	return alertRules, nil
 }
 
+// GetAlertRuleVersionFolders retrieves a list of unique folder UIDs that the given rule guid has belonged to.
+// Returned slice is ordered with more recent folders first.
+func (st DBstore) GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error) {
+	folders := make([]string, 0)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		if err := sess.Table(new(alertRuleVersion)).
+			Select("rule_namespace_uid").
+			Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).
+			GroupBy("rule_namespace_uid").
+			OrderBy("MAX(version) DESC").
+			Find(&folders); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return folders, nil
+}
+
 // ListDeletedRules retrieves a list of deleted alert rules for the specified organization ID from the database.
 // It ensures that only the latest version of each rule is included and filters out invalid or duplicated versions.
 // Returns a slice of *models.AlertRule  or an error if the operation fails.

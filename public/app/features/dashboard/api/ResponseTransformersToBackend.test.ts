@@ -1,12 +1,13 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { normalizeBackendOutputForFrontendComparison } from 'app/features/dashboard-scene/serialization/serialization-test-utils';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { transformSaveModelSchemaV2ToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
+import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { transformSceneToSaveModelSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 
-import { ensureV2Response } from './ResponseTransformers';
+import { DashboardWithAccessInfo } from './types';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -14,46 +15,87 @@ jest.mock('@grafana/runtime', () => {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'default-ds-uid',
     datasources: {
-      'default-ds-uid': {
-        meta: { id: 'prometheus' },
-        name: 'default-ds-uid',
-      },
-      'non-default-test-ds-uid': {
-        meta: { id: 'loki' },
-        name: 'non-default-test-ds-uid',
+      '-- Grafana --': {
+        type: 'grafana',
+        uid: '-- Grafana --',
+        name: 'Grafana',
+        meta: { id: 'grafana' },
       },
       'existing-ref-uid': {
+        type: 'prometheus',
+        uid: 'existing-ref-uid',
+        name: 'Prometheus',
         meta: { id: 'prometheus' },
-        name: 'existing-ref-uid',
       },
-      'existing-target-uid': {
-        meta: { id: 'elasticsearch' },
-        name: 'existing-target-uid',
-      },
-      'existing-ref': {
-        meta: { id: 'prometheus' },
-        name: 'existing-ref',
-      },
-      '-- Mixed --': {
-        meta: { id: 'mixed' },
-        name: '-- Mixed --',
-      },
-      'influx-uid': {
+      'influxdb-uid': {
+        type: 'influxdb',
+        uid: 'influxdb-uid',
+        name: 'InfluxDB',
         meta: { id: 'influxdb' },
-        name: 'influx-uid',
       },
       'cloudwatch-uid': {
+        type: 'cloudwatch',
+        uid: 'cloudwatch-uid',
+        name: 'CloudWatch',
         meta: { id: 'cloudwatch' },
-        name: 'cloudwatch-uid',
       },
-      '-- Grafana --': {
-        meta: { id: 'grafana' },
-        name: '-- Grafana --',
+      'elasticsearch-uid': {
+        type: 'elasticsearch',
+        uid: 'elasticsearch-uid',
+        name: 'Elasticsearch',
+        meta: { id: 'elasticsearch' },
+      },
+      'loki-uid': {
+        type: 'loki',
+        uid: 'loki-uid',
+        name: 'Loki',
+        meta: { id: 'loki' },
+      },
+      'default-ds-uid': {
+        type: 'prometheus',
+        uid: 'default-ds-uid',
+        name: 'Default Prometheus',
+        meta: { id: 'prometheus' },
+      },
+      'existing-target-uid': {
+        type: 'elasticsearch',
+        uid: 'existing-target-uid',
+        name: 'Elasticsearch Target',
+        meta: { id: 'elasticsearch' },
+      },
+      'non-default-test-ds-uid': {
+        type: 'loki',
+        uid: 'non-default-test-ds-uid',
+        name: 'Loki Test',
+        meta: { id: 'loki' },
+      },
+      '-- Mixed --': {
+        type: 'mixed',
+        uid: '-- Mixed --',
+        name: '-- Mixed --',
+        meta: { id: 'mixed' },
+      },
+      'influx-uid': {
+        type: 'influxdb',
+        uid: 'influx-uid',
+        name: 'InfluxDB Test',
+        meta: { id: 'influxdb' },
+      },
+      'cloudwatch-uid-alt': {
+        type: 'cloudwatch',
+        uid: 'cloudwatch-uid',
+        name: 'CloudWatch Test',
+        meta: { id: 'cloudwatch' },
+      },
+      'existing-ref': {
+        type: 'prometheus',
+        uid: 'existing-ref',
+        name: 'Existing Ref Name',
+        meta: { id: 'prometheus' },
       },
     },
-    apps: {},
     featureToggles: {
-      dashboardScene: true,
+      dashboardNewLayouts: true,
       kubernetesDashboards: true,
     },
   };
@@ -65,79 +107,20 @@ jest.mock('@grafana/runtime', () => {
 });
 
 /*
- * Frontend Conversion Test Design Explanation:
+ * V1 to V2 Dashboard Transformation Comparison Test (via ResponseTransformers)
  *
- * This test verifies that the frontend ensureV2Response function correctly converts
- * dashboard data to v2beta1 format. The test uses input files from the backend test suite
- * and compares the frontend conversion results with expected backend conversion results.
+ * This test compares frontend and backend transformations of dashboard data from v1 to v2 format.
+ * It uses the same test data as the backend conversion tests and verifies that the frontend
+ * transformation produces equivalent results to the backend transformation.
  *
- * Note: The frontend ensureV2Response function is designed to convert legacy dashboard
- * format to v2 format, while the backend handles Kubernetes resource format conversions.
- * This test focuses on verifying the frontend conversion logic works correctly.
+ * The test follows the same approach as transformSaveModelV1ToV2.test.ts:
+ * - Frontend path: v1beta1 spec -> Scene -> v2beta1
+ * - Backend path: v2beta1 output -> Scene -> v2beta1 (normalized)
  */
 
-// Set up the same datasources as backend test provider to ensure consistency
-const dataSources = {
-  default: mockDataSource({
-    name: 'default-ds-uid',
-    uid: 'default-ds-uid',
-    type: 'prometheus',
-    isDefault: true,
-  }),
-  nonDefault: mockDataSource({
-    name: 'Non Default Test Datasource Name',
-    uid: 'non-default-test-ds-uid',
-    type: 'loki',
-    isDefault: false,
-  }),
-  existingRef: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref-uid',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  existingTarget: mockDataSource({
-    name: 'Existing Target Name',
-    uid: 'existing-target-uid',
-    type: 'elasticsearch',
-    isDefault: false,
-  }),
-  existingRefAlt: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  mixed: mockDataSource({
-    name: MIXED_DATASOURCE_NAME,
-    uid: '-- Mixed --',
-    type: 'mixed',
-    isDefault: false,
-  }),
-  influx: mockDataSource({
-    name: 'InfluxDB Test',
-    uid: 'influx-uid',
-    type: 'influxdb',
-    isDefault: false,
-  }),
-  cloudwatch: mockDataSource({
-    name: 'CloudWatch Test',
-    uid: 'cloudwatch-uid',
-    type: 'cloudwatch',
-    isDefault: false,
-  }),
-  grafana: mockDataSource({
-    name: '-- Grafana --',
-    uid: '-- Grafana --',
-    type: 'grafana',
-    isDefault: false,
-  }),
-};
-
-describe('Backend / Frontend result comparison', () => {
+describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setupDataSources(...Object.values(dataSources));
 
     // Mock console methods to avoid test failures from expected warnings
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -182,48 +165,67 @@ describe('Backend / Frontend result comparison', () => {
   const v1beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v1beta1.'));
 
   v1beta1Inputs.forEach((inputFile) => {
-    it(`should convert ${inputFile} spec to match backend conversion`, async () => {
+    it(`compare ${inputFile} from v1beta1 to v2beta1 backend and frontend conversions`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
       // Find the corresponding v2beta1 output file
       const outputFileName = inputFile.replace('.json', `.${LATEST_API_VERSION.split('/')[1]}.json`);
       const outputFilePath = path.join(outputDir, outputFileName);
 
-      // Check if the expected output file exists
-      try {
-        const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
-        expect(backendOutput.apiVersion).toBe(LATEST_API_VERSION);
+      const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
+      expect(backendOutput.apiVersion).toBe(LATEST_API_VERSION);
 
-        // Create dashboard models using frontend conversion
-        // ensureV2Response expects DashboardWithAccessInfo object
-        const frontendOutput = ensureV2Response({
-          ...jsonInput,
-          kind: 'DashboardWithAccessInfo',
-          access: {},
-        });
+      // Backend path: Load backend output into Scene, then serialize back to v2beta1
+      // This normalizes the backend output through the same Scene
+      const sceneBackend = transformSaveModelSchemaV2ToScene({
+        spec: backendOutput.spec,
+        metadata: backendOutput.metadata,
+        apiVersion: backendOutput.apiVersion,
+        access: {},
+        kind: 'DashboardWithAccessInfo',
+      } as DashboardWithAccessInfo<DashboardV2Spec>);
+      const backendOutputAfterLoadedByScene = transformSceneToSaveModelSchemaV2(sceneBackend, false);
 
-        // Verify both outputs have valid spec structures
-        expect(frontendOutput.spec).toBeDefined();
-        expect(backendOutput.spec).toBeDefined();
+      // Frontend path: v1beta1 spec -> Scene -> v2beta1
+      // Extract the spec from v1beta1 format and use it as the dashboard data
+      // Remove snapshot field to prevent isSnapshot() from returning true
+      const dashboardSpec = { ...jsonInput.spec };
+      delete dashboardSpec.snapshot;
 
-        // Normalize backend output to account for differences in library panel repeat handling
-        // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
-        const inputPanels = jsonInput.spec?.panels || [];
-        const normalizedBackendSpec = normalizeBackendOutputForFrontendComparison(backendOutput.spec, inputPanels);
+      // Wrap in DashboardDTO structure that transformSaveModelToScene expects
+      const scene = transformSaveModelToScene({
+        dashboard: dashboardSpec,
+        meta: {
+          isNew: false,
+          isFolder: false,
+          canSave: true,
+          canEdit: true,
+          canDelete: false,
+          canShare: false,
+          canStar: false,
+          canAdmin: false,
+          isSnapshot: false,
+          provisioned: false,
+          version: 1,
+        },
+      });
 
-        // Compare the spec structures
-        expect(normalizedBackendSpec).toEqual(frontendOutput.spec);
+      const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
 
-        // Verify the conversion doesn't throw errors and produces a valid structure
-        expect(() => JSON.stringify(frontendOutput)).not.toThrow();
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('ENOENT')) {
-          // Skip test if output file doesn't exist
-          console.warn(`Skipping test for ${inputFile} - no corresponding v2beta1 output file found`);
-          return;
-        }
-        throw error;
-      }
+      // Verify both outputs have valid spec structures
+      expect(frontendOutput).toBeDefined();
+      expect(backendOutputAfterLoadedByScene).toBeDefined();
+
+      // Normalize backend output to account for differences in library panel repeat handling
+      // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
+      const inputPanels = jsonInput.spec?.panels || [];
+      const normalizedBackendOutput = normalizeBackendOutputForFrontendComparison(
+        backendOutputAfterLoadedByScene,
+        inputPanels
+      );
+
+      // Compare the spec structures
+      expect(normalizedBackendOutput).toEqual(frontendOutput);
     });
   });
 });
