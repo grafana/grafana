@@ -166,14 +166,15 @@ export function doTempoMetricsStreaming(
           }
 
           newResult = {
-            data: data?.map((frame: DataFrameJSON) => {
-              const df = dataFrameFromJSON(frame);
-              // preserve the query's refId to prevent conflation of series from different queries
-              if (query.refId) {
-                df.refId = query.refId;
-              }
-              return df;
-            }) ?? [],
+            data:
+              data?.map((frame: DataFrameJSON) => {
+                const df = dataFrameFromJSON(frame);
+                // preserve the query's refId to prevent conflation of series from different queries
+                if (query.refId) {
+                  df.refId = query.refId;
+                }
+                return df;
+              }) ?? [],
             state,
           };
         }
