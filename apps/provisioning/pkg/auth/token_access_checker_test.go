@@ -26,31 +26,31 @@ func TestTokenAccessChecker_Check(t *testing.T) {
 		name          string
 		innerResponse authlib.CheckResponse
 		innerErr      error
-		authInfo      *mockAuthInfo
+		authInfo      *identity.StaticRequester
 		expectAllow   bool
 	}{
 		{
 			name:          "allowed by checker",
 			innerResponse: authlib.CheckResponse{Allowed: true},
-			authInfo:      &mockAuthInfo{identityType: authlib.TypeUser},
+			authInfo:      &identity.StaticRequester{Type: authlib.TypeUser},
 			expectAllow:   true,
 		},
 		{
 			name:          "denied by checker",
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			authInfo:      &mockAuthInfo{identityType: authlib.TypeUser},
+			authInfo:      &identity.StaticRequester{Type: authlib.TypeUser},
 			expectAllow:   false,
 		},
 		{
 			name:        "error from checker",
 			innerErr:    errors.New("access check failed"),
-			authInfo:    &mockAuthInfo{identityType: authlib.TypeUser},
+			authInfo:    &identity.StaticRequester{Type: authlib.TypeUser},
 			expectAllow: false,
 		},
 		{
 			name:          "AccessPolicy identity is always allowed",
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			authInfo:      &mockAuthInfo{identityType: authlib.TypeAccessPolicy},
+			authInfo:      &identity.StaticRequester{Type: authlib.TypeAccessPolicy},
 			expectAllow:   true,
 		},
 	}
@@ -110,9 +110,9 @@ func TestTokenAccessChecker_FillsNamespace(t *testing.T) {
 
 	checker := NewTokenAccessChecker(mock)
 
-	ctx := authlib.WithAuthInfo(context.Background(), &mockAuthInfo{
-		identityType: authlib.TypeUser,
-		namespace:    "org-123",
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Namespace: "org-123",
 	})
 
 	// Request without namespace
@@ -126,24 +126,6 @@ func TestTokenAccessChecker_FillsNamespace(t *testing.T) {
 
 	err := checker.Check(ctx, req, "")
 	require.NoError(t, err)
-}
-
-// mockAuthInfo implements authlib.AuthInfo for testing.
-type mockAuthInfo struct {
-	identityType authlib.IdentityType
-	namespace    string
-}
-
-func (m *mockAuthInfo) GetIdentityType() authlib.IdentityType {
-	return m.identityType
-}
-
-func (m *mockAuthInfo) GetNamespace() string {
-	return m.namespace
-}
-
-func (m *mockAuthInfo) GetSubject() string {
-	return "user:1"
 }
 
 // mockInnerAccessChecker implements authlib.AccessChecker for testing.
