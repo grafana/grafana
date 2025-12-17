@@ -366,15 +366,13 @@ func (m *addPrimaryKeyMigration) SQL(d Dialect) string {
 // ConvertUniqueKeyToPrimaryKey adds series of migrations to convert existing unique key to PRIMARY KEY.
 // For Sqlite this means recreating the table, which only works if there are no foreign keys referencing the table.
 // 4 migrations are added in total. migrationNames slice can be used to override names of migrations.
-func ConvertUniqueKeyToPrimaryKey(mg *Migrator, tableName string, uniqueKey Index, finalTable Table, migrationNames []string) {
+func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Table, migrationNames []string) {
+	tableName := finalTable.Name
 	if tableName == "" {
 		panic("invalid table name")
 	}
 	if len(uniqueKey.Cols) == 0 || uniqueKey.Type != UniqueIndex {
 		panic("invalid unique type")
-	}
-	if tableName != finalTable.Name {
-		panic("invalid table name")
 	}
 	if !slices.Equal(uniqueKey.Cols, finalTable.PrimaryKeys) {
 		panic("invalid primary key in the final table")

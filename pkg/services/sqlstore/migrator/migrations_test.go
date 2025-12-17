@@ -3,17 +3,10 @@ package migrator
 import (
 	_ "embed"
 	"fmt"
-	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type ExpectedMigration struct {
-	Id  string
-	SQL string
-}
 
 //go:embed testdata/sqlite_file_migration_statement.sql
 var sqliteMigrationStatement string
@@ -82,9 +75,8 @@ func TestConvertUniqueKeyToPrimaryKey(t *testing.T) {
 	for name, tc := range testCases {
 		for dialectName, migrations := range expectedMigrations(tc.migrationNamesExpected) {
 			t.Run(fmt.Sprintf("%s-%s", name, dialectName), func(t *testing.T) {
-				CheckExpectedMigrations(t, dialectName, migrations, func(migrator *Migrator) {
+				err := CheckExpectedMigrations(dialectName, migrations, func(migrator *Migrator) {
 					ConvertUniqueKeyToPrimaryKey(migrator,
-						"file",
 						Index{Cols: []string{"path_hash"}, Type: UniqueIndex}, // Convert this unique key to primary key
 						Table{
 							Name: "file",
@@ -107,34 +99,8 @@ func TestConvertUniqueKeyToPrimaryKey(t *testing.T) {
 							},
 						}, tc.migrationNamesParam)
 				})
+				require.NoError(t, err)
 			})
 		}
 	}
-}
-
-func CheckExpectedMigrations(t *testing.T, dialectName string, expected []ExpectedMigration, addMigrations func(migrator *Migrator)) {
-	d := NewDialect(dialectName)
-	mg := newMigrator(nil, nil, "", d)
-	addMigrations(mg)
-
-	require.Len(t, mg.migrations, len(expected))
-
-	for ix, m := range mg.migrations {
-		assert.Equal(t, expected[ix].Id, m.Id())
-		assert.Equal(t, normalizeLines(expected[ix].SQL), normalizeLines(m.SQL(d)))
-	}
-}
-
-func normalizeLines(sql string) string {
-	lines := strings.Split(sql, "\n")
-	result := strings.Builder{}
-	for _, l := range lines {
-		l := strings.TrimSpace(l)
-		if l == "" {
-			continue
-		}
-		result.WriteString(l)
-		result.WriteString("\n")
-	}
-	return result.String()
 }
