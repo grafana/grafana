@@ -91,10 +91,6 @@
     "./rtkq/logsdrilldown/v1alpha1": {
       "import": "./src/clients/rtkq/logsdrilldown/v1alpha1/index.ts",
       "require": "./src/clients/rtkq/logsdrilldown/v1alpha1/index.ts"
-    },
-    "./rtkq/scope/v0alpha1": {
-      "import": "./src/clients/rtkq/scope/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/scope/v0alpha1/index.ts"
     }
   },
   "publishConfig": {

@@ -1,3 +1,3 @@
-import { generatedAPI } from '@grafana/api-clients/rtkq/scope/v0alpha1';
+import { generatedAPI } from './endpoints.gen';
 
 export const scopeAPIv0alpha1 = generatedAPI;
