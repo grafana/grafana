@@ -14,6 +14,10 @@ import (
 // JitterStrategy represents a modifier to alert rule timing that affects how evaluations are distributed.
 type JitterStrategy int
 
+func (s JitterStrategy) String() string {
+	return [...]string{"never", "by group", "by rule"}[s]
+}
+
 const (
 	JitterNever JitterStrategy = iota
 	JitterByGroup
@@ -56,6 +60,11 @@ func JitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, stra
 		return -res
 	}
 	return res
+}
+
+// JitterOffsetInDuration gives the jitter offset for a rule, in terms of a duration relative to its interval and a base interval.
+func JitterOffsetInDuration(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) time.Duration {
+	return time.Duration(JitterOffsetInTicks(r, baseInterval, strategy)) * baseInterval
 }
 
 func jitterHash(r *ngmodels.AlertRule, strategy JitterStrategy) uint64 {
