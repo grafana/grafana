@@ -67,17 +67,18 @@ export function buildGradientColors(
 
   // for fixed colors and other modes, we create a simple two-color gradient
   // we set the highest contrast color second based on the theme.
-  const darkerColor = tinycolor(baseColor).spin(-20).darken(5);
-  const lighterColor = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
-  return theme.isDark
-    ? [
-        { color: darkerColor.darken(10).toString(), percent: 0 },
-        { color: lighterColor.lighten(10).toString(), percent: 1 },
-      ]
-    : [
-        { color: lighterColor.lighten(10).toString(), percent: 0 },
-        { color: darkerColor.toString(), percent: 1 },
-      ];
+  const darkerColor = tinycolor(baseColor).spin(5).darken(35).saturate(20);
+  const lighterColor = tinycolor(baseColor)
+    .spin(-5)
+    .brighten(theme.isDark ? 30 : 15)
+    .lighten(theme.isDark ? 35 : 15)
+    .desaturate(10);
+  return [
+    { color: theme.isDark ? darkerColor.toString() : lighterColor.toString(), percent: 0 },
+    { color: baseColor, percent: 0.45 },
+    { color: baseColor, percent: 0.55 },
+    { color: theme.isDark ? lighterColor.toString() : darkerColor.toString(), percent: 1 },
+  ];
 }
 
 function clamp(value: number, min = 0, max = 1) {

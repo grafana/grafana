@@ -76,12 +76,7 @@ describe('RadialGauge color utils', () => {
             view: { getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: '#444444' }))) },
           })
         )
-      ).toEqual([
-        { color: '#444444', percent: 0 },
-        { color: '#FADE2A', percent: 0.5 },
-        { color: '#F2495C', percent: 0.8 },
-        { color: '#444444', percent: 1 },
-      ]);
+      ).toMatchSnapshot();
     });
 
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
@@ -92,12 +87,7 @@ describe('RadialGauge color utils', () => {
           buildFieldDisplay(createField(FieldColorModeId.Thresholds)),
           '#FF0000'
         )
-      ).toEqual([
-        { color: '#FF0000', percent: 0 },
-        { color: '#FADE2A', percent: 0.5 },
-        { color: '#F2495C', percent: 0.8 },
-        { color: '#FF0000', percent: 1 },
-      ]);
+      ).toMatchSnapshot();
     });
 
     it('should return gradient colors for continuous color modes', () => {
@@ -108,62 +98,19 @@ describe('RadialGauge color utils', () => {
           buildFieldDisplay(createField(FieldColorModeId.ContinuousCividis)),
           '#00FF00'
         )
-      ).toEqual([
-        {
-          color: 'rgb(0, 32, 81)',
-          percent: 0,
-        },
-        {
-          color: 'rgb(17, 54, 108)',
-          percent: 0.125,
-        },
-        {
-          color: 'rgb(60, 77, 110)',
-          percent: 0.25,
-        },
-        {
-          color: 'rgb(98, 100, 111)',
-          percent: 0.375,
-        },
-        {
-          color: 'rgb(127, 124, 117)',
-          percent: 0.5,
-        },
-        {
-          color: 'rgb(154, 148, 120)',
-          percent: 0.625,
-        },
-        {
-          color: 'rgb(187, 175, 113)',
-          percent: 0.75,
-        },
-        {
-          color: 'rgb(226, 203, 92)',
-          percent: 0.875,
-        },
-        {
-          color: 'rgb(253, 234, 69)',
-          percent: 1,
-        },
-      ]);
+      ).toMatchSnapshot();
     });
 
     it('should return gradient colors for by-value color modes', () => {
       expect(
         buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues)))
-      ).toEqual([
-        { color: '#181b1f', percent: 0 },
-        { color: '#1F60C4', percent: 1 },
-      ]);
+      ).toMatchSnapshot();
     });
 
     it('should return gradient colors for fixed color mode', () => {
       expect(
         buildGradientColors('auto', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#442299')
-      ).toEqual([
-        { color: '#14175a', percent: 0 },
-        { color: '#a146da', percent: 1 },
-      ]);
+      ).toMatchSnapshot();
     });
   });
 
