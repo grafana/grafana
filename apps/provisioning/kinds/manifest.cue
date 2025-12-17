@@ -6,5 +6,6 @@ manifest: {
 	preferredVersion: "v0alpha1"
 	kinds: [
 		repository,
+		connection
 	]
-} 
+}

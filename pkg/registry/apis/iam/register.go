@@ -21,6 +21,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -41,11 +42,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
@@ -76,8 +79,10 @@ func RegisterAPIService(
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
+	orgService org.Service,
 	userService legacyuser.Service,
 	teamService teamservice.Service,
+	restConfig apiserver.RestConfigProvider,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -87,6 +92,11 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
+
+	resourceParentProvider := iamauthorizer.NewApiParentProvider(
+		iamauthorizer.NewLocalConfigProvider(restConfig.GetRestConfig),
+		iamauthorizer.Versions,
+	)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
@@ -102,6 +112,7 @@ func RegisterAPIService(
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
 		teamGroupsHandler:           teamGroupsHandlerImpl,
 		sso:                         ssoService,
+		resourceParentProvider:      resourceParentProvider,
 		authorizer:                  authorizer,
 		legacyAccessClient:          legacyAccessClient,
 		accessClient:                accessClient,
@@ -114,9 +125,11 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(userService, tracing), features),
+			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
+
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
@@ -130,6 +143,8 @@ func NewAPIService(
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
+	tokenExchanger authn.TokenExchanger,
+	authorizerDialConfigs map[schema.GroupResource]iamauthorizer.DialConfig,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
@@ -137,6 +152,11 @@ func NewAPIService(
 
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
+
+	resourceParentProvider := iamauthorizer.NewApiParentProvider(
+		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
+		iamauthorizer.Versions,
+	)
 
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
@@ -148,6 +168,7 @@ func NewAPIService(
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		accessClient:               accessClient,
+		resourceParentProvider:     resourceParentProvider,
 		zClient:                    zClient,
 		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                        reg,
@@ -440,7 +461,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
 	}
 
-	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient))
+	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 	return nil
@@ -510,10 +531,18 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	routes := b.teamSearch.GetAPIRoutes(defs)
-	routes.Namespace = append(routes.Namespace, b.display.GetAPIRoutes(defs).Namespace...)
+	searchRoutes := make([]*builder.APIRoutes, 0, 2)
+	if b.userSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
+	}
 
-	return routes
+	if b.teamSearch != nil {
+		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
+	}
+
+	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}
+	routes = append(routes, searchRoutes...)
+	return mergeAPIRoutes(routes...)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -620,4 +649,16 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err
+}
+
+func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
+	merged := &builder.APIRoutes{}
+	for _, r := range routes {
+		if r == nil {
+			continue
+		}
+		merged.Root = append(merged.Root, r.Root...)
+		merged.Namespace = append(merged.Namespace, r.Namespace...)
+	}
+	return merged
 }

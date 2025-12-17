@@ -148,6 +148,82 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 	})
+
+	t.Run("should handle API errors", func(t *testing.T) {
+		statusResponse := `{
+			"apiVersion": "v1",
+			"kind": "Status",
+			"metadata": {},
+			"status": "Failure",
+			"message": "settings.setting.grafana.app \"test\" not found",
+			"reason": "NotFound",
+			"details": {
+				"name": "test",
+				"group": "setting.grafana.app",
+				"kind": "settings"
+			},
+			"code": 404
+		}`
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(statusResponse))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "could not find the requested resource")
+	})
+
+	t.Run("should handle 500 internal server error", func(t *testing.T) {
+		statusResponse := `{
+			"apiVersion": "v1",
+			"kind": "Status",
+			"metadata": {},
+			"status": "Failure",
+			"message": "Internal error occurred: database connection failed",
+			"reason": "InternalError",
+			"code": 500
+		}`
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(statusResponse))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "error on the server")
+	})
+
+	t.Run("should handle connection errors", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		serverURL := server.URL
+		server.Close()
+
+		client := newTestClient(t, serverURL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "connection refused")
+	})
 }
 
 func TestParseSettingList(t *testing.T) {

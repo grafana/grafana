@@ -154,12 +154,6 @@ func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql
 		return nil
 	})
 
-	// Use transaction from unified storage if available in the context.
-	// This allows us to run migrations in a transaction which is specifically required for SQLite.
-	if tx == nil {
-		tx = resource.TransactionFromContext(ctx)
-	}
-
 	if tx != nil {
 		return tx.QueryContext(ctx, query, args...)
 	}

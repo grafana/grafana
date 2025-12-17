@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/audit"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -27,6 +28,7 @@ import (
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -113,6 +115,9 @@ type service struct {
 	appInstallers                     []appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
 	dualWriterMetrics                 *grafanarest.DualWriterMetrics
+
+	auditBackend            audit.Backend
+	auditPolicyRuleProvider auditing.PolicyRuleProvider
 }
 
 func ProvideService(
@@ -137,6 +142,8 @@ func ProvideService(
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
+	auditBackend audit.Backend,
+	auditPolicyRuleProvider auditing.PolicyRuleProvider,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -167,6 +174,8 @@ func ProvideService(
 		appInstallers:                     appInstallers,
 		builderMetrics:                    builderMetrics,
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
+		auditBackend:                      auditBackend,
+		auditPolicyRuleProvider:           auditPolicyRuleProvider,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -354,6 +363,10 @@ func (s *service) start(ctx context.Context) error {
 	defGetters := []common.GetOpenAPIDefinitions{
 		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
 	}
+
+	// Auditing Options
+	serverConfig.AuditBackend = s.auditBackend
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(

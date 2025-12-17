@@ -219,6 +219,7 @@ export const LogList = ({
         logs={logs}
         logOptionsStorageKey={logOptionsStorageKey}
         showControls={showControls}
+        showFieldSelector={showFieldSelector}
       >
         <LogListSearchContextProvider>
           <LogListComponent
@@ -458,6 +459,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
