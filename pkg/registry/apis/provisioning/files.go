@@ -15,7 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -236,16 +235,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // listFolderFiles returns a list of files in a folder
 func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	// TODO: replace with access check on the repo itself
-	if !id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
-			fmt.Errorf("requires admin role"))
-	}
+	// Authorization is handled at the route level - any authenticated user who can access
+	// the files endpoint can list files. The AccessClient controls per-file access.
 
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {
