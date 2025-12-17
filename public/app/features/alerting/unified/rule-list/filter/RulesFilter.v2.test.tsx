@@ -15,26 +15,30 @@ import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
 
-// In-memory storage for UserStorage mock (allows real useSavedSearches hook to run)
-// This approach catches bugs in the hook logic, unlike mocking the entire hook.
-//
-// NOTE: MSW-based UserStorage mock was considered but deferred due to:
-// 1. UserStorage constructs its base URL at module load time using config.namespace
-// 2. The resource name depends on config.bootData.user which may not be set in tests
-// 3. UserStorage caches initialization state, complicating test isolation
-// The jest.mock approach provides better test isolation for these unit tests.
-let mockStorageData: Record<string, string> = {};
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation((_service: string) => ({
-    getItem: jest.fn(async (key: string): Promise<string | null> => {
-      return mockStorageData[key] ?? null;
-    }),
-    setItem: jest.fn(async (key: string, value: string): Promise<void> => {
-      mockStorageData[key] = value;
-    }),
-  })),
+// Mock config for UserStorage (namespace and user must be set before UserStorage module loads)
+// This allows the real UserStorage class to work with MSW handlers
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(), // Silence analytics calls from useSavedSearches
+  getDataSourceSrv: () => ({
+    getList: jest.fn().mockReturnValue([
+      { name: 'Prometheus', uid: 'prometheus-uid' },
+      { name: 'Loki', uid: 'loki-uid' },
+    ]),
+  }),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    namespace: 'default',
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      navTree: [],
+      user: {
+        uid: 'test-user-123',
+        id: 123,
+        isSignedIn: true,
+      },
+    },
+  },
 }));
 
 // Set up contextSrv.user.id for useSavedSearches session storage key.
@@ -87,6 +91,7 @@ jest.mock('../../hooks/useFilteredRules', () => ({
 
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
+// Set up MSW server with UserStorage handlers
 setupMswServer();
 
 jest.spyOn(analytics, 'trackFilterButtonClick');
@@ -111,20 +116,6 @@ jest.mock('../../plugins/useAlertingHomePageExtensions', () => ({
       extensionPointId: PluginExtensionPoints.AlertingHomePage,
       limitPerPlugin: 1,
     });
-  }),
-}));
-
-// Note: useSavedSearches is NOT mocked here - the real hook runs with MSW-based UserStorage mock.
-// This ensures that issues inside the useSavedSearches hook are caught by these tests.
-// The UserStorage MSW handlers are included in setupMswServer() and reset in afterEach.
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(), // Silence analytics calls from useSavedSearches
-  getDataSourceSrv: () => ({
-    getList: jest.fn().mockReturnValue([
-      { name: 'Prometheus', uid: 'prometheus-uid' },
-      { name: 'Loki', uid: 'loki-uid' },
-    ]),
   }),
 }));
 
@@ -158,9 +149,8 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
-
-  // Reset mock storage for useSavedSearches
-  mockStorageData = {};
+  sessionStorage.clear();
+  localStorage.clear();
 
   mockFilterState = {
     ruleName: '',
@@ -479,6 +469,5 @@ describe('RulesFilterV2', () => {
     });
   });
 
-  // NOTE: Auto-apply of default saved search is now tested in RuleList.v2.test.tsx
-  // since the behavior was moved from RulesFilterV2 to RuleListPage
+  // Auto-apply of default search is tested in RuleList.v2.test.tsx (behavior is in RuleListPage)
 });

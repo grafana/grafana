@@ -271,25 +271,52 @@ Test categories:
 
 ### Mocking UserStorage API with MSW
 
-The hook tests use MSW to mock the UserStorage API endpoints:
+The hook and component tests use MSW to mock the UserStorage API endpoints.
+The handlers are defined in `mocks/server/handlers/userStorage.ts` and included via `setupMswServer()`:
 
 ```typescript
-import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
+import { setupMswServer, setAlertingStorageItem, getAlertingStorageItem } from 'app/features/alerting/unified/mockApi';
 
-const USER_STORAGE_BASE_URL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
+// Set up MSW server with UserStorage handlers (call at module level)
+setupMswServer();
 
-const handlers = [
-  http.get(`${USER_STORAGE_BASE_URL}/:resourceName`, () => {
-    return HttpResponse.json({ spec: { data: mockStorageData } });
-  }),
-  http.patch(`${USER_STORAGE_BASE_URL}/:resourceName`, async ({ request }) => {
-    const body = await request.json();
-    return HttpResponse.json({ spec: { data: body.spec.data } });
-  }),
-];
+// In tests, use helper functions to set up storage data:
+it('should load saved searches', async () => {
+  setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
-const server = setupServer(...handlers);
+  const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  expect(result.current.savedSearches).toEqual(mockSavedSearches);
+});
+
+// Verify persisted data:
+it('should save a new search', async () => {
+  // ... perform save action ...
+
+  const storedData = getAlertingStorageItem('savedSearches');
+  expect(storedData).toContain('"name":"New Search"');
+});
+```
+
+**Important**: Tests must mock `config.namespace` and `config.bootData.user` before imports,
+so that `UserStorage` constructs the correct API URLs:
+
+```typescript
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    namespace: 'default',
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      user: { uid: 'test-user-123', id: 123, isSignedIn: true },
+    },
+  },
+}));
 ```
 
 ### Verifying Notifications in UI
@@ -312,9 +339,18 @@ function createWrapper() {
   };
 }
 
-// In tests:
-const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-expect(await screen.findByText(/failed to save/i)).toBeInTheDocument();
+// In tests (e.g., malformed JSON triggers error notification):
+it('should handle malformed JSON gracefully', async () => {
+  setAlertingStorageItem('savedSearches', 'not valid json');
+
+  const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  expect(await screen.findByText(/failed to load saved searches/i)).toBeInTheDocument();
+});
 ```
 
 ## Accessibility

@@ -29,8 +29,34 @@ export function resetUserStorage(): void {
 }
 
 /**
+ * Get the resource name for a given service, matching how UserStorage constructs it.
+ * This uses config.bootData.user to determine the user identifier.
+ *
+ * @param service - The service name (e.g., 'alerting')
+ * @returns The resource name in format `{service}:{userUID}`
+ *
+ * @example
+ * // In a test with config.bootData.user = { uid: '', id: 123 }
+ * const resourceName = getResourceName('alerting'); // 'alerting:123'
+ *
+ * // In a test with config.bootData.user = { uid: 'abc-123', id: 456 }
+ * const resourceName = getResourceName('alerting'); // 'alerting:abc-123'
+ */
+export function getResourceName(service: string): string {
+  const user = config.bootData?.user;
+  const userUID = user?.uid === '' || !user?.uid ? String(user?.id ?? 'anonymous') : user.uid;
+  return `${service}:${userUID}`;
+}
+
+/**
+ * Convenience constant for the alerting service name.
+ * Use with getResourceName('alerting') or ALERTING_SERVICE directly.
+ */
+export const ALERTING_SERVICE = 'alerting';
+
+/**
  * Set up initial data in the UserStorage mock.
- * @param resourceName - The resource name (e.g., 'alerting:123')
+ * @param resourceName - The resource name (e.g., 'alerting:123'). Use getResourceName() to construct this.
  * @param key - The storage key
  * @param value - The value to store
  */
@@ -39,6 +65,33 @@ export function setUserStorageItem(resourceName: string, key: string, value: str
     userStorageData[resourceName] = { data: {} };
   }
   userStorageData[resourceName].data[key] = value;
+}
+
+/**
+ * Convenience function to set alerting storage items using the current config's user.
+ * This automatically constructs the resource name from config.bootData.user.
+ *
+ * @param key - The storage key (e.g., 'savedSearches')
+ * @param value - The value to store (will be stored as-is, caller should JSON.stringify if needed)
+ *
+ * @example
+ * // Set up saved searches for testing
+ * setAlertingStorageItem('savedSearches', JSON.stringify([{ id: '1', name: 'Test', query: 'state:firing', isDefault: false, createdAt: Date.now() }]));
+ */
+export function setAlertingStorageItem(key: string, value: string): void {
+  const resourceName = getResourceName(ALERTING_SERVICE);
+  setUserStorageItem(resourceName, key, value);
+}
+
+/**
+ * Convenience function to get alerting storage items using the current config's user.
+ *
+ * @param key - The storage key (e.g., 'savedSearches')
+ * @returns The stored value or null if not found
+ */
+export function getAlertingStorageItem(key: string): string | null {
+  const resourceName = getResourceName(ALERTING_SERVICE);
+  return getUserStorageItem(resourceName, key);
 }
 
 /**

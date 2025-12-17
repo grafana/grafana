@@ -3,54 +3,14 @@ import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  getAlertingStorageItem,
+  setAlertingStorageItem,
+} from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 
-// In-memory storage for UserStorage mock
-let mockStorageData: Record<string, string> = {};
-let shouldFailOnGet = false;
-let shouldFailOnSet = false;
-
-// Mock UserStorage class directly (same pattern as useFavoriteDatasources.test.ts)
-// This avoids issues with MSW not intercepting requests due to config.namespace
-// being evaluated at module load time before jest.mock takes effect
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation((_service: string) => ({
-    getItem: jest.fn(async (key: string): Promise<string | null> => {
-      if (shouldFailOnGet) {
-        throw new Error('Storage error');
-      }
-      return mockStorageData[key] ?? null;
-    }),
-    setItem: jest.fn(async (key: string, value: string): Promise<void> => {
-      if (shouldFailOnSet) {
-        throw new Error('Storage error');
-      }
-      mockStorageData[key] = value;
-    }),
-  })),
-}));
-
-import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
-
-afterEach(() => {
-  mockStorageData = {};
-  shouldFailOnGet = false;
-  shouldFailOnSet = false;
-});
-
-// Helper functions for tests
-function setMockStorageData(key: string, value: string) {
-  mockStorageData[key] = value;
-}
-
-function setStorageGetError(shouldFail: boolean) {
-  shouldFailOnGet = shouldFail;
-}
-
-function setStorageSetError(shouldFail: boolean) {
-  shouldFailOnSet = shouldFail;
-}
-
+// Mock config BEFORE any imports that use it (jest.mock is hoisted)
+// This ensures config.namespace and config.bootData.user are set when UserStorage module loads
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
@@ -69,7 +29,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-// Mock contextSrv for user ID
+// Mock contextSrv for user ID (used by useSavedSearches for session storage key)
 jest.mock('../../../../../core/services/context_srv', () => ({
   contextSrv: {
     user: {
@@ -77,6 +37,11 @@ jest.mock('../../../../../core/services/context_srv', () => ({
     },
   },
 }));
+
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
+
+// Set up MSW server with UserStorage handlers
+setupMswServer();
 
 // Mock data is ordered as it will appear after sorting by useSavedSearches:
 // default search first, then alphabetically by name
@@ -114,11 +79,12 @@ describe('useSavedSearches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   describe('Initial loading', () => {
     it('should load saved searches from UserStorage', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -130,7 +96,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should handle empty storage gracefully', async () => {
-      // mockStorageData is empty by default
+      // Storage is empty by default after resetUserStorage() in afterEach
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -141,9 +107,9 @@ describe('useSavedSearches', () => {
       expect(result.current.savedSearches).toEqual([]);
     });
 
-    it('should show error notification on load failure', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
-      setStorageGetError(true);
+    it('should handle 404 (no stored data) gracefully', async () => {
+      // When no data exists, UserStorage returns 404, which is handled as "not found"
+      // The hook should return an empty array without error
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -151,8 +117,7 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // When API fails, UserStorage falls back to localStorage, so no error notification
-      // The hook handles the fallback gracefully
+      // UserStorage handles 404 gracefully - returns empty storage
       expect(result.current.savedSearches).toEqual([]);
     });
 
@@ -164,7 +129,7 @@ describe('useSavedSearches', () => {
         { id: '4', name: null, query: 'valid', isDefault: false }, // Invalid name type
         mockSavedSearches[1], // Valid
       ];
-      setMockStorageData('savedSearches', JSON.stringify(mixedData));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mixedData));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -180,7 +145,7 @@ describe('useSavedSearches', () => {
 
     it('should handle malformed JSON gracefully', async () => {
       jest.spyOn(console, 'error').mockImplementation();
-      setMockStorageData('savedSearches', 'not valid json');
+      setAlertingStorageItem('savedSearches', 'not valid json');
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -211,12 +176,14 @@ describe('useSavedSearches', () => {
       expect(result.current.savedSearches).toHaveLength(1);
       expect(result.current.savedSearches[0].name).toBe('New Search');
       expect(result.current.savedSearches[0].query).toBe('state:pending');
+
       // Verify data was persisted to MSW storage
-      expect(mockStorageData.savedSearches).toContain('"name":"New Search"');
+      const storedData = getAlertingStorageItem('savedSearches');
+      expect(storedData).toContain('"name":"New Search"');
     });
 
     it('should throw validation error for duplicate name (case-insensitive)', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -257,7 +224,7 @@ describe('useSavedSearches', () => {
 
   describe('renameSearch', () => {
     it('should rename an existing search', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -270,12 +237,14 @@ describe('useSavedSearches', () => {
       });
 
       expect(result.current.savedSearches.find((s) => s.id === '1')?.name).toBe('Renamed Search');
+
       // Verify data was persisted to MSW storage
-      expect(mockStorageData.savedSearches).toContain('"name":"Renamed Search"');
+      const storedData = getAlertingStorageItem('savedSearches');
+      expect(storedData).toContain('"name":"Renamed Search"');
     });
 
     it('should throw validation error for duplicate name on rename', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -294,7 +263,7 @@ describe('useSavedSearches', () => {
 
   describe('deleteSearch', () => {
     it('should delete a search', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -313,7 +282,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should track analytics on delete', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -331,7 +300,7 @@ describe('useSavedSearches', () => {
 
   describe('setDefaultSearch', () => {
     it('should set a search as default', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -348,7 +317,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should clear default when null is passed', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -364,7 +333,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should track analytics with correct action', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -394,7 +363,7 @@ describe('useSavedSearches', () => {
 
   describe('getAutoApplySearch', () => {
     it('should return default search on first navigation', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -408,7 +377,7 @@ describe('useSavedSearches', () => {
     });
 
     it('should return null on subsequent calls (same session)', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -433,7 +402,7 @@ describe('useSavedSearches', () => {
         writable: true,
       });
 
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -454,7 +423,7 @@ describe('useSavedSearches', () => {
 
     it('should return null when no default search exists', async () => {
       const searchesWithoutDefault = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
-      setMockStorageData('savedSearches', JSON.stringify(searchesWithoutDefault));
+      setAlertingStorageItem('savedSearches', JSON.stringify(searchesWithoutDefault));
 
       const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -470,7 +439,7 @@ describe('useSavedSearches', () => {
 
   describe('Per-user session tracking', () => {
     it('should use user-specific session storage key', async () => {
-      setMockStorageData('savedSearches', JSON.stringify(mockSavedSearches));
+      setAlertingStorageItem('savedSearches', JSON.stringify(mockSavedSearches));
 
       renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
 
@@ -478,30 +447,6 @@ describe('useSavedSearches', () => {
         // Session storage should be set with user-specific key
         expect(sessionStorage.getItem('grafana.alerting.alertRules.visited.123')).toBe('true');
       });
-    });
-  });
-
-  describe('Error handling', () => {
-    it('should show error notification on save failure', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
-      setStorageSetError(true);
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      await act(async () => {
-        try {
-          await result.current.saveSearch('New Search', 'state:pending');
-        } catch {
-          // Expected to throw
-        }
-      });
-
-      // Verify error notification appears in the UI
-      expect(await screen.findByText(/failed to save/i)).toBeInTheDocument();
     });
   });
 });

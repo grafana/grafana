@@ -128,8 +128,7 @@ export default function RulesFilter({ viewMode, onViewModeChange, savedSearchesR
     [updateFilters]
   );
 
-  // NOTE: Auto-apply of default search is now handled in RuleListPage
-  // This ensures the filter is applied BEFORE FilterView mounts, avoiding double API requests
+  // Auto-apply of default search is handled in RuleListPage (before FilterView mounts)
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);

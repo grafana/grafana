@@ -12,7 +12,8 @@ import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
 
-import RuleList, { RuleListActions } from './RuleList.v2';
+import RuleListPage, { RuleListActions } from './RuleList.v2';
+import { UseSavedSearchesResult, useSavedSearches } from './filter/useSavedSearches';
 
 // This tests only checks if proper components are rendered, so we mock them
 // Both FilterView and GroupedView are tested in their own tests
@@ -25,16 +26,25 @@ jest.mock('./GroupedView', () => ({
 }));
 
 jest.mock('./filter/useSavedSearches', () => ({
-  useSavedSearches: () => ({
-    savedSearches: [],
-    isLoading: false,
-    saveSearch: jest.fn(),
-    renameSearch: jest.fn(),
-    deleteSearch: jest.fn(),
-    setDefaultSearch: jest.fn(),
-    getAutoApplySearch: () => null,
-  }),
+  useSavedSearches: jest.fn(),
 }));
+
+const useSavedSearchesMock = useSavedSearches as jest.MockedFunction<typeof useSavedSearches>;
+
+// Default mock implementation (no default search)
+const defaultSavedSearchesResult: UseSavedSearchesResult = {
+  savedSearches: [],
+  isLoading: false,
+  saveSearch: jest.fn(),
+  renameSearch: jest.fn(),
+  deleteSearch: jest.fn(),
+  setDefaultSearch: jest.fn(),
+  getAutoApplySearch: () => null,
+};
+
+beforeEach(() => {
+  useSavedSearchesMock.mockReturnValue(defaultSavedSearchesResult);
+});
 
 const ui = {
   filterView: byTestId('filter-view'),
@@ -57,16 +67,16 @@ setupMswServer();
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
-describe('RuleList v2', () => {
+describe('RuleListPage v2', () => {
   it('should show grouped view by default', () => {
-    render(<RuleList />);
+    render(<RuleListPage />);
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when invalid view parameter is provided', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=invalid'],
       },
@@ -77,35 +87,35 @@ describe('RuleList v2', () => {
   });
 
   it('should show list view when "view=list" URL parameter is present', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when only group filter is applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when only namespace filter is applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when both group and namespace filters are applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when group and namespace filters are combined with other filter types', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global state:firing'] },
     });
 
@@ -114,14 +124,14 @@ describe('RuleList v2', () => {
   });
 
   it('should show grouped view when view parameter is empty', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view='] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view='] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when search parameter is empty', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search='] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search='] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
@@ -137,28 +147,28 @@ describe('RuleList v2', () => {
     { filterType: 'ruleHealth', searchQuery: 'health:error' },
     { filterType: 'contactPoint', searchQuery: 'contactPoint:slack' },
   ])('should show list view when %s filter is applied', ({ filterType, searchQuery }) => {
-    render(<RuleList />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with group filter', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with namespace filter', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with both group and namespace filters', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
 
@@ -354,10 +364,10 @@ describe('RuleListActions', () => {
   });
 });
 
-describe('RuleList v2 - View switching', () => {
+describe('RuleListPage v2 - View switching', () => {
   it('should preserve both group and namespace filters when switching from list view to grouped view', async () => {
     // Start with list view and both group and namespace filters
-    const { user } = render(<RuleList />, {
+    const { user } = render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
     expect(ui.filterView.get()).toBeInTheDocument();
@@ -377,7 +387,7 @@ describe('RuleList v2 - View switching', () => {
 
   it('should clear all filters when switching from list view to grouped view with group, namespace and other filters', async () => {
     // Start with list view with all types of filters
-    const { user } = render(<RuleList />, {
+    const { user } = render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=list&search=group:cpu-usage namespace:global state:firing rule:"test"'],
       },
@@ -395,5 +405,81 @@ describe('RuleList v2 - View switching', () => {
     // Verify all filters are cleared
     expect(ui.searchInput.get()).toHaveValue('');
     expect(ui.modeSelector.list.query()).not.toBeChecked();
+  });
+});
+
+describe('RuleListPage v2 - Default search auto-apply', () => {
+  // These tests verify that the default search is applied at the page level,
+  // BEFORE child components mount, preventing double API requests.
+  // This addresses the reviewer's suggestion to "catch it earlier in routing".
+
+  testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
+
+  it('should apply default search before rendering child components', async () => {
+    const mockDefaultSearch = {
+      id: '1',
+      name: 'My Default',
+      query: 'state:firing',
+      isDefault: true,
+      createdAt: Date.now(),
+    };
+
+    // Mock getAutoApplySearch to return a default search
+    const getAutoApplySearchMock = jest.fn().mockReturnValueOnce(mockDefaultSearch).mockReturnValue(null);
+
+    useSavedSearchesMock.mockReturnValue({
+      ...defaultSavedSearchesResult,
+      getAutoApplySearch: getAutoApplySearchMock,
+    });
+
+    render(<RuleListPage />);
+
+    // Wait for the component to render
+    expect(ui.filterView.get()).toBeInTheDocument();
+
+    // Verify the search input shows the applied search query
+    expect(ui.searchInput.get()).toHaveValue('state:firing');
+
+    // Verify getAutoApplySearch was called
+    expect(getAutoApplySearchMock).toHaveBeenCalled();
+  });
+
+  it('should not apply default search when URL already has search parameter', async () => {
+    const mockDefaultSearch = {
+      id: '1',
+      name: 'My Default',
+      query: 'state:firing',
+      isDefault: true,
+      createdAt: Date.now(),
+    };
+
+    // getAutoApplySearch should return null when URL has search param
+    // (this is handled by the hook itself)
+    const getAutoApplySearchMock = jest.fn().mockReturnValue(null);
+
+    useSavedSearchesMock.mockReturnValue({
+      ...defaultSavedSearchesResult,
+      savedSearches: [mockDefaultSearch],
+      getAutoApplySearch: getAutoApplySearchMock,
+    });
+
+    render(<RuleListPage />, {
+      historyOptions: { initialEntries: ['/?search=label:team=backend'] },
+    });
+
+    // Should show the URL's search, not the default
+    expect(ui.searchInput.get()).toHaveValue('label:team=backend');
+  });
+
+  it('should render normally when no default search exists', () => {
+    useSavedSearchesMock.mockReturnValue({
+      ...defaultSavedSearchesResult,
+      getAutoApplySearch: () => null,
+    });
+
+    render(<RuleListPage />);
+
+    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(ui.searchInput.get()).toHaveValue('');
   });
 });
