@@ -11874,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend warning your users before starting the process.",
       "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
       "modal-description-required-features": "Enable required Grafana features for provisioning",
       "modal-title-set-up-public-access": "Set up public access",
@@ -11886,8 +11885,7 @@
       "step-title-copy-url": "Copy your public URL",
       "step-title-enable-feature-toggles": "Enable Required Feature Toggles",
       "step-title-start-ngrok": "Start ngrok for temporary public access",
-      "step-title-update-grafana-config": "Update your Grafana configuration",
-      "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
+      "step-title-update-grafana-config": "Update your Grafana configuration"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
@@ -11956,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Delete repositories",
-      "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
       "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
       "error-delete-all-repositories": "Failed to delete all repositories",
-      "remove-all-configured-repositories": "Remove all configured repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "title-delete-all-configured-repositories": "Delete all configured repositories",
-      "title-legacy-storage-detected": "Legacy storage detected"
+      "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
     "http-utils": {
       "access-denied": "Access denied. Please check your token permissions.",
@@ -12007,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
-        "legacy-storage": "Legacy storage mode only supports syncing the entire Grafana instance.",
         "not-allowed": "Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.",
         "not-supported": "This option is not supported yet."
       },
@@ -12087,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "legacy-storage-message": "Instance is not yet running unified storage -- requires migration wizard",
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
@@ -12096,7 +12089,6 @@
       "tab-resources": "Resources",
       "tab-resources-title": "Repository files and resources",
       "title": "Repository Status",
-      "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
     "repository-type-cards": {
@@ -12192,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
-      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
-      "synchronization-description": "Include commits for each historical value",
-      "synchronization-options": "Synchronization options"
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
     },
     "token-permissions-info": {
       "and-click": "and click",
@@ -12211,11 +12201,11 @@
     },
     "warning-title-default": "Warning",
     "wizard": {
-      "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
-      "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
+      "alert-point-1": "Resources can still be created, edited, or deleted during this process, but changes may not be exported.",
+      "alert-point-2": "Once provisioning is complete, resources will be marked as managed through external storage.",
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
-      "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2>this guide</2> for step-by-step instructions.",
-      "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
+      "alert-point-4": "Enterprise instance administrators can display an announcement banner to notify users that migration is in progress. See <2>this guide</2> for step-by-step instructions.",
+      "alert-title": "Important: No data or configuration will be lost. Dashboards remain accessible during migration, but changes made during this process may not be exported.",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
@@ -12233,7 +12223,6 @@
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
-      "sync-option-history": "History",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
