@@ -19,6 +19,7 @@ import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProv
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
+import { SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
@@ -81,7 +82,7 @@ LIMIT
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
 
-  const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
+  const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
 
   const {
@@ -223,21 +224,32 @@ LIMIT
     </div>
   );
 
+  const contextValue = {
+    // Explanations
+    explanation,
+    isExplanationOpen,
+    shouldShowViewExplanation,
+    handleExplain,
+    handleOpenExplanation,
+    handleCloseExplanation,
+    // Suggestions
+    suggestions,
+    isDrawerOpen,
+    handleHistoryUpdate,
+    handleApplySuggestion,
+    handleOpenDrawer,
+    handleCloseDrawer,
+  };
+
   const renderSQLButtons = () => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
       <SqlQueryActions
         executeQuery={executeQuery}
-        shouldShowViewExplanation={shouldShowViewExplanation}
-        handleOpenExplanation={handleOpenExplanation}
         currentQuery={query.expression || ''}
-        handleExplain={handleExplain}
         queryContext={queryContext}
         refIds={vars}
         initialQuery={initialQuery}
-        handleHistoryUpdate={handleHistoryUpdate}
         errorContext={errorContext}
-        suggestions={suggestions}
-        handleOpenDrawer={handleOpenDrawer}
       />
       {isSchemasFeatureEnabled && (
         <Button
@@ -303,7 +315,7 @@ LIMIT
   );
 
   return (
-    <>
+    <SqlExprProvider value={contextValue}>
       {renderSQLEditor()}
       {isExpanded && (
         <Modal
@@ -321,7 +333,7 @@ LIMIT
           </Stack>
         </Modal>
       )}
-    </>
+    </SqlExprProvider>
   );
 };
 

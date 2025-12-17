@@ -3,6 +3,8 @@ import { lazy, Suspense } from 'react';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
+import { useSqlExprContext } from './SqlExprContext';
+
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
   import('./GenAI/GenAISQLSuggestionsButton').then((module) => ({
@@ -24,33 +26,29 @@ const SuggestionsDrawerButton = lazy(() =>
 
 export interface SqlQueryActionsProps {
   executeQuery: () => void;
-  shouldShowViewExplanation: boolean;
-  handleOpenExplanation: () => void;
   currentQuery: string;
-  handleExplain: (explanation: string) => void;
   queryContext: Record<string, unknown>;
   refIds: string[];
   initialQuery: string;
-  handleHistoryUpdate: (history: string[]) => void;
   errorContext: string[];
-  suggestions: string[];
-  handleOpenDrawer: () => void;
 }
 
 export const SqlQueryActions = ({
   executeQuery,
-  shouldShowViewExplanation,
-  handleOpenExplanation,
   currentQuery,
-  handleExplain,
   queryContext,
   refIds,
   initialQuery,
-  handleHistoryUpdate,
   errorContext,
-  suggestions,
-  handleOpenDrawer,
 }: SqlQueryActionsProps) => {
+  const {
+    handleOpenExplanation,
+    shouldShowViewExplanation,
+    handleExplain,
+    handleHistoryUpdate,
+    handleOpenDrawer,
+    suggestions,
+  } = useSqlExprContext();
   return (
     <Stack direction="row" gap={1} alignItems="center" justifyContent="start" wrap>
       <Button icon="play" onClick={executeQuery} size="sm">
