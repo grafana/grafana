@@ -224,7 +224,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         const v1SaveModel = transformSceneToSaveModel(scene);
         sceneForExport = transformSaveModelToScene(
           { dashboard: v1SaveModel, meta: scene.state.meta },
-          { uid: scene.state.uid ?? '', route: DashboardRoutes.Normal, forceSerializerVersion: 'v2' }
+          { uid: scene.state.uid ?? '', route: DashboardRoutes.Normal, serializerVersion: 'v2' }
         );
       }
 

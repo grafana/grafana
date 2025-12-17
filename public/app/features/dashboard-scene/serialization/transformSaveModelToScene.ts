@@ -267,7 +267,7 @@ export function createDashboardSceneFromDashboardModel(
   const uid = oldModel.uid;
   const isReport = options?.route === DashboardRoutes.Report;
   const serializerVersion =
-    options?.forceSerializerVersion ?? (shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1');
+    options?.serializerVersion ?? (shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1');
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
