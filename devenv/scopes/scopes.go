@@ -77,22 +77,26 @@ type TreeNode struct {
 }
 
 type NavigationConfig struct {
-	URL      string   `yaml:"url"`      // URL path (e.g., /d/abc123 or /explore)
-	Scope    string   `yaml:"scope"`    // Required scope
-	SubScope string   `yaml:"subScope"` // Optional subScope for hierarchical navigation
-	Title    string   `yaml:"title"`    // Display title
-	Groups   []string `yaml:"groups"`   // Optional groups for categorization
+	URL                      string   `yaml:"url"`                      // URL path (e.g., /d/abc123 or /explore)
+	Scope                    string   `yaml:"scope"`                    // Required scope
+	SubScope                 string   `yaml:"subScope"`                 // Optional subScope for hierarchical navigation
+	Title                    string   `yaml:"title"`                    // Display title
+	Groups                   []string `yaml:"groups"`                   // Optional groups for categorization
+	DisableSubScopeSelection bool     `yaml:"disableSubScopeSelection"` // Makes the subscope not selectable
+	PreLoadSubScopeChildren  bool     `yaml:"preLoadSubScopeChildren"`  // Preload children of subScope without updating UI
 }
 
 // NavigationTreeNode represents a node in the navigation tree structure
 type NavigationTreeNode struct {
-	Name     string               `yaml:"name"`
-	Title    string               `yaml:"title"`
-	URL      string               `yaml:"url"`
-	Scope    string               `yaml:"scope"`
-	SubScope string               `yaml:"subScope,omitempty"`
-	Groups   []string             `yaml:"groups,omitempty"`
-	Children []NavigationTreeNode `yaml:"children,omitempty"`
+	Name                     string               `yaml:"name"`
+	Title                    string               `yaml:"title"`
+	URL                      string               `yaml:"url"`
+	Scope                    string               `yaml:"scope"`
+	SubScope                 string               `yaml:"subScope,omitempty"`
+	Groups                   []string             `yaml:"groups,omitempty"`
+	DisableSubScopeSelection bool                 `yaml:"disableSubScopeSelection,omitempty"`
+	PreLoadSubScopeChildren  bool                 `yaml:"preLoadSubScopeChildren,omitempty"` // Preload children of subScope without updating UI
+	Children                 []NavigationTreeNode `yaml:"children,omitempty"`
 }
 
 // Helper function to convert ScopeFilterConfig to v0alpha1.ScopeFilter
@@ -313,8 +317,10 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 	prefixedScope := prefix + "-" + nav.Scope
 
 	spec := v0alpha1.ScopeNavigationSpec{
-		URL:   nav.URL,
-		Scope: prefixedScope,
+		URL:                      nav.URL,
+		Scope:                    prefixedScope,
+		DisableSubScopeSelection: nav.DisableSubScopeSelection,
+		PreLoadSubScopeChildren:  nav.PreLoadSubScopeChildren,
 	}
 
 	if nav.SubScope != "" {
@@ -350,14 +356,14 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		return err
 	}
 
+	// Get the created resource to retrieve its resourceVersion for status update
+	createdNav, err := c.getScopeNavigation(prefixedName)
+	if err != nil {
+		return fmt.Errorf("failed to get created navigation: %w", err)
+	}
+
 	// Update status in a second request (status is a subresource)
 	if nav.Title != "" || len(nav.Groups) > 0 {
-		// Get the created resource to retrieve its resourceVersion and existing spec
-		createdNav, err := c.getScopeNavigation(prefixedName)
-		if err != nil {
-			return fmt.Errorf("failed to get created navigation: %w", err)
-		}
-
 		statusResource := v0alpha1.ScopeNavigation{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: apiVersion,
@@ -404,9 +410,11 @@ func treeToNavigations(node NavigationTreeNode, parentPath []string, dashboardCo
 
 	// Create navigation for this node
 	nav := NavigationConfig{
-		URL:   url,
-		Scope: node.Scope,
-		Title: node.Title,
+		URL:                      url,
+		Scope:                    node.Scope,
+		Title:                    node.Title,
+		DisableSubScopeSelection: node.DisableSubScopeSelection,
+		PreLoadSubScopeChildren:  node.PreLoadSubScopeChildren,
 	}
 	if node.SubScope != "" {
 		nav.SubScope = node.SubScope

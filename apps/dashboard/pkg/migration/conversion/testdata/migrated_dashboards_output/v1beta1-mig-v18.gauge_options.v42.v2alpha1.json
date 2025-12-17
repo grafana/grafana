@@ -288,6 +288,10 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "show": true,
                   "showLegend": true

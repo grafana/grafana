@@ -3402,11 +3402,12 @@
     },
     "/dashboards/home": {
       "get": {
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "tags": [
           "dashboards"
         ],
-        "summary": "Get home dashboard.",
         "operationId": "getHomeDashboard",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getHomeDashboardResponse"
@@ -9926,8 +9927,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -9971,8 +9971,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -10013,8 +10012,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true

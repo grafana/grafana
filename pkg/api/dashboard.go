@@ -493,7 +493,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
 //
-// Get home dashboard.
+// NOTE: the home dashboard is configured in preferences.  This API will be removed in G13
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getHomeDashboardResponse

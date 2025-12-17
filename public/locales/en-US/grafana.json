@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Open external link"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": "This field is protected and can only be edited by users with elevated permissions"
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable",
-          "values": "Values separated by comma"
+          "modal-title": "Custom Variable"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5133,6 +5139,7 @@
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
+      "missing-config": "Missing panel configuration",
       "suggestions": {
         "empty-state-message": "Run a query to start seeing suggested visualizations"
       }
@@ -6145,7 +6152,10 @@
       "no-data-found": "No data found"
     },
     "inspect-json-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "error-invalid-json": "Invalid JSON",
+      "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "validation-error": "Validation error"
     },
     "interval-variable-form": {
       "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified",
@@ -10171,7 +10181,8 @@
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
       "line-contains": "Add as line contains filter",
-      "line-contains-not": "Add as line does not contain filter"
+      "line-contains-not": "Add as line does not contain filter",
+      "search-text": "Search in results"
     },
     "show-log-attributes": "Display log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
@@ -11409,6 +11420,12 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
+        "moreDetails": "Do you find Plugin Insights usefull? Please share your feedback <2>here</2>.",
+        "pluginInsights": {
+          "header": "Plugin insights"
+        },
+        "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
+        "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",

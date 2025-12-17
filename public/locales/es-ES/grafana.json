@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Abrir enlace externo"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Más",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valores separados por coma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5133,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
       "menu-use-library-panel": "Usar panel de la librería",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6152,10 @@
       "no-data-found": "No se han encontrado datos"
     },
     "inspect-json-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcula dinámicamente el intervalo dividiendo el intervalo de tiempo por el recuento especificado",
@@ -11409,6 +11419,12 @@
         "latestReleaseDate": "Fecha último lanzamiento:",
         "latestVersion": "Versión más reciente",
         "license": "Licencia",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Comunicar un problema",
         "reportAbuse": "",
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",

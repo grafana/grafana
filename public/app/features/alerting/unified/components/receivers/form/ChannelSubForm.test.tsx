@@ -89,6 +89,7 @@ describe('ChannelSubForm', () => {
             commonSettingsComponent={GrafanaCommonChannelSettings}
             isEditable={true}
             isTestable={false}
+            canEditProtectedFields={true}
           />
         </FormProvider>
       </AlertmanagerProvider>
