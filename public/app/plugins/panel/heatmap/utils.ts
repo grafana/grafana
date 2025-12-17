@@ -632,16 +632,11 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         }
 
         if (scaleY.distr === 3) {
-          if (ySizeDivisor === 1) {
-            // Use actual data spacing for pre-bucketed data
-            const nextYValue = ys[1] ?? ys[0] * scaleY.log!;
-            ySize = Math.abs(valToPosY(nextYValue, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff));
-          } else {
-            // Use full magnitude for calculated heatmaps with splits
-            ySize =
-              Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
-              ySizeDivisor;
-          }
+          // Use actual data spacing for pre-bucketed data, or full magnitude for calculated heatmaps with splits
+          const nextYValue = ySizeDivisor === 1 ? (ys[1] ?? ys[0] * scaleY.log!) : ys[0] * scaleY.log!;
+
+          const baseYSize = Math.abs(valToPosY(nextYValue, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff));
+          ySize = baseYSize / ySizeDivisor;
         } else {
           ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
         }
