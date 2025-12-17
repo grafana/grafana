@@ -123,7 +123,15 @@ type sqlKVKeysRequest struct {
 }
 
 func (req sqlKVKeysRequest) Validate() error {
-	return req.sqlKVSection.Validate()
+	if err := req.sqlKVSection.Validate(); err != nil {
+		return err
+	}
+
+	if req.Options.Sort != SortOrderAsc && req.Options.Sort != SortOrderDesc {
+		return fmt.Errorf("invalid sort option")
+	}
+
+	return nil
 }
 
 func (req sqlKVKeysRequest) StartKey() string {
