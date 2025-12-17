@@ -6,7 +6,9 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { Button, CollapsableSection, Link, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, Spinner, Stack, Text, useStyles2, Grid } from '@grafana/ui';
+import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
+import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { getRecentlyViewedDashboards } from './utils';
 
@@ -29,6 +31,7 @@ export function RecentlyViewedDashboards() {
     }
     return getRecentlyViewedDashboards(MAX_RECENT);
   }, []);
+  const { foldersByUid } = useDashboardLocationInfo(recentDashboards.length > 0);
 
   const handleClearHistory = () => {
     store.set(recentDashboardsKey, JSON.stringify([]));
@@ -66,39 +69,54 @@ export function RecentlyViewedDashboards() {
         <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
       )}
 
-      {/* TODO: implement actual card content */}
       {!loading && recentDashboards.length > 0 && (
-        <>
-          {recentDashboards.map((dash) => (
-            <div key={dash.uid}>
-              <Link href={dash.url}>{dash.name}</Link>
-            </div>
-          ))}
-        </>
+        <ul className={styles.list}>
+          <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap={2}>
+            {recentDashboards.map((dash) => (
+              <li key={dash.uid} className={styles.listItem}>
+                <DashListItem
+                  key={dash.uid}
+                  dashboard={dash}
+                  url={dash.url}
+                  showFolderNames={true}
+                  locationInfo={foldersByUid[dash.location]}
+                  layoutMode="card"
+                />
+              </li>
+            ))}
+          </Grid>
+        </ul>
       )}
     </CollapsableSection>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const accent = theme.visualization.getColorByName('purple'); // or your own hex
-
   return {
     title: css({
       cursor: 'default',
+      '& [id^="collapse-button-"] svg': {
+        color: theme.colors.primary.text,
+      },
       h3: {
-        background: `linear-gradient(90deg, ${accent} 0%, #e478eaff 100%)`,
+        background: `linear-gradient(90deg, ${theme.colors.primary.text} 0%, ${theme.colors.secondary.text} 100%)`,
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',
         color: 'transparent',
-        cursor: 'pointer',
-      },
-      '& [id^="collapse-button-"] svg': {
-        color: accent,
       },
     }),
     content: css({
       paddingTop: theme.spacing(0),
+    }),
+    list: css({
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+      display: 'grid',
+      gap: theme.spacing(2),
+    }),
+    listItem: css({
+      margin: 0,
     }),
   };
 };

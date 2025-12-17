@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -33,9 +34,14 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlKVGet = mustTemplate("sqlkv_get.sql")
+	sqlKVGet    = mustTemplate("sqlkv_get.sql")
+	sqlKVDelete = mustTemplate("sqlkv_delete.sql")
+	sqlKVKeys   = mustTemplate("sqlkv_keys.sql")
 )
 
+// sqlKVSection can be embedded in structs used when rendering query templates
+// for queries that reference a particular section. The section will be validated,
+// and the template can directly reference the `TableName`.
 type sqlKVSection struct {
 	Section string
 }
@@ -60,18 +66,15 @@ func (req sqlKVSection) TableName() string {
 	return "resource_events"
 }
 
-type sqlKVGetRequest struct {
-	sqltemplate.SQLTemplate
+// sqlKVSectionKey can be embedded in structs used when rendering query templates
+// for queries that reference both a section and a particular key. The `key` is
+// validated, and the template can reference the corresponding `KeyPath`.
+type sqlKVSectionKey struct {
 	sqlKVSection
 	Key string
-	*sqlKVGetResponse
 }
 
-type sqlKVGetResponse struct {
-	Value []byte
-}
-
-func (req sqlKVGetRequest) Validate() error {
+func (req sqlKVSectionKey) Validate() error {
 	if err := req.sqlKVSection.Validate(); err != nil {
 		return err
 	}
@@ -82,12 +85,61 @@ func (req sqlKVGetRequest) Validate() error {
 	return nil
 }
 
+func (req sqlKVSectionKey) KeyPath() string {
+	return req.Section + "/" + req.Key
+}
+
+type sqlKVGetRequest struct {
+	sqltemplate.SQLTemplate
+	sqlKVSectionKey
+	*sqlKVGetResponse
+}
+
+type sqlKVGetResponse struct {
+	Value []byte
+}
+
+func (req sqlKVGetRequest) Validate() error {
+	return req.sqlKVSectionKey.Validate()
+}
+
 func (req sqlKVGetRequest) Results() ([]byte, error) {
 	return req.Value, nil
 }
 
-func (req sqlKVGetRequest) KeyPath() string {
-	return req.Section + "/" + req.Key
+type sqlKVDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	sqlKVSectionKey
+}
+
+func (req sqlKVDeleteRequest) Validate() error {
+	return req.sqlKVSectionKey.Validate()
+}
+
+type sqlKVKeysRequest struct {
+	sqltemplate.SQLTemplate
+	sqlKVSection
+	Options ListOptions
+}
+
+func (req sqlKVKeysRequest) Validate() error {
+	return req.sqlKVSection.Validate()
+}
+
+func (req sqlKVKeysRequest) StartKey() string {
+	return req.Section + "/" + req.Options.StartKey
+}
+
+func (req sqlKVKeysRequest) EndKey() string {
+	if req.Options.EndKey == "" {
+		req.Options.EndKey = PrefixRangeEnd(req.Section + "/")
+	}
+
+	return req.Section + "/" + req.Options.EndKey
+}
+
+func (req sqlKVKeysRequest) SortAscending() bool {
+	return req.Options.Sort != SortOrderDesc
 }
 
 var _ KV = &sqlKV{}
@@ -127,15 +179,38 @@ func (k *sqlKV) Ping(ctx context.Context) error {
 
 func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
-		panic("not implemented!")
+		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVKeys, sqlKVKeysRequest{
+			SQLTemplate:  sqltemplate.New(k.dialect),
+			sqlKVSection: sqlKVSection{section},
+			Options:      opt,
+		})
+		if err != nil {
+			yield("", err)
+			return
+		}
+
+		for rows.Next() {
+			var key string
+			if err := rows.Scan(&key); err != nil {
+				yield("", fmt.Errorf("error reading row: %w", err))
+				return
+			}
+
+			if !yield(strings.TrimPrefix(key, section+"/"), nil) {
+				return
+			}
+		}
+
+		if err := rows.Err(); err != nil {
+			yield("", fmt.Errorf("failed to read rows: %w", err))
+		}
 	}
 }
 
 func (k *sqlKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
 	value, err := dbutil.QueryRow(ctx, k.db, sqlKVGet, sqlKVGetRequest{
 		SQLTemplate:      sqltemplate.New(k.dialect),
-		sqlKVSection:     sqlKVSection{section},
-		Key:              key,
+		sqlKVSectionKey:  sqlKVSectionKey{sqlKVSection{section}, key},
 		sqlKVGetResponse: new(sqlKVGetResponse),
 	})
 	if err != nil {
@@ -171,7 +246,24 @@ func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 }
 
 func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
-	panic("not implemented!")
+	res, err := dbutil.Exec(ctx, k.db, sqlKVDelete, sqlKVDeleteRequest{
+		SQLTemplate:     sqltemplate.New(k.dialect),
+		sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{section}, key},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete key: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to validate delete: %w", err)
+	}
+
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
