@@ -284,7 +284,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		for k, err := range kv.Keys(ctx, "", resource.ListOptions{}) {
 			if err != nil {
 				errors = append(errors, err)
-				break
+				continue
 			}
 			keys = append(keys, k)
 		}
@@ -293,7 +293,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Empty(t, keys)
 	})
 
-	t.Run("invalid sort option", func(t *testing.T) {
+	t.Run("invalid sort option, defaults to asc", func(t *testing.T) {
 		var keys []string
 		var errors []error
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
@@ -301,13 +301,12 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		}) {
 			if err != nil {
 				errors = append(errors, err)
-				break
+				continue
 			}
 			keys = append(keys, k)
 		}
-		require.Len(t, errors, 1)
-		assert.Contains(t, errors[0].Error(), "invalid sort option")
-		assert.Empty(t, keys)
+		assert.Empty(t, errors)
+		assert.Equal(t, testKeys, keys)
 	})
 
 	t.Run("list keys with end key < start key", func(t *testing.T) {
@@ -319,7 +318,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		}) {
 			if err != nil {
 				errors = append(errors, err)
-				break
+				continue
 			}
 			keys = append(keys, k)
 		}

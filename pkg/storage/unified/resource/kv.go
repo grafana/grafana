@@ -293,11 +293,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		defer txn.Discard()
 		defer iter.Close()
 
-		if opt.Sort != SortOrderAsc && opt.Sort != SortOrderDesc {
-			yield("", fmt.Errorf("invalid sort option"))
-			return
-		}
-
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
 			item := iter.Item()
 			if opt.Limit > 0 && count >= opt.Limit {
