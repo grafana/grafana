@@ -393,8 +393,9 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 		return authorizer.DecisionDeny, "viewer role is required", nil
 
 	case "files":
-		// Access to files is controlled by the AccessClient
-		return authorizer.DecisionAllow, "", nil
+		// Listing files requires admin access (matching handler-level check in listFolderFiles).
+		// Individual file operations are additionally controlled by the AccessClient in DualReadWriter.
+		return allowForAdminsOrAccessPolicy(id)
 
 	case "resources", "sync", "history":
 		// These are strictly read operations.
