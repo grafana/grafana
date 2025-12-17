@@ -129,13 +129,16 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
         treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
         return treeNode;
       }
-      treeNode.children[childNodeName] = {
-        expanded: false,
-        scopeNodeId: childNodeName,
-        query: '',
-        children: undefined,
-        childrenLoaded: false,
-      };
+      // Only insert if the child doesn't already exist - preserve existing loaded children
+      if (!treeNode.children[childNodeName]) {
+        treeNode.children[childNodeName] = {
+          expanded: false,
+          scopeNodeId: childNodeName,
+          query: '',
+          children: undefined,
+          childrenLoaded: false,
+        };
+      }
       treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
       return treeNode;
     });
