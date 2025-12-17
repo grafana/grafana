@@ -1544,12 +1544,13 @@
       "options": {
         "barWidth": 12,
         "barWidthFactor": 0.4,
+        "barShape": "rounded",
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
+        "endpointMarker": "glow",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {

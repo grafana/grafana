@@ -1513,6 +1513,7 @@
           "centerGlow": true,
           "gradient": true
         },
+        "endpointMarker": "glow",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
