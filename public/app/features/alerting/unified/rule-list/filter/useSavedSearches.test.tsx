@@ -172,9 +172,10 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Zod validation rejects the entire array if any item is invalid
-      // Returns empty array when validation fails
-      expect(result.current.savedSearches).toHaveLength(0);
+      // Invalid entries are filtered out, valid ones are preserved
+      expect(result.current.savedSearches).toHaveLength(2);
+      expect(result.current.savedSearches[0].name).toBe('Default Search');
+      expect(result.current.savedSearches[1].name).toBe('Test Search 1');
     });
 
     it('should handle malformed JSON gracefully', async () => {
