@@ -107,6 +107,7 @@ describe('usePluginFunctions()', () => {
       },
     };
 
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId] = {
       id: pluginId,
       path: '',
@@ -329,6 +330,7 @@ describe('usePluginFunctions()', () => {
     };
 
     // The `AddedFunctionsRegistry` is validating if the function is registered in the plugin metadata (config.apps).
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedFunctions = [functionConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (

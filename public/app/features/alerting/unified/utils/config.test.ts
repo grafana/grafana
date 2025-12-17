@@ -62,11 +62,13 @@ describe('checkEvaluationIntervalGlobalLimit', () => {
 
 describe('getIsIrmPluginPresent', () => {
   it('should return true when IRM plugin is present in config.apps', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
     expect(getIsIrmPluginPresent()).toBe(true);
   });
 
   it('should return false when IRM plugin is not present in config.apps', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
       [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),
@@ -77,11 +79,13 @@ describe('getIsIrmPluginPresent', () => {
 
 describe('getIrmIfPresentOrIncidentPluginId', () => {
   it('should return IRM plugin ID when IRM plugin is present', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
     expect(getIrmIfPresentOrIncidentPluginId()).toBe(SupportedPlugin.Irm);
   });
 
   it('should return Incident plugin ID when IRM plugin is not present', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
       [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),
@@ -92,11 +96,13 @@ describe('getIrmIfPresentOrIncidentPluginId', () => {
 
 describe('getIrmIfPresentOrOnCallPluginId', () => {
   it('should return IRM plugin ID when IRM plugin is present', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
     expect(getIrmIfPresentOrOnCallPluginId()).toBe(SupportedPlugin.Irm);
   });
 
   it('should return OnCall plugin ID when IRM plugin is not present', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
       [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),

@@ -70,6 +70,7 @@ let llmHealthCheck: Promise<boolean> | undefined;
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
+  // eslint-disable-next-line no-restricted-syntax
   if (!config.apps['grafana-llm-app']) {
     return false;
   }

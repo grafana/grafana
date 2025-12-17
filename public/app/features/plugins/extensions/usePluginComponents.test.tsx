@@ -115,6 +115,7 @@ describe('usePluginComponents()', () => {
       },
     };
 
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId] = {
       id: pluginId,
       path: '',
@@ -507,6 +508,7 @@ describe('usePluginComponents()', () => {
     };
 
     // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (config.apps).
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedComponents = [componentConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (

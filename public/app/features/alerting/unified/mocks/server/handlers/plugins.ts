@@ -12,6 +12,7 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  */
 export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
   plugins.forEach(({ id, baseUrl, info, angular }) => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[id] = {
       id,
       path: baseUrl,
