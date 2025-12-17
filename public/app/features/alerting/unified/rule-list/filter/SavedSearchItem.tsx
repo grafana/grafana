@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { Dropdown, Icon, IconButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { InlineRenameInput } from './InlineRenameInput';
-import { SavedSearch, ValidationError } from './savedSearchesSchema';
+import { SavedSearch } from './savedSearchesSchema';
 
 // ============================================================================
 // Saved Search Item
@@ -19,7 +19,7 @@ export interface SavedSearchItemProps {
   onApply: () => void;
   onStartRename: () => void;
   onCancelRename: () => void;
-  onRenameComplete: (newName: string) => Promise<ValidationError | void>;
+  onRenameComplete: (newName: string) => Promise<void>;
   onStartDelete: () => void;
   onCancelDelete: () => void;
   onDeleteConfirm: () => Promise<void>;
