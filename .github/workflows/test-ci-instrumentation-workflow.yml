@@ -37,20 +37,41 @@ jobs:
       - name: Build Go Cache Plugin
         run: |
           cd ./gocacheplugin/cmd/go-cache-plugin
-          GOWORK=off go build -o atool
+          GOWORK=off go build -o go-cache-plugin
           cd ../../..
-          cp ./gocacheplugin/cmd/go-cache-plugin/atool ./
+          cp ./gocacheplugin/cmd/go-cache-plugin/go-cache-plugin ./
 
       - name: Start Go Cache Plugin
+        env:
+          GOCACHE_LOCAL_ONLY: true
+          GOCACHE_DIR: /tmp/gocache
+          GOCACHE_MODPROXY_NOCACHE: true
+          GOCACHE_ENABLE_TRACING: true
+          GOCACHE_TRACING_TRACE_FILE: trace-modcache.log
+          #          OTEL_COLLECTOR_ADDRESS: localhost:4319
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          JOB_NAME: ${{ github.job }}
+          STEP_NAME: Build Grafana
+          STEP_NUMBER: 8
         run: |
-          ./atool serve --plugin 5930 --http=localhost:5970 --modproxy \
-          --cache-dir=/tmp/gocache --local --cache-dir=/tmp/gocachenew --log-file go-cache.log  \
-          --tracing "${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}:${GITHUB_JOB}:Build Grafana:8" &
+          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy &
 
-          echo $! > atool.pid
+          echo $! > go-cache-plugin.pid
 
       - name: Build Grafana
         continue-on-error: true
+        env:
+          GOCACHE_LOCAL_ONLY: true
+          GOCACHE_DIR: /tmp/gocache
+          GOCACHE_ENABLE_TRACING: true
+          GOCACHE_TRACING_TRACE_FILE: trace-gocache.log
+
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          JOB_NAME: ${{ github.job }}
+          STEP_NAME: Build Grafana
+          STEP_NUMBER: 8
         run: |
           echo "RUN_ID=${GITHUB_RUN_ID}"
           echo "RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT}"
@@ -58,11 +79,23 @@ jobs:
           echo "STEP_NAME=Build Grafana"
 
           ls ./
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./atool connect 5930" make build-go
+          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
 
-      - name: Cat trace.log an cleanup
+
+      - name: Cleanup
         run: |
-          kill $(cat atool.pid)
-          cat go-cache.log
+          kill $(cat go-cache-plugin.pid)
 
+
+      - name: Cat GOMOD traces
+        run: |
+          echo "====GO MODPROXY TRACES====="
+          cat trace-modcache.log
+          echo "==========================="
+
+      - name: Cat GOCACHEPROG traces
+        run: |
+          echo "====GO GOCACHEPROG TRACES====="
+          cat trace-gocache.log
+          echo "=============================="
 
