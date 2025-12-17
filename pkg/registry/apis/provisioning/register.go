@@ -368,46 +368,24 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 }
 
 // authorizeRepositorySubresource handles authorization for repository subresources.
+// Subresources are grouped by required role level.
 func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 	switch a.GetSubresource() {
-	case "", "test":
-		// Doing something with the repository itself.
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "admin role is required", nil
-
-	case "jobs":
-		// Posting jobs requires editor privileges (for syncing).
-		if id.GetOrgRole().Includes(identity.RoleAdmin) || id.GetOrgRole().Includes(identity.RoleEditor) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "editor role is required", nil
-
-	case "refs":
-		// This is strictly a read operation. It is handy on the frontend for viewers.
-		if id.GetOrgRole().Includes(identity.RoleViewer) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "viewer role is required", nil
-
-	case "files":
-		// Listing files requires admin access (matching handler-level check in listFolderFiles).
-		// Individual file operations are additionally controlled by the AccessClient in DualReadWriter.
+	// Admin-only: repository CRUD, testing, and file listing
+	case "", "test", "files":
 		return allowForAdminsOrAccessPolicy(id)
 
-	case "resources", "sync", "history":
-		// These are strictly read operations.
-		// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
-		if id.GetOrgRole().Includes(identity.RoleEditor) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "editor role is required", nil
+	// Editor: job creation, sync operations, resource listing, history
+	case "jobs", "resources", "sync", "history":
+		return allowForEditorsOrAccessPolicy(id)
 
+	// Viewer: read-only operations (refs, status GET)
+	case "refs":
+		return allowForViewersOrAccessPolicy(id)
 	case "status":
-		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-			return authorizer.DecisionAllow, "", nil
+		if a.GetVerb() == apiutils.VerbGet {
+			return allowForViewersOrAccessPolicy(id)
 		}
 		return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
 
@@ -419,15 +397,18 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 	}
 }
 
-// isAccessPolicy checks if the requester is an AccessPolicy identity.
-// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT) and don't have org roles.
+// ----------------------------------------------------------------------------
+// Role-based authorization helpers
+// ----------------------------------------------------------------------------
+// These helpers check both the traditional org role AND AccessPolicy identity.
+// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT)
+// and don't have org roles, so we allow them through.
+// The frontend provisioning pages require admin access (controlled by navtree in admin.go).
+
 func isAccessPolicy(id identity.Requester) bool {
 	return authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
 }
 
-// allowForAdminsOrAccessPolicy allows access for admin users or AccessPolicy identities.
-// The frontend provisioning pages require admin access (controlled by navtree in admin.go).
-// AccessPolicy identities (ST->MT flow) are trusted internal callers without org roles.
 func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
 	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return authorizer.DecisionAllow, "", nil
@@ -435,20 +416,34 @@ func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, s
 	return authorizer.DecisionDeny, "admin role is required", nil
 }
 
-// authorizeRepositorySubresource handles authorization for connections subresources.
+func allowForEditorsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
+	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleEditor) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "editor role is required", nil
+}
+
+func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
+	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleViewer) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "viewer role is required", nil
+}
+
+// authorizeConnectionSubresource handles authorization for connection subresources.
 func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
+	// Admin-only: connection CRUD
 	case "":
-		// Doing something with the connection itself.
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "admin role is required", nil
+		return allowForAdminsOrAccessPolicy(id)
+
+	// Viewer: status GET only
 	case "status":
-		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-			return authorizer.DecisionAllow, "", nil
+		if a.GetVerb() == apiutils.VerbGet {
+			return allowForViewersOrAccessPolicy(id)
 		}
 		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+
 	default:
 		if id.GetIsGrafanaAdmin() {
 			return authorizer.DecisionAllow, "", nil
