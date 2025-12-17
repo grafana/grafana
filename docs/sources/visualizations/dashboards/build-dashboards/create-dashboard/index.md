@@ -101,6 +101,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
+{{< docs/list >}}
 {{< shared id="create-dashboard" >}}
 
 1. Click **Dashboards** in the main menu.
@@ -170,6 +171,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
 
    Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
+
+{{< /docs/list >}}
 
 ## Copy a dashboard
 
