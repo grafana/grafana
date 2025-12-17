@@ -190,7 +190,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         category,
       });
 
-    if (!opts.calculate) {
+    // Tick alignment only applies to auto (ordinal) mode
+    const hasExplicitScale = context.options?.rowsFrame?.yBucketScale !== undefined;
+    if (!opts.calculate && !hasExplicitScale) {
       builder.addRadio({
         path: 'rowsFrame.layout',
         name: t('heatmap.name-tick-alignment', 'Tick alignment'),
