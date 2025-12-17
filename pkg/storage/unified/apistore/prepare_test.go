@@ -197,7 +197,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, int64(2), meta2.GetGeneration())
 	})
 
-	t.Run("Update skip incrementing generation when the same", func(t *testing.T) {
+	t.Run("Update should skip incrementing generation when content is unchanged", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name:       "test",
