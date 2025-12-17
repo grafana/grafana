@@ -87,17 +87,16 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
-
 ## Create a dashboard
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
 **Before you begin:**
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](ref:about-users-and-permissions).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
-- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
+- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source) if you need instructions.
 
 **To create a dashboard**:
 
@@ -114,7 +113,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
-   - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
+   - Select one of the Grafana [built-in special data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -122,18 +121,18 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    The **Edit panel** view opens with your data source selected.
    You can change the panel data source later using the drop-down in the **Queries** tab of the panel editor if needed.
 
-   For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
+   For more information about data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for specific guidelines.
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
+   - Click **Replace with saved query** to reuse a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
 
-1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+1. (Optional) To [save the query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query) for reuse, click the **Save query** button (or icon).
 1. Click **Refresh** to query the data source.
 1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and refresh the data source as many times as needed.
 
    {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
 1. In the visualization list, select a visualization type.
@@ -142,23 +141,23 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Grafana displays a preview of your query results with the visualization applied.
 
-   For more information about individual visualizations, refer to [Visualizations options](ref:visualizations-options).
+   For more information about individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
 
-1. Under **Panel options**, enter a title and description for your panel or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Under **Panel options**, enter a title and description for your panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
-   - [Configure value mappings](ref:configure-value-mappings)
-   - [Visualization-specific options](ref:visualization-specific-options)
-   - [Override field values](ref:override-field-values)
-   - [Configure thresholds](ref:configure-thresholds)
-   - [Configure standard options](ref:configure-standard-options)
+   - [Configure value mappings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-value-mappings/)
+   - [Visualization-specific options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/)
+   - [Override field values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/)
+   - [Configure thresholds](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-thresholds/)
+   - [Configure standard options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-standard-options/)
 
 1. When you've finished editing your panel, click **Save dashboard**.
 
    Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
 
-1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**.
 1. To add more panels to the dashboard, click **Back to dashboard**.
@@ -190,7 +189,7 @@ To copy a dashboard, follow these steps:
 
 ## Configure repeating rows
 
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](ref:configure-repeating-panels).
+You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels).
 
 To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
 
@@ -214,7 +213,7 @@ To provide context to dashboard users, add the variable to the row title.
 
 ### Repeating rows and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
 For example, in a dashboard:
 
