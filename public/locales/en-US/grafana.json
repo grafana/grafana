@@ -4829,7 +4829,8 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom Variable"
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6595,7 +6596,8 @@
       "tooltip-show-usages": "Show usages"
     },
     "variable-values-preview": {
-      "preview-of-values": "Preview of values",
+      "preview-of-values_one": "Preview of values ({{count}})",
+      "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
     },
     "version-history": {

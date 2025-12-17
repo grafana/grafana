@@ -18,7 +18,9 @@ export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
       <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+          Preview of values ({'{{count}}'})
+        </Trans>
         {hasOptions && hasMultiProps && <VariableValuesWithPropsPreview options={options} />}
         {hasOptions && !hasMultiProps && <VariableValuesWithoutPropsPreview options={options} />}
       </Text>
