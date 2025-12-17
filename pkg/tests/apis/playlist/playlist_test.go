@@ -65,7 +65,7 @@ func TestIntegrationPlaylist(t *testing.T) {
                   "version": ""
                 },
                 "scope": "Namespaced",
-                "singularResource": "playlists",
+                "singularResource": "playlist",
                 "subresources": [
                   {
                     "responseKind": {
