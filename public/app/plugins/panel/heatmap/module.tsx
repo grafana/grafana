@@ -190,7 +190,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         category,
       });
 
-    // Tick alignment only applies to auto (ordinal) mode
+    // Hide tick alignment for explicit scales - bucket boundaries are fixed by numeric labels
     const hasExplicitScale = context.options?.rowsFrame?.yBucketScale !== undefined;
     if (!opts.calculate && !hasExplicitScale) {
       builder.addRadio({
