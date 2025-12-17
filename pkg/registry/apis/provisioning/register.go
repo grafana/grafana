@@ -346,12 +346,9 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 // Different routes may need different permissions:
 //
 // Admin-only:
-//   - Repository CRUD, test, files, refs
+//   - Repository CRUD, test, files, refs, jobs, resources, history
 //   - Stats, settings, jobs, historic jobs
 //   - Connection CRUD
-//
-// Editor:
-//   - Repository subresources: jobs, resources, sync, history
 //
 // Viewer:
 //   - Repository/connection status (GET only)
@@ -373,14 +370,9 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 	switch a.GetSubresource() {
-	// Admin-only: repository CRUD, testing, file listing, refs
-	case "", "test", "files", "refs":
+	// Admin-only: repository CRUD and all subresources
+	case "", "test", "files", "refs", "jobs", "resources", "history":
 		return allowForAdminsOrAccessPolicy(id)
-
-	// Editor: job creation, sync operations, resource listing, history
-	case "jobs", "resources", "sync", "history":
-		return allowForEditorsOrAccessPolicy(id)
-
 	// Viewer: status GET only
 	case "status":
 		if a.GetVerb() == apiutils.VerbGet {
