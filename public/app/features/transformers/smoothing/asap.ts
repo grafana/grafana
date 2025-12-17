@@ -9,55 +9,32 @@ export interface ASAPOptions {
   resolution: number;
 }
 
-export function asapSmooth(data: Array<DataPoint | [number, number]>, options: ASAPOptions): DataPoint[] {
+export function asapSmooth(data: DataPoint[], options: ASAPOptions): DataPoint[] {
   const { resolution } = options;
 
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  if (!data || data.length === 0) {
     return [];
   }
 
-  const inputData: Array<[number, number]> = [];
-
-  for (const point of data) {
-    if (!point || typeof point !== 'object') {
-      continue;
-    }
-
-    let x: number, y: number;
-
-    if ('x' in point && 'y' in point) {
-      x = typeof point.x === 'number' ? point.x : Number(point.x);
-      y = typeof point.y === 'number' ? point.y : Number(point.y);
-    } else if (Array.isArray(point) && point.length >= 2) {
-      x = Number(point[0]);
-      y = Number(point[1]);
-    } else {
-      continue;
-    }
-
-    if (isNaN(x) || isNaN(y)) {
-      continue;
-    }
-
-    inputData.push([x, y]);
-  }
+  // Filter invalid points and convert to tuple format for ASAP library
+  const inputData: Array<[number, number]> = data
+    .filter((point) => point != null && !isNaN(point.x) && !isNaN(point.y))
+    .map((point) => [point.x, point.y]);
 
   if (inputData.length === 0) {
     return [];
   }
 
+  // this prevents O(m×n) degradation if inputData is unsorted data
+  inputData.sort((a, b) => a[0] - b[0]);
+
+  // ASAP always returns objects with x and y properties
   const smoothedData = ASAP(inputData, resolution);
 
-  const result: DataPoint[] = [];
-  for (let i = 0; i < smoothedData.length; i++) {
-    const item = smoothedData[i];
-
-    if (Array.isArray(item) && item.length >= 2) {
-      result.push({ x: Number(item[0]), y: Number(item[1]) });
-    } else if (item && typeof item === 'object' && 'x' in item && 'y' in item) {
-      result.push({ x: Number(item.x), y: Number(item.y) });
-    }
-  }
+  // Convert back to DataPoint format
+  const result: DataPoint[] = Array.from(smoothedData).filter(
+    (item): item is DataPoint => item !== null && typeof item === 'object' && 'x' in item && 'y' in item
+  );
 
   return result;
 }
