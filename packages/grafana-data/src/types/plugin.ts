@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { PluginSchema } from '@grafana/plugin-types/plugin-schema';
+
 import { KeyValue } from './data';
 import { IconName } from './icon';
 
@@ -265,4 +267,33 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   constructor() {
     this.meta = {} as T;
   }
+}
+export interface PluginMetasResponse {
+  items: PluginMetasItem[];
+}
+
+export interface PluginMetasItem {
+  spec: PluginMetasSpec;
+}
+
+export interface PluginMetasSpec {
+  pluginJson: PluginSchema;
+  module: PluginMetasModule;
+  baseURL: string;
+  signature: PluginMetasSignature;
+  angular: PluginMetasAngular;
+  translations?: PluginSchema['languages'];
+}
+
+export interface PluginMetasAngular {
+  detected: boolean;
+}
+
+export interface PluginMetasModule {
+  path: string;
+  loadingStrategy: PluginLoadingStrategy;
+}
+
+export interface PluginMetasSignature {
+  status: PluginSignatureStatus;
 }

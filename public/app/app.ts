@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
+  PluginMetasResponse,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
@@ -41,6 +42,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  GrafanaBootConfig,
 } from '@grafana/runtime';
 import {
   initOpenFeature,
@@ -257,6 +259,28 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
+        const response = await backendSrv.get<PluginMetasResponse>(
+          `/apis/plugins.grafana.app/v0alpha1/namespaces/${config.namespace}/pluginmetas`
+        );
+        const plugins: GrafanaBootConfig['plugins'] = { apps: {}, panels: {}, datasources: {} };
+        response.items.reduce((acc, curr) => {
+          if (curr.spec.pluginJson.type === 'app') {
+            acc.apps[curr.spec.pluginJson.id] = curr.spec;
+          }
+
+          if (curr.spec.pluginJson.type === 'panel') {
+            acc.panels[curr.spec.pluginJson.id] = curr.spec;
+          }
+
+          if (curr.spec.pluginJson.type === 'datasource') {
+            acc.datasources[curr.spec.pluginJson.id] = curr.spec;
+          }
+
+          return acc;
+        }, plugins);
+
+        updateConfig({ plugins });
+
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
 
