@@ -29,6 +29,7 @@ interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
 
 type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDot;
 
+const DOT_OPACITY = 0.5;
 const DOT_RADIUS_FACTOR = 0.4;
 const MAX_DOT_RADIUS = 8;
 
@@ -102,8 +103,10 @@ export const RadialArcPath = memo(
           {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
         </g>
 
-        {guideDotColors && arcLengthDeg > 5 && <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} />}
-        {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} />}
+        {guideDotColors && arcLengthDeg > 5 && (
+          <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} opacity={DOT_OPACITY} />
+        )}
+        {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} opacity={DOT_OPACITY} />}
       </>
     );
   }
