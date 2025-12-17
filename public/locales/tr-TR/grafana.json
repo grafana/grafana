@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": ""
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Daha Fazla",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Virgülle ayrılmış değerler"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Ad filtresi",
@@ -5133,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Yapılandır",
       "menu-use-library-panel": "Kütüphane panelini kullan",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6152,10 @@
       "no-data-found": "Veri bulunamadı"
     },
     "inspect-json-tab": {
-      "apply": "Uygula"
+      "apply": "Uygula",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Zaman aralığını belirtilen sayıya bölerek aralığı dinamik olarak hesaplar",
@@ -11409,6 +11419,12 @@
         "latestReleaseDate": "Son yayın tarihi:",
         "latestVersion": "En Son Sürüm",
         "license": "Lisans",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Sorun bildir",
         "reportAbuse": "",
         "reportAbuseTooltip": "Zararlı veya kötü amaçlı eklentilere ilişkin sorunları doğrudan Grafana Labs'a bildirin.",
