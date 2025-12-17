@@ -894,7 +894,7 @@ export const getCategories = (): ValueFormatCategory[] => [
           'Decibel-milliwatt (dBm)'
         ),
         id: 'dBm',
-        fn: SIPrefix('dBm'),
+        fn: toFixedUnit('dbm'),
       },
       {
         name: t('grafana-data.valueFormats.categories.energy.formats.name-milliohm', 'Milliohm (mΩ)'),
