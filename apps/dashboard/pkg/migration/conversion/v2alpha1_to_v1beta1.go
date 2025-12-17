@@ -1983,7 +1983,6 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 			}
 		}
 		overrideMap["properties"] = properties
-		
 
 		result = append(result, overrideMap)
 	}
