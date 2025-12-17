@@ -207,7 +207,7 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	// We should not publish Grafana as a Go module, disabling vcs changes the version to (devel)
 	// and works better with SBOM and Vulnerability Scanners.
 	args = append(args, "-buildvcs=false")
-	//args = append(args, "-toolexec=\"./foo\"")
+	args = append(args, "-toolexec=\"./go-toolexec\"")
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 
