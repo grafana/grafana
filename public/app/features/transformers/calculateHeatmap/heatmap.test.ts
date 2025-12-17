@@ -197,9 +197,8 @@ describe('Heatmap transformer', () => {
         yBucketScale: { type: ScaleDistribution.Linear },
       });
 
-      // Should use numeric values [1, 10, 100] instead of ordinal indices [0, 1, 2]
+      expect(heatmap.fields[1].name).toBe('yMin');
       expect(heatmap.fields[1].values).toEqual([1, 10, 100, 1, 10, 100]);
-      expect(heatmap.fields[1].name).toBe('yMax'); // le layout
     });
 
     it('converts ge labels to numeric buckets with linear scale', () => {

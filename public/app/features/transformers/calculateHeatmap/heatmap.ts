@@ -198,19 +198,20 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   let bucketBoundsMax: number[] | undefined;
 
   if (useLinearScale) {
-    // Linear mode: use numeric bucket values and calculate proportional heights
+    // Linear mode: use numeric bucket values
     bucketBounds = yFields.map((field) => {
       const labelKey = custom.yMatchWithLabel;
       const labelValue = labelKey ? field.labels?.[labelKey] : undefined;
       const valueStr = labelValue ?? field.name;
       return Number(valueStr);
     });
+
+    // Generate upper bounds: shift values + calculate last bucket
     bucketBoundsMax = bucketBounds.slice();
     bucketBoundsMax.shift();
-
-    // Calculate the factor from adjacent buckets to estimate the upper bound of the last bucket
     const factor = calculateBucketFactor(bucketBounds);
-    bucketBoundsMax.push(bucketBounds.at(-1)! * factor);
+    bucketBoundsMax.push(bucketBounds[bucketBounds.length - 1] * factor);
+
     custom.yMatchWithLabel = undefined;
   } else {
     // Auto mode: use ordinal indices like the original main branch behavior
@@ -278,7 +279,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       config: xField.config,
     },
     {
-      name: ordinalFieldName,
+      name: useLinearScale ? 'yMin' : ordinalFieldName,
       type: FieldType.number,
       values: ys,
       config: {

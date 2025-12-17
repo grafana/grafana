@@ -99,9 +99,12 @@ const HeatmapHoverCell = ({
   const index = dataIdxs[1]!;
   const data = dataRef.current;
 
-  const [isSparse] = useState(
-    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
-  );
+  const [isSparse] = useState(() => {
+    if (!data.heatmap) {
+      return false;
+    }
+    return data.heatmap.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap);
+  });
 
   const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;
