@@ -143,7 +143,7 @@ describe('BootstrapStep', () => {
     it('should render correct info for GitHub repository type', async () => {
       setup();
       expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
+      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should show "Empty" (2 external + 2 unmanaged, one per card)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -198,7 +198,8 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('7 resources')).toBeInTheDocument();
+      // Two elements display "7 resources": one in the external storage card and one in unmanaged resources card
+      expect(await screen.findAllByText('7 resources')).toHaveLength(2);
     });
   });
 
@@ -207,21 +208,7 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
-    });
-
-    it('should use useResourceStats hook with legacy storage flag', async () => {
-      setup({
-        settingsData: {
-          legacyStorage: true,
-          allowImageRendering: true,
-          items: [],
-          availableRepositoryTypes: [],
-        },
-      });
-
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
     });
   });
 
@@ -255,7 +242,6 @@ describe('BootstrapStep', () => {
 
       setup({
         settingsData: {
-          legacyStorage: true,
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
