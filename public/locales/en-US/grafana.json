@@ -12463,7 +12463,7 @@
         "label": "Effects"
       },
       "endpoint-marker": "Endpoint marker",
-      "endpoint-marker-description": "Glow is only supported in dark mode.",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",

@@ -74,7 +74,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     builder.addRadio({
       path: 'endpointMarker',
       name: t('radialbar.config.endpoint-marker', 'Endpoint marker'),
-      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode.'),
+      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode'),
       category,
       defaultValue: defaultOptions.endpointMarker,
       settings: {
