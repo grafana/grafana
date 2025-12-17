@@ -2,6 +2,7 @@ package migrator
 
 import (
 	_ "embed"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -18,24 +19,25 @@ type ExpectedMigration struct {
 var sqliteMigrationStatement string
 
 func TestConvertUniqueKeyToPrimaryKey(t *testing.T) {
-	expectedMigrations := map[string][]ExpectedMigration{
-		MySQL: {
-			{Id: "drop my_row_id and add primary key to file table if my_row_id exists (auto-generated mysql column)", SQL: `
+	expectedMigrations := func(names []string) map[string][]ExpectedMigration {
+		return map[string][]ExpectedMigration{
+			MySQL: {
+				{Id: names[0], SQL: `
 			  ALTER TABLE file
 			  DROP PRIMARY KEY,
 			  DROP COLUMN my_row_id,
 			  DROP INDEX UQE_file_path_hash,
 			  ADD PRIMARY KEY (path_hash);
 			`},
-			{Id: "drop UQE_file_path_hash unique index from file table if it exists (mysql)", SQL: "ALTER TABLE file DROP INDEX UQE_file_path_hash"},
-			{Id: "add primary key to file table if it doesn't exist (mysql)", SQL: "ALTER TABLE file ADD PRIMARY KEY (path_hash)"},
-			{Id: "add primary key to file table (postgres and sqlite)", SQL: ""},
-		},
-		Postgres: {
-			{Id: "drop my_row_id and add primary key to file table if my_row_id exists (auto-generated mysql column)", SQL: ""},
-			{Id: "drop UQE_file_path_hash unique index from file table if it exists (mysql)", SQL: ""},
-			{Id: "add primary key to file table if it doesn't exist (mysql)", SQL: ""},
-			{Id: "add primary key to file table (postgres and sqlite)", SQL: `
+				{Id: names[1], SQL: "ALTER TABLE file DROP INDEX UQE_file_path_hash"},
+				{Id: names[2], SQL: "ALTER TABLE file ADD PRIMARY KEY (path_hash)"},
+				{Id: names[3], SQL: ""},
+			},
+			Postgres: {
+				{Id: names[0], SQL: ""},
+				{Id: names[1], SQL: ""},
+				{Id: names[2], SQL: ""},
+				{Id: names[3], SQL: `
 				DO $$
 				BEGIN
 					-- Drop the unique constraint if it exists
@@ -46,41 +48,67 @@ func TestConvertUniqueKeyToPrimaryKey(t *testing.T) {
 					ALTER TABLE file ADD PRIMARY KEY (path_hash);
 				END IF;
 				END $$;`},
-		},
-		SQLite: {
-			{Id: "drop my_row_id and add primary key to file table if my_row_id exists (auto-generated mysql column)", SQL: ""},
-			{Id: "drop UQE_file_path_hash unique index from file table if it exists (mysql)", SQL: ""},
-			{Id: "add primary key to file table if it doesn't exist (mysql)", SQL: ""},
-			{Id: "add primary key to file table (postgres and sqlite)", SQL: sqliteMigrationStatement}, // Embed used here because sqlite statement is full of backquotes.
-		},
+			},
+			SQLite: {
+				{Id: names[0], SQL: ""},
+				{Id: names[1], SQL: ""},
+				{Id: names[2], SQL: ""},
+				{Id: names[3], SQL: sqliteMigrationStatement}, // Embed used here because sqlite statement is full of backquotes.
+			},
+		}
 	}
 
-	for dialectName, migrations := range expectedMigrations {
-		CheckExpectedMigrations(t, dialectName, migrations, func(migrator *Migrator) {
-			ConvertUniqueKeyToPrimaryKey(migrator,
-				"file",
-				Index{Cols: []string{"path_hash"}, Type: UniqueIndex}, // Convert this unique key to primary key
-				Table{
-					Name: "file",
-					Columns: []*Column{
-						{Name: "path", Type: DB_NVarchar, Length: 1024, Nullable: false},
-						{Name: "path_hash", Type: DB_NVarchar, Length: 64, Nullable: false, IsPrimaryKey: true},
-						{Name: "parent_folder_path_hash", Type: DB_NVarchar, Length: 64, Nullable: false},
-						{Name: "contents", Type: DB_Blob, Nullable: false},
-						{Name: "etag", Type: DB_NVarchar, Length: 32, Nullable: false},
-						{Name: "cache_control", Type: DB_NVarchar, Length: 128, Nullable: false},
-						{Name: "content_disposition", Type: DB_NVarchar, Length: 128, Nullable: false},
-						{Name: "updated", Type: DB_DateTime, Nullable: false},
-						{Name: "created", Type: DB_DateTime, Nullable: false},
-						{Name: "size", Type: DB_BigInt, Nullable: false},
-						{Name: "mime_type", Type: DB_NVarchar, Length: 255, Nullable: false},
-					},
-					PrimaryKeys: []string{"path_hash"},
-					Indices: []*Index{
-						{Cols: []string{"parent_folder_path_hash"}},
-					},
+	type testCase struct {
+		migrationNamesParam    []string // Passed to ConvertUniqueKeyToPrimaryKey
+		migrationNamesExpected []string // Used to build migrations map
+	}
+
+	testCases := map[string]testCase{
+		"default names": {migrationNamesParam: nil, migrationNamesExpected: []string{
+			"drop my_row_id and add primary key with columns path_hash to table file if my_row_id exists (auto-generated mysql column)",
+			"drop unique index UQE_file_path_hash with columns path_hash from file table if it exists (mysql)",
+			"add primary key with columns path_hash to table file if it doesn't exist (mysql)",
+			"add primary key with columns path_hash to table file (postgres and sqlite)",
+		}},
+		"supplied names": {migrationNamesParam: []string{"a", "b", "c", "d"}, migrationNamesExpected: []string{"a", "b", "c", "d"}},
+		"partially supplied names": {migrationNamesParam: []string{"a", "", "c"}, migrationNamesExpected: []string{
+			"a",
+			"drop unique index UQE_file_path_hash with columns path_hash from file table if it exists (mysql)",
+			"c",
+			"add primary key with columns path_hash to table file (postgres and sqlite)",
+		}},
+	}
+
+	for name, tc := range testCases {
+		for dialectName, migrations := range expectedMigrations(tc.migrationNamesExpected) {
+			t.Run(fmt.Sprintf("%s-%s", name, dialectName), func(t *testing.T) {
+				CheckExpectedMigrations(t, dialectName, migrations, func(migrator *Migrator) {
+					ConvertUniqueKeyToPrimaryKey(migrator,
+						"file",
+						Index{Cols: []string{"path_hash"}, Type: UniqueIndex}, // Convert this unique key to primary key
+						Table{
+							Name: "file",
+							Columns: []*Column{
+								{Name: "path", Type: DB_NVarchar, Length: 1024, Nullable: false},
+								{Name: "path_hash", Type: DB_NVarchar, Length: 64, Nullable: false, IsPrimaryKey: true},
+								{Name: "parent_folder_path_hash", Type: DB_NVarchar, Length: 64, Nullable: false},
+								{Name: "contents", Type: DB_Blob, Nullable: false},
+								{Name: "etag", Type: DB_NVarchar, Length: 32, Nullable: false},
+								{Name: "cache_control", Type: DB_NVarchar, Length: 128, Nullable: false},
+								{Name: "content_disposition", Type: DB_NVarchar, Length: 128, Nullable: false},
+								{Name: "updated", Type: DB_DateTime, Nullable: false},
+								{Name: "created", Type: DB_DateTime, Nullable: false},
+								{Name: "size", Type: DB_BigInt, Nullable: false},
+								{Name: "mime_type", Type: DB_NVarchar, Length: 255, Nullable: false},
+							},
+							PrimaryKeys: []string{"path_hash"},
+							Indices: []*Index{
+								{Cols: []string{"parent_folder_path_hash"}},
+							},
+						}, tc.migrationNamesParam)
 				})
-		})
+			})
+		}
 	}
 }
 
