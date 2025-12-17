@@ -174,7 +174,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       >
         <div className={styles.topRow}>
           {config.featureToggles.scopeFilters && !editPanel && (
-            <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+            <ContextualNavigationPaneToggle className={styles.contextualNavToggleNewLayout} hideWhenOpen={true} />
           )}
           {!hideVariableControls && (
             <div className={styles.drilldownControlsContainer}>
@@ -229,7 +229,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggleOriginal} hideWhenOpen={true} />
+        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
         <>
@@ -390,13 +390,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       marginLeft: 'auto',
     }),
-    // Original contextualNavToggle style
-    contextualNavToggleOriginal: css({
+    contextualNavToggle: css({
       display: 'inline-flex',
       margin: theme.spacing(0, 1, 1, 0),
     }),
-    // New layout contextualNavToggle style
-    contextualNavToggle: css({
+    contextualNavToggleNewLayout: css({
       display: 'inline-flex',
       flexShrink: 0,
     }),

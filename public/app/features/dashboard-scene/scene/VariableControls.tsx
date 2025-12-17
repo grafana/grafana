@@ -39,12 +39,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <>
-      <div>
-        {variablesToRender.length > 0 &&
-          variablesToRender.map((variable) => (
-            <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
-          ))}
-      </div>
+      {variablesToRender.length > 0 &&
+        variablesToRender.map((variable) => (
+          <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+        ))}
 
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
