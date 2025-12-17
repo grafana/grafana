@@ -3,7 +3,6 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
@@ -30,7 +29,6 @@ var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	iam.ProvideNoopRoleApiInstaller,
-	wire.Bind(new(iam.RoleApiInstaller), new(*iam.NoopApiInstaller[*iamv0.Role])),
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 

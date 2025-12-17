@@ -18,14 +18,14 @@ type ApiInstaller[T runtime.Object] interface {
 	// UpdateAPIGroupInfo registers storage and hooks with the API group.
 	UpdateAPIGroupInfo(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error
 
-	// ValidateRoleOnCreate validates role creation.
-	ValidateRoleOnCreate(ctx context.Context, obj T) error
+	// ValidateOnCreate validates object creation.
+	ValidateOnCreate(ctx context.Context, obj T) error
 
-	// ValidateRoleOnUpdate validates role updates.
-	ValidateRoleOnUpdate(ctx context.Context, oldObj, newObj T) error
+	// ValidateOnUpdate validates object updates.
+	ValidateOnUpdate(ctx context.Context, oldObj, newObj T) error
 
-	// ValidateRoleOnDelete validates role deletion.
-	ValidateRoleOnDelete(ctx context.Context, obj T) error
+	// ValidateOnDelete validates object deletion.
+	ValidateOnDelete(ctx context.Context, obj T) error
 }
 
 // RoleApiInstaller provides Role-specific API registration and validation.
@@ -42,28 +42,23 @@ func (n *NoopApiInstaller[T]) UpdateAPIGroupInfo(apiGroupInfo *server.APIGroupIn
 	return nil
 }
 
-func (n *NoopApiInstaller[T]) ValidateRoleOnCreate(ctx context.Context, obj T) error {
+func (n *NoopApiInstaller[T]) ValidateOnCreate(ctx context.Context, obj T) error {
 	// No validation needed in OSS
 	return nil
 }
 
-func (n *NoopApiInstaller[T]) ValidateRoleOnUpdate(ctx context.Context, oldObj, newObj T) error {
+func (n *NoopApiInstaller[T]) ValidateOnUpdate(ctx context.Context, oldObj, newObj T) error {
 	// No validation needed in OSS
 	return nil
 }
 
-func (n *NoopApiInstaller[T]) ValidateRoleOnDelete(ctx context.Context, obj T) error {
+func (n *NoopApiInstaller[T]) ValidateOnDelete(ctx context.Context, obj T) error {
 	// No validation needed in OSS
 	return nil
-}
-
-// ProvideNoopApiInstaller provides a generic no-op API installer for OSS.
-func ProvideNoopApiInstaller[T runtime.Object]() *NoopApiInstaller[T] {
-	return &NoopApiInstaller[T]{}
 }
 
 // ProvideNoopRoleApiInstaller provides a no-op role installer specifically for Role types.
 // This is needed for Wire dependency injection which doesn't handle generic functions well.
-func ProvideNoopRoleApiInstaller() *NoopApiInstaller[*iamv0.Role] {
+func ProvideNoopRoleApiInstaller() RoleApiInstaller {
 	return &NoopApiInstaller[*iamv0.Role]{}
 }

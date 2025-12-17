@@ -563,7 +563,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		case *iamv0.ExternalGroupMapping:
 			return externalgroupmapping.ValidateOnCreate(typedObj)
 		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateRoleOnCreate(ctx, typedObj)
+			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
@@ -593,13 +593,13 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a Role, got %T", oldRoleObj)
 			}
-			return b.roleApiInstaller.ValidateRoleOnUpdate(ctx, oldRoleObj, typedObj)
+			return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
 		}
 		return nil
 	case admission.Delete:
 		switch oldRoleObj := a.GetOldObject().(type) {
 		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateRoleOnDelete(ctx, oldRoleObj)
+			return b.roleApiInstaller.ValidateOnDelete(ctx, oldRoleObj)
 		}
 		return nil
 	case admission.Connect:
