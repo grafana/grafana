@@ -411,6 +411,10 @@
             "version": "11.1.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,

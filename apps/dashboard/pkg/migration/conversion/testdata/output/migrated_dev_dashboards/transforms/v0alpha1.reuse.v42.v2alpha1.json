@@ -614,6 +614,10 @@
             "spec": {
               "pluginVersion": "9.2.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "Dashboard queries allow re-using the same results from one panel in another panel context.\n\nThis dashboard shows a single panel that makes a real query and applies transformations.  The other panels, all use the same results rather than make their own query requests.",
                 "mode": "markdown"
               },

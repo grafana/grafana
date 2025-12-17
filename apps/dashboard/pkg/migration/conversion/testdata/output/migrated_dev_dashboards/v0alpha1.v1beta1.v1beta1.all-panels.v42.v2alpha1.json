@@ -745,6 +745,10 @@
             "spec": {
               "pluginVersion": "8.1.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "# All panels\n\nThis dashboard was created to quickly check accessiblity issues on a lot of panels at the same time           ",
                 "mode": "markdown"
               },
@@ -777,6 +781,10 @@
             "spec": {
               "pluginVersion": "8.1.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "# Another text panel\n\nBecause why not",
                 "mode": "markdown"
               },

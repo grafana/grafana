@@ -402,6 +402,10 @@
             "spec": {
               "pluginVersion": "11.1.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,

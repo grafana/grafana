@@ -296,6 +296,7 @@
         }
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -431,6 +432,7 @@
         }
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -670,6 +672,7 @@
         }
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -702,6 +705,7 @@
         "type": "text"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -811,6 +815,7 @@
         "type": "table"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -991,6 +996,7 @@
         "type": "stat"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -1075,6 +1081,7 @@
         "type": "piechart"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },
@@ -1250,6 +1257,7 @@
         "valueName": "total"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },

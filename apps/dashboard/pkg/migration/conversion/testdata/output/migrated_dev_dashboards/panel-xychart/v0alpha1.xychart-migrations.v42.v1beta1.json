@@ -453,6 +453,7 @@
         "type": "xychart"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "grafana-testdata-datasource"
         },

@@ -69,6 +69,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "\n# Welcome to Grafana 7.4\n\nGrafana v7.4 is adds many new enhancements to visualizations, transformations, tracing, security, auditing \u0026 more. This dashboard highlights \nsome of the new visualization capabilities. \n\n[Read the what's new article](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v7-4/)  | \n[Download](https://grafana.com/grafana/download/beta)",
                 "mode": "markdown"
               },
@@ -253,6 +257,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "## Interpolation modes\n\nThe new time series panel brings a new interpolation mode\nwhere you can choose between.\n* Linear\n* Smooth\n* Step before\n* Step after (same as old staircase option)",
                 "mode": "markdown"
               },
@@ -742,6 +750,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "# Performance\n\nThe new graph component is many times faster than the \nold graph panel, capable of rendering thousands of data points and many series\nat 30 frames per second. ",
                 "mode": "markdown"
               },
@@ -1159,6 +1171,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "## Soft min and max\n\nAuto **Min** and **Max** can make small variations look much bigger than they  are. This can be fixed by setting **Min** \u0026 **Max**. \nThis creates a new problem when spikes in the data occur. Because the \n**Min** and **Max** are hard the full spike cannot be seen. \n\nThe new _Time series_ panel has options for **Soft min** and **Soft max** that can solve \nthis. With these new options you can control the default range of the axis but also allow going\nbeyond this range when the data does. \n\nYou can combine both the existing standard option **Min** and **Max** and the new **Soft min**\n and **Soft max** to define both soft and hard limits. ",
                 "mode": "markdown"
               },
@@ -2034,6 +2050,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "## Richer display options\n\nThe new time series panel supports more control over lines, fill gradients that \nwork for both line, area graphs \u0026 bars.    ",
                 "mode": "markdown"
               },
@@ -2244,6 +2264,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "## Value mappings\n\nStandard field config value mappings work and will affect the y-axis.",
                 "mode": "markdown"
               },
@@ -2552,6 +2576,10 @@
             "version": "7.4.0-beta1",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "## Multiple Y-Axes\n\nWith the new panel you can have more than 2 y-axes! ",
                 "mode": "markdown"
               },

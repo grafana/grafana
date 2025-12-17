@@ -422,6 +422,10 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "content": "# Title\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n\n",
                 "mode": "markdown"
               },

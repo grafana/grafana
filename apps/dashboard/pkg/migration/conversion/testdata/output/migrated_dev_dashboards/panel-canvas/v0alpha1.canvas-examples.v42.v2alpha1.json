@@ -3783,6 +3783,10 @@
             "spec": {
               "pluginVersion": "9.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -3820,6 +3824,10 @@
             "spec": {
               "pluginVersion": "9.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -3857,6 +3865,10 @@
             "spec": {
               "pluginVersion": "9.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -3894,6 +3906,10 @@
             "spec": {
               "pluginVersion": "9.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {}
+                },
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
