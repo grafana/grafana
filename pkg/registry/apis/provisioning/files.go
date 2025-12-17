@@ -13,9 +13,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -27,12 +27,12 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
-	access  authlib.AccessChecker
+	access  auth.AccessChecker
 	parsers resources.ParserFactory
 	clients resources.ClientFactory
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access authlib.AccessChecker) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker) *filesConnector {
 	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
 }
 
@@ -242,45 +242,14 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // authorizeListFiles checks if the user has repositories:read permission for listing files.
-// Falls back to admin role for backwards compatibility.
+// The access checker handles AccessPolicy identities, namespace resolution, and role-based fallback internally.
 func (c *filesConnector) authorizeListFiles(ctx context.Context, repoName string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
-	// AccessPolicy identities (ST->MT flow) are trusted internal callers
-	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) {
-		return nil
-	}
-
-	rsp, err := c.access.Check(ctx, id, authlib.CheckRequest{
-		Verb:      utils.VerbGet,
-		Group:     provisioning.GROUP,
-		Resource:  provisioning.RepositoryResourceInfo.GetName(),
-		Name:      repoName,
-		Namespace: id.GetNamespace(),
+	return c.access.Check(ctx, authlib.CheckRequest{
+		Verb:     utils.VerbGet,
+		Group:    provisioning.GROUP,
+		Resource: provisioning.RepositoryResourceInfo.GetName(),
+		Name:     repoName,
 	}, "")
-	if err != nil {
-		// Fall back to admin role on error
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return nil
-		}
-		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), repoName,
-			fmt.Errorf("failed to check access: %w", err))
-	}
-
-	if rsp.Allowed {
-		return nil
-	}
-
-	// Fall back to admin role for backwards compatibility
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), repoName,
-		fmt.Errorf("admin role is required"))
 }
 
 // listFolderFiles returns a list of files in a folder.

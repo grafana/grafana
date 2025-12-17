@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -111,7 +112,9 @@ type APIBuilder struct {
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
-	access           authlib.AccessChecker
+	access           auth.AccessChecker
+	accessWithAdmin  auth.AccessChecker
+	accessWithEditor auth.AccessChecker
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	validator        repository.RepositoryValidator
@@ -158,6 +161,9 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
+	// Create access checker with fallback behavior based on mode
+	accessChecker := auth.NewAccessChecker(access, useExclusivelyAccessCheckerForAuthz)
+
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
 		tracer:                              tracer,
@@ -170,7 +176,9 @@ func NewAPIBuilder(
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
 		unified:                             unified,
-		access:                              access,
+		access:                              accessChecker,
+		accessWithAdmin:                     accessChecker.WithFallback(identity.RoleAdmin),
+		accessWithEditor:                    accessChecker.WithFallback(identity.RoleEditor),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
@@ -308,36 +316,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizeRoleBasedResource(a.GetResource(), id)
 			}
 
-			info, ok := authlib.AuthInfoFrom(ctx)
-			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
-			// so we allow it to use the access checker if there is any auth info available
-			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.useExclusivelyAccessCheckerForAuthz) {
-				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
-					Verb:        a.GetVerb(),
-					Group:       a.GetAPIGroup(),
-					Resource:    a.GetResource(),
-					Name:        a.GetName(),
-					Namespace:   a.GetNamespace(),
-					Subresource: a.GetSubresource(),
-					Path:        a.GetPath(),
-				}, "")
-				if err != nil {
-					return authorizer.DecisionDeny, "failed to perform authorization", err
-				}
-
-				if !res.Allowed {
-					return authorizer.DecisionDeny, "permission denied", nil
-				}
-
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			id, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to find requester", err
-			}
-
-			return b.authorizeResource(ctx, a, id)
+			return b.authorizeResource(ctx, a)
 		})
 }
 
@@ -365,35 +344,63 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Stats:
 //   - Admin role required
-func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
-		return b.authorizeRepositorySubresource(ctx, a, id)
+		return b.authorizeRepositorySubresource(ctx, a)
 	case provisioning.ConnectionResourceInfo.GetName():
-		return b.authorizeConnectionSubresource(ctx, a, id)
+		return b.authorizeConnectionSubresource(ctx, a)
 	case provisioning.JobResourceInfo.GetName():
-		return b.checkAccessForJobs(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 	case provisioning.HistoricJobResourceInfo.GetName():
 		// Historic jobs are read-only and admin-only (not editor)
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.HistoricJobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.HistoricJobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 	case "settings", "stats":
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return authorizer.DecisionDeny, "failed to find requester", err
+		}
 		return authorizeRoleBasedResource(a.GetResource(), id)
 	default:
-		return b.authorizeDefault(id)
+		return b.authorizeDefault(ctx)
 	}
 }
 
 // authorizeRepositorySubresource handles authorization for repository subresources.
 // Uses the access checker with verb-based authorization.
-func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
 	// Repository CRUD - use access checker with the actual verb
 	case "":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	// Test requires write permission (testing before save)
 	case "test":
-		return b.checkAccess(ctx, id, apiutils.VerbUpdate, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	// Files subresource: allow any authenticated user at route level.
 	// Directory listing checks repositories:read in the connector.
@@ -403,13 +410,28 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 
 	// Read-only subresources: refs, resources, history, status
 	case "refs", "resources", "history", "status":
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
 	case "jobs":
-		return b.checkAccessForJobs(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), "", a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	default:
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return authorizer.DecisionDeny, "failed to find requester", err
+		}
 		if id.GetIsGrafanaAdmin() {
 			return authorizer.DecisionAllow, "", nil
 		}
@@ -419,17 +441,33 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 
 // authorizeConnectionSubresource handles authorization for connection subresources.
 // Uses the access checker with verb-based authorization.
-func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
 	// Connection CRUD - use access checker with the actual verb
 	case "":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.ConnectionResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	// Status is read-only
 	case "status":
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.ConnectionResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
 
 	default:
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return authorizer.DecisionDeny, "failed to find requester", err
+		}
 		if id.GetIsGrafanaAdmin() {
 			return authorizer.DecisionAllow, "", nil
 		}
@@ -441,61 +479,17 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 // Authorization helpers
 // ----------------------------------------------------------------------------
 
-func isAccessPolicy(id identity.Requester) bool {
-	return authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
-}
-
-// checkAccessWithFallback uses the access checker to verify permissions.
-// Falls back to the specified role for backwards compatibility.
-func (b *APIBuilder) checkAccessWithFallback(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string, fallbackRole identity.RoleType) (authorizer.Decision, string, error) {
-	// AccessPolicy identities are trusted internal callers (ST->MT flow)
-	if isAccessPolicy(id) {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	// Use the access checker
-	res, err := b.access.Check(ctx, id, authlib.CheckRequest{
-		Verb:      verb,
-		Group:     group,
-		Resource:  resource,
-		Name:      name,
-		Namespace: namespace,
-	}, "")
-
+// toAuthorizerDecision converts an access check error to an authorizer decision tuple.
+func toAuthorizerDecision(err error) (authorizer.Decision, string, error) {
 	if err != nil {
-		// Fall back to specified role on error
-		if id.GetOrgRole().Includes(fallbackRole) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "failed to check access: " + err.Error(), nil
+		return authorizer.DecisionDeny, err.Error(), nil
 	}
-
-	if res.Allowed {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	// Fall back to specified role for backwards compatibility
-	if id.GetOrgRole().Includes(fallbackRole) {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	return authorizer.DecisionDeny, fmt.Sprintf("%s role is required", strings.ToLower(string(fallbackRole))), nil
-}
-
-// checkAccess uses the access checker with admin role fallback.
-func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
-	return b.checkAccessWithFallback(ctx, id, verb, group, resource, name, namespace, identity.RoleAdmin)
-}
-
-// checkAccessForJobs uses the access checker with editor role fallback.
-// Jobs can be created/managed by editors, not just admins.
-func (b *APIBuilder) checkAccessForJobs(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
-	return b.checkAccessWithFallback(ctx, id, verb, group, resource, name, namespace, identity.RoleEditor)
+	return authorizer.DecisionAllow, "", nil
 }
 
 // allowForAdminsOrAccessPolicy is used for resources without fine-grained permissions.
 func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleAdmin) {
+	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) || id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
@@ -503,7 +497,7 @@ func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, s
 
 // allowForViewersOrAccessPolicy allows any authenticated user with at least viewer role.
 func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleViewer) {
+	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) || id.GetOrgRole().Includes(identity.RoleViewer) {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "viewer role is required", nil
@@ -530,7 +524,11 @@ func authorizeRoleBasedResource(resource string, id identity.Requester) (authori
 }
 
 // authorizeDefault handles authorization for unmapped resources.
-func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision, string, error) {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return authorizer.DecisionDeny, "failed to find requester", err
+	}
 	// We haven't bothered with this kind yet.
 	if id.GetIsGrafanaAdmin() {
 		return authorizer.DecisionAllow, "", nil
