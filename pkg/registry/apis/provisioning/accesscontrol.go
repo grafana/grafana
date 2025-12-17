@@ -12,6 +12,12 @@ const (
 	ActionProvisioningRepositoriesRead   = "provisioning.repositories:read"   // GET + LIST.
 	ActionProvisioningRepositoriesDelete = "provisioning.repositories:delete" // DELETE.
 
+	// Connections
+	ActionProvisioningConnectionsCreate = "provisioning.connections:create" // CREATE.
+	ActionProvisioningConnectionsWrite  = "provisioning.connections:write"  // UPDATE.
+	ActionProvisioningConnectionsRead   = "provisioning.connections:read"   // GET + LIST.
+	ActionProvisioningConnectionsDelete = "provisioning.connections:delete" // DELETE.
+
 	// Jobs
 	ActionProvisioningJobsCreate = "provisioning.jobs:create" // CREATE.
 	ActionProvisioningJobsWrite  = "provisioning.jobs:write"  // UPDATE.
@@ -57,6 +63,46 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 				{
 					Action: ActionProvisioningRepositoriesDelete,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	// Connections
+	connectionsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.connections:reader",
+			DisplayName: "Connections Reader",
+			Description: "Read and list provisioning connections.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningConnectionsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	connectionsWriter := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.connections:writer",
+			DisplayName: "Connections Writer",
+			Description: "Create, update and delete provisioning connections.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningConnectionsCreate,
+				},
+				{
+					Action: ActionProvisioningConnectionsRead,
+				},
+				{
+					Action: ActionProvisioningConnectionsWrite,
+				},
+				{
+					Action: ActionProvisioningConnectionsDelete,
 				},
 			},
 		},
@@ -122,6 +168,8 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 	return service.DeclareFixedRoles(
 		repositoriesReader,
 		repositoriesWriter,
+		connectionsReader,
+		connectionsWriter,
 		jobsReader,
 		jobsWriter,
 		historicJobsReader,
