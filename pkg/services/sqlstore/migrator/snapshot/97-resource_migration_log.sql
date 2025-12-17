@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
+-- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: grafana
+-- Host: localhost    Database: hg_dump
 -- ------------------------------------------------------
--- Server version	8.0.32
+-- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
