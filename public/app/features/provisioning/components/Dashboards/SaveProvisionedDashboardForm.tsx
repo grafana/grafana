@@ -12,6 +12,7 @@ import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -206,6 +207,9 @@ export function SaveProvisionedDashboardForm({
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
+
+    // ignore incoming save events
+    dashboardWatcher.ignoreNextSave();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request

@@ -10181,7 +10181,8 @@
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
       "line-contains": "Add as line contains filter",
-      "line-contains-not": "Add as line does not contain filter"
+      "line-contains-not": "Add as line does not contain filter",
+      "search-text": "Search in results"
     },
     "show-log-attributes": "Display log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
