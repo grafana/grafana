@@ -413,37 +413,26 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         // Pre-fetch the first scope's defaultPath to improve performance
         // This makes the selector open instantly since all nodes are already cached
         // We only need the first scope since that's what's used for expansion
-        const firstScope = fetchedScopes[0];
-        if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
-          // Deduplicate and filter out already cached nodes
-          const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
-          const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
-
-          if (nodesToFetch.length > 0) {
-            await this.getScopeNodes(nodesToFetch);
-          }
-        }
+        // TEMPORARILY DISABLED to debug test failure
+        // const firstScope = fetchedScopes[0];
+        // if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
+        //   // Deduplicate and filter out already cached nodes
+        //   const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
+        //   const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+        //
+        //   if (nodesToFetch.length > 0) {
+        //     await this.getScopeNodes(nodesToFetch);
+        //   }
+        // }
 
         const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-        // Extract parent node - prefer defaultPath, then fall back to other methods
-        let parentNode: ScopeNode | undefined;
+        // If not provided, try to get the parent from the scope node
+        // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
+        const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
+        const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
-        // 1. Try to get parent from defaultPath (most reliable)
-        const firstFetchedScope = fetchedScopes[0];
-        if (firstFetchedScope?.spec.defaultPath && firstFetchedScope.spec.defaultPath.length >= 2) {
-          // Parent is the second-to-last node in defaultPath
-          const parentId = firstFetchedScope.spec.defaultPath[firstFetchedScope.spec.defaultPath.length - 2];
-          parentNode = this.state.nodes[parentId];
-        }
-
-        // 2. Fallback to parentNodeId or scope node's parent if defaultPath not available
-        if (!parentNode) {
-          const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
-          parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
-        }
-
-        this.addRecentScopes(fetchedScopes, parentNode);
+        this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
       }
 
       this.updateState({ scopes: newScopesState, loading: false });
