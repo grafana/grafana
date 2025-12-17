@@ -298,15 +298,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			// Handle read-only resources that use role-based authorization.
-			// These resources are not registered in the access checker, so we handle them separately.
-			// This allows the frontend to access settings without requiring explicit permissions.
-			if a.GetResource() == "settings" || a.GetResource() == "stats" {
+			// Handle role-based resources that bypass the access checker.
+			// These resources don't have fine-grained permissions registered.
+			if isRoleBasedResource(a.GetResource()) {
 				id, err := identity.GetRequester(ctx)
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to find requester", err
 				}
-				return b.authorizeResource(ctx, a, id)
+				return authorizeRoleBasedResource(a.GetResource(), id)
 			}
 
 			info, ok := authlib.AuthInfoFrom(ctx)
@@ -376,11 +375,8 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", a.GetName(), a.GetNamespace())
 	case provisioning.HistoricJobResourceInfo.GetName():
 		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "historicjobs", a.GetName(), a.GetNamespace())
-	case "settings":
-		// Settings is read-only and needed by multiple UI pages, allow viewers
-		return allowForViewersOrAccessPolicy(id)
-	case "stats":
-		return allowForAdminsOrAccessPolicy(id)
+	case "settings", "stats":
+		return authorizeRoleBasedResource(a.GetResource(), id)
 	default:
 		return b.authorizeDefault(id)
 	}
@@ -493,6 +489,26 @@ func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, 
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "viewer role is required", nil
+}
+
+// isRoleBasedResource returns true for resources that use role-based authorization
+// instead of fine-grained permissions. These resources bypass the access checker.
+func isRoleBasedResource(resource string) bool {
+	return resource == "settings" || resource == "stats"
+}
+
+// authorizeRoleBasedResource handles authorization for resources without fine-grained permissions.
+// - settings: viewer role (read-only, needed by multiple UI pages)
+// - stats: admin role
+func authorizeRoleBasedResource(resource string, id identity.Requester) (authorizer.Decision, string, error) {
+	switch resource {
+	case "settings":
+		return allowForViewersOrAccessPolicy(id)
+	case "stats":
+		return allowForAdminsOrAccessPolicy(id)
+	default:
+		return authorizer.DecisionDeny, "unknown role-based resource", nil
+	}
 }
 
 // authorizeDefault handles authorization for unmapped resources.
