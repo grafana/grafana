@@ -242,15 +242,17 @@ LIMIT
   };
 
   const renderButtons = () => (
-    <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
-      <SqlQueryActions
-        executeQuery={executeQuery}
-        currentQuery={query.expression || ''}
-        queryContext={queryContext}
-        refIds={vars}
-        initialQuery={initialQuery}
-        errorContext={errorContext}
-      />
+    <Stack direction="row" alignItems="center" justifyContent={isExpanded ? 'end' : 'space-between'} wrap>
+      {!isExpanded && (
+        <SqlQueryActions
+          executeQuery={executeQuery}
+          currentQuery={query.expression || ''}
+          queryContext={queryContext}
+          refIds={vars}
+          initialQuery={initialQuery}
+          errorContext={errorContext}
+        />
+      )}
       {isSchemasFeatureEnabled && (
         <Button
           icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
@@ -300,17 +302,6 @@ LIMIT
         {renderButtons()}
         {renderMainContent(width, height)}
       </Stack>
-      <Suspense fallback={null}>
-        <GenAISuggestionsDrawer
-          isOpen={isDrawerOpen}
-          onApplySuggestion={onApplySuggestion}
-          onClose={handleCloseDrawer}
-          suggestions={suggestions}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
-      </Suspense>
     </div>
   );
 
@@ -327,12 +318,20 @@ LIMIT
           isOpen={isExpanded}
           onDismiss={() => setIsExpanded(false)}
         >
-          <Stack direction="column" gap={1}>
-            {renderButtons()}
-            {renderMainContent()}
-          </Stack>
+          {renderSQLEditor()}
         </Modal>
       )}
+      <Suspense fallback={null}>
+        <GenAISuggestionsDrawer
+          isOpen={isDrawerOpen}
+          onApplySuggestion={onApplySuggestion}
+          onClose={handleCloseDrawer}
+          suggestions={suggestions}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
+      </Suspense>
     </SqlExprProvider>
   );
 };
