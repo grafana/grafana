@@ -11,6 +11,9 @@ export const changeMetricField = createAction<{ id: MetricAggregation['id']; fie
 export const changeMetricType = createAction<{ id: MetricAggregation['id']; type: MetricAggregation['type'] }>(
   '@metrics/change_type'
 );
+export const changeEditorType = createAction<{ id: MetricAggregation['id']; type: MetricAggregation['type'] }>(
+  '@metrics/change_type'
+);
 export const changeMetricAttribute = createAction<{ metric: MetricAggregation; attribute: string; newValue: unknown }>(
   '@metrics/change_attr'
 );
