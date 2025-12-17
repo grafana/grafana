@@ -246,7 +246,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     if (custom.yMinDisplay) {
       custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
-    custom.yOrdinalDisplay = custom.yOrdinalDisplay!.map((name) => {
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay?.map((name) => {
       let num = +name;
 
       if (!Number.isNaN(num)) {
