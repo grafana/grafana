@@ -257,7 +257,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       this.updateState({ folders, filteredFolders });
 
       // Preload children for any newly added folders with preLoadSubScopeChildren
-      this.preloadSubScopeChildren(rootSubScopeFolder.folders, path);
+      await this.preloadSubScopeChildren(rootSubScopeFolder.folders, path);
     } else {
       this.updateState({ folders, filteredFolders });
     }
@@ -323,7 +323,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       });
 
       // Preload children for folders with preLoadSubScopeChildren set
-      this.preloadSubScopeChildren(folders[''].folders, ['']);
+      await this.preloadSubScopeChildren(folders[''].folders, ['']);
     }
   };
 
@@ -334,13 +334,17 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
    * @param foldersToCheck - The folders to check for preLoadSubScopeChildren
    * @param basePath - The path to prepend when building the full path for each folder
    */
-  private preloadSubScopeChildren = (foldersToCheck: SuggestedNavigationsFoldersMap, basePath: string[]) => {
+  private preloadSubScopeChildren = async (foldersToCheck: SuggestedNavigationsFoldersMap, basePath: string[]) => {
+    const preloadPromises: Array<Promise<void>> = [];
+
     for (const [folderKey, folder] of Object.entries(foldersToCheck)) {
       if (folder.preLoadSubScopeChildren && folder.subScopeName) {
         const path = [...basePath, folderKey];
-        this.fetchSubScopeItems(path, folder.subScopeName);
+        preloadPromises.push(this.fetchSubScopeItems(path, folder.subScopeName));
       }
     }
+
+    await Promise.all(preloadPromises);
   };
 
   public groupSuggestedItems = (
@@ -503,6 +507,72 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
+
+  /**
+   * Result of finding a navigation in the folder structure.
+   * Contains the subscope path if the navigation was found within a subscope folder.
+   */
+  public findNavigationInfo = (
+    currentPath: string
+  ): { found: boolean; nearestSubscope?: string; subscopePath?: string[] } => {
+    // First check the top-level scopeNavigations
+    const inTopLevel = this.state.scopeNavigations.some((s) => {
+      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
+        return false;
+      }
+      return isCurrentPath(currentPath, s.spec.url);
+    });
+
+    if (inTopLevel) {
+      return { found: true };
+    }
+
+    // Then check all navigations in the folder structure (including subscope-loaded ones)
+    return this.findNavigationInFolders(currentPath, this.state.folders, []);
+  };
+
+  /**
+   * Recursively searches for a navigation URL in the folders structure.
+   * Returns subscope information if the navigation is found within a subscope folder.
+   */
+  private findNavigationInFolders = (
+    currentPath: string,
+    folders: SuggestedNavigationsFoldersMap,
+    currentSubscopePath: string[]
+  ): { found: boolean; nearestSubscope?: string; subscopePath?: string[] } => {
+    for (const folder of Object.values(folders)) {
+      // Build the subscope path - add this folder's subscope if it has one
+      const newSubscopePath = folder.subScopeName ? [...currentSubscopePath, folder.subScopeName] : currentSubscopePath;
+
+      // Check navigations in this folder
+      for (const navigation of Object.values(folder.suggestedNavigations)) {
+        if (isCurrentPath(currentPath, navigation.url)) {
+          // Found! Return the nearest subscope (last in the path) and full path
+          return {
+            found: true,
+            nearestSubscope: newSubscopePath.length > 0 ? newSubscopePath[newSubscopePath.length - 1] : undefined,
+            subscopePath: newSubscopePath.length > 0 ? newSubscopePath : undefined,
+          };
+        }
+      }
+
+      // Recursively check nested folders
+      const nestedResult = this.findNavigationInFolders(currentPath, folder.folders, newSubscopePath);
+      if (nestedResult.found) {
+        return nestedResult;
+      }
+    }
+
+    return { found: false };
+  };
+
+  /**
+   * Checks if the given path matches any navigation URL in the entire folder structure,
+   * including navigations loaded by subscopes.
+   */
+  public isPathInNavigations = (currentPath: string): boolean => {
+    return this.findNavigationInfo(currentPath).found;
+  };
 }
 
 /**
