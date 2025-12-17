@@ -3,7 +3,7 @@ import { LinkButton, Stack } from '@grafana/ui';
 import { RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
-  jobType?: 'sync' | 'delete' | 'move';
+  jobType?: 'sync' | 'delete' | 'move' | 'push';
   urls?: RepositoryUrLs;
 }
 export function PullRequestButtons({ urls, jobType }: Props) {
