@@ -25,6 +25,11 @@ import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { HeatmapData } from './fields';
 import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
+/** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
+function toLogBase(value: number | undefined): 2 | 10 {
+  return value === 10 ? 10 : 2;
+}
+
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
@@ -213,7 +218,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? ScaleDistribution.Log
       : ScaleDistribution.Linear;
 
-  const scaleLog = yBucketScale?.log ?? yScale.log ?? 2;
+  const scaleLog = toLogBase(yBucketScale?.log ?? yScale.log);
   const scaleLinearThreshold = yBucketScale?.linearThreshold;
 
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
@@ -246,9 +251,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             const isLogScale =
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
-            [scaleMin, scaleMax] = isLogScale
-              ? uPlot.rangeLog(dataMin, dataMax, scaleLog as unknown as uPlot.Scale.LogBase, true)
-              : [dataMin, dataMax];
+            [scaleMin, scaleMax] = isLogScale ? uPlot.rangeLog(dataMin, dataMax, scaleLog, true) : [dataMin, dataMax];
 
             if (isLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
