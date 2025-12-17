@@ -33,6 +33,7 @@ import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
@@ -245,7 +246,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 }
 
 function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
-  const { isEditing, editPanel, uid, meta } = dashboard.useState();
+  const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
 
   if (editPanel) {
@@ -255,13 +256,17 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEditable = Boolean(editable);
   const showShareButton = hasUid && !isSnapshot && !isPlaying;
 
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {isEditing && <SaveDashboard dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
+        <MakeDashboardEditableButton dashboard={dashboard} />
+      )}
       {isPlaying && (
         <Button
           variant="secondary"

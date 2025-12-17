@@ -3446,17 +3446,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@grafana/plugin-e2e@npm:3.0.3"
+"@grafana/plugin-e2e@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@grafana/plugin-e2e@npm:3.1.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^12.4.0-19890644192"
+    "@grafana/e2e-selectors": "npm:12.4.0-20165274911"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/d9247d52cc5b65c91983212790610b0c2470d705fa4e37178d04cbf681c4fc80bb08b2c39ea6f0061cb0d78242f108a5c8e6fa1ad2f2209d6f15d34000cb1d00
+  checksum: 10/a4003a1c594e8ecd771a8ab7af77357cfe2d942dee821d922e317da2eb7962f86c19bddcc4bdf4d0c793b3ebfec409095b25022b0e3664d66b93163e61cc3fb5
   languageName: node
   linkType: hard
 
@@ -19480,7 +19480,7 @@ __metadata:
     "@grafana/llm": "npm:1.0.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^3.0.3"
+    "@grafana/plugin-e2e": "npm:^3.1.0"
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
