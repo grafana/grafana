@@ -190,7 +190,7 @@ LIMIT
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [isExpanded]);
 
   useEffect(() => {
     // Call the onChange method once so we have access to the initial query in consuming components
