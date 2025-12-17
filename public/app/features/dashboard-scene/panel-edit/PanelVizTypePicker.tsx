@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
@@ -47,6 +47,13 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
   const styles = useStyles2(getStyles);
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
   const filterId = useId();
+  const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (searchInputRef) {
+      searchInputRef.focus();
+    }
+  }, [searchInputRef]);
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
