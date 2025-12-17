@@ -22,10 +22,7 @@ export interface SynchronizeStepProps {
 export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
   const { watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
-  const [repoName = '', syncTarget] = watch([
-    'repositoryName',
-    'repository.sync.target',
-  ]);
+  const [repoName = '', syncTarget] = watch(['repositoryName', 'repository.sync.target']);
   const { requiresMigration } = useResourceStats(repoName, syncTarget);
   const { createSyncJob } = useCreateSyncJob({
     repoName,

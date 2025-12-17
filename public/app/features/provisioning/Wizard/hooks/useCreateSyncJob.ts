@@ -9,11 +9,7 @@ export interface UseCreateSyncJobParams {
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({
-  repoName,
-  requiresMigration,
-  setStepStatusInfo,
-}: UseCreateSyncJobParams) {
+export function useCreateSyncJob({ repoName, requiresMigration, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
   const createSyncJob = async () => {
