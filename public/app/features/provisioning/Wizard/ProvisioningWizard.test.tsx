@@ -1,6 +1,7 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen, waitFor } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
+import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
 import {
@@ -120,7 +121,6 @@ describe('ProvisioningWizard', () => {
     mockUseGetFrontendSettingsQuery.mockReturnValue({
       data: {
         items: [],
-        legacyStorage: false,
         allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -192,8 +193,8 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 	return result, err
 }
 
-func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRule, error) {
-	alertRules := make([]*ngmodels.AlertRule, 0)
+func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error) {
+	alertRules := make([]*ngmodels.AlertRuleVersion, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).Asc("id").Rows(new(alertRuleVersion))
 		if err != nil {
@@ -213,7 +214,7 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 			if previousVersion != nil && previousVersion.EqualSpec(*rule) {
 				continue
 			}
-			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
+			converted, err := alertRuleVersionToModelsAlertRuleVersion(*rule, st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
@@ -226,7 +227,7 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 	if err != nil {
 		return nil, err
 	}
-	slices.SortFunc(alertRules, func(a, b *ngmodels.AlertRule) int {
+	slices.SortFunc(alertRules, func(a, b *ngmodels.AlertRuleVersion) int {
 		if a.ID > b.ID {
 			return -1
 		}
@@ -236,6 +237,27 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 		return 0
 	})
 	return alertRules, nil
+}
+
+// GetAlertRuleVersionFolders retrieves a list of unique folder UIDs that the given rule guid has belonged to.
+// Returned slice is ordered with more recent folders first.
+func (st DBstore) GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error) {
+	folders := make([]string, 0)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		if err := sess.Table(new(alertRuleVersion)).
+			Select("rule_namespace_uid").
+			Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).
+			GroupBy("rule_namespace_uid").
+			OrderBy("MAX(version) DESC").
+			Find(&folders); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return folders, nil
 }
 
 // ListDeletedRules retrieves a list of deleted alert rules for the specified organization ID from the database.
@@ -257,6 +279,7 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
 				continue
 			}
+			// Note: Message is not returned as a message cannot be set when deleting rules.
 			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
@@ -335,7 +358,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -351,14 +374,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				r.UID = uid
 			}
 			r.Version = 1
-			if err := st.validateAlertRule(r); err != nil {
+			if err := st.validateAlertRule(r.AlertRule); err != nil {
 				return err
 			}
 			if err := (&r).PreSave(TimeNow, user); err != nil {
 				return err
 			}
 
-			converted, err := alertRuleFromModelsAlertRule(r)
+			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %q to storage model: %w", r.Title, err)
 			}
@@ -368,7 +391,9 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			converted.GUID = uuid.NewString()
 
 			newRules = append(newRules, converted)
-			ruleVersions = append(ruleVersions, alertRuleToAlertRuleVersion(converted))
+			v := alertRuleToAlertRuleVersion(converted)
+			v.Message = r.Message
+			ruleVersions = append(ruleVersions, v)
 		}
 		if len(newRules) > 0 {
 			// we have to insert the rules one by one as otherwise we are
@@ -443,6 +468,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			v := alertRuleToAlertRuleVersion(converted)
 			v.Version++
 			v.ParentVersion = r.Existing.Version
+			v.Message = r.Message
 
 			// check if there is diff between existing and new, and if no, skip saving version.
 			existingConverted, err := alertRuleFromModelsAlertRule(*r.Existing)
@@ -627,7 +653,13 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+			var converted ngmodels.AlertRule
+			if query.Compact {
+				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
+			} else {
+				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
+			}
+
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
 				continue
@@ -672,8 +704,10 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
-	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
-		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup)
+	return sess.And(
+		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
+		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
+	)
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
@@ -790,6 +824,16 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 	return result, nextToken, err
 }
 
+func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool {
+	for _, m := range matchers {
+		if !m.Matches(lbls[m.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
+// nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
 	if query.OrgID >= 0 {
@@ -862,6 +906,22 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if len(query.DataSourceUIDs) > 0 {
+		orConditions := make([]string, 0, len(query.DataSourceUIDs))
+		orParams := make([]interface{}, 0, len(query.DataSourceUIDs))
+		for _, dsUID := range query.DataSourceUIDs {
+			// The 'data' column holds the alert definition as JSON. The data source's UID is in the 'datasourceUid' field.
+			// Instead of trying to parse that JSON, we can do a simple text search.
+			// All alert rules go through PreSave(), which normalizes the JSON data using json.Marshal().
+			pattern := fmt.Sprintf(`"datasourceUid":"%s"`, dsUID)
+			sql, param := st.SQLStore.GetDialect().LikeOperator("data", true, pattern, true)
+			orConditions = append(orConditions, sql)
+			orParams = append(orParams, param)
+		}
+
+		q = q.And("("+strings.Join(orConditions, " OR ")+")", orParams...)
+	}
+
 	if query.SearchTitle != "" {
 		words := strings.Fields(query.SearchTitle)
 		if len(words) > 0 {
@@ -886,6 +946,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if query.HasPrometheusRuleDefinition != nil {
 		q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
+	if len(query.LabelMatchers) > 0 {
+		q, err = st.filterByLabelMatchers(query.LabelMatchers, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
@@ -938,6 +1005,11 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 			return nil, false
 		}
 	}
+	if len(query.LabelMatchers) > 0 { // remove false-positive hits from the result
+		if !matchersMatchLabels(query.LabelMatchers, converted.Labels) {
+			return nil, false
+		}
+	}
 	// MySQL (and potentially other databases) can use case-insensitive comparison.
 	// This code makes sure we return groups that only exactly match the filter.
 	if groupsSet != nil {
@@ -975,10 +1047,17 @@ func decodeCursor(token string) (continueCursor, error) {
 }
 
 func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
-	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
-		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup).
-		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx).
-		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID)
+	return sess.And(`(
+		(namespace_uid > ?)
+		OR (namespace_uid = ? AND rule_group > ?)
+		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx > ?)
+		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)
+	)`,
+		c.NamespaceUID,
+		c.NamespaceUID, c.RuleGroup,
+		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx,
+		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID,
+	)
 }
 
 // Count returns either the number of the alert rules under a specific org (if orgID is not zero)
@@ -1096,6 +1175,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 					continue
 				}
 			}
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
 				if optimizations, err := OptimizeAlertQueries(converted.Data); err != nil {
 					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
@@ -1316,6 +1396,23 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 		"%prometheus_style_rule%",
 		"%original_rule_definition%",
 	), nil
+}
+
+// filterByLabelMatchers adds filtering for equality and inequality label matchers.
+// Returns error if regex matchers are passed.
+func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Session) (*xorm.Session, error) {
+	for _, m := range matchers {
+		if m.Type != labels.MatchEqual && m.Type != labels.MatchNotEqual {
+			return nil, fmt.Errorf("matcher %q %s %q is not supported", m.Name, m.Type, m.Value)
+		}
+
+		sql, args, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", m)
+		if err != nil {
+			return nil, err
+		}
+		sess = sess.And(sql, args...)
+	}
+	return sess, nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {

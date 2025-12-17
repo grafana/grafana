@@ -175,7 +175,7 @@
         "label-scrape-interval": "Scrape-Intervall",
         "label-series-limit": "Reihengrenze",
         "label-use-series-endpoint": "Reihenendpunkt verwenden",
-        "more-info": "",
+        "more-info": "Weitere Informationen zur Konfiguration des Typs und der Version von Prometheus in Datenquellen finden Sie in der <2>Bereitstellungsdokumentation</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Beispiel: {{example}}",
         "title-interval-behaviour": "Intervallverhalten",
         "title-other": "Sonstiges",

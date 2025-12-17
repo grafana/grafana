@@ -173,6 +173,7 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(templatesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingNotificationsTemplatesWrite},
 				{Action: accesscontrol.ActionAlertingNotificationsTemplatesDelete},
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesTest},
 			}),
 		},
 	}
@@ -288,12 +289,13 @@ var (
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting:admin",
 			DisplayName: "Full admin access",
-			Description: "Full write access in Grafana and all external providers, including their permissions and secrets",
+			Description: "Full write access in Grafana and all external providers, including their permissions, protected fields and secrets",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(alertingWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: models.ScopeReceiversAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},

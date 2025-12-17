@@ -1,7 +1,6 @@
-import { MetricFindValue, TypedVariableModel } from '@grafana/data';
+import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  AnnotationQuery,
   DataQuery,
   DataSourceRef,
   Panel,
@@ -34,6 +33,7 @@ import {
   IntervalVariableKind,
   TextVariableKind,
   GroupByVariableKind,
+  SwitchVariableKind,
   LibraryPanelKind,
   PanelKind,
   GridLayoutItemKind,
@@ -215,6 +215,7 @@ export function ensureV2Response(
       keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
       includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
       targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+      ...(link.placement !== undefined && { placement: link.placement }),
     })),
     annotations,
     variables,
@@ -498,7 +499,11 @@ export function getDefaultDatasource(): DataSourceRef {
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
-    const ds = t.datasource || panelDatasource;
+    // Check if target datasource is empty object {} (no keys), treat it as missing
+    // and fall through to use panel datasource (matches backend behavior)
+    const targetDs = t.datasource;
+    const isEmptyDatasourceObject = targetDs && typeof targetDs === 'object' && Object.keys(targetDs).length === 0;
+    const ds = isEmptyDatasourceObject ? panelDatasource : targetDs || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -523,8 +528,59 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
+/**
+ * Known Panel properties from the Panel schema (dashboard_kind.cue).
+ * These should NOT be passed to Angular migration handlers.
+ * Only "unknown" Angular-specific properties should be passed.
+ */
+const knownPanelProperties = new Set([
+  'type',
+  'id',
+  'pluginVersion',
+  'targets',
+  'title',
+  'description',
+  'transparent',
+  'datasource',
+  'gridPos',
+  'links',
+  'repeat',
+  'repeatDirection',
+  'maxPerRow',
+  'maxDataPoints',
+  'transformations',
+  'interval',
+  'timeFrom',
+  'timeShift',
+  'hideTimeOverride',
+  'timeCompare',
+  'libraryPanel',
+  'cacheTimeout',
+  'queryCachingTTL',
+  'options',
+  'fieldConfig',
+  'autoMigrateFrom',
+]);
+
+/**
+ * Extracts only the Angular-specific options from a panel,
+ * filtering out all known Panel schema properties.
+ * This is used to pass just the Angular options to migration handlers
+ * (e.g., sparkline, valueName, format for singlestat).
+ */
+function extractAngularOptions(panel: Panel): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(panel)) {
+    if (!knownPanelProperties.has(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function buildPanelKind(p: Panel): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+  const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
 
@@ -540,12 +596,32 @@ export function buildPanelKind(p: Panel): PanelKind {
   }
 
   // match backend conversion behavior
+  // Only set first threshold step value to null if it's explicitly null or undefined
+  // Preserve 0 values (0 is falsy but should be kept as 0, not converted to null)
   if (
     fieldConfig.defaults.thresholds?.steps &&
     fieldConfig.defaults.thresholds.steps.length > 0 &&
-    !fieldConfig.defaults.thresholds.steps[0]?.value
+    (fieldConfig.defaults.thresholds.steps[0]?.value === null ||
+      fieldConfig.defaults.thresholds.steps[0]?.value === undefined)
   ) {
     fieldConfig.defaults.thresholds.steps[0]!.value = null;
+  }
+
+  // Build options with Angular migration data if needed (matches backend behavior)
+  // autoMigrateFrom is set during v0->v1 migration when Angular panels are converted
+  const { autoMigrateFrom } = p;
+  let options = p.options ?? {};
+
+  // When autoMigrateFrom is present, compose __angularMigration with only Angular-specific options
+  // This filters out known Panel schema properties, passing only the Angular options to migration handlers
+  if (autoMigrateFrom) {
+    options = {
+      ...options,
+      __angularMigration: {
+        autoMigrateFrom,
+        originalOptions: extractAngularOptions(p),
+      },
+    };
   }
 
   const panelKind: PanelKind = {
@@ -560,7 +636,7 @@ export function buildPanelKind(p: Panel): PanelKind {
         version: p.pluginVersion ?? '',
         spec: {
           fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
-          options: p.options ?? {},
+          options,
         },
       },
       links:
@@ -645,6 +721,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
+            ...(v.regexApplyTo && { regexApplyTo: v.regexApplyTo }),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
@@ -809,6 +886,29 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 
         variables.push(gb);
         break;
+      case 'switch':
+        // V1 switch variables have options array with exactly 2 options
+        // First option is typically enabledValue, second is disabledValue
+        const options = v.options ?? [];
+        const enabledValueRaw = options[0]?.value ?? 'true';
+        const disabledValueRaw = options[1]?.value ?? 'false';
+        const enabledValue = Array.isArray(enabledValueRaw) ? enabledValueRaw[0] : enabledValueRaw;
+        const disabledValue = Array.isArray(disabledValueRaw) ? disabledValueRaw[0] : disabledValueRaw;
+        // Current value should be a string (not array)
+        const currentValueRaw = v.current?.value ?? disabledValue;
+        const currentValue = Array.isArray(currentValueRaw) ? currentValueRaw[0] : currentValueRaw;
+
+        const sw: SwitchVariableKind = {
+          kind: 'SwitchVariable',
+          spec: {
+            ...commonProperties,
+            current: currentValue,
+            enabledValue,
+            disabledValue,
+          },
+        };
+        variables.push(sw);
+        break;
       default:
         // do not throw error, just log it
         console.error(`Variable transformation not implemented: ${v.type}`);
@@ -820,7 +920,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
     // Extract properties that are explicitly handled
-    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, mappings, ...legacyOptions } = a;
 
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
@@ -830,6 +930,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         hide: Boolean(hide),
         iconColor: iconColor,
         builtIn: Boolean(builtIn),
+        ...(mappings && { mappings: transformAnnotationMappingsV1ToV2(mappings) }),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
@@ -886,6 +987,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
+          regexApplyTo: v.spec.regexApplyTo,
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
@@ -996,6 +1098,29 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           defaultKeys: v.spec.defaultKeys,
         };
         variables.push(av);
+        break;
+      case 'SwitchVariable':
+        const sv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current,
+            value: v.spec.current,
+          },
+          options: [
+            {
+              text: v.spec.enabledValue,
+              value: v.spec.enabledValue,
+              selected: v.spec.current === v.spec.enabledValue,
+            },
+            {
+              text: v.spec.disabledValue,
+              value: v.spec.disabledValue,
+              selected: v.spec.current === v.spec.disabledValue,
+            },
+          ],
+          query: '',
+        };
+        variables.push(sv);
         break;
       default:
         // do not throw error, just log it
@@ -1210,6 +1335,16 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
       return FieldColorModeIdV1.ContinuousGreens;
     case 'continuous-purples':
       return FieldColorModeIdV1.ContinuousPurples;
+    case 'continuous-viridis':
+      return FieldColorModeIdV1.ContinuousViridis;
+    case 'continuous-magma':
+      return FieldColorModeIdV1.ContinuousMagma;
+    case 'continuous-plasma':
+      return FieldColorModeIdV1.ContinuousPlasma;
+    case 'continuous-inferno':
+      return FieldColorModeIdV1.ContinuousInferno;
+    case 'continuous-cividis':
+      return FieldColorModeIdV1.ContinuousCividis;
     case 'fixed':
       return FieldColorModeIdV1.Fixed;
     case 'shades':
@@ -1256,6 +1391,8 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
       return 'groupby';
     case 'AdhocVariable':
       return 'adhoc';
+    case 'SwitchVariable':
+      return 'switch';
     default:
       throw new Error(`Unknown variable type: ${variable}`);
   }
@@ -1298,4 +1435,26 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
     panels,
     templating: { list: variables },
   };
+}
+
+export function transformAnnotationMappingsV1ToV2(
+  mappings: AnnotationQuery['mappings']
+): AnnotationQueryKind['spec']['mappings'] {
+  if (!mappings) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(mappings).map(([key, value]) => {
+      if (typeof value === 'string') {
+        return [key, { source: 'field', value }];
+      }
+
+      if (typeof value === 'object') {
+        return [key, value.source ? value : { source: 'field', ...value }];
+      }
+
+      return [key, value];
+    })
+  );
 }

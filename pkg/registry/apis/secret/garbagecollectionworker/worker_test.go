@@ -1,7 +1,6 @@
 package garbagecollectionworker_test
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,7 +50,7 @@ func TestBasic(t *testing.T) {
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
 
-		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: false})
+		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Status.Keeper, contracts.ReadOpts{ForUpdate: false})
 		require.NoError(t, err)
 
 		keeper, err := sut.KeeperService.KeeperForConfig(keeperCfg)
@@ -133,7 +131,7 @@ func TestProperty(t *testing.T) {
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
-				svCopy := deepCopy(sv)
+				svCopy := sv.DeepCopy()
 
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv))
 				svCopy.UID = createdSv.UID
@@ -194,13 +192,15 @@ func newModel() *model {
 }
 
 func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) error {
+	created := now
 	for _, item := range m.items {
 		if item.active && item.Namespace == sv.Namespace && item.Name == sv.Name {
 			item.active = false
+			created = item.created
 			break
 		}
 	}
-	m.items = append(m.items, &modelSecureValue{SecureValue: sv, active: true, created: now})
+	m.items = append(m.items, &modelSecureValue{SecureValue: sv, active: true, created: created})
 	return nil
 }
 
@@ -218,6 +218,16 @@ func (m *model) delete(ns string, name string) error {
 func (m *model) cleanupInactiveSecureValues(now time.Time, minAge time.Duration, maxBatchSize uint16) ([]*modelSecureValue, error) {
 	// Using a slice to allow duplicates
 	toDelete := make([]*modelSecureValue, 0)
+
+	// The implementation query sorts by created time ascending
+	slices.SortFunc(m.items, func(a, b *modelSecureValue) int {
+		if a.created.Before(b.created) {
+			return -1
+		} else if a.created.After(b.created) {
+			return 1
+		}
+		return 0
+	})
 
 	for _, sv := range m.items {
 		if len(toDelete) >= int(maxBatchSize) {
@@ -237,12 +247,4 @@ func (m *model) cleanupInactiveSecureValues(now time.Time, minAge time.Duration,
 	})
 
 	return toDelete, nil
-}
-
-func deepCopy[T any](sv T) T {
-	copied, err := copystructure.Copy(sv)
-	if err != nil {
-		panic(fmt.Sprintf("failed to copy secure value: %v", err))
-	}
-	return copied.(T)
 }

@@ -95,6 +95,7 @@ describe('AddedLinksRegistry', () => {
           path: `/a/${pluginId}/declare-incident`,
           targets: 'plugins/myorg-basic-app/start',
           configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
+          openInNewTab: true,
         },
       ],
     });
@@ -120,6 +121,7 @@ describe('AddedLinksRegistry', () => {
           path: `/a/${pluginId}/declare-incident`,
           extensionPointId: 'plugins/myorg-basic-app/start',
           configure: expect.any(Function),
+          openInNewTab: true,
         },
       ],
     });

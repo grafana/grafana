@@ -30,19 +30,20 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
-	Backend        resource.StorageBackend
-	DB             infraDB.DB
-	Cfg            *setting.Cfg
-	Tracer         trace.Tracer
-	Reg            prometheus.Registerer
-	AccessClient   types.AccessClient
-	SearchOptions  resource.SearchOptions
-	StorageMetrics *resource.StorageMetrics
-	IndexMetrics   *resource.BleveIndexMetrics
-	Features       featuremgmt.FeatureToggles
-	QOSQueue       QOSEnqueueDequeuer
-	SecureValues   secrets.InlineSecureValueSupport
-	OwnsIndexFn    func(key resource.NamespacedResource) (bool, error)
+	Backend          resource.StorageBackend
+	OverridesService *resource.OverridesService
+	DB               infraDB.DB
+	Cfg              *setting.Cfg
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
 }
 
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
@@ -69,7 +70,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		SecureValues: opts.SecureValues,
 	}
 	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg})
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
 	}
 	// Support local file blob
 	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
@@ -96,29 +97,48 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			return nil, err
 		}
 
-		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+		if opts.Cfg.EnableSQLKVBackend {
+			sqlkv, err := resource.NewSQLKV(eDB)
+			if err != nil {
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+			}
 
-		backend, err := NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Tracer:               opts.Tracer,
-			Reg:                  opts.Reg,
-			IsHA:                 isHA,
-			storageMetrics:       opts.StorageMetrics,
-			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
-		})
-		if err != nil {
-			return nil, err
+			kvBackend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+				KvStore: sqlkv,
+				Tracer:  opts.Tracer,
+				Reg:     opts.Reg,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+
+			serverOptions.Backend = kvBackend
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+				opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
 		}
-		serverOptions.Backend = backend
-		serverOptions.Diagnostics = backend
-		serverOptions.Lifecycle = backend
 	}
 
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.OverridesService = opts.OverridesService
 
 	return resource.NewResourceServer(serverOptions)
 }

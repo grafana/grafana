@@ -11,6 +11,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Manage provisioned repositories with Git Sync
 menuTitle: Manage repositories with Git Sync
 weight: 400

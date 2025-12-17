@@ -54,7 +54,7 @@ For production systems, use the `folderFromFilesStructure` capability instead of
 ## Before you begin
 
 {{< admonition type="note" >}}
-Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature.
+Enable the `provisioning` feature toggle in Grafana to use this feature.
 {{< /admonition >}}
 
 To set up file provisioning, you need:
@@ -67,7 +67,7 @@ To set up file provisioning, you need:
 
 ## Enable required feature toggles and configure permitted paths
 
-To activate local file provisioning in Grafana, you need to enable the `provisioning` and `kubernetesDashboards` feature toggles.
+To activate local file provisioning in Grafana, you need to enable the `provisioning` feature toggle.
 For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
 
 The local setting must be a relative path and its relative path must be configured in the `permitted_provisioned_paths` configuration option.
@@ -82,12 +82,11 @@ Any subdirectories are automatically included.
 The values that you enter for the `permitted_provisioning_paths` become the base paths for those entered when you enter a local path in the **Connect to local storage** wizard.
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
-1. Locate or add a `[feature_toggles]` section. Add these values:
+1. Locate or add a `[feature_toggles]` section. Add this value:
 
    ```ini
    [feature_toggles]
    provisioning = true
-   kubernetesDashboards = true ; use k8s from browser
    ```
 
 1. Locate or add a `[paths]` section. To add more than one location, use the pipe character (`|`) to separate the paths. The list should not include empty paths or trailing pipes. Add these values:

@@ -907,6 +907,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	_, err = section.NewKey("domain", "localhost:1234")
 	require.NoError(t, err)
 
+	cfg.CloudMigration.Enabled = true
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
 	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
 
@@ -919,15 +920,11 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		},
 	}
 
-	featureToggles := featuremgmt.WithFeatures(
-		featuremgmt.FlagOnPremToCloudMigrations,
-	)
+	featureToggles := featuremgmt.WithFeatures()
 
 	sqlStore := sqlstore.NewTestStore(t,
 		sqlstore.WithCfg(cfg),
-		sqlstore.WithFeatureFlags(
-			featuremgmt.FlagOnPremToCloudMigrations,
-		),
+		sqlstore.WithFeatureFlags(),
 	)
 
 	kvStore := kvstore.ProvideService(sqlStore)

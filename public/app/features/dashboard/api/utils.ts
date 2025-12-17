@@ -13,9 +13,16 @@ export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1';
 }
 
+export function isV0V1StoredVersion(version: string | undefined): boolean {
+  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1';
+}
+
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
+  const isV2DashboardAPIVersionEnabled = config.featureToggles.kubernetesDashboardsV2;
+  const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
+
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
   // Force legacy API when dashboard scene is disabled or explicitly forced
@@ -32,7 +39,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
     if (responseFormat === 'v1') {
       return 'v1';
     }
-    if (responseFormat === 'v2') {
+    if (responseFormat === 'v2' || isV2DashboardAPIVersionEnabled || isDashboardNewLayoutsEnabled) {
       return 'v2';
     }
     return 'unified';

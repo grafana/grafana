@@ -132,6 +132,7 @@ module.exports = [
       reportUnusedDisableDirectives: false,
     },
     files: ['**/*.{ts,tsx,js}'],
+    ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     plugins: {
       '@emotion': emotionPlugin,
       lodash: lodashPlugin,
@@ -254,6 +255,9 @@ module.exports = [
     name: 'grafana/jsx-a11y-overrides',
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
+    plugins: {
+      'jsx-a11y': jsxA11yPlugin,
+    },
     rules: {
       ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/no-autofocus': [
@@ -278,6 +282,9 @@ module.exports = [
     name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
       'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
@@ -378,6 +385,7 @@ module.exports = [
     plugins: {
       'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
+      jest: jestPlugin,
     },
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
@@ -508,10 +516,12 @@ module.exports = [
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores:
+    ignores: [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
-      enterpriseIgnores,
+      ...enterpriseIgnores,
+      'packages/grafana-ui/src/components/Forms/Legacy/**',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',

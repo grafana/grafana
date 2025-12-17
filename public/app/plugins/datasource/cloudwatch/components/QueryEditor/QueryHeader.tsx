@@ -1,12 +1,15 @@
+import type { JSX } from 'react';
+
 import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
+import { CloudWatchQueryMode } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;

@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import type { JSX } from 'react';
 
 import {
   PluginContextProvider,

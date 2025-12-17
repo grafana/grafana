@@ -162,6 +162,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
@@ -189,12 +190,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
       query: variable.query ?? {},
       datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
+      ...(variable.regexApplyTo && { regexApplyTo: variable.regexApplyTo }),
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
@@ -291,6 +292,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

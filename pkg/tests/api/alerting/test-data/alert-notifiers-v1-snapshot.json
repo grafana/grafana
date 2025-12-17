@@ -82,6 +82,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -208,6 +209,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -352,6 +354,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -392,6 +395,42 @@
         "secure": false,
         "dependsOn": "",
         "subformOptions": null
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "HideOpenButton",
+        "description": "Hide open URL button",
+        "placeholder": "",
+        "propertyName": "hide_open_button",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "HideVersionInfo",
+        "description": "Hide version info",
+        "placeholder": "",
+        "propertyName": "hide_version_info",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
       }
     ]
   },
@@ -415,6 +454,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -712,6 +752,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -874,6 +915,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1158,6 +1200,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1356,6 +1399,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1757,6 +1801,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -1784,6 +1829,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -2282,6 +2328,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -2574,6 +2621,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "token",
@@ -2592,6 +2640,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -2917,6 +2966,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3267,6 +3317,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "",
@@ -3357,6 +3408,7 @@
           "is": ""
         },
         "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3438,6 +3490,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",
@@ -3880,6 +3933,7 @@
                   "is": ""
                 },
                 "required": true,
+                "protected": true,
                 "validationRule": "",
                 "secure": false,
                 "dependsOn": "",
@@ -4078,6 +4132,7 @@
                       "is": ""
                     },
                     "required": false,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -4165,6 +4220,7 @@
           "is": ""
         },
         "required": true,
+        "protected": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "secret",

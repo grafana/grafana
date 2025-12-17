@@ -7,6 +7,7 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   AlertRuleAction,
   useAlertRuleAbility,
+  useEnrichmentAbility,
   useGrafanaPromRuleAbilities,
   useGrafanaPromRuleAbility,
   useRulerRuleAbilities,
@@ -16,6 +17,10 @@ import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesTable } from './RulesTable';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 
 jest.mock('../../hooks/useAbilities');
 
@@ -29,6 +34,7 @@ const mocks = {
   useGrafanaPromRuleAbility: jest.mocked(useGrafanaPromRuleAbility),
   useRulerRuleAbilities: jest.mocked(useRulerRuleAbilities),
   useGrafanaPromRuleAbilities: jest.mocked(useGrafanaPromRuleAbilities),
+  useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
 };
 
 setPluginLinksHook(() => ({
@@ -63,6 +69,7 @@ describe('RulesTable RBAC', () => {
     mocks.useAlertRuleAbility.mockReturnValue([false, false]);
     mocks.useRulerRuleAbility.mockReturnValue([false, false]);
     mocks.useGrafanaPromRuleAbility.mockReturnValue([false, false]);
+    mocks.useEnrichmentAbility.mockReturnValue([false, false]);
 
     // Plural hooks (used by AlertRuleMenu) - need to return arrays based on input actions
     mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {

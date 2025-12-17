@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
@@ -119,11 +119,11 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
   }, []);
 
   const login = useCallback(
-    (formModel: FormModel) => {
+    async (formModel: FormModel) => {
       setLoginErrorMessage(undefined);
       setIsLoggingIn(true);
 
-      getBackendSrv()
+      return getBackendSrv()
         .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
         .then((result) => {
           setResult(result);

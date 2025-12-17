@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -48,7 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
-	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -74,7 +74,7 @@ func ProvideBackgroundServiceRegistry(
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
-	unifiedStorageMigrationProvider unifiedmigrations.UnifiedStorageMigrationProvider,
+	installSync installsync.Syncer,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -91,7 +91,6 @@ func ProvideBackgroundServiceRegistry(
 		notifications,
 		rendering,
 		tokenService,
-		unifiedStorageMigrationProvider,
 		provisioning,
 		grafanaUpdateChecker,
 		pluginsUpdateChecker,
@@ -124,6 +123,7 @@ func ProvideBackgroundServiceRegistry(
 		dashboardServiceImpl,
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
+		installSync,
 	)
 }
 

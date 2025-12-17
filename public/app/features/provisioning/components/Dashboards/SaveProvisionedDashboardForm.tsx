@@ -6,12 +6,13 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -47,6 +48,7 @@ export function SaveProvisionedDashboardForm({
   workflowOptions,
   readOnly,
   repository,
+  saveAsCopy,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -166,7 +168,15 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({
+    title,
+    description,
+    repo,
+    path,
+    comment,
+    ref,
+    copyTags,
+  }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });
@@ -185,7 +195,8 @@ export function SaveProvisionedDashboardForm({
       isNew,
       title,
       description,
-      copyTags: true,
+      copyTags,
+      saveAsCopy,
     });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
@@ -193,6 +204,9 @@ export function SaveProvisionedDashboardForm({
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
+
+    // ignore incoming save events
+    dashboardWatcher.ignoreNextSave();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request
@@ -286,6 +300,12 @@ export function SaveProvisionedDashboardForm({
             repository={repository}
             isNew={isNew}
           />
+
+          {saveAsCopy && (
+            <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+              <Switch {...register('copyTags')} />
+            </Field>
+          )}
 
           <Stack gap={2}>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">

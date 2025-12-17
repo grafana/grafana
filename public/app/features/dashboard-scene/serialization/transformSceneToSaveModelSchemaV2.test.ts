@@ -283,6 +283,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             sort: VariableSortV1.alphabeticalDesc,
             refresh: VariableRefresh.onDashboardLoad,
             regex: 'regex1',
+            regexApplyTo: 'value',
             allValue: '*',
             includeAll: true,
             isMulti: true,
@@ -411,6 +412,45 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations).toHaveLength(2);
   });
 
+  it('should transform links with placement property', () => {
+    const sceneWithPlacementLink = new DashboardScene({
+      links: [
+        {
+          title: 'Link in Controls Menu',
+          url: 'http://test.com',
+          type: 'link',
+          placement: 'inControlsMenu',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Link without placement',
+          url: 'http://test2.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithPlacementLink);
+
+    expect(result.links).toBeDefined();
+    expect(result.links).toHaveLength(2);
+    expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
+    expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
   it('should transform the minimum scene to save model schema v2', () => {
     const minimalScene = new DashboardScene({});
 
@@ -431,6 +471,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         datasource: { uid: 'prometheus', type: 'prometheus' },
       };
 
+      const queryWithOnlyDSType: SceneDataQuery = {
+        refId: 'C',
+        datasource: { type: 'prometheus' },
+      };
+
       // Mock query runner with runtime-resolved datasource
       const queryRunner = new SceneQueryRunner({
         queries: [queryWithoutDS, queryWithDS],
@@ -438,7 +483,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       });
 
       // Get a reference to the DS references mapping
-      const dsReferencesMap = new Set(['A']);
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
       // Test the query without DS originally - should return undefined
       const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
@@ -448,13 +493,17 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
+      // Test the query with only type defined - should return the type
+      const resultC = getPersistedDSFor(queryWithOnlyDSType, dsReferencesMap, 'query', queryRunner);
+      expect(resultC).toEqual({ type: 'prometheus' });
+
       // Test a query with no DS originally but not in the mapping - should get the runner's datasource
       const queryNotInMapping: SceneDataQuery = {
-        refId: 'C',
+        refId: 'D',
         // No datasource, but not in mapping
       };
-      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
-      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+      const resultD = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
+      expect(resultD).toEqual({ uid: 'default-ds', type: 'default' });
     });
   });
 
@@ -472,8 +521,14 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         datasource: { uid: 'prometheus', type: 'prometheus' },
       });
 
+      // Variable with only type defined
+      const variableWithOnlyDSType = new QueryVariable({
+        name: 'C',
+        datasource: { type: 'prometheus' },
+      });
+
       // Get a reference to the DS references mapping
-      const dsReferencesMap = new Set(['A']);
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
       // Test the variable without DS originally - should return undefined
       const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
@@ -483,13 +538,17 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultB = getPersistedDSFor(variableWithDS, dsReferencesMap, 'variable');
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
-      // Test a variable with no DS originally but not in the mapping - should get empty object
+      // Test the variable with only type defined - should return the type
+      const resultC = getPersistedDSFor(variableWithOnlyDSType, dsReferencesMap, 'variable');
+      expect(resultC).toEqual({ type: 'prometheus' });
+
+      // Test a variable with no DS originally but not in the mapping - should return undefined
       const variableNotInMapping = new QueryVariable({
-        name: 'C',
+        name: 'D',
         // No datasource, but not in mapping
       });
-      const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
-      expect(resultC).toEqual({});
+      const resultD = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
+      expect(resultD).toBeUndefined();
     });
   });
 
@@ -608,6 +667,11 @@ describe('getElementDatasource', () => {
       refId: 'A',
     };
 
+    const queryWithOnlyType: SceneDataQuery = {
+      refId: 'C',
+      datasource: { type: 'prometheus' },
+    };
+
     // Mock query runner
     const queryRunner = new SceneQueryRunner({
       queries: [queryWithoutDS, queryWithDS],
@@ -616,9 +680,9 @@ describe('getElementDatasource', () => {
 
     // Mock dsReferencesMapping
     const dsReferencesMapping = {
-      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
-      variables: new Set<string>(),
-      annotations: new Set<string>(),
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
     };
 
     // Call the function with the panel and query with DS
@@ -628,6 +692,16 @@ describe('getElementDatasource', () => {
     // Call the function with the panel and query without DS
     const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
     expect(resultWithoutDS).toBeUndefined();
+
+    // Call the function with the panel and query with only type
+    const resultWithOnlyType = getElementDatasource(
+      vizPanel,
+      queryWithOnlyType,
+      'panel',
+      queryRunner,
+      dsReferencesMapping
+    );
+    expect(resultWithOnlyType).toEqual({ type: 'prometheus' });
   });
 
   it('should handle variable datasources correctly', () => {
@@ -653,9 +727,9 @@ describe('getElementDatasource', () => {
 
     // Mock dsReferencesMapping
     const dsReferencesMapping = {
-      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
-      variables: new Set<string>(['A']),
-      annotations: new Set<string>(),
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>([['A', '']]),
+      annotations: new Map<string, string>(),
     };
 
     // Call the function with variables
@@ -742,11 +816,25 @@ describe('getElementDatasource', () => {
       iconColor: 'blue',
     };
 
+    // Create an annotation query with only type defined
+    const annotationLayerWithOnlyType = new dataLayers.AnnotationsDataLayer({
+      name: 'Annotation with only datasource type',
+      isEnabled: true,
+      isHidden: false,
+      query: {
+        name: 'Test Annotation',
+        enable: true,
+        hide: false,
+        iconColor: 'blue',
+        datasource: { type: 'prometheus' },
+      },
+    });
+
     // Mock dsReferencesMapping
     const dsReferencesMapping = {
-      panels: new Map([['panel-1', new Set(['A'])]]),
-      variables: new Set<string>(),
-      annotations: new Set<string>(['No DS Annotation']),
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
     };
 
     // Test with annotation that has datasource defined
@@ -768,6 +856,16 @@ describe('getElementDatasource', () => {
       dsReferencesMapping
     );
     expect(resultWithoutDS).toBeUndefined();
+
+    // Test with annotation that has only type defined
+    const resultWithOnlyType = getElementDatasource(
+      annotationLayer,
+      annotationLayerWithOnlyType.state.query,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithOnlyType).toEqual({ type: 'prometheus' });
   });
 
   it('should handle invalid input combinations', () => {
@@ -839,9 +937,9 @@ describe('getVizPanelQueries', () => {
 
     // Mock dsReferencesMapping
     const dsReferencesMapping = {
-      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
-      variables: new Set<string>(),
-      annotations: new Set<string>(),
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
     };
 
     const result = getVizPanelQueries(vizPanel, dsReferencesMapping);

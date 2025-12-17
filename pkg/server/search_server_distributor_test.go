@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -173,6 +174,28 @@ func TestIntegrationDistributor(t *testing.T) {
 		for instance, count := range instanceResponseCount {
 			require.GreaterOrEqual(t, count, 1, "instance did not get any traffic: "+instance)
 		}
+	})
+
+	t.Run("RebuildIndexes", func(t *testing.T) {
+		instanceResponseCount := make(map[string]int)
+
+		// simulate RebuildIndexes for a single namespace
+		testNamespace := testNamespaces[0]
+
+		req := &resourcepb.RebuildIndexesRequest{
+			Namespace: testNamespace,
+			Keys: []*resourcepb.ResourceKey{{
+				Namespace: testNamespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+			}},
+		}
+		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
+		require.Nil(t, distributorRes.Error)
+
+		// assert all instances got the response by looking at the merged details
+		count := strings.Count(distributorRes.Details, "{instance:")
+		require.Equal(t, len(testServers), count)
 	})
 
 	var wg sync.WaitGroup
@@ -366,7 +389,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		DB:             nil,

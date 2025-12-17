@@ -107,6 +107,7 @@ jobs:
         CURRENT_OSS_WIRE_CHECKSUM=$(sha256sum pkg/server/wire_gen.go | cut -d' ' -f1)
         if [ "$CURRENT_OSS_WIRE_CHECKSUM" != "${{ steps.pre_gen_oss.outputs.wire_checksum }}" ]; then
           OSS_WIRE_CHANGED=true
+          OSS_DIFF=$(git diff pkg/server/wire_gen.go)
           echo "Uncomitted changes detected in pkg/server/wire_gen.go"
         fi
 
@@ -115,6 +116,7 @@ jobs:
           CURRENT_ENTERPRISE_WIRE_CHECKSUM=$(sha256sum pkg/server/enterprise_wire_gen.go | cut -d' ' -f1)
           if [ "$CURRENT_ENTERPRISE_WIRE_CHECKSUM" != "${{ steps.pre_gen_enterprise.outputs.wire_checksum }}" ]; then
             ENTERPRISE_WIRE_CHANGED=true
+            ENTERPRISE_DIFF=$(git diff pkg/server/enterprise_wire_gen.go)
             echo "Uncomitted changes detected in pkg/server/enterprise_wire_gen.go"
           fi
         fi
@@ -124,6 +126,14 @@ jobs:
         else
           if [[ "${{ github.event.pull_request.head.repo.fork }}" == "false" ]]; then
             echo "> !!! Please synchronize the grafana OSS and grafana enterprise code bases as defined in the enterprise readme, then run 'make gen-go' in the OSS folder and commit the changes to both repositories."
+            if [[ "$OSS_WIRE_CHANGED" == "true" ]]; then
+              echo "OSS changes:"
+              echo "$OSS_DIFF"
+            fi
+            if [[ "$ENTERPRISE_WIRE_CHANGED" == "true" ]]; then
+              echo "Enterprise changes:"
+              echo "$ENTERPRISE_DIFF"
+            fi
           else
             echo "> !!! Please run 'make gen-go' and commit the changes."
           fi

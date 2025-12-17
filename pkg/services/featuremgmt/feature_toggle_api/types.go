@@ -44,12 +44,6 @@ type FeatureSpec struct {
 	// The flag is used at startup, so any change requires a restart
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 
-	// Allow cloud users to set the values in UI
-	AllowSelfServe bool `json:"allowSelfServe,omitempty"`
-
-	// Do not show the value in the UI
-	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"`
-
 	// Do not show the value in docs
 	HideFromDocs bool `json:"hideFromDocs,omitempty"`
 

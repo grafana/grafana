@@ -214,14 +214,14 @@ func TestIntegrationListIter(t *testing.T) {
 
 		token := iter.ContinueToken()
 
-		var actual resource.ContinueToken
+		var actual ContinueToken
 		b, err := base64.StdEncoding.DecodeString(token)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(b, &actual)
 		require.NoError(t, err)
 
-		expected := resource.ContinueToken{
+		expected := ContinueToken{
 			ResourceVersion: 300,
 			StartOffset:     1,
 			SortAscending:   true,
@@ -250,14 +250,14 @@ func TestIntegrationListIter(t *testing.T) {
 
 		token := iter.ContinueToken()
 
-		var actual resource.ContinueToken
+		var actual ContinueToken
 		b, err := base64.StdEncoding.DecodeString(token)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(b, &actual)
 		require.NoError(t, err)
 
-		expected := resource.ContinueToken{
+		expected := ContinueToken{
 			ResourceVersion: 100,
 			StartOffset:     1,
 			SortAscending:   true,
