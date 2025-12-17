@@ -10,6 +10,7 @@ import {
   STATUS_MESSAGE,
   TRACE_STATE,
   SPAN_NAME,
+  SERVICE_NAME,
 } from '../components/constants/span';
 import { Trace } from '../components/types/trace';
 
@@ -40,7 +41,7 @@ export const getTraceTagKeys = (trace: Trace) => {
     });
 
     if (span.process.serviceName) {
-      keys.push('service.name');
+      keys.push(SERVICE_NAME);
     }
 
     if (span.logs !== null) {

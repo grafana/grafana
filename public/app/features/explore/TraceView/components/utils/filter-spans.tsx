@@ -25,6 +25,7 @@ import {
   TRACE_STATE,
   ID,
   SPAN_NAME,
+  SERVICE_NAME,
 } from '../constants/span';
 import TNil from '../types/TNil';
 import { TraceSpan, CriticalPathSection } from '../types/trace';
@@ -55,12 +56,12 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
         return matchTextSearch(value, span);
       }
 
-      // Special handling for serviceName
-      if (key === 'service.name') {
+      // Special handling for service.name
+      if (key === SERVICE_NAME) {
         return matchField(span.process.serviceName, operator, value);
       }
 
-      // Special handling for span.name (operationName)
+      // Special handling for span.name
       if (key === SPAN_NAME) {
         return matchField(span.operationName, operator, value);
       }
