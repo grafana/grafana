@@ -361,8 +361,11 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 // Historic Jobs:
 //   - Read-only: historicjobs:read
 //
-// Other resources (stats, settings):
-//   - Admin role or AccessPolicy required
+// Settings:
+//   - Viewer role (read-only, needed by multiple UI pages)
+//
+// Stats:
+//   - Admin role required
 func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
@@ -373,7 +376,10 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", a.GetName(), a.GetNamespace())
 	case provisioning.HistoricJobResourceInfo.GetName():
 		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "historicjobs", a.GetName(), a.GetNamespace())
-	case "stats", "settings":
+	case "settings":
+		// Settings is read-only and needed by multiple UI pages, allow viewers
+		return allowForViewersOrAccessPolicy(id)
+	case "stats":
 		return allowForAdminsOrAccessPolicy(id)
 	default:
 		return b.authorizeDefault(id)
@@ -479,6 +485,14 @@ func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, s
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// allowForViewersOrAccessPolicy allows any authenticated user with at least viewer role.
+func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
+	if isAccessPolicy(id) || id.GetOrgRole().Includes(identity.RoleViewer) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "viewer role is required", nil
 }
 
 // authorizeDefault handles authorization for unmapped resources.
