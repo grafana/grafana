@@ -242,5 +242,5 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Cols: []string{"data_key_id"}},
 		},
 	}
-	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable, nil)
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
 }

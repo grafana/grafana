@@ -236,5 +236,5 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		},
 		PrimaryKeys: []string{"snapshot_uid", "resource_type", "partition_number"},
 	}
-	ConvertUniqueKeyToPrimaryKey(mg, srpUniqueIndex, updatedCloudMigrationSnapshotPartitionTable, nil)
+	ConvertUniqueKeyToPrimaryKey(mg, srpUniqueIndex, updatedCloudMigrationSnapshotPartitionTable)
 }

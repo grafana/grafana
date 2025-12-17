@@ -365,8 +365,7 @@ func (m *addPrimaryKeyMigration) SQL(d Dialect) string {
 
 // ConvertUniqueKeyToPrimaryKey adds series of migrations to convert existing unique key to PRIMARY KEY.
 // For Sqlite this means recreating the table, which only works if there are no foreign keys referencing the table.
-// 4 migrations are added in total. migrationNames slice can be used to override names of migrations.
-func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Table, migrationNames []string) {
+func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Table) {
 	tableName := finalTable.Name
 	if tableName == "" {
 		panic("invalid table name")
@@ -408,27 +407,16 @@ func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Tabl
 	  ADD PRIMARY KEY (%s);
 	`, tableName, uniqueKey.XName(tableName), strings.Join(mysqlQuotedColumns, ",")))
 	mysqlMigration1.Condition = &IfColumnExistsCondition{TableName: tableName, ColumnName: "my_row_id"}
-	name1 := migrationName(fmt.Sprintf("drop my_row_id and add primary key with columns %s to table %s if my_row_id exists (auto-generated mysql column)", columnsList, tableName), migrationNames, 0)
-	mg.AddMigration(name1, mysqlMigration1)
+	mg.AddMigration(fmt.Sprintf("drop my_row_id and add primary key with columns %s to table %s if my_row_id exists (auto-generated mysql column)", columnsList, tableName), mysqlMigration1)
 
 	mysqlMigration2 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s DROP INDEX %s`, tableName, uniqueKey.XName(tableName)))
 	mysqlMigration2.Condition = &IfIndexExistsCondition{TableName: tableName, IndexName: uniqueKey.XName(tableName)}
-	name2 := fmt.Sprintf("drop unique index %s from %s table if it exists (mysql)", uniqueKey.XName(tableName), tableName)
-	mg.AddMigration(migrationName(name2, migrationNames, 1), mysqlMigration2)
+	mg.AddMigration(fmt.Sprintf("drop unique index %s from %s table if it exists (mysql)", uniqueKey.XName(tableName), tableName), mysqlMigration2)
 
 	mysqlMigration3 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s ADD PRIMARY KEY (%s)`, tableName, strings.Join(mysqlQuotedColumns, ",")))
 	mysqlMigration3.Condition = &IfPrimaryKeyNotExistsCondition{TableName: tableName}
-	name3 := fmt.Sprintf("add primary key with columns %s to table %s if it doesn't exist (mysql)", columnsList, tableName)
-	mg.AddMigration(migrationName(name3, migrationNames, 2), mysqlMigration3)
+	mg.AddMigration(fmt.Sprintf("add primary key with columns %s to table %s if it doesn't exist (mysql)", columnsList, tableName), mysqlMigration3)
 
 	// postgres and sqlite statements are idempotent so we can have only one condition-less migration
-	name4 := fmt.Sprintf("add primary key with columns %s to table %s (postgres and sqlite)", columnsList, tableName)
-	mg.AddMigration(migrationName(name4, migrationNames, 3), &addPrimaryKeyMigration{tableName: tableName, uniqueKey: uniqueKey, table: finalTable})
-}
-
-func migrationName(defaultName string, names []string, idx int) string {
-	if idx >= len(names) || names[idx] == "" {
-		return defaultName
-	}
-	return names[idx]
+	mg.AddMigration(fmt.Sprintf("add primary key with columns %s to table %s (postgres and sqlite)", columnsList, tableName), &addPrimaryKeyMigration{tableName: tableName, uniqueKey: uniqueKey, table: finalTable})
 }

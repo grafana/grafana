@@ -215,7 +215,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		PrimaryKeys: []string{"group", "resource"},
 	}
 
-	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable, nil)
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable)
 
 	return marker
 }
