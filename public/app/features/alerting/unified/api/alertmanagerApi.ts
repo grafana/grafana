@@ -123,12 +123,15 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           ),
         });
 
-        return response.map((notifier) => ({
+        const result = response.map((notifier) => ({
           ...notifier,
-          options: notifier.options.map((option) => {
+          // IMPORTANT: Use fallback array to handle notifiers without options
+          options: (notifier.options || []).map((option) => {
             return populateSecureFieldKey(option, '');
           }),
         }));
+
+        return result;
       },
     }),
 

@@ -37,7 +37,7 @@ export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): Notifi
     // Add the current version (v1 - Grafana)
     const grafanaVersion: NotifierDTO = {
       ...notifier,
-      version: GRAFANA_VERSION,
+      currentVersion: GRAFANA_VERSION,
     };
     result.push(grafanaVersion);
 
@@ -50,7 +50,7 @@ export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): Notifi
         type: `${notifier.type}_${MIMIR_VERSION}` as any,
         name: notifier.name, // Keep same name for grouping
         description: `${notifier.description} (Mimir version)`,
-        version: MIMIR_VERSION,
+        currentVersion: MIMIR_VERSION,
       };
       result.push(mimirVersion);
     }
@@ -87,7 +87,7 @@ export function filterNotifiersForContext(notifiers: NotifierDTO[], isEditing: b
     return notifiers;
   } else {
     // In create mode, only show versions that can be created
-    return notifiers.filter((notifier) => canCreateVersion(notifier.version));
+    return notifiers.filter((notifier) => canCreateVersion(notifier.currentVersion));
   }
 }
 
@@ -102,16 +102,16 @@ export function getLatestVersions(notifiers: NotifierDTO[]): NotifierDTO[] {
   Object.values(grouped).forEach((versions) => {
     // Sort by version descending (v1, v0, etc.) and take the first non-deprecated
     const sorted = versions.sort((a, b) => {
-      const versionA = a.version || 'v1';
-      const versionB = b.version || 'v1';
+      const versionA = a.currentVersion || 'v1';
+      const versionB = b.currentVersion || 'v1';
       return versionB.localeCompare(versionA);
     });
 
     // Find first non-deprecated version, or fallback to first
-    const latestVersion = sorted.find((v) => !isDeprecatedVersion(v.version)) || sorted[0];
+    const latestVersion = sorted.find((v) => !isDeprecatedVersion(v.currentVersion)) || sorted[0];
     
     // Only include if it can be created
-    if (canCreateVersion(latestVersion.version)) {
+    if (canCreateVersion(latestVersion.currentVersion)) {
       latest.push(latestVersion);
     }
   });

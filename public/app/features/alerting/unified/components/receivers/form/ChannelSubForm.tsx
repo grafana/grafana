@@ -181,19 +181,18 @@ export function ChannelSubForm<R extends ChannelValues>({
     );
 
     return sortBy(notifiersToShow, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-      ({ dto: { name, type, version }, meta }) => ({
-        // @ts-expect-error ReactNode is supported
-        label: (
-          <Stack alignItems="center" gap={1}>
-            {name}
-            {version && version !== 'v1' && ` (${version})`}
-            {meta?.badge}
-          </Stack>
-        ),
-        value: type,
-        description: meta?.description,
-        isDisabled: meta ? !meta.enabled : false,
-      })
+      ({ dto: { name, type, currentVersion }, meta }) => {
+        // Build label string with version info
+        const versionSuffix = currentVersion && currentVersion !== 'v1' ? ` (${currentVersion})` : '';
+        const labelText = `${name}${versionSuffix}`;
+        
+        return {
+          label: labelText,
+          value: type,
+          description: meta?.description,
+          isDisabled: meta ? !meta.enabled : false,
+        };
+      }
     );
   }, [notifiers, selectedType]);
 
@@ -219,7 +218,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   // POC: Check if current integration is a legacy/Mimir version
   // Version naming: v0mimir1, v0mimir2 = Mimir versions; v1 = Grafana version
-  const integrationVersion = notifier?.dto.version;
+  const integrationVersion = notifier?.dto.currentVersion;
   const isLegacyVersion = isDeprecatedVersion(integrationVersion);
 
   // POC: Legacy integrations are read-only (Stage 2: imported/provisioned state)

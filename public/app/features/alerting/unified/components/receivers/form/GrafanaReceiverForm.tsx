@@ -68,7 +68,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   } = useOnCallIntegration();
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
-
   const [testReceivers, setTestReceivers] = useState<Receiver[]>();
 
   // transform receiver DTO to form values
