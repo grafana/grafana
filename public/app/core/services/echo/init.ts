@@ -149,14 +149,13 @@ async function initRudderstackBackend() {
   // this will need to be updated when rudderstackSdkV3Url is added
   // Desired logic: if only one of the sdk urls is provided, use respective code
   // otherwise defer to the feature toggle.
-  const fakeConfigRudderstackSdkV3Url: string | undefined = undefined;
 
   const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
-  const hasNewSdkUrl = Boolean(fakeConfigRudderstackSdkV3Url);
-  const onlyOneConfigURLSet = hasOldSdkUrl !== hasNewSdkUrl;
-  const useNewRudderstack = onlyOneConfigURLSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+  const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
+  const onlyOneSdkURLSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneSdkURLSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
 
-  const configUrl = useNewRudderstack ? fakeConfigRudderstackSdkV3Url : config.rudderstackSdkUrl;
+  const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
 
   const modulePromise = useNewRudderstack
     ? import('./backends/analytics/RudderstackV3Backend')
@@ -168,8 +167,8 @@ async function initRudderstackBackend() {
       writeKey: config.rudderstackWriteKey,
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
-      sdkUrl: config.rudderstackSdkUrl,
-      configUrl,
+      sdkUrl,
+      configUrl: config.rudderstackConfigUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,
     })
