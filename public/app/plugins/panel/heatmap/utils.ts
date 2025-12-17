@@ -13,7 +13,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -53,6 +53,7 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   selectionMode?: HeatmapSelectionMode;
+  xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -67,6 +68,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     yAxisConfig,
     ySizeDivisor,
     selectionMode = HeatmapSelectionMode.X,
+    xAxisConfig,
   } = opts;
 
   const xScaleKey = 'x';
@@ -182,6 +184,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       isTime && xField.config.unit?.startsWith('time:')
         ? (v, decimals) => xField.display!(v, decimals).text
         : undefined,
+    ...xAxisConfig,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;

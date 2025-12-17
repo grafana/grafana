@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -122,6 +123,20 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 			return model.LibraryElementDTO{}, model.ErrLibraryElementInvalidUID
 		} else if util.IsShortUIDTooLong(createUID) {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementUIDTooLong
+		}
+	}
+
+	if cmd.FolderUID != nil {
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			UID:          cmd.FolderUID,
+			SignedInUser: signedInUser,
+		})
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+		if f.ManagedBy == utils.ManagerKindRepo {
+			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
 	}
 
@@ -473,17 +488,22 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err != nil {
 			return err
 		}
+
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-		var folderUIDS = []string{"general", ""}
-		folderMap := map[string]string{}
+		// Using a map for O(1) lookup instead of O(n) slice iteration
+		folderUIDSet := make(map[string]bool, len(fs)+2)
+		folderUIDSet["general"] = true
+		folderUIDSet[""] = true
+
+		folderMap := make(map[string]string, len(fs))
 		for _, f := range fs {
-			folderUIDS = append(folderUIDS, f.UID)
+			folderUIDSet[f.UID] = true
 			folderMap[f.UID] = f.Title
 		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
 			if !signedInUser.HasRole(org.RoleAdmin) {
-				if !contains(folderUIDS, element.FolderUID) {
+				if !folderUIDSet[element.FolderUID] {
 					continue
 				}
 			}
@@ -522,10 +542,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			})
 		}
 
-		var libraryElements []model.LibraryElement
+		var libraryElements []model.LibraryElementWithMeta
 		countBuilder := db.SQLBuilder{}
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
+			countBuilder.Write(", '' as folder_uid ")
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
@@ -537,6 +558,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(" ")
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
+		countBuilder.Write(", le.folder_uid as folder_uid ")
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
@@ -550,8 +572,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 
+		// Apply the same folder permission filtering to the count for non-admin users
+		totalCount := int64(len(libraryElements))
+		if !signedInUser.HasRole(org.RoleAdmin) {
+			totalCount = 0
+			for _, element := range libraryElements {
+				if folderUIDSet[element.FolderUID] {
+					totalCount++
+				}
+			}
+		}
+
 		result = model.LibraryElementSearchResult{
-			TotalCount: int64(len(libraryElements)),
+			TotalCount: totalCount,
 			Elements:   retDTOs,
 			Page:       query.Page,
 			PerPage:    query.PerPage,
@@ -583,6 +616,21 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}
+
+	if cmd.FolderUID != nil {
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			UID:          cmd.FolderUID,
+			SignedInUser: signedInUser,
+		})
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+		if f.ManagedBy == utils.ManagerKindRepo {
+			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
+		}
+	}
+
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		elementInDB, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
@@ -876,15 +924,6 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 
 		return nil
 	})
-}
-
-func contains(slice []string, element string) bool {
-	for _, item := range slice {
-		if item == element {
-			return true
-		}
-	}
-	return false
 }
 
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {

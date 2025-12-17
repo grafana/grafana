@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { VisibilityMode, TimelineValueAlignment, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
+import { TimelineValueAlignment, TooltipDisplayMode, VisibilityMode, VizTooltipOptions } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { getXAxisConfig } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
@@ -23,7 +24,16 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
+const propsToDiff = [
+  'rowHeight',
+  'colWidth',
+  'showValue',
+  'mergeValues',
+  'alignValue',
+  'tooltip',
+  'paginationRev',
+  'annotationLanes',
+];
 
 export const TimelineChart = (props: TimelineProps) => {
   const { frames, timeZone, rowHeight, tooltip, legend, legendItems } = props;
@@ -60,6 +70,7 @@ export const TimelineChart = (props: TimelineProps) => {
         getValueColor: getValueColor,
 
         hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
+        xAxisConfig: getXAxisConfig(props.annotationLanes),
       });
     },
     [frames, props, timeZone, rowHeight, getValueColor, tooltip]

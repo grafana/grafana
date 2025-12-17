@@ -45,11 +45,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     bar: css({
       label: 'bar',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       minWidth: '2px',
       position: 'absolute',
-      height: '36%',
-      top: '32%',
+      height: '40%',
+      top: '30%',
     }),
     rpc: css({
       label: 'rpc',
@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     criticalPath: css({
       position: 'absolute',
-      top: '45%',
+      top: '44%',
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',

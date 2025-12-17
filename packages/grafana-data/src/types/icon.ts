@@ -162,6 +162,7 @@ export const availableIconsIndex = {
   globe: true,
   grafana: true,
   'graph-bar': true,
+  'hand-pointer': true,
   heart: true,
   'heart-rate': true,
   'heart-break': true,
@@ -287,6 +288,7 @@ export const availableIconsIndex = {
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
+  'tachometer-empty': true,
   'cmab-logo': true,
 };
 

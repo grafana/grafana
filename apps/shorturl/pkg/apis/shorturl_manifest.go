@@ -16,22 +16,22 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 )
 
 var (
-	rawSchemaShortURLv1alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"ShortURL":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"path":{"description":"The original path to where the short url is linking too e.g. https://localhost:3000/eer8i1kictngga/new-dashboard-with-lib-panel","type":"string"}},"required":["path"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"lastSeenAt":{"description":"The last time the short URL was used, 0 is the initial value","type":"integer"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"required":["lastSeenAt"],"type":"object"}}`)
-	versionSchemaShortURLv1alpha1 app.VersionSchema
-	_                             = json.Unmarshal(rawSchemaShortURLv1alpha1, &versionSchemaShortURLv1alpha1)
+	rawSchemaShortURLv1beta1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"ShortURL":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"path":{"description":"The original path to where the short url is linking too e.g. https://localhost:3000/eer8i1kictngga/new-dashboard-with-lib-panel","type":"string"}},"required":["path"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"lastSeenAt":{"description":"The last time the short URL was used, 0 is the initial value","type":"integer"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"required":["lastSeenAt"],"type":"object"}}`)
+	versionSchemaShortURLv1beta1 app.VersionSchema
+	_                            = json.Unmarshal(rawSchemaShortURLv1beta1, &versionSchemaShortURLv1beta1)
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "shorturl",
 	Group:            "shorturl.grafana.app",
-	PreferredVersion: "v1alpha1",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
-			Name:   "v1alpha1",
+			Name:   "v1beta1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
@@ -47,7 +47,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					Schema: &versionSchemaShortURLv1alpha1,
+					Schema: &versionSchemaShortURLv1beta1,
 					Routes: map[string]spec3.PathProps{
 						"/goto": {
 							Get: &spec3.Operation{
@@ -106,7 +106,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"ShortURL/v1alpha1": v1alpha1.ShortURLKind(),
+	"ShortURL/v1beta1": v1beta1.ShortURLKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -117,7 +117,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v1alpha1|ShortURL|goto|GET": v1alpha1.GetGoto{},
+	"v1beta1|ShortURL|goto|GET": v1beta1.GetGoto{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

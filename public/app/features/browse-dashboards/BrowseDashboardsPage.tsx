@@ -15,6 +15,7 @@ import { useDispatch } from 'app/types/store';
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
+import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
@@ -26,6 +27,7 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
@@ -177,6 +179,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
+        {/* only show recently viewed dashboards when in root */}
+        {!folderUID && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -217,6 +221,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             }
           </AutoSizer>
         </div>
+        {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
     </Page>
   );

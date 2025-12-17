@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type JSX } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';

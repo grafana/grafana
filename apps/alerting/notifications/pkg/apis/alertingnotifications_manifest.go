@@ -49,6 +49,9 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv0alpha1,
+					SelectableFields: []string{
+						"spec.title",
+					},
 				},
 
 				{

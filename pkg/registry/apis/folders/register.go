@@ -205,11 +205,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 var defaultPermissions = []map[string]any{
 	{
 		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
-	{
-		"kind": "BasicRole",
 		"name": "Editor",
 		"verb": "edit",
 	},

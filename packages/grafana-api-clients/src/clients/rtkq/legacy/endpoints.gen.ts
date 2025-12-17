@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -108,13 +106,13 @@ const injectedRtkApi = api
         query: () => ({ url: `/access-control/status` }),
         providesTags: ['access_control', 'enterprise'],
       }),
-      listTeamsRoles: build.mutation<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
+      listTeamsRoles: build.query<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/teams/roles/search`,
           method: 'POST',
           body: queryArg.rolesSearchQuery,
         }),
-        invalidatesTags: ['access_control', 'enterprise'],
+        providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
         query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
@@ -129,7 +127,11 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       setTeamRoles: build.mutation<SetTeamRolesApiResponse, SetTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles`, method: 'PUT' }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          method: 'PUT',
+          body: queryArg.setTeamRolesCommand,
+        }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       removeTeamRole: build.mutation<RemoveTeamRoleApiResponse, RemoveTeamRoleApiArg>({
@@ -228,7 +230,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -251,7 +253,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,
@@ -551,7 +553,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -618,7 +620,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -652,17 +654,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['dashboards', 'snapshots'],
       }),
-      calculateDashboardDiff: build.mutation<CalculateDashboardDiffApiResponse, CalculateDashboardDiffApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/calculate-diff`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['dashboards'],
-      }),
       postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
         invalidatesTags: ['dashboards'],
-      }),
-      getHomeDashboard: build.query<GetHomeDashboardApiResponse, GetHomeDashboardApiArg>({
-        query: () => ({ url: `/dashboards/home` }),
-        providesTags: ['dashboards'],
       }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
@@ -1599,6 +1593,8 @@ const injectedRtkApi = api
             perpage: queryArg.perpage,
             name: queryArg.name,
             query: queryArg.query,
+            accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['teams'],
@@ -1642,7 +1638,12 @@ const injectedRtkApi = api
         invalidatesTags: ['teams'],
       }),
       getTeamById: build.query<GetTeamByIdApiResponse, GetTeamByIdApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.teamId}` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.teamId}`,
+          params: {
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
         providesTags: ['teams'],
       }),
       updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
@@ -2142,6 +2143,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2491,7 +2493,7 @@ export type RouteConvertPrometheusCortexPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusCortexDeleteRuleGroupApiResponse =
@@ -2528,7 +2530,7 @@ export type RouteConvertPrometheusPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusDeleteRuleGroupApiResponse =
@@ -2549,18 +2551,6 @@ export type SearchDashboardSnapshotsApiArg = {
   /** Limit the number of returned results */
   limit?: number;
 };
-export type CalculateDashboardDiffApiResponse = /** status 200 (empty) */ number[];
-export type CalculateDashboardDiffApiArg = {
-  body: {
-    base?: CalculateDiffTarget;
-    /** The type of diff to return
-        Description:
-        `basic`
-        `json` */
-    diffType?: 'basic' | 'json';
-    new?: CalculateDiffTarget;
-  };
-};
 export type PostDashboardApiResponse = /** status 200 (empty) */ {
   /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
   folderUid?: string;
@@ -2580,8 +2570,6 @@ export type PostDashboardApiResponse = /** status 200 (empty) */ {
 export type PostDashboardApiArg = {
   saveDashboardCommand: SaveDashboardCommand;
 };
-export type GetHomeDashboardApiResponse = /** status 200 (empty) */ GetHomeDashboardResponse;
-export type GetHomeDashboardApiArg = void;
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -3445,21 +3433,23 @@ export type SearchTeamsApiArg = {
   name?: string;
   /** If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded. */
   query?: string;
+  accesscontrol?: boolean;
+  sort?: string;
 };
 export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
 export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
@@ -3481,6 +3471,7 @@ export type DeleteTeamByIdApiArg = {
 export type GetTeamByIdApiResponse = /** status 200 (empty) */ TeamDto;
 export type GetTeamByIdApiArg = {
   teamId: string;
+  accesscontrol?: boolean;
 };
 export type UpdateTeamApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -3880,26 +3871,26 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type PermissionIsTheModelForAccessControlPermissions = {
+export type Permission = {
   action?: string;
   created?: string;
   scope?: string;
   updated?: string;
 };
 export type RoleDto = {
-  created?: string;
+  created: string;
   delegatable?: boolean;
-  description?: string;
-  displayName?: string;
+  description: string;
+  displayName: string;
   global?: boolean;
-  group?: string;
+  group: string;
   hidden?: boolean;
   mapped?: boolean;
-  name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
-  uid?: string;
-  updated?: string;
-  version?: number;
+  name: string;
+  permissions?: Permission[];
+  uid: string;
+  updated: string;
+  version: number;
 };
 export type CreateRoleForm = {
   description?: string;
@@ -3908,7 +3899,7 @@ export type CreateRoleForm = {
   group?: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   uid?: string;
   version?: number;
 };
@@ -3922,7 +3913,7 @@ export type UpdateRoleCommand = {
   group: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   version?: number;
 };
 export type RoleAssignmentsDto = {
@@ -3945,6 +3936,10 @@ export type RolesSearchQuery = {
 };
 export type AddTeamRoleCommand = {
   roleUid?: string;
+};
+export type SetTeamRolesCommand = {
+  includeHidden?: boolean;
+  roleUids?: string[];
 };
 export type AddUserRoleCommand = {
   global?: boolean;
@@ -4387,11 +4382,6 @@ export type DashboardSnapshotDto = {
   name?: string;
   updated?: string;
 };
-export type CalculateDiffTarget = {
-  dashboardId?: number;
-  unsavedDashboard?: Json;
-  version?: number;
-};
 export type SaveDashboardCommand = {
   UpdatedAt?: string;
   dashboard?: Json;
@@ -4402,51 +4392,6 @@ export type SaveDashboardCommand = {
   message?: string;
   overwrite?: boolean;
   userId?: number;
-};
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type GetHomeDashboardResponse = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-} & {
-  redirectUri?: string;
 };
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
@@ -4538,6 +4483,45 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
 };
 export type DashboardFullWithMeta = {
   dashboard?: Json;
@@ -6019,7 +6003,7 @@ export type CreateDashboardSnapshotCommand = {
 };
 export type CreateTeamCommand = {
   email?: string;
-  name?: string;
+  name: string;
 };
 export type TeamDto = {
   accessControl?: {
@@ -6028,13 +6012,14 @@ export type TeamDto = {
   avatarUrl?: string;
   email?: string;
   externalUID?: string;
-  id?: number;
-  isProvisioned?: boolean;
-  memberCount?: number;
-  name?: string;
-  orgId?: number;
+  /** @deprecated Use UID instead */
+  id: number;
+  isProvisioned: boolean;
+  memberCount: number;
+  name: string;
+  orgId: number;
   permission?: PermissionType;
-  uid?: string;
+  uid: string;
 };
 export type SearchTeamQueryResult = {
   page?: number;
@@ -6046,6 +6031,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6057,10 +6043,8 @@ export type SearchTeamGroupsQueryResult = {
   totalCount?: number;
 };
 export type UpdateTeamCommand = {
-  Email?: string;
-  ExternalUID?: string;
-  ID?: number;
-  Name?: string;
+  email?: string;
+  name?: string;
 };
 export type TeamMemberDto = {
   auth_module?: string;
@@ -6078,7 +6062,7 @@ export type TeamMemberDto = {
   userUID?: string;
 };
 export type AddTeamMemberCommand = {
-  userId?: number;
+  userId: number;
 };
 export type SetTeamMembershipsCommand = {
   admins?: string[];
@@ -6515,7 +6499,8 @@ export const {
   useSetRoleAssignmentsMutation,
   useGetAccessControlStatusQuery,
   useLazyGetAccessControlStatusQuery,
-  useListTeamsRolesMutation,
+  useListTeamsRolesQuery,
+  useLazyListTeamsRolesQuery,
   useListTeamRolesQuery,
   useLazyListTeamRolesQuery,
   useAddTeamRoleMutation,
@@ -6621,10 +6606,7 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  useCalculateDashboardDiffMutation,
   usePostDashboardMutation,
-  useGetHomeDashboardQuery,
-  useLazyGetHomeDashboardQuery,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,

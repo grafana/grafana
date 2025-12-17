@@ -4,7 +4,7 @@ import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 import { RepoType } from '../Wizard/types';

@@ -226,7 +226,7 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
@@ -234,7 +234,7 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		dataSourceRequestValidator: validations.ProvideValidator(),
 		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 		headers:                    headers,
-		concurrentQueryLimit:       16, // TODO: make it configurable
+		concurrentQueryLimit:       concurrentQueryLimit,
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -333,12 +333,9 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 }
 
 func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
-	tr, ok := query.CheckGet("_timeRange")
-	if !ok { // timeRange json node does not exist
-		tr, ok = query.CheckGet("timeRange") // try the old name for backward compatibility
-		if !ok {                             // timeRange json node does not exist, use global from/to
-			return globalFrom, globalTo, nil
-		}
+	tr, ok := query.CheckGet("timeRange")
+	if !ok { // timeRange json node does not exist, use global from/to
+		return globalFrom, globalTo, nil
 	}
 	from, err := tr.Get("from").String()
 	if err != nil {
@@ -350,6 +347,40 @@ func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (s
 	}
 
 	return from, to, nil
+}
+
+const timeRangeKey = "timeRange"
+
+func queryToJson(query *simplejson.Json, supportLocalTimeRange bool) ([]byte, error) {
+	if !supportLocalTimeRange {
+		return query.MarshalJSON()
+	}
+
+	// we need to remove the `timeRange` attribute from the JSON, if it exists there,
+	// because it might cause complications with certain data sources.
+	_, has := query.CheckGet(timeRangeKey)
+	if !has {
+		return query.MarshalJSON()
+	}
+
+	qMap, err := query.Map()
+	if err != nil {
+		return nil, err
+	}
+
+	// we do not want to modify the query,
+	// so we create a copy without
+	// the timeRange attribute
+	d := make(map[string]any)
+
+	// without the `timeRange` attribute
+	for k, v := range qMap {
+		if k != timeRangeKey {
+			d[k] = v
+		}
+	}
+
+	return simplejson.NewFromAny(d).MarshalJSON()
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -397,7 +428,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 		}
 
-		modelJSON, err := query.MarshalJSON()
+		modelJSON, err := queryToJson(query, supportLocalTimeRange)
 		if err != nil {
 			return nil, err
 		}

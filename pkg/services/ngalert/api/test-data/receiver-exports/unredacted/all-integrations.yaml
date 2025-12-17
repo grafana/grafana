@@ -119,6 +119,8 @@ contactPoints:
         - uid: googlechat-uid
           type: googlechat
           settings:
+            hide_open_button: true
+            hide_version_info: true
             http_config:
                 oauth2:
                     client_id: test-client-id

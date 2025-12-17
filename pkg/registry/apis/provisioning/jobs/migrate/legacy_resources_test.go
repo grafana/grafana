@@ -93,8 +93,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
 
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{}, errors.New("legacy migrator error"))
 
@@ -115,7 +115,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			signerFactory,
 			mockClientFactory,
 			mockExportFn.Execute,
@@ -136,7 +136,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 		mockExportFn.AssertExpectations(t)
 		mockClientFactory.AssertExpectations(t)
@@ -308,22 +308,18 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			History:   true,
 		}).Return(mockSigner, nil)
 
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		// Mock CountResources for the count phase
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		})).Return(&resourcepb.BulkResponse{}, nil).Once()
+		// Mock MigrateDashboards for the actual migration phase (dashboards resource)
+		mockDashboardAccess.On("MigrateDashboards", mock.Anything, mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{
-			Summary: []*resourcepb.BulkResponse_Summary{
-				{
-					Group:    "test.grafana.app",
-					Resource: "tests",
-					Count:    10,
-					History:  5,
-				},
-			},
-		}, nil).Once() // Migration phase
+		}), mock.Anything).Return(&legacy.BlobStoreInfo{
+			Count: 10,
+			Size:  5,
+		}, nil).Once()
 
 		mockClients := resources.NewMockResourceClients(t)
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -339,7 +335,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			mockSignerFactory,
 			mockClientFactory,
 			mockExportFn.Execute,
@@ -362,7 +358,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		mockClientFactory.AssertExpectations(t)
 		mockExportFn.AssertExpectations(t)
 		progress.AssertExpectations(t)
@@ -742,8 +738,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 
 func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 	t.Run("should fail when legacy migrate count fails", func(t *testing.T) {
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{}, errors.New("count error"))
 
@@ -752,7 +748,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 
 		migrator := newLegacyResourceMigrator(
 			nil,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			nil,
 			nil,
 			progress,
@@ -766,89 +762,91 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unable to count legacy items")
 
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 
 	t.Run("should fail when legacy migrate write fails", func(t *testing.T) {
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		// For test-resources GroupResource, we don't know which method it will call, but since it's not dashboards/folders/librarypanels,
+		// the Migrate will fail trying to map the resource type. Let's make it dashboards for this test.
+		mockDashboardAccess.On("MigrateDashboards", mock.Anything, mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{}, errors.New("write error")).Once() // Write phase
+		}), mock.Anything).Return(nil, errors.New("write error")).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
 		migrator := newLegacyResourceMigrator(
 			nil,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			nil,
 			nil,
 			progress,
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
-			schema.GroupResource{Group: "test.grafana.app", Resource: "test-resources"},
+			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "migrate legacy test-resources: write error")
+		require.Contains(t, err.Error(), "migrate legacy dashboards: write error")
 
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 
 	t.Run("should successfully migrate resource", func(t *testing.T) {
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess.On("MigrateDashboards", mock.Anything, mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
+		}), mock.Anything).Return(&legacy.BlobStoreInfo{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
 		migrator := newLegacyResourceMigrator(
 			nil,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			nil,
 			nil,
 			progress,
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
-			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
 		require.NoError(t, err)
 
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 	t.Run("should set total to history if history is greater than count", func(t *testing.T) {
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{
 			Summary: []*resourcepb.BulkResponse_Summary{
 				{
-					Group:    "test.grafana.app",
-					Resource: "tests",
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
 					Count:    1,
 					History:  100,
 				},
 			},
 		}, nil).Once() // Count phase
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess.On("MigrateDashboards", mock.Anything, mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
+		}), mock.Anything).Return(&legacy.BlobStoreInfo{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -856,39 +854,39 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 
 		migrator := newLegacyResourceMigrator(
 			nil,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			nil,
 			nil,
 			progress,
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
-			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
 		require.NoError(t, err)
 
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 	t.Run("should set total to count if history is less than count", func(t *testing.T) {
-		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess := legacy.NewMockMigrationDashboardAccessor(t)
+		mockDashboardAccess.On("CountResources", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resourcepb.BulkResponse{
 			Summary: []*resourcepb.BulkResponse_Summary{
 				{
-					Group:    "test.grafana.app",
-					Resource: "tests",
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
 					Count:    200,
 					History:  1,
 				},
 			},
 		}, nil).Once() // Count phase
-		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
+		mockDashboardAccess.On("MigrateDashboards", mock.Anything, mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
+		}), mock.Anything).Return(&legacy.BlobStoreInfo{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -897,20 +895,20 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 
 		migrator := newLegacyResourceMigrator(
 			nil,
-			mockLegacyMigrator,
+			mockDashboardAccess,
 			nil,
 			nil,
 			progress,
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
-			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			signer,
 		)
 
 		err := migrator.Migrate(context.Background())
 		require.NoError(t, err)
 
-		mockLegacyMigrator.AssertExpectations(t)
+		mockDashboardAccess.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 }

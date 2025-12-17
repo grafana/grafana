@@ -1,0 +1,220 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "v18.gauge_options.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "thresholds": [
+            {
+              "color": "red",
+              "value": 100
+            },
+            {
+              "color": "yellow",
+              "value": 50
+            },
+            {
+              "color": "green",
+              "value": 0
+            }
+          ],
+          "valueOptions": {
+            "decimals": 2,
+            "prefix": "Value: ",
+            "stat": "last",
+            "suffix": " ms",
+            "unit": "ms"
+          }
+        },
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Complete Gauge Panel",
+        "type": "gauge"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "valueOptions": {
+            "decimals": 1,
+            "unit": "percent"
+          }
+        },
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Partial Gauge Panel",
+        "type": "gauge"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 3,
+        "options": {
+          "valueOptions": {
+            "decimals": 0,
+            "stat": "avg",
+            "unit": "bytes"
+          }
+        },
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Buggy Gauge Panel",
+        "type": "gauge"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 4,
+        "options": {
+          "anotherProp": 42,
+          "customProperty": "customValue",
+          "thresholds": [
+            {
+              "color": "blue",
+              "value": 10
+            }
+          ],
+          "valueOptions": {
+            "unit": "short"
+          }
+        },
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Custom Properties Gauge Panel",
+        "type": "gauge"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 5,
+        "options": {
+          "legend": {
+            "show": true,
+            "showLegend": true
+          }
+        },
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Non-Gauge Panel",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "V18 Gauge Options Migration Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
+    }
+  }
+}

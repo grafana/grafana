@@ -1,4 +1,4 @@
-import { set, uniq } from 'lodash';
+import { set, uniq, uniqBy } from 'lodash';
 import {
   concatMap,
   finalize,
@@ -38,17 +38,14 @@ import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema/dist/esm/index';
 import { TableCellDisplayMode } from '@grafana/ui';
 
+import { CloudWatchLogsQuery, LogsMode, CloudWatchLogsAnomaliesQuery, LogsQueryLanguage } from '../dataquery.gen';
 import {
   CloudWatchJsonData,
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
-  LogsMode,
-  LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
 } from '../types';
@@ -253,9 +250,19 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
       scopedVars
     );
+    const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.name),
+      scopedVars,
+      'text'
+    );
+    const interpolatedLogGroups = interpolatedLogGroupArns.map((arn, index) => ({
+      arn,
+      name: interpolatedLogGroupNames[index] ?? arn,
+    }));
 
     // need to support legacy format variables too
-    const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+    const interpolatedLegacyLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
       query.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
       scopedVars,
@@ -264,8 +271,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
     // Otherwise the StartLogQuery API will return a permission error
-    const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
-    const logGroupNames = uniq(interpolatedLogGroupNames);
+    const logGroups = uniqBy(interpolatedLogGroups, 'arn');
+    const logGroupNames = uniq(interpolatedLegacyLogGroupNames);
 
     const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
       if (

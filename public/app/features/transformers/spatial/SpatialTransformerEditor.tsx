@@ -148,13 +148,13 @@ export const SetGeometryTransformerEditor = (props: Props) => {
   const pane = getTransformerOptionPane<SpatialTransformOptions>(props, supplier);
   return (
     <div>
-      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.items.map((v) => v.renderElement())}</div>
       <div>
         {pane.categories.map((c) => {
           return (
             <div key={c.props.id} className={styles.wrap}>
               <h5>{c.props.title}</h5>
-              <div className={styles.item}>{c.items.map((s) => s.render())}</div>
+              <div className={styles.item}>{c.items.map((s) => s.renderElement())}</div>
             </div>
           );
         })}

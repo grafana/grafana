@@ -10,10 +10,14 @@ export interface SaveProvisionedDashboardProps {
   dashboard: DashboardScene;
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
+  saveAsCopy?: boolean;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: SaveProvisionedDashboardProps) {
-  const { isNew, defaultValues, workflowOptions, readOnly, repository } = useProvisionedDashboardData(dashboard);
+export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
+  const { isNew, defaultValues, workflowOptions, readOnly, repository } = useProvisionedDashboardData(
+    dashboard,
+    saveAsCopy
+  );
 
   if (!defaultValues) {
     return null;
@@ -24,11 +28,12 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Save
       dashboard={dashboard}
       drawer={drawer}
       changeInfo={changeInfo}
-      isNew={isNew}
+      isNew={isNew || !!saveAsCopy}
       defaultValues={defaultValues}
       repository={repository}
       workflowOptions={workflowOptions}
       readOnly={readOnly}
+      saveAsCopy={saveAsCopy}
     />
   );
 }

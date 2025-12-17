@@ -1,4 +1,5 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import type { JSX } from 'react';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';

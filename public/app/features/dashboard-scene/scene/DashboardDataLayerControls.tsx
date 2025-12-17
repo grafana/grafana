@@ -1,4 +1,8 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui';
 
 import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
@@ -11,13 +15,17 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
   const state = sceneGraph.getData(dashboard).useState();
   // It is possible to render the controls for the annotation data layers in separate places using the `placement` property.
   // In case it's not specified, we are rendering the controls here (default).
-  const isDefaultPlacement = (layer: SceneDataLayerProvider) => layer.state.placement === undefined;
+  const isDefaultPlacementAndNotHidden = (layer: SceneDataLayerProvider) =>
+    layer.state.placement === undefined && !layer.state.isHidden;
+  const styles = useStyles2(getStyles);
 
   if (isDashboardDataLayerSetState(state)) {
     return (
       <>
-        {state.annotationLayers.filter(isDefaultPlacement).map((layer) => (
-          <DataLayerControl layer={layer} key={layer.state.key} />
+        {state.annotationLayers.filter(isDefaultPlacementAndNotHidden).map((layer) => (
+          <div key={layer.state.key} className={styles.container}>
+            <DataLayerControl layer={layer} />
+          </div>
         ))}
       </>
     );
@@ -25,3 +33,14 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
 
   return null;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    label: 'dashboard-data-layer-controls',
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  }),
+});

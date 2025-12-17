@@ -4,18 +4,25 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
+	ServiceName          = "plugins.installsync"
 	syncerLockActionName = "plugin-install-api-sync"
 )
 
@@ -25,7 +32,9 @@ var (
 
 // Syncer is the interface for syncing plugin installations to the Kubernetes-style API.
 type Syncer interface {
-	Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error
+	registry.BackgroundService
+	registry.CanBeDisabled
+	Sync(ctx context.Context, source install.Source, installedPlugins []pluginstore.Plugin) error
 }
 
 // ServerLock is the interface for acquiring distributed locks.
@@ -34,13 +43,21 @@ type ServerLock interface {
 }
 
 type syncer struct {
-	featureToggles   featuremgmt.FeatureToggles
-	clientGenerator  resource.ClientGenerator
-	installRegistrar *install.InstallRegistrar
-	orgService       org.Service
-	namespaceMapper  request.NamespaceMapper
-	serverLock       ServerLock
+	services.NamedService
+	featureToggles      featuremgmt.FeatureToggles
+	clientGenerator     resource.ClientGenerator
+	installRegistrar    *install.InstallRegistrar
+	orgService          org.Service
+	namespaceMapper     request.NamespaceMapper
+	serverLock          ServerLock
+	restConfigProvider  apiserver.RestConfigProvider
+	pluginsStoreService pluginstore.Store
 }
+
+var _ Syncer = (*syncer)(nil)
+var _ registry.BackgroundService = (*syncer)(nil)
+var _ registry.CanBeDisabled = (*syncer)(nil)
+var _ services.NamedService = (*syncer)(nil)
 
 // newSyncer creates a new syncer with the provided dependencies.
 func newSyncer(
@@ -50,15 +67,21 @@ func newSyncer(
 	orgService org.Service,
 	namespaceMapper request.NamespaceMapper,
 	serverLock ServerLock,
+	restConfigProvider apiserver.RestConfigProvider,
+	pluginsStoreService pluginstore.Store,
 ) *syncer {
-	return &syncer{
-		clientGenerator:  clientGenerator,
-		featureToggles:   featureToggles,
-		installRegistrar: installRegistrar,
-		orgService:       orgService,
-		namespaceMapper:  namespaceMapper,
-		serverLock:       serverLock,
+	s := syncer{
+		clientGenerator:     clientGenerator,
+		featureToggles:      featureToggles,
+		installRegistrar:    installRegistrar,
+		orgService:          orgService,
+		namespaceMapper:     namespaceMapper,
+		serverLock:          serverLock,
+		restConfigProvider:  restConfigProvider,
+		pluginsStoreService: pluginsStoreService,
 	}
+	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(ServiceName)
+	return &s
 }
 
 // ProvideSyncer creates a new Syncer for syncing plugin installations to the API.
@@ -68,6 +91,8 @@ func ProvideSyncer(
 	orgService org.Service,
 	cfgProvider configprovider.ConfigProvider,
 	serverLock ServerLock,
+	restConfigProvider apiserver.RestConfigProvider,
+	pluginsStoreService pluginstore.Store,
 ) (Syncer, error) {
 	cfg, err := cfgProvider.Get(context.Background())
 	if err != nil {
@@ -83,16 +108,49 @@ func ProvideSyncer(
 		orgService,
 		namespaceMapper,
 		serverLock,
+		restConfigProvider,
+		pluginsStoreService,
 	), nil
 }
 
-func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
-	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync) {
-		return nil
+func (s *syncer) IsDisabled() bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	syncEnabled := s.featureToggles.IsEnabled(context.Background(), featuremgmt.FlagPluginInstallAPISync)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	serviceLoadingEnabled := s.featureToggles.IsEnabled(context.Background(), featuremgmt.FlagPluginStoreServiceLoading)
+	return !syncEnabled || !serviceLoadingEnabled
+}
+
+func (s *syncer) Run(ctx context.Context) error {
+	if err := s.StartAsync(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(context.Background())
+}
+
+func (s *syncer) running(ctx context.Context) error {
+	ctxLog := logging.FromContext(ctx)
+	restConfig, err := s.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return err
+	}
+	discoveryClient, err := client.NewDiscoveryClient(restConfig)
+	if err != nil {
+		ctxLog.Warn("Failed to create discovery client, skipping plugin sync", "error", err)
+	}
+	if err := discoveryClient.WaitForAvailability(ctx, pluginsv0alpha1.PluginKind().GroupVersionKind().GroupVersion()); err != nil {
+		ctxLog.Warn("Failed to wait for plugin API availability, skipping plugin sync", "error", err)
 	}
 
-	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading) {
-		logging.DefaultLogger.Warn("pluginInstallAPISync is enabled, but pluginStoreServiceLoading is disabled. skipping plugin sync.")
+	if err := s.Sync(ctx, install.SourcePluginStore, s.pluginsStoreService.Plugins(ctx)); err != nil {
+		ctxLog.Warn("Failed to sync plugins", "error", err)
+	}
+	<-ctx.Done()
+	return nil
+}
+
+func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []pluginstore.Plugin) error {
+	if s.IsDisabled() {
 		return nil
 	}
 
@@ -111,13 +169,14 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 	return syncErr
 }
 
-func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, installedPlugins []pluginstore.Plugin) error {
 	orgs, err := s.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		return err
 	}
 
 	for _, org := range orgs {
+		ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, s.namespaceMapper(org.ID))
 		err := s.syncNamespace(ctx, s.namespaceMapper(org.ID), source, installedPlugins)
 		if err != nil {
 			return err
@@ -127,7 +186,7 @@ func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, i
 	return nil
 }
 
-func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []*plugins.Plugin) error {
+func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []pluginstore.Plugin) error {
 	client, err := s.installRegistrar.GetClient()
 	if err != nil {
 		return err
@@ -138,9 +197,9 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 		return err
 	}
 
-	installedMap := make(map[string]*plugins.Plugin)
+	installedMap := make(map[string]struct{})
 	for _, p := range installedPlugins {
-		installedMap[p.ID] = p
+		installedMap[p.ID] = struct{}{}
 	}
 
 	// unregister plugins that are not installed

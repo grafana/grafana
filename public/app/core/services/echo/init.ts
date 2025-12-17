@@ -146,14 +146,30 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const { RudderstackBackend } = await import('./backends/analytics/RudderstackBackend');
+  // this will need to be updated when rudderstackSdkV3Url is added
+  // Desired logic: if only one of the sdk urls is provided, use respective code
+  // otherwise defer to the feature toggle.
+  const fakeConfigRudderstackSdkV3Url: string | undefined = undefined;
+
+  const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
+  const hasNewSdkUrl = Boolean(fakeConfigRudderstackSdkV3Url);
+  const onlyOneConfigURLSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneConfigURLSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+
+  const configUrl = useNewRudderstack ? fakeConfigRudderstackSdkV3Url : config.rudderstackSdkUrl;
+
+  const modulePromise = useNewRudderstack
+    ? import('./backends/analytics/RudderstackV3Backend')
+    : import('./backends/analytics/RudderstackBackend');
+
+  const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
     new RudderstackBackend({
       writeKey: config.rudderstackWriteKey,
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
       sdkUrl: config.rudderstackSdkUrl,
-      configUrl: config.rudderstackConfigUrl,
+      configUrl: configUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,
     })
@@ -170,6 +186,7 @@ async function initAzureAppInsightsBackend() {
     new ApplicationInsightsBackend({
       connectionString: config.applicationInsightsConnectionString,
       endpointUrl: config.applicationInsightsEndpointUrl,
+      autoRouteTracking: config.applicationInsightsAutoRouteTracking,
     })
   );
 }

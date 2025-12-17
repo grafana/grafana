@@ -45,6 +45,8 @@ type IndexViewData struct {
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
+
+	PublicDashboardAccessToken string
 }
 
 // Templates setup.
@@ -67,34 +69,35 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
 	frontendSettings := FSFrontendSettings{
-		AnalyticsConsoleReporting:           cfg.FrontendAnalyticsConsoleReporting,
-		AnonymousEnabled:                    cfg.Anonymous.Enabled,
-		ApplicationInsightsConnectionString: cfg.ApplicationInsightsConnectionString,
-		ApplicationInsightsEndpointUrl:      cfg.ApplicationInsightsEndpointUrl,
-		AuthProxyEnabled:                    cfg.AuthProxy.Enabled,
-		AutoAssignOrg:                       cfg.AutoAssignOrg,
-		CSPReportOnlyEnabled:                cfg.CSPReportOnlyEnabled,
-		DisableLoginForm:                    cfg.DisableLoginForm,
-		DisableUserSignUp:                   !cfg.AllowUserSignUp,
-		GoogleAnalytics4Id:                  cfg.GoogleAnalytics4ID,
-		GoogleAnalytics4SendManualPageViews: cfg.GoogleAnalytics4SendManualPageViews,
-		GoogleAnalyticsId:                   cfg.GoogleAnalyticsID,
-		GrafanaJavascriptAgent:              cfg.GrafanaJavascriptAgent,
-		Http2Enabled:                        cfg.Protocol == setting.HTTP2Scheme,
-		JwtHeaderName:                       cfg.JWTAuth.HeaderName,
-		JwtUrlLogin:                         cfg.JWTAuth.URLLogin,
-		LdapEnabled:                         cfg.LDAPAuthEnabled,
-		LoginHint:                           cfg.LoginHint,
-		PasswordHint:                        cfg.PasswordHint,
-		ReportingStaticContext:              cfg.ReportingStaticContext,
-		RudderstackConfigUrl:                cfg.RudderstackConfigURL,
-		RudderstackDataPlaneUrl:             cfg.RudderstackDataPlaneURL,
-		RudderstackIntegrationsUrl:          cfg.RudderstackIntegrationsURL,
-		RudderstackSdkUrl:                   cfg.RudderstackSDKURL,
-		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
-		TrustedTypesDefaultPolicyEnabled:    (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
-		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
-		BuildInfo:                           getBuildInfo(license, cfg),
+		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		AnonymousEnabled:                     cfg.Anonymous.Enabled,
+		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
+		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
+		ApplicationInsightsAutoRouteTracking: cfg.ApplicationInsightsAutoRouteTracking,
+		AuthProxyEnabled:                     cfg.AuthProxy.Enabled,
+		AutoAssignOrg:                        cfg.AutoAssignOrg,
+		CSPReportOnlyEnabled:                 cfg.CSPReportOnlyEnabled,
+		DisableLoginForm:                     cfg.DisableLoginForm,
+		DisableUserSignUp:                    !cfg.AllowUserSignUp,
+		GoogleAnalytics4Id:                   cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews:  cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleAnalyticsId:                    cfg.GoogleAnalyticsID,
+		GrafanaJavascriptAgent:               cfg.GrafanaJavascriptAgent,
+		Http2Enabled:                         cfg.Protocol == setting.HTTP2Scheme,
+		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                          cfg.JWTAuth.URLLogin,
+		LdapEnabled:                          cfg.LDAPAuthEnabled,
+		LoginHint:                            cfg.LoginHint,
+		PasswordHint:                         cfg.PasswordHint,
+		ReportingStaticContext:               cfg.ReportingStaticContext,
+		RudderstackConfigUrl:                 cfg.RudderstackConfigURL,
+		RudderstackDataPlaneUrl:              cfg.RudderstackDataPlaneURL,
+		RudderstackIntegrationsUrl:           cfg.RudderstackIntegrationsURL,
+		RudderstackSdkUrl:                    cfg.RudderstackSDKURL,
+		RudderstackWriteKey:                  cfg.RudderstackWriteKey,
+		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
+		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,
+		BuildInfo:                            getBuildInfo(license, cfg),
 	}
 
 	return &IndexProvider{
@@ -137,9 +140,12 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	reqCtx := contexthandler.FromContext(ctx)
+
 	// TODO -- restructure so the static stuff is under one variable and the rest is dynamic
 	data := p.data // copy everything
 	data.Nonce = nonce
+	data.PublicDashboardAccessToken = reqCtx.PublicDashboardAccessToken
 
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
@@ -149,7 +155,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
 	p.runIndexDataHooks(reqCtx, &data)
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")

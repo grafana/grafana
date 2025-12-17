@@ -22,7 +22,7 @@ type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName | React.ReactElement;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   className?: string;
   fullWidth?: boolean;
   type?: string;
@@ -142,6 +142,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       size = 'md',
       fill = 'solid',
       icon,
+      iconPlacement = 'left',
       fullWidth,
       children,
       className,
@@ -174,6 +175,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
+    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
+
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <a
@@ -184,8 +187,9 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         ref={tooltip ? undefined : ref}
         aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
-        <IconRenderer icon={icon} size={size} className={styles.icon} />
+        {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
+        {iconPlacement === 'right' && iconComponent}
       </a>
     );
 
@@ -203,8 +207,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
 LinkButton.displayName = 'LinkButton';
 
+type IconElementProps = {
+  className?: string;
+  size?: IconSize;
+};
+
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   size?: IconSize;
   className?: string;
   iconType?: IconType;

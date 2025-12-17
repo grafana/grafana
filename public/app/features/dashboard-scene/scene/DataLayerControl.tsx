@@ -64,11 +64,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
   controlWrapper: css({
+    height: theme.spacing(2),
     '& > div': {
       border: 'none',
       background: 'transparent',
+      paddingRight: theme.spacing(0.5),
+      height: theme.spacing(2),
       '&:hover': {
         border: 'none',
         background: 'transparent',
@@ -76,6 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   menuLabel: css({
-    marginTop: theme.spacing(0.5),
+    marginTop: 0,
+    marginBottom: 0,
   }),
 });

@@ -52,6 +52,10 @@ func (s *singleTenantInstanceProvider) GetInstance(_ context.Context, logger log
 	}, nil
 }
 
+func (s *singleTenantInstanceProvider) GetMode() string {
+	return "st"
+}
+
 func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSettings {
 	return s.instanceConf
 }

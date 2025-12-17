@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { RefCallback, useCallback, useEffect, useRef } from 'react';
+import { RefCallback, useCallback, useEffect, useRef, type JSX } from 'react';
 import * as React from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 

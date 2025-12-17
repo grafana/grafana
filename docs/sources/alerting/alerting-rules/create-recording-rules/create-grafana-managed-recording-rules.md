@@ -70,6 +70,10 @@ If a rule does not explicitly specify a target data source for writing (for exam
 default_datasource_uid = my-uid
 ```
 
+{{< admonition type="note" >}}
+Grafana Cloud: If you leave **Target data source** blank when creating a recording rule, Grafana writes the results to your managed Prometheus data source named `grafanacloud-prom` by default. This may be different from the default data source you use in dashboards. To write to a different backend, explicitly select a target data source. In self-managed Grafana, you can set the default fallback with `default_datasource_uid` in the `[recording_rules]` section of the configuration.
+{{< /admonition >}}
+
 If you previously configured recording rules using the `url` and `basic_auth_*` configuration options, these are no longer supported. You must either:
 
 - Set `default_datasource_uid` in the `[recording_rules]` section of the configuration file to point to the target data source

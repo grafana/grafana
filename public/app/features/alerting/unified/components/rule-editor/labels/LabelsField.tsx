@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
@@ -13,7 +13,7 @@ import { SupportedPlugin } from '../../../types/pluginBridges';
 import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
-import AlertLabelDropdown from '../../AlertLabelDropdown';
+import AlertLabelDropdown, { AsyncOptionsLoader } from '../../AlertLabelDropdown';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { useGetLabelsFromDataSourceName } from '../useAlertRuleSuggestions';
 
@@ -117,8 +117,7 @@ export function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
   loadingLabelsPlugin: boolean,
-  labelsInSubform: Array<{ key: string; value: string }>,
-  selectedKey: string
+  labelsInSubform: Array<{ key: string; value: string }>
 ) {
   // ------- Get labels keys and their values from existing alerts
   const { labels: labelsByKeyFromExisingAlerts, isLoading } = useGetLabelsFromDataSourceName(dataSourceName);
@@ -126,18 +125,19 @@ export function useCombinedLabels(
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
   );
-  //------ Convert the labelsOpsKeys to the same format as the labelsByKeyFromExisingAlerts
-  const labelsByKeyOps = useMemo(() => {
-    return labelsOpsKeys.reduce((acc: Record<string, Set<string>>, label) => {
-      acc[label.name] = new Set();
-      return acc;
-    }, {});
+
+  // Lazy query for fetching label values on demand
+  const [fetchLabelValues] = labelsApi.endpoints.getLabelValues.useLazyQuery();
+
+  //------ Convert the labelsOpsKeys to a Set for quick lookup
+  const opsLabelKeysSet = useMemo(() => {
+    return new Set(labelsOpsKeys.map((label) => label.name));
   }, [labelsOpsKeys]);
 
   //------- Convert the keys from the ops labels to options for the dropdown
   const keysFromGopsLabels = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyOps).filter(isKeyAllowed), labelsInSubform);
-  }, [labelsByKeyOps, labelsInSubform]);
+    return mapLabelsToOptions(Array.from(opsLabelKeysSet).filter(isKeyAllowed), labelsInSubform);
+  }, [opsLabelKeysSet, labelsInSubform]);
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
@@ -158,70 +158,47 @@ export function useCombinedLabels(
     },
   ];
 
-  const selectedKeyIsFromAlerts = labelsByKeyFromExisingAlerts.has(selectedKey);
-  const selectedKeyIsFromOps = labelsByKeyOps[selectedKey] !== undefined && labelsByKeyOps[selectedKey]?.size > 0;
-  const selectedKeyDoesNotExist = !selectedKeyIsFromAlerts && !selectedKeyIsFromOps;
+  // Create an async options loader for a specific key
+  // This is called by Combobox when the dropdown menu opens
+  const createAsyncValuesLoader = useCallback(
+    (key: string): AsyncOptionsLoader => {
+      return async (_inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+        if (!isKeyAllowed(key) || !key) {
+          return [];
+        }
 
-  const valuesAlreadyFetched = !selectedKeyIsFromAlerts && labelsByKeyOps[selectedKey]?.size > 0;
+        // Collect values from existing alerts first
+        const valuesFromAlerts = labelsByKeyFromExisingAlerts.get(key);
+        const existingValues = valuesFromAlerts ? Array.from(valuesFromAlerts) : [];
 
-  // Only fetch the values for the selected key if it is from ops and the values are not already fetched (the selected key is not in the labelsByKeyOps object)
-  const {
-    currentData: valuesData,
-    isLoading: isLoadingValues = false,
-    error,
-  } = labelsApi.endpoints.getLabelValues.useQuery(
-    { key: selectedKey },
-    {
-      skip:
-        !labelsPluginInstalled ||
-        !selectedKey ||
-        selectedKeyIsFromAlerts ||
-        valuesAlreadyFetched ||
-        selectedKeyDoesNotExist,
-    }
-  );
+        // Collect values from ops labels (if plugin is installed)
+        let opsValues: string[] = [];
+        if (labelsPluginInstalled && opsLabelKeysSet.has(key)) {
+          try {
+            // RTK Query handles caching automatically
+            const result = await fetchLabelValues({ key }, true).unwrap();
+            if (result?.values?.length) {
+              opsValues = result.values.map((value) => value.name);
+            }
+          } catch (error) {
+            console.error('Failed to fetch label values for key:', key, error);
+          }
+        }
 
-  // these are the values for the selected key in case it is from ops
-  const valuesFromSelectedGopsKey = useMemo(() => {
-    // if it is from alerts, we need to fetch the values from the existing alerts
-    if (selectedKeyIsFromAlerts) {
-      return [];
-    }
-    // in case of a label from ops, we need to fetch the values from the plugin
-    // fetch values from ops only if there is no value for the key
-    const valuesForSelectedKey = labelsByKeyOps[selectedKey];
-    const valuesAlreadyFetched = valuesForSelectedKey?.size > 0;
-    if (valuesAlreadyFetched) {
-      return mapLabelsToOptions(valuesForSelectedKey);
-    }
-    if (!isLoadingValues && valuesData?.values?.length && !error) {
-      const values = valuesData?.values.map((value) => value.name);
-      labelsByKeyOps[selectedKey] = new Set(values);
-      return mapLabelsToOptions(values);
-    }
-    return [];
-  }, [selectedKeyIsFromAlerts, labelsByKeyOps, selectedKey, isLoadingValues, valuesData, error]);
+        // Combine: existing values first, then unique ops values (Set preserves first occurrence)
+        const combinedValues = [...new Set([...existingValues, ...opsValues])];
 
-  const getValuesForLabel = useCallback(
-    (key: string) => {
-      if (!isKeyAllowed(key)) {
-        return [];
-      }
-
-      // values from existing alerts will take precedence over values from ops
-      if (selectedKeyIsFromAlerts || !labelsPluginInstalled) {
-        return mapLabelsToOptions(labelsByKeyFromExisingAlerts.get(key));
-      }
-      return valuesFromSelectedGopsKey;
+        return mapLabelsToOptions(combinedValues);
+      };
     },
-    [labelsByKeyFromExisingAlerts, labelsPluginInstalled, valuesFromSelectedGopsKey, selectedKeyIsFromAlerts]
+    [labelsByKeyFromExisingAlerts, labelsPluginInstalled, opsLabelKeysSet, fetchLabelValues]
   );
 
   return {
     loading: isLoading || isLoadingLabels,
     keysFromExistingAlerts,
     groupedOptions,
-    getValuesForLabel,
+    createAsyncValuesLoader,
   };
 }
 
@@ -248,30 +225,30 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     append({ key: '', value: '' });
   }, [append]);
 
-  const [selectedKey, setSelectedKey] = useState('');
   // check if the labels plugin is installed
   const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
     SupportedPlugin.Labels
   );
 
-  const { loading, keysFromExistingAlerts, groupedOptions, getValuesForLabel } = useCombinedLabels(
+  const { loading, keysFromExistingAlerts, groupedOptions, createAsyncValuesLoader } = useCombinedLabels(
     dataSourceName,
     labelsPluginInstalled,
     loadingLabelsPlugin,
-    labelsInSubform,
-    selectedKey
+    labelsInSubform
   );
-
-  const values = useMemo(() => {
-    return getValuesForLabel(selectedKey);
-  }, [selectedKey, getValuesForLabel]);
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-start">
       {fields.map((field, index) => {
+        // Create an async loader for this specific row's key
+        // This will be called by Combobox when the dropdown opens
+        const currentKey = labelsInSubform[index]?.key || '';
+        const asyncValuesLoader = createAsyncValuesLoader(currentKey);
+
         return (
-          <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)} id="hola">
+          <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)}>
             <Field
+              noMargin
               className={styles.labelInput}
               invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
               error={errors.labelsInSubform?.[index]?.key?.message}
@@ -295,7 +272,6 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                       onChange={(newValue: SelectableValue) => {
                         if (newValue) {
                           onChange(newValue.value || newValue.label || '');
-                          setSelectedKey(newValue.value);
                         }
                       }}
                       type="key"
@@ -306,6 +282,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
             </Field>
             <InlineLabel className={styles.equalSign}>=</InlineLabel>
             <Field
+              noMargin
               className={styles.labelInput}
               invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
               error={errors.labelsInSubform?.[index]?.value?.message}
@@ -320,15 +297,12 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                     <AlertLabelDropdown
                       {...rest}
                       defaultValue={value ? { label: value, value: value } : undefined}
-                      options={values}
+                      options={asyncValuesLoader}
                       isLoading={loading}
                       onChange={(newValue: SelectableValue) => {
                         if (newValue) {
                           onChange(newValue.value || newValue.label || '');
                         }
-                      }}
-                      onOpenMenu={() => {
-                        setSelectedKey(labelsInSubform[index].key);
                       }}
                       type="value"
                     />
@@ -368,6 +342,7 @@ export const LabelsWithoutSuggestions: FC = () => {
           <div key={field.id}>
             <div className={cx(styles.flexRow, styles.centerAlignRow)} data-testid="alertlabel-input-wrapper">
               <Field
+                noMargin
                 className={styles.labelInput}
                 invalid={!!errors.labels?.[index]?.key?.message}
                 error={errors.labels?.[index]?.key?.message}
@@ -386,6 +361,7 @@ export const LabelsWithoutSuggestions: FC = () => {
               </Field>
               <InlineLabel className={styles.equalSign}>=</InlineLabel>
               <Field
+                noMargin
                 className={styles.labelInput}
                 invalid={!!errors.labels?.[index]?.value?.message}
                 error={errors.labels?.[index]?.value?.message}

@@ -171,28 +171,6 @@ domain = example.com
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
 
-	t.Run("should handle configuration with register_api_server disabled", func(t *testing.T) {
-		iniContent := `
-[secrets_manager]
-register_api_server = false
-`
-		cfg, err := NewCfgFromBytes([]byte(iniContent))
-		require.NoError(t, err)
-
-		assert.False(t, cfg.SecretsManagement.RegisterAPIServer)
-	})
-
-	t.Run("should handle configuration without register_api_server set", func(t *testing.T) {
-		iniContent := `
-[secrets_manager]
-encryption_provider = aws_kms
-`
-		cfg, err := NewCfgFromBytes([]byte(iniContent))
-		require.NoError(t, err)
-
-		assert.True(t, cfg.SecretsManagement.RegisterAPIServer)
-	})
-
 	t.Run("should handle configuration with run_secrets_db_migrations disabled", func(t *testing.T) {
 		iniContent := `
 [secrets_manager]

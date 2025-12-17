@@ -499,7 +499,6 @@ function DataSourcePickerWithPrompt({ options, onChange, ...otherProps }: DataSo
     dashboard: true,
     variables: true,
     current: options.dataSource,
-    uploadFile: true,
     onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
       await onChange(ds, defaultQueries);
       setIsDataSourceModalOpen(false);

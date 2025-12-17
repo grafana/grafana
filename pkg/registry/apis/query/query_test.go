@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -180,7 +181,7 @@ func TestQueryAPI(t *testing.T) {
 				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
 			}
 
-			reqCtx := identity.WithRequester(context.Background(), mockUser{})
+			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})
 
 			req := httptest.NewRequestWithContext(reqCtx, http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
 			req.Header.Set("Content-Type", "application/json")
@@ -272,6 +273,10 @@ func (m mockClient) GetInstance(ctx context.Context, logger log.Logger, headers 
 		logger:       logger,
 	}
 	return mclient, nil
+}
+
+func (m mockClient) GetMode() string {
+	return "testing"
 }
 
 func (m mockClient) ReportMetrics() {
@@ -434,4 +439,12 @@ func TestMergeHeaders(t *testing.T) {
 			require.Equal(t, tt.expected, h1)
 		})
 	}
+}
+
+type mockAuthInfo struct {
+	claims.AuthInfo
+}
+
+func (main mockAuthInfo) GetExtra() map[string][]string {
+	return nil
 }

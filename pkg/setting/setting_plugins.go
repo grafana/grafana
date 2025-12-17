@@ -102,7 +102,7 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 		if len(parts) > 1 {
 			version = parts[1]
 			if len(parts) > 2 {
-				url = parts[2]
+				url = strings.Join(parts[2:], "@")
 			}
 		}
 
@@ -185,6 +185,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			}
 			cfg.PreinstallPluginsAsync = nil
 		}
+
+		cfg.PreinstallAutoUpdate = pluginsSection.Key("preinstall_auto_update").MustBool(true)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")

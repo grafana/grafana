@@ -21,5 +21,4 @@ type PluginSpecClass string
 const (
 	PluginSpecClassCore     PluginSpecClass = "core"
 	PluginSpecClassExternal PluginSpecClass = "external"
-	PluginSpecClassCdn      PluginSpecClass = "cdn"
 )

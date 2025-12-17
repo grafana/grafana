@@ -58,6 +58,13 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
+	RelationCanGet            string = "can_get"
+	RelationCanCreate         string = "can_create"
+	RelationCanUpdate         string = "can_update"
+	RelationCanDelete         string = "can_delete"
+	RelationCanGetPermissions string = "can_get_permissions"
+	RelationCanSetPermissions string = "can_set_permissions"
+
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
@@ -132,6 +139,26 @@ var RelationToVerbMapping = map[string]string{
 	RelationDelete:         utils.VerbDelete,
 	RelationGetPermissions: utils.VerbGetPermissions,
 	RelationSetPermissions: utils.VerbSetPermissions,
+}
+
+// FolderPermissionRelation returns the optimized folder relation for permission management.
+func FolderPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanGet
+	case RelationCreate:
+		return RelationCanCreate
+	case RelationUpdate:
+		return RelationCanUpdate
+	case RelationDelete:
+		return RelationCanDelete
+	case RelationGetPermissions:
+		return RelationCanGetPermissions
+	case RelationSetPermissions:
+		return RelationCanSetPermissions
+	default:
+		return relation
+	}
 }
 
 func IsGroupResourceRelation(relation string) bool {
@@ -228,6 +255,9 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
 		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
@@ -350,6 +380,14 @@ func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 	}
 }
 
+func NewTuple(subject, relation, object string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   object,
+	}
+}
+
 func ToAuthzExtTupleKey(t *openfgav1.TupleKey) *authzextv1.TupleKey {
 	tupleKey := &authzextv1.TupleKey{
 		User:     t.GetUser(),
@@ -439,6 +477,14 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 	return result
 }
 
+func ToOpenFGADeleteTupleKey(tuples *openfgav1.TupleKey) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     tuples.GetUser(),
+		Relation: tuples.GetRelation(),
+		Object:   tuples.GetObject(),
+	}
+}
+
 func AddRenderContext(req *openfgav1.CheckRequest) {
 	if req.ContextualTuples == nil {
 		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
@@ -456,4 +502,22 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 			"",
 		),
 	})
+}
+
+func SplitTupleObject(object string) (string, string, string) {
+	var objectType, name, relation string
+	parts := strings.Split(object, ":")
+	if len(parts) < 2 {
+		return "", "", ""
+	}
+
+	objectType = parts[0]
+	nameRel := parts[1]
+	parts = strings.Split(nameRel, "#")
+	if len(parts) > 1 {
+		relation = parts[1]
+	}
+	name = parts[0]
+
+	return objectType, name, relation
 }

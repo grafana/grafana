@@ -1,4 +1,4 @@
-import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
+import { Observable, ReplaySubject, Subject, distinctUntilChanged, firstValueFrom, map, scan, startWith } from 'rxjs';
 
 import { ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';
@@ -13,7 +13,7 @@ export type PluginExtensionConfigs<T> = {
 export type RegistryType<T> = Record<string | symbol, T>;
 
 // This is the base-class used by the separate specific registries.
-export abstract class Registry<TRegistryValue, TMapType> {
+export abstract class Registry<TRegistryValue extends object | unknown[] | Record<string | symbol, unknown>, TMapType> {
   // Used in cases when we would like to pass a read-only registry to plugin.
   // In these cases we are passing in the `registrySubject` to the constructor.
   // (If TRUE `initialState` is ignored.)
@@ -38,7 +38,6 @@ export abstract class Registry<TRegistryValue, TMapType> {
     if (options.registrySubject) {
       this.registrySubject = options.registrySubject;
       this.isReadOnly = true;
-
       return;
     }
 
@@ -47,8 +46,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
       .pipe(
         scan(this.mapToRegistry.bind(this), options.initialState ?? {}),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
-        startWith(options.initialState ?? {}),
-        map((registry) => deepFreeze(registry))
+        startWith(options.initialState ?? {})
       )
       // Emitting the new registry to `this.registrySubject`
       .subscribe(this.registrySubject);
@@ -63,12 +61,22 @@ export abstract class Registry<TRegistryValue, TMapType> {
     if (this.isReadOnly) {
       throw new Error(MSG_CANNOT_REGISTER_READ_ONLY);
     }
-
+    if (result.configs.length === 0) {
+      return;
+    }
     this.resultSubject.next(result);
   }
 
   asObservable(): Observable<RegistryType<TRegistryValue>> {
-    return this.registrySubject.asObservable();
+    return this.registrySubject.asObservable().pipe(map((state) => deepFreeze(state)));
+  }
+
+  asObservableSlice(selector: (state: RegistryType<TRegistryValue>) => TRegistryValue): Observable<TRegistryValue> {
+    return this.registrySubject.asObservable().pipe(
+      map((state) => selector(state)),
+      distinctUntilChanged((prev, curr) => Object.is(prev, curr)),
+      map((slice) => deepFreeze(slice))
+    );
   }
 
   getState(): Promise<RegistryType<TRegistryValue>> {

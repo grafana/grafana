@@ -110,7 +110,9 @@
         "enable": true,
         "iconColor": "purple",
         "datasource": {
-          "uid": "prometheus"
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
         }
       }
     ]

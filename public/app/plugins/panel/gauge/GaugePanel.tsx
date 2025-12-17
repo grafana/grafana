@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { PureComponent, type JSX } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
 import { BarGaugeSizing, VizOrientation } from '@grafana/schema';

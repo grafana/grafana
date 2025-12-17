@@ -46,7 +46,7 @@ A mute timing is a recurring interval that stops notifications for one or multip
 
 Use mute timings to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.
 
-The active time interval provide the opposite functionality, where alerts handled by a notification policy are suppressed unless the notification happens at a time that matches the time interval. Use active time intervals for periods where you want to reduce alert noise.
+The active time interval provide the opposite functionality, where alerts handled by a notification policy are suppressed unless the notification happens at a time that matches the time interval. Use active time intervals for periods where you want to reduce alert noise. Mute timings take precedence over active time intervals when they overlap.
 
 {{< admonition type="note" >}}
 Mute timings and active time intervals are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.

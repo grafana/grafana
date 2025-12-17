@@ -5,7 +5,16 @@ import { PluginPageContext } from 'app/features/plugins/components/PluginPageCon
 
 import { Page } from './Page';
 
-export function PluginPage({ actions, children, info, pageNav, layout, renderTitle, subTitle }: PluginPageProps) {
+export function PluginPage({
+  actions,
+  children,
+  info,
+  pageNav,
+  layout,
+  renderTitle,
+  subTitle,
+  background,
+}: PluginPageProps) {
   const context = useContext(PluginPageContext);
 
   return (
@@ -17,6 +26,7 @@ export function PluginPage({ actions, children, info, pageNav, layout, renderTit
       renderTitle={renderTitle}
       info={info}
       subTitle={subTitle}
+      background={background}
     >
       <Page.Contents>{children}</Page.Contents>
     </Page>

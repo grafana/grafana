@@ -10,6 +10,10 @@ import (
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
+	//
+	// Deprecated: FeatureToggles.IsEnabled is deprecated and will be removed in a future release.
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client]), for example:
+	// openfeature.NewDefaultClient().Boolean(ctx, "your-flag", false, openfeature.TransactionContext(ctx))
 	IsEnabled(ctx context.Context, flag string) bool
 
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
@@ -19,7 +23,9 @@ type FeatureToggles interface {
 	// a full server restart for a change to take place.
 	//
 	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
-	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client])
+	// Toggles that must be reliably evaluated at the service startup should be
+	// changed to settings (see setting.StartupSettings), and/or removed entirely.
+	// For app registration please use `grafana-apiserver.runtime_config` in settings.ini
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
@@ -128,10 +134,6 @@ type FeatureFlag struct {
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
-
-	// Recommended properties - control behavior of the feature toggle management page in the UI
-	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability, PublicPreview, and Deprecated toggles only)
-	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // GA, Deprecated, and PublicPreview toggles only: don't display this feature in the UI; if this is a GA toggle, add a comment with the reasoning
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`

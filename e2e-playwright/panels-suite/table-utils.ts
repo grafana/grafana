@@ -1,6 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 
-export const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
+export const getCell = (loc: Page | Locator, rowIdx: number, colIdx: number) =>
   loc
     .getByRole('row')
     .nth(rowIdx)
@@ -8,7 +8,7 @@ export const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: numbe
     .nth(colIdx);
 
 export const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
-  const cell = await getCell(loc, rowIdx, colIdx);
+  const cell = getCell(loc, rowIdx, colIdx);
   return (await cell.boundingBox())?.height ?? 0;
 };
 
@@ -18,7 +18,7 @@ export const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
   let result = -1;
   const colCount = await loc.getByRole('columnheader').count();
   for (let colIdx = 0; colIdx < colCount; colIdx++) {
-    const cell = await getCell(loc, 0, colIdx);
+    const cell = getCell(loc, 0, colIdx);
     if ((await cell.textContent()) === columnName) {
       result = colIdx;
       break;

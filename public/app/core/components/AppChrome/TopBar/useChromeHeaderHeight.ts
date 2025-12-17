@@ -15,7 +15,7 @@ export function useChromeHeaderLevels() {
   const state = chrome.state.getValue();
   const scopes = useScopes();
 
-  const isLargeScreen = useMediaQueryMinWidth('xl');
+  const isLargeScreen = useMediaQueryMinWidth('lg');
 
   const [headerLevels, setHeaderLevels] = useState(
     getHeaderLevelsGivenState(state, scopes?.state.enabled, isLargeScreen)
@@ -46,8 +46,8 @@ function getHeaderLevelsGivenState(
     return 0;
   }
 
-  // Always use two levels scopes is enabled
-  if (scopesEnabled) {
+  // // Use 2 levels if scopes is enabled on smaller screens
+  if (scopesEnabled && !isLargeScreen) {
     return 2;
   }
 
@@ -94,6 +94,5 @@ export function useChromeHeaderHeight() {
  **/
 export function getChromeHeaderLevelHeight() {
   // Waiting with switch to 48 until we have a story for scopes
-  // return config.featureToggles.unifiedNavbars ? 48 : 40;
-  return 40;
+  return config.featureToggles.unifiedNavbars || config.featureToggles.dashboardNewLayouts ? 48 : 40;
 }

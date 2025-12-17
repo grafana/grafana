@@ -175,7 +175,7 @@
         "label-scrape-interval": "Interval scrape",
         "label-series-limit": "Batas data seri",
         "label-use-series-endpoint": "Gunakan titik akhir data seri",
-        "more-info": "",
+        "more-info": "Untuk informasi lengkap tentang mengonfigurasi jenis dan versi prometheus dalam sumber data, lihat <2>dokumentasi penyediaan</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Contoh: {{example}}",
         "title-interval-behaviour": "Perilaku interval",
         "title-other": "Lainnya",

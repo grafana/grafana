@@ -40,7 +40,7 @@ test.describe(
       await test.step('1.View and select any scope', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        expect.soft(scopesSelector).toHaveValue('');
+        expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
@@ -63,14 +63,13 @@ test.describe(
 
         await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
 
-        expect.soft(scopesSelector).toHaveValue(scopeTitle);
+        expect.soft(scopesSelector).toHaveAttribute('data-value', scopeTitle);
       });
 
       await test.step('2.Select a scope across multiple types of production entities', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        expect.soft(scopesSelector).toHaveValue('');
-
+        expect.soft(scopesSelector).toHaveAttribute('data-value', '');
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
 
@@ -94,14 +93,14 @@ test.describe(
 
         await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
 
-        await expect.soft(scopesSelector).toHaveValue(scopeTitles.join(' + '));
+        await expect.soft(scopesSelector).toHaveAttribute('data-value', scopeTitles.join(' + '));
       });
 
       await test.step('3.View and select a recently viewed scope', async () => {
         // this step depends on the previous ones because they set recent scopes
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        expect.soft(scopesSelector).toHaveValue('');
+        expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
@@ -114,13 +113,13 @@ test.describe(
 
         await recentScope.click();
 
-        await expect.soft(scopesSelector).toHaveValue(scopeName!.replace(', ', ' + '));
+        await expect.soft(scopesSelector).toHaveAttribute('data-value', scopeName!.replace(', ', ' + '));
       });
 
       await test.step('4.View and select a scope configured by any team', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        expect.soft(scopesSelector).toHaveValue('');
+        expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
@@ -143,7 +142,7 @@ test.describe(
 
         await applyScopes(page, USE_LIVE_DATA ? undefined : []); //used only in mocked scopes version
 
-        expect.soft(scopesSelector).toHaveValue(new RegExp(`^${scopeTitle}`));
+        expect.soft(scopesSelector).toHaveAttribute('data-value', new RegExp(`^${scopeTitle}`));
       });
 
       await test.step('5.View pre-completed production entity values as I type', async () => {

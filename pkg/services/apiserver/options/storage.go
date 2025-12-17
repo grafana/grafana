@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -14,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 
+	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
@@ -87,6 +90,58 @@ type StorageOptions struct {
 	ConfigProvider RestConfigProvider
 }
 
+// unifiedStorageConfigValue implements pflag.Value for parsing unified storage config
+type unifiedStorageConfigValue struct {
+	config *map[string]setting.UnifiedStorageConfig
+}
+
+func (v *unifiedStorageConfigValue) String() string {
+	if v.config == nil || len(*v.config) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(*v.config))
+	for key, cfg := range *v.config {
+		parts = append(parts, fmt.Sprintf("%s=%d", key, cfg.DualWriterMode))
+	}
+	return strings.Join(parts, ",")
+}
+
+func (v *unifiedStorageConfigValue) Set(val string) error {
+	if val == "" {
+		return nil
+	}
+
+	// Parse comma-separated key=value pairs
+	pairs := strings.Split(val, ",")
+	for _, pair := range pairs {
+		kv := strings.SplitN(pair, "=", 2)
+		if len(kv) != 2 {
+			return fmt.Errorf("invalid format: %s (expected key=value)", pair)
+		}
+
+		key := strings.TrimSpace(kv[0])
+		mode, err := strconv.Atoi(strings.TrimSpace(kv[1]))
+		if err != nil {
+			return fmt.Errorf("invalid mode value for %s: %w", key, err)
+		}
+
+		if mode < 0 || mode > 5 {
+			return fmt.Errorf("mode must be between 0 and 5, got %d for %s", mode, key)
+		}
+
+		(*v.config)[key] = setting.UnifiedStorageConfig{
+			DualWriterMode:                      apiserverrest.DualWriterMode(mode),
+			DualWriterMigrationDataSyncDisabled: true,
+		}
+	}
+
+	return nil
+}
+
+func (v *unifiedStorageConfigValue) Type() string {
+	return "stringToUnifiedStorageConfig"
+}
+
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
 		StorageType:                            StorageTypeUnified,
@@ -95,6 +150,7 @@ func NewStorageOptions() *StorageOptions {
 		GrpcClientAuthenticationAllowInsecure:  false,
 		GrpcClientKeepaliveTime:                0,
 		BlobThresholdBytes:                     BlobThresholdDefault,
+		UnifiedStorageConfig:                   make(map[string]setting.UnifiedStorageConfig),
 	}
 }
 
@@ -108,6 +164,11 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
+
+	// Use custom flag value for unified storage config
+	fs.Var(&unifiedStorageConfigValue{config: &o.UnifiedStorageConfig},
+		"grafana-apiserver-unified-storage-config",
+		"Unified storage configuration per resource.group in the format resource.group=mode,... where mode is 0-5")
 
 	// Secrets Manager Configuration flags
 	fs.BoolVar(&o.SecretsManagerGrpcClientEnable, "grafana.secrets-manager.grpc-client-enable", false, "Enable gRPC client for secrets manager")

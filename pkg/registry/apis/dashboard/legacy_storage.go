@@ -22,7 +22,7 @@ import (
 )
 
 type DashboardStorage struct {
-	Access           legacy.DashboardAccess
+	Access           legacy.DashboardAccessor
 	DashboardService dashboards.DashboardService
 }
 
