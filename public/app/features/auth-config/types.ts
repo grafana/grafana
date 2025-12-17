@@ -134,9 +134,24 @@ export type FieldData = {
   content?: (setValue: UseFormSetValue<SSOProviderDTO>) => ReactElement;
 };
 
+/** Configuration for conditionally disabling a field based on another field's value */
+export type DisabledWhenConfig = {
+  /** The field name to watch */
+  field: keyof SSOProviderDTO;
+  /** The value that triggers the disabled state */
+  is: boolean | string;
+  /** The value to set when disabled */
+  disabledValue?: SelectableValue<string>;
+};
+
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
-  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };
+  | {
+      name: keyof SSOProvider['settings'];
+      dependsOn?: keyof SSOProvider['settings'];
+      disabledWhen?: DisabledWhenConfig;
+      hidden?: boolean;
+    };
 
 export interface ServerDiscoveryFormData {
   url: string;
