@@ -110,7 +110,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

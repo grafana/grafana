@@ -167,7 +167,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

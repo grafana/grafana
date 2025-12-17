@@ -2240,6 +2240,23 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		}
 	}
 
+	// Handle old Angular-style text panels where content and mode are at the root level
+	// instead of inside the options object. This matches the frontend migration in
+	// textPanelMigrationHandler.ts. Text panels don't change type (text → text), but
+	// the properties need to be moved into options.
+	if panelType == "text" {
+		if content, ok := panelMap["content"].(string); ok {
+			if _, hasContent := options["content"]; !hasContent {
+				options["content"] = content
+			}
+		}
+		if mode, ok := panelMap["mode"].(string); ok {
+			if _, hasMode := options["mode"]; !hasMode {
+				options["mode"] = mode
+			}
+		}
+	}
+
 	// Add frontend-style default options to match frontend behavior
 	if legend, ok := options["legend"].(map[string]interface{}); ok {
 		// Add showLegend: true to match frontend behavior

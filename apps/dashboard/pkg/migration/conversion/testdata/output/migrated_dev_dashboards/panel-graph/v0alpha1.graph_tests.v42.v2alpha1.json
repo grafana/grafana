@@ -412,7 +412,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Should be a long line connecting the null region in the `connected`  mode, and in zero it should just be a line with zero value at the null points. ",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -456,7 +459,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Stacking values on top of nulls, should treat the null values as zero. ",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -500,7 +506,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Stacking when all values are null should leave a gap in the graph",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1681,7 +1690,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Left is showing null between values for a normal line graph and staircase graph. Orphaned data points should be rendered as points",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -2061,7 +2073,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Just verify that the tooltip time has millisecond resolution ",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -2105,7 +2120,10 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "content": "Verify that axis labels look ok",
+                "mode": "markdown"
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
