@@ -554,7 +554,7 @@ export function sceneVariablesSetToSchemaV2Variables(
             ...validateFiltersOrigin(variable.state.originFilters),
             ...validateFiltersOrigin(variable.state.filters),
           ],
-          defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
