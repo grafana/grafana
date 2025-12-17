@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
@@ -113,6 +114,15 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 	)
 
 	return a.legacy
+}
+
+// GetAuthorizer Returns a dummy authorizer
+func (a *AnnotationAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			return authorizer.DecisionAllow, "", nil
+		},
+	)
 }
 
 var (

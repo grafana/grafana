@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaAnnotation = resource.NewSimpleSchema("annotation.grafana.app", "v0alpha1", &Annotation{}, &AnnotationList{}, resource.WithKind("Annotation"),
+	schemaAnnotation = resource.NewSimpleSchema("annotation.grafana.app", "v0alpha1", NewAnnotation(), &AnnotationList{}, resource.WithKind("Annotation"),
 		resource.WithPlural("annotations"), resource.WithScope(resource.NamespacedScope))
 	kindAnnotation = resource.Kind{
 		Schema: schemaAnnotation,
