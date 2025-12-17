@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Külső hivatkozás megnyitása"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Továbbiak",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Értékek vesszővel elválasztva"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -11413,6 +11419,12 @@
         "latestReleaseDate": "Legújabb kiadás dátuma:",
         "latestVersion": "Legújabb verzió",
         "license": "Licenc",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Probléma felvetése",
         "reportAbuse": "",
         "reportAbuseTooltip": "A rosszindulatú vagy kártékony bővítményekkel kapcsolatos problémák jelentése közvetlenül a Grafana Labs vállalatnak.",

@@ -1727,6 +1727,55 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	// Setup.
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
+
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
+	require.NoError(t, err)
+	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
+	require.NoError(t, err)
+
+	oldRule := ruleV1
+	updatedRule := ruleV1
+	updateRule := func(title string, folderUID string) {
+		oldRule = updatedRule
+		updatedRule = models.CopyRule(oldRule, gen.WithTitle(title), gen.WithNamespaceUID(folderUID))
+		require.NoError(t, store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{{Existing: oldRule, New: *updatedRule}}))
+		updatedRule.Version++ // Simulate version increment after update to avoid conflict errors.
+	}
+
+	// Update rule a couple of times to create versions.
+	originalFolder := oldRule.NamespaceUID
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "newfolder-1")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "current-folder")
+
+	t.Run("should return rule versions folders sorted in decreasing order", func(t *testing.T) {
+		historicalFolders, err := store.GetAlertRuleVersionFolders(context.Background(), updatedRule.OrgID, updatedRule.GUID)
+		require.NoError(t, err)
+		assert.Equal(t, []string{ // Return folders with more recent first.
+			"current-folder",
+			originalFolder,
+			"newfolder-2",
+			"newfolder-1",
+		}, historicalFolders)
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
