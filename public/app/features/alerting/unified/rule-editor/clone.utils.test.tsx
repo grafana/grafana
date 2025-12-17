@@ -137,6 +137,7 @@ describe('cloneRuleDefinition', () => {
 
   it('Should remove the origin label when cloning data source plugin-provided rules', () => {
     // Mock the plugin as installed
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
     };
@@ -174,6 +175,7 @@ describe('cloneRuleDefinition', () => {
   });
 
   it('Should remove the origin label when cloning Grafana-managed plugin-provided rules', () => {
+    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
     };

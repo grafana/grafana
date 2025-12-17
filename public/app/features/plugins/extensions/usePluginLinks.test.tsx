@@ -107,6 +107,7 @@ describe('usePluginLinks()', () => {
       },
     };
 
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId] = {
       id: pluginId,
       path: '',
@@ -269,6 +270,7 @@ describe('usePluginLinks()', () => {
     };
 
     // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
+    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedLinks = [linkConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (

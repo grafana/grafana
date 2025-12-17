@@ -24,6 +24,7 @@ describe('AdvisorRedirectNotice', () => {
   afterEach(() => {
     jest.clearAllMocks();
     config.featureToggles.grafanaAdvisor = originalFeatureToggleValue;
+    // eslint-disable-next-line no-restricted-syntax
     config.apps['grafana-advisor-app'] = {
       id: 'grafana-advisor-app',
       path: '/a/grafana-advisor-app',
@@ -60,6 +61,7 @@ describe('AdvisorRedirectNotice', () => {
   });
 
   it('should not render when app is not installed', async () => {
+    // eslint-disable-next-line no-restricted-syntax
     delete config.apps['grafana-advisor-app'];
     render(<AdvisorRedirectNotice />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();

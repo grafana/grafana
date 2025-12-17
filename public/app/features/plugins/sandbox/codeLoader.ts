@@ -138,6 +138,7 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
 
   //find it in apps
   //the information inside the apps object is more limited
+  // eslint-disable-next-line no-restricted-syntax
   for (const app of Object.values(config.apps)) {
     if (app.id === pluginId) {
       return {
