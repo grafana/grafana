@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Öppen extern länk"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Mer",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Värden åtskilda med kommatecken"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Namnfilter",
@@ -11413,6 +11419,12 @@
         "latestReleaseDate": "Senaste utgivningsdatum:",
         "latestVersion": "Senaste versionen",
         "license": "Licens",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Ta upp ett problem",
         "reportAbuse": "",
         "reportAbuseTooltip": "Rapportera problem relaterade till skadliga eller farliga tilläggsprogram direkt till Grafana Labs.",
