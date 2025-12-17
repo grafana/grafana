@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -190,6 +191,12 @@ func TestEvaluatorTest(t *testing.T) {
 		createStateManager: func() stateManager {
 			return manager
 		},
+		disableGrafanaFolder: false,
+		featureToggles:       featuremgmt.WithFeatures(),
+		minInterval:          1 * time.Second,
+		baseInterval:         1 * time.Second,
+		jitterStrategy:       schedule.JitterNever,
+		maxEvaluations:       10000,
 	}
 	gen := models.RuleGen
 	rule := gen.With(gen.WithInterval(time.Second)).GenerateRef()
@@ -405,9 +412,12 @@ func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from time.Time, inter
 		if err != nil {
 			return err
 		}
-		err = callback(idx, now, results)
+		c, err := callback(idx, now, results)
 		if err != nil {
 			return err
+		}
+		if !c {
+			break
 		}
 	}
 	return nil

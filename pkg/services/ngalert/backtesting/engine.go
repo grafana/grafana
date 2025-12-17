@@ -52,6 +52,8 @@ type Engine struct {
 	featureToggles       featuremgmt.FeatureToggles
 	minInterval          time.Duration
 	baseInterval         time.Duration
+	jitterStrategy       schedule.JitterStrategy
+	maxEvaluations       int
 }
 
 func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer, cfg setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) *Engine {
@@ -72,8 +74,9 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 		},
 		disableGrafanaFolder: false,
 		featureToggles:       toggles,
-		minInterval:          0,
+		minInterval:          cfg.MinInterval,
 		baseInterval:         cfg.BaseInterval,
+		maxEvaluations:       cfg.BacktestingMaxEvaluations,
 	}
 }
 
