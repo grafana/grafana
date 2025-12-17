@@ -2224,6 +2224,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "外部リンクを開く"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "その他",
       "new-menu": {
@@ -4802,8 +4809,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "カンマで区切った値"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "名前フィルター",
@@ -11367,6 +11373,12 @@
         "latestReleaseDate": "最新リリース日：",
         "latestVersion": "最新のバージョン",
         "license": "ライセンス",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "問題を提起する",
         "reportAbuse": "",
         "reportAbuseTooltip": "悪意のあるプラグインや有害なプラグインに関連する問題は、Grafana Labsに直接報告してください。",

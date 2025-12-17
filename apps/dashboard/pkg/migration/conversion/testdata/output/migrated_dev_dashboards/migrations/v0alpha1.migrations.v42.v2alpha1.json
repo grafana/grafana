@@ -123,6 +123,42 @@
             "spec": {
               "pluginVersion": "9.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "right",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                },
                 "cellHeight": "sm",
                 "footer": {
                   "countRows": false,
@@ -270,6 +306,10 @@
             "spec": {
               "pluginVersion": "9.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "grafana-piechart-panel",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "displayMode": "list",
                   "placement": "bottom",
@@ -402,6 +442,41 @@
             "spec": {
               "pluginVersion": "10.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "grafana-worldmap-panel",
+                  "originalOptions": {
+                    "circleMaxSize": 30,
+                    "circleMinSize": 2,
+                    "colors": [
+                      "rgba(245, 54, 54, 0.9)",
+                      "rgba(237, 129, 40, 0.89)",
+                      "rgba(50, 172, 45, 0.97)"
+                    ],
+                    "decimals": 0,
+                    "esMetric": "Count",
+                    "hideEmpty": false,
+                    "hideZero": false,
+                    "initialZoom": 1,
+                    "locationData": "countries",
+                    "mapCenter": "(0°, 0°)",
+                    "mapCenterLatitude": 0,
+                    "mapCenterLongitude": 0,
+                    "mouseWheelZoom": false,
+                    "showLegend": true,
+                    "stickyLabels": false,
+                    "tableQueryOptions": {
+                      "geohashField": "geohash",
+                      "latitudeField": "latitude",
+                      "longitudeField": "longitude",
+                      "metricField": "metric",
+                      "queryType": "geohash"
+                    },
+                    "thresholds": "0,10",
+                    "unitPlural": "",
+                    "unitSingle": "",
+                    "valueName": "total"
+                  }
+                },
                 "basemap": {
                   "name": "Basemap",
                   "type": "default"
@@ -562,6 +637,69 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "series",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:88",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:89",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true,
                 "legend": {
                   "calcs": [],
@@ -667,6 +805,67 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "histogram",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:193",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:194",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true,
                 "legend": {
                   "calcs": [],
@@ -775,6 +974,70 @@
             "spec": {
               "pluginVersion": "11.3.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "series",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:88",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:89",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true,
                 "legend": {
                   "calcs": [],
@@ -880,6 +1143,65 @@
             "spec": {
               "pluginVersion": "11.0.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true,
                 "legend": {
                   "calcs": [],
@@ -1031,7 +1353,68 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "grafana-singlestat-panel",
+                  "originalOptions": {
+                    "colorBackground": false,
+                    "colorValue": true,
+                    "colors": [
+                      "#299c46",
+                      "rgba(237, 129, 40, 0.89)",
+                      "#d44a3a"
+                    ],
+                    "format": "areaF2",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "nullPointMode": "connected",
+                    "postfix": "b",
+                    "postfixFontSize": "50%",
+                    "prefix": "a",
+                    "prefixFontSize": "50%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": false,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "thresholds": "",
+                    "valueFontSize": "80%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

@@ -702,6 +702,10 @@ lineage: schemas: [{
 
 			// Field options allow you to change how the data is displayed in your visualizations.
 			fieldConfig?: #FieldConfigSource
+
+			// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+			// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+			autoMigrateFrom?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
