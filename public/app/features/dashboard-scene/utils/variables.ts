@@ -288,6 +288,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
