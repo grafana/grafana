@@ -241,7 +241,7 @@ func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sour
 	targetColsSQL := b.QuoteColList(targetCols)
 
 	quote := b.dialect.Quote
-	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
+	return fmt.Sprintf("INSERT INTO %s (%s)\nSELECT %s\nFROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
 }
 
 func (b *BaseDialect) DropTable(tableName string) string {
