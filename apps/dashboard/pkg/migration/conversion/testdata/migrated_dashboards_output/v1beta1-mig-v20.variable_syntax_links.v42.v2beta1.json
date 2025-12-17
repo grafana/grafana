@@ -325,10 +325,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "This panel has no data links or field options to migrate."
               },
               "fieldConfig": {

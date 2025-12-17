@@ -83,7 +83,6 @@
       "type": "timeseries"
     },
     {
-      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 4,
         "w": 6,

@@ -90,7 +90,6 @@
         "type": "histogram"
       },
       {
-        "autoMigrateFrom": "text",
         "id": 7,
         "title": "Panel with No Options",
         "type": "text"

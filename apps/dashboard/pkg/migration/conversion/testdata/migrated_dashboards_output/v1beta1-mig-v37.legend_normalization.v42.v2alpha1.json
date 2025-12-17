@@ -348,12 +348,7 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                }
-              },
+              "options": {},
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

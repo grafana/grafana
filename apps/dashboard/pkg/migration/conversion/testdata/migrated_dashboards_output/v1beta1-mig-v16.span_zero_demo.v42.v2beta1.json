@@ -70,10 +70,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "This dashboard demonstrates various monitoring components for application observability and performance metrics.\n",
                 "mode": "markdown"
               },
@@ -176,10 +172,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "Performance monitoring examines factors that affect system response times, including operation duration, queue lengths, and processing delays. This section provides metrics and traces for performance analysis.\n",
                 "mode": "markdown"
               },
@@ -822,10 +814,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "Resource utilization monitoring for application containers",
                 "mode": "markdown"
               },
@@ -1117,10 +1105,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "This service handles background processing tasks for the application system. It manages various types of operations including data synchronization, resource management, and batch processing.\n\nSupported operation types:\n1. Sync: Synchronizes data between different systems\n2. Process: Handles batch data processing tasks\n3. Cleanup: Removes outdated or temporary resources\n4. Update: Applies configuration changes across services\n\nService dependencies:\n- Data API: For reading and writing application data\n- Configuration Service: For managing system settings\n- Queue Service: For handling task scheduling\n- Storage Service: For persistent data management\n- Auth Service: For authentication and authorization\n- Metrics Service: For collecting operational statistics\n",
                 "mode": "markdown"
               },
@@ -1170,10 +1154,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "Error monitoring helps identify issues in the system. This section displays error logs and success rates for operations.",
                 "mode": "markdown"
               },

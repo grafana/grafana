@@ -69,12 +69,7 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                }
-              },
+              "options": {},
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -175,10 +170,6 @@
             "version": "",
             "spec": {
               "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                },
                 "content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
                 "mode": "markdown"
               },

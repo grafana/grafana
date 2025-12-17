@@ -462,12 +462,7 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {
-                "__angularMigration": {
-                  "autoMigrateFrom": "text",
-                  "originalOptions": {}
-                }
-              },
+              "options": {},
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
