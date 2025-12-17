@@ -4,10 +4,13 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -15,8 +18,11 @@ import (
 // This allows different implementations (OSS noop, Enterprise with features)
 // to provide their own resource registration and validation logic.
 type ApiInstaller[T runtime.Object] interface {
-	// UpdateAPIGroupInfo registers storage and hooks with the API group.
-	UpdateAPIGroupInfo(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error
+	// GetAuthorizer returns the authorizer for the API group.
+	GetAuthorizer() authorizer.Authorizer
+
+	// RegisterStorage registers storage and hooks with the API group.
+	RegisterStorage(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error
 
 	// ValidateOnCreate validates object creation.
 	ValidateOnCreate(ctx context.Context, obj T) error
@@ -34,11 +40,18 @@ type ApiInstaller[T runtime.Object] interface {
 type RoleApiInstaller ApiInstaller[*iamv0.Role]
 
 // NoopApiInstaller is a no-op implementation for when roles are not available (OSS).
-type NoopApiInstaller[T runtime.Object] struct{}
+type NoopApiInstaller[T runtime.Object] struct {
+	ResourceInfo utils.ResourceInfo
+}
 
-func (n *NoopApiInstaller[T]) UpdateAPIGroupInfo(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error {
-	// TODO: Register a noop storage backend?
-	// No registration needed in OSS
+func (n *NoopApiInstaller[T]) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionDeny, "Unavailable functionality", nil
+	})
+}
+
+func (n *NoopApiInstaller[T]) RegisterStorage(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error {
+	storage[n.ResourceInfo.StoragePath()] = &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
 	return nil
 }
 
@@ -60,5 +73,7 @@ func (n *NoopApiInstaller[T]) ValidateOnDelete(ctx context.Context, obj T) error
 // ProvideNoopRoleApiInstaller provides a no-op role installer specifically for Role types.
 // This is needed for Wire dependency injection which doesn't handle generic functions well.
 func ProvideNoopRoleApiInstaller() RoleApiInstaller {
-	return &NoopApiInstaller[*iamv0.Role]{}
+	return &NoopApiInstaller[*iamv0.Role]{
+		ResourceInfo: iamv0.RoleInfo,
+	}
 }

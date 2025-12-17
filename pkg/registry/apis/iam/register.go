@@ -87,7 +87,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -385,7 +385,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
 		// Role registration is delegated to the RoleApiInstaller
-		if err := b.roleApiInstaller.UpdateAPIGroupInfo(apiGroupInfo, &opts, storage); err != nil {
+		if err := b.roleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
 			return err
 		}
 
