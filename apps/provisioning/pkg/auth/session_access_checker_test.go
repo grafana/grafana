@@ -14,20 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockAccessChecker implements authlib.AccessChecker for testing.
-type mockAccessChecker struct {
-	response authlib.CheckResponse
-	err      error
-}
-
-func (m *mockAccessChecker) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-	return m.response, m.err
-}
-
-func (m *mockAccessChecker) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return nil, nil, nil
-}
-
 // mockRequester implements identity.Requester for testing.
 type mockRequester struct {
 	identity.Requester
@@ -48,7 +34,7 @@ func (m *mockRequester) GetNamespace() string {
 	return m.namespace
 }
 
-func TestAccessChecker_Check_SingleTenant(t *testing.T) {
+func TestSessionAccessChecker_Check(t *testing.T) {
 	ctx := context.Background()
 	req := authlib.CheckRequest{
 		Verb:      "get",
@@ -132,17 +118,17 @@ func TestAccessChecker_Check_SingleTenant(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockAccessChecker{
+			mock := &mockInnerAccessChecker{
 				response: tt.innerResponse,
 				err:      tt.innerErr,
 			}
 
-			checker := NewAccessChecker(mock, false) // ST mode
+			checker := NewSessionAccessChecker(mock)
 			if tt.fallbackRole != "" {
-				checker = checker.WithFallback(tt.fallbackRole)
+				checker = checker.WithFallbackRole(tt.fallbackRole)
 			}
 
-			// Add requester to context (ST mode uses GetRequester)
+			// Add requester to context
 			testCtx := identity.WithRequester(ctx, tt.requester)
 
 			err := checker.Check(testCtx, req, "")
@@ -157,107 +143,26 @@ func TestAccessChecker_Check_SingleTenant(t *testing.T) {
 	}
 }
 
-func TestAccessChecker_Check_MultiTenant(t *testing.T) {
-	req := authlib.CheckRequest{
-		Verb:      "get",
-		Group:     "provisioning.grafana.app",
-		Resource:  "repositories",
-		Name:      "test-repo",
-		Namespace: "default",
-	}
-
-	tests := []struct {
-		name          string
-		fallbackRole  identity.RoleType
-		innerResponse authlib.CheckResponse
-		innerErr      error
-		authInfo      authlib.AuthInfo
-		expectAllow   bool
-	}{
-		{
-			name:          "allowed by checker",
-			fallbackRole:  identity.RoleAdmin,
-			innerResponse: authlib.CheckResponse{Allowed: true},
-			authInfo:      &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeUser},
-			expectAllow:   true,
-		},
-		{
-			name:          "denied by checker, no fallback even with admin role",
-			fallbackRole:  identity.RoleAdmin,
-			innerResponse: authlib.CheckResponse{Allowed: false},
-			authInfo:      &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
-			expectAllow:   false, // MT mode: no fallback
-		},
-		{
-			name:         "error from checker, no fallback even with admin role",
-			fallbackRole: identity.RoleAdmin,
-			innerErr:     errors.New("access check failed"),
-			authInfo:     &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
-			expectAllow:  false, // MT mode: no fallback
-		},
-		{
-			name:          "AccessPolicy identity is always allowed",
-			innerResponse: authlib.CheckResponse{Allowed: false},
-			authInfo:      &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeAccessPolicy},
-			expectAllow:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockAccessChecker{
-				response: tt.innerResponse,
-				err:      tt.innerErr,
-			}
-
-			checker := NewAccessChecker(mock, true) // MT mode
-			if tt.fallbackRole != "" {
-				checker = checker.WithFallback(tt.fallbackRole)
-			}
-
-			// Add auth info to context (MT mode uses AuthInfoFrom)
-			testCtx := authlib.WithAuthInfo(context.Background(), tt.authInfo)
-
-			err := checker.Check(testCtx, req, "")
-
-			if tt.expectAllow {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				assert.True(t, apierrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
-			}
-		})
-	}
-}
-
-func TestAccessChecker_Check_NoIdentity(t *testing.T) {
-	mock := &mockAccessChecker{
+func TestSessionAccessChecker_NoRequester(t *testing.T) {
+	mock := &mockInnerAccessChecker{
 		response: authlib.CheckResponse{Allowed: true},
 	}
 
-	t.Run("ST mode without requester", func(t *testing.T) {
-		checker := NewAccessChecker(mock, false) // ST mode
-		err := checker.Check(context.Background(), authlib.CheckRequest{}, "")
-		require.Error(t, err)
-		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized error")
-	})
+	checker := NewSessionAccessChecker(mock)
+	err := checker.Check(context.Background(), authlib.CheckRequest{}, "")
 
-	t.Run("MT mode without auth info", func(t *testing.T) {
-		checker := NewAccessChecker(mock, true) // MT mode
-		err := checker.Check(context.Background(), authlib.CheckRequest{}, "")
-		require.Error(t, err)
-		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized error")
-	})
+	require.Error(t, err)
+	assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized error")
 }
 
-func TestAccessChecker_WithFallback_ImmutableOriginal(t *testing.T) {
-	mock := &mockAccessChecker{
+func TestSessionAccessChecker_WithFallbackRole_ImmutableOriginal(t *testing.T) {
+	mock := &mockInnerAccessChecker{
 		response: authlib.CheckResponse{Allowed: false},
 	}
 
-	original := NewAccessChecker(mock, false) // ST mode
-	withAdmin := original.WithFallback(identity.RoleAdmin)
-	withEditor := original.WithFallback(identity.RoleEditor)
+	original := NewSessionAccessChecker(mock)
+	withAdmin := original.WithFallbackRole(identity.RoleAdmin)
+	withEditor := original.WithFallbackRole(identity.RoleEditor)
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
 		orgRole:      identity.RoleEditor,
@@ -279,15 +184,15 @@ func TestAccessChecker_WithFallback_ImmutableOriginal(t *testing.T) {
 	require.NoError(t, err, "editor fallback should allow for editor")
 }
 
-func TestAccessChecker_WithFallback_ChainedCalls(t *testing.T) {
-	mock := &mockAccessChecker{
+func TestSessionAccessChecker_WithFallbackRole_ChainedCalls(t *testing.T) {
+	mock := &mockInnerAccessChecker{
 		response: authlib.CheckResponse{Allowed: false},
 	}
 
-	// Ensure chained WithFallback calls work correctly
-	checker := NewAccessChecker(mock, false). // ST mode
-							WithFallback(identity.RoleAdmin).
-							WithFallback(identity.RoleEditor) // This should override admin
+	// Ensure chained WithFallbackRole calls work correctly
+	checker := NewSessionAccessChecker(mock).
+		WithFallbackRole(identity.RoleAdmin).
+		WithFallbackRole(identity.RoleEditor) // This should override admin
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
 		orgRole:      identity.RoleEditor,
@@ -298,12 +203,12 @@ func TestAccessChecker_WithFallback_ChainedCalls(t *testing.T) {
 	require.NoError(t, err, "last fallback (editor) should be used")
 }
 
-func TestAccessChecker_RealSignedInUser(t *testing.T) {
-	mock := &mockAccessChecker{
+func TestSessionAccessChecker_RealSignedInUser(t *testing.T) {
+	mock := &mockInnerAccessChecker{
 		response: authlib.CheckResponse{Allowed: false},
 	}
 
-	checker := NewAccessChecker(mock, false).WithFallback(identity.RoleAdmin) // ST mode
+	checker := NewSessionAccessChecker(mock).WithFallbackRole(identity.RoleAdmin)
 
 	// Use a real SignedInUser
 	signedInUser := &user.SignedInUser{
@@ -318,12 +223,12 @@ func TestAccessChecker_RealSignedInUser(t *testing.T) {
 	require.NoError(t, err, "admin user should be allowed via fallback")
 }
 
-func TestAccessChecker_Check_FillsNamespace(t *testing.T) {
-	mock := &mockAccessChecker{
+func TestSessionAccessChecker_FillsNamespace(t *testing.T) {
+	mock := &mockInnerAccessChecker{
 		response: authlib.CheckResponse{Allowed: true},
 	}
 
-	checker := NewAccessChecker(mock, false) // ST mode
+	checker := NewSessionAccessChecker(mock)
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
 		orgRole:      identity.RoleAdmin,
@@ -342,5 +247,5 @@ func TestAccessChecker_Check_FillsNamespace(t *testing.T) {
 
 	err := checker.Check(ctx, req, "")
 	require.NoError(t, err)
-	// The namespace should have been filled from the identity
 }
+

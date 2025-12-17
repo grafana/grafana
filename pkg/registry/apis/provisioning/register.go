@@ -161,8 +161,13 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
-	// Create access checker with fallback behavior based on mode
-	accessChecker := auth.NewAccessChecker(access, useExclusivelyAccessCheckerForAuthz)
+	// Create access checker based on mode
+	var accessChecker auth.AccessChecker
+	if useExclusivelyAccessCheckerForAuthz {
+		accessChecker = auth.NewTokenAccessChecker(access)
+	} else {
+		accessChecker = auth.NewSessionAccessChecker(access)
+	}
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
@@ -177,8 +182,8 @@ func NewAPIBuilder(
 		dashboardAccess:                     dashboardAccess,
 		unified:                             unified,
 		access:                              accessChecker,
-		accessWithAdmin:                     accessChecker.WithFallback(identity.RoleAdmin),
-		accessWithEditor:                    accessChecker.WithFallback(identity.RoleEditor),
+		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
+		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
