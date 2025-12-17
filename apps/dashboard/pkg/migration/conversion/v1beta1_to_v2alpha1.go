@@ -2250,14 +2250,9 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 
 	// Handle Angular panel migrations
 	// This replicates the v0→v1 migration logic for panels that weren't migrated yet.
-	// 1. Panels that change type (singlestat→stat, graph→timeseries, etc.):
-	//    - Detected via AngularPanelMigrations map or autoMigrateFrom field
-	//    - Original Angular options stored in __angularMigration for frontend handlers
-	//
-	// 2. Text panels (special case - type stays "text"):
-	//    - Old Angular text panels have content/mode at root level instead of in options
-	//    - We move these properties into options directly (no __angularMigration needed)
-	//    - This matches frontend's textPanelMigrationHandler.ts behavior
+	// We check two cases:
+	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
+	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
 	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
 
 	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
