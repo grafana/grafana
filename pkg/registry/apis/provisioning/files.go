@@ -242,6 +242,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // authorizeListFiles checks if the user has repositories:read permission for listing files.
+// Falls back to admin role for backwards compatibility.
 func (c *filesConnector) authorizeListFiles(ctx context.Context, repoName string) error {
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -279,7 +280,7 @@ func (c *filesConnector) authorizeListFiles(ctx context.Context, repoName string
 	}
 
 	return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), repoName,
-		fmt.Errorf("repositories:read permission required to list files"))
+		fmt.Errorf("admin role is required"))
 }
 
 // listFolderFiles returns a list of files in a folder.

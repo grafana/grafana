@@ -372,8 +372,9 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	case provisioning.ConnectionResourceInfo.GetName():
 		return b.authorizeConnectionSubresource(ctx, a, id)
 	case provisioning.JobResourceInfo.GetName():
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
+		return b.checkAccessForJobs(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 	case provisioning.HistoricJobResourceInfo.GetName():
+		// Historic jobs are read-only and admin-only (not editor)
 		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.HistoricJobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 	case "settings", "stats":
 		return authorizeRoleBasedResource(a.GetResource(), id)
@@ -404,9 +405,9 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "refs", "resources", "history", "status":
 		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
-	// Jobs subresource - check jobs permissions with the verb
+	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
 	case "jobs":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), "", a.GetNamespace())
+		return b.checkAccessForJobs(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), "", a.GetNamespace())
 
 	default:
 		if id.GetIsGrafanaAdmin() {
@@ -478,7 +479,44 @@ func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, ver
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	return authorizer.DecisionDeny, "permission denied", nil
+	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// checkAccessForJobs is like checkAccess but falls back to editor role for write operations.
+// Jobs can be created/managed by editors, not just admins.
+func (b *APIBuilder) checkAccessForJobs(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
+	// AccessPolicy identities are trusted internal callers (ST->MT flow)
+	if isAccessPolicy(id) {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Use the access checker
+	res, err := b.access.Check(ctx, id, authlib.CheckRequest{
+		Verb:      verb,
+		Group:     group,
+		Resource:  resource,
+		Name:      name,
+		Namespace: namespace,
+	}, "")
+
+	if err != nil {
+		// Fall back to editor role on error
+		if id.GetOrgRole().Includes(identity.RoleEditor) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "failed to check access: " + err.Error(), nil
+	}
+
+	if res.Allowed {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Fall back to editor role for backwards compatibility
+	if id.GetOrgRole().Includes(identity.RoleEditor) {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	return authorizer.DecisionDeny, "editor role is required", nil
 }
 
 // allowForAdminsOrAccessPolicy is used for resources without fine-grained permissions.
