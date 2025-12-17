@@ -343,17 +343,18 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // authorizeResource handles authorization for different resources.
-// Different routes may need different permissions.
-// * Reading and modifying a repository's configuration requires administrator privileges.
-// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
-// * Reading a repository's files requires viewer privileges.
-// * Reading a repository's refs requires viewer privileges.
-// * Editing a repository's files requires editor privileges.
-// * Syncing a repository requires editor privileges.
-// * Exporting a repository requires administrator privileges.
-// * Migrating a repository requires administrator privileges.
-// * Testing a repository configuration requires administrator privileges.
-// * Viewing a repository's history requires editor privileges.
+// Different routes may need different permissions:
+//
+// Admin-only:
+//   - Repository CRUD, test, files, refs
+//   - Stats, settings, jobs, historic jobs
+//   - Connection CRUD
+//
+// Editor:
+//   - Repository subresources: jobs, resources, sync, history
+//
+// Viewer:
+//   - Repository/connection status (GET only)
 func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
@@ -372,17 +373,15 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 	switch a.GetSubresource() {
-	// Admin-only: repository CRUD, testing, and file listing
-	case "", "test", "files":
+	// Admin-only: repository CRUD, testing, file listing, refs
+	case "", "test", "files", "refs":
 		return allowForAdminsOrAccessPolicy(id)
 
 	// Editor: job creation, sync operations, resource listing, history
 	case "jobs", "resources", "sync", "history":
 		return allowForEditorsOrAccessPolicy(id)
 
-	// Viewer: read-only operations (refs, status GET)
-	case "refs":
-		return allowForViewersOrAccessPolicy(id)
+	// Viewer: status GET only
 	case "status":
 		if a.GetVerb() == apiutils.VerbGet {
 			return allowForViewersOrAccessPolicy(id)
