@@ -683,10 +683,12 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 			"folders.folder.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,

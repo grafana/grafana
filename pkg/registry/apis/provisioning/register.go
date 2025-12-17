@@ -245,7 +245,7 @@ func RegisterAPIService(
 	}
 
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(context.Background(), storageStatus) {
-		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please, re-enable unified storage migration in settings or disable provisioning")
+		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please enable data migration in settings for folders and dashboards by adding the following configuration:\n[unified_storage.folders.folder.grafana.app]\nenableMigration = true\n\n[unified_storage.dashboards.dashboard.grafana.app]\nenableMigration = true\n\nAlternatively, disable provisioning")
 	}
 
 	allowedTargets := []provisioning.SyncTargetType{}
