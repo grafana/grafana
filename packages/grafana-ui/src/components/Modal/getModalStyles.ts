@@ -91,7 +91,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     modalButtonRow: css({
       background: theme.colors.background.primary,
       position: 'sticky',
-      bottom: -1,
+      bottom: 0,
       paddingTop: theme.spacing(2),
       paddingBottom: theme.spacing(0.5),
       zIndex: 1,
