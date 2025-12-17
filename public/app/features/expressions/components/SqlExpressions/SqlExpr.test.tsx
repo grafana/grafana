@@ -245,26 +245,26 @@ describe('Schema Inspector feature toggle', () => {
     });
 
     it('closes panel and shows reopen button when close button clicked', async () => {
-      const { queryByText, getByLabelText, findByText } = render(<SqlExpr {...defaultProps} />);
+      const { queryByText, getByText, findByText } = render(<SqlExpr {...defaultProps} />);
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
 
-      const closeButton = getByLabelText('Close schema inspector');
+      const closeButton = getByText('Close schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
-      expect(await findByText('Inspect schema')).toBeInTheDocument();
+      expect(await findByText('Open schema inspector')).toBeInTheDocument();
     });
 
-    it('reopens panel when inspect schema button clicked after closing', async () => {
-      const { queryByText, getByLabelText, getByText } = render(<SqlExpr {...defaultProps} />);
+    it('reopens panel when Open schema inspector button clicked after closing', async () => {
+      const { queryByText, getByText } = render(<SqlExpr {...defaultProps} />);
 
-      const closeButton = getByLabelText('Close schema inspector');
+      const closeButton = getByText('Close schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
 
-      const reopenButton = getByText('Inspect schema');
+      const reopenButton = getByText('Open schema inspector');
       await act(async () => fireEvent.click(reopenButton));
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
@@ -300,7 +300,7 @@ describe('Schema Inspector feature toggle', () => {
     it('does not render panel or button', () => {
       const { queryByText } = render(<SqlExpr {...defaultProps} />);
 
-      expect(queryByText('Inspect schema')).not.toBeInTheDocument();
+      expect(queryByText('Open schema inspector')).not.toBeInTheDocument();
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
     });
   });
