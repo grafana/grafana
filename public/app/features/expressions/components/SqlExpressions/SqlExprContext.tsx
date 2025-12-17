@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 
-interface SqlExprContextValue {
+export interface SqlExprContextValue {
   // Explanations
   explanation: string;
   isExplanationOpen: boolean;

@@ -19,7 +19,7 @@ import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProv
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { SqlExprProvider } from './SqlExprContext';
+import { SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
@@ -224,7 +224,7 @@ LIMIT
     </div>
   );
 
-  const contextValue = {
+  const contextValue: SqlExprContextValue = {
     // Explanations
     explanation,
     isExplanationOpen,
@@ -275,7 +275,7 @@ LIMIT
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
       })}
     >
-      <div ref={containerRef} className={styles.editorContainer}>
+      <div ref={isExpanded ? null : containerRef} className={styles.editorContainer}>
         <SQLEditor
           query={query.expression || initialQuery}
           onChange={onEditorChange}
