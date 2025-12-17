@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -88,6 +89,5 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 		return nil // Fallback succeeded
 	}
 
-	return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("permission denied"))
+	return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s role is required", strings.ToLower(string(c.fallbackRole))))
 }
-

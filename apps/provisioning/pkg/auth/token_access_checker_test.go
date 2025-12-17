@@ -141,4 +141,3 @@ func (m *mockInnerAccessChecker) Check(_ context.Context, _ authlib.AuthInfo, _ 
 func (m *mockInnerAccessChecker) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return nil, nil, nil
 }
-

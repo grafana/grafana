@@ -248,4 +248,3 @@ func TestSessionAccessChecker_FillsNamespace(t *testing.T) {
 	err := checker.Check(ctx, req, "")
 	require.NoError(t, err)
 }
-

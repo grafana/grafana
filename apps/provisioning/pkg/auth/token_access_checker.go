@@ -60,4 +60,3 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 	}
 	return nil
 }
-
