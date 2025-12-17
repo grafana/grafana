@@ -54,7 +54,7 @@ type Engine struct {
 	baseInterval         time.Duration
 }
 
-func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer, cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) *Engine {
+func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer, cfg setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
@@ -85,37 +85,35 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, fmt.Errorf("%w: invalid interval [%d,%d]", ErrInvalidInputData, from.Unix(), to.Unix())
 	}
 
-	rule = rule.Copy()
-	rule.UID = "backtesting"
-	rule.NamespaceUID = "backtesting"
-	rule.RuleGroup = "backtesting"
-
 	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
 	logger := logger.FromContext(ruleCtx).New("backtesting", util.GenerateShortUID())
 
 	var warns []string
 	if rule.GetInterval() < e.minInterval {
 		logger.Warn("Interval adjusted to minimal interval", "originalInterval", rule.GetInterval(), "adjustedInterval", e.minInterval)
+		rule = rule.Copy()
 		rule.IntervalSeconds = int64(e.minInterval.Seconds())
 		warns = append(warns, fmt.Sprintf("Interval adjusted to minimal interval %ds", rule.IntervalSeconds))
 	}
-	if rule.IntervalSeconds%int64(e.baseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("%w: interval %ds is not divisible by base interval %ds", ErrInvalidInputData, rule.IntervalSeconds, int64(e.baseInterval.Seconds()))
+
+	effectiveStrategy := e.jitterStrategy
+	if e.jitterStrategy == schedule.JitterByGroup && (rule.RuleGroup == "" || rule.NamespaceUID == "") ||
+		e.jitterStrategy == schedule.JitterByRule && rule.UID == "" {
+		logger.Warn(fmt.Sprintf("Jitter strategy is set to %s, but rule group or namespace is not set. Ignore jitter", e.jitterStrategy))
+		warns = append(warns, fmt.Sprintf("Jitter strategy is set to %s, but rule group or namespace is not set. Ignore jitter. The results of testing will be different than real evaluations", e.jitterStrategy))
+		effectiveStrategy = schedule.JitterNever
+	}
+	jitterOffset := schedule.JitterOffsetInDuration(rule, e.baseInterval, effectiveStrategy)
+	firstEval, err := getFirstEvaluationTime(from, rule, e.baseInterval, jitterOffset)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInputData, err)
 	}
 
-	// Now calculate the time of the tick the same way as in the scheduler
-	firstTick := ticker.GetStartTick(from, e.baseInterval)
-	if firstTick != from {
-		if firstTick.Before(from) {
-			firstTick = firstTick.Add(rule.GetInterval())
-		}
-		logger.Info("Adjusted the first tick of the backtesting interval", "from", from, "actualFrom", firstTick)
-	}
-	var evaluations int
-	if to.After(firstTick) {
-		evaluations = int(to.Sub(firstTick).Seconds()) / int(rule.IntervalSeconds)
-	} else {
-		evaluations = 1
+	evaluations := calculateNumberOfEvaluations(firstEval, to, rule.GetInterval())
+	if e.maxEvaluations > 0 && evaluations > e.maxEvaluations {
+		logger.Warn("Evaluations adjusted to maximal number", "originalEvaluations", evaluations, "adjustedEvaluations", e.maxEvaluations)
+		warns = append(warns, fmt.Sprintf("Number of evaluations are adjusted to the limit of %d evaluations. Requested: %d", e.maxEvaluations, evaluations))
+		evaluations = e.maxEvaluations
 	}
 
 	start := time.Now()
@@ -140,7 +138,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
 
-	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", evaluations)
+	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.GetInterval(), "firstTick", firstEval, "evaluations", evaluations, "jitterOffset", jitterOffset, "jitterStrategy", effectiveStrategy)
 
 	var builder *historian.QueryResultBuilder
 
@@ -155,12 +153,12 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		// PanelID:      0,
 		Condition: rule.Condition,
 	}
-	lables := map[string]string{
+	labels := map[string]string{
 		historian.OrgIDLabel:     fmt.Sprint(ruleMeta.OrgID),
 		historian.GroupLabel:     fmt.Sprint(ruleMeta.Group),
 		historian.FolderUIDLabel: fmt.Sprint(rule.NamespaceUID),
 	}
-	labelsBytes, err := json.Marshal(lables)
+	labelsBytes, err := json.Marshal(labels)
 	if err != nil {
 		return nil, err
 	}
@@ -168,12 +166,12 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	extraLabels := state.GetRuleExtraLabels(logger, rule, "Backtesting", !e.disableGrafanaFolder, e.featureToggles)
 
 	processFn := func(idx int, currentTime time.Time, results eval.Results) (bool, error) {
-		if idx >= evaluations {
-			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", evaluations)
-			return false, nil
-		}
+		// init the builder. Do the best guess for the size of the result
 		if builder == nil {
 			builder = historian.NewQueryResultBuilder(evaluations * len(results))
+			for _, warn := range warns {
+				builder.AddWarn(warn)
+			}
 		}
 		states := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
 		for _, s := range states {
@@ -186,12 +184,10 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 				return false, err
 			}
 		}
-		if currentTime.Add(time.Duration(rule.IntervalSeconds) * time.Second).After(to) {
-		}
-		return false, nil
+		return idx <= evaluations, nil
 	}
 
-	err = evaluator.Eval(ruleCtx, from, rule.GetInterval(), evaluations, processFn)
+	err = evaluator.Eval(ruleCtx, firstEval, rule.GetInterval(), evaluations, processFn)
 	if err != nil {
 		return nil, err
 	}
@@ -199,9 +195,6 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, errors.New("no results were produced")
 	}
 	logger.Info("Rule testing finished successfully", "duration", time.Since(start))
-	for _, warn := range warns {
-		builder.AddWarn(warn)
-	}
 	return builder.ToFrame(), nil
 }
 

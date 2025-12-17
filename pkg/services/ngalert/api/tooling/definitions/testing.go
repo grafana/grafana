@@ -232,6 +232,10 @@ type BacktestConfig struct {
 	NoDataState                 NoDataState         `json:"no_data_state"`
 	ExecErrState                ExecutionErrorState `json:"exec_err_state"`
 	MissingSeriesEvalsToResolve *int64              `json:"missing_series_evals_to_resolve,omitempty"`
+
+	UID          string `json:"uid,omitempty"`
+	RuleGroup    string `json:"rule_group,omitempty"`
+	NamespaceUID string `json:"namespace_uid,omitempty"`
 }
 
 // swagger:model

@@ -439,10 +439,10 @@ func ValidateBacktestConfig(orgId int64, config apimodels.BacktestConfig, limits
 			Title:                       config.Title,
 			Condition:                   config.Condition,
 			Data:                        config.Data,
-			UID:                         "",
+			UID:                         config.UID,
 			NoDataState:                 config.NoDataState,
 			ExecErrState:                config.ExecErrState,
 			MissingSeriesEvalsToResolve: config.MissingSeriesEvalsToResolve,
 		},
-	}, "backtesting", interval, orgId, "backtesting", limits)
+	}, config.RuleGroup, interval, orgId, config.NamespaceUID, limits)
 }
