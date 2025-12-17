@@ -75,8 +75,7 @@ FROM
 LIMIT
   10`;
 
-  const [dimensions, setDimensions] = useState({ height: 0 });
-  const styles = useStyles2((theme) => getStyles(theme, dimensions.height || EDITOR_HEIGHT));
+  const styles = useStyles2((theme) => getStyles(theme));
   const containerRef = useRef<HTMLDivElement>(null);
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -177,21 +176,6 @@ LIMIT
     }
   }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
 
-  // Set up resize observer to handle container resizing
-  useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      const { height } = entries[0].contentRect;
-      setDimensions({ height });
-    });
-
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, [isExpanded]);
-
   useEffect(() => {
     // Call the onChange method once so we have access to the initial query in consuming components
     // But only if expression is empty
@@ -281,8 +265,6 @@ LIMIT
         <SQLEditor
           query={query.expression || initialQuery}
           onChange={onEditorChange}
-          width={width}
-          height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
           language={EDITOR_LANGUAGE_DEFINITION}
         >
           {({ formatQuery }) => renderToolbox(formatQuery)}
@@ -336,7 +318,7 @@ LIMIT
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   sqlContainer: css({
     marginTop: theme.spacing(0.5),
   }),
@@ -357,7 +339,7 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   }),
   editorContainer: css({
     gridArea: 'editor',
-    height: editorHeight, // Use dynamic height from ResizeObserver
+    height: '100%', // Use dynamic height from ResizeObserver
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
@@ -372,7 +354,7 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   }),
   schemaInspector: css({
     gridArea: 'schema',
-    height: editorHeight,
+    height: '100%',
     overflow: 'hidden',
     minWidth: 0,
   }),
