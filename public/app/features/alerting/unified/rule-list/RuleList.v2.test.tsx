@@ -24,6 +24,18 @@ jest.mock('./GroupedView', () => ({
   GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
 }));
 
+jest.mock('./filter/useSavedSearches', () => ({
+  useSavedSearches: () => ({
+    savedSearches: [],
+    isLoading: false,
+    saveSearch: jest.fn(),
+    renameSearch: jest.fn(),
+    deleteSearch: jest.fn(),
+    setDefaultSearch: jest.fn(),
+    getAutoApplySearch: () => null,
+  }),
+}));
+
 const ui = {
   filterView: byTestId('filter-view'),
   groupedView: byTestId('grouped-view'),
