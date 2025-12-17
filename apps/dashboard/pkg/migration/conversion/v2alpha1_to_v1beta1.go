@@ -2074,11 +2074,9 @@ func convertRegexMapToV1(regexMap *dashv2alpha1.DashboardRegexMap) map[string]in
 		return nil
 	}
 
-	options := []map[string]interface{}{
-		{
-			"pattern": regexMap.Options.Pattern,
-			"result":  convertValueMappingResultToV1(regexMap.Options.Result),
-		},
+	options := map[string]interface{}{
+		"pattern": regexMap.Options.Pattern,
+		"result":  convertValueMappingResultToV1(regexMap.Options.Result),
 	}
 
 	return map[string]interface{}{
