@@ -99,10 +99,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.primary.text,
       },
       h3: {
-        background: `linear-gradient(90deg, ${theme.colors.primary.text} 0%, ${theme.colors.secondary.text} 100%)`,
+        background: `linear-gradient(90deg, ${theme.colors.primary.shade} 0%, ${theme.colors.primary.text} 100%)`,
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',
         color: 'transparent',
+        cursor: 'pointer',
       },
     }),
     content: css({
