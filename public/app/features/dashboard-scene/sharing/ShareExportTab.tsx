@@ -223,7 +223,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       if (initialSaveModelVersion === 'v1' && !isDashboardV2Spec(origDashboard)) {
         const v1SaveModel = transformSceneToSaveModel(scene);
         sceneForExport = transformSaveModelToScene(
-          { dashboard: v1SaveModel, meta: scene.state.meta },
+          {
+            dashboard: { ...v1SaveModel, title: v1SaveModel.title ?? '', uid: v1SaveModel.uid ?? '' },
+            meta: scene.state.meta,
+          },
           { uid: scene.state.uid ?? '', route: DashboardRoutes.Normal, serializerVersion: 'v2' }
         );
       }
