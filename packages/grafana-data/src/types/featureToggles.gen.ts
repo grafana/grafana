@@ -309,10 +309,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -1184,6 +1180,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */

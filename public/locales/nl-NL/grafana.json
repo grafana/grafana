@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Externe link openen"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Meer",
       "new-menu": {
@@ -4821,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Waarden gescheiden door komma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -5133,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configureren",
       "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6145,7 +6152,10 @@
       "no-data-found": "Geen info gevonden"
     },
     "inspect-json-tab": {
-      "apply": "Toepassen"
+      "apply": "Toepassen",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Berekent het interval dynamisch door het tijdsbereik te delen door het opgegeven aantal",
@@ -11409,6 +11419,12 @@
         "latestReleaseDate": "Uiterste releasedatum:",
         "latestVersion": "Nieuwste versie",
         "license": "Licentie",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Een probleem melden",
         "reportAbuse": "",
         "reportAbuseTooltip": "Meld problemen met kwaadaardige of schadelijke plug-ins rechtstreeks aan Grafana Labs.",

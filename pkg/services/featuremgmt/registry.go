@@ -495,13 +495,6 @@ var (
 			FrontendOnly: true, // and can change at startup
 		},
 		{
-			Name:         "queryServiceFromExplore",
-			Description:  "Routes explore requests to the new query service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -1952,6 +1945,14 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "pluginInsights",
+			Description:  "Show insights for plugins in the plugin details page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
 		},
 		{
 			Name:            "panelTimeSettings",
