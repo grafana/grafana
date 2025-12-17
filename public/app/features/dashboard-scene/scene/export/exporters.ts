@@ -2,7 +2,6 @@ import { defaults, each, sortBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   PanelKind,
@@ -15,7 +14,6 @@ import {
 import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -26,6 +24,8 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
+import { buildVizPanelFromPanelModel } from '../../serialization/transformSaveModelToScene';
+import { vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
@@ -364,8 +364,16 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
   try {
     // Load the full library panel definition
     const fullLibraryPanel = await getLibraryPanel(libraryPanel.uid, true);
-    const panelModel: Panel = fullLibraryPanel.model;
-    const inlinePanel = buildPanelKind(panelModel);
+    // Use scene-based transformation for v1 to v2 panel conversion
+    // This ensures consistency with the rest of the codebase
+    const panelModel = new PanelModel(fullLibraryPanel.model);
+    const vizPanel = buildVizPanelFromPanelModel(panelModel);
+    const result = vizPanelToSchemaV2(vizPanel);
+    // vizPanelToSchemaV2 returns PanelKind for non-library panels
+    if (result.kind !== 'Panel') {
+      throw new Error('Expected PanelKind from vizPanelToSchemaV2');
+    }
+    const inlinePanel = result;
     // keep the original id
     inlinePanel.spec.id = id;
     return inlinePanel;

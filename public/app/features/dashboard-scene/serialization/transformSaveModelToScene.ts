@@ -414,14 +414,12 @@ export function createDashboardSceneFromDashboardModel(
   return dashboardScene;
 }
 
-export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
-    ? {
-        variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
-      }
-    : {};
-
+/**
+ * Creates a VizPanel from a PanelModel (v1 panel JSON).
+ * This function is useful for converting individual panels without
+ * needing the full dashboard context.
+ */
+export function buildVizPanelFromPanelModel(panel: PanelModel): VizPanel {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -499,7 +497,18 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     });
   }
 
-  const body = new VizPanel(vizPanelState);
+  return new VizPanel(vizPanelState);
+}
+
+export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
+  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
+    ? {
+        variableName: panel.repeat,
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
+      }
+    : {};
+
+  const body = buildVizPanelFromPanelModel(panel);
 
   return new DashboardGridItem({
     key: `grid-item-${panel.id}`,
