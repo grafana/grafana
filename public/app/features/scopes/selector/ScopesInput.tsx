@@ -99,16 +99,28 @@ export function ScopesInput({
   );
 }
 
-const getScopesPath = (appliedScopes: SelectedScope[], nodes: NodesMap) => {
+const getScopesPath = (appliedScopes: SelectedScope[], nodes: NodesMap, scopes: ScopesMap) => {
   let nicePath: string[] | undefined;
 
-  if (appliedScopes.length > 0 && appliedScopes[0].scopeNodeId) {
-    let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
-    // Get reed of empty root section and the actual scope node
-    path = path.slice(1, -1);
+  if (appliedScopes.length > 0) {
+    const firstScope = appliedScopes[0];
+    const scope = scopes[firstScope.scopeId];
 
-    // We may not have all the nodes in path loaded
-    nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
+    // Prefer defaultPath from scope metadata
+    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 1) {
+      // Get all nodes except the last one (which is the scope itself)
+      const pathNodeIds = scope.spec.defaultPath.slice(0, -1);
+      nicePath = pathNodeIds.map((nodeId) => nodes[nodeId]?.spec.title).filter((title) => title);
+    }
+    // Fallback to walking the node tree
+    else if (firstScope.scopeNodeId) {
+      let path = getPathOfNode(firstScope.scopeNodeId, nodes);
+      // Get rid of empty root section and the actual scope node
+      path = path.slice(1, -1);
+
+      // We may not have all the nodes in path loaded
+      nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
+    }
   }
 
   return nicePath;
@@ -127,7 +139,7 @@ function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disable
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
 
-  const nicePath = getScopesPath(appliedScopes, nodes);
+  const nicePath = getScopesPath(appliedScopes, nodes, scopes);
   const scopeNames = appliedScopes.map((s) => {
     if (s.scopeNodeId) {
       return nodes[s.scopeNodeId]?.spec.title || s.scopeNodeId;
