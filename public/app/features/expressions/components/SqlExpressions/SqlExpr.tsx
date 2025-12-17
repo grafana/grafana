@@ -241,7 +241,7 @@ LIMIT
     handleCloseDrawer,
   };
 
-  const renderSQLButtons = () => (
+  const renderButtons = () => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
       <SqlQueryActions
         executeQuery={executeQuery}
@@ -275,7 +275,7 @@ LIMIT
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
       })}
     >
-      <div ref={isExpanded ? null : containerRef} className={styles.editorContainer}>
+      <div ref={containerRef} className={styles.editorContainer}>
         <SQLEditor
           query={query.expression || initialQuery}
           onChange={onEditorChange}
@@ -297,7 +297,7 @@ LIMIT
   const renderSQLEditor = (width?: number, height?: number) => (
     <div className={styles.sqlContainer}>
       <Stack direction="column" gap={1}>
-        {renderSQLButtons()}
+        {renderButtons()}
         {renderMainContent(width, height)}
       </Stack>
       <Suspense fallback={null}>
@@ -328,7 +328,7 @@ LIMIT
           onDismiss={() => setIsExpanded(false)}
         >
           <Stack direction="column" gap={1}>
-            {renderSQLButtons()}
+            {renderButtons()}
             {renderMainContent()}
           </Stack>
         </Modal>
