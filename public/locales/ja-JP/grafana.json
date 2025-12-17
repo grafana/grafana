@@ -2224,6 +2224,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "外部リンクを開く"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "その他",
       "new-menu": {
@@ -4802,8 +4809,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "カンマで区切った値"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "名前フィルター",
@@ -5114,6 +5120,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -6124,7 +6131,10 @@
       "no-data-found": "データが見つかりません"
     },
     "inspect-json-tab": {
-      "apply": "適用"
+      "apply": "適用",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "指定した数で時間範囲を分割して、間隔を動的に計算します",
@@ -11363,6 +11373,12 @@
         "latestReleaseDate": "最新リリース日：",
         "latestVersion": "最新のバージョン",
         "license": "ライセンス",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "問題を提起する",
         "reportAbuse": "",
         "reportAbuseTooltip": "悪意のあるプラグインや有害なプラグインに関連する問題は、Grafana Labsに直接報告してください。",

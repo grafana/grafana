@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/golang/snappy"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -391,27 +393,33 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should save all instances when batch size is bigger than 1", func(t *testing.T) {
 		batchSize = 2
-		newRuleUID := "y"
-		err := ng.InstanceStore.FullSync(ctx, append(instances, *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(newRuleUID))), batchSize, nil)
+		testInstances := []models.AlertInstance{
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch1"), models.InstanceMuts.WithResultFingerprint("fp0")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch2"), models.InstanceMuts.WithResultFingerprint("fp1")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch3"), models.InstanceMuts.WithResultFingerprint("fp2")),
+		}
+
+		err := ng.InstanceStore.FullSync(ctx, testInstances, batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
 			RuleOrgID: orgID,
 		})
 		require.NoError(t, err)
-		require.Len(t, res, len(instances)+1)
-		for _, ruleUID := range append(ruleUIDs, newRuleUID) {
-			found := false
-			for _, instance := range res {
-				if instance.RuleUID == ruleUID {
-					found = true
-					continue
-				}
-			}
-			if !found {
-				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
-			}
+
+		savedInstances := make([]models.AlertInstance, len(res))
+		for i, r := range res {
+			savedInstances[i] = *r
 		}
+
+		opts := []cmp.Option{
+			cmpopts.EquateApproxTime(time.Second), // we don't get the same precision back from the DB
+			cmpopts.EquateEmpty(),
+			cmpopts.SortSlices(func(a, b models.AlertInstance) bool {
+				return a.RuleUID < b.RuleUID
+			}),
+		}
+		require.Empty(t, cmp.Diff(testInstances, savedInstances, opts...))
 	})
 
 	t.Run("Should not fail when the instances are empty", func(t *testing.T) {

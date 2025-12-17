@@ -618,6 +618,7 @@ type Cfg struct {
 	EnableSearch                               bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
+	EnableSQLKVBackend                         bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -631,6 +632,9 @@ type UnifiedStorageConfig struct {
 	DataSyncerInterval time.Duration
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
 	DataSyncerRecordsLimit int
+	// EnableMigration indicates whether migration is enabled for the resource.
+	// If not set, will use the default from MigratedUnifiedResources.
+	EnableMigration bool
 }
 
 type InstallPlugin struct {
