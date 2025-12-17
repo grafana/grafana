@@ -84,6 +84,15 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     onClosePane: () => editPane.closePane(),
   });
 
+  // Code pane needs more width than other panes
+  const CODE_PANE_MIN_WIDTH = 500;
+  useEffect(() => {
+    if (openPane === 'code' && sidebarContext.paneWidth < CODE_PANE_MIN_WIDTH) {
+      const diff = CODE_PANE_MIN_WIDTH - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+    }
+  }, [openPane, sidebarContext]);
+
   /**
    * Sync docked state to editPane state
    */
