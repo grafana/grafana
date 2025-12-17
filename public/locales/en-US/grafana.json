@@ -11199,6 +11199,7 @@
       },
       "error-loading-suggestions": {
         "message": "An error occurred when loading visualization suggestions.",
+        "plugin-failed": "Failed to load panel plugin: {{ pluginId }}.",
         "title": "Error",
         "try-again-button": "Try again"
       },

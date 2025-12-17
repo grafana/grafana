@@ -8,6 +8,7 @@ import {
   PreferredVisualisationType,
   VisualizationSuggestionScore,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin, isBuiltInPlugin } from 'app/features/plugins/importPanelPlugin';
@@ -49,7 +50,16 @@ async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
         hasErrors = true;
         console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
       } else {
-        appEvents.emit(AppEvents.alertError, [`Failed to load panel plugin: ${pluginId}.`]);
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            t(
+              'panel.visualization-suggestions.error-loading-suggestions.plugin-failed',
+              'Failed to load panel plugin: {{ pluginId }}.',
+              { pluginId }
+            ),
+          ],
+        });
       }
     }
   }
