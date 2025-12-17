@@ -420,7 +420,7 @@ describe('DashboardPrompt', () => {
   });
 });
 
-function buildTestScene(overrides?: Partial<DashboardSceneState>, targetVersion: 'v1' | 'v2' = 'v1') {
+function buildTestScene(overrides?: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
   const defaultPanels = [
     new VizPanel({
       title: 'Panel A',
@@ -445,7 +445,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>, targetVersion:
       body: DefaultGridLayoutManager.fromVizPanels(defaultPanels),
       ...overrides,
     },
-    targetVersion
+    serializerVersion
   );
 
   return scene;

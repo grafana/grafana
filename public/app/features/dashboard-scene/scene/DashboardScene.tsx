@@ -192,7 +192,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardJson | DashboardV2Spec
   >;
 
-  public constructor(state: Partial<DashboardSceneState>, targetVersion: 'v1' | 'v2' = 'v1') {
+  public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: t('dashboard-scene.dashboard-scene.title.dashboard', 'Dashboard'),
       meta: {},
@@ -205,7 +205,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
     });
 
-    this.serializer = targetVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
+    this.serializer =
+      serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
 
