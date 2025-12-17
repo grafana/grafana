@@ -86,7 +86,7 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName) {
     const pkgJson = await PackageJson.create(pkgJsonPath, {
       data: {
         name: pkgName,
-        types: `../dist/types/${aliasName}.d.ts`,
+        types: `../dist/cjs/${aliasName}.d.cts`,
         main: `../dist/cjs/${aliasName}.cjs`,
         module: `../dist/esm/${aliasName}.mjs`,
       },
