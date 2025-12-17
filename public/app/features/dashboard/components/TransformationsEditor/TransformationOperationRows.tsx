@@ -9,6 +9,8 @@ interface TransformationOperationRowsProps {
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
+  getIsOpen?: (id: string) => boolean | undefined;
+  setIsOpen?: (id: string, isOpen: boolean) => void;
 }
 
 export const TransformationOperationRows = ({
@@ -16,6 +18,8 @@ export const TransformationOperationRows = ({
   onChange,
   onRemove,
   configs,
+  getIsOpen,
+  setIsOpen,
 }: TransformationOperationRowsProps) => {
   return (
     <>
@@ -36,6 +40,8 @@ export const TransformationOperationRows = ({
             uiConfig={uiConfig}
             onRemove={onRemove}
             onChange={onChange}
+            isOpen={getIsOpen?.(t.id)}
+            onOpenChanged={(isOpen) => setIsOpen?.(t.id, isOpen)}
           />
         );
       })}
