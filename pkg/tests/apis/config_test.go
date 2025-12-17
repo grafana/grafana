@@ -51,7 +51,7 @@ const pluginsDiscoveryJSON = `[
 				"version": ""
 			},
 			"scope": "Namespaced",
-			"singularResource": "plugins",
+			"singularResource": "plugin",
 			"subresources": [
 				{
 					"responseKind": {
