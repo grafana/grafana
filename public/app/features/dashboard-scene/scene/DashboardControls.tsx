@@ -154,7 +154,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   // Get adhoc and groupby variables for drilldown controls
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
-  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
   const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
   const showDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
