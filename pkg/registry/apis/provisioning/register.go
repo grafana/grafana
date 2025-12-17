@@ -372,9 +372,9 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	case provisioning.ConnectionResourceInfo.GetName():
 		return b.authorizeConnectionSubresource(ctx, a, id)
 	case provisioning.JobResourceInfo.GetName():
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 	case provisioning.HistoricJobResourceInfo.GetName():
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "historicjobs", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.HistoricJobResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 	case "settings", "stats":
 		return authorizeRoleBasedResource(a.GetResource(), id)
 	default:
@@ -388,19 +388,19 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	switch a.GetSubresource() {
 	// Repository CRUD - use access checker with the actual verb
 	case "":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	// Test requires write permission (testing before save)
 	case "test":
-		return b.checkAccess(ctx, id, apiutils.VerbUpdate, provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbUpdate, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	// Read-only subresources: files listing, refs, resources, history, status
 	case "files", "refs", "resources", "history", "status":
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	// Jobs subresource - check jobs permissions with the verb
 	case "jobs":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", "", a.GetNamespace())
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.JobResourceInfo.GetName(), "", a.GetNamespace())
 
 	default:
 		if id.GetIsGrafanaAdmin() {
@@ -416,11 +416,11 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 	switch a.GetSubresource() {
 	// Connection CRUD - use access checker with the actual verb
 	case "":
-		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, provisioning.ConnectionResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	// Status is read-only
 	case "status":
-		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.ConnectionResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	default:
 		if id.GetIsGrafanaAdmin() {
