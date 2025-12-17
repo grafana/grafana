@@ -102,7 +102,7 @@ export const YBucketScaleEditor = (props: StandardEditorProps<ScaleDistributionC
 
   return (
     <>
-      <RadioButtonGroup value={currentOption} options={SCALE_OPTIONS} onChange={handleScaleChange} fullWidth />
+      <RadioButtonGroup value={currentOption} options={SCALE_OPTIONS} onChange={handleScaleChange} />
       {showLogBase && (
         <Field
           label={t('heatmap.y-bucket-scale-editor.log-base-label', 'Log base')}
