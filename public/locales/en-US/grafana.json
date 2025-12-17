@@ -3715,6 +3715,7 @@
       "text": "No results found for your query"
     },
     "recently-viewed": {
+      "clear": "Clear history",
       "empty": "Nothing viewed yet",
       "title": "Recently viewed"
     },
