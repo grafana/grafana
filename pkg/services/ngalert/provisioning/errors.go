@@ -27,8 +27,8 @@ var (
 	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
 	ErrTemplateExists   = errutil.BadRequest("alerting.notifications.templates.nameExists", errutil.WithPublicMessage("Template file with this name already exists. Use a different name or update existing one."))
 	ErrTemplateOrigin   = errutil.BadRequest("alerting.notifications.templates.originInvalid").MustTemplate(
-		"Template '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
-		errutil.WithPublic("Template '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+		"Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
