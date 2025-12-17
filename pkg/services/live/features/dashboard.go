@@ -29,7 +29,7 @@ type dashboardEvent struct {
 	UID             string     `json:"uid"`
 	Action          actionType `json:"action"` // saved, editing, deleted
 	SessionID       string     `json:"sessionId,omitempty"`
-	ResourceVersion string     `json:"resourceVersion,omitempty"`
+	ResourceVersion string     `json:"rv,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels

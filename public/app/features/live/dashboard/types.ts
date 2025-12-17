@@ -11,5 +11,5 @@ export interface DashboardEvent {
   message?: string;
   sessionId?: string;
   timestamp?: number;
-  resourceVersion?: string;
+  rv?: string;
 }

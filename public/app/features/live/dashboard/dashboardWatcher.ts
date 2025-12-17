@@ -128,9 +128,6 @@ class DashboardWatcher {
               console.log('dashboard event for different dashboard?', event, dash);
               return;
             }
-            if (event.message.resourceVersion) {
-              console.log('TODO... compare to the current RV and skip?', event.message, dash);
-            }
 
             let showPopup = this.editing || dash.hasUnsavedChanges();
 
