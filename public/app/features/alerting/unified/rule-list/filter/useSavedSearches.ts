@@ -10,7 +10,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { logError, logWarning } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
-import { SavedSearch, savedSearchesArraySchema, validateSearchName } from './savedSearchesSchema';
+import { SavedSearch, savedSearchSchema, savedSearchesArraySchema, validateSearchName } from './savedSearchesSchema';
 
 /**
  * Storage key for saved searches in UserStorage.
@@ -79,7 +79,15 @@ function validateSavedSearches(data: unknown): SavedSearch[] {
   logWarning('Saved searches validation failed, filtering invalid entries', {
     issues: JSON.stringify(result.error.issues),
   });
-  return [];
+
+  const validEntries: SavedSearch[] = [];
+  for (const item of data) {
+    const itemResult = savedSearchSchema.safeParse(item);
+    if (itemResult.success) {
+      validEntries.push(itemResult.data);
+    }
+  }
+  return validEntries;
 }
 
 /**
