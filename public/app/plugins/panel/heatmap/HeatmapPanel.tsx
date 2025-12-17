@@ -143,6 +143,12 @@ const HeatmapPanelViz = ({
 
     const activeScaleConfig = options.rowsFrame?.yBucketScale ?? scaleConfig;
 
+    // For log/symlog scales: use 1 for pre-bucketed data with explicit scale, otherwise use split value
+    const isLogScale =
+      activeScaleConfig?.type === ScaleDistribution.Log || activeScaleConfig?.type === ScaleDistribution.Symlog;
+    const hasExplicitScale = options.rowsFrame?.yBucketScale !== undefined;
+    const ySizeDivisor = isLogScale && !hasExplicitScale ? +(options.calculation?.yBuckets?.value || 1) : 1;
+
     return prepConfig({
       dataRef,
       theme,
@@ -153,12 +159,7 @@ const HeatmapPanelViz = ({
       hideGE: options.filterValues?.ge,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
-      ySizeDivisor:
-        activeScaleConfig?.type === ScaleDistribution.Log || activeScaleConfig?.type === ScaleDistribution.Symlog
-          ? options.rowsFrame?.yBucketScale
-            ? 1
-            : +(options.calculation?.yBuckets?.value || 1)
-          : 1,
+      ySizeDivisor,
       selectionMode: options.selectionMode,
       xAxisConfig: getXAxisConfig(annotationsLength),
       rowsFrame: options.rowsFrame,
