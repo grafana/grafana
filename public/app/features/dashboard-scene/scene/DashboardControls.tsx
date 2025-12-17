@@ -158,7 +158,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
   const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
-  const showDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
+  const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -166,7 +166,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
-  if (showDrilldownControls) {
+  if (useUnifiedDrilldownUI) {
     return (
       <div
         data-testid={selectors.pages.Dashboard.Controls}
