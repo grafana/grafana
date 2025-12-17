@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { byPlaceholderText, byRole, byText } from 'testing-library-selector';
 
 import { SavedSearches } from './SavedSearches';
-import { SavedSearch } from './SavedSearches.types';
+import { SavedSearch } from './savedSearchesSchema';
 
 /**
  * UI selectors for SavedSearches component tests.

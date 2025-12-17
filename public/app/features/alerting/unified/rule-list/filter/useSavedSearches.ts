@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
@@ -7,9 +7,10 @@ import { UserStorage } from '@grafana/runtime/internal';
 
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { contextSrv } from '../../../../../core/services/context_srv';
+import { logError, logWarning } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
-import { SavedSearch, ValidationError, savedSearchesArraySchema, validateSearchName } from './SavedSearches.types';
+import { SavedSearch, savedSearchesArraySchema, validateSearchName } from './savedSearchesSchema';
 
 /**
  * Storage key for saved searches in UserStorage.
@@ -71,12 +72,50 @@ function validateSavedSearches(data: unknown): SavedSearch[] {
 
   // If the whole array failed, try to salvage individual valid entries
   if (!Array.isArray(data)) {
-    console.warn('Saved searches data is not an array, returning empty array');
+    logWarning('Saved searches data is not an array, returning empty array');
     return [];
   }
 
-  console.warn('Saved searches validation failed, filtering invalid entries:', result.error.issues);
+  logWarning('Saved searches validation failed, filtering invalid entries', {
+    issues: JSON.stringify(result.error.issues),
+  });
   return [];
+}
+
+/**
+ * Sorts saved searches: default search first, then others alphabetically.
+ * @param searches - Array of saved searches to sort
+ * @returns Sorted array with default first, then alphabetically by name
+ */
+function sortSavedSearches(searches: SavedSearch[]): SavedSearch[] {
+  const defaultSearch = searches.find((s) => s.isDefault);
+  const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+  const others = searches.filter((s) => !s.isDefault).sort((a, b) => collator.compare(a.name, b.name));
+
+  return defaultSearch ? [defaultSearch, ...others] : others;
+}
+
+/**
+ * Loads saved searches from UserStorage and validates the data.
+ * @returns Promise resolving to an array of valid saved searches
+ */
+async function loadSavedSearchesFromStorage(): Promise<SavedSearch[]> {
+  const stored = await userStorage.getItem(SAVED_SEARCHES_STORAGE_KEY);
+  if (!stored) {
+    return [];
+  }
+
+  const parsed = JSON.parse(stored);
+  return validateSavedSearches(parsed);
+}
+
+/**
+ * Checks if the current URL has a non-empty search query parameter.
+ * @returns true if URL contains a search parameter with a value
+ */
+function hasUrlSearchQuery(): boolean {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.has('search') && urlParams.get('search') !== '';
 }
 
 /**
@@ -91,16 +130,16 @@ export interface UseSavedSearchesResult {
    * Save a new search with the given name and query.
    * @param name - The display name for the saved search
    * @param query - The search query string
-   * @returns ValidationError if name is not unique, void on success
+   * @throws ValidationError if name is not unique
    */
-  saveSearch: (name: string, query: string) => Promise<void | ValidationError>;
+  saveSearch: (name: string, query: string) => Promise<void>;
   /**
    * Rename an existing saved search.
    * @param id - The ID of the search to rename
    * @param newName - The new display name
-   * @returns ValidationError if name is not unique, void on success
+   * @throws ValidationError if name is not unique
    */
-  renameSearch: (id: string, newName: string) => Promise<void | ValidationError>;
+  renameSearch: (id: string, newName: string) => Promise<void>;
   /**
    * Delete a saved search by ID.
    * @param id - The ID of the search to delete
@@ -159,19 +198,8 @@ export function useSavedSearches(): UseSavedSearchesResult {
   // Track whether this is a fresh navigation (not refresh)
   const isNavigationRef = useRef<boolean | null>(null);
 
-  // Async loader function for saved searches
-  const loadSavedSearches = useCallback(async (): Promise<SavedSearch[]> => {
-    const stored = await userStorage.getItem(SAVED_SEARCHES_STORAGE_KEY);
-    if (!stored) {
-      return [];
-    }
-
-    const parsed = JSON.parse(stored);
-    return validateSavedSearches(parsed);
-  }, []);
-
   // Use useAsync for loading state management
-  const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearches, []);
+  const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearchesFromStorage, []);
   const isLoading = isLoadingState(loadState) || isUninitialized(loadState);
 
   // Load saved searches from storage on mount
@@ -191,13 +219,15 @@ export function useSavedSearches(): UseSavedSearchesResult {
     // Set the visited flag for future checks
     sessionStorage.setItem(sessionKey, 'true');
 
-    // Load from UserStorage using useAsync
-    executeLoad()
-      .then((validated) => {
+    // Load from UserStorage using async/await pattern
+    const loadSearches = async () => {
+      try {
+        const validated = await executeLoad();
         setSavedSearches(validated);
-      })
-      .catch((error) => {
-        console.error('Failed to load saved searches from storage:', error);
+      } catch (error) {
+        logError(error instanceof Error ? error : new Error('Failed to load saved searches from storage'), {
+          context: 'useSavedSearches.loadSearches',
+        });
         notifyApp.error(
           t('alerting.saved-searches.error-load-title', 'Failed to load saved searches'),
           t(
@@ -205,7 +235,10 @@ export function useSavedSearches(): UseSavedSearchesResult {
             'Your saved searches could not be loaded. Please try refreshing the page.'
           )
         );
-      });
+      }
+    };
+
+    loadSearches();
 
     // Clean up session flag when component unmounts (user navigates away)
     return () => {
@@ -221,7 +254,9 @@ export function useSavedSearches(): UseSavedSearchesResult {
       try {
         await userStorage.setItem(SAVED_SEARCHES_STORAGE_KEY, JSON.stringify(searches));
       } catch (error) {
-        console.error('Failed to save searches:', error);
+        logError(error instanceof Error ? error : new Error('Failed to save searches'), {
+          context: 'useSavedSearches.persistSearches',
+        });
         notifyApp.error(
           t('alerting.saved-searches.error-save-title', 'Failed to save'),
           t('alerting.saved-searches.error-save-description', 'Your changes could not be saved. Please try again.')
@@ -234,14 +269,14 @@ export function useSavedSearches(): UseSavedSearchesResult {
 
   /**
    * Save a new search with the given name and query.
-   * Returns a ValidationError if the name is not unique.
+   * @throws ValidationError if the name is not unique
    */
   const saveSearch = useCallback(
-    async (name: string, query: string): Promise<void | ValidationError> => {
+    async (name: string, query: string): Promise<void> => {
       // Validate name using shared validation function
       const validationError = validateSearchName(name, savedSearches);
       if (validationError) {
-        return { field: 'name', message: validationError };
+        throw { field: 'name' as const, message: validationError };
       }
 
       const newSearch: SavedSearch = {
@@ -262,22 +297,20 @@ export function useSavedSearches(): UseSavedSearchesResult {
         hasDefault: newSearches.some((s) => s.isDefault),
         totalCount: newSearches.length,
       });
-
-      return undefined;
     },
     [savedSearches, persistSearches]
   );
 
   /**
    * Rename an existing saved search.
-   * Returns a ValidationError if the new name is not unique.
+   * @throws ValidationError if the new name is not unique
    */
   const renameSearch = useCallback(
-    async (id: string, newName: string): Promise<void | ValidationError> => {
+    async (id: string, newName: string): Promise<void> => {
       // Validate name using shared validation function (excluding current item)
       const validationError = validateSearchName(newName, savedSearches, id);
       if (validationError) {
-        return { field: 'name', message: validationError };
+        throw { field: 'name' as const, message: validationError };
       }
 
       const newSearches = savedSearches.map((s) => (s.id === id ? { ...s, name: newName } : s));
@@ -287,8 +320,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
 
       // Track analytics
       trackSavedSearchRename();
-
-      return undefined;
     },
     [savedSearches, persistSearches]
   );
@@ -341,10 +372,8 @@ export function useSavedSearches(): UseSavedSearchesResult {
       return null;
     }
 
-    // Check if there's already a search query in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasUrlSearch = urlParams.has('search') && urlParams.get('search') !== '';
-    if (hasUrlSearch) {
+    // Don't auto-apply if there's already a search query in the URL
+    if (hasUrlSearchQuery()) {
       return null;
     }
 
@@ -360,8 +389,11 @@ export function useSavedSearches(): UseSavedSearchesResult {
     return defaultSearch ?? null;
   }, [savedSearches]);
 
+  // Sort saved searches: default first, then alphabetically by name
+  const sortedSavedSearches = useMemo(() => sortSavedSearches(savedSearches), [savedSearches]);
+
   return {
-    savedSearches,
+    savedSearches: sortedSavedSearches,
     isLoading,
     saveSearch,
     renameSearch,

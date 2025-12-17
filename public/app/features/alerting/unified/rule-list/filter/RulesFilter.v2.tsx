@@ -26,6 +26,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
+  logError,
   trackAlertRuleFilterEvent,
   trackFilterButtonApplyClick,
   trackFilterButtonClearClick,
@@ -45,7 +46,7 @@ import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/r
 
 import { RulesFilterProps } from './RulesFilter';
 import { SavedSearches } from './SavedSearches';
-import { SavedSearch } from './SavedSearches.types';
+import { SavedSearch } from './savedSearchesSchema';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
@@ -150,7 +151,9 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
         const parsedFilter = getSearchFilterFromQuery(defaultSearch.query);
         updateFilters(parsedFilter);
       } catch (error) {
-        console.error('Failed to auto-apply default search:', error);
+        logError(error instanceof Error ? error : new Error('Failed to auto-apply default search'), {
+          context: 'RulesFilter.autoApplyDefaultSearch',
+        });
       }
     }
   }, [savedSearchesEnabled, savedSearchesLoading, getAutoApplySearch, updateFilters]);

@@ -1,19 +1,22 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, IconButton, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { SavedSearch, ValidationError, validateSearchName } from './SavedSearches.types';
+import { useAppNotification } from '../../../../../core/copy/appNotification';
+
+import { SavedSearch, isValidationError, validateSearchName } from './savedSearchesSchema';
 
 // ============================================================================
 // Inline Save Input (compact input with icon buttons)
 // ============================================================================
 
 export interface InlineSaveInputProps {
-  onSave: (name: string) => Promise<ValidationError | void>;
+  /** Callback to save the search. Throws ValidationError on validation failure. */
+  onSave: (name: string) => Promise<void>;
   onCancel: () => void;
   savedSearches: SavedSearch[];
 }
@@ -24,32 +27,38 @@ interface FormValues {
 
 export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveInputProps) {
   const styles = useStyles2(getStyles);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const notifyApp = useAppNotification();
 
   const {
     register,
     handleSubmit,
-    setError,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: { name: '' },
   });
 
-  // Focus input on mount
+  // Focus input on mount using react-hook-form's setFocus
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    setFocus('name');
+  }, [setFocus]);
 
   const onSubmit = async (data: FormValues) => {
-    const validationError = validateSearchName(data.name, savedSearches);
-    if (validationError) {
-      setError('name', { message: validationError });
-      return;
-    }
-
-    const result = await onSave(data.name.trim());
-    if (result?.message) {
-      setError('name', { message: result.message });
+    try {
+      await onSave(data.name.trim());
+    } catch (error) {
+      // Check if it's a validation error (has field and message)
+      if (isValidationError(error)) {
+        // Validation errors are shown inline in the form
+        // This is handled by react-hook-form validation, but we keep this
+        // as a fallback for server-side validation errors
+        return;
+      }
+      // For generic save operation errors, show a notification
+      notifyApp.error(
+        t('alerting.saved-searches.error-save-title', 'Failed to save'),
+        t('alerting.saved-searches.error-save-description', 'Your changes could not be saved. Please try again.')
+      );
     }
   };
 
@@ -60,9 +69,6 @@ export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveI
     }
   };
 
-  // Get the register props and merge with our ref
-  const { ref: registerRef, ...registerProps } = register('name');
-
   return (
     <Stack direction="column" gap={0.5}>
       {/* Match exact structure of SavedSearchItem: [flex-1 content] [icon] [icon] with gap={1} */}
@@ -71,14 +77,13 @@ export function InlineSaveInput({ onSave, onCancel, savedSearches }: InlineSaveI
           {/* Input area - flex=1 like the name area in list items */}
           <Box flex={1} marginRight={2}>
             <Input
-              {...registerProps}
-              ref={(e) => {
-                registerRef(e);
-                // Store ref for focus management
-                if (inputRef && 'current' in inputRef) {
-                  inputRef.current = e;
-                }
-              }}
+              {...register('name', {
+                required: t('alerting.saved-searches.error-name-required', 'Name is required'),
+                validate: (value) => {
+                  const error = validateSearchName(value, savedSearches);
+                  return error ?? true;
+                },
+              })}
               onKeyDown={handleKeyDown}
               placeholder={t('alerting.saved-searches.name-placeholder', 'Enter a name...')}
               invalid={!!errors.name}

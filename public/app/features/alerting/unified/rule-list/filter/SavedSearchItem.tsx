@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { Dropdown, Icon, IconButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { InlineRenameInput } from './InlineRenameInput';
-import { SavedSearch, ValidationError } from './SavedSearches.types';
+import { SavedSearch, ValidationError } from './savedSearchesSchema';
 
 // ============================================================================
 // Saved Search Item

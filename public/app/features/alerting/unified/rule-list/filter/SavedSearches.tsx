@@ -12,8 +12,8 @@
  * ## Props
  * @param savedSearches - Array of saved search objects
  * @param currentSearchQuery - The current search query string from the filter state
- * @param onSave - Callback to save a new search. Returns ValidationError on failure.
- * @param onRename - Callback to rename an existing search. Returns ValidationError on failure.
+ * @param onSave - Callback to save a new search. Throws ValidationError on failure.
+ * @param onRename - Callback to rename an existing search. Throws ValidationError on failure.
  * @param onDelete - Callback to delete a search
  * @param onApply - Callback when a saved search is applied
  * @param onSetDefault - Callback to set/unset default search (pass null to unset)
@@ -46,7 +46,7 @@
  */
 
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -56,7 +56,7 @@ import { PopupCard } from '../../components/HoverCard';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
-import { SavedSearch, ValidationError } from './SavedSearches.types';
+import { SavedSearch } from './savedSearchesSchema';
 
 // ============================================================================
 // Types
@@ -67,10 +67,10 @@ export interface SavedSearchesProps {
   savedSearches: SavedSearch[];
   /** The current search query string from the filter state */
   currentSearchQuery: string;
-  /** Callback to save a new search. Returns ValidationError on failure, void on success. */
-  onSave: (name: string, query: string) => Promise<void | ValidationError>;
-  /** Callback to rename an existing search. Returns ValidationError on failure, void on success. */
-  onRename: (id: string, newName: string) => Promise<void | ValidationError>;
+  /** Callback to save a new search. Throws ValidationError on failure. */
+  onSave: (name: string, query: string) => Promise<void>;
+  /** Callback to rename an existing search. Throws ValidationError on failure. */
+  onRename: (id: string, newName: string) => Promise<void>;
   /** Callback to delete a search */
   onDelete: (id: string) => Promise<void>;
   /** Callback when a saved search is applied */
@@ -181,16 +181,6 @@ export function SavedSearches({
   const saveButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Sort saved searches: default first, then alphabetically
-  const sortedSearches = useMemo(() => {
-    const searches = [...savedSearches];
-    const defaultSearch = searches.find((s) => s.isDefault);
-    const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
-    const others = searches.filter((s) => !s.isDefault).sort((a, b) => collator.compare(a.name, b.name));
-
-    return defaultSearch ? [defaultSearch, ...others] : others;
-  }, [savedSearches]);
-
   // Focus dialog when dropdown opens to enable keyboard navigation
   useEffect(() => {
     if (isOpen && activeAction === 'idle') {
@@ -266,12 +256,9 @@ export function SavedSearches({
   }, []);
 
   const handleSaveComplete = useCallback(
-    async (name: string): Promise<ValidationError | void> => {
-      const result = await onSave(name, currentSearchQuery);
-      if (!result) {
-        dispatch({ type: 'COMPLETE_ACTION' });
-      }
-      return result;
+    async (name: string): Promise<void> => {
+      await onSave(name, currentSearchQuery);
+      dispatch({ type: 'COMPLETE_ACTION' });
     },
     [onSave, currentSearchQuery]
   );
@@ -285,12 +272,9 @@ export function SavedSearches({
   }, []);
 
   const handleRenameComplete = useCallback(
-    async (id: string, newName: string): Promise<ValidationError | void> => {
-      const result = await onRename(id, newName);
-      if (!result) {
-        dispatch({ type: 'COMPLETE_ACTION' });
-      }
-      return result;
+    async (id: string, newName: string): Promise<void> => {
+      await onRename(id, newName);
+      dispatch({ type: 'COMPLETE_ACTION' });
     },
     [onRename]
   );
@@ -335,7 +319,7 @@ export function SavedSearches({
   );
 
   const buttonLabel = t('alerting.saved-searches.button-label', 'Saved searches');
-  const hasSearches = sortedSearches.length > 0;
+  const hasSearches = savedSearches.length > 0;
   const canSave = currentSearchQuery.trim().length > 0;
 
   const content = (
@@ -347,7 +331,7 @@ export function SavedSearches({
       tabIndex={-1}
     >
       <ListMode
-        searches={sortedSearches}
+        searches={savedSearches}
         hasSearches={hasSearches}
         canSave={canSave}
         activeAction={activeAction}
@@ -406,12 +390,14 @@ interface ListModeProps {
   saveButtonRef: React.RefObject<HTMLButtonElement>;
   isLoading: boolean;
   onStartSave: () => void;
-  onSaveComplete: (name: string) => Promise<ValidationError | void>;
+  /** Callback to complete save. Throws ValidationError on validation failure. */
+  onSaveComplete: (name: string) => Promise<void>;
   onCancelSave: () => void;
   onApply: (search: SavedSearch) => void;
   onStartRename: (id: string) => void;
   onCancelRename: () => void;
-  onRenameComplete: (id: string, newName: string) => Promise<ValidationError | void>;
+  /** Callback to complete rename. Throws ValidationError on validation failure. */
+  onRenameComplete: (id: string, newName: string) => Promise<void>;
   onStartDelete: (id: string) => void;
   onCancelDelete: () => void;
   onDeleteConfirm: (id: string) => Promise<void>;

@@ -43,6 +43,20 @@ export interface ValidationError {
   message: string;
 }
 
+/**
+ * Type guard to check if an error is a ValidationError.
+ */
+export function isValidationError(error: unknown): error is ValidationError {
+  return Boolean(
+    error &&
+      typeof error === 'object' &&
+      'field' in error &&
+      'message' in error &&
+      error.field === 'name' &&
+      typeof error.message === 'string'
+  );
+}
+
 // ============================================================================
 // Validation Utilities
 // ============================================================================
