@@ -360,7 +360,14 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		})
 	}
 
-	list.TotalHits = int64(len(list.Results.Rows))
+	// the UI expects us to populate "TotalHits" with the total search hits, not however many we are returning.
+	// this is a dumb workaround due to the fact that legacy doesn't expose a way of "counting search hits"
+	// it fixes a bug that only happens in mode 1-2 that prevents pagination from working in the dashboard list view
+	// we only have a handful of instances running in this mode and moving towards 0 instances fast, so this is fine
+	query.Limit = 0
+	query.Page = 1
+	res, err = c.dashboardStore.FindDashboards(ctx, query)
+	list.TotalHits = int64(len(res))
 
 	return list, nil
 }
