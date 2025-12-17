@@ -7625,39 +7625,6 @@
       },
       "share-span": "Share"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Select max span operator",
-      "aria-label-select-min-span-operator": "Select min span operator",
-      "aria-label-select-service-name": "Select service name",
-      "aria-label-select-service-name-operator": "Select service name operator",
-      "aria-label-select-span-name": "Select span name",
-      "aria-label-select-span-name-operator": "Select span name operator",
-      "ariaLabel-select-max-span-duration": "Select max span duration",
-      "ariaLabel-select-min-span-duration": "Select min span duration",
-      "label-collapse": "Span Filters",
-      "label-duration": "Duration",
-      "label-service-name": "Service name",
-      "label-span-name": "Span name",
-      "label-tags": "Tags",
-      "placeholder-all-service-names": "All service names",
-      "placeholder-all-span-names": "All span names",
-      "tooltip-collapse": "Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.",
-      "tooltip-duration": "Filter by duration. Accepted units are {{units}}",
-      "tooltip-tags": "Filter by tags, process tags or log fields in your spans."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Add tag",
-      "aria-label-input-tag-value": "Input tag value",
-      "aria-label-remove-tag": "Remove tag",
-      "aria-label-select-tag-key": "Select tag key",
-      "aria-label-select-tag-operator": "Select tag operator",
-      "aria-label-select-tag-value": "Select tag value",
-      "placeholder-select-tag": "Select tag",
-      "placeholder-select-value": "Select value",
-      "placeholder-tag-value": "Tag value",
-      "tooltip-add-tag": "Add tag",
-      "tooltip-remove-tag": "Remove tag"
-    },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
     },
