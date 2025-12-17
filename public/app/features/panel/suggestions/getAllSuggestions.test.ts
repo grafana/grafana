@@ -555,6 +555,27 @@ describe('sortSuggestions', () => {
   });
 });
 
+describe('Visualization suggestions error handling', () => {
+  it('returns result with hasErrors flag', async () => {
+    const result = await getAllSuggestions({
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1, 2] },
+            { name: 'Max', type: FieldType.number, values: [1, 10] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+    });
+
+    expect(result).toHaveProperty('suggestions');
+    expect(result).toHaveProperty('hasErrors');
+    expect(result.hasErrors).toBe(false);
+  });
+});
+
 function repeatFrame(count: number, frame: DataFrame): DataFrame[] {
   const frames: DataFrame[] = [];
   for (let i = 0; i < count; i++) {
