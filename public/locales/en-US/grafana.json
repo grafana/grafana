@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Login attribute path",
       "login-prompt-consent": "Consent",
       "login-prompt-description": "Indicates the type of user interaction when the user logs in with the IdP.",
+      "login-prompt-description-google": "Indicates the type of user interaction when the user logs in with Google. This is forced to \"Consent\" when \"Use refresh token\" is enabled.",
       "login-prompt-label": "Login prompt",
       "login-prompt-login": "Login",
       "login-prompt-select-account": "Select account",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "If enabled, Grafana will use <2>Proof Key for Code Exchange (PKCE)</2> with the OAuth2 Authorization Code Grant.",
       "use-pkce-label": "Use PKCE",
       "use-refresh-token-description": "If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.",
+      "use-refresh-token-description-google": "If enabled, Grafana will fetch a new access token using the refresh token provided by Google. This forces the login prompt to \"Consent\" to ensure Google returns a refresh token.",
       "use-refresh-token-label": "Use refresh token",
       "validate-hosted-domain-description": "If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the \"{{ allowedDomainsLabel }}\" list specified by the user.",
       "validate-hosted-domain-label": "Validate hosted domain",
@@ -10187,7 +10189,8 @@
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
       "line-contains": "Add as line contains filter",
-      "line-contains-not": "Add as line does not contain filter"
+      "line-contains-not": "Add as line does not contain filter",
+      "search-text": "Search in results"
     },
     "show-log-attributes": "Display log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
