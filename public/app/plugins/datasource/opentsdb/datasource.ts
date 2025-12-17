@@ -77,8 +77,28 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     };
   }
 
-  // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
+    if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const annotation of options.targets) {
+        if (annotation.target) {
+          streams.push(
+            new Observable((subscriber) => {
+              this.annotationEvent(options, annotation)
+                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+                .catch((ex) => {
+                  return subscriber.next({ data: [toDataFrame([])] });
+                })
+                .finally(() => subscriber.complete());
+            })
+          );
+        }
+      }
+
+      return merge(...streams);
+    }
+
     if (config.featureToggles.opentsdbBackendMigration) {
       const hasValidTargets = options.targets.some((target) => target.metric && !target.hide);
       if (!hasValidTargets) {
@@ -91,31 +111,6 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
           return response;
         })
       );
-    }
-
-    // migrate annotations
-    if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
-      const streams: Array<Observable<DataQueryResponse>> = [];
-
-      for (const annotation of options.targets) {
-        if (annotation.target) {
-          streams.push(
-            new Observable((subscriber) => {
-              this.annotationEvent(options, annotation)
-                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-                .catch((ex) => {
-                  // grafana fetch throws the error so for annotation consistency among datasources
-                  // we return an empty array which displays as 'no events found'
-                  // in the annnotation editor
-                  return subscriber.next({ data: [toDataFrame([])] });
-                })
-                .finally(() => subscriber.complete());
-            })
-          );
-        }
-      }
-
-      return merge(...streams);
     }
 
     const start = this.convertToTSDBTime(options.range.raw.from, false, options.timezone);
@@ -181,6 +176,58 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
   }
 
   annotationEvent(options: DataQueryRequest, annotation: OpenTsdbQuery): Promise<AnnotationEvent[]> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const query: OpenTsdbQuery = {
+        refId: annotation.refId ?? 'Anno',
+        metric: annotation.target,
+        aggregator: 'sum',
+        fromAnnotations: true,
+        isGlobal: annotation.isGlobal,
+        disableDownsampling: true,
+      };
+
+      const queryRequest: DataQueryRequest<OpenTsdbQuery> = {
+        ...options,
+        targets: [query],
+      };
+
+      return lastValueFrom(
+        super.query(queryRequest).pipe(
+          map((response) => {
+            const eventList: AnnotationEvent[] = [];
+
+            for (const frame of response.data) {
+              // const annotations = frame.meta?.custom?.annotations;
+              // const globalAnnotations = frame.meta?.custom?.globalAnnotations;
+              const annotationObject = annotation.isGlobal
+                ? frame.meta?.custom?.globalAnnotations
+                : frame.meta?.custom?.annotations;
+
+              // let annotationObject = annotations;
+              // if (annotation.isGlobal && globalAnnotations) {
+              //   annotationObject = globalAnnotations;
+              // }
+
+              if (annotationObject && isArray(annotationObject)) {
+                annotationObject.forEach((ann) => {
+                  const event: AnnotationEvent = {
+                    text: ann.description,
+                    time: Math.floor(ann.startTime) * 1000,
+                    annotation: annotation,
+                  };
+
+                  eventList.push(event);
+                });
+              }
+            }
+
+            console.log('be eventList', eventList);
+            return eventList;
+          })
+        )
+      );
+    }
+
     const start = this.convertToTSDBTime(options.range.raw.from, false, options.timezone);
     const end = this.convertToTSDBTime(options.range.raw.to, true, options.timezone);
     const qs = [];
