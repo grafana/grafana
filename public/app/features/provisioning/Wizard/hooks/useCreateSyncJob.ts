@@ -6,14 +6,12 @@ import { StepStatusInfo } from '../types';
 export interface UseCreateSyncJobParams {
   repoName: string;
   requiresMigration: boolean;
-  migrateExistingResources?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
 export function useCreateSyncJob({
   repoName,
   requiresMigration,
-  migrateExistingResources,
   setStepStatusInfo,
 }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
@@ -30,8 +28,7 @@ export function useCreateSyncJob({
     try {
       setStepStatusInfo?.({ status: 'running' });
 
-      const shouldMigrate = requiresMigration || migrateExistingResources === true;
-      const jobSpec = shouldMigrate
+      const jobSpec = requiresMigration
         ? {
             migrate: {},
           }

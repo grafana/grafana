@@ -114,11 +114,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, migrateExistingResources] = watch([
+  const [repoName = '', repoType, syncTarget] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
-    'migrate.migrateExistingResources',
   ]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
@@ -130,7 +129,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
-    migrateExistingResources,
     setStepStatusInfo,
   });
 

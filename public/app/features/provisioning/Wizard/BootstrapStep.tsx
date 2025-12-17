@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Checkbox, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
@@ -141,30 +141,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                 autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
               />
             </Field>
-            <Controller
-              name="migrate.migrateExistingResources"
-              control={control}
-              render={({ field: { onChange, value, ...field } }) => (
-                <Field
-                  description={t(
-                    'provisioning.bootstrap-step.description-migrate-existing-resources',
-                    'Additionally migrate all existing unmanaged resources to this repository and pull everything from there.'
-                  )}
-                  noMargin
-                >
-                  <Checkbox
-                    id="migrate-existing-resources"
-                    {...field}
-                    value={value || false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
-                    label={t(
-                      'provisioning.bootstrap-step.label-migrate-existing-resources',
-                      'Additionally migrate all existing unmanaged resources to this folder'
-                    )}
-                  />
-                </Field>
-              )}
-            />
           </>
         )}
 
