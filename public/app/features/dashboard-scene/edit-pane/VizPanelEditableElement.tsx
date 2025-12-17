@@ -2,8 +2,8 @@ import { useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { Stack, Button } from '@grafana/ui';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
+import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -15,8 +15,7 @@ import {
   PanelFrameTitleInput,
   editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { scrollCanvasElementIntoView } from '../scene/layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -138,9 +137,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
-      this.panel.parent.scrollIntoView();
-    }
+    scrollCanvasElementIntoView(this.panel, `[data-viz-panel-key="${this.panel.state.key}"`);
   }
 }
 
