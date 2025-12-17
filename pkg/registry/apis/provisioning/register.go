@@ -422,25 +422,42 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 	}
 }
 
+// isAdminOrAccessPolicy checks if the requester is either an admin user or an AccessPolicy identity.
+// AccessPolicy identities are used in trusted internal flows (e.g., ST->MT) and don't have org roles,
+// so we allow them through. Regular users must have admin role.
+func isAdminOrAccessPolicy(id identity.Requester) bool {
+	// AccessPolicy identities are trusted internal callers (ST->MT flow)
+	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) {
+		return true
+	}
+	// Regular users need admin role
+	return id.GetOrgRole().Includes(identity.RoleAdmin)
+}
+
 // authorizeStats handles authorization for stats resource.
-func (b *APIBuilder) authorizeStats(_ identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
 	// Stats is a read-only endpoint that returns resource counts.
-	// Any authenticated user can access it - authentication is verified before this point.
-	return authorizer.DecisionAllow, "", nil
+	// The frontend provisioning pages require admin access (controlled by navtree).
+	if isAdminOrAccessPolicy(id) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
 }
 
 // authorizeSettings handles authorization for settings resource.
-func (b *APIBuilder) authorizeSettings(_ identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
 	// Settings is a read-only endpoint that returns available repository types and configuration.
-	// Any authenticated user can access it - authentication is verified before this point.
-	// The frontend needs this to display the provisioning wizard.
-	return authorizer.DecisionAllow, "", nil
+	// The frontend provisioning pages require admin access (controlled by navtree).
+	if isAdminOrAccessPolicy(id) {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionDeny, "admin role is required", nil
 }
 
 // authorizeJobs handles authorization for job resources.
 func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, string, error) {
 	// Jobs are shown on the configuration page.
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+	if isAdminOrAccessPolicy(id) {
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
