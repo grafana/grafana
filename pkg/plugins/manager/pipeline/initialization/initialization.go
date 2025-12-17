@@ -3,9 +3,14 @@ package initialization
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // Initializer is responsible for the Initialization stage of the plugin loader pipeline.
@@ -20,6 +25,7 @@ type Initialize struct {
 	cfg             *config.PluginManagementCfg
 	initializeSteps []InitializeFunc
 	log             log.Logger
+	tracer          trace.Tracer
 }
 
 type Opts struct {
@@ -36,11 +42,17 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Initialize {
 		cfg:             cfg,
 		initializeSteps: opts.InitializeFuncs,
 		log:             log.New("plugins.initialization"),
+		tracer:          otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"),
 	}
 }
 
 // Initialize will execute the Initialize steps of the Initialization stage.
 func (i *Initialize) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
+	ctx, span := i.tracer.Start(ctx, "initialization.Initialize", trace.WithAttributes(
+		semconv.GrafanaPluginId(ps.ID),
+	))
+	defer span.End()
+
 	if len(i.initializeSteps) == 0 {
 		return ps, nil
 	}
@@ -51,7 +63,7 @@ func (i *Initialize) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugi
 		ip, err = init(ctx, ps)
 		if err != nil {
 			i.log.Error("Could not initialize plugin", "pluginId", ps.ID, "error", err)
-			return nil, err
+			return nil, tracing.Error(span, err)
 		}
 	}
 

@@ -83,6 +83,7 @@ dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
 kubernetesDashboardsV2,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
+drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
 perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true
 perPanelFiltering,experimental,@grafana/dashboards-squad,false,false,true
