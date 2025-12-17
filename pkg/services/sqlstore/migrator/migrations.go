@@ -392,6 +392,12 @@ func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Tabl
 
 	columnsList := strings.Join(uniqueKey.Cols, ",")
 
+	mysqlQuote := NewDialect(MySQL).Quote
+	mysqlQuotedColumns := make([]string, 0, len(uniqueKey.Cols))
+	for _, col := range uniqueKey.Cols {
+		mysqlQuotedColumns = append(mysqlQuotedColumns, mysqlQuote(col))
+	}
+
 	// migration 1 is to handle cases where the table was created with sql_generate_invisible_primary_key = ON
 	// in this case we need to do the conversion in one sql statement
 	mysqlMigration1 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`
@@ -400,17 +406,17 @@ func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Tabl
 	  DROP COLUMN my_row_id,
 	  DROP INDEX %s,
 	  ADD PRIMARY KEY (%s);
-	`, tableName, uniqueKey.XName(tableName), columnsList))
+	`, tableName, uniqueKey.XName(tableName), strings.Join(mysqlQuotedColumns, ",")))
 	mysqlMigration1.Condition = &IfColumnExistsCondition{TableName: tableName, ColumnName: "my_row_id"}
 	name1 := migrationName(fmt.Sprintf("drop my_row_id and add primary key with columns %s to table %s if my_row_id exists (auto-generated mysql column)", columnsList, tableName), migrationNames, 0)
 	mg.AddMigration(name1, mysqlMigration1)
 
 	mysqlMigration2 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s DROP INDEX %s`, tableName, uniqueKey.XName(tableName)))
 	mysqlMigration2.Condition = &IfIndexExistsCondition{TableName: tableName, IndexName: uniqueKey.XName(tableName)}
-	name2 := fmt.Sprintf("drop unique index %s with columns %s from %s table if it exists (mysql)", uniqueKey.XName(tableName), columnsList, tableName)
+	name2 := fmt.Sprintf("drop unique index %s from %s table if it exists (mysql)", uniqueKey.XName(tableName), tableName)
 	mg.AddMigration(migrationName(name2, migrationNames, 1), mysqlMigration2)
 
-	mysqlMigration3 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s ADD PRIMARY KEY (%s)`, tableName, strings.Join(uniqueKey.Cols, ",")))
+	mysqlMigration3 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s ADD PRIMARY KEY (%s)`, tableName, strings.Join(mysqlQuotedColumns, ",")))
 	mysqlMigration3.Condition = &IfPrimaryKeyNotExistsCondition{TableName: tableName}
 	name3 := fmt.Sprintf("add primary key with columns %s to table %s if it doesn't exist (mysql)", columnsList, tableName)
 	mg.AddMigration(migrationName(name3, migrationNames, 2), mysqlMigration3)

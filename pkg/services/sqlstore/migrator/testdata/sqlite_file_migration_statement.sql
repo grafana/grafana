@@ -1,39 +1,21 @@
 CREATE TABLE IF NOT EXISTS `file_new` (
     `path` TEXT NOT NULL
-    , `path_hash` TEXT PRIMARY KEY NOT NULL
+    , `path_hash` TEXT NOT NULL
     , `parent_folder_path_hash` TEXT NOT NULL
     , `contents` BLOB NOT NULL
     , `etag` TEXT NOT NULL
-    , `cache_control` TEXT NOT NULL
-    , `content_disposition` TEXT NOT NULL
-    , `updated` DATETIME NOT NULL
-    , `created` DATETIME NOT NULL
-    , `size` INTEGER NOT NULL
-    , `mime_type` TEXT NOT NULL
-);
+    , PRIMARY KEY ( `path_hash`,`etag` ));
 
 INSERT INTO `file_new` (`path`
   , `path_hash`
   , `parent_folder_path_hash`
   , `contents`
-  , `etag`
-  , `cache_control`
-  , `content_disposition`
-  , `updated`
-  , `created`
-  , `size`
-  , `mime_type`)
+  , `etag`)
 SELECT `path`
   , `path_hash`
   , `parent_folder_path_hash`
   , `contents`
   , `etag`
-  , `cache_control`
-  , `content_disposition`
-  , `updated`
-  , `created`
-  , `size`
-  , `mime_type`
 FROM `file`;
 
 DROP TABLE IF EXISTS `file`;

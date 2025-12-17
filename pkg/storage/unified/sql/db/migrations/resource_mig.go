@@ -204,5 +204,18 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "IDX_resource_history_key_path",
 	}))
 
+	oldResourceVersionUniqueKey := migrator.Index{Cols: []string{"group", "resource"}, Type: migrator.UniqueIndex}
+	updatedResourceVersionTable := migrator.Table{
+		Name: "resource_version",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource"},
+	}
+
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable, nil)
+
 	return marker
 }
