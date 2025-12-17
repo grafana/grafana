@@ -1443,11 +1443,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/receivers/form/ChannelSubForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/form/CloudCommonChannelSettings.tsx": {
     "no-restricted-syntax": {
       "count": 1

@@ -17,7 +17,7 @@ import {
   ReceiverFormValues,
 } from '../../../types/receiver-form';
 import { isDeprecatedVersion } from '../../../utils/integration-versions';
-import { getLatestVersions } from '../../../utils/notifier-versions-poc';
+import { getLatestVersions } from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -165,7 +165,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   };
 
   const typeOptions = useMemo((): SelectableValue[] => {
-    // POC: Group notifiers by name to handle versioning
+    // Group notifiers by name to handle versioning
     // Only show latest (creatable) versions in the dropdown
     const notifierDTOs = notifiers.map((n) => n.dto);
     const latestVersions = getLatestVersions(notifierDTOs);
@@ -173,21 +173,31 @@ export function ChannelSubForm<R extends ChannelValues>({
     // Create a map of latest version types to their notifier objects
     const latestVersionsMap = new Map(latestVersions.map((dto) => [dto.type, dto]));
 
-    // Filter notifiers to only include latest versions
-    // IMPORTANT: Also include the currently selected type (even if it's a legacy version)
-    // This ensures the dropdown shows the current selection instead of "Choose"
-    const notifiersToShow = notifiers.filter((notifier) => 
-      latestVersionsMap.has(notifier.dto.type) || notifier.dto.type === selectedType
+    // Filter notifiers to include:
+    // 1. Latest versions (v1) - available for creation
+    // 2. Currently selected type - even if it's a legacy version (v0)
+    //    This ensures editing an existing v0 integration shows its type instead of "Choose"
+    const notifiersToShow = notifiers.filter(
+      (notifier) => latestVersionsMap.has(notifier.dto.type) || notifier.dto.type === selectedType
     );
 
     return sortBy(notifiersToShow, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
       ({ dto: { name, type, currentVersion }, meta }) => {
-        // Build label string with version info
+        // Add version suffix to distinguish between v0 and v1 of the same integration
+        // Example: "Slack (v0)" vs "Slack" when editing a legacy integration
         const versionSuffix = currentVersion && currentVersion !== 'v1' ? ` (${currentVersion})` : '';
         const labelText = `${name}${versionSuffix}`;
-        
+
         return {
-          label: labelText,
+          // ReactNode is supported in Select label, but types don't reflect it
+          /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
+          label: (
+            <Stack alignItems="center" gap={1}>
+              {labelText}
+              {meta?.badge}
+            </Stack>
+          ) as any,
+          /* eslint-enable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
@@ -216,14 +226,11 @@ export function ChannelSubForm<R extends ChannelValues>({
   const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
   const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
 
-  // POC: Check if current integration is a legacy/Mimir version
-  // Version naming: v0mimir1, v0mimir2 = Mimir versions; v1 = Grafana version
-  const integrationVersion = notifier?.dto.currentVersion;
+  // Check if current integration is a legacy/Mimir version (v0)
+  // Legacy integrations are read-only and cannot be edited
+  // Read version from existing integration data, not from notifier list
+  const integrationVersion = initialValues?.version || defaultValues.version || notifier?.dto.currentVersion;
   const isLegacyVersion = isDeprecatedVersion(integrationVersion);
-
-  // POC: Legacy integrations are read-only (Stage 2: imported/provisioned state)
-  // In Stage 3, after conversion, they might become editable
-  const isLegacyReadOnly = isLegacyVersion && isEditable; // Override editability for legacy
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
@@ -234,6 +241,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             label={t('alerting.channel-sub-form.label-integration', 'Integration')}
             htmlFor={contactPointTypeInputId}
             data-testid={`${pathPrefix}type`}
+            noMargin
           >
             <Stack direction="column" gap={1}>
               <Stack direction="row" alignItems="flex-start" gap={1}>
@@ -256,15 +264,20 @@ export function ChannelSubForm<R extends ChannelValues>({
               {isLegacyVersion && integrationVersion && (
                 <Stack direction="row" gap={0.5}>
                   <Badge
-                    text="Legacy (Mimir)"
+                    text={t('alerting.channel-sub-form.badge-legacy-mimir', 'Legacy (Mimir)')}
                     color="orange"
                     icon="exclamation-triangle"
-                    tooltip="This is a legacy integration imported from Mimir. Settings are read-only but you can change to a different integration type to convert."
+                    tooltip={t(
+                      'alerting.channel-sub-form.tooltip-legacy-mimir',
+                      'This is a legacy integration imported from Mimir. Settings are read-only but you can change to a different integration type to convert.'
+                    )}
                   />
                   <Badge
                     text={integrationVersion.toUpperCase()}
                     color="orange"
-                    tooltip={`Integration version: ${integrationVersion}`}
+                    tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
+                      version: integrationVersion,
+                    })}
                   />
                 </Stack>
               )}
@@ -272,20 +285,20 @@ export function ChannelSubForm<R extends ChannelValues>({
           </Field>
         </div>
         <div className={styles.buttons}>
-          {isTestable && onTest && isTestAvailable && (
+          {/* Don't show Test, Duplicate, or Delete buttons for legacy (v0) integrations */}
+          {isTestable && onTest && isTestAvailable && !isLegacyVersion && (
             <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
-              {/* Don't allow duplicating legacy integrations (they're read-only) */}
-              {!isLegacyReadOnly && (
+              {!isLegacyVersion && (
                 <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
                   <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
                 </Button>
               )}
-              {onDelete && (
+              {onDelete && !isLegacyVersion && (
                 <Button
                   data-testid={`${pathPrefix}delete-button`}
                   size="xs"
@@ -305,16 +318,12 @@ export function ChannelSubForm<R extends ChannelValues>({
         <div className={styles.innerContent}>
           {isLegacyVersion && (
             <Alert
-              title={t(
-                'alerting.channel-sub-form.legacy-read-only-title',
-                'Legacy Integration - Read Only'
-              )}
+              title={t('alerting.channel-sub-form.legacy-read-only-title', 'Legacy Integration - Read Only')}
               severity="info"
             >
               <Trans i18nKey="alerting.channel-sub-form.legacy-read-only-body">
                 This integration was imported from Mimir and is currently in read-only mode. To edit or update this
-                integration, you will need to convert it to the latest version first. This is part of the migration
-                to the unified Grafana Alert Manager.
+                integration, you will need to convert it to the latest version first.
               </Trans>
             </Alert>
           )}
@@ -340,7 +349,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onResetSecureField={onResetSecureField}
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
-            readOnly={!isEditable || isLegacyReadOnly}
+            readOnly={!isEditable || isLegacyVersion}
             customValidators={customValidators}
           />
           {!!(mandatoryOptions.length && optionalOptions.length) && (
@@ -361,7 +370,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 onDeleteSubform={onDeleteSubform}
                 errors={errors}
                 integrationPrefix={channelFieldPath}
-                readOnly={!isEditable || isLegacyReadOnly}
+                readOnly={!isEditable || isLegacyVersion}
                 customValidators={customValidators}
               />
             </CollapsibleSection>
@@ -369,7 +378,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           <CollapsibleSection
             label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
           >
-            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable || isLegacyReadOnly} />
+            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable || isLegacyVersion} />
           </CollapsibleSection>
         </div>
       )}

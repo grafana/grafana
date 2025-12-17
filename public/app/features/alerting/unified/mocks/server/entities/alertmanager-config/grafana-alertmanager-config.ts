@@ -181,7 +181,8 @@ const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
           {
             uid: 'legacy-slack-demo-uid',
             name: 'Legacy Slack from Mimir',
-            type: 'slack_v0mimir1', // Mimir version v0mimir1 imported from Mimir
+            type: 'slack',
+            version: 'v0',
             disableResolveMessage: false,
             settings: {
               recipient: '#alerts-legacy',
@@ -200,7 +201,8 @@ const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
           {
             uid: 'legacy-webhook-demo-uid',
             name: 'Legacy Webhook from Mimir',
-            type: 'webhook_v0mimir1', // Mimir webhook version v0mimir1
+            type: 'webhook',
+            version: 'v0',
             disableResolveMessage: false,
             settings: {
               url: 'https://example.com/webhook/mimir-legacy',

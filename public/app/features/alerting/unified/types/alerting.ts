@@ -89,7 +89,7 @@ export interface NotifierDTO<T = NotifierType> {
   info?: string;
   secure?: boolean;
   // Integration versioning support for single alert manager migration
-  // v0mimir1/v0mimir2 = Mimir (legacy), v1 = Grafana (current)
+  // v0 = Mimir (legacy), v1 = Grafana (current)
   currentVersion?: string;
 }
 
