@@ -143,7 +143,7 @@ describe('BootstrapStep', () => {
     it('should render correct info for GitHub repository type', async () => {
       setup();
       expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
+      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should have the role "Empty" (2 external + 2 unmanaged - one for each sync option card)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -198,7 +198,9 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('7 resources')).toBeInTheDocument();
+      // The resource count string appears twice because BootstrapStepResourceCounting is rendered
+      // for each enabled sync option (instance and folder), and both show the resource count
+      expect(await screen.findAllByText('7 resources')).toHaveLength(2);
     });
   });
 
@@ -207,21 +209,7 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
-    });
-
-    it('should use useResourceStats hook with legacy storage flag', async () => {
-      setup({
-        settingsData: {
-          legacyStorage: true,
-          allowImageRendering: true,
-          items: [],
-          availableRepositoryTypes: [],
-        },
-      });
-
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo');
     });
   });
 
@@ -231,39 +219,6 @@ describe('BootstrapStep', () => {
 
       expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
-    });
-
-    it('should only display instance option when legacy storage exists', async () => {
-      (useModeOptions as jest.Mock).mockReturnValue({
-        enabledOptions: [
-          {
-            target: 'instance',
-            label: 'Sync all resources with external storage',
-            description: 'Resources will be synced with external storage',
-            subtitle: 'Use this option if you want to sync your entire instance',
-          },
-        ],
-        disabledOptions: [
-          {
-            target: 'folder',
-            label: 'Sync external storage to a new Grafana folder',
-            description: 'A new Grafana folder will be created',
-            subtitle: 'Use this option to sync into a new folder',
-          },
-        ],
-      });
-
-      setup({
-        settingsData: {
-          legacyStorage: true,
-          allowImageRendering: true,
-          items: [],
-          availableRepositoryTypes: [],
-        },
-      });
-
-      expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
-      expect(await screen.findByText('Sync external storage to a new Grafana folder')).not.toBeChecked();
     });
 
     it('should allow selecting different sync targets', async () => {
