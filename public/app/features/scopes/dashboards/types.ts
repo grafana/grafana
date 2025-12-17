@@ -44,6 +44,7 @@ export interface SuggestedNavigationsFolder {
   subScopeName?: string;
   loading?: boolean;
   disableSubScopeSelection?: boolean;
+  preLoadSubScopeChildren?: boolean;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;

@@ -31,6 +31,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -354,6 +355,8 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.authorizeSettings(id)
 	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
 		return b.authorizeJobs(id)
+	case provisioning.ConnectionResourceInfo.GetName():
+		return b.authorizeConnectionSubresource(a, id)
 	default:
 		return b.authorizeDefault(id)
 	}
@@ -435,6 +438,28 @@ func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, 
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeRepositorySubresource handles authorization for connections subresources.
+func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	case "":
+		// Doing something with the connection itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
 }
 
 // authorizeDefault handles authorization for unmapped resources.
@@ -520,9 +545,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
+	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create connection storage: %w", err)
+	}
+	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+
+	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
@@ -565,6 +599,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
+	}
+	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+	c, ok := obj.(*provisioning.Connection)
+	if ok {
+		return connectionvalidation.MutateConnection(c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -613,6 +652,11 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	_, ok := obj.(*provisioning.HistoricJob)
 	if ok {
 		return nil
+	}
+
+	connection, ok := obj.(*provisioning.Connection)
+	if ok {
+		return connectionvalidation.ValidateConnection(connection)
 	}
 
 	// Validate Jobs

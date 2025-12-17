@@ -495,13 +495,6 @@ var (
 			FrontendOnly: true, // and can change at startup
 		},
 		{
-			Name:         "queryServiceFromExplore",
-			Description:  "Routes explore requests to the new query service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -603,6 +596,13 @@ var (
 		{
 			Name:         "unlimitedLayoutsNesting",
 			Description:  "Enables unlimited dashboard panel grouping",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "drilldownRecommendations",
+			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,

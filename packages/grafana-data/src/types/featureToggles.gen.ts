@@ -309,10 +309,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -376,6 +372,10 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   */

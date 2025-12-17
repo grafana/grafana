@@ -146,13 +146,21 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const modulePromise =
-    config.featureToggles.rudderstackUpgrade &&
-    // Import V3 backend only if all V3 related config is present
-    config.rudderstackV3SdkUrl
-      ? import('./backends/analytics/RudderstackV3Backend')
-      : // If not set, fallback to legacy backend
-        import('./backends/analytics/RudderstackBackend');
+  // this will need to be updated when rudderstackSdkV3Url is added
+  // Desired logic: if only one of the sdk urls is provided, use respective code
+  // otherwise defer to the feature toggle.
+  const fakeConfigRudderstackSdkV3Url: string | undefined = undefined;
+
+  const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
+  const hasNewSdkUrl = Boolean(fakeConfigRudderstackSdkV3Url);
+  const onlyOneConfigURLSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneConfigURLSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+
+  const configUrl = useNewRudderstack ? fakeConfigRudderstackSdkV3Url : config.rudderstackSdkUrl;
+
+  const modulePromise = useNewRudderstack
+    ? import('./backends/analytics/RudderstackV3Backend')
+    : import('./backends/analytics/RudderstackBackend');
 
   const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
@@ -162,7 +170,7 @@ async function initRudderstackBackend() {
       user: contextSrv.user,
       sdkUrl: config.rudderstackSdkUrl,
       sdkV3Url: config.rudderstackV3SdkUrl,
-      configUrl: config.rudderstackConfigUrl,
+      configUrl: configUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,
     })
