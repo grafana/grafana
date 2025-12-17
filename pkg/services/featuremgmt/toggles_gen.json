@@ -2912,7 +2912,8 @@
       "metadata": {
         "name": "queryServiceFromExplore",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-04-02T10:00:33Z"
+        "creationTimestamp": "2025-04-02T10:00:33Z",
+        "deletionTimestamp": "2025-12-10T20:33:21Z"
       },
       "spec": {
         "description": "Routes explore requests to the new query service",
