@@ -30,7 +30,7 @@ interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
 
 type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDot;
 
-const DOT_START_MIN_ANGLE_DEG = 5;
+const ENDPOINT_MARKER_MIN_ANGLE = 10;
 const DOT_OPACITY = 0.5;
 const DOT_RADIUS_FACTOR = 0.4;
 const MAX_DOT_RADIUS = 8;
@@ -85,7 +85,7 @@ export const RadialArcPath = memo(
           const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(gradientStops, fieldDisplay.display.percent);
           endpointMarks = (
             <>
-              {arcLengthDeg > DOT_START_MIN_ANGLE_DEG && (
+              {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
                 <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
               )}
               <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
@@ -93,18 +93,20 @@ export const RadialArcPath = memo(
           );
           break;
         case 'glow':
-          const xStartMark = centerX + radius * Math.cos(endRadians - 0.2);
-          const yStartMark = centerY + radius * Math.sin(endRadians - 0.2);
-          endpointMarks = (
-            <path
-              d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
-              fill="none"
-              strokeWidth={barWidth}
-              stroke={endpointMarkerGlowFilter}
-              strokeLinecap={roundedBars ? 'round' : 'butt'}
-              filter={glowFilter}
-            />
-          );
+          const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
+          const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
+          const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
+          endpointMarks =
+            arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE ? (
+              <path
+                d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
+                fill="none"
+                strokeWidth={barWidth}
+                stroke={endpointMarkerGlowFilter}
+                strokeLinecap={roundedBars ? 'round' : 'butt'}
+                filter={glowFilter}
+              />
+            ) : null;
           break;
         default:
           break;
