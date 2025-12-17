@@ -26,8 +26,6 @@ describe('ShareExportTab', () => {
   let makeExportableV1Spy: jest.SpyInstance;
   let transformSceneToV1Spy: jest.SpyInstance;
   let transformSceneToV2Spy: jest.SpyInstance;
-  let transformSaveModelToSceneSpy: jest.SpyInstance;
-
   beforeEach(() => {
     config.featureToggles.kubernetesDashboards = true;
     config.featureToggles.dashboardNewLayouts = false;
@@ -68,7 +66,7 @@ describe('ShareExportTab', () => {
     } as Dashboard);
 
     // Mock transformSaveModelToScene to return a mock scene (used for v1->v2 export with rows)
-    transformSaveModelToSceneSpy = jest.spyOn(v1ToScene, 'transformSaveModelToScene').mockImplementation(() => {
+    jest.spyOn(v1ToScene, 'transformSaveModelToScene').mockImplementation(() => {
       return new DashboardScene({
         title: 'Mock Scene for V2 Export',
         uid: 'mock-scene-uid',
