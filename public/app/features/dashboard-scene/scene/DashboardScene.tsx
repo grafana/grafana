@@ -898,7 +898,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+    const rawJson = this.getRawJsonFromEditor();
+    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh, rawJson });
   }
 
   getManagerKind(): ManagerKind | undefined {
