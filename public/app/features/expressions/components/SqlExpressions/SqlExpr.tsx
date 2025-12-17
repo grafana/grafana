@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -202,12 +203,6 @@ LIMIT
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [executeQuery]);
 
-  const renderToolbox = (formatQuery: () => void) => (
-    <div ref={toolboxRef}>
-      <QueryToolbox query={query} onFormatCode={formatQuery} onExpand={setIsExpanded} isExpanded={isExpanded} />
-    </div>
-  );
-
   const contextValue: SqlExprContextValue = {
     // Explanations
     explanation,
@@ -262,13 +257,28 @@ LIMIT
       })}
     >
       <div ref={containerRef} className={styles.editorContainer}>
-        <SQLEditor
-          query={query.expression || initialQuery}
-          onChange={onEditorChange}
-          language={EDITOR_LANGUAGE_DEFINITION}
-        >
-          {({ formatQuery }) => renderToolbox(formatQuery)}
-        </SQLEditor>
+        <AutoSizer>
+          {({ width, height }) => (
+            <SQLEditor
+              query={query.expression || initialQuery}
+              onChange={onEditorChange}
+              language={EDITOR_LANGUAGE_DEFINITION}
+              width={width}
+              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+            >
+              {({ formatQuery }) => (
+                <div ref={toolboxRef}>
+                  <QueryToolbox
+                    query={query}
+                    onFormatCode={formatQuery}
+                    onExpand={setIsExpanded}
+                    isExpanded={isExpanded}
+                  />
+                </div>
+              )}
+            </SQLEditor>
+          )}
+        </AutoSizer>
       </div>
       {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
         <div className={cx(styles.schemaInspector, { [styles.schemaInspectorOpen]: isSchemaInspectorOpen })}>
@@ -340,7 +350,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     gridArea: 'editor',
     height: '100%', // Use dynamic height from ResizeObserver
-    resize: 'vertical',
+    width: '100%',
     overflow: 'auto',
     minHeight: '100px',
   }),
@@ -369,19 +379,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     maxHeight: '120px',
     overflowY: 'auto',
-  }),
-  fieldItem: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(1),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  responseContainer: css({
-    padding: theme.spacing(2),
   }),
 });
 
