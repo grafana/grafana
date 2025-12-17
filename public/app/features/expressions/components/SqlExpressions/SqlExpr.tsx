@@ -38,7 +38,6 @@ const GenAIExplanationDrawer = lazy(() =>
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
-const EDITOR_HEIGHT = 300;
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -69,12 +68,14 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     formatter: formatSQL,
   };
 
-  const initialQuery = `SELECT
-  *
-FROM
-  ${vars[0]}
-LIMIT
-  10`;
+  const initialQuery = `
+    SELECT
+      *
+    FROM
+      ${vars[0]}
+    LIMIT
+      10
+  `;
 
   const styles = useStyles2((theme) => getStyles(theme));
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,7 +282,7 @@ LIMIT
         </AutoSizer>
       </div>
       {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
-        <div className={cx(styles.schemaInspector, { [styles.schemaInspectorOpen]: isSchemaInspectorOpen })}>
+        <div className={styles.schemaInspector}>
           <SchemaInspectorPanel schemas={schemas?.sqlSchemas ?? null} loading={schemasLoading} error={schemasError} />
         </div>
       )}
@@ -332,7 +333,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sqlContainer: css({
     marginTop: theme.spacing(0.5),
   }),
-
   contentContainer: css({
     display: 'grid',
     gap: theme.spacing(1),
@@ -367,18 +367,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     overflow: 'hidden',
     minWidth: 0,
-  }),
-  schemaInspectorOpen: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-  }),
-  schemaFields: css({
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
-    maxHeight: '120px',
-    overflowY: 'auto',
   }),
 });
 
