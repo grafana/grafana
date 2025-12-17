@@ -79,7 +79,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     modalContent: css({
       overflow: 'auto',
       padding: theme.spacing(3, 3, 0, 3),
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(2.5),
       scrollbarWidth: 'thin',
       width: '100%',
 
@@ -91,7 +91,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     modalButtonRow: css({
       background: theme.colors.background.primary,
       position: 'sticky',
-      bottom: 0,
+      bottom: 1,
       paddingTop: theme.spacing(2),
       paddingBottom: theme.spacing(0.5),
       zIndex: 1,
