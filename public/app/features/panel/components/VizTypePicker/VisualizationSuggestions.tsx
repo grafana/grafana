@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
-import { useAsync, useMeasure } from 'react-use';
+import { useAsyncRetry, useMeasure } from 'react-use';
 
 import {
   GrafanaTheme2,
@@ -30,18 +30,18 @@ export interface Props {
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const [fetchSuggestionsCounter, setFetchSuggestionsCounter] = useState(0);
   const {
     value: result,
     loading,
     error,
-  } = useAsync(async () => {
+    retry,
+  } = useAsyncRetry(async () => {
     if (!hasData(data)) {
       return { suggestions: [], hasErrors: false };
     }
 
     return await getAllSuggestions(data);
-  }, [data, fetchSuggestionsCounter]);
+  }, [data]);
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
@@ -87,8 +87,8 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   );
 
   const handleRetry = useCallback(() => {
-    setFetchSuggestionsCounter((prev) => prev + 1);
-  }, []);
+    retry();
+  }, [retry]);
 
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
