@@ -347,17 +347,22 @@ func (m *addPrimaryKeyMigration) SQL(d Dialect) string {
 
 		return statements.String()
 	} else if d.DriverName() == Postgres {
+		quotesCols := make([]string, 0, len(m.uniqueKey.Cols))
+		for _, c := range m.uniqueKey.Cols {
+			quotesCols = append(quotesCols, d.Quote(c))
+		}
+
 		return fmt.Sprintf(`
 		DO $$
 		BEGIN
 			-- Drop the unique constraint if it exists
-			DROP INDEX IF EXISTS "%s";
+			DROP INDEX IF EXISTS %s;
 
 			-- Add primary key if it doesn't already exist
 			IF NOT EXISTS (SELECT 1 FROM pg_index i WHERE indrelid = '%s'::regclass AND indisprimary) THEN
 				ALTER TABLE %s ADD PRIMARY KEY (%s);
 			END IF;
-		END $$;`, m.uniqueKey.XName(m.tableName), m.tableName, m.tableName, strings.Join(m.uniqueKey.Cols, ","))
+		END $$;`, d.Quote(m.uniqueKey.XName(m.tableName)), m.tableName, d.Quote(m.tableName), strings.Join(quotesCols, ","))
 	} else {
 		return ""
 	}

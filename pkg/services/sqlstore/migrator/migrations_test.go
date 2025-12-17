@@ -41,7 +41,7 @@ func TestConvertUniqueKeyToPrimaryKey(t *testing.T) {
 
 					-- Add primary key if it doesn't already exist
 					IF NOT EXISTS (SELECT 1 FROM pg_index i WHERE indrelid = 'file'::regclass AND indisprimary) THEN
-					ALTER TABLE file ADD PRIMARY KEY (path_hash,etag);
+					ALTER TABLE "file" ADD PRIMARY KEY ("path_hash","etag");
 				END IF;
 				END $$;`},
 		},
