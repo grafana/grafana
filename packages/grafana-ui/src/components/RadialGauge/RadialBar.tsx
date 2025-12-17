@@ -3,29 +3,33 @@ import { FieldDisplay } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialGradientMode, RadialShape, RadialGaugeDimensions } from './types';
+import { RadialShape, RadialGaugeDimensions } from './types';
 
 export interface RadialBarProps {
   angle: number;
   angleRange: number;
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
-  glowFilter?: string;
-  gradientMode: RadialGradientMode;
+  gradient?: boolean;
   roundedBars?: boolean;
+  endpointMarker?: 'point' | 'glow';
   shape: RadialShape;
   startAngle: number;
+  glowFilter?: string;
+  endpointMarkerGlowFilter?: string;
 }
 export function RadialBar({
   angle,
   angleRange,
   dimensions,
   fieldDisplay,
-  glowFilter,
-  gradientMode,
+  gradient,
   roundedBars,
+  endpointMarker,
   shape,
   startAngle,
+  glowFilter,
+  endpointMarkerGlowFilter,
 }: RadialBarProps) {
   const theme = useTheme2();
   return (
@@ -36,7 +40,6 @@ export function RadialBar({
         fieldDisplay={fieldDisplay}
         color={theme.colors.action.hover}
         dimensions={dimensions}
-        gradientMode="none"
         roundedBars={roundedBars}
         shape={shape}
         startAngle={startAngle + angle}
@@ -44,15 +47,16 @@ export function RadialBar({
       {/** The colored bar */}
       <RadialArcPath
         arcLengthDeg={angle}
-        color={gradientMode === 'none' ? fieldDisplay.display.color : undefined}
+        color={gradient ? undefined : fieldDisplay.display.color}
         dimensions={dimensions}
         fieldDisplay={fieldDisplay}
-        glowFilter={glowFilter}
-        gradientMode={gradientMode}
+        gradient={gradient}
         roundedBars={roundedBars}
         shape={shape}
-        showGuideDots={roundedBars}
+        endpointMarker={roundedBars ? endpointMarker : undefined}
         startAngle={startAngle}
+        endpointMarkerGlowFilter={endpointMarkerGlowFilter}
+        glowFilter={glowFilter}
       />
     </>
   );

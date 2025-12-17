@@ -112,16 +112,12 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 exports[`RadialGauge color utils buildGradientColors should return gradient colors for fixed color mode in dark theme 1`] = `
 [
   {
-    "color": "#030108",
+    "color": "#210550",
     "percent": 0,
   },
   {
     "color": "#442299",
-    "percent": 0.45,
-  },
-  {
-    "color": "#442299",
-    "percent": 0.55,
+    "percent": 0.33,
   },
   {
     "color": "#ffffff",
@@ -133,19 +129,15 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 exports[`RadialGauge color utils buildGradientColors should return gradient colors for fixed color mode in light theme 1`] = `
 [
   {
-    "color": "#9689ca",
+    "color": "#9181d3",
     "percent": 0,
   },
   {
     "color": "#442299",
-    "percent": 0.45,
+    "percent": 0.33,
   },
   {
-    "color": "#442299",
-    "percent": 0.55,
-  },
-  {
-    "color": "#030108",
+    "color": "#210550",
     "percent": 1,
   },
 ]

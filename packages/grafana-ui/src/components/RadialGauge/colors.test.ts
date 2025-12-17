@@ -6,9 +6,9 @@ import { FieldColorModeId } from '@grafana/schema';
 import {
   buildGradientColors,
   colorAtGradientPercent,
-  getEndpointColors,
+  getBarEndcapColors,
+  getEndpointMarkerColors,
   getGradientCss,
-  getGuideDotColors,
 } from './colors';
 
 export type DeepPartial<T> = {
@@ -49,9 +49,16 @@ describe('RadialGauge color utils', () => {
         },
       });
 
-    it('should return the baseColor if gradientMode is none', () => {
+    it('should return the baseColor if gradient is false-y', () => {
       expect(
-        buildGradientColors('none', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
+        buildGradientColors(false, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
+      ).toEqual([
+        { color: '#FF0000', percent: 0 },
+        { color: '#FF0000', percent: 1 },
+      ]);
+
+      expect(
+        buildGradientColors(undefined, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
       ).toEqual([
         { color: '#FF0000', percent: 0 },
         { color: '#FF0000', percent: 1 },
@@ -59,18 +66,18 @@ describe('RadialGauge color utils', () => {
     });
 
     it('uses the fallback color if no baseColor is set', () => {
-      expect(
-        buildGradientColors('none', createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)))
-      ).toEqual([
-        { color: FALLBACK_COLOR, percent: 0 },
-        { color: FALLBACK_COLOR, percent: 1 },
-      ]);
+      expect(buildGradientColors(false, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)))).toEqual(
+        [
+          { color: FALLBACK_COLOR, percent: 0 },
+          { color: FALLBACK_COLOR, percent: 1 },
+        ]
+      );
     });
 
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
       expect(
         buildGradientColors(
-          'auto',
+          true,
           createTheme(),
           buildFieldDisplay(createField(FieldColorModeId.Thresholds), {
             view: { getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: '#444444' }))) },
@@ -81,19 +88,14 @@ describe('RadialGauge color utils', () => {
 
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
       expect(
-        buildGradientColors(
-          'auto',
-          createTheme(),
-          buildFieldDisplay(createField(FieldColorModeId.Thresholds)),
-          '#FF0000'
-        )
+        buildGradientColors(true, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Thresholds)), '#FF0000')
       ).toMatchSnapshot();
     });
 
     it('should return gradient colors for continuous color modes', () => {
       expect(
         buildGradientColors(
-          'auto',
+          true,
           createTheme(),
           buildFieldDisplay(createField(FieldColorModeId.ContinuousCividis)),
           '#00FF00'
@@ -104,7 +106,7 @@ describe('RadialGauge color utils', () => {
     it.each(['dark', 'light'] as const)('should return gradient colors for by-value color mode in %s theme', (mode) => {
       expect(
         buildGradientColors(
-          'auto',
+          true,
           createTheme({ colors: { mode } }),
           buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues))
         )
@@ -114,7 +116,7 @@ describe('RadialGauge color utils', () => {
     it.each(['dark', 'light'] as const)('should return gradient colors for fixed color mode in %s theme', (mode) => {
       expect(
         buildGradientColors(
-          'auto',
+          true,
           createTheme({ colors: { mode } }),
           buildFieldDisplay(createField(FieldColorModeId.Fixed)),
           '#442299'
@@ -168,14 +170,14 @@ describe('RadialGauge color utils', () => {
     });
   });
 
-  describe('getEndpointColors', () => {
+  describe('getBarEndcapColors', () => {
     it('should return the first and last colors in the gradient', () => {
       const gradient = [
         { color: '#ff0000', percent: 0 },
         { color: '#00ff00', percent: 0.5 },
         { color: '#0000ff', percent: 1 },
       ];
-      const [startColor, endColor] = getEndpointColors(gradient);
+      const [startColor, endColor] = getBarEndcapColors(gradient);
       expect(startColor).toBe('#ff0000');
       expect(endColor).toBe('#0000ff');
     });
@@ -186,22 +188,22 @@ describe('RadialGauge color utils', () => {
         { color: '#00ff00', percent: 0.5 },
         { color: '#0000ff', percent: 1 },
       ];
-      const [startColor, endColor] = getEndpointColors(gradient, 0.25);
+      const [startColor, endColor] = getBarEndcapColors(gradient, 0.25);
       expect(startColor).toBe('#ff0000');
       expect(endColor).toBe('#808000');
     });
 
     it('should handle gradients with only one colors', () => {
       const gradient = [{ color: '#ff0000', percent: 0 }];
-      const [startColor, endColor] = getEndpointColors(gradient);
+      const [startColor, endColor] = getBarEndcapColors(gradient);
       expect(startColor).toBe('#ff0000');
       expect(endColor).toBe('#ff0000');
     });
 
     it('should throw an error when no colors are provided', () => {
       expect(() => {
-        getEndpointColors([]);
-      }).toThrow('getEndpointColors requires at least one color stop');
+        getBarEndcapColors([]);
+      }).toThrow('getBarEndcapColors requires at least one color stop');
     });
   });
 
@@ -227,14 +229,14 @@ describe('RadialGauge color utils', () => {
     });
   });
 
-  describe('getGuideDotColors', () => {
+  describe('getEndpointMarkerColors', () => {
     it('should return contrasting guide dot colors based on the gradient endpoints and percent', () => {
       const gradient = [
         { color: '#000000', percent: 0 },
         { color: '#ffffff', percent: 0.5 },
         { color: '#ffffff', percent: 1 },
       ];
-      const [startDotColor, endDotColor] = getGuideDotColors(gradient, 0.35);
+      const [startDotColor, endDotColor] = getEndpointMarkerColors(gradient, 0.35);
       expect(startDotColor).toBe('#fbfbfb');
       expect(endDotColor).toBe('#111217');
     });

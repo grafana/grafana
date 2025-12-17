@@ -5,7 +5,7 @@ import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialGradientMode, RadialShape, RadialGaugeDimensions } from './types';
+import { RadialShape, RadialGaugeDimensions } from './types';
 import {
   getAngleBetweenSegments,
   getFieldConfigMinMax,
@@ -22,7 +22,7 @@ export interface RadialBarSegmentedProps {
   segmentCount: number;
   segmentSpacing: number;
   shape: RadialShape;
-  gradientMode: RadialGradientMode;
+  gradient?: boolean;
 }
 
 export const RadialBarSegmented = memo(
@@ -32,10 +32,10 @@ export const RadialBarSegmented = memo(
     startAngle,
     angleRange,
     glowFilter,
+    gradient,
     segmentCount,
     segmentSpacing,
     shape,
-    gradientMode,
   }: RadialBarSegmentedProps) => {
     const theme = useTheme2();
 
@@ -53,21 +53,21 @@ export const RadialBarSegmented = memo(
       let segmentColor: string | undefined;
       if (angleValue >= value) {
         segmentColor = theme.colors.action.hover;
-      } else if (gradientMode === 'none') {
+      } else if (!gradient) {
         segmentColor = displayProcessor(angleValue).color ?? FALLBACK_COLOR;
       }
 
       segments.push(
         <RadialArcPath
           key={i}
-          startAngle={segmentAngle}
+          arcLengthDeg={segmentArcLengthDeg}
+          color={segmentColor}
           dimensions={dimensions}
           fieldDisplay={fieldDisplay}
-          color={segmentColor}
-          shape={shape}
           glowFilter={glowFilter}
-          arcLengthDeg={segmentArcLengthDeg}
-          gradientMode={gradientMode}
+          gradient={gradient}
+          shape={shape}
+          startAngle={segmentAngle}
         />
       );
     }

@@ -37,7 +37,7 @@ export function RadialBarPanel({
         width={width}
         height={height}
         barWidthFactor={options.barWidthFactor}
-        gradient={options.effects?.gradient ? 'auto' : 'none'}
+        gradient={options.effects?.gradient}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
         roundedBars={options.barShape === 'rounded'}
@@ -50,6 +50,7 @@ export function RadialBarPanel({
         alignmentFactors={valueProps.alignmentFactors}
         valueManualFontSize={options.text?.valueSize}
         nameManualFontSize={options.text?.titleSize}
+        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
         onClick={menuProps.openMenu}
       />
     );

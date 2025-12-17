@@ -1,3 +1,5 @@
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { RadialGaugeDimensions } from './types';
 
 export interface GlowGradientProps {
@@ -55,5 +57,38 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
         <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
       </g>
     </>
+  );
+}
+
+export function SpotlightGradient({
+  id,
+  dimensions,
+  roundedBars,
+  angle,
+  theme,
+}: {
+  id: string;
+  dimensions: RadialGaugeDimensions;
+  angle: number;
+  roundedBars: boolean;
+  theme: GrafanaTheme2;
+}) {
+  if (theme.isLight) {
+    return null;
+  }
+
+  const angleRadian = ((angle - 90) * Math.PI) / 180;
+
+  let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
+  let y1 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian - 0.2);
+  let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
+  let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+
+  return (
+    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
+      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
+      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
+    </linearGradient>
   );
 }

@@ -13,8 +13,8 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
-import { GlowGradient, MiddleCircleGlow } from './effects';
-import { RadialGradientMode, RadialShape, RadialTextMode } from './types';
+import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
+import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
@@ -25,7 +25,7 @@ export interface RadialGaugeProps {
    * Circle or gauge (partial circle)
    */
   shape?: RadialShape;
-  gradient?: RadialGradientMode;
+  gradient?: boolean;
   /**
    * Bar width is always relative to size of the gauge.
    * But this gives you control over the width relative to size.
@@ -37,6 +37,10 @@ export interface RadialGaugeProps {
   glowCenter?: boolean;
   roundedBars?: boolean;
   thresholdsBar?: boolean;
+  /**
+   * Specify if an endpoint marker should be shown at the end of the bar
+   */
+  endpointMarker?: 'point' | 'glow';
   /**
    * Number of segments depends on size of gauge but this
    * factor 1-10 gives you relative control
@@ -74,7 +78,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     width = 256,
     height = 256,
     shape = 'circle',
-    gradient = 'none',
+    gradient = false,
     barWidthFactor = 0.4,
     glowBar = false,
     glowCenter = false,
@@ -85,6 +89,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
+    endpointMarker,
     onClick,
     values,
   } = props;
@@ -120,7 +125,23 @@ export function RadialGauge(props: RadialGaugeProps) {
       showScaleLabels
     );
 
+    // FIXME: I want to move the ids for these filters into a context which the children
+    // can reference via a hook, rather than passing them down as props
+    const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
+
+    if (endpointMarker === 'glow') {
+      defs.push(
+        <SpotlightGradient
+          key={spotlightGradientId}
+          id={spotlightGradientId}
+          angle={angle + startAngle}
+          dimensions={dimensions}
+          roundedBars={roundedBars}
+          theme={theme}
+        />
+      );
+    }
 
     if (segmentCount > 1) {
       graphics.push(
@@ -134,7 +155,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
           shape={shape}
-          gradientMode={gradient}
+          gradient={gradient}
         />
       );
     } else {
@@ -147,9 +168,11 @@ export function RadialGauge(props: RadialGaugeProps) {
           startAngle={startAngle}
           roundedBars={roundedBars}
           glowFilter={`url(#${glowFilterId})`}
+          endpointMarkerGlowFilter={`url(#${spotlightGradientId})`}
           shape={shape}
-          gradientMode={gradient}
+          gradient={gradient}
           fieldDisplay={displayValue}
+          endpointMarker={endpointMarker}
         />
       );
     }
@@ -210,7 +233,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               roundedBars={roundedBars}
               glowFilter={`url(#${glowFilterId})`}
               shape={shape}
-              gradientMode={gradient}
+              gradient={gradient}
             />
           );
         }

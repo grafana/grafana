@@ -28,6 +28,7 @@ export interface Options extends common.SingleStatBaseOptions {
   barShape: ('flat' | 'rounded');
   barWidthFactor: number;
   effects: GaugePanelEffects;
+  endpointMarker?: ('point' | 'glow' | 'none');
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
@@ -40,6 +41,7 @@ export const defaultOptions: Partial<Options> = {
   barShape: 'flat',
   barWidthFactor: 0.5,
   effects: {},
+  endpointMarker: 'point',
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',

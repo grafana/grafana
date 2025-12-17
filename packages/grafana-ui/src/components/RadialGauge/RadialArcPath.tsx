@@ -1,11 +1,11 @@
-import { useId, memo, HTMLAttributes } from 'react';
+import { useId, memo, HTMLAttributes, ReactElement } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { buildGradientColors, getEndpointColors, getGradientCss, getGuideDotColors } from './colors';
-import { RadialGradientMode, RadialShape, RadialGaugeDimensions } from './types';
+import { buildGradientColors, getBarEndcapColors, getGradientCss, getEndpointMarkerColors } from './colors';
+import { RadialShape, RadialGaugeDimensions } from './types';
 import { drawRadialArcPath, toRad } from './utils';
 
 export interface RadialArcPathPropsBase {
@@ -13,12 +13,13 @@ export interface RadialArcPathPropsBase {
   color?: string;
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
-  glowFilter?: string;
-  gradientMode: RadialGradientMode;
+  gradient?: boolean;
   roundedBars?: boolean;
   shape: RadialShape;
-  showGuideDots?: boolean;
+  endpointMarker?: 'point' | 'glow';
   startAngle: number;
+  glowFilter?: string;
+  endpointMarkerGlowFilter?: string;
 }
 
 interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
@@ -40,27 +41,18 @@ export const RadialArcPath = memo(
     color,
     dimensions,
     fieldDisplay,
-    glowFilter,
-    gradientMode,
+    gradient,
     roundedBars,
     shape,
-    showGuideDots,
+    endpointMarker,
     startAngle: angle,
+    glowFilter,
+    endpointMarkerGlowFilter,
   }: RadialArcPathProps) => {
     const theme = useTheme2();
     const id = useId();
 
-    const gradientStops = buildGradientColors(gradientMode, theme, fieldDisplay, fieldDisplay.display.color);
-
-    let guideDotColors: [string, string] | undefined;
-    let endpointColors: [string, string] | undefined;
-
-    if (showGuideDots && gradientStops.length > 0) {
-      guideDotColors = getGuideDotColors(gradientStops, fieldDisplay.display.percent);
-      if (shape === 'circle') {
-        endpointColors = getEndpointColors(gradientStops, fieldDisplay.display.percent);
-      }
-    }
+    const gradientStops = buildGradientColors(gradient, theme, fieldDisplay, fieldDisplay.display.color);
 
     const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: '100%', height: '100%' };
     if (color) {
@@ -76,12 +68,65 @@ export const RadialArcPath = memo(
     const startRadians = toRad(angle);
     const endRadians = toRad(angle + arcLengthDeg);
 
-    const x1 = centerX + radius * Math.cos(startRadians);
-    const y1 = centerY + radius * Math.sin(startRadians);
-    const x2 = centerX + radius * Math.cos(endRadians);
-    const y2 = centerY + radius * Math.sin(endRadians);
+    const xStart = centerX + radius * Math.cos(startRadians);
+    const yStart = centerY + radius * Math.sin(startRadians);
+    const xEnd = centerX + radius * Math.cos(endRadians);
+    const yEnd = centerY + radius * Math.sin(endRadians);
 
-    const dotRadius = Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS);
+    const dotRadius =
+      endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
+
+    let barEndcapColors: [string | undefined, string | undefined] | undefined;
+    const endpointMarks: ReactElement[] = [];
+    if (endpointMarker && gradientStops.length > 0) {
+      switch (endpointMarker) {
+        case 'point':
+          const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(gradientStops, fieldDisplay.display.percent);
+          if (arcLengthDeg > DOT_START_MIN_ANGLE_DEG) {
+            endpointMarks.push(
+              <circle
+                key="endpoint-marker-start"
+                cx={xStart}
+                cy={yStart}
+                r={dotRadius}
+                fill={pointColorStart}
+                opacity={DOT_OPACITY}
+              />
+            );
+          }
+          endpointMarks.push(
+            <circle
+              key="endpoint-marker-end"
+              cx={xEnd}
+              cy={yEnd}
+              r={dotRadius}
+              fill={pointColorEnd}
+              opacity={DOT_OPACITY}
+            />
+          );
+          break;
+        case 'glow':
+          const xStartMark = centerX + radius * Math.cos(endRadians - 0.2);
+          const yStartMark = centerY + radius * Math.sin(endRadians - 0.2);
+          endpointMarks.push(
+            <path
+              d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
+              fill="none"
+              strokeWidth={barWidth}
+              stroke={endpointMarkerGlowFilter}
+              strokeLinecap={roundedBars ? 'round' : 'butt'}
+              filter={glowFilter}
+            />
+          );
+          break;
+        default:
+          break;
+      }
+
+      if (shape === 'circle') {
+        barEndcapColors = getBarEndcapColors(gradientStops, fieldDisplay.display.percent);
+      }
+    }
 
     return (
       <>
@@ -100,14 +145,13 @@ export const RadialArcPath = memo(
           >
             <div style={bgDivStyle} />
           </foreignObject>
-          {endpointColors && <circle cx={x1} cy={y1} r={barWidth / 2} fill={endpointColors[0]} />}
-          {endpointColors && <circle cx={x2} cy={y2} r={barWidth / 2} fill={endpointColors[1]} />}
+          {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}
+          {barEndcapColors?.[1] && (
+            <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} opacity={0.5} />
+          )}
         </g>
 
-        {guideDotColors && arcLengthDeg > DOT_START_MIN_ANGLE_DEG && (
-          <circle cx={x1} cy={y1} r={dotRadius} fill={guideDotColors[0]} opacity={DOT_OPACITY} />
-        )}
-        {guideDotColors && <circle cx={x2} cy={y2} r={dotRadius} fill={guideDotColors[1]} opacity={DOT_OPACITY} />}
+        {endpointMarks}
       </>
     );
   }

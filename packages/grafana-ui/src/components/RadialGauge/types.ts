@@ -1,4 +1,3 @@
-export type RadialGradientMode = 'none' | 'auto';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 

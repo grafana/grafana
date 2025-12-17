@@ -3,16 +3,16 @@ import tinycolor from 'tinycolor2';
 import { colorManipulator, FALLBACK_COLOR, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { GradientStop, RadialGradientMode, RadialShape } from './types';
+import { GradientStop, RadialShape } from './types';
 import { getFieldConfigMinMax, getFieldDisplayProcessor } from './utils';
 
 export function buildGradientColors(
-  gradientMode: RadialGradientMode,
+  gradient = false,
   theme: GrafanaTheme2,
   fieldDisplay: FieldDisplay,
   baseColor = FALLBACK_COLOR
 ): GradientStop[] {
-  if (gradientMode === 'none') {
+  if (!gradient) {
     return [
       { color: baseColor, percent: 0 },
       { color: baseColor, percent: 1 },
@@ -67,16 +67,14 @@ export function buildGradientColors(
 
   // for fixed colors and other modes, we create a simple two-color gradient
   // we set the highest contrast color second based on the theme.
-  const darkerColor = tinycolor(baseColor).spin(5).darken(35).saturate(20);
+  const darkerColor = tinycolor(baseColor).spin(5).darken(20).saturate(25);
   const lighterColor = tinycolor(baseColor)
     .spin(-5)
     .brighten(theme.isDark ? 30 : 15)
-    .lighten(theme.isDark ? 35 : 15)
-    .desaturate(10);
+    .lighten(theme.isDark ? 35 : 15);
   return [
     { color: theme.isDark ? darkerColor.toString() : lighterColor.toString(), percent: 0 },
-    { color: baseColor, percent: 0.45 },
-    { color: baseColor, percent: 0.55 },
+    { color: baseColor, percent: 0.33 },
     { color: theme.isDark ? lighterColor.toString() : darkerColor.toString(), percent: 1 },
   ];
 }
@@ -138,9 +136,9 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
   return mixed;
 }
 
-export function getEndpointColors(gradientStops: GradientStop[], percent = 1): [string, string] {
+export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): [string, string] {
   if (gradientStops.length === 0) {
-    throw new Error('getEndpointColors requires at least one color stop');
+    throw new Error('getBarEndcapColors requires at least one color stop');
   }
 
   const startColor = gradientStops[0].color;
@@ -173,7 +171,7 @@ const getGuideDotColor = (color: string): string => {
   return colorManipulator.getContrastRatio(darkColor, color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor;
 };
 
-export function getGuideDotColors(gradientStops: GradientStop[], percent = 1): [string, string] {
-  const [startColor, endColor] = getEndpointColors(gradientStops, percent);
+export function getEndpointMarkerColors(gradientStops: GradientStop[], percent = 1): [string, string] {
+  const [startColor, endColor] = getBarEndcapColors(gradientStops, percent);
   return [getGuideDotColor(startColor), getGuideDotColor(endColor)];
 }

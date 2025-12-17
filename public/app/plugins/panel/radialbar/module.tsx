@@ -71,6 +71,22 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       showIf: (options) => options.segmentCount === 1,
     });
 
+    builder.addRadio({
+      path: 'endpointMarker',
+      name: t('radialbar.config.endpoint-marker', 'Endpoint marker'),
+      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode.'),
+      category,
+      defaultValue: defaultOptions.endpointMarker,
+      settings: {
+        options: [
+          { value: 'point', label: t('radialbar.config.endpoint-marker-point', 'Point') },
+          { value: 'glow', label: t('radialbar.config.endpoint-marker-glow', 'Glow') },
+          { value: 'none', label: t('radialbar.config.endpoint-marker-none', 'None') },
+        ],
+      },
+      showIf: (options) => options.barShape === 'rounded' && options.segmentCount === 1,
+    });
+
     builder.addSliderInput({
       path: 'barWidthFactor',
       name: t('radialbar.config.bar-width', 'Bar width'),
