@@ -108,12 +108,6 @@ func TestSessionAccessChecker_Check(t *testing.T) {
 			requester:     &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
 			expectAllow:   false,
 		},
-		{
-			name:          "AccessPolicy identity is always allowed",
-			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeAccessPolicy},
-			expectAllow:   true,
-		},
 	}
 
 	for _, tt := range tests {

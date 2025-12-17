@@ -47,12 +47,6 @@ func TestTokenAccessChecker_Check(t *testing.T) {
 			authInfo:    &identity.StaticRequester{Type: authlib.TypeUser},
 			expectAllow: false,
 		},
-		{
-			name:          "AccessPolicy identity is always allowed",
-			innerResponse: authlib.CheckResponse{Allowed: false},
-			authInfo:      &identity.StaticRequester{Type: authlib.TypeAccessPolicy},
-			expectAllow:   true,
-		},
 	}
 
 	for _, tt := range tests {

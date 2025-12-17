@@ -45,11 +45,6 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 		return apierrors.NewUnauthorized(fmt.Sprintf("failed to get requester: %v", err))
 	}
 
-	// AccessPolicy identities are trusted internal callers
-	if authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy) {
-		return nil
-	}
-
 	// Fill in namespace from identity if not provided
 	if req.Namespace == "" {
 		req.Namespace = requester.GetNamespace()

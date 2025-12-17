@@ -36,11 +36,6 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 		return apierrors.NewUnauthorized("no auth info in context")
 	}
 
-	// AccessPolicy identities are trusted internal callers
-	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) {
-		return nil
-	}
-
 	// Fill in namespace from identity if not provided
 	if req.Namespace == "" {
 		req.Namespace = id.GetNamespace()
