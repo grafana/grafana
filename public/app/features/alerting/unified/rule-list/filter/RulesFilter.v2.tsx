@@ -133,6 +133,30 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
 
   // Auto-apply default search on first load (navigation, not refresh)
   // We use a ref to ensure this only runs once, preventing re-application when dependencies change
+  //
+  // ⚠️ KNOWN LIMITATION: Double-render on initial load with default search
+  //
+  // Using useEffect for auto-applying the default search has a significant drawback:
+  // it fires AFTER the initial render. This means the page renders first without filters
+  // (which may trigger API requests), then the useEffect applies the default filter,
+  // causing a second render that triggers API requests again with the correct filters.
+  //
+  // ALTERNATIVE CONSIDERED: Moving this logic to the routing layer (e.g., React Router loader)
+  // was explored but deferred due to complexity:
+  // 1. Saved searches are loaded asynchronously from UserStorage
+  // 2. The auto-apply logic depends on multiple conditions (feature toggle, first navigation,
+  //    no existing URL search params)
+  // 3. Integrating async data fetching with route loaders would require significant
+  //    architectural changes across the alerting routing configuration
+  //
+  // POTENTIAL FUTURE IMPROVEMENT:
+  // To eliminate the double-render, consider one of these approaches:
+  // - Create a shared context/hook that RuleList can use to delay rendering FilterView
+  //   until the auto-apply decision has been made
+  // - Move saved searches initialization to a route loader using React Router's defer()
+  //   pattern, allowing the component to wait for the data before first render
+  // - Use React Suspense with a promise-based check for default search
+  //
   useEffect(() => {
     // Skip if feature is disabled, still loading, or we've already attempted
     if (!savedSearchesEnabled || savedSearchesLoading || hasAttemptedAutoApplyRef.current) {

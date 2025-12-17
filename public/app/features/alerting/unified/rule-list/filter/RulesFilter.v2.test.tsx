@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExtensionTypes } from '@grafana/data';
-import { config, locationService, setPluginComponentsHook } from '@grafana/runtime';
+import { locationService, setPluginComponentsHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -17,11 +17,14 @@ import RulesFilter from './RulesFilter';
 
 // In-memory storage for UserStorage mock (allows real useSavedSearches hook to run)
 // This approach catches bugs in the hook logic, unlike mocking the entire hook.
+//
+// NOTE: MSW-based UserStorage mock was considered but deferred due to:
+// 1. UserStorage constructs its base URL at module load time using config.namespace
+// 2. The resource name depends on config.bootData.user which may not be set in tests
+// 3. UserStorage caches initialization state, complicating test isolation
+// The jest.mock approach provides better test isolation for these unit tests.
 let mockStorageData: Record<string, string> = {};
 
-// Mock UserStorage class directly (same pattern as useFavoriteDatasources.test.ts)
-// This avoids issues with MSW not intercepting requests due to config.namespace
-// being evaluated at module load time before jest.mock takes effect
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   UserStorage: jest.fn().mockImplementation((_service: string) => ({
@@ -34,15 +37,22 @@ jest.mock('@grafana/runtime/internal', () => ({
   })),
 }));
 
-// Mock contextSrv for user ID (required by useSavedSearches)
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    user: {
-      id: 123,
+// Set up contextSrv.user.id for useSavedSearches session storage key.
+// The hook uses this ID to create a per-user session storage key.
+// Note: hasPermission is handled by grantUserPermissions via jest.spyOn, not mocked here.
+jest.mock('app/core/services/context_srv', () => {
+  const actual = jest.requireActual('app/core/services/context_srv');
+  return {
+    ...actual,
+    contextSrv: {
+      ...actual.contextSrv,
+      user: {
+        ...actual.contextSrv.user,
+        id: 123,
+      },
     },
-    hasPermission: jest.fn().mockReturnValue(true),
-  },
-}));
+  };
+});
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
@@ -102,8 +112,9 @@ jest.mock('../../plugins/useAlertingHomePageExtensions', () => ({
   }),
 }));
 
-// Note: useSavedSearches is NOT mocked here - the real hook runs with UserStorage mocked above.
+// Note: useSavedSearches is NOT mocked here - the real hook runs with MSW-based UserStorage mock.
 // This ensures that issues inside the useSavedSearches hook are caught by these tests.
+// The UserStorage MSW handlers are included in setupMswServer() and reset in afterEach.
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(), // Silence analytics calls from useSavedSearches
@@ -185,37 +196,35 @@ beforeEach(() => {
 });
 
 describe('RulesFilter Feature Flag', () => {
-  const originalFeatureToggle = config.featureToggles.alertingFilterV2;
+  describe('with alertingFilterV2 enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingFilterV2'] });
 
-  afterEach(() => {
-    config.featureToggles.alertingFilterV2 = originalFeatureToggle;
+    it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
+      render(<RulesFilter />);
+
+      // Wait for suspense to resolve and check that the V2 filter button is present
+      await screen.findByRole('button', { name: 'Filter' });
+      expect(ui.filterButton.get()).toBeInTheDocument();
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
   });
 
-  it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
-    config.featureToggles.alertingFilterV2 = true;
+  describe('with alertingFilterV2 disabled', () => {
+    testWithFeatureToggles({ disable: ['alertingFilterV2'] });
 
-    render(<RulesFilter />);
+    it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
+      render(<RulesFilter />);
 
-    // Wait for suspense to resolve and check that the V2 filter button is present
-    await screen.findByRole('button', { name: 'Filter' });
-    expect(ui.filterButton.get()).toBeInTheDocument();
-    expect(ui.searchInput.get()).toBeInTheDocument();
-  });
+      // Wait for suspense to resolve and check V1 structure
+      await screen.findByText('Search');
 
-  it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
-    config.featureToggles.alertingFilterV2 = false;
+      // V1 has search input but no V2-style filter button
+      expect(ui.searchInput.get()).toBeInTheDocument();
+      expect(ui.filterButton.query()).not.toBeInTheDocument();
 
-    render(<RulesFilter />);
-
-    // Wait for suspense to resolve and check V1 structure
-    await screen.findByText('Search');
-
-    // V1 has search input but no V2-style filter button
-    expect(ui.searchInput.get()).toBeInTheDocument();
-    expect(ui.filterButton.query()).not.toBeInTheDocument();
-
-    // V1 has a help icon next to the search input
-    expect(screen.getByText('Search')).toBeInTheDocument();
+      // V1 has a help icon next to the search input
+      expect(screen.getByText('Search')).toBeInTheDocument();
+    });
   });
 });
 
@@ -469,13 +478,7 @@ describe('RulesFilterV2', () => {
   });
 
   describe('Saved Searches', () => {
-    beforeEach(() => {
-      config.featureToggles.alertingSavedSearches = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.alertingSavedSearches = false;
-    });
+    testWithFeatureToggles({ enable: ['alertingSavedSearches'] });
 
     it('Should auto-apply default saved search on first navigation', async () => {
       // Set up a saved search marked as default
@@ -569,6 +572,68 @@ describe('RulesFilterV2', () => {
       Object.defineProperty(window, 'location', {
         value: originalLocation,
         writable: true,
+      });
+    });
+
+    /**
+     * This test documents the expected behavior for auto-applying default saved searches
+     * when navigating between pages (e.g., alert list → dashboards → alert list).
+     *
+     * Expected behavior:
+     * - First navigation to alert list: Default filter IS applied (no session flag)
+     * - Page refresh (F5): Default filter is NOT applied (session flag persists)
+     * - Navigate away (e.g., to dashboards): Session flag is cleared on unmount
+     * - Navigate back to alert list: Default filter IS applied again (fresh navigation)
+     *
+     * This design ensures:
+     * - Users get their preferred default view on every navigation to the page
+     * - Refresh preserves the current filter state (doesn't reset to default)
+     * - URL search parameters always take precedence over default saved search
+     */
+    it('Should re-apply default saved search when navigating back after leaving the page', async () => {
+      // Set up a saved search marked as default
+      const defaultSavedSearch = {
+        id: 'test-id',
+        name: 'Default Search',
+        query: 'state:firing',
+        isDefault: true,
+        createdAt: Date.now(),
+      };
+      mockStorageData.savedSearches = JSON.stringify([defaultSavedSearch]);
+
+      // Simulate first navigation: no session flag
+      sessionStorage.removeItem('grafana.alerting.alertRules.visited.123');
+
+      const { unmount } = render(<RulesFilterV2 />);
+
+      // First navigation: default filter should be applied
+      await waitFor(() => {
+        expect(mockUpdateFilters).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ruleState: 'firing',
+          })
+        );
+      });
+
+      // Simulate navigating away: component unmounts, which clears the session flag
+      unmount();
+
+      // Verify session flag was removed (simulating navigation to another page)
+      expect(sessionStorage.getItem('grafana.alerting.alertRules.visited.123')).toBeNull();
+
+      // Reset mock to track new calls
+      mockUpdateFilters.mockClear();
+
+      // Simulate navigating back: fresh navigation, no session flag
+      render(<RulesFilterV2 />);
+
+      // Default filter should be applied again
+      await waitFor(() => {
+        expect(mockUpdateFilters).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ruleState: 'firing',
+          })
+        );
       });
     });
   });

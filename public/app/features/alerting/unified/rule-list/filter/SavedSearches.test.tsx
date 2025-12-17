@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byPlaceholderText, byRole, byText } from 'testing-library-selector';
 
 import { SavedSearches } from './SavedSearches';
@@ -23,11 +22,11 @@ const ui = {
   applyButtons: byRole('button', { name: /apply this search/i }),
   actionMenuButtons: byRole('button', { name: /actions/i }),
   deleteButton: byRole('button', { name: /delete/i }),
-  // Menu items
-  setAsDefaultMenuItem: byText(/set as default/i),
-  removeDefaultMenuItem: byText(/remove default/i),
-  renameMenuItem: byText(/rename/i),
-  deleteMenuItem: byText(/^delete$/i),
+  // Menu items (using byRole for proper accessibility testing)
+  setAsDefaultMenuItem: byRole('menuitem', { name: /set as default/i }),
+  removeDefaultMenuItem: byRole('menuitem', { name: /remove default/i }),
+  renameMenuItem: byRole('menuitem', { name: /rename/i }),
+  deleteMenuItem: byRole('menuitem', { name: /^delete$/i }),
   // Messages
   emptyStateMessage: byText(/no saved searches/i),
   nameRequiredError: byText(/name is required/i),
@@ -70,9 +69,9 @@ const defaultProps = {
 
 function setup(props: Partial<typeof defaultProps> = {}) {
   const mergedProps = { ...defaultProps, ...props };
-  const user = userEvent.setup();
-  const utils = render(<SavedSearches {...mergedProps} />);
-  return { user, ...utils, props: mergedProps };
+  // render from test/test-utils provides the user object for interactions
+  const view = render(<SavedSearches {...mergedProps} />);
+  return { ...view, props: mergedProps };
 }
 
 describe('SavedSearches', () => {
