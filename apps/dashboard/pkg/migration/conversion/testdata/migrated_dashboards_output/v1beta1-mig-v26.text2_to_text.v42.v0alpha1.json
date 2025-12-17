@@ -27,6 +27,7 @@
     "links": [],
     "panels": [
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "apiVersion": "v1",
           "type": "prometheus",
@@ -47,6 +48,7 @@
         "type": "text"
       },
       {
+        "autoMigrateFrom": "text",
         "content": "# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
         "datasource": {
           "apiVersion": "v1",
@@ -69,6 +71,7 @@
         "type": "text"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "apiVersion": "v1",
           "type": "prometheus",

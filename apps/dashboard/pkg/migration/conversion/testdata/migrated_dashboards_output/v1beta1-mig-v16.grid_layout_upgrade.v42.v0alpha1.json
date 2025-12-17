@@ -306,6 +306,7 @@
         "type": "row"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "apiVersion": "v1",
           "type": "prometheus",

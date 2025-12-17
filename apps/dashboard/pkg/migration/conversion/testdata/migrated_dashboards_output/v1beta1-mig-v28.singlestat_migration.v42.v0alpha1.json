@@ -372,6 +372,7 @@
         "type": "stat"
       },
       {
+        "autoMigrateFrom": "text",
         "datasource": {
           "type": "prometheus"
         },

@@ -29,6 +29,7 @@
   ],
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -87,6 +88,7 @@
       "type": "row"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -117,6 +119,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -258,6 +261,7 @@
       "type": "logs"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -632,6 +636,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",

@@ -23,6 +23,7 @@
   "liveNow": false,
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },

@@ -21,11 +21,13 @@
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "id": 1,
       "title": "Text2 Panel",
       "type": "text"
     },
     {
+      "autoMigrateFrom": "text",
       "content": "# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
       "id": 2,
       "mode": "markdown",
@@ -33,6 +35,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "text",
       "id": 3,
       "options": {
         "content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",

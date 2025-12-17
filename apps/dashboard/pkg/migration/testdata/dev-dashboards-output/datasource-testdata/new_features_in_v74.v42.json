@@ -20,6 +20,7 @@
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "apiVersion": "v1",
         "type": "grafana-testdata-datasource",
@@ -434,6 +435,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -919,6 +921,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -1206,6 +1209,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -1883,6 +1887,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -2057,6 +2062,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -2273,6 +2279,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },

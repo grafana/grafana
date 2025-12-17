@@ -51,6 +51,7 @@
   ],
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 3,
         "w": 12,
@@ -151,6 +152,7 @@
       "type": "geomap"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 3,
         "w": 12,

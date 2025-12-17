@@ -165,6 +165,7 @@
       "type": "row"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 4,
         "w": 16,

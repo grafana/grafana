@@ -290,6 +290,8 @@
       }
     },
     {
+      "autoMigrateFrom": "text",
+      "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -300,14 +302,13 @@
         "y": 0
       },
       "id": 6,
+      "mode": "markdown",
       "options": {
         "code": {
           "language": "plaintext",
           "showLineNumbers": false,
           "showMiniMap": false
-        },
-        "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
-        "mode": "markdown"
+        }
       },
       "pluginVersion": "11.0.0-pre",
       "targets": [
@@ -425,6 +426,7 @@
       }
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -664,6 +666,7 @@
       }
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -696,6 +699,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -805,6 +809,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -985,6 +990,7 @@
       "type": "stat"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -1069,6 +1075,7 @@
       "type": "piechart"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -1244,6 +1251,7 @@
       "valueName": "total"
     },
     {
+      "autoMigrateFrom": "text",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },

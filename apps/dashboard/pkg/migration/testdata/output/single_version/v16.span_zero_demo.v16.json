@@ -29,6 +29,7 @@
   ],
   "panels": [
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 3,
         "w": 24,
@@ -57,6 +58,7 @@
       "type": "row"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -72,6 +74,7 @@
       "type": "text"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -186,6 +189,7 @@
       "type": "logs"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -481,6 +485,7 @@
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 7,
         "w": 8,

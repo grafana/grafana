@@ -140,6 +140,7 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "text",
       "gridPos": {
         "h": 8,
         "w": 12,
