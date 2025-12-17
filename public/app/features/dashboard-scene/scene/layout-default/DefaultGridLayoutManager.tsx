@@ -695,7 +695,7 @@ function getStyles(theme: GrafanaTheme2) {
       // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {
         flexGrow: `0 !important`,
-        minHeight: '1px',
+        minHeight: 1,
       },
       ...dashboardCanvasAddButtonHoverStyles,
     }),
