@@ -132,7 +132,6 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   showIllustrations={true}
                   showPluginState={false}
                   showTags={false}
-                  data={props.data}
                 />
               ))}
           </Grid>
