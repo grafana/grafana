@@ -169,7 +169,7 @@ async function initRudderstackBackend() {
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
       sdkUrl: config.rudderstackSdkUrl,
-      configUrl: configUrl,
+      configUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,
     })
