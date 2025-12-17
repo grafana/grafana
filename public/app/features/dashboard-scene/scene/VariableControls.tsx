@@ -21,7 +21,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
 
   // Get visible variables for drilldown layout
-  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
