@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Abrir enlace externo"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Más",
       "new-menu": {
@@ -2335,7 +2342,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3705,6 +3714,10 @@
       "clear": "Borrar la búsqueda y los filtros",
       "text": "No se han encontrado resultados para tu consulta"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -4781,6 +4794,8 @@
       "remove": "Eliminar {{typeName}}",
       "row-title": "",
       "switch-layout": "Cambiar diseño",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4813,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valores separados por coma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5089,6 +5103,14 @@
         "layout": "Diseño"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5117,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
       "menu-use-library-panel": "Usar panel de la librería",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5461,6 +5484,12 @@
         "label": "Editar",
         "tooltip": "Entrar en modo de edición"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Hacer editable",
         "tooltip": "Este panel de control se ha marcado como de solo lectura"
@@ -5481,14 +5510,6 @@
         "discard-panel-new": "Descartar panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema del dashboard v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar en modo de edición"
-          },
-          "exit": {
-            "label": "Salir del modo de edición"
-          }
         },
         "enter-edit-mode": {
           "label": "Hacer editable",
@@ -5887,6 +5908,17 @@
       "label-value": "Valor",
       "placeholder-your-metric-prefix": "Tu prefijo métrico"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
       "name-values-separated-comma": "Valores separados por comas",
@@ -5929,13 +5961,25 @@
       "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar panel",
         "view-panel": "Ver panel"
       },
       "title": {
         "dashboard": "Panel de control",
-        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?"
+        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6108,7 +6152,10 @@
       "no-data-found": "No se han encontrado datos"
     },
     "inspect-json-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcula dinámicamente el intervalo dividiendo el intervalo de tiempo por el recuento especificado",
@@ -6258,12 +6305,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
+      "description-regex-apply-to": "",
       "label-data-source": "Fuente de datos",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Ordenar opciones estáticas",
       "label-target-data-source": "Fuente de datos de destino",
       "label-use-static-options": "Usar opciones estáticas",
       "name-regex": "RegEx",
       "query-options": "Opciones de consulta",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opciones de selección",
       "static-options-legend": "Opciones estáticas"
     },
@@ -8806,6 +8861,13 @@
       "aria-label-default": "Elegir un color",
       "aria-label-selected-color": "{{colorLabel}} color"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Eliminar",
       "cancel": "Cancelar",
@@ -9003,6 +9065,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Contraer todas las filas",
       "aria-label-expand-all": "Expandir todas las filas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar fila expandida",
       "tooltip-collapse-all": "Contraer todas las filas",
       "tooltip-expand-all": "Expandir todas las filas"
@@ -10674,7 +10738,6 @@
       "title": "Nuevo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nuevo panel de control"
     },
     "new-folder": {
@@ -11356,6 +11419,12 @@
         "latestReleaseDate": "Fecha último lanzamiento:",
         "latestVersion": "Versión más reciente",
         "license": "Licencia",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Comunicar un problema",
         "reportAbuse": "",
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",
@@ -11808,7 +11877,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade estos ajustes a tu archivo custom.ini para habilitar las funciones necesarias:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -11818,7 +11887,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Configurar esta conexión podría causar una interrupción temporal"
     },
     "getting-started-page": {
-      "header": "Aprovisionamiento",
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
     },
     "git": {
@@ -12404,13 +12472,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,7 +12652,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",

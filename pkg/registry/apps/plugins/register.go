@@ -6,12 +6,12 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
 var (
@@ -34,21 +34,16 @@ func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClien
 	}
 
 	coreProvider := meta.NewCoreProvider()
-	cloudProvider := meta.NewCloudProvider(grafanaComAPIURL)
+	cloudProvider := meta.NewCatalogProvider(grafanaComAPIURL)
 	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
 
-	i, err := pluginsapp.ProvideAppInstaller(metaProviderManager)
+	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
+	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
 	if err != nil {
 		return nil, err
 	}
 
-	i.WithAccessChecker(accessClient)
-
 	return &AppInstaller{
 		PluginAppInstaller: i,
 	}, nil
-}
-
-func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return pluginsapp.GetAuthorizer()
 }

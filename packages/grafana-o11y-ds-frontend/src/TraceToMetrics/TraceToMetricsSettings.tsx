@@ -35,6 +35,10 @@ export interface TraceToMetricsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToMetricsData> {}
 
 export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
+  const supportedDataSourceTypes = [
+    'prometheus',
+    'victoriametrics-metrics-datasource', // external
+  ];
   const styles = useStyles2(getStyles);
 
   return (
@@ -47,10 +51,10 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         >
           <DataSourcePicker
             inputId="trace-to-metrics-data-source-picker"
-            pluginId="prometheus"
             current={options.jsonData.tracesToMetrics?.datasourceUid}
             noDefault={true}
             width={40}
+            filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
             onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,

@@ -198,5 +198,11 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}
 	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
 
+	mg.AddMigration("Add IDX_resource_history_key_path index", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"key_path"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_key_path",
+	}))
+
 	return marker
 }

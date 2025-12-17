@@ -303,5 +303,10 @@
     "title": "V3 No-Op Migration - but tests ensuring panel IDs are unique",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

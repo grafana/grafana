@@ -309,10 +309,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -988,6 +984,11 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
+  * Enables recently viewed dashboards section in the browsing dashboard page
+  * @default false
+  */
+  recentlyViewedDashboards?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1180,9 +1181,19 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
+  /**
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchRawDSLQuery?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false

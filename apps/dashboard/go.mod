@@ -9,6 +9,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.2

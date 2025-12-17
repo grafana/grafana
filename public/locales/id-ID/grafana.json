@@ -2224,6 +2224,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Buka tautan eksternal"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Lebih banyak",
       "new-menu": {
@@ -2327,7 +2334,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3689,6 +3698,10 @@
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_other": "",
@@ -4762,6 +4775,8 @@
       "remove": "Hapus {{typeName}}",
       "row-title": "",
       "switch-layout": "Ganti tata letak",
+      "switch-layout-row": "",
+      "switch-layout-tab": "",
       "tab-title": ""
     },
     "edit-pane": {
@@ -4794,8 +4809,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Nilai dipisahkan dengan koma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -5070,6 +5084,14 @@
         "layout": "Tata Letak"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5098,6 +5120,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurasikan",
       "menu-use-library-panel": "Gunakan panel pustaka",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5441,6 +5464,12 @@
         "label": "Edit",
         "tooltip": "Masuk ke mode edit"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Jadikan dapat diedit",
         "tooltip": "Dasbor ini ditandai sebagai hanya baca"
@@ -5461,14 +5490,6 @@
         "discard-panel-new": "Buang panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit skema dasbor v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Masuk ke mode edit"
-          },
-          "exit": {
-            "label": "Keluar dari mode edit"
-          }
         },
         "enter-edit-mode": {
           "label": "Jadikan dapat diedit",
@@ -5866,6 +5887,17 @@
       "label-value": "Nilai",
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
+    "conversion-warning-banner": {
+      "detail-conditional": "",
+      "detail-grids": "",
+      "detail-tabs": "",
+      "details": "",
+      "message": "",
+      "read-less": "",
+      "read-more": "",
+      "recommendation": "",
+      "save-warning": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
@@ -5908,13 +5940,25 @@
       "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Edit panel",
         "view-panel": "Lihat panel"
       },
       "title": {
         "dashboard": "Dasbor",
-        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?"
+        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6087,7 +6131,10 @@
       "no-data-found": "Tidak ada data yang ditemukan"
     },
     "inspect-json-tab": {
-      "apply": "Terapkan"
+      "apply": "Terapkan",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Menghitung interval secara dinamis dengan membagi rentang waktu dengan jumlah yang ditentukan",
@@ -6236,12 +6283,20 @@
     "query-variable-editor-form": {
       "description-examples": "",
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
+      "description-regex-apply-to": "",
       "label-data-source": "Sumber data",
+      "label-regex-apply-to": "",
       "label-static-options-sort": "Urutan opsi statis",
       "label-target-data-source": "Sumber data target",
       "label-use-static-options": "Gunakan opsi statis",
       "name-regex": "Regex",
       "query-options": "Opsi kueri",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "",
+          "value": ""
+        }
+      },
       "selection-options": "Opsi pemilihan",
       "static-options-legend": "Opsi statis"
     },
@@ -8771,6 +8826,13 @@
       "aria-label-default": "Pilih warna",
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Hapus",
       "cancel": "Batalkan",
@@ -8968,6 +9030,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Ciutkan semua baris",
       "aria-label-expand-all": "Perluas semua baris",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
@@ -10631,7 +10695,6 @@
       "title": "Baru"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Dasbor baru"
     },
     "new-folder": {
@@ -11310,6 +11373,12 @@
         "latestReleaseDate": "Tanggal rilis terbaru:",
         "latestVersion": "Versi Terbaru",
         "license": "Lisensi",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Kemukakan masalah",
         "reportAbuse": "",
         "reportAbuseTooltip": "Laporkan masalah yang terkait dengan plugin jahat atau berbahaya langsung ke Grafana Labs.",
@@ -11757,7 +11826,7 @@
       "modal-title-set-up-public-access": "Atur akses publik",
       "modal-title-set-up-required-features": "Atur fitur yang diwajibkan",
       "step-description-copy-url": "Dari output ngrok, salin URL penerusan https:// yang terlihat seperti ini:",
-      "step-description-enable-feature-toggles": "Tambahkan pengaturan ini ke file custom.ini Anda untuk mengaktifkan fitur yang diperlukan:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Jalankan perintah ini untuk membuat tunnel aman ke Grafana lokal Anda:",
       "step-description-update-grafana-config": "Tambahkan ini ke file custom.ini Anda, ganti URL dengan URL ngrok Anda yang sebenarnya:",
       "step-title-copy-url": "Salin URL publik Anda",
@@ -11767,7 +11836,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Mengatur koneksi ini dapat menyebabkan pemadaman sementara"
     },
     "getting-started-page": {
-      "header": "Penyediaan",
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
     },
     "git": {
@@ -12352,13 +12420,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12531,7 +12598,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Impor",
       "new": "Baru",
       "new-dashboard": "Dasbor baru",

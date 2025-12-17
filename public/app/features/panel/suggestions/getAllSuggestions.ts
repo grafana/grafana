@@ -17,35 +17,31 @@ import { panelsToCheckFirst } from './consts';
 /**
  * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
  */
-let _pluginCache: PanelPlugin[] | null = null;
 async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
-  if (!_pluginCache) {
-    _pluginCache = [];
+  // list of plugins to load is determined by the feature flag
+  const pluginIds: string[] = config.featureToggles.externalVizSuggestions
+    ? getAllPanelPluginMeta()
+        .filter((panel) => panel.suggestions)
+        .map((m) => m.id)
+    : panelsToCheckFirst;
 
-    // list of plugins to load is determined by the feature flag
-    const pluginIds: string[] = config.featureToggles.externalVizSuggestions
-      ? getAllPanelPluginMeta()
-          .filter((panel) => panel.suggestions)
-          .map((m) => m.id)
-      : panelsToCheckFirst;
+  // import the plugins in parallel using Promise.allSettled
+  const plugins: PanelPlugin[] = [];
+  const settledPromises = await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)));
+  for (let i = 0; i < settledPromises.length; i++) {
+    const settled = settledPromises[i];
 
-    // import the plugins in parallel using Promise.allSettled
-    const settledPromises = await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)));
-    for (let i = 0; i < settledPromises.length; i++) {
-      const settled = settledPromises[i];
-
-      if (settled.status === 'fulfilled') {
-        _pluginCache.push(settled.value);
-      }
-      // TODO: do we want to somehow log if there were errors loading some of the plugins?
+    if (settled.status === 'fulfilled') {
+      plugins.push(settled.value);
     }
+    // TODO: do we want to somehow log if there were errors loading some of the plugins?
   }
 
-  if (_pluginCache.length === 0) {
+  if (plugins.length === 0) {
     throw new Error('No panel plugins with visualization suggestions found');
   }
 
-  return _pluginCache;
+  return plugins;
 }
 
 /**
@@ -83,7 +79,7 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
     if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
       return -1;
     }
-    const mappedB = mapPreferredVisualisationTypeToPlugin(a.pluginId);
+    const mappedB = mapPreferredVisualisationTypeToPlugin(b.pluginId);
     if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
       return 1;
     }
@@ -101,9 +97,8 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
 export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
   const dataSummary = getPanelDataSummary(data?.series);
   const list: PanelPluginVisualizationSuggestion[] = [];
-  const plugins = await getPanelsWithSuggestions();
 
-  for (const plugin of plugins) {
+  for (const plugin of await getPanelsWithSuggestions()) {
     const suggestions = plugin.getSuggestions(dataSummary);
     if (suggestions) {
       list.push(...suggestions);

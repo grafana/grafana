@@ -298,8 +298,13 @@ func NewMapperRegistry() MapperRegistry {
 			},
 		},
 		"plugins.grafana.app": {
-			"plugins":     newResourceTranslation("plugins.plugins", "uid", false, nil),
-			"pluginsmeta": newResourceTranslation("plugins.pluginsmeta", "uid", false, nil),
+			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
+			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+		},
+		"advisor.grafana.app": {
+			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
+			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
+			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
 	})
 

@@ -35,7 +35,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -89,7 +89,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -309,7 +309,7 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -428,7 +428,7 @@ func setupTestConversionScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	scheme := runtime.NewScheme()
 	err := RegisterConversions(scheme, dsProvider, leProvider)
@@ -527,7 +527,7 @@ func TestConversionMetrics(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -694,7 +694,7 @@ func TestConversionMetricsWrapper(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -864,7 +864,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 			// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 			leProvider := migrationtestutil.NewTestLibraryElementProvider()
-			migration.Initialize(dsProvider, leProvider)
+			migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -910,7 +910,7 @@ func TestConversionLogging(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -1003,7 +1003,7 @@ func TestConversionLogLevels(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -1076,7 +1076,7 @@ func TestConversionLoggingFields(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields

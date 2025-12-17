@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAsync, useMeasure } from 'react-use';
 
 import {
@@ -30,7 +30,17 @@ export interface Props {
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions, loading, error } = useAsync(() => getAllSuggestions(data), [data]);
+  const {
+    value: suggestions,
+    loading,
+    error,
+  } = useAsync(async () => {
+    if (!hasData(data)) {
+      return [];
+    }
+
+    return await getAllSuggestions(data);
+  }, [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
@@ -89,7 +99,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className={styles.loadingContainer}>
         <Spinner size="xxl" />
@@ -120,16 +130,12 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     );
   }
 
-  if (!data) {
-    return null;
-  }
-
   return (
     <div className={styles.grid}>
       {isNewVizSuggestionsEnabled
-        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
-            <>
-              <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
+        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
+            <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
+              <div className={styles.vizTypeHeader}>
                 <Text variant="body" weight="medium">
                   {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
                   {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
@@ -141,10 +147,21 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                   <div
                     key={suggestion.hash}
                     className={styles.cardContainer}
+                    tabIndex={0}
+                    role="button"
+                    aria-pressed={isCardSelected}
+                    onKeyDown={(ev) => {
+                      if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
+                      }
+                    }}
                     ref={index === 0 ? firstCardRef : undefined}
                   >
                     {isCardSelected && (
                       <Button
+                        // rather than allow direct focus, we handle ketboard events in the card.
+                        tabIndex={-1}
                         variant="primary"
                         size={'md'}
                         className={styles.applySuggestionButton}
@@ -168,13 +185,12 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       suggestion={suggestion}
                       width={width}
                       isSelected={isCardSelected}
-                      tabIndex={index}
                       onClick={() => applySuggestion(suggestion, true)}
                     />
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))
         : suggestions?.map((suggestion, index) => (
             <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>

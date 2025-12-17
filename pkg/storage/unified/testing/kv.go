@@ -28,6 +28,10 @@ const (
 	TestKVUnixTimestamp  = "unix timestamp"
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
+
+	// Use `eventsSection` as the section for the tests, as the sqlkv implementation
+	// needs a real section to determine which table to use.
+	testSection = "unified/events"
 )
 
 // NewKVFunc is a function that creates a new KV instance for testing
@@ -35,7 +39,8 @@ type NewKVFunc func(ctx context.Context) resource.KV
 
 // KVTestOptions configures which tests to run
 type KVTestOptions struct {
-	NSPrefix string // namespace prefix for isolation
+	SkipTests map[string]bool
+	NSPrefix  string // namespace prefix for isolation
 }
 
 // GenerateRandomKVPrefix creates a random namespace prefix for test isolation
@@ -72,23 +77,32 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 	}
 
 	for _, tc := range cases {
+		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
+			t.Logf("Skipping test: %s", tc.name)
+			continue
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			tc.fn(t, newKV(context.Background()), opts.NSPrefix)
 		})
 	}
 }
 
+func prefixKey(nsPrefix, key string) string {
+	return nsPrefix + "/" + key
+}
+
 func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-get"
 
 	t.Run("get existing key", func(t *testing.T) {
 		// First save a key
+		existingKey := prefixKey(nsPrefix, "existing-key")
 		testValue := "test value for get"
-		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader(testValue))
+		saveKVHelper(t, kv, ctx, testSection, existingKey, strings.NewReader(testValue))
 
 		// Now get it
-		reader, err := kv.Get(ctx, section, "existing-key")
+		reader, err := kv.Get(ctx, testSection, existingKey)
 		require.NoError(t, err)
 
 		// Read the value
@@ -102,15 +116,21 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
-		_, err := kv.Get(ctx, section, "non-existent-key")
+		_, err := kv.Get(ctx, testSection, prefixKey(nsPrefix, "non-existent-key"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("get with empty section", func(t *testing.T) {
-		_, err := kv.Get(ctx, "", "some-key")
+		_, err := kv.Get(ctx, "", prefixKey(nsPrefix, "some-key"))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("get with empty key", func(t *testing.T) {
+		_, err := kv.Get(ctx, testSection, "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "key is required")
 	})
 }
 
@@ -192,36 +212,42 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-delete"
 
 	t.Run("delete existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "delete-key", strings.NewReader("delete me"))
+		deleteKey := prefixKey(nsPrefix, "delete-key")
+		saveKVHelper(t, kv, ctx, testSection, deleteKey, strings.NewReader("delete me"))
 
 		// Verify it exists
-		_, err := kv.Get(ctx, section, "delete-key")
+		_, err := kv.Get(ctx, testSection, deleteKey)
 		require.NoError(t, err)
 
 		// Delete it
-		err = kv.Delete(ctx, section, "delete-key")
+		err = kv.Delete(ctx, testSection, deleteKey)
 		require.NoError(t, err)
 
 		// Verify it's gone
-		_, err = kv.Get(ctx, section, "delete-key")
+		_, err = kv.Get(ctx, testSection, deleteKey)
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("delete non-existent key", func(t *testing.T) {
-		err := kv.Delete(ctx, section, "non-existent-delete-key")
+		err := kv.Delete(ctx, testSection, prefixKey(nsPrefix, "non-existent-delete-key"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("delete with empty section", func(t *testing.T) {
-		err := kv.Delete(ctx, "", "some-key")
+		err := kv.Delete(ctx, "", prefixKey(nsPrefix, "some-key"))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("delete with empty key", func(t *testing.T) {
+		err := kv.Delete(ctx, testSection, "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "key is required")
 	})
 }
 
@@ -794,6 +820,19 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
 func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, key string, value io.Reader) {
 	t.Helper()
+
+	// TODO: remove this check once the sqlkv implementation supports `Save`.
+	type testingSaver interface {
+		TestingSave(context.Context, string, []byte) error
+	}
+
+	if saver, ok := kv.(testingSaver); ok {
+		blob, err := io.ReadAll(value)
+		require.NoError(t, err)
+		require.NoError(t, saver.TestingSave(ctx, key, blob))
+		return
+	}
+
 	writer, err := kv.Save(ctx, section, key)
 	require.NoError(t, err)
 	_, err = io.Copy(writer, value)
