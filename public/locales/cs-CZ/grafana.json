@@ -2248,6 +2248,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Otevřít externí odkaz"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Další",
       "new-menu": {
@@ -4859,8 +4866,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Hodnoty oddělené čárkou"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filtr názvu",
@@ -11505,6 +11511,12 @@
         "latestReleaseDate": "Nejnovější datum vydání:",
         "latestVersion": "Poslední verze",
         "license": "Licence",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Nahlásit problém",
         "reportAbuse": "",
         "reportAbuseTooltip": "Nahlaste problémy související se škodlivými pluginy přímo společnosti Grafana Labs.",

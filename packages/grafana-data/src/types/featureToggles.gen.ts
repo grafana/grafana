@@ -373,6 +373,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
+  /**
   * Enables viewing non-applicable drilldowns on a panel level
   */
   perPanelNonApplicableDrilldowns?: boolean;

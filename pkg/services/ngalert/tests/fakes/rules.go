@@ -2,6 +2,7 @@ package fakes
 
 import (
 	"context"
+	"maps"
 	"math/rand"
 	"slices"
 	"strings"
@@ -610,6 +611,30 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	}
 
 	return f.History[guid], nil
+}
+
+func (f *RuleStore) GetAlertRuleVersionFolders(_ context.Context, orgID int64, guid string) ([]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	q := GenericRecordedQuery{
+		Name:   "GetAlertRuleVersionFolders",
+		Params: []any{orgID, guid},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+
+	folderSet := make(map[string]struct{})
+	for _, rule := range f.History[guid] {
+		folderSet[rule.NamespaceUID] = struct{}{}
+	}
+
+	return slices.Collect(maps.Keys(folderSet)), nil
 }
 
 func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {
