@@ -88,16 +88,26 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('test data (smoothed)');
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // first frame should be the original, unchanged
+      expect(result[0].name).toBe('test data');
       expect(result[0].fields).toHaveLength(2);
       expect(result[0].fields[0].name).toBe('time');
-      expect(result[0].fields[1].name).toBe('value (smoothed)');
+      expect(result[0].fields[1].name).toBe('value');
+      expect(result[0].fields[1].values).toEqual([10, 20, 15, 25, 18]);
+
+      // second frame should be the smoothed version
+      expect(result[1].name).toBe('Smoothed');
+      expect(result[1].fields).toHaveLength(2);
+      expect(result[1].fields[0].name).toBe('time');
+      expect(result[1].fields[1].name).toBe('value');
 
       // should preserve original time points
-      expect(result[0].fields[0].values).toEqual([1000, 2000, 3000, 4000, 5000]);
+      expect(result[1].fields[0].values).toEqual([1000, 2000, 3000, 4000, 5000]);
       // should have corresponding smoothed values
-      expect(result[0].fields[1].values.length).toBe(5);
+      expect(result[1].fields[1].values.length).toBe(5);
     });
 
     it('should handle multiple numeric fields', () => {
@@ -118,17 +128,25 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].fields).toHaveLength(4);
-      expect(result[0].fields[0].name).toBe('timestamp');
-      expect(result[0].fields[1].name).toBe('cpu (smoothed)');
-      expect(result[0].fields[2].name).toBe('memory (smoothed)');
-      expect(result[0].fields[3].name).toBe('label');
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // first frame is original
+      expect(result[0].name).toBe('multi field data');
+      expect(result[0].fields[1].name).toBe('cpu');
+      expect(result[0].fields[2].name).toBe('memory');
+
+      // second frame is smoothed
+      expect(result[1].fields).toHaveLength(4);
+      expect(result[1].fields[0].name).toBe('timestamp');
+      expect(result[1].fields[1].name).toBe('cpu');
+      expect(result[1].fields[2].name).toBe('memory');
+      expect(result[1].fields[3].name).toBe('label');
 
       // all numeric fields should be smoothed and preserve original time points
-      expect(result[0].fields[0].values.length).toBe(4);
-      expect(result[0].fields[1].values.length).toBe(4);
-      expect(result[0].fields[2].values.length).toBe(4);
+      expect(result[1].fields[0].values.length).toBe(4);
+      expect(result[1].fields[1].values.length).toBe(4);
+      expect(result[1].fields[2].values.length).toBe(4);
     });
 
     it('should preserve non-numeric and non-time fields', () => {
@@ -149,10 +167,14 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result[0].fields[2].name).toBe('category');
-      expect(result[0].fields[2].type).toBe(FieldType.string);
-      expect(result[0].fields[3].name).toBe('active');
-      expect(result[0].fields[3].type).toBe(FieldType.boolean);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve non-numeric fields
+      expect(result[1].fields[2].name).toBe('category');
+      expect(result[1].fields[2].type).toBe(FieldType.string);
+      expect(result[1].fields[3].name).toBe('active');
+      expect(result[1].fields[3].type).toBe(FieldType.boolean);
     });
   });
 
@@ -173,9 +195,12 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // should preserve all original time points
-      expect(result[0].fields[0].values.length).toBe(200);
-      expect(result[0].fields[1].values.length).toBe(200);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve all original time points
+      expect(result[1].fields[0].values.length).toBe(200);
+      expect(result[1].fields[1].values.length).toBe(200);
     });
 
     it('should respect custom resolution settings', () => {
@@ -194,9 +219,12 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // should preserve all original time points regardless of resolution
-      expect(result[0].fields[0].values.length).toBe(100);
-      expect(result[0].fields[1].values.length).toBe(100);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve all original time points regardless of resolution
+      expect(result[1].fields[0].values.length).toBe(100);
+      expect(result[1].fields[1].values.length).toBe(100);
     });
 
     it('should clamp resolution to minimum value', () => {
@@ -211,14 +239,17 @@ describe('Smoothing transformer', () => {
         }),
       ];
 
-      // request resolution below minimum - should be clamped to 10
+      // request resolution below minimum, it should be clamped to 1
       const config: SmoothingTransformerOptions = { resolution: 2 };
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // should preserve all original time points and clamp resolution to minimum
-      expect(result[0].fields[0].values.length).toBe(5);
-      expect(result[0].fields[1].values.length).toBe(5);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve all original time points and clamp resolution to minimum
+      expect(result[1].fields[0].values.length).toBe(5);
+      expect(result[1].fields[1].values.length).toBe(5);
     });
   });
 
@@ -291,12 +322,15 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // should preserve all time points
-      expect(result[0].fields[0].values.length).toBe(5);
-      expect(result[0].fields[1].values.length).toBe(5);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve all time points
+      expect(result[1].fields[0].values.length).toBe(5);
+      expect(result[1].fields[1].values.length).toBe(5);
 
       // all values should be interpolated from smoothed curve (no nulls)
-      const values = result[0].fields[1].values;
+      const values = result[1].fields[1].values;
       values.forEach((value) => {
         expect(value).not.toBeNull();
         expect(typeof value).toBe('number');
@@ -320,7 +354,8 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // When all values are NaN, frame should be returned unchanged
+      // When all values are NaN, only original frame should be returned (no smoothed frame)
+      expect(result).toHaveLength(1);
       expect(result[0].fields[1].name).toBe('value'); // No "(smoothed)" suffix
       expect(result[0].fields[1].values).toEqual([NaN, NaN, NaN]);
       expect(result[0].name).toBe('all NaN data'); // Original name preserved
@@ -342,12 +377,15 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      // should preserve all time points
-      expect(result[0].fields[0].values.length).toBe(4);
-      expect(result[0].fields[1].values.length).toBe(4);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // smoothed frame should preserve all time points
+      expect(result[1].fields[0].values.length).toBe(4);
+      expect(result[1].fields[1].values.length).toBe(4);
 
       // all values should be interpolated (no nulls in output)
-      const values = result[0].fields[1].values;
+      const values = result[1].fields[1].values;
       values.forEach((value) => {
         expect(value).not.toBeNull();
         expect(typeof value).toBe('number');
@@ -371,9 +409,12 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result[0].fields[0].values).toHaveLength(1);
-      expect(result[0].fields[1].values).toHaveLength(1);
-      expect(result[0].fields[1].values[0]).toBe(42);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      expect(result[1].fields[0].values).toHaveLength(1);
+      expect(result[1].fields[1].values).toHaveLength(1);
+      expect(result[1].fields[1].values[0]).toBe(42);
     });
 
     it('should handle empty numeric field values', () => {
@@ -414,7 +455,8 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      const timeValues = result[0].fields[0].values as number[];
+      // check smoothed frame's time values
+      const timeValues = result[1].fields[0].values as number[];
 
       // check that time values are in ascending order
       for (let i = 1; i < timeValues.length; i++) {
@@ -439,9 +481,18 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+
+      // original frame unchanged
       expect(result[0].refId).toBe('TEST');
       expect(result[0].meta).toEqual(source[0].meta);
-      expect(result[0].name).toBe('original name (smoothed)');
+      expect(result[0].name).toBe('original name');
+
+      // smoothed frame preserves metadata
+      expect(result[1].refId).toBe('TEST');
+      expect(result[1].meta).toEqual(source[0].meta);
+      expect(result[1].name).toBe('Smoothed');
     });
 
     it('should handle frames with no name', () => {
@@ -459,7 +510,9 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result[0].name).toBe('Data (smoothed)');
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+      expect(result[1].name).toBe('Smoothed');
     });
   });
 
@@ -492,12 +545,13 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].fields[0].values.length).toBe(10);
-      expect(result[0].fields[1].values.length).toBe(10);
+      // should return both original and smoothed frames
+      expect(result).toHaveLength(2);
+      expect(result[1].fields[0].values.length).toBe(10);
+      expect(result[1].fields[1].values.length).toBe(10);
 
       // all values should be non-null numbers
-      const values = result[0].fields[1].values;
+      const values = result[1].fields[1].values;
       values.forEach((value) => {
         expect(value).not.toBeNull();
         expect(typeof value).toBe('number');
@@ -531,11 +585,20 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe('frame1 (smoothed)');
-      expect(result[1].name).toBe('frame2 (smoothed)');
+      // should return original frames + smoothed frames (2 original + 2 smoothed = 4 total)
+      expect(result).toHaveLength(4);
+
+      // original frames first
+      expect(result[0].name).toBe('frame1');
       expect(result[0].refId).toBe('A');
+      expect(result[1].name).toBe('frame2');
       expect(result[1].refId).toBe('B');
+
+      // smoothed frames after
+      expect(result[2].name).toBe('Smoothed');
+      expect(result[2].refId).toBe('A');
+      expect(result[3].name).toBe('Smoothed');
+      expect(result[3].refId).toBe('B');
     });
 
     it('should handle mixed frame types', () => {
@@ -562,9 +625,15 @@ describe('Smoothing transformer', () => {
 
       const result = smoothingTransformer.transformer(config, ctx)(source);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe('valid frame (smoothed)');
+      // should return 2 original frames + 1 smoothed frame (only valid frame gets smoothed)
+      expect(result).toHaveLength(3);
+
+      // original frames first
+      expect(result[0].name).toBe('valid frame');
       expect(result[1]).toEqual(source[1]);
+
+      // smoothed frame after
+      expect(result[2].name).toBe('Smoothed');
     });
   });
 

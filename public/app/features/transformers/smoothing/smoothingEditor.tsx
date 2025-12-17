@@ -38,7 +38,7 @@ export const SmoothingTransformerEditor = ({
         labelWidth={12}
         tooltip={t(
           'transformers.smoothing.resolution.tooltip',
-          'Controls smoothing intensity. Lower values create more aggressive smoothing. The output preserves all original time points.'
+          'Controls smoothing intensity. Lower values create more aggressive smoothing. Both original and smoothed data are displayed.'
         )}
       >
         <NumberInput

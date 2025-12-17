@@ -204,10 +204,12 @@ export const getSmoothingTransformer: () => SynchronousDataTransformerInfo<Smoot
         return frames;
       }
 
-      return frames.map((frame) => {
+      const smoothedFrames: DataFrame[] = [];
+
+      for (const frame of frames) {
         const timeField = frame.fields.find((f) => f.type === FieldType.time);
         if (!timeField) {
-          return frame;
+          continue;
         }
 
         // check if there's at least one numeric field with valid data
@@ -219,39 +221,46 @@ export const getSmoothingTransformer: () => SynchronousDataTransformerInfo<Smoot
         });
 
         if (!hasValidNumericField) {
-          return frame;
+          continue;
         }
 
+        // create smoothed fields for all numeric fields
+        const smoothedFields = [timeField]; // keep original time field
         let anyFieldSmoothed = false;
-        const newFields = frame.fields.map((field) => {
-          if (field.type === FieldType.time) {
-            // keep original time points
-            return field;
-          } else if (field.type === FieldType.number) {
+
+        for (const field of frame.fields) {
+          if (field.type === FieldType.number) {
             const smoothedValues = interpolateFromSmoothedCurve(field.values, timeField.values, resolution);
 
-            // if smoothing returned null (no valid data), keep the original field unchanged
+            // if smoothing returned null (no valid data), skip this field
             if (smoothedValues === null) {
-              return field;
+              continue;
             }
 
             anyFieldSmoothed = true;
-            return {
+            smoothedFields.push({
               ...field,
-              name: `${field.name} (smoothed)`,
               values: smoothedValues,
-            };
+            });
+          } else if (field.type !== FieldType.time) {
+            // include other non-numeric, non-time fields (like labels)
+            smoothedFields.push(field);
           }
-          return field;
-        });
+        }
 
-        // only add (smoothed) suffix to frame name if at least one field was smoothed
-        return {
-          ...frame,
-          fields: newFields,
-          name: anyFieldSmoothed ? `${frame.name || 'Data'} (smoothed)` : frame.name || 'Data',
-        };
-      });
+        // only create a smoothed frame if at least one field was smoothed
+        if (anyFieldSmoothed) {
+          const smoothedFrame: DataFrame = {
+            ...frame,
+            name: 'Smoothed',
+            fields: smoothedFields,
+          };
+          smoothedFrames.push(smoothedFrame);
+        }
+      }
+
+      // return original frames followed by smoothed frames
+      return [...frames, ...smoothedFrames];
     };
   },
 });
