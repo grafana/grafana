@@ -283,7 +283,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       type: FieldType.number,
       values: ys,
       config: {
-        unit: useLinearScale ? undefined : 'short', // preserves original unit from data source
+        unit: useLinearScale ? yFields[0]?.config?.unit : 'short', // preserve original unit for linear, use 'short' for ordinal
       },
     },
   ];

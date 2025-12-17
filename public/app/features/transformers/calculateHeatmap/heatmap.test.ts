@@ -286,7 +286,7 @@ describe('Heatmap transformer', () => {
       expect(heatmap.meta?.custom?.yOrdinalDisplay).toEqual(['low', 'high']);
     });
 
-    it('sets unit to undefined for linear scale (preserves original unit)', () => {
+    it('sets unit to undefined for linear scale when no unit exists', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1000] },
@@ -300,8 +300,26 @@ describe('Heatmap transformer', () => {
         yBucketScale: { type: ScaleDistribution.Linear },
       });
 
-      // Y field should not have 'short' unit for linear scale
+      // No unit → expect undefined (not 'short')
       expect(heatmap.fields[1].config.unit).toBeUndefined();
+    });
+
+    it('passes through existing unit for linear scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10], config: { unit: 'ms' } },
+          { name: '10', type: FieldType.number, values: [20], config: { unit: 'ms' } },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Linear },
+      });
+
+      // Existing unit → pass through unchanged
+      expect(heatmap.fields[1].config.unit).toBe('ms');
     });
 
     it('sets unit to short for ordinal scale', () => {
