@@ -300,6 +300,17 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
+			// Handle read-only resources that use role-based authorization.
+			// These resources are not registered in the access checker, so we handle them separately.
+			// This allows the frontend to access settings without requiring explicit permissions.
+			if a.GetResource() == "settings" || a.GetResource() == "stats" {
+				id, err := identity.GetRequester(ctx)
+				if err != nil {
+					return authorizer.DecisionDeny, "failed to find requester", err
+				}
+				return b.authorizeResource(ctx, a, id)
+			}
+
 			info, ok := authlib.AuthInfoFrom(ctx)
 			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
 			// so we allow it to use the access checker if there is any auth info available
