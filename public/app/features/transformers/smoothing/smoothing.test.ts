@@ -1,4 +1,10 @@
-import { DataFrame, DataTransformContext, FieldType, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformContext,
+  FieldType,
+  toDataFrame,
+  TransformationApplicabilityLevels,
+} from '@grafana/data';
 
 import { getSmoothingTransformer, SmoothingTransformerOptions } from './smoothing';
 
@@ -7,6 +13,63 @@ describe('Smoothing transformer', () => {
   const ctx: DataTransformContext = {
     interpolate: (v: string) => v,
   };
+
+  describe('isApplicable', () => {
+    it('should return Applicable for time series frames', () => {
+      const frames = [
+        toDataFrame({
+          name: 'time series',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 15] },
+          ],
+        }),
+      ];
+
+      expect(smoothingTransformer.isApplicable!(frames)).toBe(TransformationApplicabilityLevels.Applicable);
+    });
+
+    it('should return NotApplicable for frames without time field', () => {
+      const frames = [
+        toDataFrame({
+          name: 'no time field',
+          fields: [
+            { name: 'category', type: FieldType.string, values: ['A', 'B', 'C'] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 15] },
+          ],
+        }),
+      ];
+
+      expect(smoothingTransformer.isApplicable!(frames)).toBe(TransformationApplicabilityLevels.NotApplicable);
+    });
+
+    it('should return Applicable if at least one frame is a time series', () => {
+      const frames = [
+        toDataFrame({
+          name: 'not time series',
+          fields: [
+            { name: 'category', type: FieldType.string, values: ['A', 'B', 'C'] },
+            { name: 'label', type: FieldType.string, values: ['X', 'Y', 'Z'] },
+          ],
+        }),
+        toDataFrame({
+          name: 'time series',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 15] },
+          ],
+        }),
+      ];
+
+      expect(smoothingTransformer.isApplicable!(frames)).toBe(TransformationApplicabilityLevels.Applicable);
+    });
+
+    it('should return NotApplicable for empty data', () => {
+      const frames: DataFrame[] = [];
+
+      expect(smoothingTransformer.isApplicable!(frames)).toBe(TransformationApplicabilityLevels.NotApplicable);
+    });
+  });
 
   describe('Basic functionality', () => {
     it('should smooth time series data with default settings', () => {
