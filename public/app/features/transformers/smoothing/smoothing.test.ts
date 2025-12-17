@@ -6,7 +6,7 @@ import {
   TransformationApplicabilityLevels,
 } from '@grafana/data';
 
-import { getSmoothingTransformer, SmoothingTransformerOptions } from './smoothing';
+import { calculateMaxSourcePoints, getSmoothingTransformer, SmoothingTransformerOptions } from './smoothing';
 
 describe('Smoothing transformer', () => {
   const smoothingTransformer = getSmoothingTransformer();
@@ -565,6 +565,111 @@ describe('Smoothing transformer', () => {
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('valid frame (smoothed)');
       expect(result[1]).toEqual(source[1]);
+    });
+  });
+
+  describe('calculateMaxSourcePoints', () => {
+    it('should return 0 for empty frames', () => {
+      expect(calculateMaxSourcePoints([])).toBe(0);
+    });
+
+    it('should return 0 for frames without time fields', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'category', type: FieldType.string, values: ['A', 'B', 'C'] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 15] },
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(0);
+    });
+
+    it('should return 0 for frames without numeric fields', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'category', type: FieldType.string, values: ['A', 'B', 'C'] },
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(0);
+    });
+
+    it('should count valid data points, filtering out null and NaN', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000] },
+            { name: 'value', type: FieldType.number, values: [10, null, 15, NaN, 18] },
+          ],
+        }),
+      ];
+
+      // Only 3 valid points: 10, 15, 18
+      expect(calculateMaxSourcePoints(frames)).toBe(3);
+    });
+
+    it('should return maximum across multiple numeric fields', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000] },
+            { name: 'cpu', type: FieldType.number, values: [10, null, 15] }, // 2 valid points
+            { name: 'memory', type: FieldType.number, values: [20, 25, 30, 35] }, // 4 valid points
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(4);
+    });
+
+    it('should return maximum across multiple frames', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 15] },
+          ],
+        }),
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000] },
+            { name: 'metric', type: FieldType.number, values: [30, 40, 35, 45, 50] },
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(5);
+    });
+
+    it('should handle frames with all valid points', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30, 40] },
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(4);
+    });
+
+    it('should handle frames with all null values', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'value', type: FieldType.number, values: [null, null, null] },
+          ],
+        }),
+      ];
+
+      expect(calculateMaxSourcePoints(frames)).toBe(0);
     });
   });
 });

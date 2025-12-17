@@ -42,6 +42,29 @@ export const calculateEffectiveResolution = (resolution: number, sourcePointCoun
   return Math.min(resolution, sourcePointCount * MAX_RESOLUTION_MULTIPLIER);
 };
 
+// calculates the maximum number of source points across all numeric fields in all frames
+export const calculateMaxSourcePoints = (frames: DataFrame[]): number => {
+  let maxSourcePoints = 0;
+
+  for (const frame of frames) {
+    const timeField = frame.fields.find((f) => f.type === FieldType.time);
+    if (!timeField) {
+      continue;
+    }
+
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        const sourcePoints = createDataPoints(timeField.values, field.values);
+        if (sourcePoints.length > maxSourcePoints) {
+          maxSourcePoints = sourcePoints.length;
+        }
+      }
+    }
+  }
+
+  return maxSourcePoints;
+};
+
 // performs linear interpolation between two points
 export const linearInterpolate = (leftPoint: DataPoint, rightPoint: DataPoint, targetTime: number): number => {
   // exact match
