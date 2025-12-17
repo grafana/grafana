@@ -116,32 +116,30 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
         {/* Only show title field if folder sync */}
         {selectedTarget === 'folder' && (
-          <>
-            <Field
-              label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
-              description={t(
-                'provisioning.bootstrap-step.description-clear-repository-connection',
-                'Add a clear name for this repository connection'
+          <Field
+            label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
+            description={t(
+              'provisioning.bootstrap-step.description-clear-repository-connection',
+              'Add a clear name for this repository connection'
+            )}
+            error={errors.repository?.title?.message}
+            invalid={!!errors.repository?.title}
+            required
+            noMargin
+          >
+            <Input
+              id="repository-title"
+              {...register('repository.title', {
+                required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
+              })}
+              placeholder={t(
+                'provisioning.bootstrap-step.placeholder-my-repository-connection',
+                'My repository connection'
               )}
-              error={errors.repository?.title?.message}
-              invalid={!!errors.repository?.title}
-              required
-              noMargin
-            >
-              <Input
-                id="repository-title"
-                {...register('repository.title', {
-                  required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
-                })}
-                placeholder={t(
-                  'provisioning.bootstrap-step.placeholder-my-repository-connection',
-                  'My repository connection'
-                )}
-                // Autofocus the title field if it's the only available option
-                autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
-              />
-            </Field>
-          </>
+              // Autofocus the title field if it's the only available option
+              autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
+            />
+          </Field>
         )}
 
         {disabledOptions?.length > 0 && (
