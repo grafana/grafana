@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Abrir enlace externo"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Más",
       "new-menu": {
@@ -3707,6 +3714,10 @@
       "clear": "Borrar la búsqueda y los filtros",
       "text": "No se han encontrado resultados para tu consulta"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -4817,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valores separados por coma"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5129,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
       "menu-use-library-panel": "Usar panel de la librería",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5950,13 +5961,25 @@
       "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar panel",
         "view-panel": "Ver panel"
       },
       "title": {
         "dashboard": "Panel de control",
-        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?"
+        "discard-changes-to-dashboard": "¿Descartar los cambios en el dashboard?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6129,7 +6152,10 @@
       "no-data-found": "No se han encontrado datos"
     },
     "inspect-json-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcula dinámicamente el intervalo dividiendo el intervalo de tiempo por el recuento especificado",
@@ -10712,7 +10738,6 @@
       "title": "Nuevo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nuevo panel de control"
     },
     "new-folder": {
@@ -11394,6 +11419,12 @@
         "latestReleaseDate": "Fecha último lanzamiento:",
         "latestVersion": "Versión más reciente",
         "license": "Licencia",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Comunicar un problema",
         "reportAbuse": "",
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",
@@ -11856,7 +11887,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Configurar esta conexión podría causar una interrupción temporal"
     },
     "getting-started-page": {
-      "header": "Aprovisionamiento",
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
     },
     "git": {
@@ -12622,7 +12652,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",

@@ -37,7 +37,3 @@ export interface TeamGroup {
   groupId: string;
   teamId: number;
 }
-
-export interface TeamState {
-  groups: TeamGroup[];
-}
