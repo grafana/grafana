@@ -361,10 +361,10 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
 		return b.authorizeRepositorySubresource(ctx, a, id)
-	case "stats", "settings", provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
-		return allowForAdminsOrAccessPolicy(id)
 	case provisioning.ConnectionResourceInfo.GetName():
 		return b.authorizeConnectionSubresource(ctx, a, id)
+	case "stats", "settings", provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
+		return allowForAdminsOrAccessPolicy(id)
 	default:
 		return b.authorizeDefault(id)
 	}
@@ -380,11 +380,11 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 
 	// Test requires write permission (testing before save)
 	case "test":
-		return b.checkAccess(ctx, id, "update", provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbUpdate, provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
 
 	// Read-only subresources: files listing, refs, resources, history, status
 	case "files", "refs", "resources", "history", "status":
-		return b.checkAccess(ctx, id, "get", provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "repositories", a.GetName(), a.GetNamespace())
 
 	// Jobs subresource - check jobs permissions with the verb
 	case "jobs":
@@ -408,7 +408,7 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 
 	// Status is read-only
 	case "status":
-		return b.checkAccess(ctx, id, "get", provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "connections", a.GetName(), a.GetNamespace())
 
 	default:
 		if id.GetIsGrafanaAdmin() {
