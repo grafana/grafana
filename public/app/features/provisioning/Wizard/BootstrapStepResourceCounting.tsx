@@ -1,14 +1,10 @@
 import { Trans } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
-import { Target } from './types';
-
 export function BootstrapStepResourceCounting({
-  target,
   fileCountString,
   resourceCountString,
 }: {
-  target: Target;
   fileCountString: string;
   resourceCountString: string;
 }) {

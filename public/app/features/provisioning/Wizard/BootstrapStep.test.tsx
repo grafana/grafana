@@ -198,7 +198,8 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect((await screen.findAllByText('7 resources')).length).toBeGreaterThan(0);
+      // Two elements display "7 resources": one in the external storage card and one in unmanaged resources card
+      expect(await screen.findAllByText('7 resources')).toHaveLength(2);
     });
   });
 
@@ -207,34 +208,7 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      // The hook is called with repoName and selectedTarget
-      // selectedTarget is 'instance' from default form values, but may be undefined on initial render
-      // Check that it was called with the repoName and optionally with selectedTarget
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', expect.anything());
-      // Verify it was eventually called with 'instance' (after form initializes)
-      const calls = mockUseResourceStats.mock.calls;
-      const hasInstanceCall = calls.some((call: unknown[]) => call[0] === 'test-repo' && call[1] === 'instance');
-      expect(hasInstanceCall).toBe(true);
-    });
-
-    it('should use useResourceStats hook with legacy storage flag', async () => {
-      setup({
-        settingsData: {
-          allowImageRendering: true,
-          items: [],
-          availableRepositoryTypes: [],
-        },
-      });
-
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      // The hook is called with repoName and selectedTarget
-      // selectedTarget is 'instance' from default form values, but may be undefined on initial render
-      // Check that it was called with the repoName and optionally with selectedTarget
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', expect.anything());
-      // Verify it was eventually called with 'instance' (after form initializes)
-      const calls = mockUseResourceStats.mock.calls;
-      const hasInstanceCall = calls.some((call: unknown[]) => call[0] === 'test-repo' && call[1] === 'instance');
-      expect(hasInstanceCall).toBe(true);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
     });
   });
 

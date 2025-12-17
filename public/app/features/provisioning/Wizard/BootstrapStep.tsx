@@ -103,7 +103,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                     <div className={styles.divider} />
 
                     <BootstrapStepResourceCounting
-                      target={action.target}
                       fileCountString={fileCountString}
                       resourceCountString={resourceCountString}
                     />
