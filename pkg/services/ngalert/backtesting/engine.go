@@ -248,3 +248,53 @@ type NoopImageService struct{}
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
 }
+
+func getNextEvaluationTime(currentTime time.Time, rule *models.AlertRule, baseInterval time.Duration, jitterOffset time.Duration) (time.Time, error) {
+	if rule.IntervalSeconds%int64(baseInterval.Seconds()) != 0 {
+		return time.Time{}, fmt.Errorf("interval %ds is not divisible by base interval %ds", rule.IntervalSeconds, int64(baseInterval.Seconds()))
+	}
+
+	freq := rule.IntervalSeconds / int64(baseInterval.Seconds())
+
+	firstTickNum := currentTime.Unix() / int64(baseInterval.Seconds())
+
+	jitterOffsetTicks := int64(jitterOffset / baseInterval)
+
+	firstEvalTickNum := firstTickNum + (jitterOffsetTicks-(firstTickNum%freq)+freq)%freq
+
+	return time.Unix(firstEvalTickNum*int64(baseInterval.Seconds()), 0), nil
+}
+
+func getFirstEvaluationTime(from time.Time, rule *models.AlertRule, baseInterval time.Duration, jitterOffset time.Duration) (time.Time, error) {
+	// Now calculate the time of the tick the same way as in the scheduler
+	firstTick := ticker.GetStartTick(from, baseInterval)
+
+	// calculate time of the first evaluation that is at or after the first tick
+	firstEval, err := getNextEvaluationTime(firstTick, rule, baseInterval, jitterOffset)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// Ensure firstEval is at or after from
+	// Calculate how many intervals to skip to get past 'from'
+	if firstEval.Before(from) {
+		diff := from.Sub(firstEval)
+		interval := rule.GetInterval()
+		// Ceiling division: how many intervals needed to cover the difference
+		intervalsToAdd := (diff + interval - 1) / interval
+		firstEval = firstEval.Add(interval * intervalsToAdd)
+	}
+
+	return firstEval, nil
+}
+
+func calculateNumberOfEvaluations(firstEval, to time.Time, interval time.Duration) int {
+	var evaluations int
+	if to.After(firstEval) {
+		evaluations = int(to.Sub(firstEval).Seconds()) / int(interval.Seconds())
+	}
+	if evaluations == 0 {
+		evaluations = 1
+	}
+	return evaluations
+}

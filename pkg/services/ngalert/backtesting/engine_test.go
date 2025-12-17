@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -410,4 +411,179 @@ func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from time.Time, inter
 		}
 	}
 	return nil
+}
+
+func TestGetNextEvaluationTime(t *testing.T) {
+	baseInterval := 10 * time.Second
+
+	testCases := []struct {
+		name             string
+		ruleInterval     int64
+		currentTimestamp int64
+		jitterOffset     time.Duration
+		expectError      bool
+		expectedNext     int64
+	}{
+		{
+			name:             "interval not divisible by base interval",
+			ruleInterval:     15,
+			currentTimestamp: 0,
+			jitterOffset:     0,
+			expectError:      true,
+		},
+		{
+			name:             "no jitter - from tick 0",
+			ruleInterval:     20,
+			currentTimestamp: 0,
+			jitterOffset:     0,
+			expectedNext:     0,
+		},
+		{
+			name:             "no jitter - from tick 1",
+			ruleInterval:     20,
+			currentTimestamp: 10,
+			jitterOffset:     0,
+			expectedNext:     20,
+		},
+		{
+			name:             "no jitter - from tick 2",
+			ruleInterval:     20,
+			currentTimestamp: 20,
+			jitterOffset:     0,
+			expectedNext:     20,
+		},
+		{
+			name:             "with 20s jitter - from tick 0",
+			ruleInterval:     60,
+			currentTimestamp: 0,
+			jitterOffset:     20 * time.Second,
+			expectedNext:     20,
+		},
+		{
+			name:             "with 20s jitter - from tick 2",
+			ruleInterval:     60,
+			currentTimestamp: 20,
+			jitterOffset:     20 * time.Second,
+			expectedNext:     20,
+		},
+		{
+			name:             "with 20s jitter - from tick 3",
+			ruleInterval:     60,
+			currentTimestamp: 30,
+			jitterOffset:     20 * time.Second,
+			expectedNext:     80,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := &models.AlertRule{IntervalSeconds: tc.ruleInterval}
+			currentTime := time.Unix(tc.currentTimestamp, 0)
+			result, err := getNextEvaluationTime(currentTime, rule, baseInterval, tc.jitterOffset)
+
+			if tc.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "is not divisible by base interval")
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedNext, result.Unix())
+		})
+	}
+}
+
+func TestGetFirstEvaluationTime(t *testing.T) {
+	baseInterval := 10 * time.Second
+
+	testCases := []struct {
+		name         string
+		ruleInterval int64
+		fromUnix     int64
+		jitterOffset time.Duration
+		expectError  bool
+		expectedUnix int64
+	}{
+		{
+			name:         "interval not divisible by base interval",
+			ruleInterval: 15,
+			fromUnix:     0,
+			jitterOffset: 0,
+			expectError:  true,
+		},
+		{
+			name:         "no jitter - from at tick 0",
+			ruleInterval: 20,
+			fromUnix:     0,
+			jitterOffset: 0,
+			expectedUnix: 0,
+		},
+		{
+			name:         "no jitter - from at tick 1",
+			ruleInterval: 20,
+			fromUnix:     10,
+			jitterOffset: 0,
+			expectedUnix: 20,
+		},
+		{
+			name:         "no jitter - from before first tick",
+			ruleInterval: 20,
+			fromUnix:     5,
+			jitterOffset: 0,
+			expectedUnix: 20,
+		},
+		{
+			name:         "no jitter - from after first aligned tick",
+			ruleInterval: 20,
+			fromUnix:     25,
+			jitterOffset: 0,
+			expectedUnix: 40,
+		},
+		{
+			name:         "no jitter - from at tick boundary",
+			ruleInterval: 10,
+			fromUnix:     10,
+			jitterOffset: 0,
+			expectedUnix: 10,
+		},
+		{
+			name:         "with 20s jitter - from epoch",
+			ruleInterval: 60,
+			fromUnix:     0,
+			jitterOffset: 20 * time.Second,
+			expectedUnix: 20,
+		},
+		{
+			name:         "with 20s jitter - from 70s",
+			ruleInterval: 60,
+			fromUnix:     70,
+			jitterOffset: 20 * time.Second,
+			expectedUnix: 80,
+		},
+		{
+			name:         "with 50s jitter - from 25s",
+			ruleInterval: 60,
+			fromUnix:     25,
+			jitterOffset: 50 * time.Second,
+			expectedUnix: 50,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := &models.AlertRule{IntervalSeconds: tc.ruleInterval}
+			from := time.Unix(tc.fromUnix, 0)
+			result, err := getFirstEvaluationTime(from, rule, baseInterval, tc.jitterOffset)
+
+			if tc.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "is not divisible by base interval")
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedUnix, result.Unix())
+			require.GreaterOrEqual(t, result.Unix(), from.Unix(), "first eval should be at or after from")
+		})
+	}
 }
