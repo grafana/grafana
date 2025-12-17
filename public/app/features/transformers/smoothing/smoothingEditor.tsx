@@ -88,5 +88,6 @@ export const getSmoothingTransformerRegistryItem: () => TransformerRegistryItem<
     imageDark: darkImage,
     imageLight: lightImage,
     help: getTransformationContent(DataTransformerID.smoothing).helperDocs,
+    tags: new Set(['ASAP', 'Autosmooth']),
   };
 };
