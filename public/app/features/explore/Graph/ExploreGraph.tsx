@@ -34,7 +34,10 @@ import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/times
 import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types/explore';
 
-import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import {
+  isHideSeriesOverride,
+  seriesVisibilityConfigFactory,
+} from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
@@ -170,6 +173,12 @@ export function ExploreGraph({
     sync: () => DashboardCursorSync.Off,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
+    },
+    onResetAllSeriesVisibility: () => {
+      setFieldConfig({
+        ...fieldConfig,
+        overrides: fieldConfig.overrides.filter((rule) => !isHideSeriesOverride(rule)),
+      });
     },
   };
 

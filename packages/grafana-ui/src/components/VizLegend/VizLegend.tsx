@@ -1,9 +1,12 @@
+import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
 
+import { Button } from '../Button/Button';
 import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
@@ -32,7 +35,7 @@ export function VizLegend<T>({
   readonly,
   isSortable,
 }: LegendProps<T>) {
-  const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
+  const { eventBus, onResetAllSeriesVisibility, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
   const onMouseOver = useCallback(
     (
@@ -104,6 +107,26 @@ export function VizLegend<T>({
     },
     [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly]
   );
+
+  if (onResetAllSeriesVisibility && items.every((item) => (item.fieldName ?? item.label) && item.disabled)) {
+    return (
+      <div className={css({ paddingTop: '0.5em' })}>
+        <Button
+          size="sm"
+          tooltip={t(
+            'grafana-ui.viz-legend.show-all-series-tooltip',
+            'Currently loaded series are hidden by previous selection. Click to show all series.'
+          )}
+          variant="secondary"
+          onClick={() => {
+            onResetAllSeriesVisibility();
+          }}
+        >
+          <Trans i18nKey="grafana-ui.viz-legend.show-all-series">Show all series</Trans>
+        </Button>
+      </div>
+    );
+  }
 
   switch (displayMode) {
     case LegendDisplayMode.Table:
