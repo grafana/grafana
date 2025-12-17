@@ -81,6 +81,7 @@ const meta: Meta<StoryProps> = {
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
     segmentCount: { control: { type: 'range', min: 0, max: 100 } },
     segmentSpacing: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
+    endpointMarker: { control: { type: 'select' }, options: ['none', 'point', 'glow'] },
     colorScheme: {
       control: { type: 'select' },
       options: [
@@ -344,6 +345,7 @@ interface ExampleProps {
   roundedBars?: boolean;
   thresholdsBar?: boolean;
   colorScheme?: FieldColorModeId;
+  endpointMarker?: RadialGaugeProps['endpointMarker'];
   decimals?: number;
   showScaleLabels?: boolean;
 }
@@ -370,6 +372,7 @@ export function RadialGaugeExample({
   roundedBars = false,
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
+  endpointMarker = 'glow',
   decimals = 0,
   showScaleLabels,
 }: ExampleProps) {
@@ -456,6 +459,7 @@ export function RadialGaugeExample({
       roundedBars={roundedBars}
       thresholdsBar={thresholdsBar}
       showScaleLabels={showScaleLabels}
+      endpointMarker={endpointMarker}
     />
   );
 }

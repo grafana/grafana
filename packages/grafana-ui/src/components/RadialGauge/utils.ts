@@ -115,6 +115,7 @@ export function calculateDimensions(
     maxRadiusW -= labelsSize;
     maxRadiusH -= labelsSize;
 
+    // FIXME: needs coverage
     // For gauges the max label needs a bit more vertical space so that it does not get clipped
     if (maxRadiusIsLimitedByHeight && endAngle < 180) {
       const amount = outerRadius * 0.07;

@@ -1,4 +1,4 @@
-import { useId, memo, HTMLAttributes, ReactElement } from 'react';
+import { useId, memo, HTMLAttributes, ReactNode } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
@@ -77,38 +77,25 @@ export const RadialArcPath = memo(
       endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
 
     let barEndcapColors: [string | undefined, string | undefined] | undefined;
-    const endpointMarks: ReactElement[] = [];
+
+    let endpointMarks: ReactNode = null;
     if (endpointMarker && gradientStops.length > 0) {
       switch (endpointMarker) {
         case 'point':
           const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(gradientStops, fieldDisplay.display.percent);
-          if (arcLengthDeg > DOT_START_MIN_ANGLE_DEG) {
-            endpointMarks.push(
-              <circle
-                key="endpoint-marker-start"
-                cx={xStart}
-                cy={yStart}
-                r={dotRadius}
-                fill={pointColorStart}
-                opacity={DOT_OPACITY}
-              />
-            );
-          }
-          endpointMarks.push(
-            <circle
-              key="endpoint-marker-end"
-              cx={xEnd}
-              cy={yEnd}
-              r={dotRadius}
-              fill={pointColorEnd}
-              opacity={DOT_OPACITY}
-            />
+          endpointMarks = (
+            <>
+              {arcLengthDeg > DOT_START_MIN_ANGLE_DEG && (
+                <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
+              )}
+              <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
+            </>
           );
           break;
         case 'glow':
           const xStartMark = centerX + radius * Math.cos(endRadians - 0.2);
           const yStartMark = centerY + radius * Math.sin(endRadians - 0.2);
-          endpointMarks.push(
+          endpointMarks = (
             <path
               d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
               fill="none"
