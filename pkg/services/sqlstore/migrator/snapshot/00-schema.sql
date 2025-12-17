@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
--- Server version	8.4.5
+-- Server version	8.0.32
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -126,6 +126,7 @@ CREATE TABLE `alert_instance` (
   `resolved_at` bigint DEFAULT NULL,
   `last_sent_at` bigint DEFAULT NULL,
   `fired_at` bigint DEFAULT NULL,
+  `annotations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`rule_org_id`,`rule_uid`,`labels_hash`),
   KEY `IDX_alert_instance_rule_org_id_rule_uid_current_state` (`rule_org_id`,`rule_uid`,`current_state`),
   KEY `IDX_alert_instance_rule_org_id_current_state` (`rule_org_id`,`current_state`)
@@ -194,8 +195,8 @@ CREATE TABLE `alert_rule` (
   `interval_seconds` bigint NOT NULL DEFAULT '60',
   `version` int NOT NULL DEFAULT '0',
   `uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
-  `namespace_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `rule_group` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `namespace_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `rule_group` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `no_data_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NoData',
   `exec_err_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Alerting',
   `for` bigint NOT NULL DEFAULT '0',
@@ -208,7 +209,7 @@ CREATE TABLE `alert_rule` (
   `notification_settings` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `record` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `metadata` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `updated_by` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_by` varchar(190) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `keep_firing_for` bigint NOT NULL DEFAULT '0',
   `missing_series_evals_to_resolve` smallint DEFAULT NULL,
@@ -216,7 +217,8 @@ CREATE TABLE `alert_rule` (
   UNIQUE KEY `UQE_alert_rule_org_id_uid` (`org_id`,`uid`),
   UNIQUE KEY `UQE_alert_rule_guid` (`guid`),
   KEY `IDX_alert_rule_org_id_namespace_uid_rule_group` (`org_id`,`namespace_uid`,`rule_group`),
-  KEY `IDX_alert_rule_org_id_dashboard_uid_panel_id` (`org_id`,`dashboard_uid`,`panel_id`)
+  KEY `IDX_alert_rule_org_id_dashboard_uid_panel_id` (`org_id`,`dashboard_uid`,`panel_id`),
+  KEY `IDX_alert_rule_org_id_namespace_uid_rule_group_rule_group_idx` (`org_id`,`namespace_uid`,`rule_group`,`rule_group_idx`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -280,10 +282,11 @@ CREATE TABLE `alert_rule_version` (
   `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `rule_group_idx` bigint DEFAULT NULL,
   `is_paused` tinyint(1) NOT NULL DEFAULT '0',
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `notification_settings` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `record` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `metadata` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `created_by` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` varchar(190) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `rule_guid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `keep_firing_for` bigint NOT NULL DEFAULT '0',
   `missing_series_evals_to_resolve` smallint DEFAULT NULL,
@@ -511,7 +514,7 @@ CREATE TABLE `cloud_migration_snapshot_partition` (
   `partition_number` int NOT NULL,
   `resource_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `data` longblob NOT NULL,
-  UNIQUE KEY `UQE_cloud_migration_snapshot_partition_srp_unique` (`snapshot_uid`,`resource_type`,`partition_number`)
+  PRIMARY KEY (`snapshot_uid`,`resource_type`,`partition_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1579,6 +1582,19 @@ CREATE TABLE `resource_blob` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `resource_events`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `resource_events` (
+  `key_path` varchar(2048) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
+  `value` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`key_path`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `resource_history`
 --
 
@@ -1597,12 +1613,14 @@ CREATE TABLE `resource_history` (
   `previous_resource_version` bigint DEFAULT NULL,
   `folder` varchar(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `generation` bigint NOT NULL DEFAULT '0',
+  `key_path` varchar(2048) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
   PRIMARY KEY (`guid`),
   UNIQUE KEY `UQE_resource_history_namespace_group_name_version` (`namespace`,`group`,`resource`,`name`,`resource_version`),
   KEY `IDX_resource_history_resource_version` (`resource_version`),
   KEY `IDX_resource_history_group_resource_resource_version` (`group`,`resource`,`resource_version`),
   KEY `IDX_resource_history_namespace_group_resource_action_version` (`namespace`,`group`,`resource`,`action`,`resource_version`),
-  KEY `IDX_resource_history_namespace_group_resource_name_generation` (`namespace`,`group`,`resource`,`name`,`generation`)
+  KEY `IDX_resource_history_namespace_group_resource_name_generation` (`namespace`,`group`,`resource`,`name`,`generation`),
+  KEY `IDX_resource_history_key_path` (`key_path`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1649,7 +1667,7 @@ CREATE TABLE `resource_version` (
   `group` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `resource` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `resource_version` bigint NOT NULL,
-  UNIQUE KEY `UQE_resource_version_group_resource` (`group`,`resource`)
+  PRIMARY KEY (`group`,`resource`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1711,7 +1729,9 @@ CREATE TABLE `secret_encrypted_value` (
   `encrypted_data` blob NOT NULL,
   `created` bigint NOT NULL,
   `updated` bigint NOT NULL,
-  UNIQUE KEY `UQE_secret_encrypted_value_namespace_name_version` (`namespace`,`name`,`version`)
+  `data_key_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  PRIMARY KEY (`namespace`,`name`,`version`),
+  KEY `IDX_secret_encrypted_value_data_key_id` (`data_key_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1734,8 +1754,10 @@ CREATE TABLE `secret_keeper` (
   `description` varchar(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `type` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payload` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `active` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`guid`),
-  UNIQUE KEY `UQE_secret_keeper_namespace_name` (`namespace`,`name`)
+  UNIQUE KEY `UQE_secret_keeper_namespace_name` (`namespace`,`name`),
+  KEY `IDX_secret_keeper_namespace_name_active` (`namespace`,`name`,`active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2104,6 +2126,23 @@ CREATE TABLE `test_data` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `unifiedstorage_migration_log`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `unifiedstorage_migration_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `migration_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sql` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `success` tinyint(1) NOT NULL,
+  `error` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `timestamp` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `user`
 --
 
@@ -2129,7 +2168,7 @@ CREATE TABLE `user` (
   `last_seen_at` datetime DEFAULT NULL,
   `is_disabled` tinyint(1) NOT NULL DEFAULT '0',
   `is_service_account` tinyint(1) DEFAULT '0',
-  `uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uid` varchar(190) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_provisioned` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `UQE_user_login` (`login`),

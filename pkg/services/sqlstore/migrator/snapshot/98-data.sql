@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
--- Server version	8.4.5
+-- Server version	8.0.32
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -324,6 +324,11 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 
 
 --
+-- Dumping data for table `resource_events`
+--
+
+
+--
 -- Dumping data for table `resource_history`
 --
 
@@ -352,36 +357,6 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 -- Dumping data for table `secret_keeper`
 --
 
-
---
--- Dumping data for table `secret_migration_log`
---
-
-INSERT INTO `secret_migration_log` (`id`, `migration_id`, `sql`, `success`, `error`, `timestamp`) VALUES
-  (1,'create secret_migration_log table','CREATE TABLE IF NOT EXISTS `secret_migration_log` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `migration_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `sql` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `success` TINYINT(1) NOT NULL\n, `error` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `timestamp` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (2,'Initialize secrets tables','',1,'','2022-01-01 00:00:00'),
-  (3,'drop table secret_secure_value','DROP TABLE IF EXISTS `secret_secure_value`',1,'','2022-01-01 00:00:00'),
-  (4,'create table secret_secure_value','CREATE TABLE IF NOT EXISTS `secret_secure_value` (\n`guid` VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `name` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `namespace` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `annotations` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `labels` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `created` BIGINT(20) NOT NULL\n, `created_by` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `updated` BIGINT(20) NOT NULL\n, `updated_by` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `external_id` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `active` TINYINT(1) NOT NULL\n, `version` BIGINT(20) NOT NULL\n, `description` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `keeper` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `decrypters` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `ref` VARCHAR(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (5,'create table secret_secure_value, index: 0','CREATE UNIQUE INDEX `UQE_secret_secure_value_namespace_name_version_active` ON `secret_secure_value` (`namespace`,`name`,`version`,`active`);',1,'','2022-01-01 00:00:00'),
-  (6,'create table secret_secure_value, index: 1','CREATE UNIQUE INDEX `UQE_secret_secure_value_namespace_name_version` ON `secret_secure_value` (`namespace`,`name`,`version`);',1,'','2022-01-01 00:00:00'),
-  (7,'drop table secret_keeper','DROP TABLE IF EXISTS `secret_keeper`',1,'','2022-01-01 00:00:00'),
-  (8,'create table secret_keeper','CREATE TABLE IF NOT EXISTS `secret_keeper` (\n`guid` VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `name` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `namespace` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `annotations` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `labels` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n, `created` BIGINT(20) NOT NULL\n, `created_by` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `updated` BIGINT(20) NOT NULL\n, `updated_by` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `description` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `type` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `payload` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (9,'create table secret_keeper, index: 0','CREATE UNIQUE INDEX `UQE_secret_keeper_namespace_name` ON `secret_keeper` (`namespace`,`name`);',1,'','2022-01-01 00:00:00'),
-  (10,'drop table secret_data_key','DROP TABLE IF EXISTS `secret_data_key`',1,'','2022-01-01 00:00:00'),
-  (11,'create table secret_data_key','CREATE TABLE IF NOT EXISTS `secret_data_key` (\n`uid` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `namespace` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `label` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `active` TINYINT(1) NOT NULL\n, `provider` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `encrypted_data` BLOB NOT NULL\n, `created` DATETIME NOT NULL\n, `updated` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (12,'drop table secret_encrypted_value','DROP TABLE IF EXISTS `secret_encrypted_value`',1,'','2022-01-01 00:00:00'),
-  (13,'create table secret_encrypted_value','CREATE TABLE IF NOT EXISTS `secret_encrypted_value` (\n`namespace` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `name` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `version` BIGINT(20) NOT NULL\n, `encrypted_data` BLOB NOT NULL\n, `created` BIGINT(20) NOT NULL\n, `updated` BIGINT(20) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (14,'create table secret_encrypted_value, index: 0','CREATE UNIQUE INDEX `UQE_secret_encrypted_value_namespace_name_version` ON `secret_encrypted_value` (`namespace`,`name`,`version`);',1,'','2022-01-01 00:00:00'),
-  (15,'create index for list on secret_secure_value','CREATE INDEX `IDX_secret_secure_value_namespace_active_updated` ON `secret_secure_value` (`namespace`,`active`,`updated`);',1,'','2022-01-01 00:00:00'),
-  (16,'create index for list and read current on secret_data_key','CREATE INDEX `IDX_secret_data_key_namespace_label_active` ON `secret_data_key` (`namespace`,`label`,`active`);',1,'','2022-01-01 00:00:00'),
-  (17,'add owner_reference_api_group column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `owner_reference_api_group` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
-  (18,'add owner_reference_api_version column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `owner_reference_api_version` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
-  (19,'add owner_reference_kind column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `owner_reference_kind` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
-  (20,'add owner_reference_name column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `owner_reference_name` VARCHAR(253) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
-  (21,'add lease_token column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `lease_token` VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
-  (22,'add lease_token index to secret_secure_value','CREATE INDEX `IDX_secret_secure_value_lease_token` ON `secret_secure_value` (`lease_token`);',1,'','2022-01-01 00:00:00'),
-  (23,'add lease_created column to secret_secure_value','alter table `secret_secure_value` ADD COLUMN `lease_created` BIGINT(20) NOT NULL DEFAULT 0 ',1,'','2022-01-01 00:00:00'),
-  (24,'add lease_created index to secret_secure_value','CREATE INDEX `IDX_secret_secure_value_lease_created` ON `secret_secure_value` (`lease_created`);',1,'','2022-01-01 00:00:00');
 
 --
 -- Dumping data for table `secret_secure_value`
@@ -455,6 +430,11 @@ INSERT INTO `secret_migration_log` (`id`, `migration_id`, `sql`, `success`, `err
 
 --
 -- Dumping data for table `test_data`
+--
+
+
+--
+-- Dumping data for table `unifiedstorage_migration_log`
 --
 
 

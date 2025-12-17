@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
--- Server version	8.4.5
+-- Server version	8.0.32
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -43,7 +43,14 @@ INSERT INTO `resource_migration_log` (`migration_id`, `sql`, `success`, `error`,
   ('Add index to resource_history for get trash','CREATE INDEX `IDX_resource_history_namespace_group_resource_action_version` ON `resource_history` (`namespace`,`group`,`resource`,`action`,`resource_version`);',1,'','2022-01-01 00:00:00'),
   ('Add generation to resource history','alter table `resource_history` ADD COLUMN `generation` BIGINT(20) NOT NULL DEFAULT 0 ',1,'','2022-01-01 00:00:00'),
   ('Add generation index to resource history','CREATE INDEX `IDX_resource_history_namespace_group_resource_name_generation` ON `resource_history` (`namespace`,`group`,`resource`,`name`,`generation`);',1,'','2022-01-01 00:00:00'),
-  ('Add UQE_resource_last_import_time_last_import_time index','CREATE INDEX `UQE_resource_last_import_time_last_import_time` ON `resource_last_import_time` (`last_import_time`);',1,'','2022-01-01 00:00:00');
+  ('Add UQE_resource_last_import_time_last_import_time index','CREATE INDEX `UQE_resource_last_import_time_last_import_time` ON `resource_last_import_time` (`last_import_time`);',1,'','2022-01-01 00:00:00'),
+  ('Add key_path column to resource_history','alter table `resource_history` ADD COLUMN `key_path` VARCHAR(2048) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT \'\' ',1,'','2022-01-01 00:00:00'),
+  ('create table resource_events','CREATE TABLE IF NOT EXISTS `resource_events` (\n`key_path` VARCHAR(2048) CHARACTER SET latin1 COLLATE latin1_bin PRIMARY KEY NOT NULL\n, `value` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
+  ('Add IDX_resource_history_key_path index','CREATE INDEX `IDX_resource_history_key_path` ON `resource_history` (`key_path`);',1,'','2022-01-01 00:00:00'),
+  ('drop my_row_id and add primary key with columns group,resource to table resource_version if my_row_id exists (auto-generated mysql column)','\n	  ALTER TABLE resource_version\n	  DROP PRIMARY KEY,\n	  DROP COLUMN my_row_id,\n	  DROP INDEX UQE_resource_version_group_resource,\n	  ADD PRIMARY KEY (`group`,`resource`);\n	',1,'','2022-01-01 00:00:00'),
+  ('drop unique index UQE_resource_version_group_resource from resource_version table if it exists (mysql)','ALTER TABLE resource_version DROP INDEX UQE_resource_version_group_resource',1,'','2022-01-01 00:00:00'),
+  ('add primary key with columns group,resource to table resource_version if it doesn\'t exist (mysql)','ALTER TABLE resource_version ADD PRIMARY KEY (`group`,`resource`)',1,'','2022-01-01 00:00:00'),
+  ('add primary key with columns group,resource to table resource_version (postgres and sqlite)','',1,'','2022-01-01 00:00:00');
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
