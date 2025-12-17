@@ -111,7 +111,7 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		created, err := client.Create(context.Background(), &tpl, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		assert.NotEqual(t, templates.Items[1].ObjectMeta.Name, created.ObjectMeta.Name)
+		assert.NotEqual(t, templates.Items[1].Name, created.Name)
 	})
 
 	t.Run("sort by kind and then name", func(t *testing.T) {

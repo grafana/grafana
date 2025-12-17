@@ -99,6 +99,7 @@ func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVers
 		return timeinterval.NewStorage(api.MuteTimings, namespacer)
 	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
 		srv := api.Templates
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
