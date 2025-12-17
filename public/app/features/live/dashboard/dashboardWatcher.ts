@@ -25,6 +25,8 @@ import { DashboardEvent, DashboardEventAction } from './types';
 const sessionId = uuidv4();
 
 class DashboardWatcher {
+  private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
+
   channel?: LiveChannelAddress; // path to the channel
   uid?: string;
   ignoreSave = 0; // save any events until this time passes
@@ -86,7 +88,7 @@ class DashboardWatcher {
 
   // ignore the next 5 seconds of save events
   ignoreNextSave() {
-    this.ignoreSave = Date.now() + 5000;
+    this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
   }
 
   getRecentEditingEvent() {
