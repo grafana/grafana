@@ -62,7 +62,7 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
    - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
-### Align SAML identifier with SCIM externalId
+### Align SAML identifier with SCIM `externalId`
 
 When you use SAML with SCIM provisioning, align the SCIM `externalId` with the SAML user identifier. Use a stable IdP attribute (for example, Entra ID `user.objectid`) as the SCIM `externalId`, and send that same value as a SAML claim. Configure Grafana to read this claim with the `assertion_attribute_external_uid` setting so SAML authentication links to the SCIM-provisioned user and its permissions.
 
