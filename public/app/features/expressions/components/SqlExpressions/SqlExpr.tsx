@@ -349,7 +349,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     gridArea: 'editor',
-    height: '100%', // Use dynamic height from ResizeObserver
+    height: '100%',
     width: '100%',
     overflow: 'auto',
     minHeight: '100px',
