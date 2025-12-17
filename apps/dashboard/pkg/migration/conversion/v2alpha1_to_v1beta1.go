@@ -1973,16 +1973,16 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 			"options": override.Matcher.Options,
 		}
 
+		properties := make([]map[string]interface{}, 0, len(override.Properties))
 		if len(override.Properties) > 0 {
-			properties := make([]map[string]interface{}, 0, len(override.Properties))
 			for _, prop := range override.Properties {
 				properties = append(properties, map[string]interface{}{
 					"id":    prop.Id,
 					"value": prop.Value,
 				})
 			}
-			overrideMap["properties"] = properties
 		}
+		overrideMap["properties"] = properties
 
 		result = append(result, overrideMap)
 	}
@@ -2074,11 +2074,9 @@ func convertRegexMapToV1(regexMap *dashv2alpha1.DashboardRegexMap) map[string]in
 		return nil
 	}
 
-	options := []map[string]interface{}{
-		{
-			"pattern": regexMap.Options.Pattern,
-			"result":  convertValueMappingResultToV1(regexMap.Options.Result),
-		},
+	options := map[string]interface{}{
+		"pattern": regexMap.Options.Pattern,
+		"result":  convertValueMappingResultToV1(regexMap.Options.Result),
 	}
 
 	return map[string]interface{}{

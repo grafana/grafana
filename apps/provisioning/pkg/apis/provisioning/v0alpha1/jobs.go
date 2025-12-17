@@ -136,9 +136,6 @@ type ExportJobOptions struct {
 }
 
 type MigrateJobOptions struct {
-	// Preserve history (if possible)
-	History bool `json:"history,omitempty"`
-
 	// Message to use when committing the changes in a single commit
 	Message string `json:"message,omitempty"`
 }
