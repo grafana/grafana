@@ -1185,6 +1185,10 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok {
+		// Handle legacy string datasource reference (e.g., "$datasource" or "prometheus")
+		// The frontend resolves these at runtime by trying uid → name → id lookup
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1532,6 +1536,10 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok {
+		// Handle legacy string datasource reference (e.g., "$datasource" or "prometheus")
+		// The frontend resolves these at runtime by trying uid → name → id lookup
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1709,6 +1717,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 
 		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
+	} else if dsStr, ok := datasource.(string); ok {
+		// Handle legacy string datasource reference (e.g., "$datasource" or "prometheus")
+		// The frontend resolves these at runtime by trying uid → name → id lookup
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}

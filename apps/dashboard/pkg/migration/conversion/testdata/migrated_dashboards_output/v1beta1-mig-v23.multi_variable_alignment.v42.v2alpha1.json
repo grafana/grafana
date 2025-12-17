@@ -139,8 +139,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -168,8 +172,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -191,8 +199,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -214,8 +226,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -237,8 +253,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -260,8 +280,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",
@@ -283,8 +307,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",

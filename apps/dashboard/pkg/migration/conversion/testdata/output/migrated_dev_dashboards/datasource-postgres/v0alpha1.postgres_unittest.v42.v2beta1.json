@@ -3884,8 +3884,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "gdev-postgres-ds-tests"
+            },
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT measurement FROM metric_values"
             }

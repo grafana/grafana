@@ -74,8 +74,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
             }

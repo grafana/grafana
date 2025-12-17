@@ -3836,8 +3836,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "gdev-mysql-ds-tests"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT measurement FROM metric_values"
             }

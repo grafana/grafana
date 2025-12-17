@@ -261,8 +261,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "gdev-influxdb1-influxql"
+            },
             "spec": {
               "__legacyStringValue": "SHOW TAG VALUES  WITH KEY = \"datacenter\" "
             }
@@ -293,8 +296,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "gdev-influxdb1-influxql"
+            },
             "spec": {
               "__legacyStringValue": "SHOW TAG VALUES WITH KEY = \"hostname\" WHERE \"datacenter\" =~ /^$datacenter$/"
             }
@@ -385,7 +391,9 @@
       {
         "kind": "AdhocVariable",
         "group": "",
-        "datasource": {},
+        "datasource": {
+          "name": "gdev-influxdb1-influxql"
+        },
         "spec": {
           "name": "adhoc",
           "baseFilters": [],

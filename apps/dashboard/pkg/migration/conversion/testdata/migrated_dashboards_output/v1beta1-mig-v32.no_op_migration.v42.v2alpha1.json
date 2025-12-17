@@ -307,8 +307,12 @@
           "hide": "dontHide",
           "refresh": "never",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "prometheus"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {}
           },
           "regex": "",

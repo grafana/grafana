@@ -77,8 +77,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "prometheus"
+            },
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
             }

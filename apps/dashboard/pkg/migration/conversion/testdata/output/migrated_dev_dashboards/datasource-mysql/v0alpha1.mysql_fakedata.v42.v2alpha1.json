@@ -635,8 +635,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "gdev-mysql"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT datacenter FROM grafana_metric"
             }
@@ -666,8 +670,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "gdev-mysql"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT hostname FROM grafana_metric WHERE datacenter='$datacenter'"
             }
