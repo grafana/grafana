@@ -425,21 +425,18 @@ func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id 
 }
 
 // authorizeStats handles authorization for stats resource.
-func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
-	// This can leak information one shouldn't necessarily have access to.
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
+func (b *APIBuilder) authorizeStats(_ identity.Requester) (authorizer.Decision, string, error) {
+	// Stats is a read-only endpoint that returns resource counts.
+	// Any authenticated user can access it - authentication is verified before this point.
+	return authorizer.DecisionAllow, "", nil
 }
 
 // authorizeSettings handles authorization for settings resource.
-func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
-	// This is strictly a read operation. It is handy on the frontend for viewers.
-	if id.GetOrgRole().Includes(identity.RoleViewer) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "viewer role is required", nil
+func (b *APIBuilder) authorizeSettings(_ identity.Requester) (authorizer.Decision, string, error) {
+	// Settings is a read-only endpoint that returns available repository types and configuration.
+	// Any authenticated user can access it - authentication is verified before this point.
+	// The frontend needs this to display the provisioning wizard.
+	return authorizer.DecisionAllow, "", nil
 }
 
 // authorizeJobs handles authorization for job resources.
