@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -78,7 +78,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   `;
 
   const styles = useStyles2((theme) => getStyles(theme));
-  const containerRef = useRef<HTMLDivElement>(null);
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
@@ -257,7 +256,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
       })}
     >
-      <div ref={containerRef} className={styles.editorContainer}>
+      <div className={styles.editorContainer}>
         <AutoSizer>
           {({ width, height }) => (
             <SQLEditor
