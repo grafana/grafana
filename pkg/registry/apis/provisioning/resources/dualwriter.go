@@ -277,7 +277,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
 	if r.shouldUpdateGrafanaDB(opts, parsed) {
-		// Get the has from repository -- this will avoid an additional RV increment
+		// HACK: Get the has from repository -- this will avoid an additional RV increment
+		// we should change the signature of Create and Update to return FileInfo instead
 		info, _ = r.repo.Read(ctx, opts.Path, opts.Ref)
 		if info != nil {
 			parsed.Meta.SetSourceProperties(utils.SourceProperties{
