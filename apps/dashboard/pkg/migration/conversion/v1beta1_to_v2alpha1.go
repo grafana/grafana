@@ -2272,7 +2272,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 			"autoMigrateFrom": autoMigrateFrom,
 			"originalOptions": originalOptions,
 		}
-
 	}
 
 	// Build field config by mapping each field individually
