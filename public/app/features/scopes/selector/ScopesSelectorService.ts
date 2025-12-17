@@ -575,7 +575,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // First close all nodes
     let newTree = closeNodes(this.state.tree);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
+    // Check if there are recent scopes - if so, we want to show them instead of expanding
+    const recentScopes = this.getRecentScopes();
+    const shouldExpandToSelection =
+      this.state.selectedScopes.length > 0 && this.state.selectedScopes[0].scopeNodeId && recentScopes.length === 0; // Only expand if no recent scopes to show
+
+    if (shouldExpandToSelection) {
       let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
