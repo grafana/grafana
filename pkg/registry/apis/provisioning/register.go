@@ -445,9 +445,9 @@ func isAccessPolicy(id identity.Requester) bool {
 	return authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
 }
 
-// checkAccess uses the access checker to verify permissions.
-// Falls back to admin role for backwards compatibility.
-func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
+// checkAccessWithFallback uses the access checker to verify permissions.
+// Falls back to the specified role for backwards compatibility.
+func (b *APIBuilder) checkAccessWithFallback(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string, fallbackRole identity.RoleType) (authorizer.Decision, string, error) {
 	// AccessPolicy identities are trusted internal callers (ST->MT flow)
 	if isAccessPolicy(id) {
 		return authorizer.DecisionAllow, "", nil
@@ -463,8 +463,8 @@ func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, ver
 	}, "")
 
 	if err != nil {
-		// Fall back to admin role on error
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		// Fall back to specified role on error
+		if id.GetOrgRole().Includes(fallbackRole) {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "failed to check access: " + err.Error(), nil
@@ -474,49 +474,23 @@ func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, ver
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	// Fall back to admin role for backwards compatibility
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+	// Fall back to specified role for backwards compatibility
+	if id.GetOrgRole().Includes(fallbackRole) {
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	return authorizer.DecisionDeny, "admin role is required", nil
+	return authorizer.DecisionDeny, fmt.Sprintf("%s role is required", strings.ToLower(string(fallbackRole))), nil
 }
 
-// checkAccessForJobs is like checkAccess but falls back to editor role for write operations.
+// checkAccess uses the access checker with admin role fallback.
+func (b *APIBuilder) checkAccess(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
+	return b.checkAccessWithFallback(ctx, id, verb, group, resource, name, namespace, identity.RoleAdmin)
+}
+
+// checkAccessForJobs uses the access checker with editor role fallback.
 // Jobs can be created/managed by editors, not just admins.
 func (b *APIBuilder) checkAccessForJobs(ctx context.Context, id identity.Requester, verb, group, resource, name, namespace string) (authorizer.Decision, string, error) {
-	// AccessPolicy identities are trusted internal callers (ST->MT flow)
-	if isAccessPolicy(id) {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	// Use the access checker
-	res, err := b.access.Check(ctx, id, authlib.CheckRequest{
-		Verb:      verb,
-		Group:     group,
-		Resource:  resource,
-		Name:      name,
-		Namespace: namespace,
-	}, "")
-
-	if err != nil {
-		// Fall back to editor role on error
-		if id.GetOrgRole().Includes(identity.RoleEditor) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "failed to check access: " + err.Error(), nil
-	}
-
-	if res.Allowed {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	// Fall back to editor role for backwards compatibility
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	return authorizer.DecisionDeny, "editor role is required", nil
+	return b.checkAccessWithFallback(ctx, id, verb, group, resource, name, namespace, identity.RoleEditor)
 }
 
 // allowForAdminsOrAccessPolicy is used for resources without fine-grained permissions.
