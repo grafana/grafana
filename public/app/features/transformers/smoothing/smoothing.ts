@@ -1,6 +1,13 @@
 import { map } from 'rxjs';
 
-import { DataFrame, DataTransformerID, FieldType, SynchronousDataTransformerInfo } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerID,
+  FieldType,
+  SynchronousDataTransformerInfo,
+  isTimeSeriesFrame,
+  TransformationApplicabilityLevels,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { asapSmooth, DataPoint } from './asap';
@@ -146,6 +153,19 @@ export const getSmoothingTransformer: () => SynchronousDataTransformerInfo<Smoot
   description: t(
     'transformers.smoothing.description',
     'Reduce noise in time series data through adaptive downsampling.'
+  ),
+  isApplicable: (data) => {
+    for (const frame of data) {
+      if (isTimeSeriesFrame(frame)) {
+        return TransformationApplicabilityLevels.Applicable;
+      }
+    }
+
+    return TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: t(
+    'transformers.smoothing.is-applicable-description',
+    'The Smoothing transformation requires at least one time series frame to function. You currently have none.'
   ),
   operator: (options, ctx) => {
     const transformer = getSmoothingTransformer().transformer(options, ctx);
