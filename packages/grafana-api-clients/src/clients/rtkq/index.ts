@@ -14,6 +14,7 @@ import { generatedAPI as playlistAPIv0alpha1 } from './playlist/v0alpha1';
 import { generatedAPI as preferencesUserAPI } from './preferences/user';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as scopeAPIv0alpha1 } from './scope/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
 import { generatedAPI as legacyUserAPI } from './user';
 // PLOP_INJECT_IMPORT
@@ -35,6 +36,7 @@ export const allMiddleware = [
   legacyUserAPI.middleware,
   historianAlertingAPIv0alpha1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
+  scopeAPIv0alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -55,6 +57,7 @@ export const allReducers = {
   [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   [historianAlertingAPIv0alpha1.reducerPath]: historianAlertingAPIv0alpha1.reducer,
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
+  [scopeAPIv0alpha1.reducerPath]: scopeAPIv0alpha1.reducer,
   // PLOP_INJECT_REDUCER
 };
 

@@ -1,17 +1,26 @@
-import { getAPIBaseURL } from '@grafana/api-clients';
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { getBackendSrv, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
+import { dispatch } from 'app/store/store';
 
 import { ScopeNavigation } from './dashboards/types';
-
-const apiUrl = getAPIBaseURL('scope.grafana.app', 'v0alpha1');
 
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {
     try {
-      return await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
+      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }));
+
+      if ('data' in result && result.data) {
+        // The generated API returns a Scope type compatible with @grafana/data Scope
+        return result.data;
+      }
+
+      if ('error' in result) {
+        console.error(result.error);
+      }
+
+      return undefined;
     } catch (err) {
-      // TODO: maybe some better error handling
       console.error(err);
       return undefined;
     }
@@ -28,10 +37,14 @@ export class ScopesApiClient {
     }
 
     try {
-      const res = await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
-        names: names,
-      });
-      return res?.items ?? [];
+      const result = await dispatch(scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({ names }));
+
+      if ('data' in result && result.data) {
+        // The generated API returns items compatible with @grafana/data ScopeNode
+        return result.data.items ?? [];
+      }
+
+      return [];
     } catch (err) {
       return [];
     }
@@ -54,16 +67,20 @@ export class ScopesApiClient {
     }
 
     try {
-      const nodes =
-        (
-          await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
-            parent: options.parent,
-            query: options.query,
-            limit,
-          })
-        )?.items ?? [];
+      const result = await dispatch(
+        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({
+          parent: options.parent,
+          query: options.query,
+          limit,
+        })
+      );
 
-      return nodes;
+      if ('data' in result && result.data) {
+        // The generated API returns items compatible with @grafana/data ScopeNode
+        return result.data.items ?? [];
+      }
+
+      return [];
     } catch (err) {
       return [];
     }
@@ -71,14 +88,19 @@ export class ScopesApiClient {
 
   public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
     try {
-      const response = await getBackendSrv().get<{ items: ScopeDashboardBinding[] }>(
-        apiUrl + `/find/scope_dashboard_bindings`,
-        {
+      const result = await dispatch(
+        scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate({
+          name: 'scope_dashboard_bindings',
           scope: scopeNames,
-        }
+        })
       );
 
-      return response?.items ?? [];
+      if ('data' in result && result.data) {
+        // The generated API returns items compatible with @grafana/data ScopeDashboardBinding
+        return result.data.items ?? [];
+      }
+
+      return [];
     } catch (err) {
       return [];
     }
@@ -86,11 +108,19 @@ export class ScopesApiClient {
 
   public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
     try {
-      const response = await getBackendSrv().get<{ items: ScopeNavigation[] }>(apiUrl + `/find/scope_navigations`, {
-        scope: scopeNames,
-      });
+      const result = await dispatch(
+        scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate({
+          name: 'scope_navigations',
+          scope: scopeNames,
+        })
+      );
 
-      return response?.items ?? [];
+      if ('data' in result && result.data) {
+        // The generated API returns items compatible with ScopeNavigation
+        return result.data.items ?? [];
+      }
+
+      return [];
     } catch (err) {
       return [];
     }
@@ -100,9 +130,16 @@ export class ScopesApiClient {
     if (!config.featureToggles.useScopeSingleNodeEndpoint) {
       return Promise.resolve(undefined);
     }
+
     try {
-      const response = await getBackendSrv().get<ScopeNode>(apiUrl + `/scopenodes/${scopeNodeId}`);
-      return response;
+      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }));
+
+      if ('data' in result && result.data) {
+        // The generated API returns a ScopeNode type compatible with @grafana/data ScopeNode
+        return result.data;
+      }
+
+      return undefined;
     } catch (err) {
       return undefined;
     }
