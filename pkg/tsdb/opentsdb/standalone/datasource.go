@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler   = (*Datasource)(nil)
-	_ backend.CheckHealthHandler = (*Datasource)(nil)
+	_ backend.CheckHealthHandler  = (*Datasource)(nil)
+	_ backend.CallResourceHandler = (*Datasource)(nil)
+	_ backend.QueryDataHandler    = (*Datasource)(nil)
 )
 
 type Datasource struct {
@@ -24,10 +25,14 @@ func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instanc
 	}, nil
 }
 
-func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return d.Service.QueryData(ctx, req)
-}
-
 func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	return d.Service.CheckHealth(ctx, req)
+}
+
+func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return d.Service.CallResource(ctx, req, sender)
+}
+
+func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return d.Service.QueryData(ctx, req)
 }

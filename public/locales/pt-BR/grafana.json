@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Abrir link externo"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Mais",
       "new-menu": {
@@ -2335,7 +2342,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3705,6 +3714,10 @@
       "clear": "Limpar busca e filtros",
       "text": "Nenhum resultado encontrado para sua consulta"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -4815,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valores separados por vírgula"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filtro de nome",
@@ -5091,6 +5103,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5119,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configuração",
       "menu-use-library-panel": "Usar painel da biblioteca",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5463,6 +5484,12 @@
         "label": "Editar",
         "tooltip": "Entrar no modo de edição"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Tornar editável",
         "tooltip": "Este painel de controle foi marcado como somente leitura"
@@ -5483,14 +5510,6 @@
         "discard-panel-new": "Descartar painel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Editar esquema v2 do painel"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrar no modo de edição"
-          },
-          "exit": {
-            "label": "Sair do modo de edição"
-          }
         },
         "enter-edit-mode": {
           "label": "Tornar editável",
@@ -5942,13 +5961,25 @@
       "title-error-loading-dashboard": "Erro ao carregar o painel de controle"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Editar painel",
         "view-panel": "Visualizar painel"
       },
       "title": {
         "dashboard": "Painel de controle",
-        "discard-changes-to-dashboard": "Deseja descartar as alterações no painel?"
+        "discard-changes-to-dashboard": "Deseja descartar as alterações no painel?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6121,7 +6152,10 @@
       "no-data-found": "Nenhum dado encontrado"
     },
     "inspect-json-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcula dinamicamente o intervalo ao dividir o intervalo de tempo pela contagem especificada",
@@ -8827,6 +8861,13 @@
       "aria-label-default": "Escolha uma cor",
       "aria-label-selected-color": "cor {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Excluir",
       "cancel": "Cancelar",
@@ -9024,6 +9065,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Recolher todas as linhas",
       "aria-label-expand-all": "Expandir todas as linhas",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
@@ -10695,7 +10738,6 @@
       "title": "Novo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Novo painel de controle"
     },
     "new-folder": {
@@ -11377,6 +11419,12 @@
         "latestReleaseDate": "Data de lançamento mais recente:",
         "latestVersion": "Última versão",
         "license": "Licença",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Comunicar um problema",
         "reportAbuse": "",
         "reportAbuseTooltip": "Comunique problemas relacionados a plug-ins mal-intencionados ou prejudiciais diretamente à Grafana Labs.",
@@ -11829,7 +11877,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar os recursos necessários",
       "step-description-copy-url": "Na saída do ngrok, copie a URL de encaminhamento https:// semelhante a esta:",
-      "step-description-enable-feature-toggles": "Adicione essas configurações ao seu arquivo custom.ini para ativar os recursos necessários:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isso ao seu arquivo custom.ini, substituindo a URL por sua URL ngrok real:",
       "step-title-copy-url": "Copie sua URL pública",
@@ -11839,7 +11887,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Estabelecer esta conexão pode causar uma interrupção temporária"
     },
     "getting-started-page": {
-      "header": "Aprovisionamento",
       "subtitle-provisioning-feature": "Visualize e gerencie suas conexões de provisionamento"
     },
     "git": {
@@ -12425,13 +12472,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12652,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importar",
       "new": "Novo",
       "new-dashboard": "Novo painel de controle",

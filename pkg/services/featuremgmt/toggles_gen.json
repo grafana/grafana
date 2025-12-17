@@ -1183,6 +1183,19 @@
     },
     {
       "metadata": {
+        "name": "drilldownRecommendations",
+        "resourceVersion": "1764855550769",
+        "creationTimestamp": "2025-12-04T13:39:10Z"
+      },
+      "spec": {
+        "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-12-12T22:20:04Z"
@@ -1204,6 +1217,19 @@
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "elasticsearchRawDSLQuery",
+        "resourceVersion": "1763508396079",
+        "creationTimestamp": "2025-11-18T23:26:36Z"
+      },
+      "spec": {
+        "description": "Enables the raw DSL query editor in the Elasticsearch data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -2656,6 +2682,20 @@
     },
     {
       "metadata": {
+        "name": "pluginInsights",
+        "resourceVersion": "1761300628147",
+        "creationTimestamp": "2025-10-24T10:10:28Z"
+      },
+      "spec": {
+        "description": "Show insights for plugins in the plugin details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginInstallAPISync",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-10-24T12:09:26Z"
@@ -2884,7 +2924,8 @@
       "metadata": {
         "name": "queryServiceFromExplore",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-04-02T10:00:33Z"
+        "creationTimestamp": "2025-04-02T10:00:33Z",
+        "deletionTimestamp": "2025-12-10T20:33:21Z"
       },
       "spec": {
         "description": "Routes explore requests to the new query service",

@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Öppen extern länk"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Mer",
       "new-menu": {
@@ -2335,7 +2342,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3705,6 +3714,10 @@
       "clear": "Rensa sökning och filter",
       "text": "Inga resultat hittades för din fråga"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -4815,8 +4828,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Värden åtskilda med kommatecken"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Namnfilter",
@@ -5091,6 +5103,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5119,6 +5139,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurera",
       "menu-use-library-panel": "Använd bibliotekspanel",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5463,6 +5484,12 @@
         "label": "Redigera",
         "tooltip": "Gå till redigeringsläge"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Gör redigerbar",
         "tooltip": "Den här instrumentpanelen markerades som skrivskyddad"
@@ -5483,14 +5510,6 @@
         "discard-panel-new": "Kassera panelen",
         "edit-dashboard-v2-schema": {
           "tooltip": "Redigera instrumentpanel v2-schema"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Gå till redigeringsläge"
-          },
-          "exit": {
-            "label": "Avsluta redigeringsläge"
-          }
         },
         "enter-edit-mode": {
           "label": "Gör redigerbar",
@@ -5942,13 +5961,25 @@
       "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Redigera panel",
         "view-panel": "Visa panel"
       },
       "title": {
         "dashboard": "Instrumentpanel",
-        "discard-changes-to-dashboard": "Kassera ändringar i instrumentpanelen?"
+        "discard-changes-to-dashboard": "Kassera ändringar i instrumentpanelen?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6121,7 +6152,10 @@
       "no-data-found": "Inga data hittades"
     },
     "inspect-json-tab": {
-      "apply": "Tillämpa"
+      "apply": "Tillämpa",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Beräknar intervallet dynamiskt genom att dividera tidsintervallet med det angivna antalet",
@@ -8827,6 +8861,13 @@
       "aria-label-default": "Välj en färg",
       "aria-label-selected-color": "{{colorLabel}} färg"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Radera",
       "cancel": "Avbryt",
@@ -9024,6 +9065,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Dölj alla rader",
       "aria-label-expand-all": "Expandera alla rader",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Växla rad utökad",
       "tooltip-collapse-all": "Dölj alla rader",
       "tooltip-expand-all": "Expandera alla rader"
@@ -10695,7 +10738,6 @@
       "title": "Nyhet"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Ny instrumentpanel"
     },
     "new-folder": {
@@ -11377,6 +11419,12 @@
         "latestReleaseDate": "Senaste utgivningsdatum:",
         "latestVersion": "Senaste versionen",
         "license": "Licens",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Ta upp ett problem",
         "reportAbuse": "",
         "reportAbuseTooltip": "Rapportera problem relaterade till skadliga eller farliga tilläggsprogram direkt till Grafana Labs.",
@@ -11829,7 +11877,7 @@
       "modal-title-set-up-public-access": "Konfigurera offentlig åtkomst",
       "modal-title-set-up-required-features": "Konfigurera obligatoriska funktioner",
       "step-description-copy-url": "Från ngroks utdata, kopiera den https://-vidarebefordringsadress som ser ut så här:",
-      "step-description-enable-feature-toggles": "Lägg till dessa inställningar i din custom.ini-fil för att aktivera nödvändiga funktioner:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Kör detta kommando för att skapa en säker tunnel till din lokala Grafana:",
       "step-description-update-grafana-config": "Lägg till detta i din custom.ini-fil och ersätt webbadressen med din faktiska ngrok-URL:",
       "step-title-copy-url": "Kopiera din offentliga webbadress",
@@ -11839,7 +11887,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Konfiguration av den här anslutningen kan orsaka ett tillfälligt avbrott"
     },
     "getting-started-page": {
-      "header": "Provisionering",
       "subtitle-provisioning-feature": "Visa och hantera dina provisioneringsanslutningar"
     },
     "git": {
@@ -12425,13 +12472,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12652,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importera",
       "new": "Nyhet",
       "new-dashboard": "Ny instrumentpanel",

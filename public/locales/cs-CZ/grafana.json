@@ -2248,6 +2248,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Otevřít externí odkaz"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Další",
       "new-menu": {
@@ -2351,7 +2358,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3737,6 +3746,10 @@
       "clear": "Vymazat vyhledávání a filtry",
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
+    },
     "restore": {
       "success": "",
       "all-failed_one": "",
@@ -4853,8 +4866,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Hodnoty oddělené čárkou"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Filtr názvu",
@@ -5129,6 +5141,14 @@
         "layout": "Rozvržení"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5157,6 +5177,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurovat",
       "menu-use-library-panel": "Použít panel knihovny",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5503,6 +5524,12 @@
         "label": "Upravit",
         "tooltip": "Vstoupit do režimu úprav"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Nastavit jako upravitelné",
         "tooltip": "Tato nástěnka byla označena jen pro čtení"
@@ -5523,14 +5550,6 @@
         "discard-panel-new": "Zahodit panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Upravit schéma nástěnky v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Vstoupit do režimu úprav"
-          },
-          "exit": {
-            "label": "Ukončit režim úprav"
-          }
         },
         "enter-edit-mode": {
           "label": "Nastavit jako upravitelné",
@@ -5984,13 +6003,25 @@
       "title-error-loading-dashboard": "Chyba při načítání nástěnky"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Upravit panel",
         "view-panel": "Zobrazit panel"
       },
       "title": {
         "dashboard": "Nástěnka",
-        "discard-changes-to-dashboard": "Zahodit změny nástěnky?"
+        "discard-changes-to-dashboard": "Zahodit změny nástěnky?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6163,7 +6194,10 @@
       "no-data-found": "Nebyla nalezena žádná data"
     },
     "inspect-json-tab": {
-      "apply": "Použít"
+      "apply": "Použít",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Dynamicky vypočítá interval vydělením časového rozsahu zadaným počtem",
@@ -8897,6 +8931,13 @@
       "aria-label-default": "Vyberte barvu",
       "aria-label-selected-color": "{{colorLabel}} barva"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Odstranit",
       "cancel": "Zrušit",
@@ -9094,6 +9135,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Sbalit všechny řádky",
       "aria-label-expand-all": "Rozbalit všechny řádky",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Řádek přepnutí rozbalen",
       "tooltip-collapse-all": "Sbalit všechny řádky",
       "tooltip-expand-all": "Rozbalit všechny řádky"
@@ -10781,7 +10824,6 @@
       "title": "Nové"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nová nástěnka"
     },
     "new-folder": {
@@ -11469,6 +11511,12 @@
         "latestReleaseDate": "Nejnovější datum vydání:",
         "latestVersion": "Poslední verze",
         "license": "Licence",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Nahlásit problém",
         "reportAbuse": "",
         "reportAbuseTooltip": "Nahlaste problémy související se škodlivými pluginy přímo společnosti Grafana Labs.",
@@ -11931,7 +11979,7 @@
       "modal-title-set-up-public-access": "Nastavit veřejný přístup",
       "modal-title-set-up-required-features": "Nastavte povinné prvky",
       "step-description-copy-url": "Z výstupu „ngrok“ zkopírujte část adresy URL pro přesměrování (https://), která vypadá následovně:",
-      "step-description-enable-feature-toggles": "Chcete-li povolit potřebné funkce, přidejte do souboru custom.ini tato nastavení:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Spuštěním tohoto příkazu vytvoříte zabezpečené připojení k místní instanci Grafany:",
       "step-description-update-grafana-config": "Přidejte to do souboru custom.ini a nahraďte adresu URL aktuální adresou URL ngrok:",
       "step-title-copy-url": "Kopírovat veřejnou adresu URL",
@@ -11941,7 +11989,6 @@
       "title-setting-connection-could-cause-temporary-outage": "Nastavení tohoto připojení může způsobit dočasný výpadek"
     },
     "getting-started-page": {
-      "header": "Zajišťování",
       "subtitle-provisioning-feature": "Zobrazujte a spravujte vazby zajištění"
     },
     "git": {
@@ -12529,13 +12576,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12714,7 +12760,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importovat",
       "new": "Nové",
       "new-dashboard": "Nová nástěnka",
