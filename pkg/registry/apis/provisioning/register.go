@@ -355,7 +355,13 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //   - CRUD: connections:create/read/write/delete
 //   - Status: connections:read
 //
-// Other resources (stats, settings, jobs, historicjobs):
+// Jobs:
+//   - CRUD: jobs:create/read/write/delete
+//
+// Historic Jobs:
+//   - Read-only: historicjobs:read
+//
+// Other resources (stats, settings):
 //   - Admin role or AccessPolicy required
 func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
@@ -363,7 +369,11 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.authorizeRepositorySubresource(ctx, a, id)
 	case provisioning.ConnectionResourceInfo.GetName():
 		return b.authorizeConnectionSubresource(ctx, a, id)
-	case "stats", "settings", provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
+	case provisioning.JobResourceInfo.GetName():
+		return b.checkAccess(ctx, id, a.GetVerb(), provisioning.GROUP, "jobs", a.GetName(), a.GetNamespace())
+	case provisioning.HistoricJobResourceInfo.GetName():
+		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, "historicjobs", a.GetName(), a.GetNamespace())
+	case "stats", "settings":
 		return allowForAdminsOrAccessPolicy(id)
 	default:
 		return b.authorizeDefault(id)
