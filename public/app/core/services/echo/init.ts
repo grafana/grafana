@@ -146,14 +146,13 @@ async function initRudderstackBackend() {
     return;
   }
 
-  // this will need to be updated when rudderstackSdkV3Url is added
-  // Desired logic: if only one of the sdk urls is provided, use respective code
+  // Logic: if only one of the sdk urls is provided, use respective code
   // otherwise defer to the feature toggle.
 
   const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
   const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
-  const onlyOneSdkURLSet = hasOldSdkUrl !== hasNewSdkUrl;
-  const useNewRudderstack = onlyOneSdkURLSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+  const onlyOneSdkUrlSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
 
   const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
 
