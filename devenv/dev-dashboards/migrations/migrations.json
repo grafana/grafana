@@ -299,13 +299,7 @@
         "y": 0
       },
       "id": 6,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        }
-      },
+      "options": {},
       "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
       "mode": "markdown",
       "pluginVersion": "11.0.0-pre",
