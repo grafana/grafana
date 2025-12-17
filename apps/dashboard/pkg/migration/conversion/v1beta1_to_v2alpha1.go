@@ -2270,21 +2270,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		}
 	}
 
-	// Handle old Angular-style text panels where content and mode are at the root level
-	// instead of inside the options object.
-	if panelType == "text" {
-		if content, ok := panelMap["content"].(string); ok {
-			if _, hasContent := options["content"]; !hasContent {
-				options["content"] = content
-			}
-		}
-		if mode, ok := panelMap["mode"].(string); ok {
-			if _, hasMode := options["mode"]; !hasMode {
-				options["mode"] = mode
-			}
-		}
-	}
-
 	// Build field config by mapping each field individually
 	fieldConfigSource := extractFieldConfigSource(fieldConfig)
 

@@ -112,6 +112,7 @@ var AngularPanelMigrations = map[string]string{
 	"grafana-piechart-panel":   "piechart",
 	"grafana-worldmap-panel":   "geomap",
 	"natel-discrete-panel":     "state-timeline",
+	"text":                     "text",
 }
 
 // GetAngularPanelMigration checks if a panel type is an Angular panel and returns the new type to migrate to.

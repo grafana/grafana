@@ -142,6 +142,7 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-piechart-panel': 'piechart',
   'grafana-worldmap-panel': 'geomap',
   'natel-discrete-panel': 'state-timeline',
+  text: 'text',
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {

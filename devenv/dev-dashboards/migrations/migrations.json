@@ -304,10 +304,10 @@
           "language": "plaintext",
           "showLineNumbers": false,
           "showMiniMap": false
-        },
-        "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
-        "mode": "markdown"
+        }
       },
+      "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
+      "mode": "markdown",
       "pluginVersion": "11.0.0-pre",
       "targets": [
         {
