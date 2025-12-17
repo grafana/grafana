@@ -15,6 +15,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -129,6 +131,12 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(opts.Path)
 		if r.Method == http.MethodGet && isDir {
+			// Directory listing requires repositories:read permission
+			if err := c.authorizeListFiles(ctx, name); err != nil {
+				responder.Error(err)
+				return
+			}
+
 			files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 			if err != nil {
 				responder.Error(err)
@@ -233,8 +241,49 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), 30*time.Second), nil
 }
 
+// authorizeListFiles checks if the user has repositories:read permission for listing files.
+func (c *filesConnector) authorizeListFiles(ctx context.Context, repoName string) error {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewUnauthorized(err.Error())
+	}
+
+	// AccessPolicy identities (ST->MT flow) are trusted internal callers
+	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) {
+		return nil
+	}
+
+	rsp, err := c.access.Check(ctx, id, authlib.CheckRequest{
+		Verb:      utils.VerbGet,
+		Group:     provisioning.GROUP,
+		Resource:  provisioning.RepositoryResourceInfo.GetName(),
+		Name:      repoName,
+		Namespace: id.GetNamespace(),
+	}, "")
+	if err != nil {
+		// Fall back to admin role on error
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return nil
+		}
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), repoName,
+			fmt.Errorf("failed to check access: %w", err))
+	}
+
+	if rsp.Allowed {
+		return nil
+	}
+
+	// Fall back to admin role for backwards compatibility
+	if id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return nil
+	}
+
+	return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), repoName,
+		fmt.Errorf("repositories:read permission required to list files"))
+}
+
 // listFolderFiles returns a list of files in a folder.
-// Authorization is handled at the route level via authorizeRepositorySubresource.
+// Authorization is checked via authorizeListFiles before calling this function.
 func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {

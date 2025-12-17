@@ -394,8 +394,14 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "test":
 		return b.checkAccess(ctx, id, apiutils.VerbUpdate, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
-	// Read-only subresources: files listing, refs, resources, history, status
-	case "files", "refs", "resources", "history", "status":
+	// Files subresource: allow any authenticated user at route level.
+	// Directory listing checks repositories:read in the connector.
+	// Individual file operations are authorized by DualReadWriter based on the actual resource.
+	case "files":
+		return authorizer.DecisionAllow, "", nil
+
+	// Read-only subresources: refs, resources, history, status
+	case "refs", "resources", "history", "status":
 		return b.checkAccess(ctx, id, apiutils.VerbGet, provisioning.GROUP, provisioning.RepositoryResourceInfo.GetName(), a.GetName(), a.GetNamespace())
 
 	// Jobs subresource - check jobs permissions with the verb
