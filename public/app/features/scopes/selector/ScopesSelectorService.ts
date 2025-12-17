@@ -562,6 +562,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     const firstScope = this.state.selectedScopes[0];
     const scopeId = firstScope.scopeId;
+    const scopeNodeId = firstScope.scopeNodeId || firstScope.parentNodeId;
 
     // Try to use defaultPath if available
     const scope = scopeId ? this.state.scopes[scopeId] : undefined;
@@ -578,34 +579,35 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       } catch (error) {
         console.error('Failed to expand using defaultPath', error);
       }
-    } else if (firstScope.parentNodeId) {
-      // Fall back to original logic using parentNodeId
-      let path = getPathOfNode(firstScope.parentNodeId, this.state.nodes);
-
-      // Get node at path, and request its children if they don't exist yet
-      let nodeAtPath = treeNodeAtPath(newTree, path);
-
-      // In the cases where nodes are not in the tree yet
-      if (!nodeAtPath) {
-        try {
-          newTree = (await this.resolvePathToRoot(firstScope.parentNodeId, newTree)).tree;
-          nodeAtPath = treeNodeAtPath(newTree, path);
-        } catch (error) {
-          console.error('Failed to resolve path to root', error);
-        }
-      }
-
-      if (nodeAtPath && !nodeAtPath.children) {
-        // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
-        newTree = newTreeWithChildren;
-      }
-
-      // Expand the nodes to the selected scope - must be done after loading children
+    } else if (scopeNodeId) {
+      // Fall back to using scopeNodeId or parentNodeId
       try {
-        newTree = expandNodes(newTree, path);
+        // Get the path using our unified method
+        const pathNodes = await this.getPathForScope(scopeId, scopeNodeId);
+
+        if (pathNodes.length > 0) {
+          // Insert path into tree
+          newTree = insertPathNodesIntoTree(newTree, pathNodes);
+
+          // Get string path for tree operations
+          const stringPath = pathNodes.map((n) => n.metadata.name);
+          stringPath.unshift(''); // Add root
+
+          // Load children of the parent node if needed
+          const pathToLastNode = stringPath.slice(0, -1);
+          const treeNode = treeNodeAtPath(newTree, pathToLastNode);
+
+          if (treeNode && !treeNode.childrenLoaded) {
+            const { newTree: withChildren } = await this.loadNodeChildren(pathToLastNode, treeNode, '');
+            newTree = withChildren;
+          }
+
+          // Expand the path
+          newTree = expandNodes(newTree, stringPath);
+        }
       } catch (error) {
-        console.error('Failed to expand nodes', error);
+        // Silently handle expansion failures - tree structure may not be fully loaded yet
+        // This can happen when opening with cached data before filterNode() completes
       }
     }
 
