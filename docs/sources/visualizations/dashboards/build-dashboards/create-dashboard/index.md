@@ -125,7 +125,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Open the **Saved queries** dropdown and then click **Replace query** to reuse a [saved query](ref:saved-queries).
+   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](ref:saved-queries).
 
 1. (Optional) To [save the query](ref:save-query) for reuse, open the **Saved queries** dropdown and then click the **Save query** option.
 1. Click **Refresh** to query the data source.
