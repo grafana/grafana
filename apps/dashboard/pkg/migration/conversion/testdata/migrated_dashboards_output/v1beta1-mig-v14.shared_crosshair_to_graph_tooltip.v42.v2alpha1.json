@@ -218,12 +218,8 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
-          "datasource": {
-            "type": "",
-            "uid": "prometheus"
-          },
           "query": {
-            "kind": "",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(server)"
             }

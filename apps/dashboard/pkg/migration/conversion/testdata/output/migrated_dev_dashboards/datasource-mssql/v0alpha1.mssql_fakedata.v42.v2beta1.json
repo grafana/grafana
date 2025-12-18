@@ -650,11 +650,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "gdev-mssql"
-            },
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT datacenter FROM grafana_metric"
             }
@@ -686,11 +683,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "gdev-mssql"
-            },
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT hostname FROM grafana_metric WHERE datacenter='$datacenter'"
             }

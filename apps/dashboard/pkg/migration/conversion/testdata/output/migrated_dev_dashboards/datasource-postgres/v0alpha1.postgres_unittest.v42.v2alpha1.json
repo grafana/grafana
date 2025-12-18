@@ -3810,12 +3810,8 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
-          "datasource": {
-            "type": "",
-            "uid": "gdev-postgres-ds-tests"
-          },
           "query": {
-            "kind": "",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT measurement FROM metric_values"
             }

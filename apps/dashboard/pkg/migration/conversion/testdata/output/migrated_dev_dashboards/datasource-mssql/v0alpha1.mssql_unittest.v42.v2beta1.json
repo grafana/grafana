@@ -4196,11 +4196,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "gdev-mssql-ds-tests"
-            },
             "spec": {
               "__legacyStringValue": "SELECT DISTINCT measurement FROM metric_values"
             }

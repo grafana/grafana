@@ -144,11 +144,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -178,11 +175,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -206,11 +200,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -234,11 +225,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -262,11 +250,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -290,11 +275,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
@@ -318,11 +300,8 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "datasource": {
-              "name": "prometheus"
-            },
             "spec": {}
           },
           "regex": "",
