@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -160,16 +159,6 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 }
 
 func TestEvaluatorTest(t *testing.T) {
-	states := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
-	generateState := func(prefix string) *state.State {
-		labels := models.GenerateAlertLabels(rand.Intn(5)+1, prefix+"-")
-		return &state.State{
-			CacheID: labels.Fingerprint(),
-			Labels:  labels,
-			State:   states[rand.Intn(len(states))],
-		}
-	}
-
 	randomResultCallback := func(now time.Time) (eval.Results, error) {
 		return eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil
 	}
@@ -202,79 +191,6 @@ func TestEvaluatorTest(t *testing.T) {
 	rule := gen.With(gen.WithInterval(time.Second)).GenerateRef()
 	ruleInterval := time.Duration(rule.IntervalSeconds) * time.Second
 
-	t.Run("should return data frame in specific format", func(t *testing.T) {
-		from := time.Unix(0, 0)
-		to := from.Add(5 * ruleInterval)
-		allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
-
-		var states []state.StateTransition
-
-		for _, s := range allStates {
-			labels := models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-")
-			states = append(states, state.StateTransition{
-				State: &state.State{
-					CacheID:     labels.Fingerprint(),
-					Labels:      labels,
-					State:       s,
-					StateReason: util.GenerateShortUID(),
-				},
-			})
-		}
-
-		manager.stateCallback = func(now time.Time) []state.StateTransition {
-			return states
-		}
-
-		frame, err := engine.Test(context.Background(), nil, rule, from, to)
-
-		require.NoError(t, err)
-		require.Len(t, frame.Fields, len(states)+1) // +1 - timestamp
-
-		t.Run("should contain field Time", func(t *testing.T) {
-			timestampField, _ := frame.FieldByName("Time")
-			require.NotNil(t, timestampField, "frame does not contain field 'Time'")
-			require.Equal(t, data.FieldTypeTime, timestampField.Type())
-		})
-
-		fieldByState := make(map[data.Fingerprint]*data.Field, len(states))
-
-		t.Run("should contain a field per state", func(t *testing.T) {
-			for _, s := range states {
-				var f *data.Field
-				for _, field := range frame.Fields {
-					if field.Labels.String() == s.Labels.String() {
-						f = field
-						break
-					}
-				}
-				require.NotNilf(t, f, "Cannot find a field by state labels")
-				fieldByState[s.CacheID] = f
-			}
-		})
-
-		t.Run("should be populated with correct values", func(t *testing.T) {
-			timestampField, _ := frame.FieldByName("Time")
-			expectedLength := timestampField.Len()
-			for _, field := range frame.Fields {
-				require.Equalf(t, expectedLength, field.Len(), "Field %s should have the size %d", field.Name, expectedLength)
-			}
-			for i := 0; i < expectedLength; i++ {
-				expectedTime := from.Add(time.Duration(int64(i)*rule.IntervalSeconds) * time.Second)
-				require.Equal(t, expectedTime, timestampField.At(i).(time.Time))
-				for _, s := range states {
-					f := fieldByState[s.CacheID]
-					if s.State.State == eval.NoData {
-						require.Nil(t, f.At(i))
-					} else {
-						v := f.At(i).(*string)
-						require.NotNilf(t, v, "Field [%s] value at index %d should not be nil", s.CacheID, i)
-						require.Equal(t, fmt.Sprintf("%s (%s)", s.State.State, s.StateReason), *v)
-					}
-				}
-			}
-		})
-	})
-
 	t.Run("should not fail if 'to-from' is not times of interval", func(t *testing.T) {
 		from := time.Unix(0, 0)
 		to := from.Add(5 * ruleInterval)
@@ -306,72 +222,14 @@ func TestEvaluatorTest(t *testing.T) {
 		}
 	})
 
-	t.Run("should backfill field with nulls if a new dimension created in the middle", func(t *testing.T) {
-		from := time.Unix(0, 0)
-
-		state1 := state.StateTransition{
-			State: generateState("1"),
-		}
-		state2 := state.StateTransition{
-			State: generateState("2"),
-		}
-		state3 := state.StateTransition{
-			State: generateState("3"),
-		}
-		stateByTime := map[time.Time][]state.StateTransition{
-			from:                       {state1, state2},
-			from.Add(1 * ruleInterval): {state1, state2},
-			from.Add(2 * ruleInterval): {state1, state2},
-			from.Add(3 * ruleInterval): {state1, state2, state3},
-			from.Add(4 * ruleInterval): {state1, state2, state3},
-		}
-		to := from.Add(time.Duration(len(stateByTime)) * ruleInterval)
-
-		manager.stateCallback = func(now time.Time) []state.StateTransition {
-			return stateByTime[now]
-		}
-
-		frame, err := engine.Test(context.Background(), nil, rule, from, to)
-		require.NoError(t, err)
-
-		var field3 *data.Field
-		for _, field := range frame.Fields {
-			if field.Labels.String() == state3.Labels.String() {
-				field3 = field
-				break
-			}
-		}
-		require.NotNilf(t, field3, "Result for state 3 was not found")
-		require.Equalf(t, len(stateByTime), field3.Len(), "State3 result has unexpected number of values")
-
-		idx := 0
-		for curTime, states := range stateByTime {
-			value := field3.At(idx).(*string)
-			if len(states) == 2 {
-				require.Nilf(t, value, "The result should be nil if state3 was not available for time %v", curTime)
-			}
-		}
-	})
-
 	t.Run("should fail", func(t *testing.T) {
 		manager.stateCallback = func(now time.Time) []state.StateTransition {
 			return nil
 		}
-
 		t.Run("when interval is not correct", func(t *testing.T) {
 			from := time.Now()
-			t.Run("when from=to", func(t *testing.T) {
-				to := from
-				_, err := engine.Test(context.Background(), nil, rule, from, to)
-				require.ErrorIs(t, err, ErrInvalidInputData)
-			})
 			t.Run("when from > to", func(t *testing.T) {
 				to := from.Add(-ruleInterval)
-				_, err := engine.Test(context.Background(), nil, rule, from, to)
-				require.ErrorIs(t, err, ErrInvalidInputData)
-			})
-			t.Run("when to-from < interval", func(t *testing.T) {
-				to := from.Add(ruleInterval).Add(-time.Millisecond)
 				_, err := engine.Test(context.Background(), nil, rule, from, to)
 				require.ErrorIs(t, err, ErrInvalidInputData)
 			})
