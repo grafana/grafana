@@ -960,10 +960,10 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 	const repo = "refs-permissions-test"
 	testRepo := TestRepo{
 		Name:               repo,
+		Template:           "testdata/github-readonly.json.tmpl",
 		Target:             "folder",
-		Copies:             map[string]string{}, // No files needed for this test
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // Repository creates a folder
+		ExpectedDashboards: 3,
+		ExpectedFolders:    3, // Repository creates folders
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -979,10 +979,11 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 		require.NoError(t, result.Error(), "editor should be able to GET refs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
-		// Verify we can parse the refs
+		// Verify we can parse the refs and it contains at least main branch
 		refs := &provisioning.RefList{}
 		err := result.Into(refs)
 		require.NoError(t, err, "should parse refs response")
+		require.NotEmpty(t, refs.Items, "should have at least one ref")
 	})
 
 	t.Run("viewer cannot GET refs", func(t *testing.T) {
