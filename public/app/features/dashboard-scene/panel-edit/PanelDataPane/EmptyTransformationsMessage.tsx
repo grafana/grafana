@@ -16,6 +16,7 @@ interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
+  isSqlApplicable?: boolean;
 }
 
 const TRANSFORMATION_IDS = [
@@ -60,6 +61,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
+  const isSqlApplicable = props.isSqlApplicable ?? true; // Default to true if not provided
 
   // Get transformations from registry
   const transformations = useMemo(() => {
@@ -69,6 +71,9 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   }, []);
 
   const handleSqlTransformationClick = () => {
+    if (!isSqlApplicable) {
+      return;
+    }
     reportInteraction('dashboards_expression_interaction', {
       action: 'add_expression',
       expression_type: 'sql',
@@ -110,6 +115,11 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="go-to-queries-button"
+                isDisabled={!isSqlApplicable}
+                disabledTooltip={t(
+                  'dashboard-scene.empty-transformations-message.sql-not-applicable',
+                  'SQL expressions require backend data sources'
+                )}
               />
             )}
             {hasAddTransformation &&
