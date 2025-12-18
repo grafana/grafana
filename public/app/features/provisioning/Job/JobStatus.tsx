@@ -28,7 +28,6 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
   const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
 
-  // Handle error state change in useEffect to avoid calling setState during render
   useEffect(() => {
     if (activeQuery.isError) {
       onStatusChange?.({

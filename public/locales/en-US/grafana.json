@@ -11939,7 +11939,6 @@
       "resource-not-found": "Resource not found. Please check the URL or repository.",
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
-    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
