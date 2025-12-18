@@ -105,7 +105,7 @@ export function SoloPanelPageLogo({ containerRef, isHovered, hideLogo }: SoloPan
         className={styles.logo}
         style={{
           height: `${16 * scale}px`,
-          marginLeft: '0.5em',
+          marginLeft: '0.25em',
         }}
       />
     </div>
