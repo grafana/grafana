@@ -255,11 +255,11 @@ export function prepConfig(opts: PrepConfigOpts) {
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
             [scaleMin, scaleMax] = isLogScale ? uPlot.rangeLog(dataMin, dataMax, scaleLog, true) : [dataMin, dataMax];
 
+            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
             if (isLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
-
-              let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
               // guard against <= 0
               if (explicitMin != null && explicitMin > 0) {
@@ -272,6 +272,10 @@ export function prepConfig(opts: PrepConfigOpts) {
                 let maxLog = log(explicitMax);
                 scaleMax = yExp ** incrRoundUp(maxLog, 1);
               }
+            } else if (!isOrdinalY) {
+              // Apply explicit min/max for linear scale
+              scaleMin = explicitMin ?? scaleMin;
+              scaleMax = explicitMax ?? scaleMax;
             }
 
             return [scaleMin, scaleMax];

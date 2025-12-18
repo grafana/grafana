@@ -154,16 +154,19 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     throw new Error(t('heatmap.error.no-y-fields', 'No numeric fields found for heatmap'));
   }
 
-  // Determine if we should use linear scaling based on yBucketScale option
+  // Determine if we should use numeric scaling based on yBucketScale option
   // Default to 'auto' behavior (ordinal) if not specified
   const scaleType = opts.yBucketScale?.type;
-  const useLinearScale = scaleType === ScaleDistribution.Linear;
+  const useNumericScale =
+    scaleType === ScaleDistribution.Linear ||
+    scaleType === ScaleDistribution.Log ||
+    scaleType === ScaleDistribution.Symlog;
 
   // similar to initBins() below
   const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
-  const ys2 = useLinearScale ? new Array(len) : undefined;
+  const ys2 = useNumericScale ? new Array(len) : undefined;
   const counts2 = new Array(len);
 
   const counts = yFields.map((field) => field.values.slice());
@@ -197,8 +200,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   let bucketBounds: number[];
   let bucketBoundsMax: number[] | undefined;
 
-  if (useLinearScale) {
-    // Linear mode: use numeric bucket values
+  if (useNumericScale) {
+    // Numeric mode: use numeric bucket values
     bucketBounds = yFields.map((field) => {
       const labelKey = custom.yMatchWithLabel;
       const labelValue = labelKey ? field.labels?.[labelKey] : undefined;
@@ -221,7 +224,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // fill flat/repeating array
   for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
     ys[i] = bucketBounds[yi];
-    if (useLinearScale && ys2 && bucketBoundsMax) {
+    if (useNumericScale && ys2 && bucketBoundsMax) {
       ys2[i] = bucketBoundsMax[yi];
     }
 
@@ -257,8 +260,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
-  // Only clear yOrdinalDisplay when using linear scale
-  if (useLinearScale) {
+  // Clear yOrdinalDisplay when using numeric scales (linear, log, symlog)
+  if (useNumericScale) {
     custom.yOrdinalDisplay = undefined;
   }
 
@@ -279,17 +282,17 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       config: xField.config,
     },
     {
-      name: useLinearScale ? 'yMin' : ordinalFieldName,
+      name: useNumericScale ? 'yMin' : ordinalFieldName,
       type: FieldType.number,
       values: ys,
       config: {
-        unit: useLinearScale ? yFields[0]?.config?.unit : 'short', // preserve original unit for linear, use 'short' for ordinal
+        unit: useNumericScale ? yFields[0]?.config?.unit : 'short', // preserve original unit for numeric, use 'short' for ordinal
       },
     },
   ];
 
   // yMax provides explicit upper bounds for proper rendering, critical for ge layout
-  if (useLinearScale && ys2) {
+  if (useNumericScale && ys2) {
     fields.push({
       name: 'yMax',
       type: FieldType.number,
@@ -300,7 +303,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
 
   // Add value/count field
   fields.push({
-    name: opts.value?.length ? opts.value : useLinearScale ? 'count' : 'Value',
+    name: opts.value?.length ? opts.value : useNumericScale ? 'count' : 'Value',
     type: FieldType.number,
     values: counts2,
     config: valueCfg,

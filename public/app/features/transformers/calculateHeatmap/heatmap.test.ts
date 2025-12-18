@@ -272,7 +272,41 @@ describe('Heatmap transformer', () => {
       expect(heatmap.meta?.custom?.yOrdinalDisplay).toBeUndefined();
     });
 
-    it('preserves yOrdinalDisplay for non-linear scale (auto/ordinal)', () => {
+    it('clears yOrdinalDisplay for log scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Log, log: 10 },
+      });
+
+      expect(heatmap.meta?.custom?.yOrdinalDisplay).toBeUndefined();
+    });
+
+    it('clears yOrdinalDisplay for symlog scale', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000] },
+          { name: '1', type: FieldType.number, values: [10] },
+          { name: '10', type: FieldType.number, values: [20] },
+        ],
+      });
+
+      const heatmap = rowsToCellsHeatmap({
+        frame,
+        yBucketScale: { type: ScaleDistribution.Symlog, log: 10, linearThreshold: 1 },
+      });
+
+      expect(heatmap.meta?.custom?.yOrdinalDisplay).toBeUndefined();
+    });
+
+    it('preserves yOrdinalDisplay for non-numeric scale (auto/ordinal)', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1000] },
