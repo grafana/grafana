@@ -210,13 +210,15 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
 
-  // Determine scale distribution based on yBucketScale option when available (calculate from data: No)
-  // If yBucketScale is undefined (Auto), use the old behavior (check yScale)
-  const scaleDistribution = yBucketScale
-    ? yBucketScale.type
-    : yScale.type !== ScaleDistribution.Linear || isSparseHeatmap
-      ? ScaleDistribution.Log
-      : ScaleDistribution.Linear;
+  const scaleDistribution = (() => {
+    if (yBucketScale) {
+      return yBucketScale.type;
+    }
+    if (yScale.type !== ScaleDistribution.Linear || isSparseHeatmap) {
+      return ScaleDistribution.Log;
+    }
+    return ScaleDistribution.Linear;
+  })();
 
   const scaleLog = toLogBase(yBucketScale?.log ?? yScale.log);
   const scaleLinearThreshold = yBucketScale?.linearThreshold;
