@@ -10,18 +10,20 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type FeatureToggleType string
+type FeatureFlagType string
 
-const Structure FeatureToggleType = "structure"
-const Integer FeatureToggleType = "integer"
-const Float FeatureToggleType = "float"
-const Boolean FeatureToggleType = "boolean"
-const String FeatureToggleType = "string"
+const (
+	Structure FeatureFlagType = "structure"
+	Integer   FeatureFlagType = "integer"
+	Float     FeatureFlagType = "float"
+	Boolean   FeatureFlagType = "boolean"
+	String    FeatureFlagType = "string"
+)
 
 type FeatureToggle struct {
-	Type  FeatureToggleType `json:"type"`
-	Name  string            `json:"name"`
-	Value any               `json:"value"`
+	Type  FeatureFlagType `json:"type"`
+	Name  string          `json:"name"`
+	Value any             `json:"value"`
 }
 
 // Deprecated: should use `featuremgmt.FeatureToggles`

@@ -261,7 +261,7 @@ func makeFlags(tt struct {
 	config := map[string]setting.FeatureToggle{
 		tt.name: {
 			Name:  tt.name,
-			Type:  setting.FeatureToggleType(tt.typ.String()),
+			Type:  setting.FeatureFlagType(tt.typ.String()),
 			Value: tt.configValue,
 		},
 	}
