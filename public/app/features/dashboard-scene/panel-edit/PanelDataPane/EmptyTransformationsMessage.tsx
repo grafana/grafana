@@ -16,7 +16,7 @@ interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
-  data?: DataFrame[];
+  data: DataFrame[];
 }
 
 const TRANSFORMATION_IDS = [
