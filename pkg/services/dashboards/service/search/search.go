@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -149,6 +150,11 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		}
 		if scoreIDX >= 0 && row.Cells[scoreIDX] != nil {
 			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
+		}
+
+		// Ensure that dashboards+folders always have a folder property returned
+		if hit.Folder == "" {
+			hit.Folder = folder.GeneralFolderUID
 		}
 
 		sr.Hits[i] = *hit
