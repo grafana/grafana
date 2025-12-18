@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { fromPairs, isEmpty } from 'lodash';
+import { fromPairs, isEmpty, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -49,7 +49,9 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
   const [error, setError] = useState<Error | null>(null);
   const [stateHistory, setStateHistory] = useState<DataFrameJSON | undefined>(undefined);
   const [instancesFilter, setInstancesFilter] = useState('');
+  const [showRefreshBanner, setShowRefreshBanner] = useState(false);
   const logsRef = useRef<Map<number, HTMLElement>>(new Map<number, HTMLElement>());
+  const lastRunRuleDefinitionRef = useRef<RuleFormValues | null>(null);
 
   const { getValues, setValue } = useForm({ defaultValues: { query: '' } });
 
@@ -57,6 +59,8 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
     setIsLoading(true);
     setError(null);
     setStateHistory(undefined);
+    setShowRefreshBanner(false);
+    lastRunRuleDefinitionRef.current = ruleDefinition;
 
     try {
       console.log(ruleDefinition);
@@ -130,6 +134,15 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerRun]);
 
+  // Detect when rule definition changes after a backtest has been run
+  useEffect(() => {
+    // Only show banner if we have results and the rule definition actually changed
+    if (lastRunRuleDefinitionRef.current && stateHistory) {
+      const hasChanged = !isEqual(lastRunRuleDefinitionRef.current, ruleDefinition);
+      setShowRefreshBanner(hasChanged);
+    }
+  }, [ruleDefinition, stateHistory]);
+
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
     instancesFilter
@@ -157,6 +170,9 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
     totalRecordsCount > 0
       ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
       : 'No state transitions occurred during the selected time range';
+
+  // Extract notices from the data frame meta
+  const notices = stateHistory?.schema?.meta?.notices || [];
 
   return (
     <Collapse
@@ -191,6 +207,37 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
           {isLoading && <LoadingPlaceholder text={t('alerting.backtest.loading', 'Running backtest...')} />}
 
           {error && <Alert title={t('alerting.backtest.error-title', 'Failed to run backtest')}>{error.message}</Alert>}
+
+          {showRefreshBanner && !isLoading && !error && hasResults && (
+            <Alert
+              severity="info"
+              title={t('alerting.backtest.refresh-required-title', 'Rule definition updated')}
+              onRemove={() => setShowRefreshBanner(false)}
+            >
+              <Stack direction="column" gap={1}>
+                <Text>
+                  <Trans i18nKey="alerting.backtest.refresh-required-message">
+                    The rule definition has been updated. Refresh the backtest to see results with the latest changes.
+                  </Trans>
+                </Text>
+                <div>
+                  <Button variant="primary" size="sm" onClick={handleRunBacktest}>
+                    <Trans i18nKey="alerting.backtest.refresh-button">Refresh backtest</Trans>
+                  </Button>
+                </div>
+              </Stack>
+            </Alert>
+          )}
+
+          {!isLoading && !error && hasResults && notices.length > 0 && (
+            <Stack direction="column" gap={1}>
+              {notices.map((notice, index) => (
+                <Alert key={index} severity={notice.severity || 'info'} title="">
+                  {notice.text}
+                </Alert>
+              ))}
+            </Stack>
+          )}
 
           {!isLoading && !error && hasResults && (
             <div className={styles.resultsContainer}>
