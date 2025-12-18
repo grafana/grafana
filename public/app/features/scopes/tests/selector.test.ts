@@ -132,6 +132,7 @@ describe('Selector', () => {
       expectRecentScope('Grafana Applications');
       expectRecentScope('Grafana, Mimir Applications');
       await selectRecentScope('Grafana Applications');
+      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana');
 
@@ -145,6 +146,7 @@ describe('Selector', () => {
       expectRecentScope('Grafana, Mimir Applications');
       expectRecentScope('Grafana Applications');
       await selectRecentScope('Grafana, Mimir Applications');
+      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana + Mimir');
     });
