@@ -55,6 +55,7 @@ export interface PluginError {
 
 export interface AngularMeta {
   detected: boolean;
+  /** @deprecated it will be removed in a future release */
   hideDeprecation: boolean;
 }
 
