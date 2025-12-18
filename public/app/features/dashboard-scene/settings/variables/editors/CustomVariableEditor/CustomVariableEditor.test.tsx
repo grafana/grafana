@@ -5,6 +5,12 @@ import { CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableEditor } from './CustomVariableEditor';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  actual.config.featureToggles = { multiPropsVariables: true };
+  return actual;
+});
+
 function setup(options: Partial<ConstructorParameters<typeof CustomVariable>[0]> = {}) {
   return {
     variable: new CustomVariable({
