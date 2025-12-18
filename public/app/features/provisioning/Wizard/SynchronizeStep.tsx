@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -20,29 +20,14 @@ export interface SynchronizeStepProps {
 }
 
 export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
-  const { watch, register } = useFormContext<WizardFormData>();
+  const { watch, register, getValues } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const repoName = watch('repositoryName') ?? '';
   const syncTarget = watch('repository.sync.target');
-  const migrateResources = watch('migrate.migrateResources');
   const { requiresMigration: baseRequiresMigration } = useResourceStats(repoName, syncTarget);
-
-  // Calculate final requiresMigration based on sync target and user selection
-  // For instance sync: use the base requiresMigration
-  // For folder sync: only migrate if user explicitly opts in via checkbox
-  const requiresMigration = useMemo(() => {
-    if (syncTarget === 'instance') {
-      return baseRequiresMigration;
-    }
-    if (syncTarget === 'folder') {
-      return migrateResources ?? false;
-    }
-    return baseRequiresMigration;
-  }, [syncTarget, baseRequiresMigration, migrateResources]);
 
   const { createSyncJob } = useCreateSyncJob({
     repoName,
-    requiresMigration,
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
@@ -79,7 +64,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
-    const response = await createSyncJob();
+    // Calculate final requiresMigration based on sync target and user selection
+    // For instance sync: use the base requiresMigration
+    // For folder sync: only migrate if user explicitly opts in via checkbox
+    let finalRequiresMigration = baseRequiresMigration;
+    if (syncTarget === 'folder') {
+      finalRequiresMigration = getValues('migrate.migrateResources') ?? false;
+    }
+
+    const response = await createSyncJob(finalRequiresMigration);
     if (response) {
       setJob(response);
     }
