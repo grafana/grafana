@@ -1,18 +1,28 @@
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../types';
+import { StepStatusInfo, Target } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
   requiresMigration: boolean;
+  syncTarget?: Target;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({ repoName, requiresMigration, setStepStatusInfo }: UseCreateSyncJobParams) {
+export interface CreateSyncJobOptions {
+  migrateResources?: boolean;
+}
+
+export function useCreateSyncJob({
+  repoName,
+  requiresMigration,
+  syncTarget,
+  setStepStatusInfo,
+}: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
-  const createSyncJob = async () => {
+  const createSyncJob = async (options?: CreateSyncJobOptions) => {
     if (!repoName) {
       setStepStatusInfo?.({
         status: 'error',
@@ -24,7 +34,13 @@ export function useCreateSyncJob({ repoName, requiresMigration, setStepStatusInf
     try {
       setStepStatusInfo?.({ status: 'running' });
 
-      const jobSpec = requiresMigration
+      // Determine if we should run a migration job:
+      // - For instance sync: always migrate if there are resources
+      // - For folder sync: migrate only if user explicitly opted in via checkbox
+      const shouldMigrate =
+        syncTarget === 'instance' ? requiresMigration : syncTarget === 'folder' && options?.migrateResources;
+
+      const jobSpec = shouldMigrate
         ? {
             migrate: {},
           }
