@@ -924,6 +924,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardAdHocAndGroupByWrapper",
+        "resourceVersion": "1765841806645",
+        "creationTimestamp": "2025-12-15T23:36:46Z"
+      },
+      "spec": {
+        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-11T16:52:46Z"
@@ -1183,6 +1196,19 @@
     },
     {
       "metadata": {
+        "name": "drilldownRecommendations",
+        "resourceVersion": "1764855550769",
+        "creationTimestamp": "2025-12-04T13:39:10Z"
+      },
+      "spec": {
+        "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-12-12T22:20:04Z"
@@ -1204,6 +1230,19 @@
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "elasticsearchRawDSLQuery",
+        "resourceVersion": "1763508396079",
+        "creationTimestamp": "2025-11-18T23:26:36Z"
+      },
+      "spec": {
+        "description": "Enables the raw DSL query editor in the Elasticsearch data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -1429,6 +1468,19 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "fetchRulesInCompactMode",
+        "resourceVersion": "1766045288124",
+        "creationTimestamp": "2025-12-18T08:08:08Z"
+      },
+      "spec": {
+        "description": "Add compact=true when fetching rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
       }
     },
     {
@@ -2884,7 +2936,8 @@
       "metadata": {
         "name": "queryServiceFromExplore",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-04-02T10:00:33Z"
+        "creationTimestamp": "2025-04-02T10:00:33Z",
+        "deletionTimestamp": "2025-12-10T20:33:21Z"
       },
       "spec": {
         "description": "Routes explore requests to the new query service",

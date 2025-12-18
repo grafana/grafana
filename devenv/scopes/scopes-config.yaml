@@ -125,6 +125,7 @@ navigationTree:
     url: /d/_5rDmaQiz
     scope: shoe-org
     subScope: shoes
+    preLoadSubScopeChildren: true
     children:
       - name: shoes-overview
         title: Overview
@@ -141,6 +142,7 @@ navigationTree:
         url: /d/edediimbjhdz4b
         scope: shoes
         subScope: frontend
+        preLoadSubScopeChildren: true
         children:
           - name: frontend-api
             title: API Metrics
@@ -210,6 +212,7 @@ navigationTree:
     url: /d/UTv--wqMk
     scope: shoe-org
     subScope: apparel
+    disableSubScopeSelection: true
     children:
       - name: apparel-product-overview
         title: Product Overview

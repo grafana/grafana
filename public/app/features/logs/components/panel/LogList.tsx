@@ -219,6 +219,7 @@ export const LogList = ({
         logs={logs}
         logOptionsStorageKey={logOptionsStorageKey}
         showControls={showControls}
+        showFieldSelector={showFieldSelector}
       >
         <LogListSearchContextProvider>
           <LogListComponent
@@ -279,6 +280,7 @@ const LogListComponent = ({
     wrapLogMessage,
   } = useLogListContext();
   const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
+  const { setSearch, showSearch } = useLogListSearchContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
@@ -440,6 +442,14 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const onClickSearchString = useCallback(
+    (search: string) => {
+      showSearch();
+      setSearch(search);
+    },
+    [setSearch, showSearch]
+  );
+
   const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
 
   if (!containerElement || listHeight == null) {
@@ -458,6 +468,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -469,6 +480,7 @@ const LogListComponent = ({
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
+            onClickSearchString={onClickSearchString}
             onDisable={onDisablePopoverMenu}
           />
         )}

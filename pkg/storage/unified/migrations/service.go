@@ -3,7 +3,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -49,34 +48,25 @@ func ProvideUnifiedStorageMigrationService(
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
-	if os.Getenv("GRAFANA_TEST_DB") != "" {
-		return nil
-	}
-
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
-	} else {
-		metrics.MUnifiedStorageMigrationStatus.Set(2)
-		logger.Info("Data migrations not yet enforced, skipping")
 	}
-
-	// TODO: Re-enable once migrations are ready
-	// TODO: add guarantee that this only runs once
-	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
-	return nil
+	logger.Info("Running migrations for unified storage")
+	metrics.MUnifiedStorageMigrationStatus.Set(3)
+	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client)
 }
 
 func RegisterMigrations(
+	ctx context.Context,
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
 ) error {
-	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
+	ctx, span := tracer.Start(ctx, "storage.unified.RegisterMigrations")
 	defer span.End()
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
@@ -89,12 +79,19 @@ func RegisterMigrations(
 		return err
 	}
 
-	// Register resource migrations
-	registerDashboardAndFolderMigration(mg, migrator, client)
-	registerPlaylistMigration(mg, migrator, client)
+	if err := registerMigrations(cfg, mg, migrator, client); err != nil {
+		return err
+	}
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
+	db := mg.DBEngine.DB().DB
+	maxOpenConns := db.Stats().MaxOpenConnections
+	if maxOpenConns <= 2 {
+		// migrations require at least 3 connections due to extra GRPC connections
+		db.SetMaxOpenConns(3)
+		defer db.SetMaxOpenConns(maxOpenConns)
+	}
 	if err := mg.RunMigrations(ctx,
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {

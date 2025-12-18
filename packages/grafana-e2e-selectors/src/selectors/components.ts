@@ -3,7 +3,7 @@
 // (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
 // but you still might need to select it for testing,
 // in that case please add the attribute data-testid={selector} in the component and
-// prefix your selector string with 'data-testid' so that when create the selectors we know to search for it on the right attribute
+// prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
 import { VersionedSelectorGroup } from '../types';
 
@@ -499,6 +499,9 @@ export const versionedComponents = {
         },
       },
       TableNG: {
+        RowExpander: {
+          '12.4.0': 'data-testid tableng row expander',
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -1329,6 +1332,7 @@ export const versionedComponents = {
   },
   DebugOverlay: {
     wrapper: {
+      '12.3.0': 'data-testid debug-overlay-wrapper',
       '9.2.0': 'debug-overlay',
     },
   },
