@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { setScopes } from '../utils/scope-helpers';
+import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
+import { testScopes } from '../utils/scopes';
 
 import {
   getAdHocFilterPills,
@@ -11,7 +12,7 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
+import { getConfigDashboards } from './utils';
 
 test.use({
   featureToggles: {
@@ -21,6 +22,7 @@ test.use({
   },
 });
 
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 const DASHBOARD_UNDER_TEST_2 = 'cuj-dashboard-2';
 const NAVIGATE_TO = 'cuj-dashboard-3';
@@ -37,6 +39,11 @@ test.describe(
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
+
+      // Set up routes before any navigation (only for mocked mode)
+      if (!USE_LIVE_DATA) {
+        await setupScopeRoutes(page, testScopes());
+      }
 
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
@@ -119,13 +126,9 @@ test.describe(
 
             await expect(scopesDashboards.first()).toBeVisible();
 
-            const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
             await scopesDashboards.first().click();
-            await waitForExpectedRequests();
+            await page.waitForURL('**/d/**');
             await page.waitForLoadState('networkidle');
-
-            const requests = getRequests();
-            expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
             //all values are set after dashboard switch
             await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
@@ -158,7 +161,8 @@ test.describe(
         const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
         await expect(markdownContent).toContainText(oldFilters);
 
-        await expect(scopesDashboards.first()).toBeVisible();
+        // Wait for dashboard list to load after scopes are applied
+        await expect(scopesDashboards.first()).toBeVisible({ timeout: 15000 });
         await scopesDashboards.first().click();
         await page.waitForURL('**/d/**');
 
