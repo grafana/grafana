@@ -3604,11 +3604,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.50.0":
-  version: 6.50.0
-  resolution: "@grafana/scenes-react@npm:6.50.0"
+"@grafana/scenes-react@npm:^6.51.0":
+  version: 6.51.0
+  resolution: "@grafana/scenes-react@npm:6.51.0"
   dependencies:
-    "@grafana/scenes": "npm:6.50.0"
+    "@grafana/scenes": "npm:6.51.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3620,7 +3620,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/9ac9f8a32699f447c7b67dd2aef4e3ca5bc9fc98e94e0dc139e7824274ffa005b7fb3fc42ca5e55bdf89b91e3af0d3807b03e1a261db91c65717ee1763e5e807
+  checksum: 10/14acdfe5220e67e7450780320b779e2e4a255995d55f0c82eb0d25933e72598e54826df0a8beee05591efe01a91ddab840483fea3bb828bd5925c3f0b44b8d17
   languageName: node
   linkType: hard
 
@@ -3650,9 +3650,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.50.0":
-  version: 6.50.0
-  resolution: "@grafana/scenes@npm:6.50.0"
+"@grafana/scenes@npm:6.51.0, @grafana/scenes@npm:^6.51.0":
+  version: 6.51.0
+  resolution: "@grafana/scenes@npm:6.51.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3672,7 +3672,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/7bc6280ff065bbba37f010e2a1f0a7dc998fe43721ddc0121e27a754c41e824b82a44222100282a69143a52061cf0dce39e6bc8b95292ca444a59c114d4b5a41
+  checksum: 10/4e4f43babe786ff729d58b7636182df57c58ce40c13b56036f725c070e0cf597cbe52aaa0f811184b8d42d8d1f9a32679695471d410f883051b09da44f8bf36a
   languageName: node
   linkType: hard
 
@@ -8287,6 +8287,30 @@ __metadata:
     prettier:
       optional: true
   checksum: 10/57d8af6d822c4cbeab201aec813830d632165c2411bf8708481ad0daa2fa942ce6a912e0ef764e6acb9bd2053baf0614b7726e5827b071f3f845d459ac1f3d3a
+  languageName: node
+  linkType: hard
+
+"@storybook/core@patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch":
+  version: 8.6.2
+  resolution: "@storybook/core@patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch::version=8.6.2&hash=f4cc1f"
+  dependencies:
+    "@storybook/theming": "npm:8.6.2"
+    better-opn: "npm:^3.0.2"
+    browser-assert: "npm:^1.2.1"
+    esbuild: "npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0"
+    esbuild-register: "npm:^3.5.0"
+    jsdoc-type-pratt-parser: "npm:^4.0.0"
+    process: "npm:^0.11.10"
+    recast: "npm:^0.23.5"
+    semver: "npm:^7.6.2"
+    util: "npm:^0.12.5"
+    ws: "npm:^8.2.3"
+  peerDependencies:
+    prettier: ^2 || ^3
+  peerDependenciesMeta:
+    prettier:
+      optional: true
+  checksum: 10/cd95a51437135dd3c4333b14acefd528d8064b2cea7789f859ba80783c115c92ed4be51d4a7bd6236888fdd5f46f488a379e0c71bc1a712ffe6dc1353fb4e648
   languageName: node
   linkType: hard
 
@@ -19484,8 +19508,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.50.0"
-    "@grafana/scenes-react": "npm:6.50.0"
+    "@grafana/scenes": "npm:^6.51.0"
+    "@grafana/scenes-react": "npm:^6.51.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

@@ -3318,6 +3318,7 @@
       "login-attribute-path-label": "登录属性路径",
       "login-prompt-consent": "同意",
       "login-prompt-description": "指示用户使用 IdP 登录时的用户交互类型。",
+      "login-prompt-description-google": "",
       "login-prompt-label": "登录提示",
       "login-prompt-login": "登录",
       "login-prompt-select-account": "选择账户",
@@ -3375,6 +3376,7 @@
       "use-pkce-description": "如果启用，Grafana 将使用<2>代码交换的证明密钥 (PKCE)</2> 与 OAuth2 身份验证代码授予。",
       "use-pkce-label": "使用 PKCE",
       "use-refresh-token-description": "如果启用，Grafana 将使用 OAuth2 提供程序提供的刷新令牌获取新的访问令牌。",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "使用刷新令牌",
       "validate-hosted-domain-description": "如果启用，Grafana 将把从 Google ID 令牌检索到的托管域与用户指定的“{{ allowedDomainsLabel }}”列表进行匹配。",
       "validate-hosted-domain-label": "验证托管域",
@@ -10138,7 +10140,8 @@
       "copy": "复制选择",
       "disable-menu": "禁用菜单",
       "line-contains": "添加为包含筛选器的行",
-      "line-contains-not": "添加为不包含筛选器的行"
+      "line-contains-not": "添加为不包含筛选器的行",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
@@ -11820,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "在连接整个实例的情况下，数据面板在运行迁移时将不可用。我们建议您在开始此流程之前提醒您的用户。",
       "modal-description-public-access": "设置对您 Grafana 实例的公共访问以启用 GitHub 集成",
       "modal-description-required-features": "启用预配所需的 Grafana 功能",
       "modal-title-set-up-public-access": "设置公共访问",
@@ -11832,8 +11834,7 @@
       "step-title-copy-url": "复制您的公共 URL",
       "step-title-enable-feature-toggles": "启用所需的功能切换",
       "step-title-start-ngrok": "启动 ngrok 以实现临时公共访问",
-      "step-title-update-grafana-config": "更新您的 Grafana 配置",
-      "title-setting-connection-could-cause-temporary-outage": "设置此连接可能会导致暂时中断"
+      "step-title-update-grafana-config": "更新您的 Grafana 配置"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "查看和管理您的预配连接"
@@ -11902,18 +11903,15 @@
     },
     "home-page": {
       "button-delete-repositories": "删除存储库",
-      "configured-repositories-while-running-legacy-storage": "运行传统存储时，已配置的存储库将不起作用。",
       "confirm-delete-repositories": "您确定要删除所有已配置的存储库吗？此操作无法撤销。",
       "error-delete-all-repositories": "删除所有存储库失败",
-      "remove-all-configured-repositories": "移除所有已配置的存储库",
       "subtitle": "查看和管理已配置的存储库",
       "success-all-repositories-deleted": "已删除所有已配置的存储库",
       "tab-getting-started": "开始操作",
       "tab-getting-started-title": "开始操作",
       "tab-repositories": "存储库",
       "tab-repositories-title": "存储库列表",
-      "title-delete-all-configured-repositories": "删除所有已配置的存储库",
-      "title-legacy-storage-detected": "检测到传统存储"
+      "title-delete-all-configured-repositories": "删除所有已配置的存储库"
     },
     "http-utils": {
       "access-denied": "",
@@ -11953,7 +11951,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12033,7 +12030,6 @@
     "repository-status-page": {
       "back-to-repositories": "回到存储库",
       "cleaning-up-resources": "清理存储库资源",
-      "legacy-storage-message": "实例尚未运行统一存储  -- 需要迁移向导",
       "not-found": "找不到",
       "not-found-message": "找不到存储库",
       "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。",
@@ -12042,7 +12038,6 @@
       "tab-resources": "资源",
       "tab-resources-title": "",
       "title": "存储库状态",
-      "title-legacy-storage": "传统存储",
       "title-queued-for-deletion": "已进入队列等待删除"
     },
     "repository-type-cards": {
@@ -12138,9 +12133,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "包括每个历史值的提交",
-      "synchronization-options": "同步选项"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "并点击",
@@ -12157,11 +12150,11 @@
     },
     "warning-title-default": "警告",
     "wizard": {
-      "alert-point-1": "在此过程中将无法创建、编辑或删除资源。在最后一步中，它们将消失。",
-      "alert-point-2": "预配完成后，资源将重新出现并通过外部存储进行管理。",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "此过程的持续时间取决于所涉及资源的数量。",
-      "alert-point-4": "企业实例管理员可以向用户显示公告横幅。有关分步说明，请参阅<2>本指南</2>。",
-      "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完成",
@@ -12179,7 +12172,6 @@
       "step-finish": "选择附加设置",
       "step-synchronize": "与外部存储同步",
       "sync-description": "将资源与外部存储同步。完成此一次性步骤后，所有后续更新都将自动保存到存储库中，并预配回实例。",
-      "sync-option-history": "历史记录",
       "title-bootstrap": "选择要同步的内容",
       "title-connect": "连接到外部存储",
       "title-finish": "选择附加设置",

@@ -3351,6 +3351,7 @@
       "login-attribute-path-label": "Cesta atributu přihlášení",
       "login-prompt-consent": "Souhlas",
       "login-prompt-description": "Označuje typ interakce uživatele při přihlášení pomocí IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Výzva k přihlášení",
       "login-prompt-login": "Přihlášení",
       "login-prompt-select-account": "Vyberte účet",
@@ -3408,6 +3409,7 @@
       "use-pkce-description": "Pokud je povoleno, Grafana použije <2>ověřovací klíč pro výměnu kódů (PKCE)</2> s udělením autorizačního kódu OAuth2.",
       "use-pkce-label": "Použít PKCE",
       "use-refresh-token-description": "Pokud je povoleno, Grafana načte nový přístupový token pomocí obnovovacího tokenu poskytnutého poskytovatelem OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Použít token pro obnovení",
       "validate-hosted-domain-description": "Pokud je povoleno, Grafana porovná hostovanou doménu načtenou z tokenu Google ID se seznamem „{{ allowedDomainsLabel }}“ zadaným uživatelem.",
       "validate-hosted-domain-label": "Ověřit hostovanou doménu",
@@ -10267,7 +10269,8 @@
       "copy": "Kopírovat výběr",
       "disable-menu": "Zakázat nabídku",
       "line-contains": "Přidat jako řádek obsahuje filtr",
-      "line-contains-not": "Přidat jako řádek neobsahuje filtr"
+      "line-contains-not": "Přidat jako řádek neobsahuje filtr",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
@@ -11973,7 +11976,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Když připojíte celou instanci, nástěnky nebudou během migrace k dispozici. Doporučujeme uživatele před zahájením procesu varovat.",
       "modal-description-public-access": "Nastavte veřejný přístup k vaší instanci Grafana pro povolení integrace GitHubu",
       "modal-description-required-features": "Povolit požadované funkce Grafany pro zajištění",
       "modal-title-set-up-public-access": "Nastavit veřejný přístup",
@@ -11985,8 +11987,7 @@
       "step-title-copy-url": "Kopírovat veřejnou adresu URL",
       "step-title-enable-feature-toggles": "Povolit požadované přepínače funkcí",
       "step-title-start-ngrok": "Spustit „ngrok“ pro dočasný veřejný přístup",
-      "step-title-update-grafana-config": "Aktualizujte konfiguraci Grafany",
-      "title-setting-connection-could-cause-temporary-outage": "Nastavení tohoto připojení může způsobit dočasný výpadek"
+      "step-title-update-grafana-config": "Aktualizujte konfiguraci Grafany"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Zobrazujte a spravujte vazby zajištění"
@@ -12055,18 +12056,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Odstranit úložiště",
-      "configured-repositories-while-running-legacy-storage": "Konfigurovaná úložiště nebudou fungovat při spuštění starší verze úložiště.",
       "confirm-delete-repositories": "Opravdu chcete odstranit všechna nakonfigurovaná úložiště? Tato akce je nevratná.",
       "error-delete-all-repositories": "Nepodařilo se odstranit všechna úložiště",
-      "remove-all-configured-repositories": "Odebrat všechna nakonfigurovaná úložiště",
       "subtitle": "Zobrazujte a spravujte nakonfigurovaná úložiště",
       "success-all-repositories-deleted": "Všechna nakonfigurovaná úložiště byla odstraněna",
       "tab-getting-started": "Začínáme",
       "tab-getting-started-title": "Začínáme",
       "tab-repositories": "Úložiště",
       "tab-repositories-title": "Seznam úložišť",
-      "title-delete-all-configured-repositories": "Odstranit všechna nakonfigurovaná úložiště",
-      "title-legacy-storage-detected": "Bylo zjištěno starší úložiště"
+      "title-delete-all-configured-repositories": "Odstranit všechna nakonfigurovaná úložiště"
     },
     "http-utils": {
       "access-denied": "",
@@ -12106,7 +12104,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12186,7 +12183,6 @@
     "repository-status-page": {
       "back-to-repositories": "Zpět na úložiště",
       "cleaning-up-resources": "Čištění zdrojů úložiště",
-      "legacy-storage-message": "Instance nespustila sjednocené úložiště – vyžaduje průvodce migrací",
       "not-found": "nenalezeno",
       "not-found-message": "Úložiště nebylo nalezeno",
       "repository-config-exists-configuration": "Ujistěte se, že konfigurace úložiště existuje v konfiguračním souboru.",
@@ -12195,7 +12191,6 @@
       "tab-resources": "Zdroje",
       "tab-resources-title": "",
       "title": "Stav úložiště",
-      "title-legacy-storage": "Starší verze úložiště",
       "title-queued-for-deletion": "Zařazeno do fronty k odstranění"
     },
     "repository-type-cards": {
@@ -12291,9 +12286,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
-      "synchronization-options": "Možnosti synchronizace"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
@@ -12310,11 +12303,11 @@
     },
     "warning-title-default": "Varování",
     "wizard": {
-      "alert-point-1": "Během tohoto procesu nebude možné vytvářet, upravovat ani odstraňovat zdroje. V posledním kroku zmizí.",
-      "alert-point-2": "Po zajištění se zdroje znovu zobrazí a budou spravovány prostřednictvím externího úložiště.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Doba trvání tohoto procesu závisí na počtu zapojených zdrojů.",
-      "alert-point-4": "Správci podnikových instancí mohou uživatelům zobrazit banner oznámení. Podrobné pokyny najdete v <2>této příručce</2>.",
-      "alert-title": "Důležité: Nebudou ztracena žádná data ani konfigurace, ale nástěnky budou na několik minut dočasně nedostupné.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Dokončit",
@@ -12332,7 +12325,6 @@
       "step-finish": "Vybrat další nastavení",
       "step-synchronize": "Synchronizovat s externím úložištěm",
       "sync-description": "Synchronizujte zdroje s externím úložištěm. Po tomto jednorázovém kroku budou všechny budoucí aktualizace automaticky uloženy do úložiště a zajištěny zpět do instance.",
-      "sync-option-history": "Historie",
       "title-bootstrap": "Vyberte, co chcete synchronizovat",
       "title-connect": "Připojit k externímu úložišti",
       "title-finish": "Vybrat další nastavení",

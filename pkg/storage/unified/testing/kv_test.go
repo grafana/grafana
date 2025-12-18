@@ -47,14 +47,11 @@ func TestSQLKV(t *testing.T) {
 	}, &KVTestOptions{
 		NSPrefix: "sql-kv-test",
 		SkipTests: map[string]bool{
-			TestKVSave:           true,
-			TestKVKeys:           true,
-			TestKVKeysWithLimits: true,
-			TestKVKeysWithSort:   true,
-			TestKVConcurrent:     true,
-			TestKVUnixTimestamp:  true,
-			TestKVBatchGet:       true,
-			TestKVBatchDelete:    true,
+			TestKVSave:          true,
+			TestKVConcurrent:    true,
+			TestKVUnixTimestamp: true,
+			TestKVBatchGet:      true,
+			TestKVBatchDelete:   true,
 		},
 	})
 }
