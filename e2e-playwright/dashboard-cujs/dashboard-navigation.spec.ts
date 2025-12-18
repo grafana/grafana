@@ -4,6 +4,7 @@ import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
 
 import {
+  clickFirstScopesDashboard,
   getAdHocFilterPills,
   getGroupByInput,
   getGroupByValues,
@@ -81,7 +82,7 @@ test.describe(
 
         await expect(markdownContent).toContainText(`now-12h`);
 
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         await expect(markdownContent).toBeVisible();
@@ -124,9 +125,7 @@ test.describe(
             await groupByVariable.press('Enter');
             await groupByVariable.press('Escape');
 
-            await expect(scopesDashboards.first()).toBeVisible();
-
-            await scopesDashboards.first().click();
+            await clickFirstScopesDashboard(page);
             await page.waitForURL('**/d/**');
             await page.waitForLoadState('networkidle');
 
@@ -161,9 +160,7 @@ test.describe(
         const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
         await expect(markdownContent).toContainText(oldFilters);
 
-        // Wait for dashboard list to load after scopes are applied
-        await expect(scopesDashboards.first()).toBeVisible({ timeout: 15000 });
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         const newPillCount = await adhocFilterPills.count();
