@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
@@ -52,7 +52,7 @@ export function PluginUsage({ plugin }: Props) {
           </Trans>
         </div>
         <AutoSizer>
-          {({ width, height }) => {
+          {({ width, height }: Size) => {
             return (
               <SearchResultsTable
                 response={found}

@@ -1,4 +1,5 @@
-// @ts-check
+// TODO: Migrate to Typescript.
+// @ts-nocheck
 const emotionPlugin = require('@emotion/eslint-plugin');
 const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');

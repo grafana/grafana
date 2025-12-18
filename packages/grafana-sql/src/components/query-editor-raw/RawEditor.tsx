@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -61,7 +61,7 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const renderEditor = (standalone = false) => {
     return standalone ? (
       <AutoSizer>
-        {({ width, height }) => {
+        {({ width, height }: Size) => {
           return renderQueryEditor(width, height);
         }}
       </AutoSizer>
