@@ -20,11 +20,12 @@ export interface SynchronizeStepProps {
 }
 
 export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
-  const { watch, register, getValues, setValue } = useFormContext<WizardFormData>();
+  const { watch, register, setValue } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const repoName = watch('repositoryName') ?? '';
   const syncTarget = watch('repository.sync.target');
-  const { requiresMigration: baseRequiresMigration } = useResourceStats(repoName, syncTarget);
+  const migrateResources = watch('migrate.migrateResources');
+  const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources);
 
   // For instance sync, always set migrateResources to true
   useEffect(() => {
@@ -71,19 +72,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
-    // Calculate final requiresMigration based on sync target and user selection
-    // For instance sync: always use baseRequiresMigration (checkbox is disabled and always true)
-    // For folder sync: only migrate if user explicitly opts in via checkbox
-    let finalRequiresMigration = baseRequiresMigration;
-    if (syncTarget === 'folder') {
-      finalRequiresMigration = getValues('migrate.migrateResources') ?? false;
-    } else if (syncTarget === 'instance') {
-      // For instance sync, migrateResources is always true, but we still use baseRequiresMigration
-      // to determine if migration is needed
-      finalRequiresMigration = baseRequiresMigration;
-    }
-
-    const response = await createSyncJob(finalRequiresMigration);
+    const response = await createSyncJob(requiresMigration);
     if (response) {
       setJob(response);
     }
@@ -201,7 +190,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
               <Trans i18nKey="provisioning.wizard.alert-point-4">
                 Enterprise instance administrators can display an announcement banner to notify users that migration is
                 in progress. See{' '}
-                <TextLink external variant="bodySmall" href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/">
+                <TextLink
+                  external
+                  variant="bodySmall"
+                  href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/"
+                >
                   this guide
                 </TextLink>{' '}
                 for step-by-step instructions.
