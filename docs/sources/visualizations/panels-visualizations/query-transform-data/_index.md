@@ -235,7 +235,7 @@ To add a query, follow these steps:
    This feature is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
-1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save query** option in the **Saved queries** dropdown.
+1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save query** option in the **Saved queries** drop-down menu.
 1. (Optional) Click **+ Add query** or **Add from saved queries** to add more queries as needed.
 
 1. Click **Run queries**.
