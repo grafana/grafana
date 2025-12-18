@@ -252,7 +252,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
 
   const renderMainContent = (width?: number, height?: number) => (
     <div
-      className={cx(styles.contentContainer, {
+      className={cx(styles.contentContainer, styles.resizableContent, {
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
       })}
     >
@@ -342,6 +342,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
         duration: theme.transitions.duration.standard,
       }),
     },
+  }),
+  resizableContent: css({
+    minHeight: '200px',
+    maxHeight: '800px',
+    resize: 'vertical',
+    overflow: 'hidden',
   }),
   contentContainerWithSchema: css({
     gridTemplateColumns: '1fr 1fr',
