@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
 import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';
+import { getErrorMessage } from '../utils/httpUtils';
 
 import { FinishedJobStatus } from './FinishedJobStatus';
 import { JobContent } from './JobContent';
@@ -25,6 +28,19 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
   const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
 
+  // Handle error state change in useEffect to avoid calling setState during render
+  useEffect(() => {
+    if (activeQuery.isError) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
+          message: getErrorMessage(activeQuery.error),
+        },
+      });
+    }
+  }, [activeQuery.isError, activeQuery.error, onStatusChange]);
+
   if (activeQuery.isLoading) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
@@ -37,12 +53,6 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   }
 
   if (activeQuery.isError) {
-    onStatusChange?.({
-      status: 'error',
-      error: {
-        title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
-      },
-    });
     return null;
   }
 
