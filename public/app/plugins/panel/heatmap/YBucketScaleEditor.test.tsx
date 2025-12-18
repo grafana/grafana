@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 import { StandardEditorContext, StandardEditorsRegistryItem } from '@grafana/data';
 import { ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
@@ -154,6 +155,48 @@ describe('YBucketScaleEditor', () => {
       await userEvent.click(logButton);
 
       expect(onChange).toHaveBeenCalledWith({ type: ScaleDistribution.Log, log: 10 });
+    });
+
+    it('should update log base when changed for Log scale', async () => {
+      const onChange = jest.fn();
+      render(
+        <YBucketScaleEditor
+          value={{ type: ScaleDistribution.Log, log: 2 }}
+          onChange={onChange}
+          context={mockContext}
+          item={mockItem}
+        />
+      );
+
+      // Find the log base field container and query the combobox within it
+      const logBaseLabel = screen.getByText('Log base');
+      const fieldContainer = logBaseLabel.closest('div[style]') as HTMLElement; // The div with style="margin-top: 8px;"
+      const selectEl = within(fieldContainer).getByRole('combobox');
+
+      await selectEvent.select(selectEl, '10', { container: document.body });
+
+      expect(onChange).toHaveBeenCalledWith({ type: ScaleDistribution.Log, log: 10 });
+    });
+
+    it('should update log base when changed for Symlog scale', async () => {
+      const onChange = jest.fn();
+      render(
+        <YBucketScaleEditor
+          value={{ type: ScaleDistribution.Symlog, log: 2, linearThreshold: 1 }}
+          onChange={onChange}
+          context={mockContext}
+          item={mockItem}
+        />
+      );
+
+      // Find the log base field container and query the combobox within it
+      const logBaseLabel = screen.getByText('Log base');
+      const fieldContainer = logBaseLabel.closest('div[style]') as HTMLElement; // The div with style="margin-top: 8px;"
+      const selectEl = within(fieldContainer).getByRole('combobox');
+
+      await selectEvent.select(selectEl, '10', { container: document.body });
+
+      expect(onChange).toHaveBeenCalledWith({ type: ScaleDistribution.Symlog, log: 10, linearThreshold: 1 });
     });
   });
 
