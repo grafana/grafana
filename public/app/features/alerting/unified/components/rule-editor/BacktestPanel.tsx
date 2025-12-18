@@ -64,18 +64,32 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
       const alertRule = formValuesToRulerGrafanaRuleDTO(ruleDefinition);
       console.log(alertRule);
 
-      // Flatten the alertRule structure: spread grafana_alert fields and top-level fields
+      // Build requestBody matching BacktestConfig struct
       const requestBody = {
+        // Required time range fields
         from: timeRange.from.toISOString(),
         to: timeRange.to.toISOString(),
-        // Spread all fields from grafana_alert
-        ...alertRule.grafana_alert,
-        // Spread all top-level fields (labels, annotations, for, keep_firing_for, etc.)
-        labels: alertRule.labels,
-        annotations: alertRule.annotations,
+        interval: ruleDefinition.evaluateEvery,
+
+        // Required alert definition fields
+        condition: alertRule.grafana_alert.condition,
+        data: alertRule.grafana_alert.data,
+        title: alertRule.grafana_alert.title,
+        no_data_state: alertRule.grafana_alert.no_data_state,
+        exec_err_state: alertRule.grafana_alert.exec_err_state,
+
+        // Optional duration fields
         for: alertRule.for,
         keep_firing_for: alertRule.keep_firing_for,
-        interval: ruleDefinition.evaluateEvery,
+
+        // Optional metadata fields
+        labels: alertRule.labels,
+        missing_series_evals_to_resolve: alertRule.grafana_alert.missing_series_evals_to_resolve,
+
+        // Optional rule identification fields
+        uid: alertRule.grafana_alert.uid,
+        rule_group: ruleDefinition.group,
+        namespace_uid: ruleDefinition.folder?.uid,
       };
 
       const response = await fetch('/api/v1/rule/backtest', {
