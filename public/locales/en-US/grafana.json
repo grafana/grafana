@@ -12182,6 +12182,9 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
+      "migrate-resources-description": "Import existing dashboards from all folders into the new provisioned folder",
+      "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
@@ -12201,11 +12204,16 @@
     },
     "warning-title-default": "Warning",
     "wizard": {
+      "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",
       "alert-point-1": "Resources can still be created, edited, or deleted during this process, but changes may not be exported.",
-      "alert-point-2": "Once provisioning is complete, resources will be marked as managed through external storage.",
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
       "alert-point-4": "Enterprise instance administrators can display an announcement banner to notify users that migration is in progress. See <2>this guide</2> for step-by-step instructions.",
-      "alert-title": "Important: No data or configuration will be lost. Dashboards remain accessible during migration, but changes made during this process may not be exported.",
+      "alert-point-folder-cleanup": "You may need to manually remove or manage original folders after migration.",
+      "alert-point-folder-structure": "When migrating existing dashboards, the folder structure will be replicated in the repository. Original folders will be emptied of dashboards but may still contain alerts or library panels.",
+      "alert-point-instance-alerts": "Existing alerts and library panels will be lost and will not be usable after migration.",
+      "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
+      "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
+      "alert-title": "Important: Review Git Sync limitations before proceeding",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
@@ -12223,6 +12231,7 @@
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
+      "sync-option-migrate-resources": "Migrate existing resources",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
