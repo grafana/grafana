@@ -80,12 +80,12 @@ export function RepositoryList({ items }: Props) {
       {getResourceCountSection()}
       {hasInstanceSyncRepo && (
         <Alert
-          title={t('provisioning.instance-sync-deprecation.title', 'Instance sync is deprecated')}
+          title={t('provisioning.instance-sync-deprecation.title', 'Instance sync is not fully supported')}
           severity="warning"
         >
           <Trans i18nKey="provisioning.instance-sync-deprecation.message">
-            Instance sync is not supported and breaks library panels and alerts. To use library panels and alerts,
-            disconnect your repository and reconnect it using folder sync instead.
+            Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels
+            and alerts, disconnect your repository and reconnect it using folder sync instead.
           </Trans>
         </Alert>
       )}
