@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
@@ -34,22 +34,22 @@ export function ScopesDashboards() {
   if (!loading) {
     if (forScopeNames.length === 0) {
       return (
-        <div
-          className={cx(styles.container, styles.noResultsContainer)}
-          data-testid="scopes-dashboards-notFoundNoScopes"
-        >
-          <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
+        <div className={styles.container} data-testid="scopes-dashboards-container">
+          <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
+
+          <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundNoScopes">
+            <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
+          </div>
         </div>
       );
     } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
-        <div
-          className={cx(styles.container, styles.noResultsContainer)}
-          data-testid="scopes-dashboards-notFoundForScope"
-        >
-          <Trans i18nKey="scopes.dashboards.noResultsForScopes">
-            No dashboards or links found for the selected scopes
-          </Trans>
+        <div className={styles.container} data-testid="scopes-dashboards-container">
+          <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
+            <Trans i18nKey="scopes.dashboards.noResultsForScopes">
+              No dashboards or links found for the selected scopes
+            </Trans>
+          </div>
         </div>
       );
     }
@@ -94,13 +94,14 @@ export function ScopesDashboards() {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.canvas,
       borderRight: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
       gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      padding: theme.spacing(0, 2),
+      margin: theme.spacing(2, 0),
       width: theme.spacing(37.5),
     }),
     noResultsContainer: css({

@@ -499,6 +499,9 @@ export const versionedComponents = {
         },
       },
       TableNG: {
+        RowExpander: {
+          '12.4.0': 'data-testid tableng row expander',
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -1329,6 +1332,7 @@ export const versionedComponents = {
   },
   DebugOverlay: {
     wrapper: {
+      '12.3.0': 'data-testid debug-overlay-wrapper',
       '9.2.0': 'debug-overlay',
     },
   },

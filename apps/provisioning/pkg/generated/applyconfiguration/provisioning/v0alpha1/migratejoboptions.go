@@ -7,7 +7,6 @@ package v0alpha1
 // MigrateJobOptionsApplyConfiguration represents a declarative configuration of the MigrateJobOptions type for use
 // with apply.
 type MigrateJobOptionsApplyConfiguration struct {
-	History *bool   `json:"history,omitempty"`
 	Message *string `json:"message,omitempty"`
 }
 
@@ -15,14 +14,6 @@ type MigrateJobOptionsApplyConfiguration struct {
 // apply.
 func MigrateJobOptions() *MigrateJobOptionsApplyConfiguration {
 	return &MigrateJobOptionsApplyConfiguration{}
-}
-
-// WithHistory sets the History field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the History field is set to the value of the last call.
-func (b *MigrateJobOptionsApplyConfiguration) WithHistory(value bool) *MigrateJobOptionsApplyConfiguration {
-	b.History = &value
-	return b
 }
 
 // WithMessage sets the Message field in the declarative configuration to the given value

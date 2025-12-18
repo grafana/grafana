@@ -839,6 +839,11 @@ export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSy
  */
 export interface Panel {
   /**
+   * When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+   * This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+   */
+  autoMigrateFrom?: string;
+  /**
    * Sets panel queries cache timeout.
    */
   cacheTimeout?: string;
