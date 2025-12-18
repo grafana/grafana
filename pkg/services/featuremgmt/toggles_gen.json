@@ -1472,6 +1472,19 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesInCompactMode",
+        "resourceVersion": "1766045288124",
+        "creationTimestamp": "2025-12-18T08:08:08Z"
+      },
+      "spec": {
+        "description": "Add compact=true when fetching rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "fetchRulesUsingPost",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-01-29T12:17:44Z"
@@ -2690,20 +2703,6 @@
         "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pluginInsights",
-        "resourceVersion": "1761300628147",
-        "creationTimestamp": "2025-10-24T10:10:28Z"
-      },
-      "spec": {
-        "description": "Show insights for plugins in the plugin details page",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true,
         "expression": "false"
       }
     },
