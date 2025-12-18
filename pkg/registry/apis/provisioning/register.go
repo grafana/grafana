@@ -318,7 +318,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to find requester", err
 				}
-				return authorizeRoleBasedResource(a.GetResource(), id)
+				return authorizeRoleBasedResource(ctx, a.GetResource(), id)
 			}
 
 			return b.authorizeResource(ctx, a)
@@ -377,7 +377,7 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		if err != nil {
 			return authorizer.DecisionDeny, "failed to find requester", err
 		}
-		return authorizeRoleBasedResource(a.GetResource(), id)
+		return authorizeRoleBasedResource(ctx, a.GetResource(), id)
 	default:
 		return b.authorizeDefault(ctx)
 	}
@@ -527,12 +527,28 @@ func isRoleBasedResource(resource string) bool {
 // authorizeRoleBasedResource handles authorization for resources without fine-grained permissions.
 // - settings: viewer role (read-only, needed by multiple UI pages)
 // - stats: admin role
-func authorizeRoleBasedResource(resource string, id identity.Requester) (authorizer.Decision, string, error) {
+// Also checks authlib.AuthInfoFrom(ctx) for AccessPolicy identity type in MT mode.
+func authorizeRoleBasedResource(ctx context.Context, resource string, id identity.Requester) (authorizer.Decision, string, error) {
+	// Check AccessPolicy identity type from both sources (ST and MT modes)
+	isAccessPolicy := authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
+	if !isAccessPolicy {
+		// Also check authlib.AuthInfoFrom for MT mode
+		if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
+			isAccessPolicy = authlib.IsIdentityType(authInfo.GetIdentityType(), authlib.TypeAccessPolicy)
+		}
+	}
+
 	switch resource {
 	case "settings":
-		return allowForViewersOrAccessPolicy(id)
+		if isAccessPolicy || id.GetOrgRole().Includes(identity.RoleViewer) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "viewer role is required", nil
 	case "stats":
-		return allowForAdminsOrAccessPolicy(id)
+		if isAccessPolicy || id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
 	default:
 		return authorizer.DecisionDeny, "unknown role-based resource", nil
 	}
