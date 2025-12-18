@@ -208,7 +208,7 @@ func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			yield("", err)
 			return
 		}
-		defer rows.Close()
+		defer closeRows(rows, yield)
 
 		for rows.Next() {
 			var key string
@@ -259,7 +259,7 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
-		defer rows.Close()
+		defer closeRows(rows, yield)
 
 		for rows.Next() {
 			var key string
@@ -327,4 +327,11 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 
 func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	panic("not implemented!")
+}
+
+func closeRows[T any](rows db.Rows, yield func(T, error) bool) {
+	if err := rows.Close(); err != nil {
+		var zero T
+		yield(zero, fmt.Errorf("error closing rows: %w", err))
+	}
 }
