@@ -21,7 +21,6 @@ import (
 )
 
 func TestBacktesting(t *testing.T) {
-	t.Skip()
 	dir, grafanaPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -69,7 +68,7 @@ func TestBacktesting(t *testing.T) {
 			require.Truef(t, ok, "The data file does not contain a field `data`")
 
 			status, body := apiCli.SubmitRuleForBacktesting(t, request)
-			require.Equal(t, http.StatusOK, status)
+			require.Equalf(t, http.StatusOK, status, "Response: %s", body)
 			var result data.Frame
 			require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		})
@@ -108,6 +107,7 @@ func TestBacktesting(t *testing.T) {
 			resourcepermissions.SetResourcePermissionCommand{
 				Actions: []string{
 					accesscontrol.ActionAlertingRuleRead,
+					accesscontrol.ActionAlertingRuleUpdate,
 				},
 				Resource:          "folders",
 				ResourceID:        "*",
