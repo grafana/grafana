@@ -279,6 +279,7 @@ replace (
 	github.com/grafana/grafana/apps/folder => ./apps/folder
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/investigations => ./apps/investigations
+	github.com/grafana/grafana/apps/live => ./apps/live
 	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist
 	github.com/grafana/grafana/apps/plugins => ./apps/plugins

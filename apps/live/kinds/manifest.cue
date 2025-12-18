@@ -10,7 +10,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
-				liveV1beta1,
+				channelV1beta1,
 			]
 		}
 	}
