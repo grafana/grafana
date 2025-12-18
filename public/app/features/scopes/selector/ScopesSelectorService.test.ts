@@ -1615,7 +1615,19 @@ describe('ScopesSelectorService', () => {
 
   describe('open selector with defaultPath expansion', () => {
     beforeEach(() => {
-      apiClient.fetchNodes = jest.fn().mockResolvedValue([regionNode]);
+      apiClient.fetchNodes = jest.fn().mockImplementation((options) => {
+        // Return children based on parent
+        if (options.parent === '') {
+          return Promise.resolve([regionNode]);
+        } else if (options.parent === 'region-us-west') {
+          return Promise.resolve([countryNode]);
+        } else if (options.parent === 'country-usa') {
+          return Promise.resolve([cityNode]);
+        } else if (options.parent === 'city-seattle') {
+          return Promise.resolve([datacenterNode]);
+        }
+        return Promise.resolve([]);
+      });
       apiClient.fetchMultipleScopeNodes = jest
         .fn()
         .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
@@ -2074,7 +2086,15 @@ describe('ScopesSelectorService', () => {
 
   describe('expandToSelectedScope (new helper method)', () => {
     beforeEach(() => {
-      apiClient.fetchNodes = jest.fn().mockResolvedValue([parentNode]);
+      apiClient.fetchNodes = jest.fn().mockImplementation((options) => {
+        // Return children based on parent
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
       apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([parentNode, childNode]);
     });
 
@@ -2189,7 +2209,17 @@ describe('ScopesSelectorService', () => {
       };
 
       apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([parentNode, childNode, grandchildNode]);
-      apiClient.fetchNodes = jest.fn().mockResolvedValue([parentNode]);
+      apiClient.fetchNodes = jest.fn().mockImplementation((options) => {
+        // Return children based on parent
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent') {
+          return Promise.resolve([childNode]);
+        } else if (options.parent === 'child') {
+          return Promise.resolve([grandchildNode]);
+        }
+        return Promise.resolve([]);
+      });
 
       (service as any).updateState({
         scopes: { 'test-scope': scope },
@@ -2233,7 +2263,15 @@ describe('ScopesSelectorService', () => {
         appliedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child' }],
       });
 
-      apiClient.fetchNodes = jest.fn().mockResolvedValue([parentNode]);
+      apiClient.fetchNodes = jest.fn().mockImplementation((options) => {
+        // Return children based on parent
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
       apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([]);
 
       await service.open();

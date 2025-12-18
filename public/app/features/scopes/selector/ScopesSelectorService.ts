@@ -258,9 +258,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       const existingChildren = treeNode.children || {};
       const childrenToPreserve: Record<string, TreeNode> = {};
 
-      // Keep children that have nested children (from path insertion)
+      // Keep children that have a children property (object, not undefined)
+      // This includes both empty objects {} (from path insertion) and populated ones
       for (const [key, child] of Object.entries(existingChildren)) {
-        if (child.children && Object.keys(child.children).length > 0) {
+        // Preserve if children is an object (not undefined)
+        if (child.children !== undefined && typeof child.children === 'object') {
           childrenToPreserve[key] = child;
         }
       }
@@ -602,6 +604,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           // If nodes aren't in tree yet, insert them
           if (!nodeAtPath) {
             newTree = insertPathNodesIntoTree(newTree, pathNodes);
+            // Update state so loadNodeChildren can see the inserted nodes
+            this.updateState({ tree: newTree });
           }
 
           // Load children of the parent node if needed to show all siblings
