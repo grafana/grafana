@@ -160,7 +160,7 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-use-saved-queries-v12.3.png" max-width="750px" alt="Access saved queries" >}}
 
-Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** dropdown updates your existing query.
+Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
 {{< admonition type="note" >}}
 Users with Admin and Editor roles can create and save queries for reuse.
