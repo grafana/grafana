@@ -34,10 +34,11 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlKVKeys     = mustTemplate("sqlkv_keys.sql")
-	sqlKVGet      = mustTemplate("sqlkv_get.sql")
-	sqlKVBatchGet = mustTemplate("sqlkv_batch_get.sql")
-	sqlKVDelete   = mustTemplate("sqlkv_delete.sql")
+	sqlKVKeys        = mustTemplate("sqlkv_keys.sql")
+	sqlKVGet         = mustTemplate("sqlkv_get.sql")
+	sqlKVBatchGet    = mustTemplate("sqlkv_batch_get.sql")
+	sqlKVDelete      = mustTemplate("sqlkv_delete.sql")
+	sqlKVBatchDelete = mustTemplate("sqlkv_batch_delete.sql")
 )
 
 // sqlKVSection can be embedded in structs used when rendering query templates
@@ -108,17 +109,17 @@ func (req sqlKVGetRequest) Results() ([]byte, error) {
 	return req.Value, nil
 }
 
-type sqlKVBatchGetRequest struct {
+type sqlKVBatchRequest struct {
 	sqltemplate.SQLTemplate
 	sqlKVSection
 	Keys []string
 }
 
-func (req sqlKVBatchGetRequest) Validate() error {
+func (req sqlKVBatchRequest) Validate() error {
 	return req.sqlKVSection.Validate()
 }
 
-func (req sqlKVBatchGetRequest) KeyPaths() []string {
+func (req sqlKVBatchRequest) KeyPaths() []string {
 	result := make([]string, 0, len(req.Keys))
 	for _, key := range req.Keys {
 		result = append(result, req.Section+"/"+key)
@@ -250,7 +251,7 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			return
 		}
 
-		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVBatchGet, sqlKVBatchGetRequest{
+		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVBatchGet, sqlKVBatchRequest{
 			SQLTemplate:  sqltemplate.New(k.dialect),
 			sqlKVSection: sqlKVSection{section},
 			Keys:         keys,
@@ -322,7 +323,19 @@ func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
 }
 
 func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
-	panic("not implemented!")
+	if len(keys) == 0 {
+		return nil
+	}
+
+	if _, err := dbutil.Exec(ctx, k.db, sqlKVBatchDelete, sqlKVBatchRequest{
+		SQLTemplate:  sqltemplate.New(k.dialect),
+		sqlKVSection: sqlKVSection{section},
+		Keys:         keys,
+	}); err != nil {
+		return fmt.Errorf("failed to batch delete keys: %w", err)
+	}
+
+	return nil
 }
 
 func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
