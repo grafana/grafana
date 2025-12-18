@@ -84,11 +84,11 @@ inputs:
     required: false
   ubuntu-base:
     type: string
-    default: 'ubuntu:22.04'
+    default: ''
     required: false
   alpine-base:
     type: string
-    default: 'alpine:3.22'
+    default: ''
     required: false
 outputs:
   dist-dir:
