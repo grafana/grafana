@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,8 +39,15 @@ func TestMain(m *testing.M) {
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
+	for _, resource := range []string{"folders.folder.grafana.app", "dashboards.dashboard.grafana.app"} {
+		unifiedConfig[resource] = setting.UnifiedStorageConfig{
+			EnableMigration: true,
+		}
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		UnifiedStorageConfig: unifiedConfig,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -218,11 +226,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("When updating uid with id", func(t *testing.T) {
+	dashboardWithDuplicatedLegacyAnnotation := "new-uid"
+	t.Run("When saving a dashboard with an already used legacy ID", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   "new-uid",
+				"uid":   dashboardWithDuplicatedLegacyAnnotation,
 				"title": "Updated title",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
@@ -233,7 +242,49 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
-	t.Run("When updating uid with a dashboard already using that uid", func(t *testing.T) {
+
+	t.Run("When updating a dashboard with legacy ID in multiple dashboards", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
+				"uid":   savedDashInGeneralFolder.UID,
+				"title": "Updated title",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+		// Delete the dashboard with duplicated legacy ID annotation
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboardWithDuplicatedLegacyAnnotation)
+		req, err := http.NewRequest("DELETE", u, nil)
+		require.NoError(t, err)
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("When updating a dashboard already using that uid", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID,
+				"uid":   savedDashInFolder.UID,
+				"title": "Dashboard with existing UID",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When updating id with a dashboard already using that uid", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
@@ -263,6 +314,31 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	// Obs: in legacy, the dashboard request would fail
+	// After the dashboard is created, the user can see that there is an error with the library panel and can remove them manually
+	t.Run("When creating a dashboard that references a non-existent library panel", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Bad dashboard",
+				"panels": []interface{}{
+					map[string]interface{}{
+						"gridPos": map[string]int{"h": 0, "w": 0, "x": 0, "y": 0},
+						"libraryPanel": map[string]string{
+							"name": "Bad panel",
+							"uid":  "invalid-uid",
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		_, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
@@ -303,7 +379,7 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 		dashboardDTO := &plugindashboards.PluginDashboard{}
 		err = json.Unmarshal(b, dashboardDTO)
 		require.NoError(t, err)
-		require.EqualValues(t, 1, dashboardDTO.DashboardId)
+		require.EqualValues(t, "just testing", dashboardDTO.Title)
 	})
 
 	t.Run("when quota limit exceeds importing a dashboard should fail", func(t *testing.T) {
@@ -392,7 +468,7 @@ providers:
 			dashboardUID = d.UID
 			dashboardID = d.ID // nolint:staticcheck
 		}
-		assert.Equal(t, int64(1), dashboardID)
+		assert.Len(t, *dashboardList, 1)
 
 		testCases := []struct {
 			desc          string
@@ -752,7 +828,7 @@ func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 				},
 				{
 					"id": 2,
-					"title": "Library Panel 2", 
+					"title": "Library Panel 2",
 					"type": "stat",
 					"gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
 					"libraryPanel": {
@@ -776,7 +852,7 @@ func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 					}
 				},
 				"test-lib-panel-2": {
-					"uid": "test-lib-panel-2", 
+					"uid": "test-lib-panel-2",
 					"name": "Test Library Panel 2",
 					"kind": 1,
 					"type": "stat",
@@ -986,7 +1062,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:        true,
+		DisableAuthZClientCache: true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

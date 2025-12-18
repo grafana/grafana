@@ -109,10 +109,16 @@ const payload = {
 reportInteraction('dashboard_render', {
   interactionType: e.origin,
   uid,
+  operationId: e.operationId, // Shared operationId for correlating with panel_render measurements
   ...payload,
 });
 
-logMeasurement(`dashboard_render`, payload, { interactionType: e.origin, dashboard: uid, title: title });
+logMeasurement('dashboard_render', payload, {
+  interactionType: e.origin,
+  dashboard: uid,
+  title: title,
+  operationId: e.operationId, // Shared operationId for correlating with panel_render measurements
+});
 ```
 
 ### Interaction Origin Mapping
@@ -301,6 +307,7 @@ Aggregates panel-level performance metrics for analytics reporting:
 - Tracks operation counts and total time spent per panel
 - Sends comprehensive analytics reports via `reportInteraction` and `logMeasurement`
 - Provides detailed panel breakdowns including slow panel detection
+- Sends individual `panel_render` measurements for each panel with aggregated metrics via `logMeasurement`
 
 #### ScenePerformanceLogger
 
@@ -344,6 +351,7 @@ Reported for each interaction via `reportInteraction` and `logMeasurement`:
 {
   interactionType: string,      // Type of interaction
   uid: string,                  // Dashboard UID
+  operationId: string,          // Unique operationId for correlating with panel_render measurements
   duration: number,             // Total duration
   networkDuration: number,      // Network time
   processingTime: number,       // Client-side processing time
@@ -357,6 +365,8 @@ Reported for each interaction via `reportInteraction` and `logMeasurement`:
   timeSinceBoot: number         // Time since frontend boot
 }
 ```
+
+**Correlation**: The `operationId` field is shared between `dashboard_render` and all associated `panel_render` measurements, enabling correlation of panel metrics with their parent dashboard interaction.
 
 #### Panel-Level Metrics
 
@@ -405,6 +415,44 @@ Aggregated by `DashboardAnalyticsAggregator` for each panel with detailed operat
   totalPanelTime: number        // Sum of all operation times
 }
 ```
+
+#### Panel Render Measurements
+
+For each dashboard interaction, individual `panel_render` measurements are sent separately from `dashboard_render` via `logMeasurement`. These measurements are sent for all panels with collected metrics (even if all times are 0), providing granular panel-level analytics.
+
+**When sent**: After `dashboard_render` interaction, one `panel_render` measurement per panel
+
+**Correlation**: All `panel_render` measurements share the same `operationId` as their parent `dashboard_render` interaction, enabling correlation between dashboard and panel-level metrics.
+
+**Measurement values** (via `logMeasurement`):
+
+```typescript
+{
+  totalTime: number,            // Sum of all operation times
+  queryCount: number,           // Number of query operations
+  transformCount: number,       // Number of transformation operations
+  renderCount: number,         // Number of render operations
+  fieldConfigCount: number,     // Number of field config operations
+  pluginLoadCount: number       // Number of plugin load operations (0 or 1)
+}
+```
+
+**Measurement metadata** (via `logMeasurement` context):
+
+```typescript
+{
+  panelKey: string,            // Panel key identifier
+  pluginId: string,            // Panel plugin identifier
+  panelId: string,             // Panel identifier
+  operationId: string          // Shared operationId for correlating with dashboard_render
+}
+```
+
+**Note**: `dashboard`, `title`, and `interactionType` are not included in `panel_render` metadata since they can be obtained by correlating with the parent `dashboard_render` interaction using `operationId`.
+
+**Correlating panel_render with dashboard_render**:
+
+All `panel_render` measurements share the same `operationId` as their parent `dashboard_render` interaction.
 
 ## Debugging and Development
 
@@ -500,7 +548,6 @@ DAA: [ANALYTICS] dashboard_view | 4 panels analyzed | 1 slow panels ⚠️
         transform: 12.3,
         render: 23.8,
         fieldConfig: 5.0,
-        pluginLoad: 39.0
       }
     }
     DAA: 📊 Queries: {
@@ -525,6 +572,59 @@ DAA: [ANALYTICS] dashboard_view | 4 panels analyzed | 1 slow panels ⚠️
 ```
 
 **Note**: The indentation shows the **console group hierarchy**. In the browser console, each panel creates a collapsible group that can be expanded to see detailed operation breakdowns. The main dashboard analytics group contains nested panel groups for organized analysis.
+
+#### Panel Render Measurements Summary
+
+After the detailed panel breakdown, a summary of all `panel_render` measurements sent is displayed:
+
+```
+DAA: 📤 Panel render interactions: 4 panels reported
+  DAA: 🎨 timeseries-panel-1: {
+    totalTime: 125.3,
+      operations: {
+        queries: 2,
+        transforms: 1,
+        renders: 1,
+        fieldConfigs: 1,
+        pluginLoads: 1
+      },
+    isSlowPanel: true,
+    warning: "SLOW"
+  }
+  DAA: 🎨 stat-panel-2: {
+    totalTime: 45.2,
+      operations: {
+        queries: 1,
+        transforms: 0,
+        renders: 1,
+        fieldConfigs: 1,
+        pluginLoads: 0
+      },
+    isSlowPanel: false
+  }
+  DAA: 🎨 table-panel-3: {
+    totalTime: 89.7,
+    operations: {
+      queries: 1,
+      transforms: 2,
+      renders: 1,
+      fieldConfigs: 1
+    },
+    isSlowPanel: false
+  }
+  DAA: 🎨 graph-panel-4: {
+    totalTime: 234.1,
+    operations: {
+      queries: 3,
+      transforms: 1,
+      renders: 2,
+      fieldConfigs: 1
+    },
+    isSlowPanel: false
+  }
+```
+
+This summary provides a quick overview of all panels that had `panel_render` measurements sent, showing total time, operation counts, and slow panel warnings.
 
 ### Enable Echo Service Debug Logging
 

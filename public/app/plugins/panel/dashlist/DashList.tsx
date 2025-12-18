@@ -4,18 +4,18 @@ import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
+import { ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import impressionSrv from 'app/core/services/impression_srv';
+import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
-import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { DashboardQueryResult, QueryResponse, SearchQuery } from 'app/features/search/service/types';
 
+import { DashListItem } from './DashListItem';
 import { Options } from './panelcfg.gen';
-import { getStyles } from './styles';
 import { useDashListUrlParams } from './utils';
 
-type Dashboard = DashboardQueryResult & {
+export type Dashboard = DashboardQueryResult & {
   isSearchResult?: boolean;
   isRecent?: boolean;
   isStarred?: boolean;
@@ -107,15 +107,10 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   return dashMap;
 }
 
-async function fetchDashboardFolders() {
-  return getGrafanaSearcher().getLocationInfo();
-}
-
 const collator = new Intl.Collator();
 
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
-  const [foldersTitleMap, setFoldersTitleMap] = useState<Record<string, LocationInfo>>({});
 
   const throttledRenderCount = useThrottle(props.renderCounter, 5000);
 
@@ -125,13 +120,7 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  useEffect(() => {
-    if (props.options.showFolderNames && dashboards.size > 0) {
-      fetchDashboardFolders().then((locationInfo) => {
-        setFoldersTitleMap(locationInfo);
-      });
-    }
-  }, [props.options.showFolderNames, dashboards]);
+  const { foldersByUid } = useDashboardLocationInfo(props.options.showFolderNames && dashboards.size > 0);
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
@@ -185,7 +174,6 @@ export function DashList(props: PanelProps<Options>) {
     setDashboards(updatedDashboards);
   };
 
-  const css = useStyles2(getStyles);
   const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
@@ -194,26 +182,17 @@ export function DashList(props: PanelProps<Options>) {
         let url = dash.url + urlParams;
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
 
-        const locationInfo = showFolderNames && dash.location ? foldersTitleMap[dash.location] : undefined;
+        const locationInfo = showFolderNames && dash.location ? foldersByUid[dash.location] : undefined;
         return (
           <li key={`dash-${dash.uid}`}>
-            <div className={css.dashlistLink}>
-              <Box flex={1}>
-                <Link href={url}>{dash.name}</Link>
-                {showFolderNames && locationInfo && (
-                  <Text color="secondary" variant="bodySmall" element="p">
-                    {locationInfo?.name}
-                  </Text>
-                )}
-              </Box>
-              <StarToolbarButton
-                title={dash.name}
-                group="dashboard.grafana.app"
-                kind="Dashboard"
-                id={dash.uid}
-                onStarChange={handleStarChange}
-              />
-            </div>
+            <DashListItem
+              dashboard={dash}
+              url={url}
+              showFolderNames={showFolderNames}
+              locationInfo={locationInfo}
+              layoutMode="list"
+              onStarChange={handleStarChange}
+            />
           </li>
         );
       })}

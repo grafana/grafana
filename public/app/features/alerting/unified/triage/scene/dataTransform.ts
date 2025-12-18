@@ -33,7 +33,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
   const ruleUIDIndex = fieldIndex.get('grafana_rule_uid');
 
   // These should always exist due to validation above, but handle gracefully
-  if (!alertnameIndex || !folderIndex || !ruleUIDIndex) {
+  if (alertnameIndex === undefined || folderIndex === undefined || ruleUIDIndex === undefined) {
     return [];
   }
 

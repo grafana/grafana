@@ -808,13 +808,13 @@ export function getAutoAssignedDSRef(
   element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
   type: 'panels' | 'variables' | 'annotations',
   elementMapReferences?: DSReferencesMapping
-): Set<string> {
+): Map<string, string | undefined> {
   if (!elementMapReferences) {
-    return new Set();
+    return new Map();
   }
   if (type === 'panels' && isVizPanel(element)) {
     const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
-    return elementMapReferences.panels.get(elementKey) || new Set();
+    return elementMapReferences.panels.get(elementKey) || new Map();
   }
 
   if (type === 'variables') {
@@ -830,39 +830,52 @@ export function getAutoAssignedDSRef(
 }
 
 /**
- * Determines if a data source reference should be persisted for a query or variable
+ * Returns the datasource value that should be persisted for a panel query, variable or annotation
+ * - Undefined if the datasource was not defined in the initial save model
+ * - { type: string } if the datasource was autossigned defined by the initial group value
+ * - { uid: string, type: string } if the datasource was defined in the initial save model
  */
 export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
   element: T,
-  autoAssignedDsRef: Set<string>,
+  autoAssignedDsRef: Map<string, string | undefined>,
+
   type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
   // Get the element identifier - refId for queries, name for variables
   const elementId = getElementIdentifier(element, type);
 
-  // If the element is in the auto-assigned set, it didn't have a datasource specified
+  // If the ds was autossigned, return the datasource initial ds value.
   if (autoAssignedDsRef?.has(elementId)) {
-    return undefined;
+    const dsType = autoAssignedDsRef.get(elementId);
+    // If the ds type was not undefined means the datasource was autossigned, so return the datasource with only the type
+    return dsType ? { type: dsType } : undefined;
   }
 
   // Return appropriate datasource reference based on element type
   if (type === 'query') {
     if ('datasource' in element && element.datasource) {
-      // If element has its own datasource, use that
-      return element.datasource;
+      // Check if datasource is empty object {} (no keys), treat it as missing
+      // and fall through to use panel datasource (matches backend behavior)
+      const isEmptyDatasourceObject =
+        typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
+
+      if (!isEmptyDatasourceObject) {
+        // If element has its own datasource (and it's not empty), use that
+        return element.datasource;
+      }
     }
 
-    // For queries missing a datasource but not in auto-assigned set, use datasource from context (queryRunner)
+    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
     return context?.state?.datasource;
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    return element.state.datasource || {};
+    return element.state.datasource || undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    return element.datasource || {};
+    return element.datasource || undefined;
   }
 
   return undefined;
@@ -920,11 +933,14 @@ function isQueryVariable(query: SceneDataQuery | QueryVariable | AnnotationQuery
 }
 
 /**
- * Get the persisted datasource for a query or variable
- * When a query or variable is created it could not have a datasource set
+ * Get the persisted datasource for a panel query, annotation or variable
+ * When a panel query, annotation or variable is created it could not have a datasource set
  * we want to respect that and not overwrite it with the auto assigned datasources
  * resolved in runtime
  *
+ * - Undefined if the datasource was not defined in the initial save model
+ * - { type: string } if the datasource was autossigned defined by the initial group value
+ * - { uid: string, type: string } if the datasource was defined in the initial save model
  */
 export function getElementDatasource(
   element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
@@ -961,7 +977,7 @@ export function getElementDatasource(
     const autoAssignedRefs = getAutoAssignedDSRef(element, 'annotations', dsReferencesMapping);
     result = getPersistedDSFor(queryElement, autoAssignedRefs, 'annotation');
   }
-  // Important: Only return the datasource if it's not in auto-assigned refs
-  // and if the result would not be an empty object
+
+  // Avoid returning an empty object
   return Object.keys(result || {}).length > 0 ? result : undefined;
 }

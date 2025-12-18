@@ -371,7 +371,6 @@ export function useCreateFolder() {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
           },
         },
-        status: {},
       },
     };
 
@@ -405,7 +404,6 @@ export function useUpdateFolder() {
         metadata: {
           name: folder.uid,
         },
-        status: {},
       },
     };
 

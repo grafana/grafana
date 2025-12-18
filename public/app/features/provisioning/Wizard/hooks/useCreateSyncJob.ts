@@ -1,28 +1,18 @@
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
-import { isGitProvider } from '../../utils/repositoryTypes';
-import { RepoType, StepStatusInfo } from '../types';
+import { StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
   requiresMigration: boolean;
-  repoType: RepoType;
-  isLegacyStorage?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({
-  repoName,
-  requiresMigration,
-  repoType,
-  isLegacyStorage,
-  setStepStatusInfo,
-}: UseCreateSyncJobParams) {
+export function useCreateSyncJob({ repoName, requiresMigration, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
-  const supportsHistory = isGitProvider(repoType) && isLegacyStorage;
 
-  const createSyncJob = async (options?: { history?: boolean }) => {
+  const createSyncJob = async () => {
     if (!repoName) {
       setStepStatusInfo?.({
         status: 'error',
@@ -36,9 +26,7 @@ export function useCreateSyncJob({
 
       const jobSpec = requiresMigration
         ? {
-            migrate: {
-              history: (options?.history || false) && supportsHistory,
-            },
+            migrate: {},
           }
         : {
             pull: {
@@ -59,7 +47,7 @@ export function useCreateSyncJob({
         return null;
       }
 
-      setStepStatusInfo?.({ status: 'success' });
+      // Job status will be tracked by JobStatus component, keep status as 'running'
       return response;
     } catch (error) {
       setStepStatusInfo?.({
@@ -73,6 +61,5 @@ export function useCreateSyncJob({
   return {
     createSyncJob,
     isLoading,
-    supportsHistory,
   };
 }

@@ -73,6 +73,8 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
+        { dataSourceNames: ['prometheus'] },
+        { labels: ['severity=critical'] },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
@@ -85,8 +87,6 @@ describe('paginationLimits', () => {
 
       it.each<Partial<RulesFilter>>([
         { namespace: 'production' },
-        { dataSourceNames: ['prometheus'] },
-        { labels: ['severity=critical'] },
         { ruleState: PromAlertingRuleState.Firing, namespace: 'production' },
       ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
@@ -112,6 +112,7 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
+        { dataSourceNames: ['prometheus'] },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
@@ -127,7 +128,6 @@ describe('paginationLimits', () => {
         { ruleName: 'alert' },
         { groupName: 'test-group' },
         { namespace: 'production' },
-        { dataSourceNames: ['prometheus'] },
         { labels: ['severity=critical'] },
       ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
@@ -156,6 +156,8 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
+        { dataSourceNames: ['prometheus'] },
+        { labels: ['severity=critical'] },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
@@ -166,16 +168,15 @@ describe('paginationLimits', () => {
         }
       );
 
-      it.each<Partial<RulesFilter>>([
-        { namespace: 'production' },
-        { dataSourceNames: ['prometheus'] },
-        { labels: ['severity=critical'] },
-      ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
-        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
+      it.each<Partial<RulesFilter>>([{ namespace: 'production' }])(
+        'should return large limits for both when frontend filters are used: %p',
+        (filterState) => {
+          const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
-        expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-        expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-      });
+          expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+        }
+      );
     });
   });
 });

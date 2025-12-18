@@ -119,7 +119,7 @@ export class AppChromeService {
   };
 
   private getUpdatedHistory(newState: AppChromeState): HistoryEntry[] {
-    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
+    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' });
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
     let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
