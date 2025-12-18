@@ -12,7 +12,7 @@ import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useResourceStats } from './hooks/useResourceStats';
-import { Target, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
   onCancel?: (repoName: string) => void;

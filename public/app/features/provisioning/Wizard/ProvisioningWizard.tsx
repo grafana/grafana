@@ -117,14 +117,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
-  const {
-    shouldSkipSync,
-    requiresMigration,
-    isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, syncTarget);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
-    requiresMigration,
     setStepStatusInfo,
   });
 
@@ -275,7 +270,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
 
         // Create a pull job to initialize the repository
-        const job = await createSyncJob();
+        const job = await createSyncJob(false);
         if (!job) {
           return; // Don't proceed if job creation fails
         }
