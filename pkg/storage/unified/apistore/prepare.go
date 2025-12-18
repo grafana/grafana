@@ -21,7 +21,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -82,7 +81,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		if obj.GetFolder() == "" {
 			// return apierrors.NewBadRequest("missing folder annotation")
 			// TODO?: should this be optionally be done in a mutation webhook?
-			obj.SetFolder(folder.GeneralFolderUID) // always enter something
+			// ???? obj.SetFolder(folder.GeneralFolderUID) // always enter something
 			return nil
 		}
 	} else if obj.GetFolder() != "" {
