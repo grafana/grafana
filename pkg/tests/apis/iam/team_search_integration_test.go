@@ -21,8 +21,7 @@ import (
 func TestIntegrationTeamSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Add rest.Mode3 and rest.Mode4 when they're supported
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team search with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -60,7 +59,6 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NoError(t, err)
 	require.NotNil(t, team1)
 
-	// Create a second team with a different name
 	team2YAML := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
 	team2YAML.Object["metadata"].(map[string]interface{})["name"] = "testteam2"
 	team2YAML.Object["spec"].(map[string]interface{})["title"] = "Another Team"
