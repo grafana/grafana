@@ -280,34 +280,38 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   );
 
   const renderSQLEditor = (width?: number, height?: number) => (
-    <div className={styles.sqlContainer}>
-      <Stack direction="column" gap={1}>
-        {renderButtons()}
-        {renderMainContent(width, height)}
-      </Stack>
-    </div>
+    <Stack direction="column" gap={1}>
+      {renderButtons()}
+      {renderMainContent(width, height)}
+    </Stack>
   );
 
   return (
     <SqlExprProvider value={contextValue}>
-      {renderSQLEditor()}
-      <Suspense fallback={null}>
-        <GenAISuggestionsDrawer
-          isOpen={isDrawerOpen}
-          onApplySuggestion={onApplySuggestion}
-          onClose={handleCloseDrawer}
-          suggestions={suggestions}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
-      </Suspense>
+      <div className={styles.mainContainer}>
+        {renderSQLEditor()}
+        <Suspense fallback={null}>
+          <GenAISuggestionsDrawer
+            isOpen={isDrawerOpen}
+            onApplySuggestion={onApplySuggestion}
+            onClose={handleCloseDrawer}
+            suggestions={suggestions}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <GenAIExplanationDrawer
+            isOpen={isExplanationOpen}
+            onClose={handleCloseExplanation}
+            explanation={explanation}
+          />
+        </Suspense>
+      </div>
     </SqlExprProvider>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  sqlContainer: css({
+  mainContainer: css({
     marginTop: theme.spacing(0.5),
   }),
   contentContainer: css({
@@ -334,15 +338,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     width: '100%',
     overflow: 'auto',
-    //minHeight: '100px',
-  }),
-  modal: css({
-    width: '95vw',
-    height: '95vh',
-  }),
-  modalContent: css({
-    height: '100%',
-    paddingTop: 0,
   }),
   schemaInspector: css({
     gridArea: 'schema',
