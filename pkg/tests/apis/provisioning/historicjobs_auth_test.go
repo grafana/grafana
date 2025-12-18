@@ -93,4 +93,3 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 	})
 }
-

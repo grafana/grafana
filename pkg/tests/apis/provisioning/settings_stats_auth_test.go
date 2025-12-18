@@ -102,4 +102,3 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 	})
 }
-

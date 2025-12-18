@@ -234,4 +234,3 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 		})
 	})
 }
-
