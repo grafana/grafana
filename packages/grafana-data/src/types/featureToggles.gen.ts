@@ -207,6 +207,10 @@ export interface FeatureToggles {
   */
   reportingRetries?: boolean;
   /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
