@@ -22,6 +22,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,6 +44,9 @@ type Options struct {
 	Reg      prometheus.Registerer
 	Authzc   types.AccessClient
 	Docs     resource.DocumentBuilderSupplier
+
+	// Only injected to make sure that secret DB is initialized on startup.
+	SecretDependencies *secret.DependencyRegisterer
 }
 
 type clientMetrics struct {

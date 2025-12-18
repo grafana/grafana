@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -24,6 +25,9 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+
+	// Secrets
+	secret.RegisterDependencies,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
