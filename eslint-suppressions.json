@@ -4246,9 +4246,6 @@
     }
   },
   "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
