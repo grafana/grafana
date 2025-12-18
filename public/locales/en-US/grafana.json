@@ -12045,6 +12045,9 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
+    "repository-status": {
+      "error": "Failed to load repository"
+    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",

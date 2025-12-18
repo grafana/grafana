@@ -28,7 +28,6 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
-import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
@@ -181,7 +180,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            <InlineSecureValueWarning repo={data} />
             <Field
               noMargin
               label={gitFields.tokenConfig.label}
