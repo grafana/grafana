@@ -292,6 +292,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   codeEditor: css({
     flexGrow: 1,
-    minHeight: 0,
   }),
 });
