@@ -311,7 +311,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(0.5),
   }),
   contentContainer: css({
-    minHeight: '200px',
+    minHeight: '250px',
     height: '100%',
     resize: 'vertical',
     overflow: 'hidden',
@@ -334,7 +334,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     width: '100%',
     overflow: 'auto',
-    minHeight: '100px',
+    //minHeight: '100px',
   }),
   modal: css({
     width: '95vw',
