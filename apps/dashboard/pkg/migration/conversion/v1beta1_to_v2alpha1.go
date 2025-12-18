@@ -2006,6 +2006,28 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 		}
 	}
 
+	// Ensure each target has a non-empty refId. We only fill missing refIds;
+	existingRefIds := make(map[string]bool)
+	for _, target := range targets {
+		if targetMap, ok := target.(map[string]interface{}); ok {
+			if refId := schemaversion.GetStringValue(targetMap, "refId"); refId != "" {
+				existingRefIds[refId] = true
+			}
+		}
+	}
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		refId := schemaversion.GetStringValue(targetMap, "refId")
+		if refId == "" {
+			refId = nextAvailableRefId(existingRefIds)
+			targetMap["refId"] = refId
+			existingRefIds[refId] = true
+		}
+	}
+
 	queries := make([]dashv2alpha1.DashboardPanelQueryKind, 0, len(targets))
 
 	for _, target := range targets {
@@ -2016,6 +2038,27 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	}
 
 	return queries
+}
+
+// nextAvailableRefId returns the next unused refId using the same sequence as the
+// frontend helper (A, B, ..., Z, AA, AB, ...).
+func nextAvailableRefId(existing map[string]bool) string {
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	var refIdFromIndex func(num int) string
+	refIdFromIndex = func(num int) string {
+		if num < len(letters) {
+			return string(letters[num])
+		}
+		return refIdFromIndex(num/len(letters)-1) + string(letters[num%len(letters)])
+	}
+
+	for i := 0; ; i++ {
+		refId := refIdFromIndex(i)
+		if !existing[refId] {
+			return refId
+		}
+	}
 }
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {

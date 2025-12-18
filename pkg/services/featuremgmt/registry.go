@@ -1361,6 +1361,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "fetchRulesInCompactMode",
+			Description:  "Add compact=true when fetching rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "newLogsPanel",
 			Description:  "Enables the new logs panel",
 			Stage:        FeatureStageGeneralAvailability,

@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Pad inlogattribuut",
       "login-prompt-consent": "Toestemming ",
       "login-prompt-description": "Geeft het type gebruikersinteractie aan wanneer de gebruiker inlogt met de IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Login prompt",
       "login-prompt-login": "Inloggen",
       "login-prompt-select-account": "Selecteer account",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Indien ingeschakeld, gebruikt Grafana <2>Proof Key for Code Exchange (PKCE)</2> met de OAuth2-autorisatiecodetoewijzing.",
       "use-pkce-label": "PKCE gebruiken",
       "use-refresh-token-description": "Indien ingeschakeld, haalt Grafana een nieuw toegangstoken op met behulp van het vernieuwingstoken dat is verstrekt door de OAuth2-provider.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Vernieuwingstoken gebruiken",
       "validate-hosted-domain-description": "Indien ingeschakeld, zal Grafana het gehoste domein dat is opgehaald uit het Google id-token vergelijken met de '{{ allowedDomainsLabel }}' lijst die is opgegeven door de gebruiker.",
       "validate-hosted-domain-label": "Gehost domein valideren",
@@ -10181,7 +10183,8 @@
       "copy": "Selectie kopiëren",
       "disable-menu": "Menu uitschakelen",
       "line-contains": "Toevoegen als regel filter bevat",
-      "line-contains-not": "Toevoegen als regel geen filter bevat"
+      "line-contains-not": "Toevoegen als regel geen filter bevat",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Tijdstempelresolutie",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Wanneer je je hele instantie koppelt, zijn er geen dashboards beschikbaar tijdens het uitvoeren van de migratie. We raden je aan je gebruikers te waarschuwen voordat je het proces start.",
       "modal-description-public-access": "Stel openbare toeging tot je Grafana-instantie in om GitHub-integratie in te schakelen",
       "modal-description-required-features": "Vereiste Grafana-functies inschakelen voor provisioning",
       "modal-title-set-up-public-access": "Openbare toegang instellen",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Kopieer je openbare URL",
       "step-title-enable-feature-toggles": "Schakel de vereiste functieschakelaars in",
       "step-title-start-ngrok": "Start ngrok voor tijdelijke openbare toegang",
-      "step-title-update-grafana-config": "Werk je Grafana-configuratie bij",
-      "title-setting-connection-could-cause-temporary-outage": "Het opzetten van deze verbinding kan een tijdelijke storing veroorzaken"
+      "step-title-update-grafana-config": "Werk je Grafana-configuratie bij"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Je provisioningverbindingen bekijken en beheren"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Repositories verwijderen",
-      "configured-repositories-while-running-legacy-storage": "Geconfigureerde repositories werken niet tijdens het uitvoeren van legacy-opslag.",
       "confirm-delete-repositories": "Weet je zeker dat je alle geconfigureerde repositories wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "error-delete-all-repositories": "Kan niet alle repositories verwijderen",
-      "remove-all-configured-repositories": "Alle geconfigureerde repositories verwijderen",
       "subtitle": "Je geconfigureerde repositories bekijken en beheren",
       "success-all-repositories-deleted": "Alle geconfigureerde repositories zijn verwijderd",
       "tab-getting-started": "Aan de slag",
       "tab-getting-started-title": "Aan de slag",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "Lijst van repositories",
-      "title-delete-all-configured-repositories": "Alle geconfigureerde repositories verwijderen",
-      "title-legacy-storage-detected": "Verouderde opslag gedetecteerd"
+      "title-delete-all-configured-repositories": "Alle geconfigureerde repositories verwijderen"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
       "cleaning-up-resources": "Bronnen van repository opschonen",
-      "legacy-storage-message": "Instantie draait nog geen geïntegreerde opslag -- migratiewizard vereist",
       "not-found": "niet gevonden",
       "not-found-message": "Repository niet gevonden",
       "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Bronnen",
       "tab-resources-title": "",
       "title": "Repository-status",
-      "title-legacy-storage": "Legacy-opslag",
       "title-queued-for-deletion": "In de wachtrij voor verwijdering"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Commits opnemen voor elke historische waarde",
-      "synchronization-options": "Synchronisatie-opties"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "en klik",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Waarschuwing",
     "wizard": {
-      "alert-point-1": "Bronnen kunnen tijdens dit proces niet worden gemaakt, bewerkt of verwijderd. In de laatste stap verdwijnen ze.",
-      "alert-point-2": "Zodra de provisioning is voltooid, verschijnen bronnen weer en worden ze beheerd via externe opslag.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "De duur van dit proces is afhankelijk van het aantal betrokken bronnen.",
-      "alert-point-4": "Enterprise-instantiebeheerders kunnen een aankondigingsbanner weergeven aan gebruikers. Zie <2>deze handleiding</2> voor stapsgewijze instructies.",
-      "alert-title": "Belangrijk: er zullen geen gegevens of configuratie verloren gaan, maar dashboards zullen tijdelijk een paar minuten niet beschikbaar zijn.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Voltooien",
@@ -12230,7 +12223,6 @@
       "step-finish": "Kies aanvullende instellingen",
       "step-synchronize": "Synchroniseren met externe opslag",
       "sync-description": "Bronnen synchroniseren met externe opslag. Na deze eenmalige stap worden alle toekomstige updates automatisch opgeslagen in de repository en opnieuw ingericht in de instantie.",
-      "sync-option-history": "Geschiedenis",
       "title-bootstrap": "Kies wat je wilt synchroniseren",
       "title-connect": "Verbinden met externe opslag",
       "title-finish": "Kies aanvullende instellingen",

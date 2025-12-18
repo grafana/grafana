@@ -1459,6 +1459,19 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesInCompactMode",
+        "resourceVersion": "1766045288124",
+        "creationTimestamp": "2025-12-18T08:08:08Z"
+      },
+      "spec": {
+        "description": "Add compact=true when fetching rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "fetchRulesUsingPost",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-01-29T12:17:44Z"
