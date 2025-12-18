@@ -334,7 +334,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   contentContainer: css({
     display: 'grid',
-    gap: theme.spacing(1),
     gridTemplateColumns: '1fr 0fr',
     gridTemplateAreas: '"editor schema"',
     [theme.transitions.handleMotion('no-preference')]: {
@@ -344,13 +343,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   resizableContent: css({
-    minHeight: '200px',
+    minHeight: '300px',
     maxHeight: '800px',
     resize: 'vertical',
     overflow: 'hidden',
   }),
   contentContainerWithSchema: css({
     gridTemplateColumns: '1fr 1fr',
+    gap: theme.spacing(1),
   }),
   editorContainer: css({
     gridArea: 'editor',
