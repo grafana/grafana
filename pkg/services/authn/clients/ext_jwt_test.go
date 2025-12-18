@@ -118,7 +118,7 @@ var (
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
 		Claims: jwt.Claims{
-			Subject:  "service-account:2",
+			Subject:  "anonymous:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
