@@ -170,10 +170,6 @@ describe('AlertRuleMenu', () => {
         groupName: 'group-name',
       };
 
-      const handleSilence = jest.fn();
-      const handleDelete = jest.fn();
-      const handleDuplicateRule = jest.fn();
-
       render(
         <AlertRuleMenu
           promRule={mockRule.promRule}
@@ -199,10 +195,6 @@ describe('AlertRuleMenu', () => {
         namespace: { uid: 'namespace-uid' },
         groupName: 'group-name',
       };
-
-      const handleSilence = jest.fn();
-      const handleDelete = jest.fn();
-      const handleDuplicateRule = jest.fn();
 
       render(
         <AlertRuleMenu
@@ -237,10 +229,6 @@ describe('AlertRuleMenu', () => {
         namespace: { uid: 'namespace-uid' },
         groupName: 'group-name',
       };
-
-      const handleSilence = jest.fn();
-      const handleDelete = jest.fn();
-      const handleDuplicateRule = jest.fn();
 
       render(
         <AlertRuleMenu
