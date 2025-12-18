@@ -194,7 +194,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(5),
     bottom: 0,
     left: 0,
-    right: 0,
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
