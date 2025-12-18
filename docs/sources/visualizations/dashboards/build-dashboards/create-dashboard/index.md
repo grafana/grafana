@@ -117,9 +117,9 @@ To create a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
-1. Under **Panel layout**, choose one of the following options:
-   - **Custom** - Position and size panels manually. The default selection.
-   - **Auto grid** - Panels are automatically resized to create a uniform grid based on the column and row settings.
+1. Under **Layout**, choose one of the following options:
+   - **Custom** - Position and size panels individually. The default selection.
+   - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
 
 1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
@@ -170,6 +170,26 @@ To create a dashboard, follow these steps:
 1. Click **Configure** in either the edit pane or on the panel to the configuration process.
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Toggle off the edit mode switch.
+
+## Dashboard layouts
+
+There are two panel layout options available:
+
+- **Custom** - You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
+- **Auto grid** - Panels resize and fit to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
+
+### Auto grid layout
+
+With the auto grid layout, the system updates the layout of the dashboard as you add panels.
+There are default parameters to constrain the layout, and you can update these to have more control over the display:
+
+- **Min column width** - Set the minimum width of the columns in the layout grid. Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
+- **Max columns** - Set the maximum number of columns that layout can have from 1-10.
+- **Row height** - Set the height of the rows in the layout grid. Coose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels..
+- **Fill screen** - Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
+
+   {{< video-embed src="layout-fillscreen.mp4" >}}
+
 
 ## Group panels
 
@@ -380,3 +400,4 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
+
