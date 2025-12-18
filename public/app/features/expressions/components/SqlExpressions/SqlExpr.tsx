@@ -77,10 +77,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
       10
   `;
 
-  const styles = useStyles2((theme) => getStyles(theme));
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
-
+  const styles = useStyles2((theme) => getStyles(theme));
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
 
@@ -249,7 +248,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
 
   const renderMainContent = (width?: number, height?: number) => (
     <div
-      className={cx(styles.contentContainer, styles.resizableContent, {
+      className={cx(styles.contentContainer, {
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
       })}
     >
@@ -312,6 +311,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(0.5),
   }),
   contentContainer: css({
+    minHeight: '200px',
+    height: '100%',
+    resize: 'vertical',
+    overflow: 'hidden',
+
     display: 'grid',
     gridTemplateColumns: '1fr 0fr',
     gridTemplateAreas: '"editor schema"',
@@ -320,12 +324,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
         duration: theme.transitions.duration.standard,
       }),
     },
-  }),
-  resizableContent: css({
-    minHeight: '200px',
-    maxHeight: '800px',
-    resize: 'vertical',
-    overflow: 'hidden',
   }),
   contentContainerWithSchema: css({
     gridTemplateColumns: '1fr 1fr',
