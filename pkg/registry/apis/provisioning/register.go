@@ -330,7 +330,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources (files, refs, resources, history, status): repositories:read
+//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -413,8 +413,18 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "files":
 		return authorizer.DecisionAllow, "", nil
 
-	// Read-only subresources: refs, resources, history, status
-	case "refs", "resources", "history", "status":
+	// refs subresource - editors need to see branches to push changes
+	case "refs":
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Read-only subresources: resources, history, status (admin only)
+	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbGet,
 			Group:     provisioning.GROUP,

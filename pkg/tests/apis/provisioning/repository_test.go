@@ -950,3 +950,65 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
 	})
 }
+
+func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "refs-permissions-test"
+	testRepo := TestRepo{
+		Name:               repo,
+		Target:             "folder",
+		Copies:             map[string]string{}, // No files needed for this test
+		ExpectedDashboards: 0,
+		ExpectedFolders:    1, // Repository creates a folder
+	}
+	helper.CreateRepo(t, testRepo)
+
+	t.Run("editor can GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.EditorREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "editor should be able to GET refs")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+		// Verify we can parse the refs
+		refs := &provisioning.RefList{}
+		err := result.Into(refs)
+		require.NoError(t, err, "should parse refs response")
+	})
+
+	t.Run("viewer cannot GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.ViewerREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "viewer should not be able to GET refs")
+		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+	})
+
+	t.Run("admin can GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "admin should be able to GET refs")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+	})
+}
