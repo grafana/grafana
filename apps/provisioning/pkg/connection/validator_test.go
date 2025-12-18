@@ -1,6 +1,7 @@
 package connection_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -104,6 +105,44 @@ func TestValidateConnection(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "github type without appID returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Name: "test-private-key",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "spec.github.appID",
+		},
+		{
+			name: "github type without installationID returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID: "123",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Name: "test-private-key",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "spec.github.installationID",
 		},
 		{
 			name: "bitbucket type without bitbucket config returns error",
@@ -234,6 +273,85 @@ func TestValidateConnection(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "github type with valid private key and app ID",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "github type with invalid private key base64",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("not-valid-base64!@#$%"),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "secure.privateKey",
+		},
+		{
+			name: "github type with invalid private key PEM",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte("not a valid PEM"))),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "secure.privateKey",
+		},
+		{
+			name: "github type with invalid app ID format",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "not-a-number",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "secure.privateKey",
 		},
 	}
 
