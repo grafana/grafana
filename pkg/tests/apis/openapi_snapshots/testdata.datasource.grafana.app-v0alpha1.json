@@ -2,7 +2,11 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Generates test data in different forms",
-    "title": "testdata.datasource.grafana.app/v0alpha1"
+    "title": "testdata.datasource.grafana.app/v0alpha1",
+    "plugin": {
+      "plugin": "grafana-testdata-datasource",
+      "version": "12.4.0-pre"
+    }
   },
   "paths": {
     "/apis/testdata.datasource.grafana.app/v0alpha1/": {
