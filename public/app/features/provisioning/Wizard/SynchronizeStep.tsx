@@ -210,33 +210,30 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           </Stack>
         </Alert>
       )}
-      {(syncTarget === 'folder' || syncTarget === 'instance') && (
-        <>
-          <Text element="h3">
-            <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
-          </Text>
-          <Field noMargin>
-            <Checkbox
-              {...register('migrate.migrateResources')}
-              id="migrate-resources"
-              label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
-              disabled={syncTarget === 'instance'}
-              description={
-                syncTarget === 'instance' ? (
-                  <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                    Instance sync requires all resources to be managed. Existing resources will be migrated
-                    automatically.
-                  </Trans>
-                ) : (
-                  <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                    Import existing dashboards from all folders into the new provisioned folder
-                  </Trans>
-                )
-              }
-            />
-          </Field>
-        </>
-      )}
+      <>
+        <Text element="h3">
+          <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
+        </Text>
+        <Field noMargin>
+          <Checkbox
+            {...register('migrate.migrateResources')}
+            id="migrate-resources"
+            label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+            disabled={syncTarget === 'instance'}
+            description={
+              syncTarget === 'instance' ? (
+                <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                  Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
+                </Trans>
+              ) : (
+                <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                  Import existing dashboards from all folders into the new provisioned folder
+                </Trans>
+              )
+            }
+          />
+        </Field>
+      </>
       {healthStatusNotReady ? (
         <>
           <Stack>
