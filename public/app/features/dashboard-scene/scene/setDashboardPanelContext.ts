@@ -6,7 +6,12 @@ import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getDatasourceFromQueryRunner,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+} from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -129,7 +134,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
@@ -141,7 +147,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return [];
     }
 
-    const groupByVar = getGroupByVariableFor(dashboard, queryRunner.state.datasource);
+    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    const groupByVar = getGroupByVariableFor(dashboard, datasource);
 
     if (!groupByVar) {
       return [];
@@ -166,7 +173,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     bulkUpdateAdHocFiltersVariable(filterVar, items);
   };
 
