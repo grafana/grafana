@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // TestV1beta1ToV2alpha1 tests conversion from v1beta1 to v2alpha1 with various datasource scenarios
@@ -19,7 +19,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -77,7 +77,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 
 				// Verify datasource UID is resolved to "grafana"
 				assert.NotNil(t, query.Spec.Datasource.Uid)
-				assert.Equal(t, grafanads.DatasourceUID, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: 'grafana'")
+				assert.Equal(t, dashboard.GrafanaDatasourceUID, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: 'grafana'")
 
 				// Verify query kind matches datasource type
 				assert.Equal(t, "datasource", query.Spec.Query.Kind)
@@ -208,6 +208,48 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				// Empty objects {} should be preserved as empty, not converted to defaults
 				assert.Nil(t, query.Spec.Datasource, "Query should not have datasource when panel datasource is empty object {}")
 				assert.Equal(t, "", query.Spec.Query.Kind, "Query kind should be empty when datasource is empty object {}")
+			},
+		},
+		{
+			name: "missing refIds are assigned while existing refIds are preserved",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "bargauge",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "",
+											"scenarioId": "random_walk",
+										},
+										map[string]interface{}{
+											"refId":      "A",
+											"scenarioId": "random_walk",
+										},
+										map[string]interface{}{
+											"refId":      "",
+											"scenarioId": "random_walk",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 3)
+				assert.Equal(t, "B", panel.Spec.Data.Spec.Queries[0].Spec.RefId)
+				assert.Equal(t, "A", panel.Spec.Data.Spec.Queries[1].Spec.RefId)
+				assert.Equal(t, "C", panel.Spec.Data.Spec.Queries[2].Spec.RefId)
 			},
 		},
 	}

@@ -183,6 +183,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesUnifiedStorageQuotas
+	// Adds support for Kubernetes unified storage quotas
+	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
+
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
@@ -567,6 +571,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagFetchRulesInCompactMode
+	// Add compact=true when fetching rules
+	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
+
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
@@ -753,6 +761,10 @@ const (
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
+
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations

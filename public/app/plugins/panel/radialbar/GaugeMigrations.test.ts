@@ -68,7 +68,9 @@ describe('Gauge Panel Migrations', () => {
           calcs: ['lastNotNull'],
         },
         shape: 'circle',
-        gradient: 'auto',
+        effects: {
+          gradient: true,
+        },
         sparkline: true,
       },
       fieldConfig: {
@@ -86,7 +88,7 @@ describe('Gauge Panel Migrations', () => {
 
     const result = gaugePanelMigrationHandler(panel as PanelModel);
     expect(result.sparkline).toBe(true);
-    expect(result.gradient).toBe('auto');
+    expect(result.effects?.gradient).toBe(true);
   });
 
   it('from 6.1.1', () => {

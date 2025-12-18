@@ -18,6 +18,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -133,6 +134,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   if (config.featureToggles.newTimeRangeZoomShortcuts) {
     keybindings.addBinding({
       key: 't +',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
+      key: 't =',
       onTrigger: () => {
         handleZoom(scene, 0.5);
       },
@@ -258,6 +266,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: () => {
         if (scene.state.body instanceof DefaultGridLayoutManager) {
           scene.state.body.collapseAllRows();
+        } else if (scene.state.body instanceof RowsLayoutManager) {
+          scene.state.body.collapseAllRows();
         }
       },
     });
@@ -267,6 +277,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'd shift+e',
       onTrigger: () => {
         if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.expandAllRows();
+        } else if (scene.state.body instanceof RowsLayoutManager) {
           scene.state.body.expandAllRows();
         }
       },

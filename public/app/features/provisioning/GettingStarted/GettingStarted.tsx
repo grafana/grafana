@@ -3,9 +3,9 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import provisioningSvg from '../img/provisioning.svg';
@@ -22,7 +22,6 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-kubernetesDashboards = true ; use k8s from browser
 `;
 
 const ngrokExample = `ngrok http 3000
@@ -103,7 +102,7 @@ const getModalContent = (setupType: SetupType) => {
             ),
             description: t(
               'provisioning.getting-started.step-description-enable-feature-toggles',
-              'Add these settings to your custom.ini file to enable necessary features:'
+              'Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.'
             ),
             code: featureIni,
           },
@@ -128,7 +127,6 @@ export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
     refetchOnMountOrArgChange: true,
   });
-  const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
@@ -136,20 +134,6 @@ export default function GettingStarted({ items }: Props) {
 
   return (
     <>
-      {legacyStorage && (
-        <Alert
-          severity="info"
-          title={t(
-            'provisioning.getting-started.title-setting-connection-could-cause-temporary-outage',
-            'Setting up this connection could cause a temporary outage'
-          )}
-        >
-          <Trans i18nKey="provisioning.getting-started.alert-temporary-outage">
-            When you connect your whole instance, dashboards will be unavailable while running the migration. We
-            recommend warning your users before starting the process.
-          </Trans>
-        </Alert>
-      )}
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>

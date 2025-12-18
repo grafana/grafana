@@ -261,6 +261,10 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes unified storage quotas
+  */
+  kubernetesUnifiedStorageQuotas?: boolean;
+  /**
   * Adds support for Kubernetes logs drilldown
   */
   kubernetesLogsDrilldown?: boolean;
@@ -304,10 +308,6 @@ export interface FeatureToggles {
   * Routes requests to the new query service
   */
   queryServiceFromUI?: boolean;
-  /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   */
@@ -373,13 +373,21 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
+  /**
   * Enables viewing non-applicable drilldowns on a panel level
   */
   perPanelNonApplicableDrilldowns?: boolean;
   /**
-  * Enabled a group by action per panel
+  * Enables a group by action per panel
   */
   panelGroupBy?: boolean;
+  /**
+  * Enables filtering by grouping labels on the panel level through legend or tooltip
+  */
+  perPanelFiltering?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -820,6 +828,10 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
+  /**
   * Enables the new logs panel
   * @default true
   */
@@ -979,6 +991,11 @@ export interface FeatureToggles {
   * @default false
   */
   restoreDashboards?: boolean;
+  /**
+  * Enables recently viewed dashboards section in the browsing dashboard page
+  * @default false
+  */
+  recentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1172,9 +1189,19 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
+  /**
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchRawDSLQuery?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false
@@ -1211,4 +1238,13 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting historian APIs
   */
   kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables plugins decoupling from bootdata
+  * @default false
+  */
+  useMTPlugins?: boolean;
+  /**
+  * Enables support for variables whose values can have multiple properties
+  */
+  multiPropsVariables?: boolean;
 }

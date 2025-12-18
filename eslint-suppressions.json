@@ -397,7 +397,7 @@
   },
   "packages/grafana-prometheus/src/language_provider.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/language_utils.ts": {
@@ -669,7 +669,7 @@
   },
   "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts": {
@@ -707,11 +707,6 @@
   },
   "packages/grafana-ui/src/components/PanelChrome/index.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -768,11 +763,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Select/resetSelectStyles.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Select/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
@@ -791,11 +781,6 @@
       "count": 13
     }
   },
-  "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
@@ -812,11 +797,6 @@
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
@@ -888,11 +868,6 @@
   },
   "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
     "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1452,39 +1427,12 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/receivers/form/ChannelOptions.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/receivers/form/ChannelSubForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/form/CloudCommonChannelSettings.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/receivers/form/GrafanaCommonChannelSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/receivers/form/ReceiverForm.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1837,7 +1785,7 @@
   },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 4
+      "count": 5
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -1847,11 +1795,6 @@
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2006,11 +1949,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableTextAreaField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2066,9 +2004,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    },
-    "no-restricted-syntax": {
       "count": 3
     }
   },
@@ -2458,11 +2393,6 @@
     }
   },
   "public/app/features/datasources/components/ButtonRow.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/datasources/components/DataSourceLoadError.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -2905,11 +2835,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
   "public/app/features/panel/panellinks/linkSuppliers.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2945,11 +2870,6 @@
   },
   "public/app/features/plugins/admin/components/PluginDashboards.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/PluginDetailsPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },
@@ -3148,11 +3068,6 @@
   "public/app/features/support-bundles/SupportBundlesCreate.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/teams/TeamGroupSync.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/templating/fieldAccessorCache.ts": {
@@ -4080,11 +3995,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/loki/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/mixed/module.ts": {
     "no-barrel-files/no-barrel-files": {
       "count": 2
@@ -4108,11 +4018,6 @@
   "public/app/plugins/datasource/mysql/configuration/ConfigurationEditor.tsx": {
     "no-restricted-syntax": {
       "count": 10
-    }
-  },
-  "public/app/plugins/datasource/opentsdb/components/AnnotationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {
@@ -4341,9 +4246,6 @@
     }
   },
   "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }

@@ -638,7 +638,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(hs.tracer, middleware.SkipTracingPaths))
+	m.Use(middleware.RequestTracing(hs.tracer, middleware.ShouldTraceWithExceptions))
 	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())

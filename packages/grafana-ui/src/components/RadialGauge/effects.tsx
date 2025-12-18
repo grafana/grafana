@@ -4,11 +4,12 @@ import { GaugeDimensions } from './utils';
 
 export interface GlowGradientProps {
   id: string;
-  radius: number;
+  barWidth: number;
 }
 
-export function GlowGradient({ id, radius }: GlowGradientProps) {
-  const glowSize = 0.03 * radius;
+export function GlowGradient({ id, barWidth }: GlowGradientProps) {
+  // 0.75 is the minimum glow size, and it scales with bar width
+  const glowSize = 0.75 + barWidth * 0.08;
 
   return (
     <filter id={id} filterUnits="userSpaceOnUse">
@@ -82,7 +83,7 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
     <>
       <defs>
         <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
-          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+          <stop offset="0%" stopColor={color} stopOpacity={0.15} />
           <stop offset="90%" stopColor={color} stopOpacity={0} />
         </radialGradient>
       </defs>
