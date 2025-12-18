@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"xorm.io/xorm"
 
 	_ "embed"
@@ -197,7 +198,7 @@ var snapshotDDL string
 //go:embed snapshot/spanner-log.json
 var snapshotMigrations string
 
-func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
+func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string, _ log.Logger) error {
 	var statements, migrationIDs []string
 	err := json.Unmarshal([]byte(snapshotDDL), &statements)
 	if err != nil {
