@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Sökväg för inloggningsattribut",
       "login-prompt-consent": "Samtycke",
       "login-prompt-description": "Anger typen av användarinteraktion när användaren loggar in med IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Inloggningsprompt",
       "login-prompt-login": "Logga in",
       "login-prompt-select-account": "Välj konto",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Om det är aktiverat kommer Grafana att använda <2>Proof Key for Code Exchange (PKCE)</2> med OAuth2 Authorization Code Grant.",
       "use-pkce-label": "Använd PKCE",
       "use-refresh-token-description": "Om det är aktiverat hämtar Grafana en ny åtkomsttoken med hjälp av den uppdateringstoken som tillhandahålls av OAuth2-leverantören.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Använd uppdateringstoken",
       "validate-hosted-domain-description": "Om det är aktiverat kontrollerar Grafana den värddomän som hämtas från Googles ID-token mot den ”{{ allowedDomainsLabel }}”-lista som användaren har specificerat.",
       "validate-hosted-domain-label": "Validera värddomänen",
@@ -10181,7 +10183,8 @@
       "copy": "Kopiera markerat",
       "disable-menu": "Inaktivera meny",
       "line-contains": "Lägg till som rad innehåller filter",
-      "line-contains-not": "Lägg till som rad innehåller inte filter"
+      "line-contains-not": "Lägg till som rad innehåller inte filter",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Tidsstämpelupplösning",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "När du ansluter hela din instans kommer instrumentpaneler inte att vara tillgängliga när du kör migreringen. Vi rekommenderar att du varnar dina användare innan du påbörjar processen.",
       "modal-description-public-access": "Konfigurera offentlig åtkomst till din Grafana-instans för att aktivera GitHub-integrering",
       "modal-description-required-features": "Aktivera obligatoriska Grafana-funktioner för provisionering",
       "modal-title-set-up-public-access": "Konfigurera offentlig åtkomst",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Kopiera din offentliga webbadress",
       "step-title-enable-feature-toggles": "Aktivera obligatoriska funktionsväxlar",
       "step-title-start-ngrok": "Starta ngrok för tillfällig offentlig åtkomst",
-      "step-title-update-grafana-config": "Uppdatera din Grafana-konfiguration",
-      "title-setting-connection-could-cause-temporary-outage": "Konfiguration av den här anslutningen kan orsaka ett tillfälligt avbrott"
+      "step-title-update-grafana-config": "Uppdatera din Grafana-konfiguration"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Visa och hantera dina provisioneringsanslutningar"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Radera databaser",
-      "configured-repositories-while-running-legacy-storage": "Konfigurerade lagringsplatser fungerar inte när äldre lagring används.",
       "confirm-delete-repositories": "Är du säker på att du vill radera alla konfigurerade databaser? Den här åtgärden kan inte ångras.",
       "error-delete-all-repositories": "Det gick inte att radera alla databaser",
-      "remove-all-configured-repositories": "Ta bort alla konfigurerade databaser",
       "subtitle": "Visa och hantera dina konfigurerade databaser",
       "success-all-repositories-deleted": "Alla konfigurerade databaser har raderats",
       "tab-getting-started": "Kom igång",
       "tab-getting-started-title": "Kom igång",
       "tab-repositories": "Lagringsplatser",
       "tab-repositories-title": "Lista över lagringsplatser",
-      "title-delete-all-configured-repositories": "Radera alla konfigurerade databaser",
-      "title-legacy-storage-detected": "Äldre lagring upptäcktes"
+      "title-delete-all-configured-repositories": "Radera alla konfigurerade databaser"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
       "cleaning-up-resources": "Rensa lagringsplatsresurser",
-      "legacy-storage-message": "Instansen kör ännu inte enhetlig lagring – kräver migreringsguide",
       "not-found": "hittades inte",
       "not-found-message": "Lagringsplatsen hittades inte",
       "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Resurser",
       "tab-resources-title": "",
       "title": "Status för lagringsplats",
-      "title-legacy-storage": "Äldre lagring",
       "title-queued-for-deletion": "Köad för radering"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Inkludera åtaganden för varje historiskt värde",
-      "synchronization-options": "Synkroniseringsalternativ"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "och klicka på",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Varning",
     "wizard": {
-      "alert-point-1": "Resurser kan inte skapas, redigeras eller raderas under den här processen. I det sista steget kommer de att försvinna.",
-      "alert-point-2": "När provisionering är klar kommer resurserna att visas igen och kan hanteras via extern lagring.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Hur lång den här processen är beror på hur många resurser som är inblandade.",
-      "alert-point-4": "Enterprise-instansadministratörer kan visa en meddelandebanner för användare. Se <2>denna guide</2> för steg för steg-anvisningar.",
-      "alert-title": "Viktigt: Inga data eller konfigurationer kommer att förloras, men instrumentpaneler kommer att vara tillfälligt otillgängliga under några minuter.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Slutför",
@@ -12230,7 +12223,6 @@
       "step-finish": "Välj ytterligare inställningar",
       "step-synchronize": "Synkronisera med extern lagring",
       "sync-description": "Synkronisera resurser med extern lagring. Efter det här engångssteget sparas alla framtida uppdateringar automatiskt på lagringsplatsen och provisioneras tillbaka till instansen.",
-      "sync-option-history": "Historik",
       "title-bootstrap": "Välj vad du vill synkronisera",
       "title-connect": "Anslut till extern lagring",
       "title-finish": "Välj ytterligare inställningar",
