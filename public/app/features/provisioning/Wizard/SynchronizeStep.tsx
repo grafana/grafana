@@ -201,7 +201,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
               <Trans i18nKey="provisioning.wizard.alert-point-4">
                 Enterprise instance administrators can display an announcement banner to notify users that migration is
                 in progress. See{' '}
-                <TextLink external href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/">
+                <TextLink external variant="bodySmall" href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/">
                   this guide
                 </TextLink>{' '}
                 for step-by-step instructions.
