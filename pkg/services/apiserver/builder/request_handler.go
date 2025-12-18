@@ -4,21 +4,36 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	restclient "k8s.io/client-go/rest"
 	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-type requestHandler struct {
-	router *mux.Router
+// convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
+func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFunction {
+	return func(req *restful.Request, resp *restful.Response) {
+		handler(resp.ResponseWriter, req.Request)
+	}
 }
 
-func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder, metricsRegistry prometheus.Registerer, apiResourceConfig *serverstorage.ResourceConfig) (http.Handler, error) {
-	useful := false // only true if any routes exist anywhere
-	router := mux.NewRouter()
+func RegisteredWebServicesFromBuilders(builders []APIGroupBuilder, metricsRegistry prometheus.Registerer, apiResourceConfig *serverstorage.ResourceConfig) []*restful.WebService {
+	requestHandler, err := getCustomRoutesHandler(
+		builders,
+		metricsRegistry,
+		apiResourceConfig,
+	)
+	if err != nil {
+		panic(fmt.Sprintf("could not build the custom web services for specified API builders: %s", err.Error()))
+	}
+	return requestHandler
+}
+
+func getCustomRoutesHandler(builders []APIGroupBuilder, metricsRegistry prometheus.Registerer, apiResourceConfig *serverstorage.ResourceConfig) ([]*restful.WebService, error) {
+	// Map to track WebServices by group version to avoid duplicates
+	webServicesByGV := make(map[string]*restful.WebService)
+	webServices := make([]*restful.WebService, 0)
 
 	metrics := NewCustomRouteMetrics(metricsRegistry)
 
@@ -40,17 +55,23 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 				continue
 			}
 
-			prefix := "/apis/" + gv.String()
+			// Create or get WebService for this group version
+
+			// Enforcing uniqueness of root is not possible iterating on builders alone
+			// because of builders such as dashboards that use a single builder for multiple GVs.
+			// The following code looks up by GV string to avoid duplicates.
+			gvKey := gv.String()
+			ws, exists := webServicesByGV[gvKey]
+			if !exists {
+				ws = new(restful.WebService)
+				// Set root path to the group version prefix to avoid conflicts
+				rootPath := "/apis/" + gv.String()
+				ws.Path(rootPath)
+				webServicesByGV[gvKey] = ws
+			}
 
 			// Root handlers
-			var sub *mux.Router
 			for _, route := range routes.Root {
-				if sub == nil {
-					sub = router.PathPrefix(prefix).Subrouter()
-					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
-				}
-
-				useful = true
 				methods, err := methodsFromSpec(route.Path, route.Spec)
 				if err != nil {
 					return nil, err
@@ -63,20 +84,29 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 					route.Handler,
 				)
 
-				sub.HandleFunc("/"+route.Path, instrumentedHandler).
-					Methods(methods...)
+				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
+				// Use relative path since WebService root path is already set
+				relativePath := "/" + route.Path
+
+				// Add routes for each HTTP method
+				for _, method := range methods {
+					switch method {
+					case "GET":
+						ws.Route(ws.GET(relativePath).To(routeFunction))
+					case "POST":
+						ws.Route(ws.POST(relativePath).To(routeFunction))
+					case "PUT":
+						ws.Route(ws.PUT(relativePath).To(routeFunction))
+					case "PATCH":
+						ws.Route(ws.PATCH(relativePath).To(routeFunction))
+					case "DELETE":
+						ws.Route(ws.DELETE(relativePath).To(routeFunction))
+					}
+				}
 			}
 
 			// Namespace handlers
-			sub = nil
-			prefix += "/namespaces/{namespace}"
 			for _, route := range routes.Namespace {
-				if sub == nil {
-					sub = router.PathPrefix(prefix).Subrouter()
-					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
-				}
-
-				useful = true
 				methods, err := methodsFromSpec(route.Path, route.Spec)
 				if err != nil {
 					return nil, err
@@ -89,27 +119,37 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 					route.Handler,
 				)
 
-				sub.HandleFunc("/"+route.Path, instrumentedHandler).
-					Methods(methods...)
+				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
+				// Use relative path since WebService root path is already set
+				relativePath := "/namespaces/{namespace}/" + route.Path
+
+				// Add routes for each HTTP method
+				for _, method := range methods {
+					switch method {
+					case "GET":
+						ws.Route(ws.GET(relativePath).To(routeFunction))
+					case "POST":
+						ws.Route(ws.POST(relativePath).To(routeFunction))
+					case "PUT":
+						ws.Route(ws.PUT(relativePath).To(routeFunction))
+					case "PATCH":
+						ws.Route(ws.PATCH(relativePath).To(routeFunction))
+					case "DELETE":
+						ws.Route(ws.DELETE(relativePath).To(routeFunction))
+					}
+				}
 			}
 		}
 	}
 
-	if !useful {
-		return delegateHandler, nil
+	// Convert map values to slice
+	for _, ws := range webServicesByGV {
+		webServices = append(webServices, ws)
 	}
 
-	// Per Gorilla Mux issue here: https://github.com/gorilla/mux/issues/616#issuecomment-798807509
-	// default handler must come last
-	router.PathPrefix("/").Handler(delegateHandler)
-
-	return &requestHandler{
-		router: router,
-	}, nil
-}
-
-func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h.router.ServeHTTP(w, req)
+	// Note: delegateHandler is not directly supported in restful.WebService
+	// The caller should handle unmatched routes at a higher level (e.g., in the container)
+	return webServices, nil
 }
 
 func methodsFromSpec(slug string, props *spec3.PathProps) ([]string, error) {
@@ -139,10 +179,4 @@ func methodsFromSpec(slug string, props *spec3.PathProps) ([]string, error) {
 	}
 
 	return methods, nil
-}
-
-type methodNotAllowedHandler struct{}
-
-func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(405) // method not allowed
 }
