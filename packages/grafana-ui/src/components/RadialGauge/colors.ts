@@ -4,13 +4,13 @@ import { colorManipulator, FALLBACK_COLOR, FieldDisplay, getFieldColorMode, Graf
 import { FieldColorModeId } from '@grafana/schema';
 
 import { GradientStop, RadialShape } from './types';
-import { getFieldConfigMinMax, getFieldDisplayProcessor } from './utils';
+import { getFieldConfigMinMax, getFieldDisplayProcessor, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
   gradient = false,
   theme: GrafanaTheme2,
   fieldDisplay: FieldDisplay,
-  baseColor = FALLBACK_COLOR
+  baseColor = fieldDisplay.display.color ?? FALLBACK_COLOR
 ): GradientStop[] {
   if (!gradient) {
     return [
@@ -65,28 +65,31 @@ export function buildGradientColors(
     ];
   }
 
-  // for fixed colors and other modes, we create a simple two-color gradient
-  // we set the highest contrast color second based on the theme.
-  const darkerColor = tinycolor(baseColor).spin(5).darken(20).saturate(25);
-  const lighterColor = tinycolor(baseColor)
-    .spin(-5)
-    .brighten(theme.isDark ? 30 : 15)
-    .lighten(theme.isDark ? 35 : 15);
-  return [
+  // For fixed / palette based color scales we can create a more hue and light
+  // based linear gradient that we rotate with the value
+  const darkerColor = tinycolor(baseColor)
+    .spin(-20)
+    .darken(theme.isDark ? 15 : 5);
+  const lighterColor = tinycolor(baseColor).saturate(20).spin(20).brighten(10).lighten(10);
+
+  const underlyingGradient = [
     { color: theme.isDark ? darkerColor.toString() : lighterColor.toString(), percent: 0 },
-    { color: baseColor, percent: 0.33 },
     { color: theme.isDark ? lighterColor.toString() : darkerColor.toString(), percent: 1 },
   ];
-}
 
-function clamp(value: number, min = 0, max = 1) {
-  if (process.env.NODE_ENV !== 'production') {
-    if (value < min || value > max) {
-      console.error(`The value provided ${value} is out of range [${min}, ${max}].`);
-    }
-  }
-
-  return Math.min(Math.max(min, value), max);
+  // rotate the gradient so that the highest contrasting point is the value, depending on theme.
+  const valuePercent = getValuePercentageForValue(fieldDisplay);
+  const startColor = theme.isDark
+    ? colorAtGradientPercent(underlyingGradient, 1 - valuePercent).toHexString()
+    : underlyingGradient[0].color;
+  const endColor = theme.isDark
+    ? underlyingGradient[1].color
+    : colorAtGradientPercent(underlyingGradient, valuePercent).toHexString();
+  return [
+    { color: startColor, percent: 0 },
+    { color: endColor, percent: valuePercent },
+    { color: endColor, percent: 1 },
+  ];
 }
 
 /**
@@ -104,7 +107,7 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
 
   // normalize and sort stops by percent. TODO: is this necessary? is gradientstops always sorted?
   const sorted = stops
-    .map((s) => ({ color: s.color, percent: clamp(s.percent, 0, 1) }))
+    .map((s) => ({ color: s.color, percent: Math.min(Math.max(0, s.percent), 1) }))
     .sort((a, b) => a.percent - b.percent);
 
   // percent outside range

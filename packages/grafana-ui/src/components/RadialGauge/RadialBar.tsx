@@ -1,16 +1,16 @@
-import { FieldDisplay } from '@grafana/data';
+import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialShape, RadialGaugeDimensions } from './types';
+import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 
 export interface RadialBarProps {
   angle: number;
   angleRange: number;
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
-  gradient?: boolean;
+  gradient?: GradientStop[];
   roundedBars?: boolean;
   endpointMarker?: 'point' | 'glow';
   shape: RadialShape;
@@ -32,6 +32,7 @@ export function RadialBar({
   endpointMarkerGlowFilter,
 }: RadialBarProps) {
   const theme = useTheme2();
+  const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
   return (
     <>
       {/** Track */}
@@ -47,16 +48,16 @@ export function RadialBar({
       {/** The colored bar */}
       <RadialArcPath
         arcLengthDeg={angle}
-        color={gradient ? undefined : fieldDisplay.display.color}
+        barEndcaps={shape === 'circle' && roundedBars}
         dimensions={dimensions}
+        endpointMarker={roundedBars ? endpointMarker : undefined}
+        endpointMarkerGlowFilter={endpointMarkerGlowFilter}
         fieldDisplay={fieldDisplay}
-        gradient={gradient}
+        glowFilter={glowFilter}
         roundedBars={roundedBars}
         shape={shape}
-        endpointMarker={roundedBars ? endpointMarker : undefined}
         startAngle={startAngle}
-        endpointMarkerGlowFilter={endpointMarkerGlowFilter}
-        glowFilter={glowFilter}
+        {...colorProps}
       />
     </>
   );

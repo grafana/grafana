@@ -2,18 +2,15 @@ import { useId, memo, HTMLAttributes, ReactNode } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-
-import { buildGradientColors, getBarEndcapColors, getGradientCss, getEndpointMarkerColors } from './colors';
-import { RadialShape, RadialGaugeDimensions } from './types';
+import { getBarEndcapColors, getGradientCss, getEndpointMarkerColors } from './colors';
+import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 import { drawRadialArcPath, toRad } from './utils';
 
 export interface RadialArcPathPropsBase {
   arcLengthDeg: number;
-  color?: string;
+  barEndcaps?: boolean;
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
-  gradient?: boolean;
   roundedBars?: boolean;
   shape: RadialShape;
   endpointMarker?: 'point' | 'glow';
@@ -22,13 +19,15 @@ export interface RadialArcPathPropsBase {
   endpointMarkerGlowFilter?: string;
 }
 
-interface RadialArcPathPropsWithGuideDot extends RadialArcPathPropsBase {
-  showGuideDots: true;
-  guideDotStartColor: string;
-  guideDotEndColor: string;
+interface RadialArcPathPropsWithColor extends RadialArcPathPropsBase {
+  color: string;
 }
 
-type RadialArcPathProps = RadialArcPathPropsBase | RadialArcPathPropsWithGuideDot;
+interface RadialArcPathPropsWithGradient extends RadialArcPathPropsBase {
+  gradient: GradientStop[];
+}
+
+type RadialArcPathProps = RadialArcPathPropsWithColor | RadialArcPathPropsWithGradient;
 
 const ENDPOINT_MARKER_MIN_ANGLE = 10;
 const DOT_OPACITY = 0.5;
@@ -38,27 +37,24 @@ const MAX_DOT_RADIUS = 8;
 export const RadialArcPath = memo(
   ({
     arcLengthDeg,
-    color,
     dimensions,
     fieldDisplay,
-    gradient,
     roundedBars,
     shape,
     endpointMarker,
+    barEndcaps,
     startAngle: angle,
     glowFilter,
     endpointMarkerGlowFilter,
+    ...rest
   }: RadialArcPathProps) => {
-    const theme = useTheme2();
     const id = useId();
 
-    const gradientStops = buildGradientColors(gradient, theme, fieldDisplay, fieldDisplay.display.color);
-
     const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: '100%', height: '100%' };
-    if (color) {
-      bgDivStyle.backgroundColor = color;
+    if ('color' in rest) {
+      bgDivStyle.backgroundColor = rest.color;
     } else {
-      bgDivStyle.backgroundImage = getGradientCss(gradientStops, shape);
+      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
     }
 
     const { radius, centerX, centerY, barWidth } = dimensions;
@@ -76,44 +72,48 @@ export const RadialArcPath = memo(
     const dotRadius =
       endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
 
-    let barEndcapColors: [string | undefined, string | undefined] | undefined;
-
+    let barEndcapColors: [string, string] | undefined;
     let endpointMarks: ReactNode = null;
-    if (endpointMarker && gradientStops.length > 0) {
-      switch (endpointMarker) {
-        case 'point':
-          const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(gradientStops, fieldDisplay.display.percent);
-          endpointMarks = (
-            <>
-              {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
-                <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
-              )}
-              <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
-            </>
-          );
-          break;
-        case 'glow':
-          const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
-          const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
-          const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
-          endpointMarks =
-            arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE ? (
-              <path
-                d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
-                fill="none"
-                strokeWidth={barWidth}
-                stroke={endpointMarkerGlowFilter}
-                strokeLinecap={roundedBars ? 'round' : 'butt'}
-                filter={glowFilter}
-              />
-            ) : null;
-          break;
-        default:
-          break;
+    if ('gradient' in rest) {
+      if (endpointMarker && (rest.gradient?.length ?? 0) > 0) {
+        switch (endpointMarker) {
+          case 'point':
+            const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(
+              rest.gradient!,
+              fieldDisplay.display.percent
+            );
+            endpointMarks = (
+              <>
+                {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
+                  <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
+                )}
+                <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
+              </>
+            );
+            break;
+          case 'glow':
+            const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
+            const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
+            const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
+            endpointMarks =
+              arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE ? (
+                <path
+                  d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
+                  fill="none"
+                  strokeWidth={barWidth}
+                  stroke={endpointMarkerGlowFilter}
+                  strokeLinecap={roundedBars ? 'round' : 'butt'}
+                  filter={glowFilter}
+                />
+              ) : null;
+            break;
+          default:
+            break;
+        }
       }
 
-      if (shape === 'circle') {
-        barEndcapColors = getBarEndcapColors(gradientStops, fieldDisplay.display.percent);
+      if (barEndcaps) {
+        barEndcapColors = getBarEndcapColors(rest.gradient, fieldDisplay.display.percent);
       }
     }
 

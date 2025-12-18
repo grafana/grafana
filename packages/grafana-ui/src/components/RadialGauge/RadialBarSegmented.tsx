@@ -5,7 +5,7 @@ import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialShape, RadialGaugeDimensions } from './types';
+import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 import {
   getAngleBetweenSegments,
   getFieldConfigMinMax,
@@ -22,7 +22,7 @@ export interface RadialBarSegmentedProps {
   segmentCount: number;
   segmentSpacing: number;
   shape: RadialShape;
-  gradient?: boolean;
+  gradient?: GradientStop[];
 }
 
 export const RadialBarSegmented = memo(
@@ -38,7 +38,6 @@ export const RadialBarSegmented = memo(
     shape,
   }: RadialBarSegmentedProps) => {
     const theme = useTheme2();
-
     const segments: React.ReactNode[] = [];
     const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, angleRange);
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
@@ -50,24 +49,20 @@ export const RadialBarSegmented = memo(
     for (let i = 0; i < segmentCountAdjusted; i++) {
       const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
       const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-      let segmentColor: string | undefined;
-      if (angleValue >= value) {
-        segmentColor = theme.colors.action.hover;
-      } else if (!gradient) {
-        segmentColor = displayProcessor(angleValue).color ?? FALLBACK_COLOR;
-      }
+      const segmentColor =
+        angleValue >= value ? theme.colors.border.medium : (displayProcessor(angleValue).color ?? FALLBACK_COLOR);
+      const colorProps = angleValue < value && gradient ? { gradient } : { color: segmentColor };
 
       segments.push(
         <RadialArcPath
           key={i}
           arcLengthDeg={segmentArcLengthDeg}
-          color={segmentColor}
           dimensions={dimensions}
           fieldDisplay={fieldDisplay}
           glowFilter={glowFilter}
-          gradient={gradient}
           shape={shape}
           startAngle={segmentAngle}
+          {...colorProps}
         />
       );
     }

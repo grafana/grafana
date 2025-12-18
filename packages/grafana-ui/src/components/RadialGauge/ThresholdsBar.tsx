@@ -1,7 +1,7 @@
 import { FieldDisplay, Threshold } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialGaugeDimensions, RadialShape } from './types';
+import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
 import { getFieldConfigMinMax } from './utils';
 
 interface ThresholdsBarProps {
@@ -14,7 +14,7 @@ interface ThresholdsBarProps {
   roundedBars?: boolean;
   glowFilter?: string;
   thresholds: Threshold[];
-  gradient?: boolean;
+  gradient?: GradientStop[];
 }
 
 export function ThresholdsBar({
@@ -50,20 +50,20 @@ export function ThresholdsBar({
     }
 
     const lengthDeg = valueDeg - currentStart + startAngle;
-    const color = gradient ? undefined : threshold.color;
+    const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
       <RadialArcPath
         key={i}
         arcLengthDeg={lengthDeg}
-        color={color}
+        barEndcaps={shape === 'circle' && roundedBars}
         dimensions={thresholdDimensions}
         fieldDisplay={fieldDisplay}
         glowFilter={glowFilter}
-        gradient={gradient}
         roundedBars={roundedBars}
         shape={shape}
         startAngle={currentStart}
+        {...colorProps}
       />
     );
 

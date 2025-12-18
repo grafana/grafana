@@ -19,16 +19,20 @@ export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
   return [min, max];
 }
 
+export function getValuePercentageForValue(fieldDisplay: FieldDisplay, value = fieldDisplay.display.numeric) {
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (value - min) / (max - min);
+}
+
 export function getValueAngleForValue(
   fieldDisplay: FieldDisplay,
   startAngle: number,
   endAngle: number,
   value = fieldDisplay.display.numeric
 ) {
-  const [min, max] = getFieldConfigMinMax(fieldDisplay);
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
 
-  let angle = ((value - min) / (max - min)) * angleRange;
+  let angle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
   if (angle > angleRange) {
     angle = angleRange;

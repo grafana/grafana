@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 
-import { DisplayValueAlignmentFactors, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -13,6 +13,7 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
+import { buildGradientColors } from './colors';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
@@ -112,7 +113,8 @@ export function RadialGauge(props: RadialGaugeProps) {
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
     const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
-    const color = displayValue.display.color ?? 'gray';
+    const gradientStops = buildGradientColors(gradient, theme, displayValue);
+    const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
       width,
       height,
@@ -155,7 +157,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
           shape={shape}
-          gradient={gradient}
+          gradient={gradientStops}
         />
       );
     } else {
@@ -170,7 +172,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           glowFilter={`url(#${glowFilterId})`}
           endpointMarkerGlowFilter={`url(#${spotlightGradientId})`}
           shape={shape}
-          gradient={gradient}
+          gradient={gradientStops}
           fieldDisplay={displayValue}
           endpointMarker={endpointMarker}
         />
@@ -233,7 +235,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               roundedBars={roundedBars}
               glowFilter={`url(#${glowFilterId})`}
               shape={shape}
-              gradient={gradient}
+              gradient={gradientStops}
             />
           );
         }
