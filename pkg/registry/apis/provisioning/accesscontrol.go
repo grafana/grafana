@@ -26,6 +26,12 @@ const (
 
 	// Historic Jobs
 	ActionProvisioningHistoricJobsRead = "provisioning.historicjobs:read" // GET + LIST.
+
+	// Settings (read-only, needed by multiple UI pages)
+	ActionProvisioningSettingsRead = "provisioning.settings:read" // GET + LIST.
+
+	// Stats (read-only, admin-only)
+	ActionProvisioningStatsRead = "provisioning.stats:read" // GET + LIST.
 )
 
 func registerAccessControlRoles(service accesscontrol.Service) error {
@@ -165,6 +171,38 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
+	// Settings - granted to Viewer (accessible by all logged-in users)
+	settingsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.settings:reader",
+			DisplayName: "Settings Reader",
+			Description: "Read provisioning settings.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningSettingsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	// Stats - granted to Admin only
+	statsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.stats:reader",
+			DisplayName: "Stats Reader",
+			Description: "Read provisioning stats.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningStatsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	return service.DeclareFixedRoles(
 		repositoriesReader,
 		repositoriesWriter,
@@ -173,5 +211,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		jobsReader,
 		jobsWriter,
 		historicJobsReader,
+		settingsReader,
+		statsReader,
 	)
 }

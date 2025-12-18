@@ -115,6 +115,7 @@ type APIBuilder struct {
 	access           auth.AccessChecker
 	accessWithAdmin  auth.AccessChecker
 	accessWithEditor auth.AccessChecker
+	accessWithViewer auth.AccessChecker
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	validator        repository.RepositoryValidator
@@ -184,6 +185,7 @@ func NewAPIBuilder(
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
+		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
@@ -311,16 +313,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			// Handle role-based resources that bypass the access checker.
-			// These resources don't have fine-grained permissions registered.
-			if isRoleBasedResource(a.GetResource()) {
-				id, err := identity.GetRequester(ctx)
-				if err != nil {
-					return authorizer.DecisionDeny, "failed to find requester", err
-				}
-				return authorizeRoleBasedResource(ctx, a.GetResource(), id)
-			}
-
 			return b.authorizeResource(ctx, a)
 		})
 }
@@ -345,10 +337,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //   - Read-only: historicjobs:read
 //
 // Settings:
-//   - Viewer role (read-only, needed by multiple UI pages)
+//   - settings:read - granted to Viewer (all logged-in users)
 //
 // Stats:
-//   - Admin role required
+//   - stats:read - granted to Admin only
 func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
@@ -372,12 +364,22 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
-	case "settings", "stats":
-		id, err := identity.GetRequester(ctx)
-		if err != nil {
-			return authorizer.DecisionDeny, "failed to find requester", err
-		}
-		return authorizeRoleBasedResource(ctx, a.GetResource(), id)
+	case "settings":
+		// Settings are read-only and accessible by all logged-in users (Viewer role)
+		return toAuthorizerDecision(b.accessWithViewer.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  "settings",
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case "stats":
+		// Stats are read-only and admin-only
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  "stats",
+			Namespace: a.GetNamespace(),
+		}, ""))
 	default:
 		return b.authorizeDefault(ctx)
 	}
@@ -500,42 +502,6 @@ func toAuthorizerDecision(err error) (authorizer.Decision, string, error) {
 		return authorizer.DecisionDeny, err.Error(), nil
 	}
 	return authorizer.DecisionAllow, "", nil
-}
-
-// isRoleBasedResource returns true for resources that use role-based authorization
-// instead of fine-grained permissions. These resources bypass the access checker.
-func isRoleBasedResource(resource string) bool {
-	return resource == "settings" || resource == "stats"
-}
-
-// authorizeRoleBasedResource handles authorization for resources without fine-grained permissions.
-// - settings: viewer role (read-only, needed by multiple UI pages)
-// - stats: admin role
-// Also checks authlib.AuthInfoFrom(ctx) for AccessPolicy identity type in MT mode.
-func authorizeRoleBasedResource(ctx context.Context, resource string, id identity.Requester) (authorizer.Decision, string, error) {
-	// Check AccessPolicy identity type from both sources (ST and MT modes)
-	isAccessPolicy := authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy)
-	if !isAccessPolicy {
-		// Also check authlib.AuthInfoFrom for MT mode
-		if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
-			isAccessPolicy = authlib.IsIdentityType(authInfo.GetIdentityType(), authlib.TypeAccessPolicy)
-		}
-	}
-
-	switch resource {
-	case "settings":
-		if isAccessPolicy || id.GetOrgRole().Includes(identity.RoleViewer) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "viewer role is required", nil
-	case "stats":
-		if isAccessPolicy || id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "admin role is required", nil
-	default:
-		return authorizer.DecisionDeny, "unknown role-based resource", nil
-	}
 }
 
 // authorizeDefault handles authorization for unmapped resources.
