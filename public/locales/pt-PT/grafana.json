@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Caminho do atributo de início de sessão",
       "login-prompt-consent": "Consentimento",
       "login-prompt-description": "Indica o tipo de interação do utilizador quando o utilizador inicia sessão com o IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Instrução de início de sessão",
       "login-prompt-login": "Entrar",
       "login-prompt-select-account": "Selecione a conta",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Se estiver ativado, a Grafana utilizará a <2>Chave de prova para troca de código (PKCE)</2> com a concessão do código de autorização OAuth2.",
       "use-pkce-label": "Utilizar PKCE",
       "use-refresh-token-description": "Se estiver ativado, o Grafana irá obter um novo token de acesso ao utilizar o token de atualização fornecido pelo fornecedor OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Utilizar token de atualização",
       "validate-hosted-domain-description": "Se estiver ativado, o Grafana irá comparar o domínio alojado obtido do token de ID do Google com a lista \"{{ allowedDomainsLabel }}\" especificada pelo utilizador.",
       "validate-hosted-domain-label": "Validar domínio alojado",
@@ -10181,7 +10183,8 @@
       "copy": "Copiar seleção",
       "disable-menu": "Desativar menu",
       "line-contains": "Adicionar, pois a linha contém filtro",
-      "line-contains-not": "Adicionar, pois a linha não contém filtro"
+      "line-contains-not": "Adicionar, pois a linha não contém filtro",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Resolução do carimbo de data e hora",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Quando liga toda a sua instância, os painéis de controlo ficarão indisponíveis durante a execução da migração. Recomendamos que avise os seus utilizadores antes de iniciar o processo.",
       "modal-description-public-access": "Configure o acesso público à sua instância Grafana para ativar a integração do GitHub",
       "modal-description-required-features": "Ativar as funcionalidades necessárias da Grafana para aprovisionamento",
       "modal-title-set-up-public-access": "Configurar acesso público",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Copie o seu URL público",
       "step-title-enable-feature-toggles": "Ativar alternâncias de funcionalidades necessárias",
       "step-title-start-ngrok": "Inicie a ngrok para um acesso público temporário",
-      "step-title-update-grafana-config": "Atualizar a sua configuração da Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "Configurar esta ligação pode causar uma interrupção temporária"
+      "step-title-update-grafana-config": "Atualizar a sua configuração da Grafana"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Ver e gerir as suas ligações de provisionamento"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Eliminar repositórios",
-      "configured-repositories-while-running-legacy-storage": "Os repositórios configurados não funcionarão durante a execução do armazenamento herdado.",
       "confirm-delete-repositories": "Tem a certeza de que pretende eliminar todos os repositórios configurados? Esta ação não pode ser anulada. ",
       "error-delete-all-repositories": "Não foi possível eliminar todos os repositórios",
-      "remove-all-configured-repositories": "Remover todos os repositórios configurados",
       "subtitle": "Ver e gerir os seus repositórios configurados",
       "success-all-repositories-deleted": "Todos os repositórios configurados eliminados",
       "tab-getting-started": "Introdução",
       "tab-getting-started-title": "Introdução",
       "tab-repositories": "Repositórios",
       "tab-repositories-title": "Lista de repositórios",
-      "title-delete-all-configured-repositories": "Eliminar todos os repositórios configurados",
-      "title-legacy-storage-detected": "Armazenamento herdado detetado"
+      "title-delete-all-configured-repositories": "Eliminar todos os repositórios configurados"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Voltar aos repositórios",
       "cleaning-up-resources": "A limpar recursos do repositório",
-      "legacy-storage-message": "A instância ainda não está a executar o armazenamento unificado; requer o assistente de migração",
       "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Recursos",
       "tab-resources-title": "",
       "title": "Estado do repositório",
-      "title-legacy-storage": "Armazenamento herdado",
       "title-queued-for-deletion": "Em fila para eliminação"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Incluir commits para cada valor histórico",
-      "synchronization-options": "Opções de sincronização"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "e clique em",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Aviso",
     "wizard": {
-      "alert-point-1": "Os recursos não poderão ser criados, editados ou eliminados durante este processo. No último passo, irão desaparecer.",
-      "alert-point-2": "Assim que o provisionamento estiver concluído, os recursos reaparecerão e serão geridos através de um armazenamento externo.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "A duração deste processo depende do número de recursos envolvidos.",
-      "alert-point-4": "Os administradores de instâncias empresariais podem exibir um banner de anúncio aos utilizadores. Consulte <2>este guia</2> para obter instruções passo a passo.",
-      "alert-title": "Importante: não serão perdidos dados ou configurações, mas os painéis de controlo ficarão temporariamente indisponíveis durante alguns minutos.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Concluir",
@@ -12230,7 +12223,6 @@
       "step-finish": "Escolha as definições adicionais",
       "step-synchronize": "Sincronizar com armazenamento externo",
       "sync-description": "Sincronize recursos com um armazenamento externo. Após este passo único, todas as atualizações futuras serão guardadas automaticamente no repositório e aprovisionadas novamente para a instância.",
-      "sync-option-history": "Histórico",
       "title-bootstrap": "Escolha o que sincronizar",
       "title-connect": "Ligar a um armazenamento externo",
       "title-finish": "Escolha as definições adicionais",

@@ -429,7 +429,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Should be a long line connecting the null region in the `connected`  mode, and in zero it should just be a line with zero value at the null points. ",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -475,7 +485,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Stacking values on top of nulls, should treat the null values as zero. ",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -521,7 +541,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Stacking when all values are null should leave a gap in the graph",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1779,7 +1809,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Left is showing null between values for a normal line graph and staircase graph. Orphaned data points should be rendered as points",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -2172,7 +2212,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Just verify that the tooltip time has millisecond resolution ",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -2218,7 +2268,17 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "Verify that axis labels look ok",
+                    "editable": true,
+                    "error": false,
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
