@@ -208,6 +208,7 @@ func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			yield("", err)
 			return
 		}
+		defer rows.Close()
 
 		for rows.Next() {
 			var key string
@@ -258,6 +259,7 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
+		defer rows.Close()
 
 		for rows.Next() {
 			var key string

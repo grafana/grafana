@@ -8,5 +8,5 @@ FROM (
     {{ end }}
 {{ end }}
 ) AS requested_keys
-JOIN {{ .TableName }} r ON r.{{ .Ident "key_path" }} = requested_keys.{{ .Ident "key_path" }}
+INNER JOIN {{ .TableName }} r ON r.{{ .Ident "key_path" }} = requested_keys.{{ .Ident "key_path" }}
 ORDER BY requested_keys.{{ .Ident "idx" }};
