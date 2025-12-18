@@ -1,6 +1,27 @@
 import { ScaleDistribution } from '@grafana/schema';
 
-import { boundedMinMax, calculateYSizeDivisor, valuesToFills } from './utils';
+import { boundedMinMax, calculateYSizeDivisor, toLogBase, valuesToFills } from './utils';
+
+describe('toLogBase', () => {
+  it('returns 10 when value is 10', () => {
+    expect(toLogBase(10)).toBe(10);
+  });
+
+  it('returns 2 when value is 2', () => {
+    expect(toLogBase(2)).toBe(2);
+  });
+
+  it('returns 2 (default) when value is undefined', () => {
+    expect(toLogBase(undefined)).toBe(2);
+  });
+
+  it('returns 2 (default) for invalid values', () => {
+    expect(toLogBase(5)).toBe(2);
+    expect(toLogBase(0)).toBe(2);
+    expect(toLogBase(-1)).toBe(2);
+    expect(toLogBase(100)).toBe(2);
+  });
+});
 
 describe('calculateYSizeDivisor', () => {
   it('returns 1 for linear scale', () => {

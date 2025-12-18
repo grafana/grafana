@@ -26,7 +26,7 @@ import { HeatmapData } from './fields';
 import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
 /** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
-function toLogBase(value: number | undefined): 2 | 10 {
+export function toLogBase(value: number | undefined): 2 | 10 {
   return value === 10 ? 10 : 2;
 }
 
