@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -67,12 +68,16 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
 func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+	return newMigrator(engine, cfg, scope, NewDialect(engine.DriverName()))
+}
+
+func newMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string, dialect Dialect) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine.DriverName()),
+		Dialect:      dialect,
 		metrics: migratorMetrics{
 			migCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "grafana_database",
@@ -392,8 +397,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {

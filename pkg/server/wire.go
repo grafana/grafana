@@ -10,6 +10,7 @@ import (
 	"github.com/google/wire"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -158,6 +159,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -401,6 +403,7 @@ var wireBasicSet = wire.NewSet(
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSet,
+	secretmigrator.NewWithEngine,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	// Kubernetes API server
