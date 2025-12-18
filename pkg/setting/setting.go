@@ -636,6 +636,12 @@ type UnifiedStorageConfig struct {
 	// EnableMigration indicates whether migration is enabled for the resource.
 	// If not set, will use the default from MigratedUnifiedResources.
 	EnableMigration bool
+	// AutoMode5Threshold is the threshold below which a resource is automatically switched to mode 5.
+	// If the total count of entries for a resource across all orgs is at or below this threshold,
+	// the resource will be switched to mode 5.
+	// Set to -1 to disable auto mode 5.
+	// Defaults to 0.
+	AutoMode5Threshold int
 }
 
 type InstallPlugin struct {

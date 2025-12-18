@@ -8,6 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
+// DefaultAutoMode5Threshold is the default threshold for auto mode 5 switching.
+// If a resource has entries at or below this count, it will be switched to mode 5.
+const DefaultAutoMode5Threshold = 0
+
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
@@ -59,6 +63,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
+		// parse autoMode5Threshold from resource section
+		autoMode5Threshold := section.Key("autoMode5Threshold").MustInt(DefaultAutoMode5Threshold)
+
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
@@ -66,6 +73,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
 			EnableMigration:                      enableMigration,
+			AutoMode5Threshold:                   autoMode5Threshold,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -167,4 +175,25 @@ func (cfg *Cfg) getUnifiedStorageType() string {
 		return cfg.Raw.Section(grafanaAPIServerSectionName).Key(storageTypeKeyName).Value()
 	}
 	return defaultStorageType
+}
+
+// GetUnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+func (cfg *Cfg) GetUnifiedStorageConfig(resource string) UnifiedStorageConfig {
+	if cfg.UnifiedStorage == nil {
+		return UnifiedStorageConfig{}
+	}
+	return cfg.UnifiedStorage[resource]
+}
+
+// EnableAutoMode5ForResource enables migration and sets mode 5 for a resource.
+// This is used when a resource has entries below the auto mode 5 threshold.
+func (cfg *Cfg) EnableAutoMode5ForResource(resource string) {
+	if cfg.UnifiedStorage == nil {
+		cfg.UnifiedStorage = make(map[string]UnifiedStorageConfig)
+	}
+	config := cfg.UnifiedStorage[resource]
+	config.DualWriterMode = rest.Mode5
+	config.DualWriterMigrationDataSyncDisabled = true
+	config.EnableMigration = true
+	cfg.UnifiedStorage[resource] = config
 }

@@ -556,6 +556,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
 			require.NoError(t, err)
+			_, err = section.NewKey("autoMode5Threshold", fmt.Sprintf("%d", v.AutoMode5Threshold))
+			require.NoError(t, err)
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {
