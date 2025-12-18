@@ -81,7 +81,7 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 
 **Solutions:**
 
-1. Verify the trust relationship on the IAM role allows Grafana's credentials to assume it.
+1. Verify the trust relationship on the IAM role allows the Grafana credentials to assume it.
 1. Check the trust policy includes the correct principal (the user or role running Grafana).
 1. If using an external ID, ensure it matches exactly in both the role's trust policy and the Grafana data source configuration.
 1. Verify the base credentials have the `sts:AssumeRole` permission.
