@@ -56,6 +56,41 @@ interface PrepConfigOpts {
   xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
 }
 
+// // https://github.com/prometheus/client_golang/blob/b5361fed217651b4d855961b47481209ac0745a0/prometheus/histogram.go#L272
+const ZERO_BUCKET_LIMIT = 3e-39;
+
+function indexOfNextAwayFromZero(arr: number[], relVal: number) {
+	let diff = Infinity;
+  let idx = -1;
+
+  if (relVal >= 0) {
+  	for (let i = 0; i < arr.length; i++) {
+    	if (arr[i] > relVal) {
+      	let diff2 = arr[i] - relVal;
+        if (diff2 < diff) {
+        	diff = diff2;
+          idx = i;
+        }
+      }
+    }
+  } else {
+  	for (let i = 0; i < arr.length; i++) {
+    	if (arr[i] < relVal) {
+      	let diff2 = relVal - arr[i];
+        if (diff2 < diff) {
+        	diff = diff2;
+          idx = i;
+        }
+      }
+    }
+  }
+
+  return idx;
+}
+
+// console.log(indexOfNextAwayFromZero([0, -1, 0.1, 0.5, 1, 29, 0.52], 0.5));
+// console.log(indexOfNextAwayFromZero([0, -1, 0.1, 0.5, 1, 29, -0.52], -0.5));
+
 export function prepConfig(opts: PrepConfigOpts) {
   const {
     dataRef,
@@ -210,22 +245,53 @@ export function prepConfig(opts: PrepConfigOpts) {
     orientation: ScaleOrientation.Vertical,
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
-    distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: yScale.log ?? 2,
+    distribution: isSparseHeatmap
+      ? ScaleDistribution.Symlog
+      : shouldUseLogScale
+        ? ScaleDistribution.Log
+        : ScaleDistribution.Linear,
+    log: yScale.log ?? 10,
+    // for symlog, needs to be nearest-zero value (excluding near-zero bucket)
+    // TODO: this may need to update for each query based on data range
+    linearThreshold: yScale.linearThreshold ?? 1,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
             // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
-            // @ts-ignore
-            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+
+            let minVals = u.data[1][1] as unknown as number[];
+            let maxVals = u.data[1][2] as unknown as number[];
+
+            // which bucket we'll use to compute factor
+            let idx = 0;
+
+            // if we have a near-zero bucket, find another bucket to estimate factor
+            if (dataMin <= 0 && dataMin >= -ZERO_BUCKET_LIMIT) {
+              idx = minVals.findIndex(v => v !== dataMin);
+
+              let i2 = indexOfNextAwayFromZero(minVals, dataMin);
+
+              // console.log(i2);
+
+              if (i2 === -1) {
+                dataMin = 0;
+                let i3 = indexOfNextAwayFromZero(minVals, -dataMin);
+                // super hack, since scale.asinh is static in uPlot currently
+                u.scales[yScaleKey].asinh = minVals[i3];
+              } else {
+                dataMin = minVals[i2];
+              }
+            }
+
+            let bucketFactor = maxVals[idx] / minVals[idx];;
 
             dataMax *= bucketFactor;
 
             let scaleMin: number | null, scaleMax: number | null;
 
             [scaleMin, scaleMax] = shouldUseLogScale
-              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
+              ? uPlot.rangeAsinh(dataMin, dataMax, (yScale.log ?? 10) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
             if (shouldUseLogScale && !isOrdinalY) {
@@ -234,14 +300,13 @@ export function prepConfig(opts: PrepConfigOpts) {
 
               let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
-              // guard against <= 0
-              if (explicitMin != null && explicitMin > 0) {
+              if (explicitMin != null) {
                 // snap to magnitude
                 let minLog = log(explicitMin);
                 scaleMin = yExp ** incrRoundDn(minLog, 1);
               }
 
-              if (explicitMax != null && explicitMax > 0) {
+              if (explicitMax != null) {
                 let maxLog = log(explicitMax);
                 scaleMax = yExp ** incrRoundUp(maxLog, 1);
               }
