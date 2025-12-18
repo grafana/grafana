@@ -40,9 +40,9 @@ func JitterStrategyFrom(cfg setting.UnifiedAlertingSettings, toggles featuremgmt
 	return strategy
 }
 
-// JitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
+// jitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
 // The resulting number of ticks is non-negative. We assume the rule is well-formed and has an IntervalSeconds greater to or equal than baseInterval.
-func JitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
+func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
 	if strategy == JitterNever {
 		return 0
 	}
@@ -64,7 +64,7 @@ func JitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, stra
 
 // JitterOffsetInDuration gives the jitter offset for a rule, in terms of a duration relative to its interval and a base interval.
 func JitterOffsetInDuration(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) time.Duration {
-	return time.Duration(JitterOffsetInTicks(r, baseInterval, strategy)) * baseInterval
+	return time.Duration(jitterOffsetInTicks(r, baseInterval, strategy)) * baseInterval
 }
 
 func jitterHash(r *ngmodels.AlertRule, strategy JitterStrategy) uint64 {

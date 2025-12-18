@@ -366,7 +366,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		offset := JitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
+		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
 		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
 		if isReadyToRun {
