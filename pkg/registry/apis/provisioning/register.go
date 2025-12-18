@@ -162,13 +162,9 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
-	// Create access checker based on mode
-	var accessChecker auth.AccessChecker
-	if useExclusivelyAccessCheckerForAuthz {
-		accessChecker = auth.NewTokenAccessChecker(access)
-	} else {
-		accessChecker = auth.NewSessionAccessChecker(access)
-	}
+	// Create unified access checker that handles both token and session identity
+	// with the original fallthrough behavior
+	accessChecker := auth.NewAccessChecker(access, useExclusivelyAccessCheckerForAuthz)
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
