@@ -447,14 +447,29 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           }
         }
 
-        const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+        // Get scopeNode and parentNode, preferring defaultPath as the source of truth
+        let scopeNode: ScopeNode | undefined;
+        let parentNode: ScopeNode | undefined;
+        let scopeNodeId: string | undefined;
 
-        // If not provided, try to get the parent from the scope node
-        // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-        const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
-        const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+        if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 1) {
+          // Extract from defaultPath (most reliable source)
+          // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+          scopeNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 1];
+          const parentNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 2];
 
-        this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
+          scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
+          parentNode = parentNodeId && parentNodeId !== '' ? this.state.nodes[parentNodeId] : undefined;
+        } else {
+          // Fallback to old approach for backwards compatibility
+          scopeNodeId = scopes[0]?.scopeNodeId;
+          scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
+
+          const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
+          parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+        }
+
+        this.addRecentScopes(fetchedScopes, parentNode, scopeNodeId);
       }
 
       this.updateState({ scopes: newScopesState, loading: false });
