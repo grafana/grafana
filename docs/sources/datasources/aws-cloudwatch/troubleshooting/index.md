@@ -64,13 +64,13 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| --- | --- |
+| Cause                                   | Solution                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | IAM policy missing required permissions | Attach the appropriate IAM policy to your user or role. For metrics, you need `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`, and related permissions. For logs, you need `logs:DescribeLogGroups`, `logs:StartQuery`, `logs:GetQueryResults`, and related permissions. Refer to [Configure CloudWatch](ref:configure-cloudwatch) for complete policy examples. |
-| Incorrect access key or secret key | Verify the credentials in the AWS Console under **IAM** > **Users** > your user > **Security credentials**. Generate new credentials if necessary. |
-| Credentials have expired | For temporary credentials, generate new ones. For access keys, verify they haven't been deactivated or deleted. |
-| Wrong AWS region | Verify the default region in the data source configuration matches where your resources are located. |
-| Assume Role ARN is incorrect | Verify the role ARN format: `arn:aws:iam::<account-id>:role/<role-name>`. Check that the role exists in the AWS Console. |
+| Incorrect access key or secret key      | Verify the credentials in the AWS Console under **IAM** > **Users** > your user > **Security credentials**. Generate new credentials if necessary.                                                                                                                                                                                                                    |
+| Credentials have expired                | For temporary credentials, generate new ones. For access keys, verify they haven't been deactivated or deleted.                                                                                                                                                                                                                                                       |
+| Wrong AWS region                        | Verify the default region in the data source configuration matches where your resources are located.                                                                                                                                                                                                                                                                  |
+| Assume Role ARN is incorrect            | Verify the role ARN format: `arn:aws:iam::<account-id>:role/<role-name>`. Check that the role exists in the AWS Console.                                                                                                                                                                                                                                              |
 
 ### "Unable to assume role"
 
@@ -190,14 +190,14 @@ These errors occur when querying CloudWatch Metrics.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| --- | --- |
-| Time range doesn't contain data | Expand the dashboard time range. CloudWatch metrics have different retention periods based on resolution. |
-| Wrong namespace or metric name | Verify the namespace (for example, `AWS/EC2`) and metric name (for example, `CPUUtilization`) are correct. |
-| Incorrect dimensions | Ensure dimension names and values match your AWS resources exactly. |
-| Match Exact enabled incorrectly | When Match Exact is enabled, all dimensions must be specified. Try disabling it to see if metrics appear. |
-| Period too large | Reduce the period setting or set it to "auto" to ensure data points are returned for your time range. |
-| Custom metrics not configured | Add custom metric namespaces in the data source configuration under **Namespaces of Custom Metrics**. |
+| Cause                           | Solution                                                                                                   |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data | Expand the dashboard time range. CloudWatch metrics have different retention periods based on resolution.  |
+| Wrong namespace or metric name  | Verify the namespace (for example, `AWS/EC2`) and metric name (for example, `CPUUtilization`) are correct. |
+| Incorrect dimensions            | Ensure dimension names and values match your AWS resources exactly.                                        |
+| Match Exact enabled incorrectly | When Match Exact is enabled, all dimensions must be specified. Try disabling it to see if metrics appear.  |
+| Period too large                | Reduce the period setting or set it to "auto" to ensure data points are returned for your time range.      |
+| Custom metrics not configured   | Add custom metric namespaces in the data source configuration under **Namespaces of Custom Metrics**.      |
 
 ### "Metric not found" or metrics don't appear in drop-down
 
@@ -254,7 +254,7 @@ These errors occur when querying CloudWatch Metrics.
 
 1. Verify each referenced metric has a unique ID set.
 1. Check that metric IDs start with a lowercase letter and contain only letters, numbers, and underscores.
-2. Ensure all referenced metrics are in the same query.
+1. Ensure all referenced metrics are in the same query.
 1. Verify the expression syntax follows [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html) documentation.
 1. Metric math expressions can't be used with Grafana alerting if they reference other query rows.
 
