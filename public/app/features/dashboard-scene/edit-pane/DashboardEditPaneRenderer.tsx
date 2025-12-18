@@ -76,12 +76,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {/* <Sidebar.Button
-              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
-              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
-              icon="brackets-curly"
-              onClick={() => dashboard.openV2SchemaEditor()}
-            /> */}
             <Sidebar.Divider />
           </>
         )}
