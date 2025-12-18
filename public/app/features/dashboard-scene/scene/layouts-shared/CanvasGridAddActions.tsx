@@ -59,7 +59,12 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   }, [layoutManager]);
 
   return (
-    <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
+    <div
+      className={cx(styles.addAction, 'dashboard-canvas-add-button')}
+      onPointerDown={(evt) => {
+        evt.stopPropagation();
+      }}
+    >
       <Button
         variant="primary"
         fill="text"
