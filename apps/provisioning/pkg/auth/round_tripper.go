@@ -66,6 +66,8 @@ func NewRoundTripper(tokenExchangeClient tokenExchanger, base http.RoundTripper,
 
 // RoundTrip exchanges credentials for an access token and injects it into the request.
 // The token is scoped to all configured audiences and the wildcard namespace ("*").
+// If a user identity is present in the request context, its ID token is forwarded
+// in the X-Grafana-Id header so aggregators can forward it to MT API servers.
 func (t *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	audiences := []string{t.audience}
 	if t.extraAudience != "" && t.extraAudience != t.audience {
@@ -82,5 +84,13 @@ func (t *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	req = utilnet.CloneRequest(req)
 	req.Header.Set("X-Access-Token", "Bearer "+tokenResponse.Token)
+
+	// Forward user ID token from context if present, so aggregators can forward it to MT
+	if requester, err := identity.GetRequester(req.Context()); err == nil && requester != nil {
+		if idToken := requester.GetIDToken(); idToken != "" {
+			req.Header.Set("X-Grafana-Id", idToken)
+		}
+	}
+
 	return t.transport.RoundTrip(req)
 }

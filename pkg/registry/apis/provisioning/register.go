@@ -520,6 +520,10 @@ func authorizeRoleBasedResource(ctx context.Context, resource string, id identit
 		if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
 			isAccessPolicy = authlib.IsIdentityType(authInfo.GetIdentityType(), authlib.TypeAccessPolicy)
 		}
+		// Also check AuthID for AccessPolicy identities (Extended JWT may set TypeUser but AuthID is "access-policy:...")
+		if !isAccessPolicy && id.GetAuthID() != "" {
+			isAccessPolicy = strings.HasPrefix(id.GetAuthID(), "access-policy:")
+		}
 	}
 
 	switch resource {
