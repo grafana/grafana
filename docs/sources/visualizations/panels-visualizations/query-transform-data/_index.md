@@ -172,7 +172,7 @@ Viewers can only reuse queries.
 
 To save a query you've created:
 
-1. From the query editor, open the **Saved queries** dropdown then click the **Save query** option:
+1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
 
