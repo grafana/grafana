@@ -1,7 +1,7 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
-import type { JSX } from 'react';
+import { act, type JSX } from 'react';
 import { render } from 'test/test-utils';
 
 import {
@@ -236,7 +236,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
@@ -244,7 +246,9 @@ describe('ProvisioningWizard', () => {
 
       expect(mockUseCreateOrUpdateRepository).toHaveBeenCalled();
 
-      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Synchronize with external storage/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /3\. Synchronize with external storage/i })).toBeInTheDocument();
@@ -280,7 +284,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
@@ -338,7 +344,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByText('Branch "invalid-branch" not found')).toBeInTheDocument();
@@ -372,7 +380,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -413,7 +423,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -441,13 +453,17 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /Previous/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Previous/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
@@ -484,7 +500,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(() => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       expect(screen.getByRole('button', { name: /Submitting.../i })).toBeDisabled();
     });
@@ -521,7 +539,9 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(async () => fireEvent.click(screen.getByRole('button', { name: /Choose what to synchronize/i })));
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();

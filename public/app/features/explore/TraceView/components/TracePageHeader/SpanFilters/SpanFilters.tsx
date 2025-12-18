@@ -57,7 +57,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
-  const prevTraceIdRef = useRef<string>();
+  const prevTraceIdRef = useRef<string>(null);
 
   const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 

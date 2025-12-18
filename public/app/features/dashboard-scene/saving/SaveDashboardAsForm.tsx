@@ -49,7 +49,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
-  const validationTimeoutRef = useRef<NodeJS.Timeout>();
+  const validationTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   // Validate title on form mount to catch invalid default values
   useEffect(() => {
@@ -59,14 +59,18 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      clearTimeout(validationTimeoutRef.current);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
     };
   }, []);
 
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue('title', e.target.value, { shouldDirty: true });
-      clearTimeout(validationTimeoutRef.current);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
       validationTimeoutRef.current = setTimeout(() => {
         trigger('title');
       }, 400);
@@ -75,7 +79,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   const onSave = async (overwrite: boolean) => {
-    clearTimeout(validationTimeoutRef.current);
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
 
     const isTitleValid = await trigger('title');
 

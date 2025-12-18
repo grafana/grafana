@@ -1,7 +1,8 @@
+import { act, fireEvent } from '@testing-library/react';
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
-import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
+import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { mockExportApi, setupMswServer } from '../../mockApi';
@@ -72,14 +73,15 @@ describe('GrafanaModifyExport', () => {
       json: 'Json Export Content',
     });
 
-    const user = userEvent.setup();
-
     renderModifyExport(grafanaRulerRule.grafana_alert.uid);
 
     await waitForElementToBeRemoved(() => ui.loading.get());
     expect(await ui.form.nameInput.find()).toHaveValue('Grafana-rule');
 
-    await user.click(ui.exportButton.get());
+    // TODO investigate why we need act
+    // see https://github.com/testing-library/react-testing-library/issues/1375
+    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+    await act(() => fireEvent.click(ui.exportButton.get()));
 
     const drawer = await ui.exportDrawer.dialog.find();
     expect(drawer).toBeInTheDocument();
