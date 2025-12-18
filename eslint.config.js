@@ -117,6 +117,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
+      'apps/plugins/plugin/src/generated/meta/v0alpha1',
+      'apps/plugins/plugin/src/generated/plugin/v0alpha1',
     ],
   },
   ...grafanaConfig,

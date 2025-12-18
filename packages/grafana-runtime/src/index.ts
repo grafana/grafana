@@ -77,3 +77,5 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
+export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';
