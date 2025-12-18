@@ -26,13 +26,13 @@ TestFullSync_HierarchicalErrorHandling tests the hierarchical error handling beh
 
 FOLDER CREATION FAILURES:
 - When a folder fails to be created with PathCreationError, all nested resources are skipped
-- Nested resources are recorded with FileActionIgnored and error "skipped: parent folder creation failed"
+- Nested resources are recorded with FileActionIgnored and error "folder was not processed because children resources in its path could not be deleted"
 - Only the folder creation error counts toward error limits
 - Nested resource skips do NOT count toward error limits
 
 FOLDER DELETION FAILURES:
 - When a file deletion fails, it's tracked in failedDeletions
-- When cleaning up folders, we check HasFailedDeletionsUnder()
+- When cleaning up folders, we check HasDirPathFailedDeletion()
 - If children failed to delete, folder deletion is skipped with FileActionIgnored
 - This prevents orphaning resources that still exist
 
@@ -46,7 +46,7 @@ AUTOMATIC TRACKING:
 - Record() automatically detects deletion failures and adds to failedDeletions
 - No manual calls to AddFailedCreation/AddFailedDeletion needed
 */
-func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
+func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 	tests := []struct {
 		name          string
 		setupMocks    func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *dynamicfake.FakeDynamicClient)
@@ -63,7 +63,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First, check if nested under failed creation - not yet
-				progress.On("IsNestedUnderFailedCreation", "folder1/file.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file.json").Return(false).Once()
 
 				// WriteResourceFromFile fails with PathCreationError for folder1/
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -86,7 +86,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers folder creation failure
-				progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -96,20 +96,20 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Subsequent files in same folder are skipped
-				progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "folder1/subfolder/file2.json" &&
 						r.Action == repository.FileActionIgnored &&
-						r.Error != nil &&
-						r.Error.Error() == "skipped: parent folder creation failed"
+						r.Warning != nil &&
+						r.Warning.Error() == "resource was not processed because the parent folder could not be created"
 				})).Return().Once()
 
-				progress.On("IsNestedUnderFailedCreation", "folder1/file3.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "folder1/file3.json" &&
 						r.Action == repository.FileActionIgnored &&
-						r.Error != nil &&
-						r.Error.Error() == "skipped: parent folder creation failed"
+						r.Warning != nil &&
+						r.Warning.Error() == "resource was not processed because the parent folder could not be created"
 				})).Return().Once()
 			},
 		},
@@ -165,7 +165,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				// Creation fails
-				progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -174,7 +174,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 					return r.Path == "folder1/file1.json" && r.Error != nil
 				})).Return().Once()
 
-				// Deletion proceeds (NOT checking IsNestedUnderFailedCreation for deletions)
+				// Deletion proceeds (NOT checking HasDirPathFailedCreation for deletions)
 				// Note: deletion will fail because resource doesn't exist, but that's fine for this test
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
@@ -201,7 +201,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers level1/ failure
-				progress.On("IsNestedUnderFailedCreation", "level1/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "level1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "level1/file1.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -212,7 +212,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 
 				// All nested files are skipped
 				for _, path := range []string{"level1/level2/file2.json", "level1/level2/level3/file3.json"} {
-					progress.On("IsNestedUnderFailedCreation", path).Return(true).Once()
+					progress.On("HasDirPathFailedCreation", path).Return(true).Once()
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 						return r.Path == path && r.Action == repository.FileActionIgnored
 					})).Return().Once()
@@ -229,7 +229,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// Success path works
-				progress.On("IsNestedUnderFailedCreation", "success/file1.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "").
 					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -237,7 +237,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Failure path fails
-				progress.On("IsNestedUnderFailedCreation", "failure/file2.json").Return(false).Once()
+				progress.On("HasDirPathFailedCreation", "failure/file2.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
@@ -246,10 +246,148 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) {
 				})).Return().Once()
 
 				// Nested file in failure path is skipped
-				progress.On("IsNestedUnderFailedCreation", "failure/nested/file3.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "failure/nested/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path == "failure/nested/file3.json" && r.Action == repository.FileActionIgnored
 				})).Return().Once()
+			},
+		},
+		{
+			name:        "folder creation fails with explicit folder in changes",
+			description: "When folder1/ is explicitly in changes and fails to create, all nested resources (subfolders and files) are skipped",
+			changes: []ResourceFileChange{
+				{Path: "folder1/", Action: repository.FileActionCreated},
+				{Path: "folder1/subfolder/", Action: repository.FileActionCreated},
+				{Path: "folder1/file1.json", Action: repository.FileActionCreated},
+				{Path: "folder1/subfolder/file2.json", Action: repository.FileActionCreated},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+				progress.On("HasDirPathFailedCreation", "folder1/").Return(false).Once()
+				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/").Return("", folderErr).Once()
+
+				progress.On("HasDirPathFailedCreation", "folder1/subfolder/").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(true).Once()
+				progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/" && r.Error != nil
+				})).Return().Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/subfolder/" && r.Action == repository.FileActionIgnored
+				})).Return().Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/file1.json" && r.Action == repository.FileActionIgnored
+				})).Return().Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/subfolder/file2.json" && r.Action == repository.FileActionIgnored
+				})).Return().Once()
+			},
+		},
+		{
+			name:        "folder deletion prevented when child deletion fails",
+			description: "When a file deletion fails, folder deletion is skipped with FileActionIgnored to prevent orphaning resources",
+			changes: []ResourceFileChange{
+				{
+					Path:     "folder1/file1.json",
+					Action:   repository.FileActionDeleted,
+					Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"},
+				},
+				{Path: "folder1/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "folder1", Group: "folder.grafana.app", Resource: "Folder"}},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
+				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
+
+				clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
+					return gvr.Group == "dashboard.grafana.app"
+				})).Return(dynamicClient.Resource(gvr), gvk, nil)
+
+				dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("permission denied")
+				})
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/file1.json" && r.Error != nil
+				})).Return().Once()
+
+				progress.On("HasDirPathFailedDeletion", "folder1/").Return(true).Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "folder1/" && r.Action == repository.FileActionIgnored
+				})).Return().Once()
+			},
+		},
+		{
+			name:        "multiple folder deletion failures",
+			description: "When multiple independent folders have child deletion failures, all folder deletions are skipped",
+			changes: []ResourceFileChange{
+				{Path: "folder1/file1.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"}},
+				{Path: "folder1/", Action: repository.FileActionDeleted},
+				{Path: "folder2/file2.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file2", Group: "dashboard.grafana.app", Resource: "dashboards"}},
+				{Path: "folder2/", Action: repository.FileActionDeleted},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
+				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
+				clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
+					return gvr.Group == "dashboard.grafana.app"
+				})).Return(dynamicClient.Resource(gvr), gvk, nil)
+
+				dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("permission denied")
+				})
+
+				for _, path := range []string{"folder1/file1.json", "folder2/file2.json"} {
+					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+						return r.Path == path && r.Error != nil
+					})).Return().Once()
+				}
+
+				progress.On("HasDirPathFailedDeletion", "folder1/").Return(true).Once()
+				progress.On("HasDirPathFailedDeletion", "folder2/").Return(true).Once()
+
+				for _, path := range []string{"folder1/", "folder2/"} {
+					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+						return r.Path == path && r.Action == repository.FileActionIgnored
+					})).Return().Once()
+				}
+			},
+		},
+		{
+			name:        "nested subfolder deletion failure",
+			description: "When a file deletion fails in a nested subfolder, both the subfolder and parent folder deletions are skipped",
+			changes: []ResourceFileChange{
+				{Path: "parent/subfolder/file.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"}},
+				{Path: "parent/subfolder/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "subfolder", Group: "folder.grafana.app", Resource: "Folder"}},
+				{Path: "parent/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "parent", Group: "folder.grafana.app", Resource: "Folder"}},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
+				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
+				clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
+					return gvr.Group == "dashboard.grafana.app"
+				})).Return(dynamicClient.Resource(gvr), gvk, nil)
+
+				dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("permission denied")
+				})
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path == "parent/subfolder/file.json" && r.Error != nil
+				})).Return().Once()
+
+				progress.On("HasDirPathFailedDeletion", "parent/subfolder/").Return(true).Once()
+				progress.On("HasDirPathFailedDeletion", "parent/").Return(true).Once()
+
+				for _, path := range []string{"parent/subfolder/", "parent/"} {
+					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+						return r.Path == path && r.Action == repository.FileActionIgnored
+					})).Return().Once()
+				}
 			},
 		},
 	}

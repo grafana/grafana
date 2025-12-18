@@ -20,6 +20,21 @@ import (
 
 const MaxNumberOfFolders = 10000
 
+// PathCreationError represents an error that occurred while creating a folder path.
+// It contains the path that failed and the underlying error.
+type PathCreationError struct {
+	Path string
+	Err  error
+}
+
+func (e *PathCreationError) Unwrap() error {
+	return e.Err
+}
+
+func (e *PathCreationError) Error() string {
+	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
+}
+
 type FolderManager struct {
 	repo   repository.ReaderWriter
 	tree   FolderTree

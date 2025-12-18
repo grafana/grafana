@@ -348,6 +348,8 @@ func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 	assert.True(t, recorder.HasDirPathFailedCreation("folder2/subfolder/file.json"))
 
 	// Test non-nested paths
+	assert.False(t, recorder.HasDirPathFailedCreation("folder2/file2.json"))
+	assert.False(t, recorder.HasDirPathFailedCreation("folder2/othersubfolder/inside.json"))
 	assert.False(t, recorder.HasDirPathFailedCreation("other/file.json"))
 	assert.False(t, recorder.HasDirPathFailedCreation("folder3/file.json"))
 	assert.False(t, recorder.HasDirPathFailedCreation("file.json"))
@@ -392,6 +394,10 @@ func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 	// Test folder paths without failed deletions
 	assert.False(t, recorder.HasDirPathFailedDeletion("other/"))
 	assert.False(t, recorder.HasDirPathFailedDeletion("different/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("folder2/othersubfolder/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("folder2/subfolder/othersubfolder/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("folder3/nested/anotherdeep/"))
+	assert.False(t, recorder.HasDirPathFailedDeletion("folder3/nested/deep/insidedeep/"))
 }
 
 func TestJobProgressRecorderResetResults(t *testing.T) {

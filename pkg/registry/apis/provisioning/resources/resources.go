@@ -27,21 +27,6 @@ var (
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
-// PathCreationError represents an error that occurred while creating a folder path.
-// It contains the path that failed and the underlying error.
-type PathCreationError struct {
-	Path string
-	Err  error
-}
-
-func (e *PathCreationError) Unwrap() error {
-	return e.Err
-}
-
-func (e *PathCreationError) Error() string {
-	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
-}
-
 // NewResourceOwnershipConflictError creates a BadRequest error for when a resource
 // is owned by a different repository or manager and cannot be modified
 func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {

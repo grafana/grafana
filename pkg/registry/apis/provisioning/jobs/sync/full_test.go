@@ -213,6 +213,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return nil
 				})
 
+				progress.On("HasDirPathFailedCreation", mock.MatchedBy(func(path string) bool {
+					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
+				})).Return(false).Maybe()
+
 				repoResources.On("WriteResourceFromFile", mock.Anything, mock.MatchedBy(func(path string) bool {
 					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
 				}), "").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
@@ -235,6 +239,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -259,6 +264,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -285,6 +291,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -309,6 +316,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -335,6 +343,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
@@ -357,6 +366,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On(
 					"EnsureFolderPathExist",
@@ -581,6 +591,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -640,6 +651,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -695,6 +707,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "").
 					Run(func(args mock.Arguments) {
@@ -753,377 +766,4 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			}
 		})
 	}
-}
-
-// TestFullSync_HierarchicalErrorHandling_FailedFolderCreation tests that when a folder
-// creation fails, all nested resources are skipped with FileActionIgnored
-func TestFullSync_HierarchicalErrorHandling_FailedFolderCreation(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "folder1/", Action: repository.FileActionCreated},
-		{Path: "folder1/subfolder/", Action: repository.FileActionCreated},
-		{Path: "folder1/file1.json", Action: repository.FileActionCreated},
-		{Path: "folder1/subfolder/file2.json", Action: repository.FileActionCreated},
-	}
-
-	folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/").Return("", folderErr).Once()
-
-	progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "folder1/file1.json").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/" && r.Error != nil
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/subfolder/" && r.Action == repository.FileActionIgnored
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/file1.json" && r.Action == repository.FileActionIgnored
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/subfolder/file2.json" && r.Action == repository.FileActionIgnored
-	})).Return().Once()
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_FailedFileDeletion tests folder deletion is prevented when child deletion fails
-func TestFullSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing.T) {
-	scheme := runtime.NewScheme()
-	dynamicClient := dynamicfake.NewSimpleDynamicClient(scheme)
-
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{
-			Path:     "folder1/file1.json",
-			Action:   repository.FileActionDeleted,
-			Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"},
-		},
-		{Path: "folder1/", Action: repository.FileActionDeleted},
-	}
-
-	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
-	gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
-
-	clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
-		return gvr.Group == "dashboard.grafana.app"
-	})).Return(dynamicClient.Resource(gvr), gvk, nil)
-
-	dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
-		return true, nil, fmt.Errorf("permission denied")
-	})
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/file1.json" && r.Error != nil
-	})).Return().Once()
-
-	progress.On("HasFailedDeletionsUnder", "folder1/").Return(true).Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/" && r.Action == repository.FileActionIgnored
-	})).Return().Once()
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure tests deletions proceed despite creation failures
-func TestFullSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure(t *testing.T) {
-	scheme := runtime.NewScheme()
-	dynamicClient := dynamicfake.NewSimpleDynamicClient(scheme)
-
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "folder1/", Action: repository.FileActionCreated},
-		{
-			Path:     "folder1/file1.json",
-			Action:   repository.FileActionDeleted,
-			Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"},
-		},
-	}
-
-	folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/").Return("", folderErr).Once()
-
-	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
-	gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
-	clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
-		return gvr.Group == "dashboard.grafana.app"
-	})).Return(dynamicClient.Resource(gvr), gvk, nil)
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/" && r.Error != nil
-	})).Return().Once()
-
-	// Deletion should proceed (not check IsNestedUnderFailedCreation)
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "folder1/file1.json" && r.Action == repository.FileActionDeleted && r.Error == nil
-	})).Return().Once()
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_MultiLevelNesting tests errors cascade through multiple nesting levels
-func TestFullSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "level1/", Action: repository.FileActionCreated},
-		{Path: "level1/level2/", Action: repository.FileActionCreated},
-		{Path: "level1/level2/level3/", Action: repository.FileActionCreated},
-		{Path: "level1/level2/level3/file.json", Action: repository.FileActionCreated},
-	}
-
-	folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/").Return("", folderErr).Once()
-
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/level3/").Return(true).Once()
-	progress.On("IsNestedUnderFailedCreation", "level1/level2/level3/file.json").Return(true).Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "level1/" && r.Error != nil
-	})).Return().Once()
-
-	for _, path := range []string{"level1/level2/", "level1/level2/level3/", "level1/level2/level3/file.json"} {
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Path == path && r.Action == repository.FileActionIgnored
-		})).Return().Once()
-	}
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_MultipleFolderDeletionFailures tests multiple folder deletion failures
-func TestFullSync_HierarchicalErrorHandling_MultipleFolderDeletionFailures(t *testing.T) {
-	scheme := runtime.NewScheme()
-	dynamicClient := dynamicfake.NewSimpleDynamicClient(scheme)
-
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "folder1/file1.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"}},
-		{Path: "folder1/", Action: repository.FileActionDeleted},
-		{Path: "folder2/file2.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file2", Group: "dashboard.grafana.app", Resource: "dashboards"}},
-		{Path: "folder2/", Action: repository.FileActionDeleted},
-	}
-
-	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
-	gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
-	clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
-		return gvr.Group == "dashboard.grafana.app"
-	})).Return(dynamicClient.Resource(gvr), gvk, nil)
-
-	dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
-		return true, nil, fmt.Errorf("permission denied")
-	})
-
-	for _, path := range []string{"folder1/file1.json", "folder2/file2.json"} {
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Path == path && r.Error != nil
-		})).Return().Once()
-	}
-
-	progress.On("HasFailedDeletionsUnder", "folder1/").Return(true).Once()
-	progress.On("HasFailedDeletionsUnder", "folder2/").Return(true).Once()
-
-	for _, path := range []string{"folder1/", "folder2/"} {
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Path == path && r.Action == repository.FileActionIgnored
-		})).Return().Once()
-	}
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_MixedSuccessAndFailure tests mixed scenarios
-func TestFullSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "success/", Action: repository.FileActionCreated},
-		{Path: "success/file1.json", Action: repository.FileActionCreated},
-		{Path: "failure/", Action: repository.FileActionCreated},
-		{Path: "failure/file2.json", Action: repository.FileActionCreated},
-	}
-
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "success/").Return("success-folder", nil).Once()
-	repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "").
-		Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
-
-	folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/").Return("", folderErr).Once()
-
-	progress.On("IsNestedUnderFailedCreation", "success/file1.json").Return(false).Once()
-	progress.On("IsNestedUnderFailedCreation", "failure/file2.json").Return(true).Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "success/" && r.Error == nil
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "success/file1.json" && r.Error == nil
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "failure/" && r.Error != nil
-	})).Return().Once()
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "failure/file2.json" && r.Action == repository.FileActionIgnored
-	})).Return().Once()
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
-	repoResources.AssertExpectations(t)
-}
-
-// TestFullSync_HierarchicalErrorHandling_NestedSubfolderDeletionFailure tests nested folder deletion failure
-func TestFullSync_HierarchicalErrorHandling_NestedSubfolderDeletionFailure(t *testing.T) {
-	scheme := runtime.NewScheme()
-	dynamicClient := dynamicfake.NewSimpleDynamicClient(scheme)
-
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Path: "parent/subfolder/file.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file1", Group: "dashboard.grafana.app", Resource: "dashboards"}},
-		{Path: "parent/subfolder/", Action: repository.FileActionDeleted},
-		{Path: "parent/", Action: repository.FileActionDeleted},
-	}
-
-	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
-	gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
-	clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
-		return gvr.Group == "dashboard.grafana.app"
-	})).Return(dynamicClient.Resource(gvr), gvk, nil)
-
-	dynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
-		return true, nil, fmt.Errorf("permission denied")
-	})
-
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path == "parent/subfolder/file.json" && r.Error != nil
-	})).Return().Once()
-
-	progress.On("HasFailedDeletionsUnder", "parent/subfolder/").Return(true).Once()
-	progress.On("HasFailedDeletionsUnder", "parent/").Return(true).Once()
-
-	for _, path := range []string{"parent/subfolder/", "parent/"} {
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Path == path && r.Action == repository.FileActionIgnored
-		})).Return().Once()
-	}
-
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
-	progress.On("SetTotal", mock.Anything, len(changes)).Return()
-	progress.On("TooManyErrors").Return(nil).Maybe()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	require.NoError(t, err)
-	progress.AssertExpectations(t)
 }
