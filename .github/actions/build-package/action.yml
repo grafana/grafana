@@ -84,11 +84,11 @@ inputs:
     required: false
   ubuntu-base:
     type: string
-    default: ''
+    default: 'ubuntu'
     required: false
   alpine-base:
     type: string
-    default: ''
+    default: 'alpine'
     required: false
 outputs:
   dist-dir:
