@@ -828,6 +828,10 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
+  /**
   * Enables the new logs panel
   * @default true
   */
