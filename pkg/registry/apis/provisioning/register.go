@@ -502,22 +502,6 @@ func toAuthorizerDecision(err error) (authorizer.Decision, string, error) {
 	return authorizer.DecisionAllow, "", nil
 }
 
-// allowForAdminsOrAccessPolicy is used for resources without fine-grained permissions.
-func allowForAdminsOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) || id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-// allowForViewersOrAccessPolicy allows any authenticated user with at least viewer role.
-func allowForViewersOrAccessPolicy(id identity.Requester) (authorizer.Decision, string, error) {
-	if authlib.IsIdentityType(id.GetIdentityType(), authlib.TypeAccessPolicy) || id.GetOrgRole().Includes(identity.RoleViewer) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "viewer role is required", nil
-}
-
 // isRoleBasedResource returns true for resources that use role-based authorization
 // instead of fine-grained permissions. These resources bypass the access checker.
 func isRoleBasedResource(resource string) bool {
