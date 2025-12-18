@@ -103,6 +103,7 @@ func namespacedKey(nsPrefix, key string) string {
 
 func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	nsPrefix += "-get"
 
 	t.Run("get existing key", func(t *testing.T) {
 		// First save a key
@@ -221,6 +222,7 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	nsPrefix += "-delete"
 
 	t.Run("delete existing key", func(t *testing.T) {
 		// First create a key
@@ -262,6 +264,7 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	nsPrefix += "-keys"
 
 	// Setup test data
 	testKeys := namespacedKeys(nsPrefix, []string{"a1", "a2", "b1", "b2", "c1"})
@@ -360,6 +363,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	nsPrefix += "-keys-with-limits"
 
 	// Setup test data
 	testKeys := namespacedKeys(nsPrefix, []string{"a1", "a2", "b1", "b2", "c1", "c2", "d1", "d2"})
@@ -416,6 +420,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	nsPrefix += "-keys-with-sort"
 
 	// Setup test data
 	testKeys := namespacedKeys(nsPrefix, []string{"a1", "a2", "b1", "b2", "c1"})
@@ -619,29 +624,29 @@ func runTestKVUnixTimestamp(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-batchget"
+	nsPrefix += "-batchget"
 
 	t.Run("batch get existing keys", func(t *testing.T) {
 		// Setup test data
 		testData := map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-			"key3": "value3",
+			namespacedKey(nsPrefix, "key1"): "value1",
+			namespacedKey(nsPrefix, "key2"): "value2",
+			namespacedKey(nsPrefix, "key3"): "value3",
 		}
 
 		// Save test data
 		for key, value := range testData {
-			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+			saveKVHelper(t, kv, ctx, testSection, key, strings.NewReader(value))
 		}
 
 		// Batch get all keys
-		keys := []string{"key1", "key2", "key3"}
+		keys := namespacedKeys(nsPrefix, []string{"key1", "key2", "key3"})
 		type result struct {
 			key   string
 			value string
 		}
 		var results []result
-		for kv, err := range kv.BatchGet(ctx, section, keys) {
+		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
 			require.NoError(t, err)
@@ -651,10 +656,10 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		// Verify results
-		assert.Len(t, results, 3)
+		require.Len(t, results, 3)
 
 		// Check that all keys are present and in order
-		expectedKeys := []string{"key1", "key2", "key3"}
+		expectedKeys := namespacedKeys(nsPrefix, []string{"key1", "key2", "key3"})
 		actualKeys := make([]string, len(results))
 		for i, r := range results {
 			actualKeys[i] = r.key
@@ -663,22 +668,40 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Verify values
 		for _, r := range results {
-			assert.Equal(t, testData[r.key], r.value)
+			assert.Equal(t, testData[r.key], r.value, "key = %s", r.key)
 		}
+	})
+
+	t.Run("batch get with empty section", func(t *testing.T) {
+		var kvs []resource.KeyValue
+		var errs []error
+		keys := namespacedKeys(nsPrefix, []string{"key1", "key2", "key3"})
+		for kv, err := range kv.BatchGet(ctx, "", keys) {
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+
+			kvs = append(kvs, kv)
+		}
+
+		require.Len(t, errs, 1)
+		assert.Contains(t, errs[0].Error(), "section is required")
+		assert.Empty(t, kvs)
 	})
 
 	t.Run("batch get with non-existent keys", func(t *testing.T) {
 		// Setup some test data
-		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader("existing-value"))
+		saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, "existing-key"), strings.NewReader("existing-value"))
 
 		// Batch get with mix of existing and non-existent keys
-		keys := []string{"existing-key", "non-existent-1", "non-existent-2"}
+		keys := namespacedKeys(nsPrefix, []string{"existing-key", "non-existent-1", "non-existent-2"})
 		type result struct {
 			key   string
 			value string
 		}
 		var results []result
-		for kv, err := range kv.BatchGet(ctx, section, keys) {
+		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
 			require.NoError(t, err)
@@ -688,15 +711,15 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		// Should only return the existing key
-		assert.Len(t, results, 1)
-		assert.Equal(t, "existing-key", results[0].key)
+		require.Len(t, results, 1)
+		assert.Equal(t, namespacedKey(nsPrefix, "existing-key"), results[0].key)
 		assert.Equal(t, "existing-value", results[0].value)
 	})
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
-		keys := []string{"non-existent-1", "non-existent-2", "non-existent-3"}
+		keys := namespacedKeys(nsPrefix, []string{"non-existent-1", "non-existent-2", "non-existent-3"})
 		var results []resource.KeyValue
-		for kv, err := range kv.BatchGet(ctx, section, keys) {
+		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
 		}
@@ -708,7 +731,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("batch get with empty keys list", func(t *testing.T) {
 		keys := []string{}
 		var results []resource.KeyValue
-		for kv, err := range kv.BatchGet(ctx, section, keys) {
+		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
 		}
@@ -718,16 +741,16 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch get with empty section", func(t *testing.T) {
-		keys := []string{"some-key"}
+		keys := namespacedKeys(nsPrefix, []string{"some-key"})
 		var errors []error
 		for kv, err := range kv.BatchGet(ctx, "", keys) {
 			if err != nil {
 				errors = append(errors, err)
-				break
+				continue
 			}
 			_ = kv // unused
 		}
-		assert.Len(t, errors, 1)
+		require.Len(t, errors, 1)
 		assert.Contains(t, errors[0].Error(), "section is required")
 	})
 
@@ -741,13 +764,13 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Save test data
 		for key, value := range testData {
-			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+			saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, key), strings.NewReader(value))
 		}
 
 		// Batch get in specific order
-		keys := []string{"z-key", "a-key", "m-key"}
+		keys := namespacedKeys(nsPrefix, []string{"z-key", "invalid-key1", "a-key", "invalid-key2", "m-key", "invalid-key3"})
 		var results []string
-		for kv, err := range kv.BatchGet(ctx, section, keys) {
+		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			err = kv.Value.Close()
 			require.NoError(t, err)
@@ -755,8 +778,8 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		// Verify order is preserved
-		assert.Len(t, results, 3)
-		expectedOrder := []string{"z-key", "a-key", "m-key"}
+		require.Len(t, results, 3)
+		expectedOrder := namespacedKeys(nsPrefix, []string{"z-key", "a-key", "m-key"})
 		assert.Equal(t, expectedOrder, results)
 	})
 }
