@@ -126,11 +126,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
-  /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
   renderAuthJWT?: boolean;

@@ -79,10 +79,6 @@ const (
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
 
-	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger
-	FlagUnifiedRequestLog = "unifiedRequestLog"
-
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"

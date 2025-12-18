@@ -3502,7 +3502,8 @@
       "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "deletionTimestamp": "2025-12-18T14:21:02Z"
       },
       "spec": {
         "description": "Writes error logs to the request logger",
