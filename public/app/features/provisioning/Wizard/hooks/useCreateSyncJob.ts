@@ -5,13 +5,14 @@ import { StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
+  requiresMigration: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
+export function useCreateSyncJob({ repoName, requiresMigration, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
-  const createSyncJob = async (requiresMigration: boolean) => {
+  const createSyncJob = async () => {
     if (!repoName) {
       setStepStatusInfo?.({
         status: 'error',
