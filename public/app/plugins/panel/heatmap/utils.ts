@@ -927,3 +927,17 @@ export const valuesToFills = (values: number[], palette: string[], minValue: num
 
   return indexedFills;
 };
+
+/**
+ * Calculates the Y-axis size divisor for heatmap cell rendering.
+ * For log/symlog scales with calculated data (no explicit scale), divides cells by the split value.
+ * Otherwise returns 1 (no division).
+ */
+export function calculateYSizeDivisor(
+  scaleType: ScaleDistribution | undefined,
+  hasExplicitScale: boolean,
+  splitValue: number | string | undefined
+): number {
+  const isLogScale = scaleType === ScaleDistribution.Log || scaleType === ScaleDistribution.Symlog;
+  return isLogScale && !hasExplicitScale ? +(splitValue || 1) : 1;
+}

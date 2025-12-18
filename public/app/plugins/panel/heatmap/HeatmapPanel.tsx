@@ -5,7 +5,6 @@ import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
-  ScaleDistribution,
   TooltipPlugin2,
   TooltipDisplayMode,
   UPlotChart,
@@ -29,7 +28,7 @@ import { HeatmapTooltip } from './HeatmapTooltip';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
-import { prepConfig } from './utils';
+import { calculateYSizeDivisor, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -144,10 +143,12 @@ const HeatmapPanelViz = ({
     const activeScaleConfig = options.rowsFrame?.yBucketScale ?? scaleConfig;
 
     // For log/symlog scales: use 1 for pre-bucketed data with explicit scale, otherwise use split value
-    const isLogScale =
-      activeScaleConfig?.type === ScaleDistribution.Log || activeScaleConfig?.type === ScaleDistribution.Symlog;
     const hasExplicitScale = options.rowsFrame?.yBucketScale !== undefined;
-    const ySizeDivisor = isLogScale && !hasExplicitScale ? +(options.calculation?.yBuckets?.value || 1) : 1;
+    const ySizeDivisor = calculateYSizeDivisor(
+      activeScaleConfig?.type,
+      hasExplicitScale,
+      options.calculation?.yBuckets?.value
+    );
 
     return prepConfig({
       dataRef,

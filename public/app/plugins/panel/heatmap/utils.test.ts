@@ -1,4 +1,47 @@
-import { boundedMinMax, valuesToFills } from './utils';
+import { ScaleDistribution } from '@grafana/schema';
+
+import { boundedMinMax, calculateYSizeDivisor, valuesToFills } from './utils';
+
+describe('calculateYSizeDivisor', () => {
+  it('returns 1 for linear scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Linear, false, 2)).toBe(1);
+  });
+
+  it('returns 1 for log scale with explicit scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, true, 2)).toBe(1);
+  });
+
+  it('returns 1 for symlog scale with explicit scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Symlog, true, 2)).toBe(1);
+  });
+
+  it('returns split value for log scale without explicit scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, false, 2)).toBe(2);
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, false, 4)).toBe(4);
+  });
+
+  it('returns split value for symlog scale without explicit scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Symlog, false, 2)).toBe(2);
+    expect(calculateYSizeDivisor(ScaleDistribution.Symlog, false, 3)).toBe(3);
+  });
+
+  it('handles string split values', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, false, '2')).toBe(2);
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, false, '4')).toBe(4);
+  });
+
+  it('returns 1 when split value is undefined', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Log, false, undefined)).toBe(1);
+  });
+
+  it('returns 1 when scale type is undefined', () => {
+    expect(calculateYSizeDivisor(undefined, false, 2)).toBe(1);
+  });
+
+  it('returns 1 for ordinal scale', () => {
+    expect(calculateYSizeDivisor(ScaleDistribution.Ordinal, false, 2)).toBe(1);
+  });
+});
 
 describe('boundedMinMax', () => {
   describe('when min and max are not provided', () => {
