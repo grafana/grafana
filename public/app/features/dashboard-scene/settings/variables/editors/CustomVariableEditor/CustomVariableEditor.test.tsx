@@ -51,7 +51,7 @@ function renderEditor(ui: React.ReactNode) {
         fireEvent.blur(elements.queryInput());
       },
       changeValuesFormat(newFormat: 'csv' | 'json') {
-        const targetLabel = newFormat === 'json' ? 'Object values in a JSON array' : 'Values separated by comma';
+        const targetLabel = newFormat === 'json' ? 'JSON' : 'CSV';
 
         const formatButton = elements.formatButton(targetLabel);
         if (formatButton === null) {

@@ -83,14 +83,11 @@ const buildLabelPath = (label: string) => {
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
   if ('valuesFormat' in variable && variable.valuesFormat === 'json') {
     try {
-      return Object.keys(JSON.parse(variable.query)[0]).filter((k) => k !== 'text' && k !== 'value');
+      return Object.keys(JSON.parse(variable.query)[0]);
     } catch {
       return [];
     }
   }
-
-  // TODO: QueryVariable support (will also require adjusting some TS types here and there...)
-
   return [];
 };
 

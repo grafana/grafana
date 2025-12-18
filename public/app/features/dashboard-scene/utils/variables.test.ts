@@ -103,8 +103,8 @@ describe('when creating variables objects', () => {
       text: 'a',
       type: 'custom',
       value: 'a',
-      valuesFormat: 'csv',
       hide: 0,
+      valuesFormat: 'csv',
     });
   });
 

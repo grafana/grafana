@@ -3,6 +3,7 @@ import { FormEvent, useCallback, useState } from 'react';
 
 import { CustomVariableModel, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -55,12 +56,16 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
     (event: FormEvent<HTMLTextAreaElement>) => {
       setPrevQuery('');
 
-      if (valuesFormat === 'json') {
-        const validationError = validateJsonQuery(event.currentTarget.value);
+      if (config.featureToggles.multiPropsVariables && valuesFormat === 'json') {
+        const validationError = validateJsonQuery(event.currentTarget.value.trim());
         setQueryValidationError(validationError);
         if (validationError) {
           return;
         }
+      }
+
+      if (!config.featureToggles.multiPropsVariables) {
+        variable.setState({ valuesFormat: 'csv' });
       }
 
       variable.setState({ query: event.currentTarget.value });
@@ -116,8 +121,7 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
   ];
 }
 
-export const validateJsonQuery = (rawQuery: string): Error | undefined => {
-  const query = rawQuery.trim();
+export const validateJsonQuery = (query: string): Error | undefined => {
   if (!query) {
     return;
   }

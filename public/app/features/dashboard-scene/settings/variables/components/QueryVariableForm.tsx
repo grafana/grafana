@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
-import { Box, Field } from '@grafana/ui';
+import { Field } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
@@ -16,9 +16,9 @@ import { getVariableQueryEditor } from 'app/features/variables/editor/getVariabl
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
 import {
-  QueryVariableStaticOptions,
   StaticOptionsOrderType,
   StaticOptionsType,
+  QueryVariableStaticOptions,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { VariableLegend } from './VariableLegend';
@@ -34,7 +34,6 @@ interface QueryVariableEditorFormProps {
   timeRange: TimeRange;
   regex: string | null;
   onRegExChange: (event: FormEvent<HTMLTextAreaElement>) => void;
-  disableRegexEdition?: boolean;
   regexApplyTo?: VariableRegexApplyTo;
   onRegexApplyToChange?: (event: VariableRegexApplyTo) => void;
   sort: VariableSort;
@@ -45,17 +44,14 @@ interface QueryVariableEditorFormProps {
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   allowCustomValue?: boolean;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
-  disableAllowCustomValue?: boolean;
   includeAll: boolean;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
-  disableCustomAllValue?: boolean;
   staticOptions?: StaticOptionsType;
   staticOptionsOrder?: StaticOptionsOrderType;
   onStaticOptionsChange?: (staticOptions: StaticOptionsType) => void;
   onStaticOptionsOrderChange?: (staticOptionsOrder: StaticOptionsOrderType) => void;
-  disableStaticOptions?: boolean;
 }
 
 export function QueryVariableEditorForm({
@@ -67,7 +63,6 @@ export function QueryVariableEditorForm({
   timeRange,
   regex,
   onRegExChange,
-  disableRegexEdition,
   regexApplyTo,
   onRegexApplyToChange,
   sort,
@@ -78,17 +73,14 @@ export function QueryVariableEditorForm({
   onMultiChange,
   allowCustomValue,
   onAllowCustomValueChange,
-  disableAllowCustomValue,
   includeAll,
   onIncludeAllChange,
   allValue,
   onAllValueChange,
-  disableCustomAllValue,
   staticOptions,
   staticOptionsOrder,
   onStaticOptionsChange,
   onStaticOptionsOrderChange,
-  disableStaticOptions,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -128,32 +120,27 @@ export function QueryVariableEditorForm({
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
-        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
       </Field>
 
       {datasource && VariableQueryEditor && (
-        <Box marginBottom={2}>
-          <QueryEditor
-            onQueryChange={onQueryChange}
-            onLegacyQueryChange={onLegacyQueryChange}
-            datasource={datasource}
-            query={query}
-            VariableQueryEditor={VariableQueryEditor}
-            timeRange={timeRange}
-          />
-        </Box>
-      )}
-
-      {!disableRegexEdition && (
-        <QueryVariableRegexForm
-          regex={regex}
-          regexApplyTo={regexApplyTo}
-          onRegExChange={onRegExChange}
-          onRegexApplyToChange={onRegexApplyToChange}
+        <QueryEditor
+          onQueryChange={onQueryChange}
+          onLegacyQueryChange={onLegacyQueryChange}
+          datasource={datasource}
+          query={query}
+          VariableQueryEditor={VariableQueryEditor}
+          timeRange={timeRange}
         />
       )}
+
+      <QueryVariableRegexForm
+        regex={regex}
+        regexApplyTo={regexApplyTo}
+        onRegExChange={onRegExChange}
+        onRegexApplyToChange={onRegexApplyToChange}
+      />
 
       <QueryVariableSortSelect
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
@@ -167,7 +154,7 @@ export function QueryVariableEditorForm({
         refresh={refresh}
       />
 
-      {!disableStaticOptions && onStaticOptionsChange && onStaticOptionsOrderChange && (
+      {onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
@@ -183,8 +170,6 @@ export function QueryVariableEditorForm({
         multi={!!isMulti}
         includeAll={!!includeAll}
         allowCustomValue={allowCustomValue}
-        disableAllowCustomValue={disableAllowCustomValue}
-        disableCustomAllValue={disableCustomAllValue}
         allValue={allValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}

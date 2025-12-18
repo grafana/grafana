@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
 
@@ -12,6 +13,7 @@ import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { validateJsonQuery } from './CustomVariableEditor';
+import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
 
 interface ModalEditorProps {
   variable: CustomVariable;
@@ -19,6 +21,13 @@ interface ModalEditorProps {
 }
 
 export function ModalEditor(props: ModalEditorProps) {
+  if (!config.featureToggles.multiPropsVariables) {
+    return <ModalEditorNonMultiProps {...props} />;
+  }
+  return <ModalEditorMultiProps {...props} />;
+}
+
+function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
     valuesFormat,
     query,
@@ -134,7 +143,11 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         source: variable,
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
-          variable.setState({ valuesFormat, query, value: undefined });
+          if (!config.featureToggles.multiPropsVariables) {
+            variable.setState({ valuesFormat: 'csv', query, value: undefined });
+          } else {
+            variable.setState({ valuesFormat, query, value: undefined });
+          }
 
           if (valuesFormat === 'json') {
             variable.setState({ allowCustomValue: false, allValue: undefined });

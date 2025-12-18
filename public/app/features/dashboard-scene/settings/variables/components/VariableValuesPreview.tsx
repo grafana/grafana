@@ -4,6 +4,7 @@ import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { VariableValueOption } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
@@ -15,14 +16,16 @@ export interface Props {
 export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
   const styles = useStyles2(getStyles);
   const hasOptions = options.length > 0;
+  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasMultiProps;
+
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
           Preview of values ({'{{count}}'})
         </Trans>
-        {hasOptions && hasMultiProps && <VariableValuesWithPropsPreview options={options} />}
-        {hasOptions && !hasMultiProps && <VariableValuesWithoutPropsPreview options={options} />}
+        {hasOptions && displayMultiPropsPreview && <VariableValuesWithPropsPreview options={options} />}
+        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
       </Text>
     </div>
   );

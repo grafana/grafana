@@ -1,13 +1,13 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue, VariableRegexApplyTo } from '@grafana/data';
+import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef, VariableRegexApplyTo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
-import { Box, Button, Field, Modal, Switch, TextLink } from '@grafana/ui';
+import { Box, Button, Field, Modal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
@@ -45,7 +45,6 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     allowCustomValue,
     staticOptions,
     staticOptionsOrder,
-    options,
   } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
@@ -98,17 +97,6 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ staticOptionsOrder });
   };
 
-  const hasMultiProps = useMemo(() => options.every((o) => Boolean(o.properties)), [options]);
-
-  useEffect(() => {
-    if (hasMultiProps) {
-      variable.setState({ allowCustomValue: false });
-      variable.setState({ allValue: '' });
-      variable.setState({ regex: '' });
-      variable.setState({ staticOptions: [] });
-    }
-  }, [hasMultiProps, variable]);
-
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
@@ -120,7 +108,6 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       regex={regex}
       regexApplyTo={regexApplyTo}
       onRegExChange={onRegExChange}
-      disableRegexEdition={hasMultiProps}
       onRegexApplyToChange={onRegexApplyToChange}
       sort={sort}
       onSortChange={onSortChange}
@@ -132,15 +119,12 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onIncludeAllChange={onIncludeAllChange}
       allValue={allValue ?? ''}
       onAllValueChange={onAllValueChange}
-      disableCustomAllValue={hasMultiProps}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
-      disableAllowCustomValue={hasMultiProps}
       staticOptions={staticOptions}
       staticOptionsOrder={staticOptionsOrder}
       onStaticOptionsChange={onStaticOptionsChange}
       onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-      disableStaticOptions={hasMultiProps}
     />
   );
 }
@@ -274,19 +258,6 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
-  // TODO: remove me after finished testing - each DS can/should implement their own UI
-  const [returnsMultiProps, setReturnsMultiProps] = useState(false);
-  const onChangeReturnsMultipleProps = (e: FormEvent<HTMLInputElement>) => {
-    setReturnsMultiProps(e.currentTarget.checked);
-    variable.setState({ allowCustomValue: false });
-    variable.setState({ allValue: '' });
-    variable.setState({ regex: '' });
-    onStaticOptionsChange?.([]);
-  };
-
-  const optionsForSelect = variable.getOptionsForSelect(false);
-  const hasMultiProps = returnsMultiProps || optionsForSelect.every((o) => Boolean(o.properties));
-
   return (
     <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
       <Field
@@ -298,43 +269,22 @@ export function Editor({ variable }: { variable: QueryVariable }) {
       </Field>
 
       {selectedDatasource && VariableQueryEditor && (
-        <Box marginBottom={2}>
-          <QueryEditor
-            onQueryChange={onQueryChange}
-            onLegacyQueryChange={onQueryChange}
-            datasource={selectedDatasource}
-            query={query}
-            VariableQueryEditor={VariableQueryEditor}
-            timeRange={timeRange}
-          />
-          {/* TODO: remove me after finished testing - each DS can/should implement their own UI */}
-          <Field
-            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-            label="Enable access to all the fields of the query results"
-            description={
-              <Trans i18nKey="">
-                Check{' '}
-                <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
-                  our docs
-                </TextLink>{' '}
-                for more information.
-              </Trans>
-            }
-            noMargin
-          >
-            <Switch onChange={onChangeReturnsMultipleProps} />
-          </Field>
-        </Box>
-      )}
-
-      {!returnsMultiProps && (
-        <QueryVariableRegexForm
-          regex={regex}
-          regexApplyTo={regexApplyTo}
-          onRegExChange={onRegExChange}
-          onRegexApplyToChange={onRegexApplyToChange}
+        <QueryEditor
+          onQueryChange={onQueryChange}
+          onLegacyQueryChange={onQueryChange}
+          datasource={selectedDatasource}
+          query={query}
+          VariableQueryEditor={VariableQueryEditor}
+          timeRange={timeRange}
         />
       )}
+
+      <QueryVariableRegexForm
+        regex={regex}
+        regexApplyTo={regexApplyTo}
+        onRegExChange={onRegExChange}
+        onRegexApplyToChange={onRegexApplyToChange}
+      />
 
       <QueryVariableSortSelect
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
@@ -348,7 +298,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         refresh={refresh}
       />
 
-      {!returnsMultiProps && onStaticOptionsChange && onStaticOptionsOrderChange && (
+      {onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
@@ -357,7 +307,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         />
       )}
 
-      {isHasVariableOptions && <VariableValuesPreview options={optionsForSelect} hasMultiProps={hasMultiProps} />}
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
     </div>
   );
 }
