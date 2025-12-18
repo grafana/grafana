@@ -12184,10 +12184,10 @@
     "synchronize-step": {
       "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
       "migrate-resources-description": "Import existing dashboards from all folders into the new provisioned folder",
+      "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
-      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
-      "synchronization-options": "Synchronization options"
+      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
     },
     "token-permissions-info": {
       "and-click": "and click",
