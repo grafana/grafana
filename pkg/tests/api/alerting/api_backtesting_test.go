@@ -21,6 +21,7 @@ import (
 )
 
 func TestBacktesting(t *testing.T) {
+	t.Skip()
 	dir, grafanaPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

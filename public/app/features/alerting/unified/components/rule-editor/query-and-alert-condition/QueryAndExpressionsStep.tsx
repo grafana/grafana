@@ -617,16 +617,16 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 )}
                 {!isPreviewLoading && (
                   <Button
-                      data-testid={selectors.components.AlertRules.previewButton}
-                      icon="sync"
-                      type="button"
-                      onClick={() => runQueriesPreview()}
-                      disabled={emptyQueries}
-                    >
-                      {!simplifiedQueryStep
-                        ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
-                        : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
-                    </Button>
+                    data-testid={selectors.components.AlertRules.previewButton}
+                    icon="sync"
+                    type="button"
+                    onClick={() => runQueriesPreview()}
+                    disabled={emptyQueries}
+                  >
+                    {!simplifiedQueryStep
+                      ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
+                      : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
+                  </Button>
                 )}
               </Stack>
             </Stack>
