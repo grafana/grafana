@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -35,10 +36,17 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlKVKeys     = mustTemplate("sqlkv_keys.sql")
-	sqlKVGet      = mustTemplate("sqlkv_get.sql")
-	sqlKVBatchGet = mustTemplate("sqlkv_batch_get.sql")
-	sqlKVDelete   = mustTemplate("sqlkv_delete.sql")
+	sqlKVKeys                        = mustTemplate("sqlkv_keys.sql")
+	sqlKVGet                         = mustTemplate("sqlkv_get.sql")
+	sqlKVBatchGet                    = mustTemplate("sqlkv_batch_get.sql")
+	sqlKVSaveEvent                   = mustTemplate("sqlkv_save_event.sql")
+	sqlKVInsertData                  = mustTemplate("sqlkv_insert_datastore.sql")
+	sqlKVUpdateData                  = mustTemplate("sqlkv_update_datastore.sql")
+	sqlKVInsertLegacyResourceHistory = mustTemplate("sqlkv_insert_legacy_resource_history.sql")
+	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
+	sqlKVDelete                      = mustTemplate("sqlkv_delete.sql")
 )
 
 // sqlKVSection can be embedded in structs used when rendering query templates
@@ -126,6 +134,33 @@ func (req sqlKVBatchGetRequest) KeyPaths() []string {
 	}
 
 	return result
+}
+
+type sqlKVSaveRequest struct {
+	sqltemplate.SQLTemplate
+	sqlKVSectionKey
+	Value []byte
+
+	// old fields that can be removed once we prune resource_history
+	GUID      string
+	Group     string
+	Resource  string
+	Namespace string
+	Name      string
+	Action    int64
+	Folder    string
+}
+
+type sqlKVSaveResponse struct {
+	Value []byte
+}
+
+func (req sqlKVSaveRequest) Validate() error {
+	return req.sqlKVSectionKey.Validate()
+}
+
+func (req sqlKVSaveRequest) Results() ([]byte, error) {
+	return req.Value, nil
 }
 
 type sqlKVKeysRequest struct {
@@ -345,14 +380,146 @@ func (w *sqlWriteCloser) Close() error {
 
 	w.closed = true
 
-	tx, ok := rvmanager.TxFromCtx(w.ctx)
-	if !ok {
-		// do regular kv save
+	// do regular kv save: simple key_path + value insert with conflict check.
+	// can only do this on resource_events for now, until we drop the columns in resource_history
+	if w.section == eventsSection {
+		_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVSaveEvent, sqlKVSaveRequest{
+			SQLTemplate:     sqltemplate.New(w.kv.dialect),
+			sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+			Value:           w.buf.Bytes(),
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+
 		return nil
 	}
 
-	// write everything but resourceversion and key_path
-	// same for resource
+	// if storage_backend is running with an RvManager, it will inject a transaction into the context
+	// used to keep backwards compatibility between sql-based kvstore and unified/sql/backend
+	tx, ok := rvmanager.TxFromCtx(w.ctx)
+	if !ok {
+		// temporary save for dataStore without rvmanager
+		// we can use the same template as the event one after we:
+		// - move PK from GUID to key_path
+		// - remove all unnecessary columns (or at least their NOT NULL constraints)
+		_, err := w.kv.Get(w.ctx, w.section, w.key)
+		if errors.Is(err, ErrNotFound) {
+			_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVInsertData, sqlKVSaveRequest{
+				SQLTemplate:     sqltemplate.New(w.kv.dialect),
+				sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+				GUID:            uuid.New().String(),
+				Value:           w.buf.Bytes(),
+			})
+
+			if err != nil {
+				return fmt.Errorf("failed to save: %w", err)
+			}
+
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+
+		_, err = dbutil.Exec(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
+			SQLTemplate:     sqltemplate.New(w.kv.dialect),
+			sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+			Value:           w.buf.Bytes(),
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+
+		return nil
+	}
+
+	// special, temporary save that includes all the fields in resource_history that are not relevant for the kvstore,
+	// as well as the resource table. This is only called if an RvManager was passed to storage_backend, as that
+	// component will be responsible for populating the resource_version and key_path columns
+	// note that we are not touching resource_version table, neither the resource_version columns or the key_path column
+	// as the RvManager will be responsible for this
+	dataKey, err := ParseKeyWithGUID(w.key)
+	if err != nil {
+		return fmt.Errorf("failed to parse key: %w", err)
+	}
+
+	var action int64
+	switch dataKey.Action {
+	case DataActionCreated:
+		action = 1
+	case DataActionUpdated:
+		action = 2
+	case DataActionDeleted:
+		action = 3
+	default:
+		return fmt.Errorf("failed to parse key: %w", err)
+	}
+
+	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
+		SQLTemplate:     sqltemplate.New(w.kv.dialect),
+		Value:           w.buf.Bytes(),
+		GUID:            dataKey.GUID,
+		Group:           dataKey.Group,
+		Resource:        dataKey.Resource,
+		Namespace:       dataKey.Namespace,
+		Name:            dataKey.Name,
+		Action:          action,
+		Folder:          dataKey.Folder,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to save: %w", err)
+	}
+
+	switch action {
+	case 1:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResource, sqlKVSaveRequest{
+			SQLTemplate:     sqltemplate.New(w.kv.dialect),
+			Value:           w.buf.Bytes(),
+			GUID:            dataKey.GUID,
+			Group:           dataKey.Group,
+			Resource:        dataKey.Resource,
+			Namespace:       dataKey.Namespace,
+			Name:            dataKey.Name,
+			Action:          action,
+			Folder:          dataKey.Folder,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+	case 2:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVUpdateLegacyResource, sqlKVSaveRequest{
+			SQLTemplate:     sqltemplate.New(w.kv.dialect),
+			Value:           w.buf.Bytes(),
+			Group:           dataKey.Group,
+			Resource:        dataKey.Resource,
+			Namespace:       dataKey.Namespace,
+			Name:            dataKey.Name,
+			Action:          action,
+			Folder:          dataKey.Folder,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+	case 3:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVDeleteLegacyResource, sqlKVSaveRequest{
+			SQLTemplate:     sqltemplate.New(w.kv.dialect),
+			Group:           dataKey.Group,
+			Resource:        dataKey.Resource,
+			Namespace:       dataKey.Namespace,
+			Name:            dataKey.Name,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to save: %w", err)
+		}
+	}
 
 	return nil
 }

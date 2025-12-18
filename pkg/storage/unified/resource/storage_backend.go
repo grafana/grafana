@@ -419,7 +419,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	}
-	err = k.eventStore.Save(ctx, eventData)
+	err := k.eventStore.Save(ctx, eventData)
 	if err != nil {
 		// Clean up the data we wrote since event save failed
 		_ = k.dataStore.Delete(ctx, dataKey)
