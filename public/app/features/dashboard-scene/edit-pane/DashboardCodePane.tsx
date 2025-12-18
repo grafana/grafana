@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/src/schema/dashboard/v2';
-import { Alert, Button, Sidebar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -73,13 +73,23 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
             showMiniMap={false}
+            showValidationAlert={false}
           />
         </div>
 
         <div className={styles.buttonContainer}>
-          <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
-            {t('dashboard.schema-editor.apply-button', 'Apply changes')}
-          </Button>
+          <Tooltip
+            content={t(
+              'dashboard.schema-editor.apply-button-disabled-tooltip',
+              'Fix validation errors before applying changes'
+            )}
+            placement="top"
+            show={isApplyDisabled ? undefined : false}
+          >
+            <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
+              {t('dashboard.schema-editor.apply-button', 'Apply changes')}
+            </Button>
+          </Tooltip>
         </div>
       </div>
     </div>

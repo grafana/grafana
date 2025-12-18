@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -154,20 +154,26 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   };
 
   const saveButton = (overwrite: boolean, disabled = false) => (
-    <Button
-      type="submit"
-      onClick={() => {
-        onSave(overwrite);
-      }}
-      variant={overwrite ? 'destructive' : 'primary'}
-      disabled={disabled}
+    <Tooltip
+      content={t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving')}
+      placement="top"
+      show={disabled ? undefined : false}
     >
-      {overwrite ? (
-        <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">Save and overwrite</Trans>
-      ) : (
-        <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
-      )}
-    </Button>
+      <Button
+        type="submit"
+        onClick={() => {
+          onSave(overwrite);
+        }}
+        variant={overwrite ? 'destructive' : 'primary'}
+        disabled={disabled}
+      >
+        {overwrite ? (
+          <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">Save and overwrite</Trans>
+        ) : (
+          <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
+        )}
+      </Button>
+    </Tooltip>
   );
 
   const cancelButton = (
@@ -265,6 +271,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             onValidationChange={handleValidationChange}
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
+            showValidationAlert={false}
           />
         ) : (
           <CodeEditor
