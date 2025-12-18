@@ -6,7 +6,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   const gradient = `linear-gradient(
     90deg,
     ${colorManipulator.alpha(theme.colors.primary.text, 0.1)} 0%,
-    ${colorManipulator.alpha(theme.colors.secondary.text, 0.1)} 100%
+    ${colorManipulator.alpha(theme.colors.secondary.main, 0.1)} 100%
   )`;
   return {
     dashlistLink: css({
