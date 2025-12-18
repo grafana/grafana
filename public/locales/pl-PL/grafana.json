@@ -3351,6 +3351,7 @@
       "login-attribute-path-label": "Ścieżka atrybutu loginu",
       "login-prompt-consent": "Zgoda",
       "login-prompt-description": "Wskazuje rodzaj interakcji użytkownika, gdy użytkownik loguje się za pomocą IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Monit o zalogowanie",
       "login-prompt-login": "Logowanie",
       "login-prompt-select-account": "Wybierz konto",
@@ -3408,6 +3409,7 @@
       "use-pkce-description": "Jeśli ta opcja jest włączona, Grafana będzie używać <2>klucza próbnego do wymiany kodów (PKCE)</2> z nadawaniem kodu autoryzacyjnego OAuth2.",
       "use-pkce-label": "Użyj PKCE",
       "use-refresh-token-description": "Jeśli ta opcja jest włączona, Grafana pobiera nowy token dostępu za pomocą tokena odświeżania dostarczonego przez dostawcę OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Użyj tokena odświeżania",
       "validate-hosted-domain-description": "Jeśli ta opcja jest włączona, Grafana dopasowuje hostowaną domenę pobraną z tokena Google ID do listy „{{ allowedDomainsLabel }}” określonej przez użytkownika.",
       "validate-hosted-domain-label": "Zweryfikuj hostowaną domenę",
@@ -10267,7 +10269,8 @@
       "copy": "Kopiuj zaznaczenie",
       "disable-menu": "Wyłącz menu",
       "line-contains": "Dodaj jako wiersz zawierający filtr",
-      "line-contains-not": "Dodaj jako wiersz nie zawierający filtra"
+      "line-contains-not": "Dodaj jako wiersz nie zawierający filtra",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Rozdzielczość znacznika czasu",
@@ -11973,7 +11976,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Po połączeniu całej instancji pulpity będą niedostępne podczas uruchamiania migracji. Zalecamy ostrzeżenie użytkowników przed rozpoczęciem tego procesu.",
       "modal-description-public-access": "Skonfiguruj publiczny dostęp do instancji Grafany, aby włączyć integrację z GitHubem",
       "modal-description-required-features": "Włącz funkcje Grafany wymagane do aprowizacji",
       "modal-title-set-up-public-access": "Skonfiguruj dostęp publiczny",
@@ -11985,8 +11987,7 @@
       "step-title-copy-url": "Skopiuj swój publiczny URL",
       "step-title-enable-feature-toggles": "Włącz wymagane przełączniki funkcji",
       "step-title-start-ngrok": "Uruchom narzędzie ngrok, aby uzyskać tymczasowy dostęp publiczny",
-      "step-title-update-grafana-config": "Zaktualizuj konfigurację usługi Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "Skonfigurowanie tego połączenia może spowodować tymczasową niedostępność"
+      "step-title-update-grafana-config": "Zaktualizuj konfigurację usługi Grafana"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Wyświetlaj połączenia aprowizacyjne i nimi zarządzaj"
@@ -12055,18 +12056,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Usuń repozytoria",
-      "configured-repositories-while-running-legacy-storage": "Skonfigurowane repozytoria nie będą działać podczas uruchamiania starszej pamięci masowej.",
       "confirm-delete-repositories": "Czy na pewno chcesz usunąć wszystkie skonfigurowane repozytoria? To działanie jest nieodwracalne.",
       "error-delete-all-repositories": "Nie udało się usunąć wszystkich repozytoriów",
-      "remove-all-configured-repositories": "Usuń wszystkie skonfigurowane repozytoria",
       "subtitle": "Wyświetl skonfigurowane repozytoria i nimi zarządzaj",
       "success-all-repositories-deleted": "Wszystkie skonfigurowane repozytoria zostały usunięte",
       "tab-getting-started": "Pierwsze kroki",
       "tab-getting-started-title": "Pierwsze kroki",
       "tab-repositories": "Repozytoria",
       "tab-repositories-title": "Lista repozytoriów",
-      "title-delete-all-configured-repositories": "Usuń wszystkie skonfigurowane repozytoria",
-      "title-legacy-storage-detected": "Wykryto starszą pamięć masową"
+      "title-delete-all-configured-repositories": "Usuń wszystkie skonfigurowane repozytoria"
     },
     "http-utils": {
       "access-denied": "",
@@ -12106,7 +12104,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12186,7 +12183,6 @@
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
       "cleaning-up-resources": "Sprzątanie zasobów repozytorium",
-      "legacy-storage-message": "Instancja nie używa jeszcze ujednoliconej pamięci masowej – wymaga to kreatora migracji",
       "not-found": "nie znaleziono",
       "not-found-message": "Nie znaleziono repozytorium",
       "repository-config-exists-configuration": "Upewnij się, że konfiguracja repozytorium istnieje w pliku konfiguracyjnym.",
@@ -12195,7 +12191,6 @@
       "tab-resources": "Zasoby",
       "tab-resources-title": "",
       "title": "Status repozytorium",
-      "title-legacy-storage": "Starsza pamięć masowa",
       "title-queued-for-deletion": "Dodano do kolejki do usunięcia"
     },
     "repository-type-cards": {
@@ -12291,9 +12286,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Uwzględnij zatwierdzenia dla każdej wartości historycznej",
-      "synchronization-options": "Opcje synchronizacji"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "i kliknij",
@@ -12310,11 +12303,11 @@
     },
     "warning-title-default": "Ostrzeżenie",
     "wizard": {
-      "alert-point-1": "Podczas tego procesu nie będzie można tworzyć, edytować ani usuwać zasobów. W ostatnim kroku zasoby znikną.",
-      "alert-point-2": "Po zakończeniu aprowizacji zasoby pojawią się ponownie i będą zarządzane za pośrednictwem zewnętrznej pamięci masowej.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Czas trwania tego procesu zależy od liczby zasobów.",
-      "alert-point-4": "Administratorzy instancji Enterprise mogą włączyć wyświetlanie użytkownikom banera z ogłoszeniem. Szczegółowe instrukcje znajdziesz w <2>tym przewodniku</2>.",
-      "alert-title": "Ważne: dane ani konfiguracja nie zostaną utracone, ale pulpity będą niedostępne przez kilka minut.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Zakończ",
@@ -12332,7 +12325,6 @@
       "step-finish": "Wybierz dodatkowe ustawienia",
       "step-synchronize": "Synchronizuj z zewnętrzną pamięcią masową",
       "sync-description": "Zsynchronizuj zasoby z zewnętrzną pamięcią masową. Po tym jednorazowym kroku wszystkie przyszłe aktualizacje zostaną automatycznie zapisane w repozytorium i ponownie aprowizowane w instancji.",
-      "sync-option-history": "Historia",
       "title-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "title-connect": "Połączenie z zewnętrzną pamięcią masową",
       "title-finish": "Wybierz dodatkowe ustawienia",

@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Anmeldeattributpfad",
       "login-prompt-consent": "Einverständnis",
       "login-prompt-description": "Gibt die Art der Nutzerinteraktion an, wenn sich der Nutzer mit dem IdP anmeldet.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Anmeldeaufforderung",
       "login-prompt-login": "Anmelden",
       "login-prompt-select-account": "Account auswählen",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Wenn dies aktiviert ist, nutzt Grafana <2>Proof Key for Code Exchange (PKCE)</2> mit OAuth2 Authorization Code Grant.",
       "use-pkce-label": "PKCE verwenden",
       "use-refresh-token-description": "Wenn dies aktiviert ist, ruft Grafana einen neuen Zugriffstoken mit dem vom OAuth2-Anbieter bereitgestellten Aktualisierungstoken ab.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Aktualisierungstoken nutzen",
       "validate-hosted-domain-description": "Wenn dies aktiviert ist, wird Grafana die vom Google-ID-Token abgerufene gehostete Domain mit der vom Nutzer spezifizierten Liste „{{ allowedDomainsLabel }}“ abgleichen.",
       "validate-hosted-domain-label": "Gehostete Domain validieren",
@@ -10181,7 +10183,8 @@
       "copy": "Auswahl kopieren",
       "disable-menu": "Menü deaktivieren",
       "line-contains": "„Als Zeile hinzufügen“ enthält Filter",
-      "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter"
+      "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Zeitstempelauflösung",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Wenn Sie Ihre gesamte Instanz verbinden, sind während der Ausführung der Migration keine Dashboards verfügbar. Wir empfehlen Ihnen, Ihre Nutzer vor Beginn des Prozesses zu benachrichtigen.",
       "modal-description-public-access": "Richten Sie zur Aktivierung der GitHub-Integration den öffentlichen Zugriff auf Ihre Grafana-Instanz ein",
       "modal-description-required-features": "Benötigte Grafana-Funktionen für die Bereitstellung aktivieren",
       "modal-title-set-up-public-access": "Öffentlichen Zugriff einrichten",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Kopieren Sie Ihre öffentliche URL",
       "step-title-enable-feature-toggles": "Benötigte Funktionsschalter aktivieren",
       "step-title-start-ngrok": "ngrok für temporären öffentlichen Zugriff starten",
-      "step-title-update-grafana-config": "Aktualisieren Sie Ihre Grafana-Konfiguration",
-      "title-setting-connection-could-cause-temporary-outage": "Das Einrichten dieser Verbindung kann zu einem vorübergehenden Ausfall führen"
+      "step-title-update-grafana-config": "Aktualisieren Sie Ihre Grafana-Konfiguration"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Sehen und verwalten Sie Ihre Bereitstellungsverbindungen"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Repositorys löschen",
-      "configured-repositories-while-running-legacy-storage": "Konfigurierte Repositorys funktionieren nicht, wenn veralteter Speicher ausgeführt wird.",
       "confirm-delete-repositories": "Sind Sie sicher, dass Sie alle konfigurierten Repositorys löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
       "error-delete-all-repositories": "Es konnten nicht alle Repositorys gelöscht werden",
-      "remove-all-configured-repositories": "Alle konfigurierten Repositorys entfernen",
       "subtitle": "Sehen und verwalten Sie Ihre konfigurierten Repositorys",
       "success-all-repositories-deleted": "Alle konfigurierten Repositorys gelöscht",
       "tab-getting-started": "Erste Schritte",
       "tab-getting-started-title": "Erste Schritte",
       "tab-repositories": "Repositorys",
       "tab-repositories-title": "Liste der Repositorys",
-      "title-delete-all-configured-repositories": "Alle konfigurierten Repositorys löschen",
-      "title-legacy-storage-detected": "Veralteter Speicher erkannt"
+      "title-delete-all-configured-repositories": "Alle konfigurierten Repositorys löschen"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
       "cleaning-up-resources": "Bereinigen von Repository-Ressourcen",
-      "legacy-storage-message": "Die Instanz führt noch keinen Unified Storage aus – Migrationsassistent erforderlich",
       "not-found": "nicht gefunden",
       "not-found-message": "Repository nicht gefunden",
       "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Ressourcen",
       "tab-resources-title": "",
       "title": "Repository-Status",
-      "title-legacy-storage": "Veralteter Speicher",
       "title-queued-for-deletion": "Zum Löschen in die Warteschlange gestellt"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Commits für jeden historischen Wert erfassen",
-      "synchronization-options": "Synchronisierungsoptionen"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "und klicken",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Warnung",
     "wizard": {
-      "alert-point-1": "Während dieses Vorgangs können keine Ressourcen erstellt, bearbeitet oder gelöscht werden. Im letzten Schritt werden sie entfernt.",
-      "alert-point-2": "Sobald die Bereitstellung abgeschlossen ist, werden die Ressourcen wieder angezeigt und über einen externen Speicher verwaltet.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Die Dauer dieses Prozesses hängt von der Anzahl der betroffenen Ressourcen ab.",
-      "alert-point-4": "Administratoren von Enterprise-Instanzen können Nutzern gegenüber ein Ankündigungsbanner anzeigen. Schritt-für-Schritt-Anweisungen finden Sie in <2>dieser Anleitung</2>.",
-      "alert-title": "Wichtig: Es gehen keine Daten oder Konfigurationen verloren, aber die Dashboards sind für einige Minuten vorübergehend nicht verfügbar.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fertigstellen",
@@ -12230,7 +12223,6 @@
       "step-finish": "Zusätzliche Einstellungen auswählen",
       "step-synchronize": "Mit externem Speicher synchronisieren",
       "sync-description": "Synchronisieren Sie Ressourcen mit externem Speicher. Nach diesem einmaligen Schritt werden alle zukünftigen Updates automatisch im Repository gespeichert und wieder in der Instanz bereitgestellt.",
-      "sync-option-history": "Verlauf",
       "title-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "title-connect": "Mit externem Speicher verbinden",
       "title-finish": "Zusätzliche Einstellungen auswählen",
