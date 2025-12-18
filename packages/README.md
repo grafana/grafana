@@ -2,13 +2,32 @@
 
 ## Exporting code conventions
 
-`@grafana/ui`, `@grafana/data` and `@grafana/runtime` makes use of `exports` in package.json to define three entrypoints that Grafana core and Grafana plugins can access. Before exposing anything in these packages please consider the table below to better understand the use case of each export.
+All the `@grafana` packages in this repo (except `@grafana/schema`) make use of `exports` in package.json to define entrypoints that Grafana core and Grafana plugins can access. Exports can also be used to restrict access to internal files in packages.
 
-| Export Name  | Import Path            | Description                                                                                                                                                                     | Available to Grafana | Available to plugins |
-| ------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
-| `./`         | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                           | ✅                   | ✅                   |
-| `./unstable` | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                             | ✅                   | ✅                   |
-| `./internal` | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you need to import code in Grafana but don't want to expose it to plugins, this is the place to export it. | ✅                   | ❌                   |
+Package authors are free to create as many exports as they like but should consider the following points:
+
+1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. For example:
+
+   ```json
+   "exports": {
+     ".": {
+       "@grafana-app/source": "./src/index.ts",
+       "types": "./dist/types/index.d.ts",
+       "import": "./dist/esm/index.mjs",
+       "require": "./dist/cjs/index.cjs"
+     }
+   }
+   ```
+
+2. If you add exports to your package you must export the `package.json` file.
+
+3. Before exposing anything in these packages please consider the table below to better understand the conventions we have put in place for most of the packages in this repository.
+
+| Export Name  | Import Path            | Description                                                                                                                                                                                                           | Available to Grafana | Available to plugins |
+| ------------ | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `./`         | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                                                                 | ✅                   | ✅                   |
+| `./unstable` | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                                                                   | ✅                   | ✅                   |
+| `./internal` | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you want to co-locate code in a package with it's public API but only want the Grafana application to access it, this is the place to export it. | ✅                   | ❌                   |
 
 ## Versioning
 

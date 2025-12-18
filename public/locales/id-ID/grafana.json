@@ -3318,6 +3318,7 @@
       "login-attribute-path-label": "Jalur atribut login",
       "login-prompt-consent": "Persetujuan",
       "login-prompt-description": "Menunjukkan jenis interaksi pengguna saat pengguna masuk dengan IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Permintaan masuk",
       "login-prompt-login": "Masuk",
       "login-prompt-select-account": "Pilih akun",
@@ -3375,6 +3376,7 @@
       "use-pkce-description": "Jika diaktifkan, Grafana akan menggunakan <2>Proof Key for Code Exchange (PKCE)</2> dengan Pemberian Kode Otorisasi OAuth2.",
       "use-pkce-label": "Gunakan PKCE",
       "use-refresh-token-description": "Jika diaktifkan, Grafana akan mengambil token akses baru menggunakan token muat ulang yang disediakan oleh penyedia OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Gunakan token muat ulang",
       "validate-hosted-domain-description": "Jika diaktifkan, Grafana akan mencocokkan Domain yang Di-hosting yang diambil dari Token ID Google dengan daftar \"{{ allowedDomainsLabel }}\" yang ditentukan oleh pengguna.",
       "validate-hosted-domain-label": "Validasi domain yang di-hosting",
@@ -10138,7 +10140,8 @@
       "copy": "Salin pilihan",
       "disable-menu": "Nonaktifkan menu",
       "line-contains": "Tambahkan sebagai baris berisi filter",
-      "line-contains-not": "Tambahkan sebagai baris tidak berisi filter"
+      "line-contains-not": "Tambahkan sebagai baris tidak berisi filter",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Resolusi stempel waktu",
@@ -11820,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Saat Anda menghubungkan seluruh instans, dasbor tidak akan tersedia saat menjalankan migrasi. Sebaiknya peringatkan pengguna Anda sebelum memulai proses.",
       "modal-description-public-access": "Siapkan akses publik ke instans Grafana Anda untuk mengaktifkan integrasi GitHub",
       "modal-description-required-features": "Aktifkan fitur Grafana yang diperlukan untuk penyediaan",
       "modal-title-set-up-public-access": "Atur akses publik",
@@ -11832,8 +11834,7 @@
       "step-title-copy-url": "Salin URL publik Anda",
       "step-title-enable-feature-toggles": "Aktifkan Tombol Fitur yang Diperlukan",
       "step-title-start-ngrok": "Mulai ngrok untuk akses publik sementara",
-      "step-title-update-grafana-config": "Perbarui konfigurasi Grafana Anda",
-      "title-setting-connection-could-cause-temporary-outage": "Mengatur koneksi ini dapat menyebabkan pemadaman sementara"
+      "step-title-update-grafana-config": "Perbarui konfigurasi Grafana Anda"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
@@ -11902,18 +11903,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Hapus repositori",
-      "configured-repositories-while-running-legacy-storage": "Repositori yang dikonfigurasi tidak akan berfungsi saat menjalankan penyimpanan lama.",
       "confirm-delete-repositories": "Anda yakin ingin menghapus semua repositori yang dikonfigurasi? Tindakan ini tidak dapat dibatalkan.",
       "error-delete-all-repositories": "Gagal menghapus semua repositori",
-      "remove-all-configured-repositories": "Hapus semua repositori yang dikonfigurasi",
       "subtitle": "Lihat dan kelola repositori yang dikonfigurasi",
       "success-all-repositories-deleted": "Semua repositori yang dikonfigurasi dihapus",
       "tab-getting-started": "Memulai",
       "tab-getting-started-title": "Memulai",
       "tab-repositories": "Repositori",
       "tab-repositories-title": "Daftar repositori",
-      "title-delete-all-configured-repositories": "Hapus semua repositori yang dikonfigurasi",
-      "title-legacy-storage-detected": "Penyimpanan lama terdeteksi"
+      "title-delete-all-configured-repositories": "Hapus semua repositori yang dikonfigurasi"
     },
     "http-utils": {
       "access-denied": "",
@@ -11953,7 +11951,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12033,7 +12030,6 @@
     "repository-status-page": {
       "back-to-repositories": "Kembali ke repositori",
       "cleaning-up-resources": "Membersihkan sumber daya repositori",
-      "legacy-storage-message": "Instans belum menjalankan penyimpanan terpadu -- memerlukan wizard migrasi",
       "not-found": "tidak ditemukan",
       "not-found-message": "Repositori tidak ditemukan",
       "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
@@ -12042,7 +12038,6 @@
       "tab-resources": "Sumber Daya",
       "tab-resources-title": "",
       "title": "Status Repositori",
-      "title-legacy-storage": "Penyimpanan Lama",
       "title-queued-for-deletion": "Diantrekan untuk dihapus"
     },
     "repository-type-cards": {
@@ -12138,9 +12133,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Sertakan commit untuk setiap nilai historis",
-      "synchronization-options": "Opsi sinkronisasi"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "dan klik",
@@ -12157,11 +12150,11 @@
     },
     "warning-title-default": "Peringatan",
     "wizard": {
-      "alert-point-1": "Sumber daya tidak akan dapat dibuat, diedit, atau dihapus selama proses ini. Pada langkah terakhir, sumber daya akan menghilang.",
-      "alert-point-2": "Setelah penyediaan selesai, sumber daya akan muncul kembali dan dikelola melalui penyimpanan eksternal.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Durasi proses ini bergantung pada jumlah sumber daya yang terlibat.",
-      "alert-point-4": "Administrator instans Enterprise dapat menampilkan banner pengumuman kepada pengguna. Lihat <2>panduan ini</2> untuk petunjuk langkah demi langkah.",
-      "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Selesai",
@@ -12179,7 +12172,6 @@
       "step-finish": "Pilih pengaturan tambahan",
       "step-synchronize": "Sinkronkan dengan penyimpanan eksternal",
       "sync-description": "Sinkronkan sumber daya dengan penyimpanan eksternal. Setelah langkah satu kali ini, semua pembaruan mendatang akan disimpan secara otomatis ke repositori dan disediakan kembali ke instans.",
-      "sync-option-history": "Sejarah",
       "title-bootstrap": "Pilih item yang akan disinkronkan",
       "title-connect": "Hubungkan ke penyimpanan eksternal",
       "title-finish": "Pilih pengaturan tambahan",

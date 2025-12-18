@@ -3318,6 +3318,7 @@
       "login-attribute-path-label": "로그인 속성 경로",
       "login-prompt-consent": "동의",
       "login-prompt-description": "사용자가 IdP로 로그인할 때 어떤 유형의 사용자 상호 작용이 있었는지 보여줍니다.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "로그인 프롬프트",
       "login-prompt-login": "로그인",
       "login-prompt-select-account": "계정 선택",
@@ -3375,6 +3376,7 @@
       "use-pkce-description": "활성화되면 Grafana는 OAuth2 인증 코드 부여와 함께 <2>코드 교환을 위한 증명 키(PKCE)</2>를 사용합니다.",
       "use-pkce-label": "PKCE 사용",
       "use-refresh-token-description": "활성화되면 Grafana는 OAuth2 제공자가 제공한 새로 고침 토큰을 사용하여 새 액세스 토큰을 가져옵니다.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "새로 고침 토큰 사용",
       "validate-hosted-domain-description": "활성화되면 Grafana는 Google ID 토큰에서 검색한 호스팅된 도메인을 사용자가 지정한 \"{{ allowedDomainsLabel }}\" 목록과 일치시킵니다.",
       "validate-hosted-domain-label": "호스팅된 도메인 검증",
@@ -10138,7 +10140,8 @@
       "copy": "선택 항목 복사",
       "disable-menu": "메뉴 비활성화",
       "line-contains": "라인에 포함 필터로 추가",
-      "line-contains-not": "라인에 미포함 필터로 추가"
+      "line-contains-not": "라인에 미포함 필터로 추가",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "타임스탬프 해상도",
@@ -11820,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "전체 인스턴스를 연결하면 마이그레이션를 실행하는 동안 대시보드를 사용할 수 없습니다. 프로세스를 시작하기 전에 사용자에게 경고하는 것이 좋습니다.",
       "modal-description-public-access": "Grafana 인스턴스에 대한 공개 액세스를 설정하여 GitHub 통합을 활성화합니다",
       "modal-description-required-features": "프로비저닝에 필요한 Grafana 기능 활성화",
       "modal-title-set-up-public-access": "공개 액세스 설정",
@@ -11832,8 +11834,7 @@
       "step-title-copy-url": "공개 URL 복사",
       "step-title-enable-feature-toggles": "필요한 기능 토글 활성화",
       "step-title-start-ngrok": "임시 공용 액세스를 위해 ngrok 시작",
-      "step-title-update-grafana-config": "Grafana 구성 업데이트",
-      "title-setting-connection-could-cause-temporary-outage": "이 연결을 설정하면 일시적인 중단이 발생할 수 있습니다"
+      "step-title-update-grafana-config": "Grafana 구성 업데이트"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "프로비저닝 연결 보기 및 관리"
@@ -11902,18 +11903,15 @@
     },
     "home-page": {
       "button-delete-repositories": "리포지토리 삭제",
-      "configured-repositories-while-running-legacy-storage": "레거시 스토리지를 실행하는 동안에는 구성된 리포지토리가 작동하지 않습니다.",
       "confirm-delete-repositories": "정말 구성된 모든 리포지토리를 삭제하시겠어요? 처리 후에는 되돌릴 수 없습니다.",
       "error-delete-all-repositories": "모든 리포지토리 삭제 실패",
-      "remove-all-configured-repositories": "구성된 모든 리포지토리 제거",
       "subtitle": "구성된 리포지토리 보기 및 관리",
       "success-all-repositories-deleted": "구성된 모든 리포지토리가 삭제되었습니다",
       "tab-getting-started": "시작하기",
       "tab-getting-started-title": "시작하기",
       "tab-repositories": "리포지토리",
       "tab-repositories-title": "리포지토리 목록",
-      "title-delete-all-configured-repositories": "구성된 모든 리포지토리 삭제",
-      "title-legacy-storage-detected": "레거시 스토리지 감지됨"
+      "title-delete-all-configured-repositories": "구성된 모든 리포지토리 삭제"
     },
     "http-utils": {
       "access-denied": "",
@@ -11953,7 +11951,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12033,7 +12030,6 @@
     "repository-status-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
       "cleaning-up-resources": "리포지토리 리소스 정리 및 삭제 중",
-      "legacy-storage-message": "인스턴스가 아직 통합 스토리지를 실행하고 있지 않습니다. 마이그레이션 마법사가 필요합니다",
       "not-found": "찾을 수 없음",
       "not-found-message": "리포지토리를 찾을 수 없습니다",
       "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요.",
@@ -12042,7 +12038,6 @@
       "tab-resources": "리소스",
       "tab-resources-title": "",
       "title": "리포지토리 상태",
-      "title-legacy-storage": "레거시 스토리지",
       "title-queued-for-deletion": "삭제 대기열에 추가됨"
     },
     "repository-type-cards": {
@@ -12138,9 +12133,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "각 과거 값에 대한 커밋을 포함합니다",
-      "synchronization-options": "동기화 옵션"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "및 클릭",
@@ -12157,11 +12150,11 @@
     },
     "warning-title-default": "경고",
     "wizard": {
-      "alert-point-1": "이 프로세스 중에는 리소스를 생성, 편집 또는 삭제할 수 없습니다. 마지막 단계에서는 리소스가 표시되지 않습니다.",
-      "alert-point-2": "프로비저닝이 완료되면 리소스가 다시 표시되고 외부 스토리지를 통해 관리됩니다.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "이 프로세스의 지속 시간은 관련된 리소스 수에 따라 달라집니다.",
-      "alert-point-4": "Enterprise 인스턴스 관리자는 사용자에게 공지 배너를 표시할 수 있습니다. 단계별 지침은 <2>이 가이드</2>를 확인하세요.",
-      "alert-title": "중요: 데이터나 구성은 손실되지 않지만 대시보드를 몇 분 동안 일시적으로 사용할 수 없습니다.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "완료",
@@ -12179,7 +12172,6 @@
       "step-finish": "추가 설정 선택",
       "step-synchronize": "외부 스토리지와 동기화",
       "sync-description": "외부 스토리지와 리소스를 동기화합니다. 이 일회성 단계 후에는 향후 모든 업데이트가 자동으로 리포지토리에 저장되고 인스턴스에 다시 프로비저닝됩니다.",
-      "sync-option-history": "이력",
       "title-bootstrap": "동기화할 항목 선택",
       "title-connect": "외부 스토리지에 연결",
       "title-finish": "추가 설정 선택",

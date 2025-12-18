@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc"
 
@@ -102,7 +103,8 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
-		if col, ok := builders.TeamSearchTableColumnDefinitions[field]; ok {
+		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
 		}
 	}
@@ -121,7 +123,8 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
-		switch field {
+		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:
 			cells = append(cells, []byte(t.Email))
 		case builders.TEAM_SEARCH_PROVISIONED:

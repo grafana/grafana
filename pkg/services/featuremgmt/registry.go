@@ -821,6 +821,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "dashboardAdHocAndGroupByWrapper",
+			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "cloudWatchNewLabelParsing",
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1356,6 +1363,13 @@ var (
 		{
 			Name:         "fetchRulesUsingPost",
 			Description:  "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "fetchRulesInCompactMode",
+			Description:  "Add compact=true when fetching rules",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1952,14 +1966,6 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
-		},
-		{
-			Name:         "pluginInsights",
-			Description:  "Show insights for plugins in the plugin details page",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
 		},
 		{
 			Name:            "panelTimeSettings",

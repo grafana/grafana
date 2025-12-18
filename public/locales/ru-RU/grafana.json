@@ -3351,6 +3351,7 @@
       "login-attribute-path-label": "Путь атрибута логина",
       "login-prompt-consent": "Согласие",
       "login-prompt-description": "Указывает тип взаимодействия с пользователем при входе с помощью IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Приглашение на вход в систему",
       "login-prompt-login": "Вход",
       "login-prompt-select-account": "Выберите учетную запись",
@@ -3408,6 +3409,7 @@
       "use-pkce-description": "Если этот параметр включен, Grafana будет использовать <2>ключ подтверждения для обмена кодом (PKCE)</2> с грантом кода авторизации OAuth2.",
       "use-pkce-label": "Использовать PKCE",
       "use-refresh-token-description": "Если этот параметр включен, Grafana будет получать новый токен доступа с помощью токена обновления, предоставленного поставщиком OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Использовать токен обновления",
       "validate-hosted-domain-description": "Если этот параметр включен, Grafana будет сопоставлять домен размещения, полученный из токена Google ID, с заданным пользователем списком «{{ allowedDomainsLabel }}».",
       "validate-hosted-domain-label": "Проверять домен размещения",
@@ -10267,7 +10269,8 @@
       "copy": "Копировать выделение",
       "disable-menu": "Отключить меню",
       "line-contains": "Добавить, поскольку строка содержит фильтр",
-      "line-contains-not": "Добавить, поскольку строка не содержит фильтр"
+      "line-contains-not": "Добавить, поскольку строка не содержит фильтр",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Разрешение метки времени",
@@ -11973,7 +11976,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Если подключается весь экземпляр, дашборды будут недоступны во время выполнения переноса. Рекомендуем предупредить пользователей перед запуском процесса.",
       "modal-description-public-access": "Настройте общий доступ к своему экземпляру Grafana, чтобы включить интеграцию с GitHub.",
       "modal-description-required-features": "Включите необходимые функции Grafana для подготовки.",
       "modal-title-set-up-public-access": "Настройка общего доступа",
@@ -11985,8 +11987,7 @@
       "step-title-copy-url": "Копирование общедоступного URL-адреса",
       "step-title-enable-feature-toggles": "Включение необходимых переключателей функциональности",
       "step-title-start-ngrok": "Запуск ngrok для временного общего доступа",
-      "step-title-update-grafana-config": "Обновление конфигурации Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "Настройка этого подключения может привести к временному сбою"
+      "step-title-update-grafana-config": "Обновление конфигурации Grafana"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
@@ -12055,18 +12056,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Удалить репозитории",
-      "configured-repositories-while-running-legacy-storage": "Настроенные репозитории не будут работать при использовании устаревшего хранилища.",
       "confirm-delete-repositories": "Действительно удалить все настроенные репозитории? Это действие невозможно отменить.",
       "error-delete-all-repositories": "Не удалось удалить все репозитории",
-      "remove-all-configured-repositories": "Удалить все настроенные репозитории",
       "subtitle": "Просмотр настроенных репозиториев и управление ими",
       "success-all-repositories-deleted": "Все настроенные репозитории удалены",
       "tab-getting-started": "Начало работы",
       "tab-getting-started-title": "Начало работы",
       "tab-repositories": "Репозитории",
       "tab-repositories-title": "Список репозиториев",
-      "title-delete-all-configured-repositories": "Удаление всех настроенных репозиториев",
-      "title-legacy-storage-detected": "Обнаружено устаревшее хранилище"
+      "title-delete-all-configured-repositories": "Удаление всех настроенных репозиториев"
     },
     "http-utils": {
       "access-denied": "",
@@ -12106,7 +12104,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12186,7 +12183,6 @@
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
-      "legacy-storage-message": "Экземпляр пока не использует унифицированное хранилище — требуется мастер переноса",
       "not-found": "не найдено",
       "not-found-message": "Репозиторий не найден",
       "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
@@ -12195,7 +12191,6 @@
       "tab-resources": "Ресурсы",
       "tab-resources-title": "",
       "title": "Состояние репозитория",
-      "title-legacy-storage": "Устаревшее хранилище",
       "title-queued-for-deletion": "В очереди на удаление"
     },
     "repository-type-cards": {
@@ -12291,9 +12286,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Включить фиксации для каждого ранее зафиксированного значения",
-      "synchronization-options": "Параметры синхронизации"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "и нажать",
@@ -12310,11 +12303,11 @@
     },
     "warning-title-default": "Предупреждение",
     "wizard": {
-      "alert-point-1": "Во время этого процесса невозможно создавать, редактировать или удалять ресурсы. На последнем шаге они исчезнут.",
-      "alert-point-2": "После завершения подготовки ресурсы снова появятся и будут управляться через внешнее хранилище.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Длительность процесса зависит от количества задействованных ресурсов.",
-      "alert-point-4": "Администраторы экземпляров Enterprise могут показывать пользователям баннер с объявлением. Пошаговые инструкции см. в <2>руководстве</2>.",
-      "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
@@ -12332,7 +12325,6 @@
       "step-finish": "Выберите дополнительные параметры",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
-      "sync-option-history": "История",
       "title-bootstrap": "Выберите, что синхронизировать",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
