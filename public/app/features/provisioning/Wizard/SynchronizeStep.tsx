@@ -20,11 +20,18 @@ export interface SynchronizeStepProps {
 }
 
 export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
-  const { watch, register, getValues } = useFormContext<WizardFormData>();
+  const { watch, register, getValues, setValue } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const repoName = watch('repositoryName') ?? '';
   const syncTarget = watch('repository.sync.target');
   const { requiresMigration: baseRequiresMigration } = useResourceStats(repoName, syncTarget);
+
+  // For instance sync, always set migrateResources to true
+  useEffect(() => {
+    if (syncTarget === 'instance') {
+      setValue('migrate.migrateResources', true);
+    }
+  }, [syncTarget, setValue]);
 
   const { createSyncJob } = useCreateSyncJob({
     repoName,
@@ -65,11 +72,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
 
   const startSynchronization = async () => {
     // Calculate final requiresMigration based on sync target and user selection
-    // For instance sync: use the base requiresMigration
+    // For instance sync: always use baseRequiresMigration (checkbox is disabled and always true)
     // For folder sync: only migrate if user explicitly opts in via checkbox
     let finalRequiresMigration = baseRequiresMigration;
     if (syncTarget === 'folder') {
       finalRequiresMigration = getValues('migrate.migrateResources') ?? false;
+    } else if (syncTarget === 'instance') {
+      // For instance sync, migrateResources is always true, but we still use baseRequiresMigration
+      // to determine if migration is needed
+      finalRequiresMigration = baseRequiresMigration;
     }
 
     const response = await createSyncJob(finalRequiresMigration);
@@ -199,7 +210,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           </Stack>
         </Alert>
       )}
-      {syncTarget === 'folder' && (
+      {(syncTarget === 'folder' || syncTarget === 'instance') && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>
@@ -209,10 +220,18 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
               {...register('migrate.migrateResources')}
               id="migrate-resources"
               label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+              disabled={syncTarget === 'instance'}
               description={
-                <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                  Import existing dashboards from all folders into the new provisioned folder
-                </Trans>
+                syncTarget === 'instance' ? (
+                  <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                    Instance sync requires all resources to be managed. Existing resources will be migrated
+                    automatically.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                    Import existing dashboards from all folders into the new provisioned folder
+                  </Trans>
+                )
               }
             />
           </Field>
