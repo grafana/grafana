@@ -76,7 +76,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		installers = append(installers, annotationAppInstaller)
 	}
