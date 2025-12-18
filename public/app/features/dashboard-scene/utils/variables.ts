@@ -186,16 +186,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
     // Query variable
   } else if (variable.type === 'query') {
-    // Convert string datasource (legacy format) to object with uid
-    // Scene QueryVariable expects DatasourceRef object, not string
-    const datasource = typeof variable.datasource === 'string' ? { uid: variable.datasource } : variable.datasource;
-
     return new QueryVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
       query: variable.query ?? {},
-      datasource,
+      datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
