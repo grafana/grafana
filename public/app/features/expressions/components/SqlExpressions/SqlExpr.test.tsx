@@ -1,4 +1,4 @@
-import { render, waitFor, fireEvent, act, testWithFeatureToggles } from 'test/test-utils';
+import { act, fireEvent, render, testWithFeatureToggles } from 'test/test-utils';
 
 import { ExpressionQuery, ExpressionQueryType } from '../../types';
 
