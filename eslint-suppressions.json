@@ -1888,11 +1888,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/serialization/angularMigration.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
