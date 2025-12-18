@@ -72,7 +72,6 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 
-	doc.Title = team.Spec.Title
 	doc.Fields = make(map[string]any)
 	if team.Spec.Email != "" {
 		doc.Fields[TEAM_SEARCH_EMAIL] = team.Spec.Email
