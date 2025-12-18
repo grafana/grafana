@@ -5,6 +5,7 @@ const themeTokenUsage = require('./rules/theme-token-usage.cjs');
 const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
 const consistentStoryTitles = require('./rules/consistent-story-titles.cjs');
 const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-paths.cjs');
+const trackingEventCreation = require('./rules/tracking-event-creation.cjs');
 
 module.exports = {
   rules: {
@@ -15,5 +16,6 @@ module.exports = {
     'no-restricted-img-srcs': noRestrictedImgSrcs,
     'consistent-story-titles': consistentStoryTitles,
     'no-plugin-external-import-paths': noPluginExternalImportPaths,
+    'tracking-event-creation': trackingEventCreation,
   },
 };

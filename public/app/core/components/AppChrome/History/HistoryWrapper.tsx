@@ -68,6 +68,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
             fill="text"
             onClick={() => {
               setNumItemsToShow(numItemsToShow + 5);
+              //Using new tracking event process
               logUnifiedHistoryShowMoreEvent();
             }}
           >
@@ -127,6 +128,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             onClick={() => {
               store.setObject('CLICKING_HISTORY', true);
               onClick();
+              //Using new tracking event process
               logClickUnifiedHistoryEntryEvent({ entryURL: url });
             }}
             href={url}
@@ -188,6 +190,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                   onClick={() => {
                     store.setObject('CLICKING_HISTORY', true);
                     onClick();
+                    //Using new tracking event process
                     logClickUnifiedHistoryEntryEvent({ entryURL: view.url, subEntry: 'timeRange' });
                   }}
                   isCompact={true}

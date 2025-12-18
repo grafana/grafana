@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "module": "commonjs"
+    "module": "es2022",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "extends": "../../tsconfig.json",
   "ts-node": {
