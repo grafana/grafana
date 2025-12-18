@@ -20,19 +20,14 @@ export interface SynchronizeStepProps {
 }
 
 export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
-  const { watch, register, setValue } = useFormContext<WizardFormData>();
+  const { watch, register } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
-  const repoName = watch('repositoryName') ?? '';
-  const syncTarget = watch('repository.sync.target');
-  const migrateResources = watch('migrate.migrateResources');
+  const [repoName = '', syncTarget, migrateResources] = watch([
+    'repositoryName',
+    'repository.sync.target',
+    'migrate.migrateResources',
+  ]);
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources);
-
-  // For instance sync, always set migrateResources to true
-  useEffect(() => {
-    if (syncTarget === 'instance') {
-      setValue('migrate.migrateResources', true);
-    }
-  }, [syncTarget, setValue]);
 
   const { createSyncJob } = useCreateSyncJob({
     repoName,
@@ -157,18 +152,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
                 </Trans>
               </li>
               {syncTarget === 'instance' && (
-                <>
-                  <li>
-                    <Trans i18nKey="provisioning.wizard.alert-point-instance-permissions">
-                      Fine-grained folder permissions will be lost and cannot be recovered.
-                    </Trans>
-                  </li>
-                  <li>
-                    <Trans i18nKey="provisioning.wizard.alert-point-instance-alerts">
-                      Existing alerts and library panels will be lost and will not be usable after migration.
-                    </Trans>
-                  </li>
-                </>
+                <li>
+                  <Trans i18nKey="provisioning.wizard.alert-point-instance-alerts">
+                    Existing alerts and library panels will be lost and will not be usable after migration.
+                  </Trans>
+                </li>
               )}
               {syncTarget === 'folder' && (
                 <>
@@ -203,30 +191,29 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           </Stack>
         </Alert>
       )}
-      <>
-        <Text element="h3">
-          <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
-        </Text>
-        <Field noMargin>
-          <Checkbox
-            {...register('migrate.migrateResources')}
-            id="migrate-resources"
-            label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
-            disabled={syncTarget === 'instance'}
-            description={
-              syncTarget === 'instance' ? (
-                <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                  Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
-                </Trans>
-              ) : (
-                <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                  Import existing dashboards from all folders into the new provisioned folder
-                </Trans>
-              )
-            }
-          />
-        </Field>
-      </>
+      <Text element="h3">
+        <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
+      </Text>
+      <Field noMargin>
+        <Checkbox
+          {...register('migrate.migrateResources')}
+          id="migrate-resources"
+          label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+          checked={syncTarget === 'instance' ? true : undefined}
+          disabled={syncTarget === 'instance'}
+          description={
+            syncTarget === 'instance' ? (
+              <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
+              </Trans>
+            ) : (
+              <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                Import existing dashboards from all folders into the new provisioned folder
+              </Trans>
+            )
+          }
+        />
+      </Field>
       {healthStatusNotReady ? (
         <>
           <Stack>

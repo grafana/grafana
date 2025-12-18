@@ -269,7 +269,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
 
-        // Create a pull job to initialize the repository
+        // No migration needed when skipping sync
         const job = await createSyncJob(false);
         if (!job) {
           return; // Don't proceed if job creation fails

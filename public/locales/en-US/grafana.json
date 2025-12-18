@@ -12211,7 +12211,6 @@
       "alert-point-folder-cleanup": "You may need to manually remove or manage original folders after migration.",
       "alert-point-folder-structure": "When migrating existing dashboards, the folder structure will be replicated in the repository. Original folders will be emptied of dashboards but may still contain alerts or library panels.",
       "alert-point-instance-alerts": "Existing alerts and library panels will be lost and will not be usable after migration.",
-      "alert-point-instance-permissions": "Fine-grained folder permissions will be lost and cannot be recovered.",
       "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
