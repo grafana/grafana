@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -35,6 +36,7 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlKVGet    = mustTemplate("sqlkv_get.sql")
 	sqlKVDelete = mustTemplate("sqlkv_delete.sql")
+	sqlKVKeys   = mustTemplate("sqlkv_keys.sql")
 )
 
 // sqlKVSection can be embedded in structs used when rendering query templates
@@ -114,6 +116,32 @@ func (req sqlKVDeleteRequest) Validate() error {
 	return req.sqlKVSectionKey.Validate()
 }
 
+type sqlKVKeysRequest struct {
+	sqltemplate.SQLTemplate
+	sqlKVSection
+	Options ListOptions
+}
+
+func (req sqlKVKeysRequest) Validate() error {
+	return req.sqlKVSection.Validate()
+}
+
+func (req sqlKVKeysRequest) StartKey() string {
+	return req.Section + "/" + req.Options.StartKey
+}
+
+func (req sqlKVKeysRequest) EndKey() string {
+	if req.Options.EndKey == "" {
+		req.Options.EndKey = PrefixRangeEnd(req.Section + "/")
+	}
+
+	return req.Section + "/" + req.Options.EndKey
+}
+
+func (req sqlKVKeysRequest) SortAscending() bool {
+	return req.Options.Sort != SortOrderDesc
+}
+
 var _ KV = &sqlKV{}
 
 type sqlKV struct {
@@ -151,7 +179,31 @@ func (k *sqlKV) Ping(ctx context.Context) error {
 
 func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
-		panic("not implemented!")
+		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVKeys, sqlKVKeysRequest{
+			SQLTemplate:  sqltemplate.New(k.dialect),
+			sqlKVSection: sqlKVSection{section},
+			Options:      opt,
+		})
+		if err != nil {
+			yield("", err)
+			return
+		}
+
+		for rows.Next() {
+			var key string
+			if err := rows.Scan(&key); err != nil {
+				yield("", fmt.Errorf("error reading row: %w", err))
+				return
+			}
+
+			if !yield(strings.TrimPrefix(key, section+"/"), nil) {
+				return
+			}
+		}
+
+		if err := rows.Err(); err != nil {
+			yield("", fmt.Errorf("failed to read rows: %w", err))
+		}
 	}
 }
 

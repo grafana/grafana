@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Giriş özniteliği yolu",
       "login-prompt-consent": "Onay",
       "login-prompt-description": "Kullanıcı IdP ile oturum açtığında kullanıcı etkileşiminin türünü gösterir.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Oturum açma istemi",
       "login-prompt-login": "Oturum aç",
       "login-prompt-select-account": "Hesap seç",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Etkinleştirilirse Grafana OAuth2 Yetkilendirme Kodu Verilmesi ile birlikte <2>Proof Key for Code Exchange (PKCE)</2> kullanacaktır.",
       "use-pkce-label": "PKCE kullan",
       "use-refresh-token-description": "Etkinleştirilirse Grafana, OAuth2 sağlayıcısı tarafından sağlanan yenileme belirtecini kullanarak yeni bir erişim belirteci alır.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Yenileme belirteci kullan",
       "validate-hosted-domain-description": "Etkinleştirilirse Grafana, Google Kimlik Belirtecinden alınan Barındırılan Alan Adı ile kullanıcı tarafından belirtilen \"{{ allowedDomainsLabel }}\" listesini eşleştirir.",
       "validate-hosted-domain-label": "Barındırılan alan adını doğrula",
@@ -10181,7 +10183,8 @@
       "copy": "Seçimi kopyala",
       "disable-menu": "Menüyü devre dışı bırak",
       "line-contains": "Satır içerir filtresi olarak ekle",
-      "line-contains-not": "Satır içermez filtresi olarak ekle"
+      "line-contains-not": "Satır içermez filtresi olarak ekle",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Tüm örneğinizi bağladığınızda geçiş işlemi sırasında panolar kullanılamaz hale gelir. İşleme başlamadan önce kullanıcılarınızı bilgilendirmenizi öneririz.",
       "modal-description-public-access": "GitHub entegrasyonu için Grafana örneğinizde genel erişimi ayarlayın",
       "modal-description-required-features": "Sağlama işlemleri için gerekli Grafana özelliklerini etkinleştir",
       "modal-title-set-up-public-access": "Herkese açık erişimi ayarla",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Herkese açık URL'nizi kopyalayın",
       "step-title-enable-feature-toggles": "Gerekli Özellik Geçişlerini Etkinleştir",
       "step-title-start-ngrok": "Geçici genel erişim için ngrok'u başlat",
-      "step-title-update-grafana-config": "Grafana yapılandırmanızı güncelleyin",
-      "title-setting-connection-could-cause-temporary-outage": "Bu bağlantıyı kurmak geçici bir kesintiye neden olabilir"
+      "step-title-update-grafana-config": "Grafana yapılandırmanızı güncelleyin"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Sağlama bağlantılarınızı görüntüleyin ve yönetin"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Depoları sil",
-      "configured-repositories-while-running-legacy-storage": "Eski depolama kullanılırken yapılandırılmış depolar çalışmaz.",
       "confirm-delete-repositories": "Yapılandırılmış tüm depoları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. ",
       "error-delete-all-repositories": "Tüm depolar silinemedi",
-      "remove-all-configured-repositories": "Yapılandırılmış tüm depoları kaldır",
       "subtitle": "Yapılandırılmış depoları görüntüleyin ve yönetin",
       "success-all-repositories-deleted": "Yapılandırılmış tüm depolar silindi",
       "tab-getting-started": "Başlarken",
       "tab-getting-started-title": "Başlarken",
       "tab-repositories": "Depolar",
       "tab-repositories-title": "Depo listesi",
-      "title-delete-all-configured-repositories": "Yapılandırılmış tüm depoları sil",
-      "title-legacy-storage-detected": "Eski depolama algılandı"
+      "title-delete-all-configured-repositories": "Yapılandırılmış tüm depoları sil"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Depolara geri dön",
       "cleaning-up-resources": "Depo kaynakları temizleniyor",
-      "legacy-storage-message": "Örnek henüz birleşik depolamayı kullanmıyor: Geçiş sihirbazı gerekiyor",
       "not-found": "bulunamadı",
       "not-found-message": "Depo bulunamadı",
       "repository-config-exists-configuration": "Depo yapılandırmasının yapılandırma dosyasında mevcut olduğundan emin olun.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Kaynaklar",
       "tab-resources-title": "",
       "title": "Depo Durumu",
-      "title-legacy-storage": "Eski Depolama",
       "title-queued-for-deletion": "Silinmek üzere kuyruğa alındı"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Her geçmiş değer için yürütmeyi dahil et",
-      "synchronization-options": "Senkronizasyon seçenekleri"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Uyarı",
     "wizard": {
-      "alert-point-1": "Bu işlem sırasında kaynaklar oluşturulamayacak, düzenlenemeyecek veya silinemeyecek. Son adımda kaynaklar kaybolacaktır.",
-      "alert-point-2": "Sağlama işlemi tamamlandığında kaynaklar tekrar görünecek ve harici depolama üzerinden yönetilecektir.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "Bu işlemin süresi dâhil olan kaynakların sayısına bağlıdır.",
-      "alert-point-4": "Enterprise örnek yöneticileri, kullanıcılara bir duyuru afişi gösterebilir. Adım adım talimatlar için <2>bu kılavuza</2> bakın.",
-      "alert-title": "Önemli: Veri veya yapılandırma kaybı yaşanmayacak ancak panolar birkaç dakika boyunca geçici olarak kullanılamayacaktır.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Sonlandır",
@@ -12230,7 +12223,6 @@
       "step-finish": "Ek ayarlar seçin",
       "step-synchronize": "Harici depolama ile senkronize et",
       "sync-description": "Kaynakları harici depolama ile senkronize edin. Bu tek seferlik adımdan sonra tüm gelecekteki güncellemeler otomatik olarak depoya kaydedilecek ve örneğe geri sağlanacaktır.",
-      "sync-option-history": "Geçmiş",
       "title-bootstrap": "Nelerin senkronize edileceğini seçin",
       "title-connect": "Harici depolamaya bağlan",
       "title-finish": "Ek ayarlar seçin",
