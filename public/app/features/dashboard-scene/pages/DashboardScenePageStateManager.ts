@@ -85,6 +85,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  /** Force the serializer version when creating the scene. Used for v1->v2 export. */
+  forceSerializerVersion?: 'v1' | 'v2';
 }
 
 export type HomeDashboardDTO = DashboardDTO & {

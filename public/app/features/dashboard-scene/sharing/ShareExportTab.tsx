@@ -11,7 +11,7 @@ import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';
-import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec, isV1ClassicDashboard } from 'app/features/dashboard/api/utils';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
@@ -216,7 +216,27 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
 
     if (exportMode === ExportMode.V2Resource) {
-      const spec = transformSceneToSaveModelSchemaV2(scene);
+      // When the initial save model was v1, we need to convert to v2 using ensureV2Response
+      // which properly handles rows (convert SceneGridRow to RowsLayout instead of losing them)
+      let spec: DashboardV2Spec;
+      if (initialSaveModelVersion === 'v1' && !isDashboardV2Spec(origDashboard)) {
+        const v1SaveModel = transformSceneToSaveModel(scene);
+        // DashboardDataDTO requires title and uid to be defined
+        // Omit them from spread and add with guaranteed values
+        const { title, uid, ...rest } = v1SaveModel;
+        const dashboardDTO: DashboardDataDTO = {
+          ...rest,
+          title: title ?? '',
+          uid: uid ?? '',
+        };
+        const v2Response = ensureV2Response({
+          dashboard: dashboardDTO,
+          meta: scene.state.meta ?? { isNew: false, isFolder: false },
+        });
+        spec = v2Response.spec;
+      } else {
+        spec = transformSceneToSaveModelSchemaV2(scene);
+      }
       const specCopy = JSON.parse(JSON.stringify(spec));
       const statelessSpec = await makeExportableV2(specCopy, isSharingExternally);
       const exportableV2 = isSharingExternally ? statelessSpec : spec;

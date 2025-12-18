@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { SceneTimeRange } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
@@ -13,6 +13,7 @@ import { DashboardDataDTO } from 'app/types/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as exporters from '../scene/export/exporters';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import * as v1ToScene from '../serialization/transformSaveModelToScene';
 import * as sceneToV1 from '../serialization/transformSceneToSaveModel';
 import * as sceneToV2 from '../serialization/transformSceneToSaveModelSchemaV2';
 
@@ -25,6 +26,7 @@ describe('ShareExportTab', () => {
   let makeExportableV1Spy: jest.SpyInstance;
   let transformSceneToV1Spy: jest.SpyInstance;
   let transformSceneToV2Spy: jest.SpyInstance;
+  let transformSaveModelToSceneSpy: jest.SpyInstance;
 
   beforeEach(() => {
     config.featureToggles.kubernetesDashboards = true;
@@ -64,6 +66,16 @@ describe('ShareExportTab', () => {
       tags: [],
       templating: { list: [] },
     } as Dashboard);
+
+    // Mock transformSaveModelToScene to return a mock scene (used for v1->v2 export with rows)
+    transformSaveModelToSceneSpy = jest.spyOn(v1ToScene, 'transformSaveModelToScene').mockImplementation(() => {
+      return new DashboardScene({
+        title: 'Mock Scene for V2 Export',
+        uid: 'mock-scene-uid',
+        body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+    });
 
     transformSceneToV2Spy = jest.spyOn(sceneToV2, 'transformSceneToSaveModelSchemaV2').mockReturnValue({
       title: 'Scene V2',
