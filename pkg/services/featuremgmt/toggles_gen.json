@@ -1649,6 +1649,20 @@
     },
     {
       "metadata": {
+        "name": "heatmapRowsAxisOptions",
+        "resourceVersion": "1765353244400",
+        "creationTimestamp": "2025-12-10T07:54:04Z"
+      },
+      "spec": {
+        "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-09-17T10:54:39Z"

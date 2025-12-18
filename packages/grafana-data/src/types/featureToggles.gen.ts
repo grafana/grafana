@@ -1169,6 +1169,11 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
+  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
+  * @default false
+  */
+  heatmapRowsAxisOptions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
