@@ -24,11 +24,10 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const { setStepStatusInfo } = useStepStatus();
   const repoName = watch('repositoryName') ?? '';
   const syncTarget = watch('repository.sync.target');
-  const { requiresMigration } = useResourceStats(repoName, syncTarget);
+  const { requiresMigration: baseRequiresMigration } = useResourceStats(repoName, syncTarget);
+
   const { createSyncJob } = useCreateSyncJob({
     repoName,
-    requiresMigration,
-    syncTarget,
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
@@ -65,8 +64,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
-    const migrateResources = getValues('migrate.migrateResources');
-    const response = await createSyncJob({ migrateResources });
+    // Calculate final requiresMigration based on sync target and user selection
+    // For instance sync: use the base requiresMigration
+    // For folder sync: only migrate if user explicitly opts in via checkbox
+    let finalRequiresMigration = baseRequiresMigration;
+    if (syncTarget === 'folder') {
+      finalRequiresMigration = getValues('migrate.migrateResources') ?? false;
+    }
+
+    const response = await createSyncJob(finalRequiresMigration);
     if (response) {
       setJob(response);
     }
