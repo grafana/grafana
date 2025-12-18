@@ -48,6 +48,9 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       newVariables: false,
     },
+    unifiedAlerting: {
+      minInterval: '10s',
+    },
   },
 }));
 
