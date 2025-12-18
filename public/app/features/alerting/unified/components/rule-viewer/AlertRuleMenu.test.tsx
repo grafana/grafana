@@ -2,31 +2,28 @@ import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { useAssistant } from '@grafana/assistant';
-import { PluginMeta } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockFolderApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getCloudRule,
   getGrafanaRule,
+  grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockGrafanaRulerRule,
   mockPromAlertingRule,
   mockPromRecordingRule,
+  mockRulerGrafanaRecordingRule,
 } from 'app/features/alerting/unified/mocks';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import {
-  AlertRuleAction,
-  useEnrichmentAbility,
-  useGrafanaPromRuleAbilities,
-  useRulerRuleAbilities,
-} from '../../hooks/useAbilities';
-import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { useRulePluginLinkExtension } from '../../plugins/useRulePluginLinkExtensions';
+import { AlertRuleAction } from '../../hooks/useAbilities';
 
 const mockOpenAssistant = jest.fn();
 jest.mock('@grafana/assistant', () => ({
@@ -39,9 +36,6 @@ jest.mock('@grafana/assistant', () => ({
 
 const mockUseAssistant = jest.mocked(useAssistant);
 
-jest.mock('../../hooks/useAbilities');
-jest.mock('../../plugins/useRulePluginLinkExtensions');
-jest.mock('../../hooks/usePluginBridge');
 const mockPauseExecute = jest.fn().mockResolvedValue(undefined);
 jest.mock('../../hooks/ruleGroup/usePauseAlertRule', () => ({
   usePauseRuleInGroup: () => [
@@ -52,15 +46,7 @@ jest.mock('../../hooks/ruleGroup/usePauseAlertRule', () => ({
   ],
 }));
 
-const mocks = {
-  useRulerRuleAbilities: jest.mocked(useRulerRuleAbilities),
-  useGrafanaPromRuleAbilities: jest.mocked(useGrafanaPromRuleAbilities),
-  useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
-  useRulePluginLinkExtension: jest.mocked(useRulePluginLinkExtension),
-  usePluginBridge: jest.mocked(usePluginBridge),
-};
-
-setupMswServer();
+const server = setupMswServer();
 
 setPluginLinksHook(() => ({
   links: [],
@@ -119,24 +105,6 @@ const createDefaultRuleSetup = () => {
   return { mockRule, identifier, groupIdentifier };
 };
 
-// Helper function to mock abilities for a specific action
-const mockAbilitiesForAction = ({
-  action,
-  rulerAbility,
-  grafanaAbility,
-}: {
-  action: AlertRuleAction;
-  rulerAbility: [boolean, boolean];
-  grafanaAbility: [boolean, boolean];
-}) => {
-  mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-    return actions.map((a) => (a === action ? rulerAbility : [false, false]));
-  });
-  mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-    return actions.map((a) => (a === action ? grafanaAbility : [false, false]));
-  });
-};
-
 describe('AlertRuleMenu', () => {
   const originalBuildInfo = config.buildInfo;
   const originalFeatureToggles = { ...config.featureToggles };
@@ -155,21 +123,12 @@ describe('AlertRuleMenu', () => {
     config.buildInfo = { ...originalBuildInfo };
     config.featureToggles = { ...originalFeatureToggles };
 
-    // Set up default neutral mocks for all hooks
-    mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-      return actions.map(() => [false, false]);
-    });
-    mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-      return actions.map(() => [false, false]);
-    });
-    mocks.useEnrichmentAbility.mockReturnValue([false, false]);
-    mocks.useRulePluginLinkExtension.mockReturnValue([]);
-    // Mock usePluginBridge to return settings so DeclareIncidentMenuItem renders as a link
-    mocks.usePluginBridge.mockReturnValue({
-      loading: false,
-      installed: true,
-      settings: { id: 'grafana-incident-app', enabled: true } as PluginMeta<{}>,
-    });
+    // Set up default folder mock for Grafana rules (namespace-uid is the default folder UID)
+    mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
+
+    // Set up default permissions (no permissions granted by default)
+    grantUserPermissions([]);
+    setFolderAccessControl({});
   });
 
   afterEach(() => {
@@ -308,22 +267,53 @@ describe('AlertRuleMenu', () => {
       description: string;
       action: AlertRuleAction;
       menuItem: keyof typeof ui.menuItems;
-      rulerAbility: [boolean, boolean];
-      grafanaAbility: [boolean, boolean];
+      granted: boolean;
       shouldShow: boolean;
     };
 
-    const testMenuItemVisibility = ({
-      description,
-      action,
-      menuItem,
-      rulerAbility,
-      grafanaAbility,
-      shouldShow,
-    }: MenuItemTestCase) => {
+    const testMenuItemVisibility = ({ description, action, menuItem, granted, shouldShow }: MenuItemTestCase) => {
       it(description, async () => {
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
-        mockAbilitiesForAction({ action, rulerAbility, grafanaAbility });
+
+        // Grant permissions based on action
+        const permissions: AccessControlAction[] = [];
+        const folderAccessControl: Record<string, boolean> = {};
+
+        if (granted) {
+          switch (action) {
+            case AlertRuleAction.Pause:
+            case AlertRuleAction.Update:
+              permissions.push(AccessControlAction.AlertingRuleUpdate);
+              folderAccessControl[AccessControlAction.AlertingRuleUpdate] = true;
+              break;
+            case AlertRuleAction.Delete:
+              permissions.push(AccessControlAction.AlertingRuleDelete);
+              folderAccessControl[AccessControlAction.AlertingRuleDelete] = true;
+              break;
+            case AlertRuleAction.Duplicate:
+              permissions.push(AccessControlAction.AlertingRuleCreate);
+              break;
+            case AlertRuleAction.Silence:
+              permissions.push(AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingSilenceCreate);
+              break;
+            case AlertRuleAction.ModifyExport:
+              permissions.push(AccessControlAction.AlertingRuleRead);
+              break;
+          }
+        }
+
+        grantUserPermissions(permissions);
+        setFolderAccessControl(folderAccessControl);
+
+        // Set up folder mock for Grafana rules with matching access control
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: folderAccessControl,
+          })
+        );
 
         render(
           <AlertRuleMenu
@@ -348,163 +338,90 @@ describe('AlertRuleMenu', () => {
 
     describe('Pause/Resume visibility', () => {
       testMenuItemVisibility({
-        description: 'shows Pause when pause permission is granted via ruler rule abilities',
+        description: 'shows Pause when pause permission is granted',
         action: AlertRuleAction.Pause,
         menuItem: 'pause',
-        rulerAbility: [true, true],
-        grafanaAbility: [false, false],
+        granted: true,
         shouldShow: true,
       });
 
       testMenuItemVisibility({
-        description: 'shows Pause when pause permission is granted via grafana prom rule abilities',
+        description: 'hides Pause when pause permission is denied',
         action: AlertRuleAction.Pause,
         menuItem: 'pause',
-        rulerAbility: [false, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'shows Pause when pause permission is granted via both ruler and grafana abilities',
-        action: AlertRuleAction.Pause,
-        menuItem: 'pause',
-        rulerAbility: [true, true],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'hides Pause when pause permission is denied in both ruler and grafana abilities',
-        action: AlertRuleAction.Pause,
-        menuItem: 'pause',
-        rulerAbility: [false, false],
-        grafanaAbility: [false, false],
+        granted: false,
         shouldShow: false,
-      });
-
-      testMenuItemVisibility({
-        description: 'shows Pause when ruler is supported but not allowed, but grafana is allowed',
-        action: AlertRuleAction.Pause,
-        menuItem: 'pause',
-        rulerAbility: [true, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
       });
     });
 
     describe('Delete visibility', () => {
       testMenuItemVisibility({
-        description: 'shows Delete when delete permission is granted via ruler rule abilities',
+        description: 'shows Delete when delete permission is granted',
         action: AlertRuleAction.Delete,
         menuItem: 'delete',
-        rulerAbility: [true, true],
-        grafanaAbility: [false, false],
+        granted: true,
         shouldShow: true,
       });
 
       testMenuItemVisibility({
-        description: 'shows Delete when delete permission is granted via grafana prom rule abilities',
+        description: 'hides Delete when delete permission is denied',
         action: AlertRuleAction.Delete,
         menuItem: 'delete',
-        rulerAbility: [false, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'hides Delete when delete permission is denied in both ruler and grafana abilities',
-        action: AlertRuleAction.Delete,
-        menuItem: 'delete',
-        rulerAbility: [false, false],
-        grafanaAbility: [false, false],
+        granted: false,
         shouldShow: false,
       });
     });
 
     describe('Duplicate visibility', () => {
       testMenuItemVisibility({
-        description: 'shows Duplicate when duplicate permission is granted via ruler rule abilities',
+        description: 'shows Duplicate when duplicate permission is granted',
         action: AlertRuleAction.Duplicate,
         menuItem: 'duplicate',
-        rulerAbility: [true, true],
-        grafanaAbility: [false, false],
+        granted: true,
         shouldShow: true,
       });
 
       testMenuItemVisibility({
-        description: 'shows Duplicate when duplicate permission is granted via grafana prom rule abilities',
+        description: 'hides Duplicate when duplicate permission is denied',
         action: AlertRuleAction.Duplicate,
         menuItem: 'duplicate',
-        rulerAbility: [false, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'hides Duplicate when duplicate permission is denied in both ruler and grafana abilities',
-        action: AlertRuleAction.Duplicate,
-        menuItem: 'duplicate',
-        rulerAbility: [false, false],
-        grafanaAbility: [false, false],
+        granted: false,
         shouldShow: false,
       });
     });
 
     describe('Silence visibility', () => {
       testMenuItemVisibility({
-        description: 'shows Silence when silence permission is granted via ruler rule abilities',
+        description: 'shows Silence when silence permission is granted',
         action: AlertRuleAction.Silence,
         menuItem: 'silence',
-        rulerAbility: [true, true],
-        grafanaAbility: [false, false],
+        granted: true,
         shouldShow: true,
       });
 
       testMenuItemVisibility({
-        description: 'shows Silence when silence permission is granted via grafana prom rule abilities',
+        description: 'hides Silence when silence permission is denied',
         action: AlertRuleAction.Silence,
         menuItem: 'silence',
-        rulerAbility: [false, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'hides Silence when silence permission is denied in both ruler and grafana abilities',
-        action: AlertRuleAction.Silence,
-        menuItem: 'silence',
-        rulerAbility: [false, false],
-        grafanaAbility: [false, false],
+        granted: false,
         shouldShow: false,
       });
     });
 
     describe('Export visibility', () => {
       testMenuItemVisibility({
-        description: 'shows Export when export permission is granted via ruler rule abilities',
+        description: 'shows Export when export permission is granted',
         action: AlertRuleAction.ModifyExport,
         menuItem: 'export',
-        rulerAbility: [true, true],
-        grafanaAbility: [false, false],
+        granted: true,
         shouldShow: true,
       });
 
       testMenuItemVisibility({
-        description: 'shows Export when export permission is granted via grafana prom rule abilities',
+        description: 'hides Export when export permission is denied',
         action: AlertRuleAction.ModifyExport,
         menuItem: 'export',
-        rulerAbility: [false, false],
-        grafanaAbility: [true, true],
-        shouldShow: true,
-      });
-
-      testMenuItemVisibility({
-        description: 'hides Export when export permission is denied in both ruler and grafana abilities',
-        action: AlertRuleAction.ModifyExport,
-        menuItem: 'export',
-        rulerAbility: [false, false],
-        grafanaAbility: [false, false],
+        granted: false,
         shouldShow: false,
       });
     });
@@ -532,18 +449,31 @@ describe('AlertRuleMenu', () => {
   });
 
   describe('Rule Types', () => {
-    // Helper to grant all permissions for testing rule type differences
-    const grantAllPermissions = () => {
-      mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-        return actions.map(() => [true, true]);
-      });
-      mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-        return actions.map(() => [true, true]);
-      });
-    };
-
     beforeEach(() => {
-      grantAllPermissions();
+      // Grant all permissions for testing rule type differences
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingInstanceCreate,
+        AccessControlAction.AlertingSilenceCreate,
+      ]);
+      setFolderAccessControl({
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.AlertingRuleDelete]: true,
+      });
+      mockFolderApi(server).folder(
+        'namespace-uid',
+        mockFolder({
+          uid: 'namespace-uid',
+          title: 'Test Folder',
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.AlertingRuleDelete]: true,
+          },
+        })
+      );
     });
 
     describe('Grafana-managed rules', () => {
@@ -629,34 +559,31 @@ describe('AlertRuleMenu', () => {
       });
 
       it('does not show Silence option for recording rules', async () => {
-        // Override silence ability for recording rules - silence is not allowed for recording rules
-        // even if permissions are granted, because the hook checks isAlertingRule
-        mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Silence) {
-              return [true, false]; // Supported but not allowed for recording rules
-            }
-            return [true, true];
-          });
-        });
-        mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Silence) {
-              return [true, false]; // Supported but not allowed for recording rules
-            }
-            return [true, true];
-          });
-        });
-
         const mockRule = getGrafanaRule({
           promRule: mockPromRecordingRule({ type: PromRuleType.Recording }),
         });
+        // Override the rulerRule to be a recording rule
+        mockRule.rulerRule = mockRulerGrafanaRecordingRule(
+          {},
+          {
+            uid: 'mock-rule-uid-123',
+            namespace_uid: 'namespace-uid',
+          }
+        );
         const identifier = fromCombinedRule('grafana', mockRule);
         const groupIdentifier = {
           groupOrigin: 'grafana' as const,
           namespace: { uid: 'namespace-uid' },
           groupName: 'group-name',
         };
+
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+          })
+        );
 
         render(
           <AlertRuleMenu
@@ -677,24 +604,6 @@ describe('AlertRuleMenu', () => {
 
     describe('Provisioned rules', () => {
       it('hides Delete option for provisioned rules', async () => {
-        // Override Delete and Pause abilities for provisioned rules
-        mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Delete || action === AlertRuleAction.Pause) {
-              return [true, false];
-            }
-            return [true, true];
-          });
-        });
-        mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Delete || action === AlertRuleAction.Pause) {
-              return [true, false];
-            }
-            return [true, true];
-          });
-        });
-
         const mockRule = getGrafanaRule({
           rulerRule: mockGrafanaRulerRule({ provenance: 'file' }),
         });
@@ -722,24 +631,6 @@ describe('AlertRuleMenu', () => {
       });
 
       it('hides Pause option for provisioned rules', async () => {
-        // Override Delete and Pause abilities for provisioned rules
-        mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Delete || action === AlertRuleAction.Pause) {
-              return [true, false];
-            }
-            return [true, true];
-          });
-        });
-        mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-          return actions.map((action) => {
-            if (action === AlertRuleAction.Delete || action === AlertRuleAction.Pause) {
-              return [true, false]; // Supported but not allowed for provisioned rules
-            }
-            return [true, true];
-          });
-        });
-
         const mockRule = getGrafanaRule({
           rulerRule: mockGrafanaRulerRule({ provenance: 'file' }),
         });
@@ -848,11 +739,8 @@ describe('AlertRuleMenu', () => {
   describe('Handler Callbacks', () => {
     describe('handleSilence', () => {
       it('calls handleSilence when Silence menu item is clicked', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Silence,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingSilenceCreate]);
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
@@ -877,9 +765,13 @@ describe('AlertRuleMenu', () => {
 
     describe('handleManageEnrichments', () => {
       it('calls handleManageEnrichments when Manage enrichments menu item is clicked', async () => {
-        const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
+        // Both toggles need to be enabled: alertEnrichment for the hook, alertingEnrichmentPerRule for the component
+        config.featureToggles.alertEnrichment = true;
         config.featureToggles.alertingEnrichmentPerRule = true;
-        mocks.useEnrichmentAbility.mockReturnValue([true, true]);
+        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const handleManageEnrichments = jest.fn();
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
@@ -902,18 +794,24 @@ describe('AlertRuleMenu', () => {
 
         expect(handleManageEnrichments).toHaveBeenCalledTimes(1);
 
-        // Restore feature toggle
-        config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
+        // Restore feature toggles
+        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
+        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
       });
     });
 
     describe('handleDelete', () => {
       it('calls handleDelete with correct identifier and groupIdentifier when Delete menu item is clicked', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Delete,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleDelete]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleDelete]: true });
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: { [AccessControlAction.AlertingRuleDelete]: true },
+          })
+        );
 
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
@@ -937,14 +835,20 @@ describe('AlertRuleMenu', () => {
       });
 
       it('does not call handleDelete when identifier is not editable', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Delete,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleDelete]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleDelete]: true });
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: { [AccessControlAction.AlertingRuleDelete]: true },
+          })
+        );
 
         const { mockRule, groupIdentifier } = createDefaultRuleSetup();
         // Create a non-editable identifier (e.g., Prometheus rule identifier without rulerRule)
+        // For external rules without rulerRule, the delete button should not appear
         const identifier = fromCombinedRule('prometheus', {
           ...mockRule,
           rulerRule: undefined,
@@ -963,20 +867,15 @@ describe('AlertRuleMenu', () => {
         );
 
         await openMenu();
-        const deleteItem = await ui.menuItems.delete.find();
-        await user.click(deleteItem);
-
+        expect(ui.menuItems.delete.query()).not.toBeInTheDocument();
         expect(handleDelete).not.toHaveBeenCalled();
       });
     });
 
     describe('handleDuplicateRule', () => {
       it('calls handleDuplicateRule with correct identifier when Duplicate menu item is clicked', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Duplicate,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
@@ -1003,11 +902,16 @@ describe('AlertRuleMenu', () => {
     describe('onPauseChange', () => {
       it('calls onPauseChange after pause state change when Pause menu item is clicked', async () => {
         const onPauseChange = jest.fn();
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Pause,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+          })
+        );
 
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
@@ -1039,11 +943,16 @@ describe('AlertRuleMenu', () => {
 
       it('calls onPauseChange after resume state change when Resume menu item is clicked', async () => {
         const onPauseChange = jest.fn();
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Pause,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+          })
+        );
 
         const mockRule = getGrafanaRule({
           rulerRule: mockGrafanaRulerRule({ is_paused: true }),
@@ -1088,7 +997,7 @@ describe('AlertRuleMenu', () => {
       it('hides Manage enrichments when feature flag is disabled', async () => {
         const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
         config.featureToggles.alertingEnrichmentPerRule = false;
-        mocks.useEnrichmentAbility.mockReturnValue([true, true]);
+        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
 
         const handleManageEnrichments = jest.fn();
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
@@ -1109,14 +1018,17 @@ describe('AlertRuleMenu', () => {
         await openMenu();
         expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
 
-        // Restore feature toggle
         config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
       });
 
       it('shows Manage enrichments when feature flag is enabled and all conditions are met', async () => {
-        const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
+        // Both toggles need to be enabled: alertEnrichment for the hook, alertingEnrichmentPerRule for the component
+        config.featureToggles.alertEnrichment = true;
         config.featureToggles.alertingEnrichmentPerRule = true;
-        mocks.useEnrichmentAbility.mockReturnValue([true, true]);
+        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const handleManageEnrichments = jest.fn();
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
@@ -1137,14 +1049,19 @@ describe('AlertRuleMenu', () => {
         await openMenu();
         expect(await ui.menuItems.manageEnrichments.find()).toBeInTheDocument();
 
-        // Restore feature toggle
-        config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
+        // Restore feature toggles
+        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
+        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
       });
 
       it('hides Manage enrichments when enrichment ability is not allowed', async () => {
-        const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
+        // Enable both toggles to ensure we're testing the permission check, not the toggles
+        config.featureToggles.alertEnrichment = true;
         config.featureToggles.alertingEnrichmentPerRule = true;
-        mocks.useEnrichmentAbility.mockReturnValue([true, false]);
+        grantUserPermissions([]);
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const handleManageEnrichments = jest.fn();
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
@@ -1165,8 +1082,8 @@ describe('AlertRuleMenu', () => {
         await openMenu();
         expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
 
-        // Restore feature toggle
-        config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
+        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
+        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
       });
     });
 
@@ -1434,9 +1351,13 @@ describe('AlertRuleMenu', () => {
   describe('Edge Cases', () => {
     describe('Missing Data', () => {
       it('hides Manage enrichments when ruleUid is missing even if all other conditions are met', async () => {
-        const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
+        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
+        config.featureToggles.alertEnrichment = true;
         config.featureToggles.alertingEnrichmentPerRule = true;
-        mocks.useEnrichmentAbility.mockReturnValue([true, true]);
+        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+        // Note: Cloud rules typically don't have a ruleUid, so this tests that case
+        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
         const handleManageEnrichments = jest.fn();
         const datasource = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
@@ -1465,16 +1386,13 @@ describe('AlertRuleMenu', () => {
         await openMenu();
         expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
 
-        // Restore feature toggle
-        config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
+        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
+        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
       });
 
       it('hides Pause option when ruleUid is missing even if pause permission is granted', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Pause,
-          rulerAbility: [true, true],
-          grafanaAbility: [true, true],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
 
         const datasource = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
         const mockRule = getCloudRule({}, { rulesSource: datasource });
@@ -1503,11 +1421,16 @@ describe('AlertRuleMenu', () => {
       });
 
       it('pause still works when onPauseChange is not provided', async () => {
-        mockAbilitiesForAction({
-          action: AlertRuleAction.Pause,
-          rulerAbility: [true, true],
-          grafanaAbility: [false, false],
-        });
+        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
+        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        mockFolderApi(server).folder(
+          'namespace-uid',
+          mockFolder({
+            uid: 'namespace-uid',
+            title: 'Test Folder',
+            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+          })
+        );
 
         const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
