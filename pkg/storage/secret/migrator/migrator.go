@@ -211,12 +211,13 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "data_key_id", Type: migrator.DB_NVarchar, Length: 100, Nullable: false, Default: "''"},
+			// {Name: "data_key_id", Type: migrator.DB_NVarchar, Length: 100, Nullable: false, Default: "''"}, // TODO: Not present until Grafana 12.3.
 		},
 		PrimaryKeys: []string{"namespace", "name", "version"},
-		Indices: []*migrator.Index{
-			{Cols: []string{"data_key_id"}},
-		},
+		// TODO: Not present until Grafana 12.3
+		//Indices: []*migrator.Index{
+		//	{Cols: []string{"data_key_id"}},
+		//},
 	}
 	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
 
