@@ -4,12 +4,12 @@ import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
-import { Button, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
@@ -79,7 +79,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
 
   const styles = useStyles2((theme) => getStyles(theme));
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
 
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
@@ -221,17 +220,15 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   };
 
   const renderButtons = () => (
-    <Stack direction="row" alignItems="center" justifyContent={isExpanded ? 'end' : 'space-between'} wrap>
-      {!isExpanded && (
-        <SqlQueryActions
-          executeQuery={executeQuery}
-          currentQuery={query.expression || ''}
-          queryContext={queryContext}
-          refIds={vars}
-          initialQuery={initialQuery}
-          errorContext={errorContext}
-        />
-      )}
+    <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
+      <SqlQueryActions
+        executeQuery={executeQuery}
+        currentQuery={query.expression || ''}
+        queryContext={queryContext}
+        refIds={vars}
+        initialQuery={initialQuery}
+        errorContext={errorContext}
+      />
       {isSchemasFeatureEnabled && (
         <Button
           icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
@@ -268,12 +265,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
             >
               {({ formatQuery }) => (
                 <div ref={toolboxRef}>
-                  <QueryToolbox
-                    query={query}
-                    onFormatCode={formatQuery}
-                    onExpand={setIsExpanded}
-                    isExpanded={isExpanded}
-                  />
+                  <QueryToolbox query={query} onFormatCode={formatQuery} />
                 </div>
               )}
             </SQLEditor>
@@ -300,19 +292,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   return (
     <SqlExprProvider value={contextValue}>
       {renderSQLEditor()}
-      {isExpanded && (
-        <Modal
-          title={t('expressions.sql-expr.modal-title', 'SQL Editor')}
-          closeOnBackdropClick={false}
-          closeOnEscape={true}
-          className={styles.modal}
-          contentClassName={styles.modalContent}
-          isOpen={isExpanded}
-          onDismiss={() => setIsExpanded(false)}
-        >
-          {renderSQLEditor()}
-        </Modal>
-      )}
       <Suspense fallback={null}>
         <GenAISuggestionsDrawer
           isOpen={isDrawerOpen}
@@ -343,7 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   resizableContent: css({
-    minHeight: '300px',
+    minHeight: '200px',
     maxHeight: '800px',
     resize: 'vertical',
     overflow: 'hidden',
