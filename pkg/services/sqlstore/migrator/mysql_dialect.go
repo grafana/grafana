@@ -369,7 +369,7 @@ func extractStatements(schema string) []string {
 			continue
 		}
 
-		if strings.TrimSpace(line) == "" {
+		if line == "" {
 			continue
 		}
 
