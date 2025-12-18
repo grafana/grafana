@@ -199,12 +199,12 @@ These errors occur when querying CloudWatch Metrics.
 | Period too large | Reduce the period setting or set it to "auto" to ensure data points are returned for your time range. |
 | Custom metrics not configured | Add custom metric namespaces in the data source configuration under **Namespaces of Custom Metrics**. |
 
-### "Metric not found" or metrics don't appear in dropdown
+### "Metric not found" or metrics don't appear in drop-down
 
 **Symptoms:**
 
 - Expected metrics don't appear in the query editor
-- Metric dropdown is empty for a namespace
+- Metric drop-down is empty for a namespace
 
 **Solutions:**
 
@@ -218,7 +218,7 @@ These errors occur when querying CloudWatch Metrics.
 
 **Symptoms:**
 
-- Dimension value dropdown doesn't populate
+- Dimension value drop-down doesn't populate
 - Wildcard searches return no results
 
 **Solutions:**
@@ -338,7 +338,7 @@ These errors occur when using template variables with the CloudWatch data source
 
 **Symptoms:**
 
-- Variable dropdown is empty
+- Variable drop-down is empty
 - Dashboard fails to load with variable errors
 
 **Solutions:**
@@ -447,7 +447,7 @@ These issues don't produce specific error messages but are commonly encountered.
 
 **Symptoms:**
 
-- Custom metrics from applications or agents don't show in the namespace dropdown
+- Custom metrics from applications or agents don't show in the namespace drop-down
 - Only standard AWS namespaces are visible
 
 **Solutions:**
