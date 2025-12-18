@@ -251,11 +251,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   );
 
   const renderMainContent = (width?: number, height?: number) => (
-    <div
-      className={cx(styles.contentContainer, styles.resizableContent, {
-        [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
-      })}
-    >
+    <div className={cx(styles.contentContainer, styles.resizableContent)}>
       <div className={styles.editorContainer}>
         <AutoSizer>
           {({ width, height }) => (
@@ -333,15 +329,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(0.5),
   }),
   contentContainer: css({
-    display: 'grid',
+    display: 'flex',
     gap: theme.spacing(1),
-    gridTemplateColumns: '1fr 0fr',
-    gridTemplateAreas: '"editor schema"',
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: theme.transitions.create(['grid-template-columns'], {
-        duration: theme.transitions.duration.standard,
-      }),
-    },
   }),
   resizableContent: css({
     minHeight: '200px',
@@ -349,15 +338,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     resize: 'vertical',
     overflow: 'hidden',
   }),
-  contentContainerWithSchema: css({
-    gridTemplateColumns: '1fr 1fr',
-  }),
   editorContainer: css({
-    gridArea: 'editor',
+    flex: 1,
     height: '100%',
-    width: '100%',
     overflow: 'auto',
     minHeight: '100px',
+    minWidth: 0, // Allow flex item to shrink below content size
   }),
   modal: css({
     width: '95vw',
@@ -368,10 +354,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: 0,
   }),
   schemaInspector: css({
-    gridArea: 'schema',
+    flex: 1,
     height: '100%',
     overflow: 'hidden',
-    minWidth: 0,
+    minWidth: 0, // Allow flex item to shrink below content size
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),
