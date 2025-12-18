@@ -213,7 +213,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
       {(syncTarget === 'folder' || syncTarget === 'instance') && (
         <>
           <Text element="h3">
-            <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>
+            <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
           </Text>
           <Field noMargin>
             <Checkbox
