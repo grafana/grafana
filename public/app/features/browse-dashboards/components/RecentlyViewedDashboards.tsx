@@ -4,9 +4,9 @@ import { useAsyncRetry } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { Button, CollapsableSection, Spinner, Stack, Text, useStyles2, Grid } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
@@ -14,7 +14,7 @@ import { getRecentlyViewedDashboards } from './utils';
 
 const MAX_RECENT = 5;
 
-const recentDashboardsKey = `dashboard_impressions-${config.bootData.user.orgId}`;
+const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
   const [isOpen, setIsOpen] = useState(true);
