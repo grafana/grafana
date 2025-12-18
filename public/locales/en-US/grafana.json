@@ -5392,10 +5392,6 @@
         "title": "Options",
         "tooltip": "Dashboard options"
       },
-      "edit-schema": {
-        "title": "Code",
-        "tooltip": "Edit as code"
-      },
       "export": {
         "title": "Export",
         "unsaved-modal": {
