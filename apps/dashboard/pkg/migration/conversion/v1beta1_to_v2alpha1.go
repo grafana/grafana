@@ -2006,6 +2006,28 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 		}
 	}
 
+	// Ensure each target has a non-empty refId. We only fill missing refIds;
+	existingRefIds := make(map[string]bool)
+	for _, target := range targets {
+		if targetMap, ok := target.(map[string]interface{}); ok {
+			if refId := schemaversion.GetStringValue(targetMap, "refId"); refId != "" {
+				existingRefIds[refId] = true
+			}
+		}
+	}
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		refId := schemaversion.GetStringValue(targetMap, "refId")
+		if refId == "" {
+			refId = nextAvailableRefId(existingRefIds)
+			targetMap["refId"] = refId
+			existingRefIds[refId] = true
+		}
+	}
+
 	queries := make([]dashv2alpha1.DashboardPanelQueryKind, 0, len(targets))
 
 	for _, target := range targets {
@@ -2016,6 +2038,27 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	}
 
 	return queries
+}
+
+// nextAvailableRefId returns the next unused refId using the same sequence as the
+// frontend helper (A, B, ..., Z, AA, AB, ...).
+func nextAvailableRefId(existing map[string]bool) string {
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	var refIdFromIndex func(num int) string
+	refIdFromIndex = func(num int) string {
+		if num < len(letters) {
+			return string(letters[num])
+		}
+		return refIdFromIndex(num/len(letters)-1) + string(letters[num%len(letters)])
+	}
+
+	for i := 0; ; i++ {
+		refId := refIdFromIndex(i)
+		if !existing[refId] {
+			return refId
+		}
+	}
 }
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
@@ -2196,6 +2239,32 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 	return result
 }
 
+// knownPanelProperties lists all properties defined in the Panel schema (dashboard_kind.cue)
+// that should NOT be passed to Angular migration handlers. Only "unknown" Angular-specific
+// properties should be passed to migration handlers.
+var knownPanelProperties = map[string]bool{
+	"type": true, "id": true, "pluginVersion": true, "targets": true,
+	"title": true, "description": true, "transparent": true, "datasource": true,
+	"gridPos": true, "links": true, "repeat": true, "repeatDirection": true,
+	"maxPerRow": true, "maxDataPoints": true, "transformations": true,
+	"interval": true, "timeFrom": true, "timeShift": true, "hideTimeOverride": true,
+	"timeCompare": true, "libraryPanel": true, "cacheTimeout": true,
+	"queryCachingTTL": true, "options": true, "fieldConfig": true, "autoMigrateFrom": true,
+}
+
+// extractAngularOptions extracts only the Angular-specific options from a panel map,
+// filtering out all known Panel schema properties. This is used to pass just the
+// Angular options to migration handlers (e.g., sparkline, valueName, format for singlestat).
+func extractAngularOptions(panelMap map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range panelMap {
+		if !knownPanelProperties[key] {
+			result[key] = value
+		}
+	}
+	return result
+}
+
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
 	panelType := schemaversion.GetStringValue(panelMap, "type", "timeseries")
 	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
@@ -2208,7 +2277,10 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 
 	options := make(map[string]interface{})
 	if opts, ok := panelMap["options"].(map[string]interface{}); ok {
-		options = opts
+		// Deep copy options to avoid modifying the original
+		for k, v := range opts {
+			options[k] = v
+		}
 	}
 
 	// Add frontend-style default options to match frontend behavior
@@ -2219,11 +2291,37 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		options["legend"] = legend
 	}
 
+	// Handle Angular panel migrations
+	// This replicates the v0→v1 migration logic for panels that weren't migrated yet.
+	// We check two cases:
+	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
+	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
+	// 3. Panel has original options - need to set autoMigrateFrom and originalOptions
+	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
+	originalOptions := extractAngularOptions(panelMap)
+
+	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
+		// Check if panel type is an Angular type that needs migration
+		if newType := getAngularPanelMigration(panelType, panelMap); newType != "" {
+			autoMigrateFrom = panelType // Original Angular type
+			panelType = newType         // New modern type
+		} else if len(originalOptions) > 0 {
+			autoMigrateFrom = panelType
+		}
+	}
+
+	if autoMigrateFrom != "" {
+		options["__angularMigration"] = map[string]interface{}{
+			"autoMigrateFrom": autoMigrateFrom,
+			"originalOptions": originalOptions,
+		}
+	}
+
 	// Build field config by mapping each field individually
 	fieldConfigSource := extractFieldConfigSource(fieldConfig)
 
 	return dashv2alpha1.DashboardVizConfigKind{
-		Kind: panelType, // Use panelType as Kind (plugin ID) to match schema comment
+		Kind: panelType, // Use panelType as Kind (plugin ID) - may be converted from Angular type
 		Spec: dashv2alpha1.DashboardVizConfigSpec{
 			PluginVersion: pluginVersion,
 			FieldConfig:   fieldConfigSource,
@@ -2663,4 +2761,11 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 	}
 
 	return result
+}
+
+// getAngularPanelMigration is a convenience wrapper around schemaversion.GetAngularPanelMigration.
+// It checks if a panel type is an Angular panel and returns the new type to migrate to.
+// Returns the new panel type if migration is needed, empty string otherwise.
+func getAngularPanelMigration(panelType string, panelMap map[string]interface{}) string {
+	return schemaversion.GetAngularPanelMigration(panelType, panelMap)
 }

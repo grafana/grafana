@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -17,10 +17,11 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
   }
 
   return (
-    <Button
+    <ToolbarButton
       tooltip={tooltip}
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
-      variant="secondary"
+      icon={dashboard.state.isEditing ? 'edit' : 'pen'}
+      variant="canvas"
       onClick={(evt) => {
         evt.preventDefault();
         evt.stopPropagation();
@@ -37,6 +38,6 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
       {dashboard.state.isEditing
         ? t('dashboard.toolbar.edit-button.exit', 'Exit edit')
         : t('dashboard.toolbar.edit-button.enter', 'Edit')}
-    </Button>
+    </ToolbarButton>
   );
 };

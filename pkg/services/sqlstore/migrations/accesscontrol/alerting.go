@@ -116,3 +116,49 @@ func (m *receiverCreateScopeMigration) Exec(sess *xorm.Session, mg *migrator.Mig
 func AddReceiverCreateScopeMigration(mg *migrator.Migrator) {
 	mg.AddMigration("remove scope from alert.notifications.receivers:create", &receiverCreateScopeMigration{})
 }
+
+type receiverProtectedFieldsEditor struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = new(alertingMigrator)
+
+func (m *receiverProtectedFieldsEditor) SQL(migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *receiverProtectedFieldsEditor) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	sql := `SELECT *
+			FROM permission AS P
+			WHERE action = 'alert.notifications.receivers.secrets:read'
+			    AND EXISTS(SELECT 1 FROM role AS R WHERE R.id = P.role_id AND R.name LIKE 'managed:%')
+			    AND NOT EXISTS(SELECT 1
+			                   FROM permission AS P2
+			                   WHERE P2.role_id = P.role_id
+			                     AND P2.action = 'alert.notifications.receivers.protected:write' AND P2.scope = P.scope
+			                   )`
+	var results []accesscontrol.Permission
+	if err := sess.SQL(sql).Find(&results); err != nil {
+		return fmt.Errorf("failed to query permissions: %w", err)
+	}
+
+	permissionsToCreate := make([]accesscontrol.Permission, 0, len(results))
+	rolesAffected := make(map[int64][]string, 0)
+	for _, result := range results {
+		result.ID = 0
+		result.Action = "alert.notifications.receivers.protected:write"
+		result.Created = time.Now()
+		result.Updated = time.Now()
+		permissionsToCreate = append(permissionsToCreate, result)
+		rolesAffected[result.RoleID] = append(rolesAffected[result.RoleID], result.Identifier)
+	}
+	_, err := sess.InsertMulti(&permissionsToCreate)
+	for id, ids := range rolesAffected {
+		mg.Logger.Debug("Added permission 'alert.notifications.receivers.protected:write' to managed role", "roleID", id, "identifiers", ids)
+	}
+	return err
+}
+
+func AddReceiverProtectedFieldsEditor(mg *migrator.Migrator) {
+	mg.AddMigration("add 'alert.notifications.receivers.protected:write' to receiver admins", &receiverProtectedFieldsEditor{})
+}

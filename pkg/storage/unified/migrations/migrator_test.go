@@ -162,14 +162,49 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		}
 	})
 
-	t.Run("Step 3: verify data is migrated to unified storage", func(t *testing.T) {
-		// Migrations will run automatically at startup and mode 5 is enforced by the config
+	t.Run("Step 3: verify that opted-out resources are not migrated", func(t *testing.T) {
+		// Build unified storage config for Mode5
+		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
+		for _, tc := range testCases {
+			for _, gvr := range tc.resources() {
+				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
+				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
+					DualWriterMode:  grafanarest.Mode5,
+					EnableMigration: false,
+				}
+			}
+		}
+
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				// EnableLog:             true,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: unifiedConfig,
+			},
+			Org1Users: org1,
+			OrgBUsers: orgB,
+		})
+		t.Cleanup(helper.Shutdown)
+
+		for _, state := range testStates {
+			t.Run(state.tc.name(), func(t *testing.T) {
+				// Verify resources don't exist in unified storage yet
+				state.tc.verify(t, helper, false)
+			})
+		}
+		verifyRegisteredMigrations(t, helper, false, true)
+	})
+
+	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
+		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
+		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+			GrafanaOpts: testinfra.GrafanaOpts{
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
 				DisableDataMigrations: false, // Run migrations at startup
+				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 			},
 			Org1Users: org1,
@@ -183,7 +218,89 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 				state.tc.verify(t, helper, true)
 			})
 		}
+
+		t.Logf("Verifying migrations are correctly registered")
+		verifyRegisteredMigrations(t, helper, true, false)
 	})
+
+	t.Run("Step 5: verify data is migrated for all migrations", func(t *testing.T) {
+		// Trigger migrations that are not enabled by default
+		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
+		for _, tc := range testCases {
+			for _, gvr := range tc.resources() {
+				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
+				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
+					EnableMigration: true,
+				}
+			}
+		}
+		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+			GrafanaOpts: testinfra.GrafanaOpts{
+				// EnableLog:             true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				DisableDataMigrations: false,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig:  unifiedConfig,
+			},
+			Org1Users: org1,
+			OrgBUsers: orgB,
+		})
+		t.Cleanup(helper.Shutdown)
+
+		for _, state := range testStates {
+			t.Run(state.tc.name(), func(t *testing.T) {
+				// Verify resources still exist in unified storage after restart
+				state.tc.verify(t, helper, true)
+			})
+		}
+
+		t.Logf("Verifying migrations are correctly registered")
+		verifyRegisteredMigrations(t, helper, false, false)
+	})
+}
+
+const (
+	migrationScope = "unifiedstorage"
+	migrationTable = migrationScope + "_migration_log"
+
+	playlistsID            = "playlists migration"
+	foldersAndDashboardsID = "folders and dashboards migration"
+)
+
+var migrationIDsToDefault = map[string]bool{
+	playlistsID:            true,
+	foldersAndDashboardsID: false,
+}
+
+func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
+	getMigrationsQuery := fmt.Sprintf("SELECT migration_id FROM %s", migrationTable)
+	createTableMigrationID := fmt.Sprintf("create %s table", migrationTable)
+	expectedMigrationIDs := []string{createTableMigrationID}
+	for id, enabled := range migrationIDsToDefault {
+		if onlyDefault && !enabled {
+			continue
+		}
+		if optOut {
+			continue
+		}
+		expectedMigrationIDs = append(expectedMigrationIDs, id)
+	}
+	rows, err := helper.GetEnv().SQLStore.GetEngine().DB().Query(getMigrationsQuery)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	migrationIDs := make(map[string]struct{})
+	for rows.Next() {
+		var migrationID string
+		require.NoError(t, rows.Scan(&migrationID))
+		require.Contains(t, expectedMigrationIDs, migrationID)
+		migrationIDs[migrationID] = struct{}{}
+	}
+	require.NoError(t, rows.Err())
+	require.Len(t, migrationIDs, len(expectedMigrationIDs))
 }
 
 // verifyResourceCount verifies that the expected number of resources exist in K8s storage

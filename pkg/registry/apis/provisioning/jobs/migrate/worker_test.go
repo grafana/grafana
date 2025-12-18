@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,9 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func TestMigrationWorker_IsSupported(t *testing.T) {
@@ -42,7 +39,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 		},
 	}
 
-	worker := NewMigrationWorker(nil, nil, nil)
+	worker := NewMigrationWorker(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -53,7 +50,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 }
 
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
-	worker := NewMigrationWorker(nil, nil, nil)
+	worker := NewMigrationWorker(NewMockMigrator(t))
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
@@ -68,56 +65,13 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
 }
 
-func TestMigrationWorker_WithHistory(t *testing.T) {
-	fakeDualwrite := dualwrite.NewMockService(t)
-	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).
-		Maybe().Return(true, nil) // using unified storage
-
-	worker := NewMigrationWorker(nil, nil, fakeDualwrite)
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{
-				History: true,
-			},
-		},
-	}
-
-	t.Run("fail local", func(t *testing.T) {
-		progressRecorder := jobs.NewMockJobProgressRecorder(t)
-		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
-
-		repo := local.NewRepository(&provisioning.Repository{}, nil)
-		err := worker.Process(context.Background(), repo, job, progressRecorder)
-		require.EqualError(t, err, "history is only supported for github repositories")
-	})
-
-	t.Run("fail unified", func(t *testing.T) {
-		progressRecorder := jobs.NewMockJobProgressRecorder(t)
-		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
-
-		repo := repository.NewMockRepository(t)
-		repo.On("Config").Return(&provisioning.Repository{
-			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL: "empty", // not valid
-				},
-			},
-		})
-		err := worker.Process(context.Background(), repo, job, progressRecorder)
-		require.EqualError(t, err, "history is not yet supported in unified storage")
-	})
-}
-
 func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupMocks     func(*MockMigrator, *MockMigrator, *dualwrite.MockService, *jobs.MockJobProgressRecorder)
-		setupRepo      func(*repository.MockRepository)
-		job            provisioning.Job
-		expectedError  string
-		isLegacyActive bool
+		name          string
+		setupMocks    func(*MockMigrator, *jobs.MockJobProgressRecorder)
+		setupRepo     func(*repository.MockRepository)
+		job           provisioning.Job
+		expectedError string
 	}{
 		{
 			name: "should fail when migrate settings are missing",
@@ -127,7 +81,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: nil,
 				},
 			},
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 			},
 			setupRepo: func(repo *repository.MockRepository) {
 				// No Config() call expected since we fail before that
@@ -135,150 +89,35 @@ func TestMigrationWorker_Process(t *testing.T) {
 			expectedError: "missing migrate settings",
 		},
 		{
-			name: "should use legacy migrator when legacy storage is active",
+			name: "should use unified storage migrator for instance-type repositories",
 			job: provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			isLegacyActive: true,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
-				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			},
-			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
-						},
-					},
-				})
-			},
-		},
-		{
-			name: "should use unified storage migrator when legacy storage is not active",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
-				},
-			},
-			isLegacyActive: false,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
-				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
-						},
-					},
-				})
+				// No Config() call needed anymore
 			},
 		},
 		{
-			name: "should propagate migrator errors",
+			name: "should allow migration for folder-type repositories",
 			job: provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			isLegacyActive: true,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
-				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("migration failed"))
-			},
-			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
-						},
-					},
-				})
-			},
-			expectedError: "migration failed",
-		},
-		{
-			name: "should block migration of legacy resources for folder-type repositories",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
-				},
-			},
-			isLegacyActive: true,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
-				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
-				// legacyMigrator should not be called as we block before reaching it
-			},
-			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
-			},
-			expectedError: "migration of legacy resources is not supported for folder-type repositories",
-		},
-		{
-			name: "should allow migration of legacy resources for instance-type repositories",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
-				},
-			},
-			isLegacyActive: true,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
-				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
-				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			},
-			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
-						},
-					},
-				})
-			},
-			expectedError: "",
-		},
-		{
-			name: "should allow migration for folder-type repositories when legacy storage is not active",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
-				},
-			},
-			isLegacyActive: false,
-			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
-				pr.On("SetTotal", mock.Anything, 10).Return()
-				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
+				// No Config() call needed anymore
 			},
 			expectedError: "",
 		},
@@ -286,15 +125,13 @@ func TestMigrationWorker_Process(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			legacyMigrator := NewMockMigrator(t)
 			unifiedMigrator := NewMockMigrator(t)
-			dualWriteService := dualwrite.NewMockService(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 
-			worker := NewMigrationWorker(legacyMigrator, unifiedMigrator, dualWriteService)
+			worker := NewMigrationWorker(unifiedMigrator)
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(legacyMigrator, unifiedMigrator, dualWriteService, progressRecorder)
+				tt.setupMocks(unifiedMigrator, progressRecorder)
 			}
 
 			rw := repository.NewMockRepository(t)
@@ -310,7 +147,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mock.AssertExpectationsForObjects(t, legacyMigrator, unifiedMigrator, dualWriteService, progressRecorder, rw)
+			mock.AssertExpectationsForObjects(t, unifiedMigrator, progressRecorder, rw)
 		})
 	}
 }
