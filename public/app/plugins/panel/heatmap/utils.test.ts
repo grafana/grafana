@@ -1,6 +1,6 @@
 import { ScaleDistribution } from '@grafana/schema';
 
-import { boundedMinMax, calculateYSizeDivisor, toLogBase, valuesToFills } from './utils';
+import { applyExplicitMinMax, boundedMinMax, calculateYSizeDivisor, toLogBase, valuesToFills } from './utils';
 
 describe('toLogBase', () => {
   it('returns 10 when value is 10', () => {
@@ -20,6 +20,68 @@ describe('toLogBase', () => {
     expect(toLogBase(0)).toBe(2);
     expect(toLogBase(-1)).toBe(2);
     expect(toLogBase(100)).toBe(2);
+  });
+});
+
+describe('applyExplicitMinMax', () => {
+  it('returns original values when no explicit values provided', () => {
+    const [min, max] = applyExplicitMinMax(0, 100, undefined, undefined);
+    expect(min).toBe(0);
+    expect(max).toBe(100);
+  });
+
+  it('applies explicit min only', () => {
+    const [min, max] = applyExplicitMinMax(0, 100, 10, undefined);
+    expect(min).toBe(10);
+    expect(max).toBe(100);
+  });
+
+  it('applies explicit max only', () => {
+    const [min, max] = applyExplicitMinMax(0, 100, undefined, 90);
+    expect(min).toBe(0);
+    expect(max).toBe(90);
+  });
+
+  it('applies both explicit min and max', () => {
+    const [min, max] = applyExplicitMinMax(0, 100, 20, 80);
+    expect(min).toBe(20);
+    expect(max).toBe(80);
+  });
+
+  it('handles negative values', () => {
+    const [min, max] = applyExplicitMinMax(-50, 50, -10, 10);
+    expect(min).toBe(-10);
+    expect(max).toBe(10);
+  });
+
+  it('handles explicit min = 0', () => {
+    const [min, max] = applyExplicitMinMax(10, 100, 0, undefined);
+    expect(min).toBe(0);
+    expect(max).toBe(100);
+  });
+
+  it('handles explicit max = 0', () => {
+    const [min, max] = applyExplicitMinMax(-100, -10, undefined, 0);
+    expect(min).toBe(-100);
+    expect(max).toBe(0);
+  });
+
+  it('handles null scaleMin', () => {
+    const [min, max] = applyExplicitMinMax(null, 100, 10, undefined);
+    expect(min).toBe(10);
+    expect(max).toBe(100);
+  });
+
+  it('handles null scaleMax', () => {
+    const [min, max] = applyExplicitMinMax(0, null, undefined, 90);
+    expect(min).toBe(0);
+    expect(max).toBe(90);
+  });
+
+  it('preserves null when no explicit value provided', () => {
+    const [min, max] = applyExplicitMinMax(null, null, undefined, undefined);
+    expect(min).toBe(null);
+    expect(max).toBe(null);
   });
 });
 

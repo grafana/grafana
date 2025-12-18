@@ -274,8 +274,7 @@ export function prepConfig(opts: PrepConfigOpts) {
               }
             } else if (!isOrdinalY) {
               // Apply explicit min/max for linear scale
-              scaleMin = explicitMin ?? scaleMin;
-              scaleMax = explicitMax ?? scaleMax;
+              [scaleMin, scaleMax] = applyExplicitMinMax(scaleMin, scaleMax, explicitMin, explicitMax);
             }
 
             return [scaleMin, scaleMax];
@@ -944,4 +943,17 @@ export function calculateYSizeDivisor(
 ): number {
   const isLogScale = scaleType === ScaleDistribution.Log || scaleType === ScaleDistribution.Symlog;
   return isLogScale && !hasExplicitScale ? +(splitValue || 1) : 1;
+}
+
+/**
+ * Applies explicit min/max values to scale range for linear scales.
+ * Returns the original values if explicitMin/explicitMax are undefined.
+ */
+export function applyExplicitMinMax(
+  scaleMin: number | null,
+  scaleMax: number | null,
+  explicitMin: number | undefined,
+  explicitMax: number | undefined
+): [number | null, number | null] {
+  return [explicitMin ?? scaleMin, explicitMax ?? scaleMax];
 }
