@@ -106,9 +106,9 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			}
 
 			kvBackendOpts := resource.KVBackendOptions{
-				KvStore:   sqlkv,
-				Tracer:    opts.Tracer,
-				Reg:       opts.Reg,
+				KvStore: sqlkv,
+				Tracer:  opts.Tracer,
+				Reg:     opts.Reg,
 			}
 
 			ctx := context.Background()

@@ -151,10 +151,6 @@ type sqlKVSaveRequest struct {
 	Folder    string
 }
 
-type sqlKVSaveResponse struct {
-	Value []byte
-}
-
 func (req sqlKVSaveRequest) Validate() error {
 	return req.sqlKVSectionKey.Validate()
 }
@@ -204,7 +200,6 @@ type sqlKV struct {
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
-	rvManager  *rvmanager.ResourceVersionManager
 }
 
 func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
@@ -460,15 +455,15 @@ func (w *sqlWriteCloser) Close() error {
 	}
 
 	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
-		SQLTemplate:     sqltemplate.New(w.kv.dialect),
-		Value:           w.buf.Bytes(),
-		GUID:            dataKey.GUID,
-		Group:           dataKey.Group,
-		Resource:        dataKey.Resource,
-		Namespace:       dataKey.Namespace,
-		Name:            dataKey.Name,
-		Action:          action,
-		Folder:          dataKey.Folder,
+		SQLTemplate: sqltemplate.New(w.kv.dialect),
+		Value:       w.buf.Bytes(),
+		GUID:        dataKey.GUID,
+		Group:       dataKey.Group,
+		Resource:    dataKey.Resource,
+		Namespace:   dataKey.Namespace,
+		Name:        dataKey.Name,
+		Action:      action,
+		Folder:      dataKey.Folder,
 	})
 
 	if err != nil {
@@ -478,15 +473,15 @@ func (w *sqlWriteCloser) Close() error {
 	switch action {
 	case 1:
 		_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResource, sqlKVSaveRequest{
-			SQLTemplate:     sqltemplate.New(w.kv.dialect),
-			Value:           w.buf.Bytes(),
-			GUID:            dataKey.GUID,
-			Group:           dataKey.Group,
-			Resource:        dataKey.Resource,
-			Namespace:       dataKey.Namespace,
-			Name:            dataKey.Name,
-			Action:          action,
-			Folder:          dataKey.Folder,
+			SQLTemplate: sqltemplate.New(w.kv.dialect),
+			Value:       w.buf.Bytes(),
+			GUID:        dataKey.GUID,
+			Group:       dataKey.Group,
+			Resource:    dataKey.Resource,
+			Namespace:   dataKey.Namespace,
+			Name:        dataKey.Name,
+			Action:      action,
+			Folder:      dataKey.Folder,
 		})
 
 		if err != nil {
@@ -494,14 +489,14 @@ func (w *sqlWriteCloser) Close() error {
 		}
 	case 2:
 		_, err = dbutil.Exec(w.ctx, tx, sqlKVUpdateLegacyResource, sqlKVSaveRequest{
-			SQLTemplate:     sqltemplate.New(w.kv.dialect),
-			Value:           w.buf.Bytes(),
-			Group:           dataKey.Group,
-			Resource:        dataKey.Resource,
-			Namespace:       dataKey.Namespace,
-			Name:            dataKey.Name,
-			Action:          action,
-			Folder:          dataKey.Folder,
+			SQLTemplate: sqltemplate.New(w.kv.dialect),
+			Value:       w.buf.Bytes(),
+			Group:       dataKey.Group,
+			Resource:    dataKey.Resource,
+			Namespace:   dataKey.Namespace,
+			Name:        dataKey.Name,
+			Action:      action,
+			Folder:      dataKey.Folder,
 		})
 
 		if err != nil {
@@ -509,11 +504,11 @@ func (w *sqlWriteCloser) Close() error {
 		}
 	case 3:
 		_, err = dbutil.Exec(w.ctx, tx, sqlKVDeleteLegacyResource, sqlKVSaveRequest{
-			SQLTemplate:     sqltemplate.New(w.kv.dialect),
-			Group:           dataKey.Group,
-			Resource:        dataKey.Resource,
-			Namespace:       dataKey.Namespace,
-			Name:            dataKey.Name,
+			SQLTemplate: sqltemplate.New(w.kv.dialect),
+			Group:       dataKey.Group,
+			Resource:    dataKey.Resource,
+			Namespace:   dataKey.Namespace,
+			Name:        dataKey.Name,
 		})
 
 		if err != nil {

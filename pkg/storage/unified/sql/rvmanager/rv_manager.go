@@ -21,7 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-const txKey = "rvmanager_db_tx"
+type contextKey string
+
+const txKey contextKey = "rvmanager_db_tx"
 
 func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
 	return context.WithValue(ctx, txKey, tx)
