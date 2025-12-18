@@ -19,7 +19,6 @@ import {
 } from './utils/actions';
 import {
   expectRecentScope,
-  expectRecentScopeNotPresent,
   expectRecentScopeNotPresentInDocument,
   expectRecentScopesSection,
   expectResultApplicationsGrafanaSelected,
