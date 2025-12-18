@@ -7,7 +7,6 @@ import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 
 import {
   fetchDetails,
-  fetchPluginInsights,
   install,
   uninstall,
   loadPluginDashboards,
@@ -62,10 +61,6 @@ const slice = createSlice({
       })
       // Fetch Details
       .addCase(fetchDetails.fulfilled, (state, action) => {
-        pluginsAdapter.updateOne(state.items, action.payload);
-      })
-      // Fetch Plugin Insights
-      .addCase(fetchPluginInsights.fulfilled, (state, action) => {
         pluginsAdapter.updateOne(state.items, action.payload);
       })
       // Install
