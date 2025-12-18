@@ -95,6 +95,7 @@ runs:
             - 'nx.json'
             - 'tsconfig.json'
             - '.yarn/**'
+            - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
