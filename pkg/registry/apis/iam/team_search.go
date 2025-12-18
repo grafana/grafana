@@ -2,6 +2,7 @@ package iam
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -137,6 +139,12 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, fmt.Errorf("no identity found for request: %w", err), w)
+		return
+	}
+
 	limit := 50
 	offset := 0
 	page := 1
@@ -154,16 +162,23 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{},
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+				Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
+				Namespace: requester.GetNamespace(),
+			},
+		},
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
 		Page:    int64(page),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
-			builders.TEAM_SEARCH_EMAIL,
-			builders.TEAM_SEARCH_PROVISIONED,
-			builders.TEAM_SEARCH_EXTERNAL_UID,
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
 		},
 	}
 

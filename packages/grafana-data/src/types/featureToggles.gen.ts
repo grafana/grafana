@@ -828,6 +828,10 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
+  /**
   * Enables the new logs panel
   * @default true
   */
@@ -1184,11 +1188,6 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
-  /**
-  * Show insights for plugins in the plugin details page
-  * @default false
-  */
-  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */

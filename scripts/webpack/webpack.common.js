@@ -22,6 +22,7 @@ module.exports = {
     publicPath: 'public/build/',
   },
   resolve: {
+    conditionNames: ['@grafana-app/source', '...'],
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
       // some of data source plugins use global Prism object to add the language definition

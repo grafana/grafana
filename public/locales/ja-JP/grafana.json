@@ -3318,6 +3318,7 @@
       "login-attribute-path-label": "ログイン属性パス",
       "login-prompt-consent": "同意",
       "login-prompt-description": "ユーザーがアイデンティティプロバイダー (IdP) でログインするときのユーザーインタラクションのタイプを示します。",
+      "login-prompt-description-google": "",
       "login-prompt-label": "ログインプロンプト",
       "login-prompt-login": "ログイン",
       "login-prompt-select-account": "アカウントの選択",
@@ -3375,6 +3376,7 @@
       "use-pkce-description": "有効にすると、Grafanaは<2>OAuth2認証コード付与でコード交換用証明キー（PKCE）</2>を使用します。",
       "use-pkce-label": "PKCEを使用",
       "use-refresh-token-description": "有効にすると、GrafanaはOAuth2プロバイダーから提供されたリフレッシュトークンを使用して新しいアクセストークンを取得します。",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "リフレッシュトークンを使用",
       "validate-hosted-domain-description": "有効にすると、GrafanaはGoogle IDトークンから取得したホストドメインをユーザーが指定した「{{ allowedDomainsLabel }}」リストと照合します。",
       "validate-hosted-domain-label": "ホストドメインを検証",
@@ -10138,7 +10140,8 @@
       "copy": "選択した部分をコピー",
       "disable-menu": "メニューを無効にする",
       "line-contains": "行にフィルタが含まれている場合はフィルタとして追加",
-      "line-contains-not": "フィルタが含まれていない行として追加"
+      "line-contains-not": "フィルタが含まれていない行として追加",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "タイムスタンプの表示形式",
@@ -11820,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "インスタンス全体を接続すると、移行実行中はダッシュボードが利用できなくなります。このプロセスを開始する前に、ユーザーに警告することをお勧めします。",
       "modal-description-public-access": "GitHub連携を有効にするために、Grafanaインスタンスへの公開アクセスを設定",
       "modal-description-required-features": "プロビジョニングに必要なGrafana機能を有効化",
       "modal-title-set-up-public-access": "公開アクセスを設定",
@@ -11832,8 +11834,7 @@
       "step-title-copy-url": "公開URLをコピー",
       "step-title-enable-feature-toggles": "必要な機能トグルを有効化",
       "step-title-start-ngrok": "一時的な公開アクセス用にngrokを起動",
-      "step-title-update-grafana-config": "Grafana設定を更新",
-      "title-setting-connection-could-cause-temporary-outage": "この接続設定を行うことで、一時的に停止する可能性があります"
+      "step-title-update-grafana-config": "Grafana設定を更新"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "プロビジョニング接続を表示・管理"
@@ -11902,18 +11903,15 @@
     },
     "home-page": {
       "button-delete-repositories": "リポジトリを削除",
-      "configured-repositories-while-running-legacy-storage": "レガシーストレージの実行中は、設定したリポジトリは機能しません。",
       "confirm-delete-repositories": "設定済みのリポジトリをすべて削除してもよろしいですか？この操作は元に戻せません。",
       "error-delete-all-repositories": "すべてのリポジトリの削除に失敗しました",
-      "remove-all-configured-repositories": "設定済みのリポジトリをすべて削除",
       "subtitle": "設定済みのリポジトリを表示・管理",
       "success-all-repositories-deleted": "設定済みのリポジトリがすべて削除されました",
       "tab-getting-started": "はじめに",
       "tab-getting-started-title": "はじめに",
       "tab-repositories": "リポジトリ",
       "tab-repositories-title": "リポジトリ一覧",
-      "title-delete-all-configured-repositories": "設定済みのリポジトリをすべて削除",
-      "title-legacy-storage-detected": "レガシーストレージが検出されました"
+      "title-delete-all-configured-repositories": "設定済みのリポジトリをすべて削除"
     },
     "http-utils": {
       "access-denied": "",
@@ -11953,7 +11951,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12033,7 +12030,6 @@
     "repository-status-page": {
       "back-to-repositories": "リポジトリに戻る",
       "cleaning-up-resources": "リポジトリリソースのクリーンアップ中",
-      "legacy-storage-message": "インスタンスはまだ統合ストレージを実行していません - 移行ウィザードが必要です",
       "not-found": "見つかりません",
       "not-found-message": "リポジトリが見つかりません",
       "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。",
@@ -12042,7 +12038,6 @@
       "tab-resources": "リソース",
       "tab-resources-title": "",
       "title": "リポジトリの状態",
-      "title-legacy-storage": "レガシーストレージ",
       "title-queued-for-deletion": "削除待ちリストに追加されました"
     },
     "repository-type-cards": {
@@ -12138,9 +12133,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "各履歴値のコミットを含める",
-      "synchronization-options": "同期オプション"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
@@ -12157,11 +12150,11 @@
     },
     "warning-title-default": "警告",
     "wizard": {
-      "alert-point-1": "このプロセス中はリソースの作成、編集、削除を行えません。最後のステップになると、リソースが消えます。",
-      "alert-point-2": "プロビジョニングが完了すると、リソースが再表示され、外部ストレージを通じて管理されます。",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "このプロセスの所要時間は、関連するリソースの数によって異なります。",
-      "alert-point-4": "エンタープライズインスタンス管理者は、ユーザーにお知らせバナーを表示できます。詳しい手順については<2>このガイド</2>をご覧ください。",
-      "alert-title": "重要：データや設定は失われませんが、ダッシュボードは数分間一時的に利用できなくなります。",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完了",
@@ -12179,7 +12172,6 @@
       "step-finish": "追加設定を選択",
       "step-synchronize": "外部ストレージと同期",
       "sync-description": "リソースを外部ストレージと同期します。この一度限りの手順が完了すると、その後のすべての更新は自動的にリポジトリに保存され、インスタンスにプロビジョニングされます。",
-      "sync-option-history": "履歴",
       "title-bootstrap": "同期する内容を選択",
       "title-connect": "外部ストレージに接続",
       "title-finish": "追加設定を選択",

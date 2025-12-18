@@ -9,7 +9,7 @@ const Components = resolveSelectors(versionedComponents);
 const selectors = { pages: Pages, components: Components };
 
 /**
- * Exposes Pages, Component selectors and E2ESelectors type in package for easy use in e2e tests and in production code
+ * Exposes Pages, Component selectors, and E2ESelectors type in package for easy use in e2e tests and in production code.
  */
 export {
   Pages,

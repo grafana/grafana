@@ -3318,6 +3318,7 @@
       "login-attribute-path-label": "登入屬性路徑",
       "login-prompt-consent": "同意",
       "login-prompt-description": "表示使用者使用 IdP 登入時的使用者互動類型。",
+      "login-prompt-description-google": "",
       "login-prompt-label": "登入提示",
       "login-prompt-login": "登入",
       "login-prompt-select-account": "選擇帳戶",
@@ -3375,6 +3376,7 @@
       "use-pkce-description": "若啟用，Grafana 將使用<2>代碼交換的驗證金鑰 (PKCE)</2> 與 OAuth2 授權碼授權。",
       "use-pkce-label": "使用 PKCE",
       "use-refresh-token-description": "若啟用，Grafana 將使用 OAuth2 提供者提供的重新整理權杖來擷取新的存取權杖。",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "使用重新整理權杖",
       "validate-hosted-domain-description": "若啟用，Grafana 將會比對從 Google ID 權杖擷取的託管網域與使用者指定的「{{ allowedDomainsLabel }}」清單。",
       "validate-hosted-domain-label": "驗證託管網域",
@@ -10138,7 +10140,8 @@
       "copy": "複製選取範圍",
       "disable-menu": "停用功能表",
       "line-contains": "新增為包含篩選條件的行",
-      "line-contains-not": "新增為不包含篩選條件的行"
+      "line-contains-not": "新增為不包含篩選條件的行",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
@@ -11820,7 +11823,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "連接整個執行個體時，在執行移轉時將無法使用儀表板。建議您在開始此流程前通知使用者。",
       "modal-description-public-access": "設定 Grafana 執行個體的公共存取權限，以啟用 GitHub 整合",
       "modal-description-required-features": "啟用所需的 Grafana 功能以進行佈建",
       "modal-title-set-up-public-access": "設定公共存取",
@@ -11832,8 +11834,7 @@
       "step-title-copy-url": "複製您的公共網址",
       "step-title-enable-feature-toggles": "啟用必要的功能切換",
       "step-title-start-ngrok": "啟動 ngrok 以進行臨時公共存取",
-      "step-title-update-grafana-config": "更新您的 Grafana 設定",
-      "title-setting-connection-could-cause-temporary-outage": "設定此連線可能會導致暫時中斷"
+      "step-title-update-grafana-config": "更新您的 Grafana 設定"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
@@ -11902,18 +11903,15 @@
     },
     "home-page": {
       "button-delete-repositories": "刪除儲存庫",
-      "configured-repositories-while-running-legacy-storage": "在執行舊的儲存空間時，已設定的儲存庫將不作用。",
       "confirm-delete-repositories": "確定要刪除所有已設定的儲存庫嗎？此動作無法還原。",
       "error-delete-all-repositories": "無法刪除所有儲存庫",
-      "remove-all-configured-repositories": "移除所有已設定的儲存庫",
       "subtitle": "檢視及管理您設定的儲存庫",
       "success-all-repositories-deleted": "已刪除所有已設定的儲存庫",
       "tab-getting-started": "立即開始",
       "tab-getting-started-title": "立即開始",
       "tab-repositories": "儲存庫",
       "tab-repositories-title": "儲存庫清單",
-      "title-delete-all-configured-repositories": "刪除所有已設定的儲存庫",
-      "title-legacy-storage-detected": "偵測到舊的儲存空間"
+      "title-delete-all-configured-repositories": "刪除所有已設定的儲存庫"
     },
     "http-utils": {
       "access-denied": "",
@@ -11953,7 +11951,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12033,7 +12030,6 @@
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
       "cleaning-up-resources": "清理儲存庫資源",
-      "legacy-storage-message": "執行個體尚未執行統一儲存空間 -- 需要移轉小工具",
       "not-found": "找不到",
       "not-found-message": "找不到儲存庫",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
@@ -12042,7 +12038,6 @@
       "tab-resources": "資源",
       "tab-resources-title": "",
       "title": "儲存庫狀態",
-      "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
     },
     "repository-type-cards": {
@@ -12138,9 +12133,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "包含每個歷史數值的提交",
-      "synchronization-options": "同步選項"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
@@ -12157,11 +12150,11 @@
     },
     "warning-title-default": "警告",
     "wizard": {
-      "alert-point-1": "在此過程中，將無法建立、編輯或刪除資源。在最後一步中，它們將會消失。",
-      "alert-point-2": "佈建完成後，資源將重新出現，並透過外部儲存空間進行管理。",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "此流程的持續時間取決於所涉及的資源數量。",
-      "alert-point-4": "企業執行個體管理員可以向使用者顯示公告橫幅。請參閱<2>本指南</2>，了解逐步說明。",
-      "alert-title": "重要事項：不會遺失任何資料或設定，但儀表板將在幾分鐘內暫時無法使用。",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "結束",
@@ -12179,7 +12172,6 @@
       "step-finish": "選擇附加設定",
       "step-synchronize": "與外部儲存空間同步",
       "sync-description": "將資源與外部儲存空間同步。在此一次性步驟之後，未來的所有更新都將自動儲存到儲存庫中，並佈建回執行個體。",
-      "sync-option-history": "歷史紀錄",
       "title-bootstrap": "選擇要同步的內容",
       "title-connect": "連接到外部儲存空間",
       "title-finish": "選擇附加設定",
