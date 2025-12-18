@@ -111,8 +111,8 @@ func (s *Service) HandleAggregatorsQuery(rw http.ResponseWriter, req *http.Reque
 
 	var aggregators []string
 	if err := json.Unmarshal(responseBody, &aggregators); err != nil {
-		logger.Warn("Failed to unmarshal aggregators response, returning empty array", "error", err)
-		aggregators = []string{}
+		http.Error(rw, fmt.Sprintf("failed to unmarshal aggregators response: %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	sort.Strings(aggregators)
@@ -180,8 +180,8 @@ func (s *Service) HandleFiltersQuery(rw http.ResponseWriter, req *http.Request) 
 
 	var filters map[string]json.RawMessage
 	if err := json.Unmarshal(responseBody, &filters); err != nil {
-		logger.Warn("Failed to unmarshal filters response, returning empty array", "error", err)
-		filters = make(map[string]json.RawMessage)
+		http.Error(rw, fmt.Sprintf("failed to unmarshal filters response: %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	keys := make([]string, 0, len(filters))
