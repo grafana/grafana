@@ -1372,8 +1372,10 @@ export type RoutingTreeList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type TemplateGroupTemplateKind = 'grafana' | 'mimir';
 export type TemplateGroupSpec = {
   content: string;
+  kind: TemplateGroupTemplateKind;
   title: string;
 };
 export type TemplateGroup = {
