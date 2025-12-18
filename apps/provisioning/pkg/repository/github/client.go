@@ -34,6 +34,10 @@ type Client interface {
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+
+	// Apps
+	GetApp(ctx context.Context, token string) (App, error)
+	GetAppInstallation(ctx context.Context, appToken string, installationID string) (AppInstallation, error)
 }
 
 type CommitAuthor struct {
@@ -74,4 +78,17 @@ type WebhookConfig struct {
 	// The secret to use when sending events to the URL.
 	// If fetched from GitHub, this is empty as it contains no useful information.
 	Secret string
+}
+
+// App represents a Github App.
+type App struct {
+	// ID represents the GH app ID.
+	ID int64
+	// Slug represents the GH app slug.
+	Slug string
+}
+
+// AppInstallation represents a Github App Installation.
+type AppInstallation struct {
+	ID int64
 }
