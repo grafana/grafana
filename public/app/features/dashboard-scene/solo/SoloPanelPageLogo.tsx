@@ -58,14 +58,14 @@ export function SoloPanelPageLogo({ containerRef, isHovered, hideLogo }: SoloPan
       // Use the smaller dimension to ensure it scales appropriately for both wide and tall panels
       const minDimension = Math.min(width, height);
 
-      // Base scale calculation: scale between 0.6 (for small panels ~200px) and 1.0 (for large panels ~800px+)
-      // Allow scaling up to 1.0 for larger panels
+      // Base scale calculation: scales from 0.6 (for small panels ~200px) up to 1.0 when the smaller dimension is ~800px
+      // Clamp to a maximum of 1.0 for larger panels
       const baseScale = Math.max(0.6, Math.min(1.0, 0.6 + (minDimension - 200) / 600));
 
-      // Also consider width specifically for very wide but short panels
+      // Also consider width specifically for very wide but short panels; reaches 1.0 when width is ~1000px
       const widthScale = Math.max(0.6, Math.min(1.0, 0.6 + (width - 200) / 800));
 
-      // Use the average of both for balanced scaling, ensuring we reach 1.0 for large panels
+      // Use the average of both for balanced scaling; panels around 1000x1000px (or larger in both dimensions) reach a scale of 1.0
       const finalScale = Math.min(1.0, (baseScale + widthScale) / 2);
       setScale(finalScale);
     };
@@ -105,7 +105,7 @@ export function SoloPanelPageLogo({ containerRef, isHovered, hideLogo }: SoloPan
         className={styles.logo}
         style={{
           height: `${16 * scale}px`,
-          marginLeft: `${0.5 * scale}em`,
+          marginLeft: '0.5em',
         }}
       />
     </div>
@@ -146,7 +146,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   const logo = css({
     // height will be set via inline style (16px * scale) to scale with panel size
-    marginLeft: theme.spacing(0.5),
     display: 'block',
     flexShrink: 0,
   });

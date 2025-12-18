@@ -40,6 +40,10 @@ function assignMockDivToRef(ref: React.RefObject<HTMLDivElement>, mockDiv: HTMLD
 
 describe('SoloPanelPageLogo', () => {
   describe('shouldHideSoloPanelLogo', () => {
+    it('treats null as false', () => {
+      expect(shouldHideSoloPanelLogo(null)).toBe(false);
+    });
+
     it('treats presence (empty string) as true', () => {
       expect(shouldHideSoloPanelLogo('')).toBe(true);
     });
@@ -63,6 +67,15 @@ describe('SoloPanelPageLogo', () => {
 
     it('treats undefined as false', () => {
       expect(shouldHideSoloPanelLogo(undefined)).toBe(false);
+    });
+
+    it('handles array values (uses the first value)', () => {
+      expect(shouldHideSoloPanelLogo([''])).toBe(true);
+      expect(shouldHideSoloPanelLogo(['true'])).toBe(true);
+      expect(shouldHideSoloPanelLogo(['1'])).toBe(true);
+      expect(shouldHideSoloPanelLogo(['false'])).toBe(false);
+      expect(shouldHideSoloPanelLogo(['0'])).toBe(false);
+      expect(shouldHideSoloPanelLogo(['false', 'true'])).toBe(false);
     });
   });
 
@@ -264,10 +277,15 @@ describe('SoloPanelPageLogo', () => {
     }));
     assignMockDivToRef(containerRef, mockDiv);
 
-    render(<SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />);
+    const { unmount } = render(
+      <SoloPanelPageLogo containerRef={containerRef} isHovered={false} hideLogo={undefined} />
+    );
 
     expect(ResizeObserver).toHaveBeenCalled();
     const resizeObserverInstance = (ResizeObserver as jest.Mock).mock.results[0].value;
     expect(resizeObserverInstance.observe).toHaveBeenCalledWith(mockDiv);
+
+    unmount();
+    expect(resizeObserverInstance.disconnect).toHaveBeenCalled();
   });
 });
