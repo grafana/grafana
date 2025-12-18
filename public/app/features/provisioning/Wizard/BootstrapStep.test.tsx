@@ -32,7 +32,7 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
         url: 'https://github.com/test/repo',
         title: '',
         sync: {
-          target: 'instance',
+          target: 'folder',
           enabled: true,
         },
         branch: 'main',
@@ -101,12 +101,6 @@ describe('BootstrapStep', () => {
 
     (useModeOptions as jest.Mock).mockReturnValue({
       enabledOptions: [
-        {
-          target: 'instance',
-          label: 'Sync all resources with external storage',
-          description: 'Resources will be synced with external storage',
-          subtitle: 'Use this option if you want to sync your entire instance',
-        },
         {
           target: 'folder',
           label: 'Sync external storage to a new Grafana folder',
@@ -226,11 +220,11 @@ describe('BootstrapStep', () => {
   });
 
   describe('sync target options', () => {
-    it('should display both instance and folder options by default', async () => {
+    it('should display only folder option by default', async () => {
       setup();
 
-      expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      expect(screen.queryByText('Sync all resources with external storage')).not.toBeInTheDocument();
     });
 
     it('should only display instance option when legacy storage exists', async () => {
