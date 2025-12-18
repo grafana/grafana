@@ -245,7 +245,8 @@ describe('AlertRuleMenu', () => {
       await openMenu();
 
       const menuContents = await getMenuContents();
-      expect(menuContents).toMatchSnapshot();
+      expect(menuContents).toHaveLength(1);
+      expect(menuContents).toContain('Copy link');
     });
   });
 

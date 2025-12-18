@@ -1,7 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`AlertRuleMenu Basic Rendering menu contains expected structure 1`] = `
-[
-  "Copy link",
-]
-`;
