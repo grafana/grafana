@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  victorialogs:
+    image: victoriametrics/victoria-logs:latest
+    container_name: victorialogs
+    ports:
+      - "9428:9428"
+    volumes:
+      - victorialogs-data:/victoria-logs-data
+    command:
+      - "-storageDataPath=/victoria-logs-data"
+      - "-httpListenAddr=:9428"
+    restart: unless-stopped
+
+volumes:
+  victorialogs-data:
+

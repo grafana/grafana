@@ -249,12 +249,21 @@ const LogLineComponent = memo(
             </div>
           )}
           <div
+            //
             className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
-            style={
-              collapsed && virtualization
+            style={{
+              ...(collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
-                : undefined
-            }
+                : {}),
+              ...( {
+                    display: 'grid',
+                    gridTemplateColumns: `auto auto ${displayedFields
+                      .map((field) => (field === LOG_LINE_BODY_FIELD_NAME ? '10fr' : '1fr'))
+                      .join(' ')}`,
+                    gridColumnGap: '8px',
+                width:"100%"
+                  }),
+            }}
           >
             <Log
               collapsed={collapsed}
@@ -389,18 +398,30 @@ const DisplayedFields = ({
   }, [log.searchWords, log.uid, matchingUids, search]);
 
   return displayedFields.map((field) => {
+    const isBodyField = field === LOG_LINE_BODY_FIELD_NAME;
+    const gridStyle = isBodyField ? {} : { gridColumn: 'auto' };
+
     if (field === LOG_LINE_BODY_FIELD_NAME) {
-      return <LogLineBody log={log} key={field} styles={styles} />;
+      return (
+        <span key={field} style={gridStyle}>
+          <LogLineBody log={log} styles={styles} />
+        </span>
+      );
     }
     if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
       return (
-        <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+        <span
+          className="field log-syntax-highlight"
+          title={getNormalizedFieldName(field)}
+          key={field}
+          style={gridStyle}
+        >
           <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
         </span>
       );
     }
     return (
-      <span className="field" title={getNormalizedFieldName(field)} key={field}>
+      <span className="field" title={getNormalizedFieldName(field)} key={field} style={gridStyle}>
         {searchWords ? (
           <Highlighter
             textToHighlight={log.getDisplayedFieldValue(field)}
