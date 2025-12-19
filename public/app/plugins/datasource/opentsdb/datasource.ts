@@ -354,7 +354,7 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     }
 
     if (config.featureToggles.opentsdbBackendMigration) {
-      return from(this.getResource('/api/search/lookup', { type: 'keyvalue', metric, keys }));
+      return from(this.getResource('api/search/lookup', { type: 'keyvalue', metric, keys }));
     }
 
     const keysArray = keys.split(',').map((key) => {
@@ -389,7 +389,8 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     }
 
     if (config.featureToggles.opentsdbBackendMigration) {
-      return from(this.getResource('/api/search/lookup', { type: 'key', metric }));
+      console.log('_performMetricKeyValueLookup', 'key');
+      return from(this.getResource('api/search/lookup', { type: 'key', metric }));
     }
 
     return this._get('/api/search/lookup', { m: metric, limit: 1000 }).pipe(
@@ -506,7 +507,7 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     }
 
     if (config.featureToggles.opentsdbBackendMigration) {
-      this.aggregatorsPromise = this.getResource('/api/aggregators');
+      this.aggregatorsPromise = this.getResource('api/aggregators');
       return this.aggregatorsPromise;
     }
 
@@ -529,7 +530,7 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     }
 
     if (config.featureToggles.opentsdbBackendMigration) {
-      this.filterTypesPromise = this.getResource('/api/config/filters');
+      this.filterTypesPromise = this.getResource('api/config/filters');
       return this.filterTypesPromise;
     }
 
