@@ -307,7 +307,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
-			guidToSnowflakeRV[guid] = snowflakeFromRv(rv)
+			guidToSnowflakeRV[guid] = SnowflakeFromRv(rv)
 			rvs[i] = rv
 			rv++
 		}
@@ -366,8 +366,18 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 
 // takes a unix microsecond rv and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
-func snowflakeFromRv(rv int64) int64 {
+func SnowflakeFromRv(rv int64) int64 {
 	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
+}
+
+// helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
+// if comparison fails
+func IsRvEqual(rv1, rv2 int64) bool {
+	if rv1 == rv2 {
+		return true
+	}
+
+	return rv1 == SnowflakeFromRv(rv2)
 }
 
 // Lock locks the resource version for the given key

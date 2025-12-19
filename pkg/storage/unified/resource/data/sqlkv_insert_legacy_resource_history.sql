@@ -12,7 +12,7 @@ INSERT INTO {{ .Ident "resource_history" }}
   {{ .Ident "generation" }}
 )
 VALUES (
-  {{ .Arg .Value }},
+  COALESCE({{ .Arg .Value }}, ""),
   {{ .Arg .GUID }},
   {{ .Arg .Group }},
   {{ .Arg .Resource }},
@@ -29,7 +29,7 @@ VALUES (
     AND {{ .Ident "name" }} = {{ .Arg .Name }}
     ORDER BY {{ .Ident "resource_version" }} DESC LIMIT 1
   ) END,
-  CASE 
+  CASE
     WHEN {{ .Arg .Action }} = 1 THEN 1
     WHEN {{ .Arg .Action }} = 3 THEN 0
     ELSE 1 + (

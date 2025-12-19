@@ -11,7 +11,7 @@ INSERT INTO {{ .Ident "resource" }}
   {{ .Ident "previous_resource_version" }}
 )
 VALUES (
-  {{ .Arg .Value }},
+  COALESCE({{ .Arg .Value }}, ""),
   {{ .Arg .GUID }},
   {{ .Arg .Group }},
   {{ .Arg .Resource }},

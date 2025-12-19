@@ -12,7 +12,7 @@ INSERT INTO {{ .Ident .TableName }}
 VALUES (
   {{ .Arg .GUID }},
   {{ .Arg .KeyPath }},
-  {{ .Arg .Value }},
+  COALESCE({{ .Arg .Value }}, ""),
   {{ .Arg .Group }},
   {{ .Arg .Resource }},
   {{ .Arg .Namespace }},

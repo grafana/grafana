@@ -330,7 +330,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	if k.rvManager != nil {
 		dataKey.GUID = uuid.New().String()
-		rv, err := k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
+		var err error
+		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 			err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value))
 			if err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
@@ -368,14 +369,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-		if latestKey.ResourceVersion != rv {
+		if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
 			// Delete the data we just wrote since it's not the latest
+			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
+			if k.rvManager != nil {
+				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
+			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
-		if prevKey.ResourceVersion != event.PreviousRV {
+		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
+			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
+			if k.rvManager != nil {
+				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
+			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
@@ -395,7 +404,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
 		if latestKey.ResourceVersion != rv {
+			// if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
 			// Delete the data we just wrote since it's not the latest
+			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
+			if k.rvManager != nil {
+				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
+			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
@@ -403,6 +417,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		// Verify that the immediate predecessor is not a create
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
+			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
+			if k.rvManager != nil {
+				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
+			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}

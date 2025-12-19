@@ -160,6 +160,26 @@ func (req sqlKVSaveRequest) Results() ([]byte, error) {
 	return req.Value, nil
 }
 
+type sqlKVLegacySaveRequest struct {
+	sqltemplate.SQLTemplate
+	Value     []byte
+	GUID      string
+	Group     string
+	Resource  string
+	Namespace string
+	Name      string
+	Action    int64
+	Folder    string
+}
+
+func (req sqlKVLegacySaveRequest) Validate() error {
+	return nil
+}
+
+func (req sqlKVLegacySaveRequest) Results() ([]byte, error) {
+	return req.Value, nil
+}
+
 type sqlKVKeysRequest struct {
 	sqltemplate.SQLTemplate
 	sqlKVSection
@@ -317,18 +337,6 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 	}
 }
 
-// TODO: this function only exists to support the testing of the sqlkv implementation before
-// we have a proper implementation of `Save`.
-func (k *sqlKV) TestingSave(ctx context.Context, key string, value []byte) error {
-	stmt := fmt.Sprintf(
-		`INSERT INTO resource_events (key_path, value) VALUES (%s, %s)`,
-		k.dialect.ArgPlaceholder(1), k.dialect.ArgPlaceholder(2),
-	)
-
-	_, err := k.db.ExecContext(ctx, stmt, eventsSection+"/"+key, value)
-	return err
-}
-
 func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
 	sectionKey := sqlKVSectionKey{sqlKVSection{section}, key}
 	if err := sectionKey.Validate(); err != nil {
@@ -401,14 +409,14 @@ func (w *sqlWriteCloser) Close() error {
 			})
 
 			if err != nil {
-				return fmt.Errorf("failed to save: %w", err)
+				return fmt.Errorf("failed to insert to datastore: %w", err)
 			}
 
 			return nil
 		}
 
 		if err != nil {
-			return fmt.Errorf("failed to save: %w", err)
+			return fmt.Errorf("failed to get for save: %w", err)
 		}
 
 		_, err = dbutil.Exec(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
@@ -418,7 +426,7 @@ func (w *sqlWriteCloser) Close() error {
 		})
 
 		if err != nil {
-			return fmt.Errorf("failed to save: %w", err)
+			return fmt.Errorf("failed to update to datastore: %w", err)
 		}
 
 		return nil
@@ -447,24 +455,25 @@ func (w *sqlWriteCloser) Close() error {
 	}
 
 	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
-		SQLTemplate: sqltemplate.New(w.kv.dialect),
-		Value:       w.buf.Bytes(),
-		GUID:        dataKey.GUID,
-		Group:       dataKey.Group,
-		Resource:    dataKey.Resource,
-		Namespace:   dataKey.Namespace,
-		Name:        dataKey.Name,
-		Action:      action,
-		Folder:      dataKey.Folder,
+		SQLTemplate:     sqltemplate.New(w.kv.dialect),
+		sqlKVSectionKey: w.sectionKey,
+		Value:           w.buf.Bytes(),
+		GUID:            dataKey.GUID,
+		Group:           dataKey.Group,
+		Resource:        dataKey.Resource,
+		Namespace:       dataKey.Namespace,
+		Name:            dataKey.Name,
+		Action:          action,
+		Folder:          dataKey.Folder,
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to save: %w", err)
+		return fmt.Errorf("failed to save to resource_history: %w", err)
 	}
 
-	switch action {
-	case 1:
-		_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResource, sqlKVSaveRequest{
+	switch dataKey.Action {
+	case DataActionCreated:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(w.kv.dialect),
 			Value:       w.buf.Bytes(),
 			GUID:        dataKey.GUID,
@@ -477,10 +486,10 @@ func (w *sqlWriteCloser) Close() error {
 		})
 
 		if err != nil {
-			return fmt.Errorf("failed to save: %w", err)
+			return fmt.Errorf("failed to insert to resource: %w", err)
 		}
-	case 2:
-		_, err = dbutil.Exec(w.ctx, tx, sqlKVUpdateLegacyResource, sqlKVSaveRequest{
+	case DataActionUpdated:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(w.kv.dialect),
 			Value:       w.buf.Bytes(),
 			Group:       dataKey.Group,
@@ -492,10 +501,10 @@ func (w *sqlWriteCloser) Close() error {
 		})
 
 		if err != nil {
-			return fmt.Errorf("failed to save: %w", err)
+			return fmt.Errorf("failed to update resource: %w", err)
 		}
-	case 3:
-		_, err = dbutil.Exec(w.ctx, tx, sqlKVDeleteLegacyResource, sqlKVSaveRequest{
+	case DataActionDeleted:
+		_, err = dbutil.Exec(w.ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(w.kv.dialect),
 			Group:       dataKey.Group,
 			Resource:    dataKey.Resource,
@@ -504,7 +513,7 @@ func (w *sqlWriteCloser) Close() error {
 		})
 
 		if err != nil {
-			return fmt.Errorf("failed to save: %w", err)
+			return fmt.Errorf("failed to delete from resource: %w", err)
 		}
 	}
 
@@ -528,6 +537,8 @@ func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
 	if rows == 0 {
 		return ErrNotFound
 	}
+
+	// TODO reflect change to resource table
 
 	return nil
 }
