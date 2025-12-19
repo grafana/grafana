@@ -121,7 +121,6 @@ LIMIT
     refetch: refetchSchemas,
   } = useSQLSchemas({
     queries,
-    enabled: isSchemaInspectorOpen,
     timeRange: metadata?.range,
   });
 
@@ -129,7 +128,6 @@ LIMIT
     () => ({
       alerting,
       panelId: metadata?.data?.request?.panelPluginId,
-      queries: metadata?.queries,
       dashboardContext: {
         dashboardTitle: metadata?.data?.request?.dashboardTitle ?? '',
         panelName: metadata?.data?.request?.panelName ?? '',
@@ -140,7 +138,6 @@ LIMIT
         ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
         : -1,
       numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
-      seriesData: metadata?.data?.series,
     }),
     [alerting, metadata]
   );
@@ -276,7 +273,7 @@ LIMIT
               onExplain={handleExplain}
               queryContext={queryContext}
               refIds={vars}
-              // schemas={schemas} // Will be added when schema extraction is implemented
+              schemas={schemas}
             />
           )}
         </Suspense>
@@ -288,8 +285,8 @@ LIMIT
             onHistoryUpdate={handleHistoryUpdate}
             queryContext={queryContext}
             refIds={vars}
-            errorContext={errorContext} // Will be added when error tracking is implemented
-            // schemas={schemas} // Will be added when schema extraction is implemented
+            errorContext={errorContext}
+            schemas={schemas}
           />
         </Suspense>
       </Stack>

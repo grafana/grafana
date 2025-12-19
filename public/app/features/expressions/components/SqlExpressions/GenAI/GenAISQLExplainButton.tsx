@@ -1,18 +1,20 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { GenAIButton } from '../../../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../../../dashboard/components/GenAI/utils';
+import { SQLSchemasResponse } from '../hooks/useSQLSchemas';
 
 import { getSQLExplanationSystemPrompt, QueryUsageContext } from './sqlPromptConfig';
+import { formatSchemasForPrompt } from './utils/formatSchemas';
 
 interface GenAISQLExplainButtonProps {
   currentQuery: string;
   onExplain: (explanation: string) => void;
   refIds: string[];
-  schemas?: unknown; // Reserved for future schema implementation
+  schemas?: SQLSchemasResponse | null;
   queryContext?: QueryUsageContext;
 }
 
@@ -33,20 +35,20 @@ Explain what this query does in simple terms.`;
  *
  * @param refIds - The list of RefIDs available in the current context
  * @param currentQuery - The current SQL query to explain
- * @param schemas - Optional schema information (planned for future implementation)
+ * @param formattedSchemas - Pre-formatted schema information string
  * @param queryContext - Optional query usage context
  * @returns A list of messages to be sent to the LLM for explaining the SQL query
  */
 const getSQLExplanationMessages = (
   refIds: string[],
   currentQuery: string,
-  schemas?: unknown,
+  formattedSchemas?: string,
   queryContext?: QueryUsageContext
 ): Message[] => {
   const systemPrompt = getSQLExplanationSystemPrompt({
     refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
     currentQuery: currentQuery.trim() || 'No current query provided',
-    schemas, // Will be utilized once schema extraction is implemented
+    formattedSchemas,
     queryContext,
   });
 
@@ -69,11 +71,13 @@ export const GenAISQLExplainButton = ({
   onExplain,
   queryContext,
   refIds,
-  schemas, // Future implementation will use this for enhanced context
+  schemas,
 }: GenAISQLExplainButtonProps) => {
+  const formattedSchemas = useMemo(() => formatSchemasForPrompt(schemas), [schemas]);
+
   const messages = useCallback(() => {
-    return getSQLExplanationMessages(refIds, currentQuery, schemas, queryContext);
-  }, [refIds, currentQuery, schemas, queryContext]);
+    return getSQLExplanationMessages(refIds, currentQuery, formattedSchemas, queryContext);
+  }, [refIds, currentQuery, formattedSchemas, queryContext]);
 
   const hasQuery = currentQuery && currentQuery.trim() !== '';
 

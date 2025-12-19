@@ -28,11 +28,10 @@ export interface SQLSchemasResponse {
 
 interface UseSQLSchemasOptions {
   queries?: DataQuery[];
-  enabled: boolean;
   timeRange?: TimeRange;
 }
 
-export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOptions) {
+export function useSQLSchemas({ queries, timeRange }: UseSQLSchemasOptions) {
   const isFeatureEnabled = useMemo(
     () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
     []
@@ -40,7 +39,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
 
   // Start with loading=true if we're going to fetch on mount
   const [schemas, setSchemas] = useState<SQLSchemasResponse | null>(null);
-  const [loading, setLoading] = useState(enabled && isFeatureEnabled && Boolean(queries));
+  const [loading, setLoading] = useState(isFeatureEnabled && Boolean(queries));
   const [error, setError] = useState<Error | null>(null);
 
   // Store queries in ref so we can access current value without triggering effect
@@ -48,7 +47,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
   queriesRef.current = queries;
 
   const fetchSchemas = useCallback(async () => {
-    if (!enabled || !isFeatureEnabled) {
+    if (!isFeatureEnabled) {
       return;
     }
 
@@ -85,7 +84,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     } finally {
       setLoading(false);
     }
-  }, [enabled, isFeatureEnabled, timeRange]);
+  }, [isFeatureEnabled, timeRange]);
 
   useEffect(() => {
     fetchSchemas();
