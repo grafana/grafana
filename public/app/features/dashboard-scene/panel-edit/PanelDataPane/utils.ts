@@ -13,3 +13,33 @@ export function scrollToQueryRow(refId: string) {
     }
   }
 }
+
+/**
+ * Waits for a query row element to appear in the DOM, then scrolls to it.
+ * Uses MutationObserver for reliable detection instead of setTimeout.
+ *
+ * @param refId - The refId of the query row to scroll to
+ * @param timeoutMs - Maximum time to wait before giving up (default: 5000ms)
+ */
+export function scrollToQueryRowWhenReady(refId: string, timeoutMs = 5000): void {
+  // First check if the element already exists
+  const existingElement = document.querySelector(`[aria-controls^="${refId}_"]`);
+  if (existingElement) {
+    scrollToQueryRow(refId);
+    return;
+  }
+
+  // Use MutationObserver to watch for the element to appear
+  const observer = new MutationObserver((_mutations, obs) => {
+    const queryRowHeader = document.querySelector(`[aria-controls^="${refId}_"]`);
+    if (queryRowHeader) {
+      obs.disconnect();
+      scrollToQueryRow(refId);
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Safety timeout to prevent indefinite observation
+  setTimeout(() => observer.disconnect(), timeoutMs);
+}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { useCallback, useMemo, useState } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
+import { DataTransformerConfig, getNextRefId, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -25,9 +25,7 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
-import { scrollToQueryRow } from './utils';
-
-const SET_TIMEOUT = 750;
+import { scrollToQueryRowWhenReady } from './utils';
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -100,23 +98,18 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       return;
     }
 
-    // Always create a new SQL expression (it will be added to the end of the queries array)
+    // Calculate the refId that will be assigned to the new query before adding it
+    const currentQueries = queriesTab.getQueries();
+    const newRefId = getNextRefId(currentQueries);
+
+    // Create a new SQL expression (it will be added to the end of the queries array)
     queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
 
     // Navigate to the Queries tab
     parent.onChangeTab(queriesTab);
 
-    // Scroll to the newly created SQL query after tab renders
-    setTimeout(() => {
-      const queries = queriesTab.getQueries();
-      // The newly added query is the last one in the array
-      if (queries.length > 0) {
-        const newQuery = queries[queries.length - 1];
-        if (newQuery?.refId) {
-          scrollToQueryRow(newQuery.refId);
-        }
-      }
-    }, SET_TIMEOUT);
+    // Scroll to the newly created SQL query when it appears in the DOM
+    scrollToQueryRowWhenReady(newRefId);
   }, [model]);
 
   const onAddTransformation = useCallback(
