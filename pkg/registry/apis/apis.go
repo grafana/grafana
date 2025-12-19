@@ -30,6 +30,7 @@ func ProvideRegistryServiceSink(
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *secret.SecretAPIBuilder,
 	_ *provisioning.APIBuilder,
+	_ *secret.DependencyRegisterer,
 ) *Service {
 	return &Service{}
 }
