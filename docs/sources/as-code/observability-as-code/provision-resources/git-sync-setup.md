@@ -154,7 +154,7 @@ To have access to this option you must enable experimental instance sync on purp
 
 After this one time step, all future updates are automatically saved to the Git repository and provisioned back to the instance.
 
-Check the **Migrate existing resources** box to migrate your existing dashboards to the provisioned folder.
+Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder.
 
 ### Choose additional settings
 
