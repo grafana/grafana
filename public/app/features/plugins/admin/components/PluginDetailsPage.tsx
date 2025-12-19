@@ -17,17 +17,8 @@ import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus, useGetPluginInsights } from '../state/hooks';
-import { PluginTabIds } from '../types';
 
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
-
-function isPluginTabId(value: string | null): value is PluginTabIds {
-  if (!value) {
-    return false;
-  }
-  const validIds: string[] = Object.values(PluginTabIds);
-  return validIds.includes(value);
-}
 
 export type Props = {
   // The ID of the plugin
