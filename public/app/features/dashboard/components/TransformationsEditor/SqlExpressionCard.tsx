@@ -36,6 +36,7 @@ export function SqlExpressionCard({ name, description, imageUrl, onClick, testId
 function getSqlExpressionCardStyles(theme: GrafanaTheme2) {
   return {
     card: css({
+      maxWidth: '200px',
       gridTemplateRows: 'min-content 0 1fr 0',
       marginBottom: 0,
     }),

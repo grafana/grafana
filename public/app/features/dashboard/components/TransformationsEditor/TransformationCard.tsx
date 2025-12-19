@@ -133,6 +133,7 @@ function getTransformationCardStyles(theme: GrafanaTheme2) {
       right: theme.spacing(1),
     }),
     newCard: css({
+      maxWidth: '200px',
       gridTemplateRows: 'min-content 0 1fr 0',
       marginBottom: 0,
     }),
