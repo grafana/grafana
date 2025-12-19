@@ -76,7 +76,7 @@ func registerMigrations(ctx context.Context,
 		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
 			logger.Info("Auto-migration enabled for migration", "migration", migration.name)
 			enableMode5IfMigrated(ctx, migration, cfg, sqlStore)
-			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg))
+			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg, migration.autoMigrate))
 			continue
 		}
 

@@ -56,10 +56,10 @@ func WithIgnoreErrors() ResourceMigrationOption {
 }
 
 // WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
-func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
+func WithAutoMigrate(cfg *setting.Cfg, autoMigrate bool) ResourceMigrationOption {
 	return func(m *ResourceMigration) {
 		m.cfg = cfg
-		m.autoMigrate = true
+		m.autoMigrate = autoMigrate
 	}
 }
 
