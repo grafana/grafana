@@ -74,8 +74,8 @@ func registerMigrations(ctx context.Context,
 ) error {
 	for _, migration := range migrationRegistry {
 		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
-			logger.Info("Auto-migration enabled for resources", "migration", migration.name)
-			enableMode5IfAlreadyMigrated(ctx, migration, cfg, sqlStore)
+			logger.Info("Auto-migration enabled for migration", "migration", migration.name)
+			enableMode5IfMigrated(ctx, migration, cfg, sqlStore)
 			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg))
 			continue
 		}
@@ -93,8 +93,76 @@ func registerMigrations(ctx context.Context,
 	return nil
 }
 
+func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
+	migrator UnifiedMigrator,
+	client resource.ResourceClient,
+	opts ...ResourceMigrationOption,
+) {
+	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
+	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
+	driverName := mg.Dialect.DriverName()
+
+	folderCountValidator := NewCountValidator(
+		client,
+		foldersDef.groupResource,
+		"dashboard",
+		"org_id = ? and is_folder = true",
+		driverName,
+	)
+
+	dashboardCountValidator := NewCountValidator(
+		client,
+		dashboardsDef.groupResource,
+		"dashboard",
+		"org_id = ? and is_folder = false",
+		driverName,
+	)
+
+	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.groupResource, driverName)
+	// TODO: remove WithSkipMigrationLog and WithIgnoreErrors before Grafana 13
+	defaultOpts := []ResourceMigrationOption{
+		WithSkipMigrationLog(),
+		WithIgnoreErrors(),
+	}
+	opts = append(defaultOpts, opts...)
+
+	dashboardsAndFolders := NewResourceMigration(
+		migrator,
+		[]schema.GroupResource{foldersDef.groupResource, dashboardsDef.groupResource},
+		"folders-dashboards",
+		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
+		opts...,
+	)
+	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
+}
+
+func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
+	migrator UnifiedMigrator,
+	client resource.ResourceClient,
+	opts ...ResourceMigrationOption,
+) {
+	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
+	driverName := mg.Dialect.DriverName()
+
+	playlistCountValidator := NewCountValidator(
+		client,
+		playlistsDef.groupResource,
+		"playlist",
+		"org_id = ?",
+		driverName,
+	)
+
+	playlistsMigration := NewResourceMigration(
+		migrator,
+		[]schema.GroupResource{playlistsDef.groupResource},
+		"playlists",
+		[]Validator{playlistCountValidator},
+		opts...,
+	)
+	mg.AddMigration("playlists migration", playlistsMigration)
+}
+
 func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
-	// Check if we should enable mode 5 based on counts
 	for _, res := range migration.resources {
 		config := cfg.GetUnifiedStorageConfig(res)
 
@@ -128,26 +196,25 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 	return true
 }
 
-func enableMode5IfAlreadyMigrated(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
+func enableMode5IfMigrated(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) {
 	if migration.migrationID == "" {
-		return false
+		return
 	}
 
 	exists, err := migrationExists(ctx, sqlStore, migration.migrationID)
 	if err != nil {
 		logger.Warn("Failed to check if migration exists", "migration", migration.name, "error", err)
-		return false
+		return
 	}
 
 	if !exists {
-		return false
+		return
 	}
 
 	for _, res := range migration.resources {
-		cfg.EnableAutoMode5(res)
+		cfg.EnableMode5(res)
 		logger.Info("Migration already completed, enabling mode 5 for resource", "resource", res)
 	}
-	return true
 }
 
 func isMigrationEnabled(migration migrationDefinition, cfg *setting.Cfg) (bool, error) {

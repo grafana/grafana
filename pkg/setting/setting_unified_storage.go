@@ -185,9 +185,8 @@ func (cfg *Cfg) GetUnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	return cfg.UnifiedStorage[resource]
 }
 
-// EnableAutoMode5 enables migration and sets mode 5 for a resource.
-// This is used when a resource has entries below the auto mode 5 threshold.
-func (cfg *Cfg) EnableAutoMode5(resource string) {
+// EnableMode5 enables migration and sets mode 5 for a resource.
+func (cfg *Cfg) EnableMode5(resource string) {
 	if cfg.UnifiedStorage == nil {
 		cfg.UnifiedStorage = make(map[string]UnifiedStorageConfig)
 	}

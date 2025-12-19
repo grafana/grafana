@@ -137,7 +137,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 	if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
 		for _, gr := range m.resources {
 			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
-			m.cfg.EnableAutoMode5(gr.Resource + "." + gr.Group)
+			m.cfg.EnableMode5(gr.Resource + "." + gr.Group)
 		}
 	}
 
