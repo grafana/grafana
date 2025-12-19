@@ -69,7 +69,7 @@ export const LegendTableItem = ({
 
   return (
     <tr className={cx(styles.row, className)}>
-      <td>
+      <td className={styles.labelCell}>
         <span className={styles.itemWrapper}>
           <VizLegendSeriesIcon
             color={item.color}
@@ -77,24 +77,26 @@ export const LegendTableItem = ({
             readonly={readonly}
             lineStyle={item.lineStyle}
           />
-          <button
-            disabled={readonly}
-            type="button"
-            title={item.label}
-            onBlur={onMouseOut}
-            onFocus={onMouseOver}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}
-            onClick={!readonly ? onClick : undefined}
-            className={cx(styles.label, item.disabled && styles.labelDisabled)}
-          >
-            {item.label}{' '}
-            {item.yAxis === 2 && (
-              <span className={styles.yAxisLabel}>
-                <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
-              </span>
-            )}
-          </button>
+          <div className={styles.labelCellInner}>
+            <button
+              disabled={readonly}
+              type="button"
+              title={item.label}
+              onBlur={onMouseOut}
+              onFocus={onMouseOver}
+              onMouseOver={onMouseOver}
+              onMouseOut={onMouseOut}
+              onClick={!readonly ? onClick : undefined}
+              className={cx(styles.label, item.disabled && styles.labelDisabled)}
+            >
+              {item.label}{' '}
+              {item.yAxis === 2 && (
+                <span className={styles.yAxisLabel}>
+                  <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
+                </span>
+              )}
+            </button>
+          </div>
         </span>
       </td>
       {item.getDisplayValues &&
@@ -128,6 +130,27 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: rowHoverBg,
       },
     }),
+    labelCell: css({
+      label: 'LegendLabelCell',
+      maxWidth: 0,
+      width: '100%',
+    }),
+    labelCellInner: css({
+      label: 'LegendLabelCellInner',
+      display: 'block',
+      flex: 1,
+      minWidth: 0,
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      paddingRight: theme.spacing(0.5),
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none',
+      maskImage: `linear-gradient(to right, black calc(100% - 24px), transparent 100%)`,
+      WebkitMaskImage: `linear-gradient(to right, black calc(100% - 24px), transparent 100%)`,
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+    }),
     label: css({
       label: 'LegendLabel',
       whiteSpace: 'nowrap',
@@ -135,9 +158,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       fontSize: 'inherit',
       padding: 0,
-      maxWidth: '600px',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
       userSelect: 'text',
     }),
     labelDisabled: css({
