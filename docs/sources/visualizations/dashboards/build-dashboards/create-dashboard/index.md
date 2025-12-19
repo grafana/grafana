@@ -117,7 +117,7 @@ To create a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
-1. Under **Layout**, choose one of the following options:
+1. Under [**Layout**](#dashboard-layouts), choose one of the following options:
    - **Custom** - Position and size panels individually. The default selection.
    - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
 
@@ -189,16 +189,23 @@ There are default parameters to constrain the layout, and you can update these t
 - **Fill screen** - Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
 
    {{< video-embed src="layout-fillscreen.mp4" >}}
-
+   <!-- TBA -->
 
 ## Group panels
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
-You can nest tabs and rows within each other or themselves.
 Also, tabs are included in the dashboard URL.
 
-The following sections describe the configuration options for adding tabs and rows.
+You can nest:
+
+- Rows in rows
+- Rows in rows
+- Tabs in rows
+
+You can nest up to two levels deep.
+
+The following sections describe the configuration options for grouping panels into tabs and rows.
 While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
 1. Click **Dashboards** in the main menu.
@@ -214,23 +221,32 @@ While grouping is meant for multiple panels, you can start a grouping with just 
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 
+Select the grouping level to access the options to add more elements or to remove the grouping.
+
+<!-- Screenshot here of a 2-level nest with area highlighted -->
+
 ### Grouping configuration options
 
 The following table describes the options you can set for a row.
 
 <!-- prettier-ignore-start -->
 
-| Option | Description |
-| ------ | ----------- |
-| Title                    | Title of the row or tab. |
+| Option                   | Description                                                                 |
+| -------------------------| --------------------------------------------------------------------------- |
+| Title                    | Title of the row or tab.                                                    |
 | Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
-| Hide row header          | Toggle the switch on to hide the header. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Only applies to rows. |
-| Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when there's a nested grouping and applies to the nested grouping. |
-| Panel layout             | Select whether panels are sized and positioned manually, **Custom**, or automatically, **Auto grid**. Only available when a grouping contains panels. |
-| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add rows or tabs based on the value of a variable. |
-| Show / hide rules > [Row/Tab visibility](#configure-showhide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
+| Hide row header          | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
+| Layout                   | Select the layout of the grouping. Choose from: **Custom**, **Auto grid**, **Rows**, or **Tabs**. For more information, refer to [Layout](#layout). |
+| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
+| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
 
 <!-- prettier-ignore-end -->
+
+#### Layout
+
+Grouping layout options depend on whether you're grouping rows, panels, or tabs and the nesting level.
+
+TBD
 
 ## Configure repeat options
 
