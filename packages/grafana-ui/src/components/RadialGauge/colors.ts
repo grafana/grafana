@@ -93,6 +93,8 @@ export function buildGradientColors(
 }
 
 /**
+ * get the relevant gradient stops surrounding a given percentage. could be same stop if the
+ * percent matches a stop exactly.
  *
  * @param sortedGradientStops - gradient stops sorted by percent
  * @param percent - percentage 0..1
@@ -170,7 +172,7 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
 
 export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
   const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
-  if (shape === 'circle') {  
+  if (shape === 'circle') {
     return `conic-gradient(from 0deg, ${colorStrings.join(', ')})`;
   }
   return `linear-gradient(90deg, ${colorStrings.join(', ')})`;
