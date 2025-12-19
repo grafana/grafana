@@ -112,7 +112,7 @@ func TestExternalGroupMapping_FilterList(t *testing.T) {
 	require.Equal(t, "mapping-1", filtered.Items[0].Name)
 }
 
-func TestExternalGroupMapping_beforeWrite(t *testing.T) {
+func TestExternalGroupMapping_BeforeCreate(t *testing.T) {
 	mapping := newExternalGroupMapping("team-1", "mapping-1")
 
 	tests := []struct {
@@ -120,11 +120,11 @@ func TestExternalGroupMapping_beforeWrite(t *testing.T) {
 		shouldAllow bool
 	}{
 		{
-			name:        "allow write",
+			name:        "allow create",
 			shouldAllow: true,
 		},
 		{
-			name:        "deny write",
+			name:        "deny create",
 			shouldAllow: false,
 		},
 	}
@@ -149,7 +149,103 @@ func TestExternalGroupMapping_beforeWrite(t *testing.T) {
 			authz := NewExternalGroupMappingAuthorizer(accessClient)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
-			err := authz.beforeWrite(ctx, mapping)
+			err := authz.BeforeCreate(ctx, mapping)
+			if tt.shouldAllow {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			require.True(t, accessClient.checkCalled)
+		})
+	}
+}
+
+func TestExternalGroupMapping_BeforeUpdate(t *testing.T) {
+	mapping := newExternalGroupMapping("team-1", "mapping-1")
+
+	tests := []struct {
+		name        string
+		shouldAllow bool
+	}{
+		{
+			name:        "allow update",
+			shouldAllow: true,
+		},
+		{
+			name:        "deny update",
+			shouldAllow: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+				require.NotNil(t, id)
+				require.Equal(t, "user:u001", id.GetUID())
+				require.Equal(t, "org-2", id.GetNamespace())
+
+				require.Equal(t, "org-2", req.Namespace)
+				require.Equal(t, iamv0.GROUP, req.Group)
+				require.Equal(t, iamv0.TeamResourceInfo.GetName(), req.Resource)
+				require.Equal(t, "team-1", req.Name)
+				require.Equal(t, utils.VerbSetPermissions, req.Verb)
+				require.Equal(t, "", folder)
+
+				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
+			}
+
+			accessClient := &fakeAccessClient{checkFunc: checkFunc}
+			authz := NewExternalGroupMappingAuthorizer(accessClient)
+			ctx := types.WithAuthInfo(context.Background(), user)
+
+			err := authz.BeforeUpdate(ctx, mapping)
+			if tt.shouldAllow {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			require.True(t, accessClient.checkCalled)
+		})
+	}
+}
+
+func TestExternalGroupMapping_BeforeDelete(t *testing.T) {
+	mapping := newExternalGroupMapping("team-1", "mapping-1")
+
+	tests := []struct {
+		name        string
+		shouldAllow bool
+	}{
+		{
+			name:        "allow delete",
+			shouldAllow: true,
+		},
+		{
+			name:        "deny delete",
+			shouldAllow: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+				require.NotNil(t, id)
+				require.Equal(t, "user:u001", id.GetUID())
+				require.Equal(t, "org-2", id.GetNamespace())
+
+				require.Equal(t, "org-2", req.Namespace)
+				require.Equal(t, iamv0.GROUP, req.Group)
+				require.Equal(t, iamv0.TeamResourceInfo.GetName(), req.Resource)
+				require.Equal(t, "team-1", req.Name)
+				require.Equal(t, utils.VerbSetPermissions, req.Verb)
+				require.Equal(t, "", folder)
+
+				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
+			}
+
+			accessClient := &fakeAccessClient{checkFunc: checkFunc}
+			authz := NewExternalGroupMappingAuthorizer(accessClient)
+			ctx := types.WithAuthInfo(context.Background(), user)
+
+			err := authz.BeforeDelete(ctx, mapping)
 			if tt.shouldAllow {
 				require.NoError(t, err)
 			} else {
