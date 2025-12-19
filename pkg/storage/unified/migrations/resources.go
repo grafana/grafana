@@ -119,9 +119,8 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
 	)
 
 	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.groupResource, driverName)
-	// TODO: remove WithSkipMigrationLog and WithIgnoreErrors before Grafana 13
+	// TODO: remove WithIgnoreErrors before Grafana 13
 	defaultOpts := []ResourceMigrationOption{
-		WithSkipMigrationLog(),
 		WithIgnoreErrors(),
 	}
 	opts = append(defaultOpts, opts...)
@@ -212,6 +211,10 @@ func enableMode5IfMigrated(ctx context.Context, migration migrationDefinition, c
 	}
 
 	for _, res := range migration.resources {
+		if cfg.UnifiedStorageType() != "unified" {
+			logger.Info("Unified storage is disabled, cannot enable mode 5 for resource", "resource", res)
+			continue
+		}
 		cfg.EnableMode5(res)
 		logger.Info("Migration already completed, enabling mode 5 for resource", "resource", res)
 	}

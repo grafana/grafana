@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -27,26 +28,19 @@ type Validator interface {
 // ResourceMigration handles migration of specific resource types from legacy to unified storage.
 type ResourceMigration struct {
 	migrator.MigrationBase
-	migrator         UnifiedMigrator
-	resources        []schema.GroupResource
-	migrationID      string
-	validators       []Validator // Optional: custom validation logic for this migration
-	log              log.Logger
-	skipMigrationLog bool // If true, migration log is not written (neither success nor error)
-	ignoreErrors     bool // If true, errors are logged but don't fail the migration
-	cfg              *setting.Cfg
-	autoMigrate      bool // If true, auto-migrate resource if count is below threshold
+	migrator     UnifiedMigrator
+	resources    []schema.GroupResource
+	migrationID  string
+	validators   []Validator // Optional: custom validation logic for this migration
+	log          log.Logger
+	cfg          *setting.Cfg
+	autoMigrate  bool // If true, auto-migrate resource if count is below threshold
+	ignoreErrors bool // If true, errors are logged but don't fail the migration
+	hadErrors    bool // Tracks if errors occurred during migration (used with ignoreErrors)
 }
 
 // ResourceMigrationOption is a functional option for configuring ResourceMigration.
 type ResourceMigrationOption func(*ResourceMigration)
-
-// WithSkipMigrationLog configures the migration to skip writing to the migration log table.
-func WithSkipMigrationLog() ResourceMigrationOption {
-	return func(m *ResourceMigration) {
-		m.skipMigrationLog = true
-	}
-}
 
 // WithIgnoreErrors configures the migration to log errors but continue execution.
 func WithIgnoreErrors() ResourceMigrationOption {
@@ -85,7 +79,8 @@ func NewResourceMigration(
 }
 
 func (m *ResourceMigration) SkipMigrationLog() bool {
-	return m.skipMigrationLog
+	// If ignoreErrors is true, we skip logging to allow re-running migrations
+	return m.ignoreErrors && m.hadErrors
 }
 
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
@@ -96,7 +91,17 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 }
 
 // Exec implements migrator.CodeMigration interface. Executes the migration across all organizations.
-func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err error) {
+	// Track any errors that occur during migration
+	defer func() {
+		if err != nil {
+			if m.ignoreErrors {
+				m.log.Warn("Migration error ignored", "error", err)
+			}
+			m.hadErrors = true
+		}
+	}()
+
 	ctx := context.Background()
 
 	orgs, err := m.getAllOrgs(sess)
@@ -114,7 +119,8 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 
 	if mg.Dialect.DriverName() == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
-		tx, err := sess.Tx()
+		var tx *core.Tx
+		tx, err = sess.Tx()
 		if err != nil {
 			m.log.Error("Failed to get transaction from session", "error", err)
 			return fmt.Errorf("failed to get transaction: %w", err)
@@ -124,11 +130,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 	}
 
 	for _, org := range orgs {
-		if err := m.migrateOrg(ctx, sess, org); err != nil {
-			if m.ignoreErrors {
-				m.log.Warn("Migration error ignored", "org_id", org.ID, "error", err)
-				continue
-			}
+		if err = m.migrateOrg(ctx, sess, org); err != nil {
 			return err
 		}
 	}
