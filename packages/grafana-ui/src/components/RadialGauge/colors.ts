@@ -156,9 +156,10 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
 
 export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
   const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
-  return shape === 'circle'
-    ? `conic-gradient(from 0deg, ${colorStrings.join(', ')})`
-    : `linear-gradient(90deg, ${colorStrings.join(', ')})`;
+  if (shape === 'circle') {  
+    return `conic-gradient(from 0deg, ${colorStrings.join(', ')})`;
+  }
+  return `linear-gradient(90deg, ${colorStrings.join(', ')})`;
 }
 
 // the theme does not make the full palette available to us, and we
