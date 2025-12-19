@@ -25,7 +25,8 @@ type migrationDefinition struct {
 	name         string
 	migrationID  string // The ID stored in the migration log table (e.g., "playlists migration")
 	resources    []string
-	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient)
+	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption)
+	autoMigrate  bool
 }
 
 var resourceRegistry = []resourceDefinition{
@@ -53,12 +54,14 @@ var migrationRegistry = []migrationDefinition{
 		migrationID:  "playlists migration",
 		resources:    []string{setting.PlaylistResource},
 		registerFunc: registerPlaylistMigration,
+		autoMigrate:  false,
 	},
 	{
 		name:         "folders and dashboards",
 		migrationID:  "folders and dashboards migration",
 		resources:    []string{setting.FolderResource, setting.DashboardResource},
 		registerFunc: registerDashboardAndFolderMigration,
+		autoMigrate:  true,
 	},
 }
 
@@ -70,30 +73,18 @@ func registerMigrations(ctx context.Context,
 	sqlStore db.DB,
 ) error {
 	for _, migration := range migrationRegistry {
-		if shouldAutoEnableMode5(ctx, migration, cfg, sqlStore) {
-			enableMode5(cfg, migration)
-			migration.registerFunc(mg, migrator, client)
+		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
+			logger.Info("Auto-migration enabled for resources", "migration", migration.name)
+			enableMode5IfAlreadyMigrated(ctx, migration, cfg, sqlStore)
+			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg))
 			continue
 		}
 
-		var (
-			hasValue   bool
-			allEnabled bool
-		)
-
-		for _, res := range migration.resources {
-			enabled := cfg.UnifiedStorage[res].EnableMigration
-			if !hasValue {
-				allEnabled = enabled
-				hasValue = true
-				continue
-			}
-			if enabled != allEnabled {
-				return fmt.Errorf("cannot migrate resources separately: %v migration must be either all enabled or all disabled", migration.resources)
-			}
+		enabled, err := isMigrationEnabled(migration, cfg)
+		if err != nil {
+			return err
 		}
-
-		if !allEnabled {
+		if !enabled {
 			logger.Info("Migration is disabled in config, skipping", "migration", migration.name)
 			continue
 		}
@@ -102,20 +93,7 @@ func registerMigrations(ctx context.Context,
 	return nil
 }
 
-// shouldAutoEnableMode5 checks if a migration should be auto-enabled based on:
-// 1. Migration already exists in the log (previously completed)
-// 2. All resource counts are below the configured threshold
-func shouldAutoEnableMode5(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
-	if migration.migrationID != "" {
-		exists, err := migrationExists(ctx, sqlStore, migration.migrationID)
-		if err != nil {
-			logger.Warn("Failed to check if migration exists", "migration", migration.name, "error", err)
-		} else if exists {
-			logger.Info("Migration already exists in log", "migration", migration.name)
-			return true
-		}
-	}
-
+func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
 	// Check if we should enable mode 5 based on counts
 	for _, res := range migration.resources {
 		config := cfg.GetUnifiedStorageConfig(res)
@@ -126,13 +104,13 @@ func shouldAutoEnableMode5(ctx context.Context, migration migrationDefinition, c
 		}
 
 		// Skip if auto migration is explicitly disabled
-		if config.EnableAutoMigrationThreshold < 0 {
+		if config.AutoMigrationThreshold < 0 {
 			return false
 		}
 
-		threshold := int64(config.EnableAutoMigrationThreshold)
+		threshold := int64(config.AutoMigrationThreshold)
 		if threshold == 0 {
-			threshold = int64(setting.DefaultEnableAutoMigrationThreshold)
+			threshold = int64(setting.DefaultAutoMigrationThreshold)
 		}
 
 		count, err := countResource(ctx, sqlStore, res)
@@ -146,15 +124,51 @@ func shouldAutoEnableMode5(ctx context.Context, migration migrationDefinition, c
 		}
 	}
 
-	logger.Info("Migration resource(s) below auto mode 5 threshold", "migration", migration.name)
+	logger.Info("Migration resource(s) below auto migration threshold", "migration", migration.name)
 	return true
 }
 
-func enableMode5(cfg *setting.Cfg, migration migrationDefinition) {
-	logger.Info("Auto-enabling migration and mode 5 for resources", "migration", migration.name)
+func enableMode5IfAlreadyMigrated(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
+	if migration.migrationID == "" {
+		return false
+	}
+
+	exists, err := migrationExists(ctx, sqlStore, migration.migrationID)
+	if err != nil {
+		logger.Warn("Failed to check if migration exists", "migration", migration.name, "error", err)
+		return false
+	}
+
+	if !exists {
+		return false
+	}
+
 	for _, res := range migration.resources {
 		cfg.EnableAutoMode5(res)
+		logger.Info("Migration already completed, enabling mode 5 for resource", "resource", res)
 	}
+	return true
+}
+
+func isMigrationEnabled(migration migrationDefinition, cfg *setting.Cfg) (bool, error) {
+	var (
+		hasValue   bool
+		allEnabled bool
+	)
+
+	for _, res := range migration.resources {
+		enabled := cfg.UnifiedStorage[res].EnableMigration
+		if !hasValue {
+			allEnabled = enabled
+			hasValue = true
+			continue
+		}
+		if enabled != allEnabled {
+			return false, fmt.Errorf("cannot migrate resources separately: %v migration must be either all enabled or all disabled", migration.resources)
+		}
+	}
+
+	return allEnabled, nil
 }
 
 func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (int64, error) {

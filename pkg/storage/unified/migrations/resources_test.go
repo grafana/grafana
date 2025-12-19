@@ -21,14 +21,14 @@ func TestRegisterMigrations(t *testing.T) {
 			{
 				name:      "playlists",
 				resources: []string{setting.PlaylistResource},
-				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 					migrationCalls["playlists"]++
 				},
 			},
 			{
 				name:      "folders and dashboards",
 				resources: []string{setting.FolderResource, setting.DashboardResource},
-				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 					migrationCalls["folders and dashboards"]++
 				},
 			},

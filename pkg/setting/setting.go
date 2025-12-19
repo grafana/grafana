@@ -636,8 +636,8 @@ type UnifiedStorageConfig struct {
 	// EnableMigration indicates whether migration is enabled for the resource.
 	// If not set, will use the default from MigratedUnifiedResources.
 	EnableMigration bool
-	// EnableAutoMigrationThreshold is the threshold below which a resource is automatically migrated.
-	EnableAutoMigrationThreshold int
+	// AutoMigrationThreshold is the threshold below which a resource is automatically migrated.
+	AutoMigrationThreshold int
 }
 
 type InstallPlugin struct {

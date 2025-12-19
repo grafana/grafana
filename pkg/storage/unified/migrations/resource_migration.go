@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -33,6 +34,8 @@ type ResourceMigration struct {
 	log              log.Logger
 	skipMigrationLog bool // If true, migration log is not written (neither success nor error)
 	ignoreErrors     bool // If true, errors are logged but don't fail the migration
+	cfg              *setting.Cfg
+	autoMigrate      bool // If true, auto-migrate resource if count is below threshold
 }
 
 // ResourceMigrationOption is a functional option for configuring ResourceMigration.
@@ -49,6 +52,14 @@ func WithSkipMigrationLog() ResourceMigrationOption {
 func WithIgnoreErrors() ResourceMigrationOption {
 	return func(m *ResourceMigration) {
 		m.ignoreErrors = true
+	}
+}
+
+// WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
+func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
+	return func(m *ResourceMigration) {
+		m.cfg = cfg
+		m.autoMigrate = true
 	}
 }
 
@@ -122,7 +133,16 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 		}
 	}
 
+	// Auto-enable mode 5 for resources after successful migration
+	if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
+		for _, gr := range m.resources {
+			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
+			m.cfg.EnableAutoMode5(gr.Resource + "." + gr.Group)
+		}
+	}
+
 	m.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
+
 	return nil
 }
 

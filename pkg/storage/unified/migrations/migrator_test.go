@@ -169,9 +169,9 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 			for _, gvr := range tc.resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					DualWriterMode:               grafanarest.Mode5,
-					EnableMigration:              false,
-					EnableAutoMigrationThreshold: -1, // disable auto mode 5
+					DualWriterMode:         grafanarest.Mode5,
+					EnableMigration:        false,
+					AutoMigrationThreshold: -1, // disable auto mode 5
 				}
 			}
 		}
@@ -203,8 +203,8 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 		// Disable auto mode 5 and migration for folders+dashboards to test explicit migration behavior
 		// Set DualWriterMode=5 so the k8s API reads from unified storage (which should be empty)
 		unifiedConfig := map[string]setting.UnifiedStorageConfig{
-			"folders.folder.grafana.app":       {EnableAutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
-			"dashboards.dashboard.grafana.app": {EnableAutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
+			"folders.folder.grafana.app":       {AutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
+			"dashboards.dashboard.grafana.app": {AutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{

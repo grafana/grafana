@@ -104,7 +104,7 @@ func RegisterMigrations(
 	return nil
 }
 
-func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
 	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
 	driverName := mg.Dialect.DriverName()
@@ -126,19 +126,24 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 	)
 
 	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.groupResource, driverName)
+	// TODO: remove WithSkipMigrationLog and WithIgnoreErrors before Grafana 13
+	defaultOpts := []ResourceMigrationOption{
+		WithSkipMigrationLog(),
+		WithIgnoreErrors(),
+	}
+	opts = append(defaultOpts, opts...)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
 		[]schema.GroupResource{foldersDef.groupResource, dashboardsDef.groupResource},
 		"folders-dashboards",
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
-		WithSkipMigrationLog(),
-		WithIgnoreErrors(),
+		opts...,
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }
 
-func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
 	driverName := mg.Dialect.DriverName()
 
@@ -155,6 +160,7 @@ func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMi
 		[]schema.GroupResource{playlistsDef.groupResource},
 		"playlists",
 		[]Validator{playlistCountValidator},
+		opts...,
 	)
 	mg.AddMigration("playlists migration", playlistsMigration)
 }

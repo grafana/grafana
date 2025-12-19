@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// DefaultEnableAutoMigrationThreshold is the default threshold for auto migration switching.
+// DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
 // If a resource has entries at or below this count, it will be migrated.
-const DefaultEnableAutoMigrationThreshold = 0
+const DefaultAutoMigrationThreshold = 0
 
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
@@ -63,8 +63,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
-		// parse enableAutoMigrationThreshold from resource section
-		enableAutoMigrationThreshold := section.Key("enableAutoMigrationThreshold").MustInt(DefaultEnableAutoMigrationThreshold)
+		// parse autoMigrationThreshold from resource section
+		autoMigrationThreshold := section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
 
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
@@ -73,7 +73,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
 			EnableMigration:                      enableMigration,
-			EnableAutoMigrationThreshold:         enableAutoMigrationThreshold,
+			AutoMigrationThreshold:               autoMigrationThreshold,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -81,13 +81,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
+	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
 		cfg.enforceMigrationToUnifiedConfigs()
 	} else {
 		// Helper log to find instances disabling migration
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -159,10 +159,10 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 	}
 }
 
-// getUnifiedStorageType returns the configured storage type without creating or mutating keys.
+// UnifiedStorageType returns the configured storage type without creating or mutating keys.
 // Precedence: env > ini > default ("unified").
 // Used to decide unified storage behavior early without side effects.
-func (cfg *Cfg) getUnifiedStorageType() string {
+func (cfg *Cfg) UnifiedStorageType() string {
 	const (
 		grafanaAPIServerSectionName = "grafana-apiserver"
 		storageTypeKeyName          = "storage_type"
