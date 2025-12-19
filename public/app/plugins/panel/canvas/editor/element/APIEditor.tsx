@@ -197,13 +197,13 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
 
       <br />
-      <Field label={t('canvas.apieditor.label-query-parameters', 'Query parameters')}>
+      <Field label={t('canvas.apieditor.label-query-parameters', 'Query parameters')} noMargin>
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
       </Field>
-      <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')}>
+      <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')} noMargin>
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
-      <Field label={t('canvas.apieditor.label-successmessage', 'Success Message')}>
+      <Field label={t('canvas.apieditor.label-successmessage', 'Success Message')} noMargin>
         <StringValueEditor
           context={context}
           value={value.successMessage}
@@ -212,7 +212,7 @@ export function APIEditor({ value, context, onChange }: Props) {
         />
       </Field>
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
-        <Field label={t('canvas.apieditor.label-payload', 'Payload')}>
+        <Field label={t('canvas.apieditor.label-payload', 'Payload')} noMargin>
           <StringValueEditor
             context={context}
             value={value?.data ?? '{}'}
