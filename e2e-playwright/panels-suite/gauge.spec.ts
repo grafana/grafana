@@ -16,7 +16,6 @@ test.describe(
   },
   () => {
     test('successfully migrates all gauge panels', async ({ gotoDashboardPage, selectors }) => {
-      // open Panel Tests - Gauge
       const dashboardPage = await gotoDashboardPage({ uid: OLD_GAUGES_DASHBOARD_UID });
 
       // check that gauges are rendered
@@ -43,6 +42,15 @@ test.describe(
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
       await expect(errorInfo).toBeHidden();
+    });
+
+    test('renders sparklines in gauge panels', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: NEW_GAUGES_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '11' }),
+      });
+
+      await expect(page.locator('.uplot')).toHaveCount(5);
     });
 
     test('"no data"', async ({ gotoDashboardPage, selectors }) => {
