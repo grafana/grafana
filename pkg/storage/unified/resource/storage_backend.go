@@ -403,8 +403,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-		if latestKey.ResourceVersion != rv {
-			// if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
+		if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
 			// Delete the data we just wrote since it's not the latest
 			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
 			if k.rvManager != nil {
