@@ -66,36 +66,13 @@ export function getScopesDashboards(page: Page) {
   return page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
 }
 
-export function getScopesDashboardsGroupExpand(page: Page) {
-  // Match folder expand buttons (scopes-dashboards-{title}-expand) but NOT the drawer toggle (scopes-dashboards-expand)
-  return page.locator(
-    '[data-testid$="-expand"][data-testid^="scopes-dashboards-"]:not([data-testid="scopes-dashboards-expand"])'
-  );
-}
-
 /**
  * Clicks the first available dashboard in the scopes dashboard list.
- * If dashboards are in collapsed groups, expands the first group first.
  */
 export async function clickFirstScopesDashboard(page: Page) {
   const dashboards = getScopesDashboards(page);
-  const groupExpand = getScopesDashboardsGroupExpand(page);
-
-  // Check if there's a visible dashboard item
-  const visibleDashboard = dashboards.first();
-  if (await visibleDashboard.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await visibleDashboard.click();
-    return;
-  }
-
-  // If no visible dashboard, try expanding the first group
-  const firstGroup = groupExpand.first();
-  if (await firstGroup.isVisible({ timeout: 5000 })) {
-    await firstGroup.click();
-    // Wait for the group to expand and dashboard items to appear
-    await dashboards.first().waitFor({ state: 'visible', timeout: 5000 });
-    await dashboards.first().click();
-  }
+  await dashboards.first().waitFor({ state: 'visible', timeout: 10000 });
+  await dashboards.first().click();
 }
 
 export function getScopesDashboardsSearchInput(page: Page) {

@@ -5,8 +5,20 @@ import { StoreState } from 'app/types/store';
 
 export let store: Store<StoreState>;
 
+// Extend Window interface for E2E testing
+declare global {
+  interface Window {
+    __grafanaStore?: Store<StoreState>;
+  }
+}
+
 export function setStore(newStore: Store<StoreState>) {
   store = newStore;
+
+  // Expose store on window for E2E tests to clear RTK Query cache
+  if (typeof window !== 'undefined') {
+    window.__grafanaStore = newStore;
+  }
 }
 
 export function getState(): StoreState {

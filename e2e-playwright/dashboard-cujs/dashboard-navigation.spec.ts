@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
+import { clearScopeApiCache, clearScopeRoutes, setScopes, setupScopeRoutes } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
 
 import {
@@ -13,7 +13,7 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { getConfigDashboards } from './utils';
+import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
 
 test.use({
   featureToggles: {
@@ -98,6 +98,13 @@ test.describe(
         await test.step(
           '3.See filter/groupby selection persisting when navigating from dashboard to dashboard - ' + db,
           async () => {
+            // Re-setup routes with the correct dashboard binding for this step
+            if (!USE_LIVE_DATA) {
+              await clearScopeRoutes(page);
+              await clearScopeApiCache(page); // Clear RTK Query cache so new mock data is fetched
+              await setupScopeRoutes(page, testScopes({ title: 'CUJ Dashboard 3', uid: NAVIGATE_TO }));
+            }
+
             const dashboardPage = await gotoDashboardPage({ uid: db });
 
             await setScopes(page, { title: 'CUJ Dashboard 3', uid: NAVIGATE_TO });
@@ -125,9 +132,15 @@ test.describe(
             await groupByVariable.press('Enter');
             await groupByVariable.press('Escape');
 
+            const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
+
             await clickFirstScopesDashboard(page);
             await page.waitForURL('**/d/**');
+            await waitForExpectedRequests();
             await page.waitForLoadState('networkidle');
+
+            const requests = getRequests();
+            expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
             //all values are set after dashboard switch
             await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
@@ -136,6 +149,13 @@ test.describe(
       }
 
       await test.step('4.Unmodified default filters and groupBy keys are not propagated to a different dashboard', async () => {
+        // Re-setup routes with the correct dashboard binding for this step
+        if (!USE_LIVE_DATA) {
+          await clearScopeRoutes(page);
+          await clearScopeApiCache(page); // Clear RTK Query cache so new mock data is fetched
+          await setupScopeRoutes(page, testScopes({ title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' }));
+        }
+
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
