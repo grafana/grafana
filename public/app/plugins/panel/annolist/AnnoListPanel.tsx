@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { createRef, PureComponent } from 'react';
+import { createRef, PureComponent, type JSX } from 'react';
 import { Subscription } from 'rxjs';
 
 import {

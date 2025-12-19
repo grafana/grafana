@@ -1,0 +1,296 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "v42.hidefrom_tooltip.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Field1"
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "tooltip": true,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with hideFrom.viz = true",
+        "type": "timeseries"
+      },
+      {
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Field2"
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": true,
+                    "viz": true
+                  }
+                }
+              ]
+            },
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": [
+                    "foo"
+                  ],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": true,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [],
+        "title": "Panel with multiple overrides",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3
+        },
+        "id": -1,
+        "panels": [
+          {
+            "fieldConfig": {
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byRegexp",
+                    "options": "/.*/"
+                  },
+                  "properties": [
+                    {
+                      "id": "custom.hideFrom",
+                      "value": {
+                        "tooltip": true,
+                        "viz": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 4
+            },
+            "id": 4,
+            "options": {},
+            "pluginVersion": "",
+            "targets": [],
+            "title": "Nested panel with hideFrom",
+            "type": "stat"
+          },
+          {
+            "fieldConfig": {
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "Time"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "short"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 4
+            },
+            "id": 5,
+            "options": {},
+            "pluginVersion": "",
+            "targets": [],
+            "title": "Panel without hideFrom",
+            "type": "table"
+          },
+          {
+            "fieldConfig": {
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byValue",
+                    "options": {
+                      "op": "gte",
+                      "reducer": "allIsZero",
+                      "value": 0
+                    }
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "short"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 4
+            },
+            "id": 6,
+            "options": {},
+            "pluginVersion": "",
+            "targets": [],
+            "title": "Panel with viz false (should not be modified)",
+            "type": "gauge"
+          },
+          {
+            "fieldConfig": {
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "{__name__=\"ALERTS\", alertname=\"k6CloudServiceErrorsLogged\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "custom.hideFrom",
+                      "value": {
+                        "legend": false,
+                        "tooltip": true,
+                        "viz": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 4
+            },
+            "id": 7,
+            "options": {},
+            "pluginVersion": "",
+            "targets": [],
+            "title": "Panel with already set tooltip (should not be modified)",
+            "type": "barchart"
+          }
+        ],
+        "title": "Row with nested panels",
+        "type": "row"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "v42 Migration Test - HideFrom Tooltip"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
+    }
+  }
+}

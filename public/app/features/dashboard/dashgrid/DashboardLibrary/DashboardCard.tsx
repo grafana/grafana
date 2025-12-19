@@ -77,7 +77,9 @@ function DashboardCardComponent({
       </div>
       <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
         {dashboard.description && (
-          <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
+          <Card.Description data-testid="dashboard-card-description" className={styles.description}>
+            {dashboard.description}
+          </Card.Description>
         )}
       </div>
       <Card.Actions className={styles.actionsContainer}>

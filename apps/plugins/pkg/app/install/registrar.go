@@ -15,17 +15,6 @@ const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
 )
 
-// Class represents the plugin class type in an unversioned internal format.
-// This intentionally duplicates the versioned API type (PluginInstallSpecClass) to decouple
-// internal code from API version changes, making it easier to support multiple API versions.
-type Class = string
-
-const (
-	ClassCore     Class = "core"
-	ClassExternal Class = "external"
-	ClassCDN      Class = "cdn"
-)
-
 type Source = string
 
 const (
@@ -37,7 +26,6 @@ type PluginInstall struct {
 	ID      string
 	Version string
 	URL     string
-	Class   Class
 	Source  Source
 }
 
@@ -58,7 +46,6 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 			Id:      p.ID,
 			Version: p.Version,
 			Url:     url,
-			Class:   pluginsv0alpha1.PluginSpecClass(p.Class),
 		},
 	}
 }
@@ -70,9 +57,6 @@ func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
 	}
 	if existing.Spec.Version != update.Spec.Version {
 		return true
-	}
-	if existing.Spec.Class != update.Spec.Class {
-		return true // this should never really happen
 	}
 	if !equalStringPointers(existing.Spec.Url, update.Spec.Url) {
 		return true

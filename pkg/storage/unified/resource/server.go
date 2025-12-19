@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"log/slog"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -15,6 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -39,6 +41,7 @@ type ResourceServer interface {
 	resourcepb.ManagedObjectIndexServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
+	resourcepb.QuotasServer
 }
 
 type ListIterator interface {
@@ -123,7 +126,7 @@ type StorageBackend interface {
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
-	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
@@ -220,6 +223,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Quota service
+	OverridesService *OverridesService
+
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
 
@@ -308,8 +314,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 			}
 
 			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Tracer: tracer,
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg, tracer),
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
 			})
 			if err != nil {
 				return nil, err
@@ -320,7 +325,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	logger := slog.Default().With("logger", "resource-server")
+	logger := log.New("resource-server")
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -342,6 +347,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+		overridesService: opts.OverridesService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -366,19 +372,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log            *slog.Logger
-	backend        StorageBackend
-	blob           BlobSupport
-	secure         secrets.InlineSecureValueSupport
-	search         *searchSupport
-	diagnostics    resourcepb.DiagnosticsServer
-	access         claims.AccessClient
-	writeHooks     WriteAccessHooks
-	lifecycle      LifecycleHooks
-	now            func() int64
-	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics *StorageMetrics
-	indexMetrics   *BleveIndexMetrics
+	log              log.Logger
+	backend          StorageBackend
+	blob             BlobSupport
+	secure           secrets.InlineSecureValueSupport
+	search           *searchSupport
+	diagnostics      resourcepb.DiagnosticsServer
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	lifecycle        LifecycleHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	indexMetrics     *BleveIndexMetrics
+	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -409,6 +416,11 @@ func (s *server) Init(ctx context.Context) error {
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
+		}
+
+		// initialize tenant overrides service
+		if s.initErr == nil && s.overridesService != nil {
+			s.initErr = s.overridesService.init(ctx)
 		}
 
 		// initialize the search index
@@ -444,6 +456,13 @@ func (s *server) Stop(ctx context.Context) error {
 		s.search.stop()
 	}
 
+	if s.overridesService != nil {
+		if err := s.overridesService.stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
+	}
+
 	// Stops the streaming
 	s.cancel()
 
@@ -470,14 +489,15 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
+	l := s.log.FromContext(ctx)
 	if obj.GetUID() == "" {
 		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
 		// return nil, NewBadRequestError("object is missing UID")
-		s.log.Error("object is missing UID", "key", key)
+		l.Error("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
-		s.log.Error("object must not include a resource version", "key", key)
+		l.Error("object must not include a resource version", "key", key)
 	}
 
 	// Make sure the command labels are not saved
@@ -646,6 +666,13 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
+	// check quotas and log for now
+	s.checkQuota(ctx, NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	})
+
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
 	}
@@ -694,7 +721,7 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
+	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -1012,7 +1039,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 
 	// Fast path for getting single value in a list
-	if rsp := s.tryFastPathList(ctx, req); rsp != nil {
+	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
 		return rsp, nil
 	}
 
@@ -1057,10 +1084,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				return err
 			}
 
-			item := &resourcepb.ResourceWrapper{
-				ResourceVersion: iter.ResourceVersion(),
-				Value:           iter.Value(),
-			}
 			// Trash is only accessible to admins or the user who deleted the object
 			if req.Source == resourcepb.ListRequest_TRASH {
 				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
@@ -1068,6 +1091,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
+			}
+
+			item := &resourcepb.ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
 			}
 
 			pageBytes += len(item.Value)
@@ -1107,40 +1135,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
-}
-
-// Some list queries can be calculated with simple reads
-func (s *server) tryFastPathList(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
-	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
-		return nil
-	}
-
-	for _, v := range req.Options.Fields {
-		if v.Key == "metadata.name" && v.Operator == `=` {
-			if len(v.Values) == 1 {
-				read := &resourcepb.ReadRequest{
-					Key:             req.Options.Key,
-					ResourceVersion: req.ResourceVersion,
-				}
-				read.Key.Name = v.Values[0]
-				found, err := s.Read(ctx, read)
-				if err != nil {
-					return &resourcepb.ListResponse{Error: AsErrorResult(err)}
-				}
-
-				// Return a value when it exists
-				rsp := &resourcepb.ListResponse{}
-				if len(found.Value) > 0 {
-					rsp.Items = []*resourcepb.ResourceWrapper{{
-						Value:           found.Value,
-						ResourceVersion: found.ResourceVersion,
-					}}
-				}
-				return rsp
-			}
-		}
-	}
-	return nil
 }
 
 // isTrashItemAuthorized checks if the user has access to the trash item.
@@ -1439,6 +1433,38 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	return rsp, nil
 }
 
+func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
+	if s.overridesService == nil {
+		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
+			Message: "overrides service not configured on resource server",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+	nsr := NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	}
+	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	limit, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+
+	// handle case where no resources exist yet - very unlikely but possible
+	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
+	if len(usage) <= 0 {
+		rsp.Usage = 0
+	} else {
+		rsp.Usage = usage[0].Count
+	}
+
+	return rsp, nil
+}
+
 func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
 		return nil, r
@@ -1538,5 +1564,48 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		return nil // Completed successfully.
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
+	}
+}
+
+func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.RebuildIndexes(ctx, req)
+}
+
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("checkQuota", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+
+	if s.overridesService == nil {
+		s.log.FromContext(ctx).Debug("overrides service not configured, skipping quota check", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+		return
+	}
+
+	quota, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+
+	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+	if len(stats) > 0 {
+		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
+	} else {
+		s.log.FromContext(ctx).Debug("no stats found for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	}
+
+	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
 	}
 }

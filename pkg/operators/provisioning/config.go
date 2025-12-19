@@ -178,7 +178,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group, authrt.ExtraAudience(provisioning.GROUP))
 			}),
 			Transport: &http.Transport{
 				MaxConnsPerHost:     100,

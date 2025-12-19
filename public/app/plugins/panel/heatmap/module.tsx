@@ -1,4 +1,11 @@
-import { DataFrame, FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -15,10 +22,11 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { YBucketScaleEditor } from './YBucketScaleEditor';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { HeatmapSuggestionsSupplier } from './suggestions';
+import { heatmapSuggestionsSupplier } from './suggestions';
 import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
@@ -59,6 +67,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     const opts = context.options ?? defaultOptions;
 
     let isOrdinalY = false;
+    const isHeatmapCells = context.data.some((frame) => frame.meta?.type === DataFrameType.HeatmapCells);
 
     if (context.data.length > 0) {
       try {
@@ -92,6 +101,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     if (opts.calculate) {
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
+    }
+
+    if (!opts.calculate && !isHeatmapCells && config.featureToggles.heatmapRowsAxisOptions) {
+      builder.addCustomEditor({
+        id: 'rowsFrame-yBucketScale',
+        path: 'rowsFrame.yBucketScale',
+        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        category,
+        editor: YBucketScaleEditor,
+        defaultValue: undefined,
+      });
     }
 
     category = [t('heatmap.category-y-axis', 'Y Axis')];
@@ -170,7 +190,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         category,
       });
 
-    if (!opts.calculate) {
+    // Hide tick alignment for explicit scales - bucket boundaries are fixed by numeric labels
+    const hasExplicitScale = context.options?.rowsFrame?.yBucketScale !== undefined;
+    if (!opts.calculate && !hasExplicitScale) {
       builder.addRadio({
         path: 'rowsFrame.layout',
         name: t('heatmap.name-tick-alignment', 'Tick alignment'),
@@ -472,5 +494,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setSuggestionsSupplier(heatmapSuggestionsSupplier)
   .setDataSupport({ annotations: true });

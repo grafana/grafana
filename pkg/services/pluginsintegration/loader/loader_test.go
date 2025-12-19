@@ -1076,9 +1076,9 @@ func TestLoader_AngularClass(t *testing.T) {
 			expAngularDetectionRun: true,
 		},
 		{
-			name:                   "other-class plugin should run angular detection",
-			class:                  "CDN", // (enterprise-only class)
-			expAngularDetectionRun: true,
+			name:                   "other class plugin should skip angular detection",
+			class:                  "foo",
+			expAngularDetectionRun: false,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1086,7 +1086,7 @@ func TestLoader_AngularClass(t *testing.T) {
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return tc.class
 				},
-				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
+				DiscoverFunc: sources.NewLocalSource(tc.class, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 			}
 			// if angularDetected = true, it means that the detection has run
 			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{

@@ -4,13 +4,19 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
+// DefaultCacheTTL is the default TTL for the datasource and library element caches.
+const DefaultCacheTTL = time.Minute
+
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider) {
-	migratorInstance.init(dsIndexProvider)
+func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider, cacheTTL time.Duration) {
+	migratorInstance.init(dsIndexProvider, leIndexProvider, cacheTTL)
 }
 
 // GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
@@ -20,14 +26,50 @@ func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
 	return migratorInstance.dsIndexProvider
 }
 
+// GetLibraryElementIndexProvider returns the library element index provider instance that was initialized.
+func GetLibraryElementIndexProvider() schemaversion.LibraryElementIndexProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.leIndexProvider
+}
+
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
 		migrations:      map[int]schemaversion.SchemaVersionMigrationFunc{},
 		ready:           make(chan struct{}),
 		dsIndexProvider: nil,
+		leIndexProvider: nil,
 	}
 	initOnce = sync.Once{}
+}
+
+// PreloadCache preloads the datasource and library element caches for the given namespaces.
+func PreloadCache(ctx context.Context, nsInfos []types.NamespaceInfo) {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+
+	// Try to preload datasource cache
+	if preloadable, ok := migratorInstance.dsIndexProvider.(schemaversion.PreloadableCache); ok {
+		preloadable.Preload(ctx, nsInfos)
+	}
+
+	// Try to preload library element cache
+	if preloadable, ok := migratorInstance.leIndexProvider.(schemaversion.PreloadableCache); ok {
+		preloadable.Preload(ctx, nsInfos)
+	}
+}
+
+// PreloadCacheInBackground starts a goroutine that preloads the caches for the given namespaces.
+func PreloadCacheInBackground(nsInfos []types.NamespaceInfo) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logging.DefaultLogger.Error("panic during cache preloading", "error", r)
+			}
+		}()
+		PreloadCache(context.Background(), nsInfos)
+	}()
 }
 
 // Migrate migrates the given dashboard to the target version.
@@ -48,12 +90,18 @@ type migrator struct {
 	ready           chan struct{}
 	migrations      map[int]schemaversion.SchemaVersionMigrationFunc
 	dsIndexProvider schemaversion.DataSourceIndexProvider
+	leIndexProvider schemaversion.LibraryElementIndexProvider
 }
 
-func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider) {
+func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider, cacheTTL time.Duration) {
 	initOnce.Do(func() {
-		m.dsIndexProvider = dsIndexProvider
-		m.migrations = schemaversion.GetMigrations(dsIndexProvider)
+		// Wrap the provider with org-aware TTL caching for all conversions.
+		// This prevents repeated DB queries across multiple conversion calls while allowing
+		// the cache to refresh periodically, making it suitable for long-lived singleton usage.
+		m.dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider, cacheTTL)
+		// Wrap library element provider with caching as well
+		m.leIndexProvider = schemaversion.WrapLibraryElementProviderWithCache(leIndexProvider, cacheTTL)
+		m.migrations = schemaversion.GetMigrations(m.dsIndexProvider, m.leIndexProvider)
 		close(m.ready)
 	})
 }

@@ -14,7 +14,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "grafana",
             "spec": {}
           },
           "enable": true,
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -90,7 +90,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -110,7 +110,15 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -134,7 +142,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "datasource": {
@@ -240,5 +248,10 @@
     "title": "No Title",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

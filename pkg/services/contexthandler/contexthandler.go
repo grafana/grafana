@@ -207,6 +207,33 @@ type AuthHTTPHeaderList struct {
 	Items []string
 }
 
+func GetAuthHTTPHeaders(jwtAuth *setting.AuthJWTSettings, authProxy *setting.AuthProxySettings) []string {
+	var items []string
+
+	// used by basic auth, api keys and potentially jwt auth
+	items = append(items, "Authorization")
+
+	// remove X-Grafana-Device-Id as it is only used for auth in authn clients.
+	items = append(items, "X-Grafana-Device-Id")
+
+	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
+	if jwtAuth.Enabled && jwtAuth.HeaderName != "" && jwtAuth.HeaderName != "Authorization" {
+		items = append(items, jwtAuth.HeaderName)
+	}
+
+	// if auth proxy is enabled add the main proxy header and all configured headers
+	if authProxy.Enabled {
+		items = append(items, authProxy.HeaderName)
+		for _, header := range authProxy.Headers {
+			if header != "" {
+				items = append(items, header)
+			}
+		}
+	}
+
+	return items
+}
+
 // WithAuthHTTPHeaders returns a new context in which all possible configured auth header will be included
 // and later retrievable by AuthHTTPHeaderListFromContext.
 func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
@@ -217,26 +244,7 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 		}
 	}
 
-	// used by basic auth, api keys and potentially jwt auth
-	list.Items = append(list.Items, "Authorization")
-
-	// remove X-Grafana-Device-Id as it is only used for auth in authn clients.
-	list.Items = append(list.Items, "X-Grafana-Device-Id")
-
-	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
-	if cfg.JWTAuth.Enabled && cfg.JWTAuth.HeaderName != "" && cfg.JWTAuth.HeaderName != "Authorization" {
-		list.Items = append(list.Items, cfg.JWTAuth.HeaderName)
-	}
-
-	// if auth proxy is enabled add the main proxy header and all configured headers
-	if cfg.AuthProxy.Enabled {
-		list.Items = append(list.Items, cfg.AuthProxy.HeaderName)
-		for _, header := range cfg.AuthProxy.Headers {
-			if header != "" {
-				list.Items = append(list.Items, header)
-			}
-		}
-	}
+	list.Items = append(list.Items, GetAuthHTTPHeaders(&cfg.JWTAuth, &cfg.AuthProxy)...)
 
 	return context.WithValue(ctx, authHTTPHeaderListKey, list)
 }

@@ -23,6 +23,12 @@ type ResourcePermission struct {
 	Spec ResourcePermissionSpec `json:"spec" yaml:"spec"`
 }
 
+func NewResourcePermission() *ResourcePermission {
+	return &ResourcePermission{
+		Spec: *NewResourcePermissionSpec(),
+	}
+}
+
 func (o *ResourcePermission) GetSpec() any {
 	return o.Spec
 }

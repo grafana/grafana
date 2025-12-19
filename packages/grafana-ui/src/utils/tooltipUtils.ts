@@ -51,8 +51,8 @@ export function buildTooltipTheme(
     headerClose: css({
       color: theme.colors.text.secondary,
       position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1.5),
+      right: theme.spacing(0.5),
+      top: theme.spacing(1),
       backgroundColor: 'transparent',
       border: 0,
     }),

@@ -188,6 +188,10 @@
             "version": "",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "dataLinks": [
                   {
                     "title": "Graph Data Link",
@@ -412,5 +416,10 @@
     "title": "V21 Data Links Series to Field Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

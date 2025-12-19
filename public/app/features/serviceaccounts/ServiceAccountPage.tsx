@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 

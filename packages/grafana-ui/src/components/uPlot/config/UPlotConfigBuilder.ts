@@ -29,7 +29,7 @@ const cursorDefaults: Cursor = {
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
-type PlotState = { isPanning: false } | { isPanning: true; min: number; max: number };
+type PlotState = { isPanning: false } | { isPanning: true; min: number; max: number; isTimeRangePending?: boolean };
 
 export class UPlotConfigBuilder {
   readonly uid = Math.random().toString(36).slice(2);

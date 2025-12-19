@@ -2274,6 +2274,55 @@
           }
         }
       ]
+    },
+    "/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register": {
+      "post": {
+        "operationId": "createRegister",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -2700,6 +2749,27 @@
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegister": {
+        "type": "object",
+        "required": [
+          "message",
+          "apiVersion",
+          "kind"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

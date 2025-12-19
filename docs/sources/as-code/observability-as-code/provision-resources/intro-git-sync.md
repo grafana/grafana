@@ -47,7 +47,7 @@ Using Git Sync, you can:
 
 {{< admonition type="caution" >}}
 
-Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
 {{< /admonition >}}
 
@@ -84,7 +84,7 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 
 - You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
-- Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup/#choose-what-to-synchronize) for more details.
+- Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup/#choose-what-to-synchronize) for more details.
 - When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
 - If you want to manage existing resources with Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
@@ -127,7 +127,13 @@ An instance can be in one of the following Git Sync states:
 
 ## Common use cases
 
-You can use Git Sync in the following scenarios.
+{{< admonition type="note" >}}
+
+Refer to [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios) for sample scenarios, including architecture and configuration details.
+
+{{< /admonition >}}
+
+You can use Git Sync for the following use cases:
 
 ### Version control and auditing
 

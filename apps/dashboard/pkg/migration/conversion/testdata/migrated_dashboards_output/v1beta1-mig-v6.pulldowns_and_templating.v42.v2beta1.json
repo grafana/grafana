@@ -113,7 +113,12 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +166,12 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -273,7 +283,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
@@ -328,7 +338,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
@@ -344,5 +354,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

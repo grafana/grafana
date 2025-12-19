@@ -57,7 +57,7 @@ func newModuleJSValidator() *ModuleJSValidator {
 
 func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error {
 	// CDN plugins are ignored because the module.js is guaranteed to exist
-	if p.Class == plugins.ClassCDN {
+	if p.FS.Type().CDN() {
 		return nil
 	}
 
@@ -96,6 +96,11 @@ func newAngularDetector(cfg *config.PluginManagementCfg, angularInspector angula
 }
 
 func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error {
+	// CDN plugins are ignored because they should not be using Angular
+	if p.FS.Type().CDN() {
+		return nil
+	}
+
 	if p.IsExternalPlugin() {
 		var err error
 

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Geomap",
   "id": "geomap",
-
+  "suggestions": true,
   "info": {
     "description": "Geomap panel",
     "author": {

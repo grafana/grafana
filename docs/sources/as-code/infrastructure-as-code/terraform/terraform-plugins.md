@@ -24,7 +24,7 @@ Before you begin, you should have the following available:
 - Administrator permissions in your Grafana instance; for more information on assigning Grafana RBAC roles, refer to [Assign RBAC roles](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles/).
 
 {{< admonition type="note" >}}
-All of the following Terraform configuration files should be saved in the same directory.
+Save all of the following Terraform configuration files in the same directory.
 {{< /admonition >}}
 
 ## Configure the Grafana provider

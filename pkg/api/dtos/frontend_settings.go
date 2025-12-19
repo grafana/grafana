@@ -200,6 +200,7 @@ type FrontendSettingsDTO struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
@@ -287,6 +288,7 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
+	CloudMigrationEnabled        bool `json:"cloudMigrationEnabled"`
 	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
 	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 

@@ -22,7 +22,6 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
-  updateExpressionType,
 } from './reducer';
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {
@@ -383,22 +382,6 @@ describe('Query and expressions reducer', () => {
       rewireExpressions({
         oldRefId: 'A',
         newRefId: 'C',
-      })
-    );
-
-    expect(newState).toMatchSnapshot();
-  });
-
-  it('should update expression type', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, expressionQuery],
-    };
-
-    const newState = queriesAndExpressionsReducer(
-      initialState,
-      updateExpressionType({
-        refId: 'B',
-        type: ExpressionQueryType.reduce,
       })
     );
 

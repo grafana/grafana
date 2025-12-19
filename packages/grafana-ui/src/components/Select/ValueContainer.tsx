@@ -26,6 +26,7 @@ class UnthemedValueContainer<Option, isMulti extends boolean, Group extends Grou
     if (
       this.ref.current &&
       this.props.selectProps.autoWidth &&
+      !this.props.selectProps.maxVisibleValues &&
       !isEqual(prevProps.selectProps.value, this.props.selectProps.value)
     ) {
       // Reset in order to measure the new width
@@ -75,4 +76,5 @@ class UnthemedValueContainer<Option, isMulti extends boolean, Group extends Grou
   }
 }
 
-export const ValueContainer = withTheme2(UnthemedValueContainer);
+export const ValueContainer: React.FC<ValueContainerProps<unknown, boolean, GroupBase<unknown>>> =
+  withTheme2(UnthemedValueContainer);

@@ -98,6 +98,7 @@ Grafana Enterprise includes all of the Grafana OSS APIs as well as the following
 - [Query and resource caching API](query_and_resource_caching/)
 - [Reporting API](reporting/)
 - [Role-based access control API](access_control/)
+- [Secrets Management API](secrets_management/)
 - [Team sync API](team_sync/)
 
 ## Deprecated HTTP APIs

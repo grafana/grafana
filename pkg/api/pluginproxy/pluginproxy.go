@@ -81,6 +81,7 @@ func (proxy *PluginProxy) HandleRequest() {
 			hasSlash := strings.HasSuffix(proxy.proxyPath, "/")
 			proxy.proxyPath = path
 
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hasSlash && !strings.HasSuffix(path, "/") && proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagPluginProxyPreserveTrailingSlash) {
 				proxy.proxyPath += "/"
 			}

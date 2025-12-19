@@ -12,6 +12,7 @@ import {
   KeyboardPlugin,
   TooltipPlugin2,
   UPlotConfigBuilder,
+  XAxisInteractionAreaPlugin,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
@@ -276,6 +277,7 @@ export const CandlestickPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}
+            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={uplotConfig}
