@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { useAssistant } from '@grafana/assistant';
@@ -19,6 +19,7 @@ import {
 } from 'app/features/alerting/unified/mocks';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import * as miscUtils from 'app/features/alerting/unified/utils/misc';
 import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -107,7 +108,6 @@ const createDefaultRuleSetup = () => {
 
 describe('AlertRuleMenu', () => {
   const originalBuildInfo = config.buildInfo;
-  const originalFeatureToggles = { ...config.featureToggles };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -121,7 +121,6 @@ describe('AlertRuleMenu', () => {
 
     // Reset config to defaults
     config.buildInfo = { ...originalBuildInfo };
-    config.featureToggles = { ...originalFeatureToggles };
 
     // Set up default folder mock for Grafana rules (namespace-uid is the default folder UID)
     mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
@@ -133,7 +132,6 @@ describe('AlertRuleMenu', () => {
 
   afterEach(() => {
     config.buildInfo = originalBuildInfo;
-    config.featureToggles = originalFeatureToggles;
   });
 
   describe('Basic Rendering', () => {
@@ -753,12 +751,12 @@ describe('AlertRuleMenu', () => {
     });
 
     describe('handleManageEnrichments', () => {
+      testWithFeatureToggles({
+        enable: ['alertEnrichment', 'alertingEnrichmentPerRule'],
+      });
+
       it('calls handleManageEnrichments when Manage enrichments menu item is clicked', async () => {
-        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
-        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
         // Both toggles need to be enabled: alertEnrichment for the hook, alertingEnrichmentPerRule for the component
-        config.featureToggles.alertEnrichment = true;
-        config.featureToggles.alertingEnrichmentPerRule = true;
         grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
         mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
@@ -782,10 +780,6 @@ describe('AlertRuleMenu', () => {
         await user.click(await ui.menuItems.manageEnrichments.find());
 
         expect(handleManageEnrichments).toHaveBeenCalledTimes(1);
-
-        // Restore feature toggles
-        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
-        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
       });
     });
 
@@ -983,96 +977,95 @@ describe('AlertRuleMenu', () => {
 
   describe('Feature Flags', () => {
     describe('alertingEnrichmentPerRule', () => {
-      it('hides Manage enrichments when feature flag is disabled', async () => {
-        const originalFeatureToggle = config.featureToggles.alertingEnrichmentPerRule;
-        config.featureToggles.alertingEnrichmentPerRule = false;
-        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+      describe('when feature flag is disabled', () => {
+        testWithFeatureToggles({
+          disable: ['alertingEnrichmentPerRule'],
+        });
 
-        const handleManageEnrichments = jest.fn();
-        const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+        it('hides Manage enrichments when feature flag is disabled', async () => {
+          grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
 
-        render(
-          <AlertRuleMenu
-            promRule={mockRule.promRule}
-            rulerRule={mockRule.rulerRule}
-            identifier={identifier}
-            groupIdentifier={groupIdentifier}
-            handleSilence={handleSilence}
-            handleDelete={handleDelete}
-            handleDuplicateRule={handleDuplicateRule}
-            handleManageEnrichments={handleManageEnrichments}
-          />
-        );
+          const handleManageEnrichments = jest.fn();
+          const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
-        await openMenu();
-        expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+          render(
+            <AlertRuleMenu
+              promRule={mockRule.promRule}
+              rulerRule={mockRule.rulerRule}
+              identifier={identifier}
+              groupIdentifier={groupIdentifier}
+              handleSilence={handleSilence}
+              handleDelete={handleDelete}
+              handleDuplicateRule={handleDuplicateRule}
+              handleManageEnrichments={handleManageEnrichments}
+            />
+          );
 
-        config.featureToggles.alertingEnrichmentPerRule = originalFeatureToggle;
+          await openMenu();
+          expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+        });
       });
 
-      it('shows Manage enrichments when feature flag is enabled and all conditions are met', async () => {
-        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
-        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
-        // Both toggles need to be enabled: alertEnrichment for the hook, alertingEnrichmentPerRule for the component
-        config.featureToggles.alertEnrichment = true;
-        config.featureToggles.alertingEnrichmentPerRule = true;
-        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
-        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
+      describe('when feature flag is enabled', () => {
+        testWithFeatureToggles({
+          enable: ['alertEnrichment', 'alertingEnrichmentPerRule'],
+        });
 
-        const handleManageEnrichments = jest.fn();
-        const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+        it('shows Manage enrichments when feature flag is enabled and all conditions are met', async () => {
+          // Both toggles need to be enabled: alertEnrichment for the hook, alertingEnrichmentPerRule for the component
+          grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+          mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
-        render(
-          <AlertRuleMenu
-            promRule={mockRule.promRule}
-            rulerRule={mockRule.rulerRule}
-            identifier={identifier}
-            groupIdentifier={groupIdentifier}
-            handleSilence={handleSilence}
-            handleDelete={handleDelete}
-            handleDuplicateRule={handleDuplicateRule}
-            handleManageEnrichments={handleManageEnrichments}
-          />
-        );
+          const handleManageEnrichments = jest.fn();
+          const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
-        await openMenu();
-        expect(await ui.menuItems.manageEnrichments.find()).toBeInTheDocument();
+          render(
+            <AlertRuleMenu
+              promRule={mockRule.promRule}
+              rulerRule={mockRule.rulerRule}
+              identifier={identifier}
+              groupIdentifier={groupIdentifier}
+              handleSilence={handleSilence}
+              handleDelete={handleDelete}
+              handleDuplicateRule={handleDuplicateRule}
+              handleManageEnrichments={handleManageEnrichments}
+            />
+          );
 
-        // Restore feature toggles
-        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
-        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
+          await openMenu();
+          expect(await ui.menuItems.manageEnrichments.find()).toBeInTheDocument();
+        });
       });
 
-      it('hides Manage enrichments when enrichment ability is not allowed', async () => {
-        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
-        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
-        // Enable both toggles to ensure we're testing the permission check, not the toggles
-        config.featureToggles.alertEnrichment = true;
-        config.featureToggles.alertingEnrichmentPerRule = true;
-        grantUserPermissions([]);
-        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
+      describe('when feature flags are enabled but permission is missing', () => {
+        testWithFeatureToggles({
+          enable: ['alertEnrichment', 'alertingEnrichmentPerRule'],
+        });
 
-        const handleManageEnrichments = jest.fn();
-        const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+        it('hides Manage enrichments when enrichment ability is not allowed', async () => {
+          // Enable both toggles to ensure we're testing the permission check, not the toggles
+          grantUserPermissions([]);
+          mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
-        render(
-          <AlertRuleMenu
-            promRule={mockRule.promRule}
-            rulerRule={mockRule.rulerRule}
-            identifier={identifier}
-            groupIdentifier={groupIdentifier}
-            handleSilence={handleSilence}
-            handleDelete={handleDelete}
-            handleDuplicateRule={handleDuplicateRule}
-            handleManageEnrichments={handleManageEnrichments}
-          />
-        );
+          const handleManageEnrichments = jest.fn();
+          const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
 
-        await openMenu();
-        expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+          render(
+            <AlertRuleMenu
+              promRule={mockRule.promRule}
+              rulerRule={mockRule.rulerRule}
+              identifier={identifier}
+              groupIdentifier={groupIdentifier}
+              handleSilence={handleSilence}
+              handleDelete={handleDelete}
+              handleDuplicateRule={handleDuplicateRule}
+              handleManageEnrichments={handleManageEnrichments}
+            />
+          );
 
-        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
-        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
+          await openMenu();
+          expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+        });
       });
     });
 
@@ -1339,44 +1332,43 @@ describe('AlertRuleMenu', () => {
 
   describe('Edge Cases', () => {
     describe('Missing Data', () => {
-      it('hides Manage enrichments when ruleUid is missing even if all other conditions are met', async () => {
-        const originalEnrichmentPerRuleToggle = config.featureToggles.alertingEnrichmentPerRule;
-        const originalEnrichmentToggle = config.featureToggles.alertEnrichment;
-        config.featureToggles.alertEnrichment = true;
-        config.featureToggles.alertingEnrichmentPerRule = true;
-        grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
-        // Note: Cloud rules typically don't have a ruleUid, so this tests that case
-        mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
+      describe('with enrichment feature flags enabled', () => {
+        testWithFeatureToggles({
+          enable: ['alertEnrichment', 'alertingEnrichmentPerRule'],
+        });
 
-        const handleManageEnrichments = jest.fn();
-        const datasource = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
-        const mockRule = getCloudRule({}, { rulesSource: datasource });
-        const identifier = fromCombinedRule(datasource.name, mockRule);
-        const groupIdentifier = {
-          groupOrigin: 'datasource' as const,
-          rulesSource: { uid: datasource.uid, name: datasource.name, ruleSourceType: 'datasource' as const },
-          namespace: { name: 'namespace-name' },
-          groupName: 'group-name',
-        };
+        it('hides Manage enrichments when ruleUid is missing even if all other conditions are met', async () => {
+          grantUserPermissions([AccessControlAction.AlertingEnrichmentsRead]);
+          // Note: Cloud rules typically don't have a ruleUid, so this tests that case
+          mockFolderApi(server).folder('namespace-uid', mockFolder({ uid: 'namespace-uid', title: 'Test Folder' }));
 
-        render(
-          <AlertRuleMenu
-            promRule={mockRule.promRule}
-            rulerRule={mockRule.rulerRule}
-            identifier={identifier}
-            groupIdentifier={groupIdentifier}
-            handleSilence={handleSilence}
-            handleDelete={handleDelete}
-            handleDuplicateRule={handleDuplicateRule}
-            handleManageEnrichments={handleManageEnrichments}
-          />
-        );
+          const handleManageEnrichments = jest.fn();
+          const datasource = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
+          const mockRule = getCloudRule({}, { rulesSource: datasource });
+          const identifier = fromCombinedRule(datasource.name, mockRule);
+          const groupIdentifier = {
+            groupOrigin: 'datasource' as const,
+            rulesSource: { uid: datasource.uid, name: datasource.name, ruleSourceType: 'datasource' as const },
+            namespace: { name: 'namespace-name' },
+            groupName: 'group-name',
+          };
 
-        await openMenu();
-        expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+          render(
+            <AlertRuleMenu
+              promRule={mockRule.promRule}
+              rulerRule={mockRule.rulerRule}
+              identifier={identifier}
+              groupIdentifier={groupIdentifier}
+              handleSilence={handleSilence}
+              handleDelete={handleDelete}
+              handleDuplicateRule={handleDuplicateRule}
+              handleManageEnrichments={handleManageEnrichments}
+            />
+          );
 
-        config.featureToggles.alertingEnrichmentPerRule = originalEnrichmentPerRuleToggle;
-        config.featureToggles.alertEnrichment = originalEnrichmentToggle;
+          await openMenu();
+          expect(ui.menuItems.manageEnrichments.query()).not.toBeInTheDocument();
+        });
       });
 
       it('hides Pause option when ruleUid is missing even if pause permission is granted', async () => {
@@ -1502,7 +1494,7 @@ describe('AlertRuleMenu', () => {
         config.buildInfo.env = 'production';
 
         // Mock createShareLink to return undefined
-        const createShareLinkSpy = jest.spyOn(require('app/features/alerting/unified/utils/misc'), 'createShareLink');
+        const createShareLinkSpy = jest.spyOn(miscUtils, 'createShareLink');
         createShareLinkSpy.mockReturnValue(undefined);
 
         render(
