@@ -74,7 +74,44 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#b4ff00",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateViridis",
+                      "exponent": 0.5,
+                      "mode": "spectrum"
+                    },
+                    "dataFormat": "timeseries",
+                    "heatmap": {},
+                    "hideZeroBuckets": false,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": true
+                    },
+                    "tooltipDecimals": 4,
+                    "xAxis": {
+                      "show": true
+                    },
+                    "yAxis": {
+                      "decimals": 2,
+                      "format": "areaM2",
+                      "logBase": 1,
+                      "show": true
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -116,7 +153,46 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {
+                      "cardRound": 50
+                    },
+                    "color": {
+                      "cardColor": "#1F60C4",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateOranges",
+                      "exponent": 0.5,
+                      "mode": "opacity"
+                    },
+                    "dataFormat": "tsbuckets",
+                    "heatmap": {},
+                    "hideZeroBuckets": false,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": false
+                    },
+                    "xAxis": {
+                      "show": true
+                    },
+                    "yAxis": {
+                      "decimals": 1,
+                      "format": "kwatt",
+                      "logBase": 1,
+                      "show": true,
+                      "width": "100"
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -158,7 +234,44 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#1F60C4",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateOranges",
+                      "exponent": 0.5,
+                      "mode": "opacity"
+                    },
+                    "dataFormat": "tsbuckets",
+                    "heatmap": {},
+                    "hideZeroBuckets": false,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": true,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": false
+                    },
+                    "xAxis": {
+                      "show": true
+                    },
+                    "yAxis": {
+                      "decimals": 1,
+                      "format": "kwatt",
+                      "logBase": 1,
+                      "show": true,
+                      "width": "100"
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -204,7 +317,46 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#b4ff00",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateViridis",
+                      "exponent": 0.5,
+                      "mode": "spectrum"
+                    },
+                    "dataFormat": "timeseries",
+                    "heatmap": {},
+                    "hideZeroBuckets": false,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": true
+                    },
+                    "tooltipDecimals": 4,
+                    "xAxis": {
+                      "show": true
+                    },
+                    "yAxis": {
+                      "decimals": 2,
+                      "format": "areaM2",
+                      "logBase": 1,
+                      "max": "50",
+                      "min": "20",
+                      "show": true
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -246,7 +398,44 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#b4ff00",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateBuGn",
+                      "exponent": 0.5,
+                      "mode": "spectrum"
+                    },
+                    "dataFormat": "timeseries",
+                    "heatmap": {},
+                    "hideZeroBuckets": true,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": true
+                    },
+                    "xAxis": {
+                      "show": true
+                    },
+                    "xBucketNumber": 10,
+                    "yAxis": {
+                      "format": "short",
+                      "logBase": 2,
+                      "show": true,
+                      "splitFactor": 2
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -288,7 +477,44 @@
             "kind": "heatmap",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#b4ff00",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateBuGn",
+                      "exponent": 0.5,
+                      "mode": "spectrum"
+                    },
+                    "dataFormat": "timeseries",
+                    "heatmap": {},
+                    "hideZeroBuckets": true,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": true
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": true
+                    },
+                    "xAxis": {
+                      "show": true
+                    },
+                    "xBucketNumber": 10,
+                    "yAxis": {
+                      "format": "short",
+                      "logBase": 10,
+                      "show": true,
+                      "splitFactor": 5
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

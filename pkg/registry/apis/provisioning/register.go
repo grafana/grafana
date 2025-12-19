@@ -28,9 +28,8 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -53,14 +52,12 @@ import (
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -111,7 +108,6 @@ type APIBuilder struct {
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
 	dashboardAccess  legacy.MigrationDashboardAccessor
-	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
@@ -158,9 +154,9 @@ func NewAPIBuilder(
 	} else {
 		clients = resources.NewClientFactory(configProvider)
 	}
+
 	parsers := resources.NewParserFactory(clients)
-	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
-	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
@@ -173,7 +169,6 @@ func NewAPIBuilder(
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
-		storageStatus:                       storageStatus,
 		unified:                             unified,
 		access:                              access,
 		jobHistoryConfig:                    jobHistoryConfig,
@@ -247,6 +242,10 @@ func RegisterAPIService(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
+	}
+
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(context.Background(), storageStatus) {
+		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please enable data migration in settings for folders and dashboards by adding the following configuration:\n[unified_storage.folders.folder.grafana.app]\nenableMigration = true\n\n[unified_storage.dashboards.dashboard.grafana.app]\nenableMigration = true\n\nAlternatively, disable provisioning")
 	}
 
 	allowedTargets := []provisioning.SyncTargetType{}
@@ -354,6 +353,8 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		return b.authorizeSettings(id)
 	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
 		return b.authorizeJobs(id)
+	case provisioning.ConnectionResourceInfo.GetName():
+		return b.authorizeConnectionSubresource(a, id)
 	default:
 		return b.authorizeDefault(id)
 	}
@@ -435,6 +436,28 @@ func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, 
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, "admin role is required", nil
+}
+
+// authorizeRepositorySubresource handles authorization for connections subresources.
+func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	case "":
+		// Doing something with the connection itself.
+		if id.GetOrgRole().Includes(identity.RoleAdmin) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "admin role is required", nil
+	case "status":
+		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+	default:
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
 }
 
 // authorizeDefault handles authorization for unmapped resources.
@@ -520,9 +543,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
+	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create connection storage: %w", err)
+	}
+	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+
+	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
@@ -565,6 +597,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
+	}
+	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+	c, ok := obj.(*provisioning.Connection)
+	if ok {
+		return connectionvalidation.MutateConnection(c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -615,6 +652,11 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
+	connection, ok := obj.(*provisioning.Connection)
+	if ok {
+		return connectionvalidation.ValidateConnection(connection)
+	}
+
 	// Validate Jobs
 	job, ok := obj.(*provisioning.Job)
 	if ok {
@@ -631,7 +673,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
-	list := b.validator.ValidateRepository(repo)
+	isCreate := a.GetOperation() == admission.Create
+	list := b.validator.ValidateRepository(repo, isCreate)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -718,12 +761,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
-			// When starting with an empty instance -- swith to "mode 4+"
-			err = b.tryRunningOnlyUnifiedStorage()
-			if err != nil {
-				return err
-			}
-
 			// Create the repository resources factory
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
 				return GetRepositoriesInNamespace(ctx, b.store)
@@ -746,28 +783,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
-				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
 				metrics,
 				b.tracer,
 				10,
-			)
-			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyResources := migrate.NewLegacyResourcesMigrator(
-				b.repositoryResources,
-				b.parsers,
-				b.dashboardAccess,
-				signerFactory,
-				b.clients,
-				export.ExportAll,
-			)
-			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
-			legacyMigrator := migrate.NewLegacyMigrator(
-				legacyResources,
-				storageSwapper,
-				syncWorker,
-				stageIfPossible,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
@@ -776,12 +796,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportWorker,
 				syncWorker,
 			)
-
-			migrationWorker := migrate.NewMigrationWorker(
-				legacyMigrator,
-				unifiedStorageMigrator,
-				b.storageStatus,
-			)
+			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
@@ -853,7 +868,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.clients,
 				b.jobs,
-				b.storageStatus,
 				b.GetHealthChecker(),
 				b.statusPatcher,
 				b.registry,
@@ -1260,65 +1274,6 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
-}
-
-// FIXME: This logic does not belong in provisioning! (but required for now)
-// When starting an empty instance, we shift so that we never reference legacy storage
-// This should run somewhere else at startup by default (dual writer? dashboards?)
-func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
-	ctx := context.Background()
-
-	if !b.storageStatus.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
-		return nil // not enabled
-	}
-
-	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
-		return nil
-	}
-
-	// Count how many things exist - create a migrator on-demand for this
-	legacyMigrator := migrations.ProvideUnifiedMigrator(b.dashboardAccess, b.unified)
-	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
-		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
-		Resources: []schema.GroupResource{{
-			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
-		}, {
-			Group: folders.GROUP, Resource: folders.RESOURCE,
-		}},
-		OnlyCount: true,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting legacy count %w", err)
-	}
-	for _, stats := range rsp.Summary {
-		if stats.Count > 0 {
-			return nil // something exists we can not just switch
-		}
-	}
-
-	logger := logging.DefaultLogger.With("logger", "provisioning startup")
-	mode5 := func(gr schema.GroupResource) error {
-		status, _ := b.storageStatus.Status(ctx, gr)
-		if !status.ReadUnified {
-			status.ReadUnified = true
-			status.WriteLegacy = false
-			status.WriteUnified = true
-			status.Runtime = false
-			status.Migrated = time.Now().UnixMilli()
-			_, err = b.storageStatus.Update(ctx, status)
-			logger.Info("set unified storage access", "group", gr.Group, "resource", gr.Resource)
-			return err
-		}
-		return nil // already reading unified
-	}
-
-	if err = mode5(dashboard.DashboardResourceInfo.GroupResource()); err != nil {
-		return err
-	}
-	if err = mode5(folders.FolderResourceInfo.GroupResource()); err != nil {
-		return err
-	}
-	return nil
 }
 
 // Helpers for fetching valid Repository objects

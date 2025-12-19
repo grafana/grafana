@@ -219,6 +219,10 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+type ConnectionInfo struct {
+	Name string `json:"name"`
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
@@ -256,6 +260,10 @@ type RepositorySpec struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+
+	// The connection the repository references.
+	// This means the Repository is interacting with git via a Connection.
+	Connection *ConnectionInfo `json:"connection,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve
@@ -313,31 +321,6 @@ type RepositoryStatus struct {
 
 	// Error information during repository deletion (if any)
 	DeleteError string `json:"deleteError,omitempty"`
-}
-
-// HealthFailureType represents different types of repository failures
-// +enum
-type HealthFailureType string
-
-const (
-	HealthFailureHook   HealthFailureType = "hook"
-	HealthFailureHealth HealthFailureType = "health"
-)
-
-type HealthStatus struct {
-	// When not healthy, requests will not be executed
-	Healthy bool `json:"healthy"`
-
-	// The type of the error
-	Error HealthFailureType `json:"error,omitempty"`
-
-	// When the health was checked last time
-	Checked int64 `json:"checked,omitempty"`
-
-	// Summary messages (can be shown to users)
-	// Will only be populated when not healthy
-	// +listType=atomic
-	Message []string `json:"message,omitempty"`
 }
 
 type SyncStatus struct {

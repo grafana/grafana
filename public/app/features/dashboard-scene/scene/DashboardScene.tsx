@@ -32,7 +32,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -140,8 +140,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** Kiosk mode */
-  kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
   /** Renders panels in grid and filtered */
@@ -337,7 +335,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
           yesButtonVariant: 'destructive',
           onAltAction: () => {
-            this.openSaveDrawer({});
+            this.openSaveDrawer({
+              onSaveSuccess: () => {
+                this.exitEditModeConfirmed(false);
+              },
+            });
           },
           onConfirm: () => {
             this.exitEditModeConfirmed();
