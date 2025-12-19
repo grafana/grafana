@@ -80,7 +80,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 	}
 }
 
-func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (res *data.Frame, err error) {
+func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time, folderTitle string) (res *data.Frame, err error) {
 	if rule == nil {
 		return nil, fmt.Errorf("%w: rule is not defined", ErrInvalidInputData)
 	}
@@ -166,7 +166,11 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		return nil, err
 	}
 
-	extraLabels := state.GetRuleExtraLabels(logger, rule, "Backtesting", !e.disableGrafanaFolder, e.featureToggles)
+	// Ensure fallback if empty string is passed
+	if folderTitle == "" {
+		folderTitle = "Backtesting"
+	}
+	extraLabels := state.GetRuleExtraLabels(logger, rule, folderTitle, !e.disableGrafanaFolder, e.featureToggles)
 
 	processFn := func(idx int, currentTime time.Time, results eval.Results) (bool, error) {
 		// init the builder. Do the best guess for the size of the result

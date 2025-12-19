@@ -238,7 +238,18 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return errorToResponse(err)
 	}
 
-	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To)
+	// Fetch folder path for alert labels, fallback to "Backtesting" if not available
+	var folderTitle string
+	if cmd.NamespaceUID != "" {
+		f, err := srv.folderService.GetNamespaceByUID(c.Req.Context(), cmd.NamespaceUID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			srv.log.FromContext(c.Req.Context()).Warn("Failed to fetch folder path for alert labels", "error", err)
+		} else {
+			folderTitle = f.Fullpath
+		}
+	}
+
+	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To, folderTitle)
 	if err != nil {
 		if errors.Is(err, backtesting.ErrInvalidInputData) {
 			return ErrResp(400, err, "Failed to evaluate")
