@@ -77,58 +77,9 @@ func TestSingleAudienceProvider(t *testing.T) {
 	require.Equal(t, []string{"test-audience"}, result)
 }
 
-func TestConditionalAudienceProvider(t *testing.T) {
-	tests := []struct {
-		name                string
-		primaryAudience     string
-		conditionalAudience string
-		expectedAudiences   []string
-	}{
-		{
-			name:                "same audiences - returns single",
-			primaryAudience:     "provisioning.grafana.app",
-			conditionalAudience: "provisioning.grafana.app",
-			expectedAudiences:   []string{"provisioning.grafana.app"},
-		},
-		{
-			name:                "different audiences - returns both",
-			primaryAudience:     "folder.grafana.app",
-			conditionalAudience: "provisioning.grafana.app",
-			expectedAudiences:   []string{"folder.grafana.app", "provisioning.grafana.app"},
-		},
-		{
-			name:                "empty primary",
-			primaryAudience:     "",
-			conditionalAudience: "provisioning.grafana.app",
-			expectedAudiences:   []string{"", "provisioning.grafana.app"},
-		},
-		{
-			name:                "empty conditional",
-			primaryAudience:     "folder.grafana.app",
-			conditionalAudience: "",
-			expectedAudiences:   []string{"folder.grafana.app", ""},
-		},
-		{
-			name:                "both empty - same",
-			primaryAudience:     "",
-			conditionalAudience: "",
-			expectedAudiences:   []string{""},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider := NewConditionalAudienceProvider(tt.primaryAudience, tt.conditionalAudience)
-			result := provider.GetAudiences(context.Background())
-			require.Equal(t, tt.expectedAudiences, result)
-		})
-	}
-}
-
 func TestProviderInterfaces(t *testing.T) {
 	// Verify that all providers implement their interfaces
 	var _ NamespaceProvider = (*StaticNamespaceProvider)(nil)
 	var _ AudienceProvider = (*StaticAudienceProvider)(nil)
 	var _ AudienceProvider = (*SingleAudienceProvider)(nil)
-	var _ AudienceProvider = (*ConditionalAudienceProvider)(nil)
 }

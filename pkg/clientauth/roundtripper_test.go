@@ -219,22 +219,6 @@ func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 			expectedAudiences: []string{"audience1", "audience2"},
 			expectedHeader:    "Bearer test-token",
 		},
-		{
-			name:              "conditional audience - same",
-			namespaceProvider: NewStaticNamespaceProvider("*"),
-			audienceProvider:  NewConditionalAudienceProvider("provisioning.grafana.app", "provisioning.grafana.app"),
-			expectedNamespace: "*",
-			expectedAudiences: []string{"provisioning.grafana.app"},
-			expectedHeader:    "Bearer test-token",
-		},
-		{
-			name:              "conditional audience - different",
-			namespaceProvider: NewStaticNamespaceProvider("*"),
-			audienceProvider:  NewConditionalAudienceProvider("folder.grafana.app", "provisioning.grafana.app"),
-			expectedNamespace: "*",
-			expectedAudiences: []string{"folder.grafana.app", "provisioning.grafana.app"},
-			expectedHeader:    "Bearer test-token",
-		},
 	}
 
 	for _, tt := range tests {

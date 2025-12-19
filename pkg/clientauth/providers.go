@@ -53,26 +53,3 @@ func NewSingleAudienceProvider(audience string) *SingleAudienceProvider {
 		StaticAudienceProvider: NewStaticAudienceProvider(audience),
 	}
 }
-
-// ConditionalAudienceProvider allows conditional logic for determining audiences.
-// This is useful for cases like the provisioning package where audiences depend on the primary audience.
-type ConditionalAudienceProvider struct {
-	primaryAudience     string
-	conditionalAudience string
-}
-
-// NewConditionalAudienceProvider creates an audience provider that conditionally adds an audience.
-// If primaryAudience != conditionalAudience, both are returned. Otherwise, only primaryAudience is returned.
-func NewConditionalAudienceProvider(primaryAudience, conditionalAudience string) *ConditionalAudienceProvider {
-	return &ConditionalAudienceProvider{
-		primaryAudience:     primaryAudience,
-		conditionalAudience: conditionalAudience,
-	}
-}
-
-func (p *ConditionalAudienceProvider) GetAudiences(ctx context.Context) []string {
-	if p.primaryAudience == p.conditionalAudience {
-		return []string{p.primaryAudience}
-	}
-	return []string{p.primaryAudience, p.conditionalAudience}
-}
