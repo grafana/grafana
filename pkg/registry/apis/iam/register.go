@@ -368,7 +368,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 		extGroupMappingStoreDW, ok := dw.(storewrapper.K8sStorage)
 		if !ok {
-			return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
 		}
 
 		authzWrapper := storewrapper.New(extGroupMappingStoreDW, iamauthorizer.NewExternalGroupMappingAuthorizer(b.accessClient))
