@@ -1,8 +1,7 @@
-import { cx, css } from '@emotion/css';
+import { cx } from '@emotion/css';
 
 import {
   DataFrame,
-  GrafanaTheme2,
   TransformerRegistryItem,
   TransformationApplicabilityLevels,
   standardTransformersRegistry,
@@ -10,6 +9,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, Card, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
+
+import { getCardStyles } from './getCardStyles';
 
 export interface TransformationCardProps {
   transform: TransformerRegistryItem;
@@ -29,7 +30,7 @@ export function TransformationCard({
   showTags = true,
 }: TransformationCardProps) {
   const theme = useTheme2();
-  const styles = useStyles2(getTransformationCardStyles);
+  const styles = useStyles2(getCardStyles);
 
   // Check to see if the transform is applicable to the given data
   let applicabilityScore = TransformationApplicabilityLevels.Applicable;
@@ -88,62 +89,4 @@ export function TransformationCard({
       </Card.Description>
     </Card>
   );
-}
-
-function getTransformationCardStyles(theme: GrafanaTheme2) {
-  return {
-    heading: css({
-      fontWeight: 400,
-      '> button': {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: theme.spacing(1),
-      },
-    }),
-    titleRow: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'nowrap',
-      width: '100%',
-    }),
-    description: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-    }),
-    image: css({
-      display: 'block',
-      maxWidth: '100%',
-      marginTop: theme.spacing(2),
-    }),
-    cardDisabled: css({
-      backgroundColor: theme.colors.action.disabledBackground,
-      img: {
-        filter: 'grayscale(100%)',
-        opacity: 0.33,
-      },
-    }),
-    cardApplicableInfo: css({
-      position: 'absolute',
-      bottom: theme.spacing(1),
-      right: theme.spacing(1),
-    }),
-    newCard: css({
-      maxWidth: '200px',
-      gridTemplateRows: 'min-content 0 1fr 0',
-      marginBottom: 0,
-    }),
-    pluginStateInfoWrapper: css({
-      marginLeft: theme.spacing(0.5),
-    }),
-    tagsWrapper: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: theme.spacing(0.5),
-    }),
-  };
 }
