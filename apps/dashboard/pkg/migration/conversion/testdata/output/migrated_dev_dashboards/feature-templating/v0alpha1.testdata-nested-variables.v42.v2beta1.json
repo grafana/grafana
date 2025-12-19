@@ -282,7 +282,15 @@
             "group": "text",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

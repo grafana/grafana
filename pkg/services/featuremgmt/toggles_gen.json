@@ -924,6 +924,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardAdHocAndGroupByWrapper",
+        "resourceVersion": "1765841806645",
+        "creationTimestamp": "2025-12-15T23:36:46Z"
+      },
+      "spec": {
+        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-11T16:52:46Z"
@@ -1632,6 +1645,20 @@
         "description": "Run the GRPC server",
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "heatmapRowsAxisOptions",
+        "resourceVersion": "1765353244400",
+        "creationTimestamp": "2025-12-10T07:54:04Z"
+      },
+      "spec": {
+        "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -3502,7 +3529,8 @@
       "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "deletionTimestamp": "2025-12-18T14:21:02Z"
       },
       "spec": {
         "description": "Writes error logs to the request logger",

@@ -3717,6 +3717,7 @@
       "text": "No results found for your query"
     },
     "recently-viewed": {
+      "clear": "Clear history",
       "empty": "Nothing viewed yet",
       "title": "Recently viewed"
     },
@@ -7165,6 +7166,9 @@
       "time-range-label": "Lock time range"
     }
   },
+  "embedded-panel": {
+    "powered-by": "Powered by"
+  },
   "empty-list-cta": {
     "pro-tip": "ProTip: {{proTip}}"
   },
@@ -9360,6 +9364,7 @@
     "name-unit": "Unit",
     "name-value-name": "Value name",
     "name-y-axis-scale": "Y axis scale",
+    "name-y-bucket-scale": "Y bucket scale",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -9389,6 +9394,18 @@
       "label-all": "All",
       "label-hidden": "Hidden",
       "label-single": "Single"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "Range within which the scale is linear",
+      "linear-threshold-label": "Linear threshold",
+      "linear-threshold-placeholder": "1",
+      "log-base-label": "Log base",
+      "scale-options": {
+        "label-auto": "Auto",
+        "label-linear": "Linear",
+        "label-log": "Log",
+        "label-symlog": "Symlog"
+      }
     }
   },
   "help-modal": {
@@ -11939,6 +11956,11 @@
       "resource-not-found": "Resource not found. Please check the URL or repository.",
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
+    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "instance-sync-deprecation": {
+      "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
+      "title": "Instance sync is not fully supported"
+    },
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
@@ -12043,9 +12065,6 @@
       "webhook-id": "ID:",
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
-    },
-    "repository-status": {
-      "error": "Failed to load repository"
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
