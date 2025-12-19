@@ -3748,6 +3748,8 @@
     "recently-viewed": {
       "clear": "Clear history",
       "empty": "Nothing viewed yet",
+      "error": "Recently viewed dashboards couldn’t be loaded.",
+      "retry": "Retry",
       "title": "Recently viewed"
     },
     "restore": {
