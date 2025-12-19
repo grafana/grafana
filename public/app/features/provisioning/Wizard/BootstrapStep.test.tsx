@@ -208,6 +208,9 @@ describe('BootstrapStep', () => {
       setup({
         settingsData: {
           allowedTargets: ['instance', 'folder'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
         },
       });
 
@@ -220,13 +223,13 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
     });
 
-    it('should use useResourceStats hook with legacy storage flag', async () => {
+    it('should use useResourceStats hook with settings data', async () => {
       setup({
         settingsData: {
-          legacyStorage: true,
+          allowedTargets: ['folder'],
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
@@ -234,7 +237,7 @@ describe('BootstrapStep', () => {
       });
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
     });
   });
 
@@ -268,7 +271,7 @@ describe('BootstrapStep', () => {
 
       setup({
         settingsData: {
-          legacyStorage: true,
+          allowedTargets: ['instance', 'folder'],
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
@@ -291,15 +294,10 @@ describe('BootstrapStep', () => {
   });
 
   describe('title field visibility', () => {
-    it('should show title field only for folder sync target', async () => {
-      const { user } = setup();
+    it('should show title field for folder sync target', async () => {
+      setup();
 
-      // Initially should not show title field (default is instance)
-      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
-
-      const folderOption = await screen.findByText('Sync external storage to a new Grafana folder');
-      await user.click(folderOption);
-
+      // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
   });

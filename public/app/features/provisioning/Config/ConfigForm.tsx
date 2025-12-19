@@ -80,10 +80,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(
-    () => getTargetOptions(settings.data?.allowedTargets || ['folder']),
-    [settings.data]
-  );
+  const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
   const {
