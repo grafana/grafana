@@ -156,10 +156,6 @@ func (req sqlKVSaveRequest) Validate() error {
 	return req.sqlKVSectionKey.Validate()
 }
 
-func (req sqlKVSaveRequest) Results() ([]byte, error) {
-	return req.Value, nil
-}
-
 type sqlKVLegacySaveRequest struct {
 	sqltemplate.SQLTemplate
 	Value     []byte
