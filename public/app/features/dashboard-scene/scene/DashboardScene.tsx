@@ -885,10 +885,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   // Get raw JSON from JSON model editor if currently active
-  // Returns undefined if not in JSON editor mode
+  // Returns undefined if not in JSON editor mode or if JSON is invalid
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
     if (this.state.editview instanceof JsonModelEditView) {
-      return JSON.parse(this.state.editview.state.jsonText);
+      try {
+        return JSON.parse(this.state.editview.state.jsonText);
+      } catch {
+        return undefined;
+      }
     }
     return undefined;
   }
