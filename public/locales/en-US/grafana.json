@@ -2666,6 +2666,35 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
+    "saved-searches": {
+      "actions-aria-label": "Actions",
+      "apply-aria-label": "Apply search \"{{name}}\"",
+      "apply-tooltip": "Apply this search",
+      "button-label": "Saved searches",
+      "cancel": "Cancel",
+      "default-indicator": "Default search",
+      "delete": "Delete",
+      "delete-button": "Delete",
+      "dropdown-aria-label": "Saved searches",
+      "empty-state": "No saved searches yet",
+      "error-load-description": "Your saved searches could not be loaded. Please try refreshing the page.",
+      "error-load-title": "Failed to load saved searches",
+      "error-name-duplicate": "A saved search with this name already exists",
+      "error-name-required": "Name is required",
+      "error-rename-description": "Your changes could not be saved. Please try again.",
+      "error-rename-title": "Failed to rename",
+      "error-save-description": "Your changes could not be saved. Please try again.",
+      "error-save-title": "Failed to save",
+      "list-aria-label": "Saved searches list",
+      "name-placeholder": "Enter a name...",
+      "remove-default": "Remove default",
+      "rename": "Rename",
+      "rename-button": "Rename",
+      "save-button": "Save",
+      "save-current-search": "Save current search",
+      "save-disabled-tooltip": "Enter a search query first",
+      "set-default": "Set as default"
+    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -11406,6 +11435,12 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
+        "moreDetails": "Do you find Plugin Insights usefull? Please share your feedback <2>here</2>.",
+        "pluginInsights": {
+          "header": "Plugin insights"
+        },
+        "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
+        "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
@@ -11951,6 +11986,10 @@
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
     "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "instance-sync-deprecation": {
+      "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
+      "title": "Instance sync is not fully supported"
+    },
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",

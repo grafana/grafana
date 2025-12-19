@@ -49,7 +49,6 @@ func TestSQLKV(t *testing.T) {
 		SkipTests: map[string]bool{
 			TestKVConcurrent:    true,
 			TestKVUnixTimestamp: true,
-			TestKVBatchDelete:   true,
 		},
 	})
 }
