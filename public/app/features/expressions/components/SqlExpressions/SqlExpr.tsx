@@ -228,7 +228,7 @@ LIMIT
       />
       {isSchemasFeatureEnabled && (
         <Button
-          icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
+          icon={isSchemaInspectorOpen ? 'angle-right' : 'angle-left'}
           onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
           size="sm"
           variant="secondary"
