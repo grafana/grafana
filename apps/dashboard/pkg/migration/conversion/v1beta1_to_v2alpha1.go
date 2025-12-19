@@ -1185,6 +1185,10 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1532,6 +1536,10 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1709,6 +1717,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 
 		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -2296,20 +2308,24 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	// We check two cases:
 	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
 	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
+	// 3. Panel has original options - need to set autoMigrateFrom and originalOptions
 	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
+	originalOptions := extractAngularOptions(panelMap)
 
 	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
 		// Check if panel type is an Angular type that needs migration
 		if newType := getAngularPanelMigration(panelType, panelMap); newType != "" {
 			autoMigrateFrom = panelType // Original Angular type
 			panelType = newType         // New modern type
+		} else if len(originalOptions) > 0 {
+			autoMigrateFrom = panelType
 		}
 	}
 
 	if autoMigrateFrom != "" {
 		options["__angularMigration"] = map[string]interface{}{
 			"autoMigrateFrom": autoMigrateFrom,
-			"originalOptions": extractAngularOptions(panelMap),
+			"originalOptions": originalOptions,
 		}
 	}
 
