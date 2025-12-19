@@ -58,19 +58,6 @@ export function VisualizationSuggestionCard({
       suggestion.cardOptions.previewModifier(preview);
     }
 
-    // const eventHandlers = ([
-    //   'onClick',
-    //   'onDoubleClick',
-    //   'onMouseMove',
-    //   'onMouseEnter',
-    //   'onMouseLeave',
-    //   'onFocus',
-    //   'onBlur',
-    // ] as const).reduce((handlers: HTMLAttributes<HTMLDivElement>, eventName) => {
-    //   handlers[eventName] = (ev) => ev.stopPropagation();
-    //   return handlers;
-    // }, {});
-
     content = (
       <button {...commonButtonProps}>
         {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
