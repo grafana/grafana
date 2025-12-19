@@ -136,8 +136,8 @@ describe('BootstrapStep', () => {
 
     it('should render correct info for GitHub repository type', async () => {
       setup();
-      expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should show "Empty" (2 external + 2 unmanaged, one per card)
+      expect(screen.getAllByText('External storage')).toHaveLength(1); // Only folder sync is shown by default
+      expect(screen.getAllByText('Empty')).toHaveLength(2); // Two elements should have the role "Empty" (1 external + 1 unmanaged)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -165,10 +165,12 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.getAllByText('2 files')).toHaveLength(2);
+      expect(await screen.getAllByText('2 files')).toHaveLength(1); // Only folder sync is shown by default
     });
 
     it('should display resource counts when resources exist', async () => {
+      // Note: Resource counts are only shown for instance sync, but instance sync is not available by default
+      // This test is kept for when instance sync is explicitly enabled via settings
       (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
         data: {
           instance: [
@@ -190,10 +192,26 @@ describe('BootstrapStep', () => {
         shouldSkipSync: false,
       });
 
-      setup();
+      // Mock settings to allow instance sync for this test
+      (useModeOptions as jest.Mock).mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'instance',
+            label: 'Sync all resources with external storage',
+            description: 'Resources will be synced with external storage',
+            subtitle: 'Use this option if you want to sync your entire instance',
+          },
+        ],
+        disabledOptions: [],
+      });
 
-      // Two elements display "7 resources": one in the external storage card and one in unmanaged resources card
-      expect(await screen.findAllByText('7 resources')).toHaveLength(2);
+      setup({
+        settingsData: {
+          allowedTargets: ['instance', 'folder'],
+        },
+      });
+
+      expect(await screen.findByText('7 resources')).toBeInTheDocument();
     });
   });
 
@@ -202,7 +220,21 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
+    });
+
+    it('should use useResourceStats hook with legacy storage flag', async () => {
+      setup({
+        settingsData: {
+          legacyStorage: true,
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+        },
+      });
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
     });
   });
 
@@ -236,6 +268,7 @@ describe('BootstrapStep', () => {
 
       setup({
         settingsData: {
+          legacyStorage: true,
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
