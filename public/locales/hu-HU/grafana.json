@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Bejelentkezési attribútum útvonala",
       "login-prompt-consent": "Hozzájárulás",
       "login-prompt-description": "Jelzi a felhasználói interakció típusát, amikor a felhasználó az IdP-vel jelentkezik be.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Bejelentkezési felszólítás",
       "login-prompt-login": "Bejelentkezés",
       "login-prompt-select-account": "Számla kiválasztása",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Ha engedélyezve van, a Grafana a <2>Proof Key for Code Exchange (PKCE)</2> lehetőséget használja az OAuth2 engedélyezési kód megadásával.",
       "use-pkce-label": "PKCE használata",
       "use-refresh-token-description": "Ha engedélyezett, a Grafana új hozzáférési tokent fog lekérni az OAuth2-szolgáltató által biztosított frissítési token használatával.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Frissítési token használata",
       "validate-hosted-domain-description": "Ha engedélyezett, a Grafana a Google ID-tokennel lekérdezett üzemeltetett tartományt a felhasználó által megadott „{{ allowedDomainsLabel }}” listával próbálja meg egyeztetni.",
       "validate-hosted-domain-label": "Üzemeltetett tartomány validálása",
@@ -10181,7 +10183,8 @@
       "copy": "Kijelölés másolása",
       "disable-menu": "Menü letiltása",
       "line-contains": "A hozzáadás sorként szűrőt tartalmaz",
-      "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt"
+      "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Ha az egész példányt csatlakoztatja, az áttelepítés futtatása során az irányítópultok nem lesznek elérhetők. Javasoljuk, hogy a folyamat megkezdése előtt figyelmeztesse a felhasználókat.",
       "modal-description-public-access": "Nyilvános hozzáférés beállítása a Grafana-példányhoz a GitHub-integráció engedélyezéséhez",
       "modal-description-required-features": "Szükséges Grafana-funkciók engedélyezése a kiépítéshez",
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
       "step-title-enable-feature-toggles": "Szükséges funkciókapcsolók engedélyezése",
       "step-title-start-ngrok": "Az ngrok elindítása az ideiglenes nyilvános hozzáféréshez",
-      "step-title-update-grafana-config": "Saját Grafana-konfiguráció frissítése",
-      "title-setting-connection-could-cause-temporary-outage": "A kapcsolat létrehozása ideiglenes üzemszünetet okozhat"
+      "step-title-update-grafana-config": "Saját Grafana-konfiguráció frissítése"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Kiépítési kapcsolatok megtekintése és kezelése"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Adattárak törlése",
-      "configured-repositories-while-running-legacy-storage": "A konfigurált adattárak nem fognak működni az örökölt tárolás futtatása közben.",
       "confirm-delete-repositories": "Biztosan törli az összes konfigurált adattárat? A művelet nem vonható vissza.",
       "error-delete-all-repositories": "Az összes adattár törlése nem sikerült",
-      "remove-all-configured-repositories": "Az összes konfigurált adattár eltávolítása",
       "subtitle": "Konfigurált adattárak megtekintése és kezelése",
       "success-all-repositories-deleted": "Az összes konfigurált adattár törölve",
       "tab-getting-started": "Kezdés",
       "tab-getting-started-title": "Kezdés",
       "tab-repositories": "Adattárak",
       "tab-repositories-title": "Adattárak listája",
-      "title-delete-all-configured-repositories": "Az összes konfigurált adattár törlése",
-      "title-legacy-storage-detected": "Örökölt tárolás észlelve"
+      "title-delete-all-configured-repositories": "Az összes konfigurált adattár törlése"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
       "cleaning-up-resources": "Adattári erőforrások tisztítása",
-      "legacy-storage-message": "A példány még nem fut egyesített tárhellyel – áttelepítési varázslót igényel",
       "not-found": "nem található",
       "not-found-message": "Nem található adattár",
       "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Erőforrások",
       "tab-resources-title": "",
       "title": "Adattár állapota",
-      "title-legacy-storage": "Örökölt tárolás",
       "title-queued-for-deletion": "Törlésre vár"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Változtatások belefoglalása minden előzményértékhez",
-      "synchronization-options": "Szinkronizálási beállítások"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "és kattintson erre:",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Figyelmeztetés",
     "wizard": {
-      "alert-point-1": "A folyamat során nem lehet erőforrásokat létrehozni, szerkeszteni vagy törölni. Az utolsó lépésben el fognak tűnni.",
-      "alert-point-2": "A kiépítés befejezése után az erőforrások újra megjelennek, és külső tárolóeszközön keresztül kezelhetők.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "A folyamat időtartama az érintett erőforrások számától függ.",
-      "alert-point-4": "A vállalati példányok adminisztrátorai megjeleníthetnek egy értesítési szalagot a felhasználóknak. A lépésenkénti utasításokat lásd az <2>útmutatóban</2>.",
-      "alert-title": "Fontos: Egyetlen adat vagy konfiguráció sem fog elveszni, de az irányítópultok néhány percig átmenetileg nem lesznek elérhetők.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Befejezés",
@@ -12230,7 +12223,6 @@
       "step-finish": "Válassza ki a további beállításokat",
       "step-synchronize": "Szinkronizálás külső tárolóval",
       "sync-description": "Erőforrások szinkronizálása külső tárolóval. Ezután az egyszeri lépés után az összes jövőbeli frissítés automatikusan mentve lesz az adattárba, és vissza lesz építve a példányba.",
-      "sync-option-history": "Előzmények",
       "title-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
       "title-connect": "Csatlakozás külső tárolóhoz",
       "title-finish": "Válassza ki a további beállításokat",

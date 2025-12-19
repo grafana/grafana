@@ -3329,6 +3329,7 @@
       "login-attribute-path-label": "Ruta del atributo de inicio de sesión",
       "login-prompt-consent": "Aceptar",
       "login-prompt-description": "Indica el tipo de interacción del usuario cuando este inicia sesión con el IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Aviso de inicio de sesión",
       "login-prompt-login": "Iniciar sesión",
       "login-prompt-select-account": "Seleccionar cuenta",
@@ -3386,6 +3387,7 @@
       "use-pkce-description": "Si está habilitado, Grafana utilizará la <2>clave de prueba para el intercambio de código (PKCE)</2> con la concesión de código de autorización OAuth2.",
       "use-pkce-label": "Utilizar PKCE",
       "use-refresh-token-description": "Si se ha habilitado, Grafana obtendrá un nuevo token de acceso a través del token de actualización que proporcione el proveedor de OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Usar token de actualización",
       "validate-hosted-domain-description": "Si se ha habilitado, Grafana comparará el dominio alojado recuperado del token de ID de Google con la lista «{{ allowedDomainsLabel }}» que especifique el usuario.",
       "validate-hosted-domain-label": "Validar dominio alojado",
@@ -10181,7 +10183,8 @@
       "copy": "Copiar selección",
       "disable-menu": "Desactivar menú",
       "line-contains": "Añadir como filtro «la línea contiene»",
-      "line-contains-not": "Añadir como filtro «la línea no contiene»"
+      "line-contains-not": "Añadir como filtro «la línea no contiene»",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Resolución de marca de tiempo",
@@ -11871,7 +11874,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Cuando conectes toda tu instancia, los paneles no estarán disponibles mientras se ejecuta la migración. Recomendamos advertir a tus usuarios antes de iniciar el proceso.",
       "modal-description-public-access": "Configura el acceso público a tu instancia de Grafana para habilitar la integración de GitHub",
       "modal-description-required-features": "Habilitar las funciones de Grafana necesarias para el aprovisionamiento",
       "modal-title-set-up-public-access": "Configurar el acceso público",
@@ -11883,8 +11885,7 @@
       "step-title-copy-url": "Copia tu URL pública",
       "step-title-enable-feature-toggles": "Habilitar las opciones de las funciones necesarias",
       "step-title-start-ngrok": "Iniciar ngrok para el acceso público temporal",
-      "step-title-update-grafana-config": "Actualiza tu configuración de Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "Configurar esta conexión podría causar una interrupción temporal"
+      "step-title-update-grafana-config": "Actualiza tu configuración de Grafana"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
@@ -11953,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Eliminar repositorios",
-      "configured-repositories-while-running-legacy-storage": "Los repositorios configurados no funcionarán mientras se ejecuta el almacenamiento heredado.",
       "confirm-delete-repositories": "¿Seguro que quieres eliminar todos los repositorios configurados? Esta acción no se puede deshacer.",
       "error-delete-all-repositories": "Error al eliminar todos los repositorios",
-      "remove-all-configured-repositories": "Eliminar todos los repositorios configurados",
       "subtitle": "Ver y gestionar tus repositorios configurados",
       "success-all-repositories-deleted": "Se han eliminado todos los repositorios configurados",
       "tab-getting-started": "Cómo empezar",
       "tab-getting-started-title": "Cómo empezar",
       "tab-repositories": "Repositorios",
       "tab-repositories-title": "Lista de repositorios",
-      "title-delete-all-configured-repositories": "Eliminar todos los repositorios configurados",
-      "title-legacy-storage-detected": "Almacenamiento heredado detectado"
+      "title-delete-all-configured-repositories": "Eliminar todos los repositorios configurados"
     },
     "http-utils": {
       "access-denied": "",
@@ -12004,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12084,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Volver a los repositorios",
       "cleaning-up-resources": "Limpiando los recursos del repositorio",
-      "legacy-storage-message": "La instancia aún no está ejecutando almacenamiento unificado, requiere un asistente de migración",
       "not-found": "no ha sido encontrado",
       "not-found-message": "Repositorio no encontrado",
       "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración.",
@@ -12093,7 +12089,6 @@
       "tab-resources": "Recursos",
       "tab-resources-title": "",
       "title": "Estado del repositorio",
-      "title-legacy-storage": "Almacenamiento heredado",
       "title-queued-for-deletion": "En cola para su eliminación"
     },
     "repository-type-cards": {
@@ -12189,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Incluir confirmaciones para cada valor histórico",
-      "synchronization-options": "Opciones de sincronización"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "y haz clic en",
@@ -12208,11 +12201,11 @@
     },
     "warning-title-default": "Advertencia",
     "wizard": {
-      "alert-point-1": "Los recursos no se podrán crear, editar ni eliminar durante este proceso. En el último paso, desaparecerán.",
-      "alert-point-2": "Una vez que se complete el aprovisionamiento, los recursos volverán a aparecer y se gestionarán a través de un almacenamiento externo.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "La duración de este proceso depende del número de recursos involucrados.",
-      "alert-point-4": "Los administradores de instancias empresariales pueden mostrar un báner de anuncio a los usuarios. Consulta <2>esta guía</2> para obtener instrucciones paso a paso.",
-      "alert-title": "Importante: No se perderán datos ni configuraciones, pero los dashboards no estarán disponibles temporalmente durante unos minutos.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminar",
@@ -12230,7 +12223,6 @@
       "step-finish": "Elegir ajustes adicionales",
       "step-synchronize": "Sincronizar con un almacenamiento externo",
       "sync-description": "Sincroniza los recursos con un almacenamiento externo. Después de este paso único, todas las actualizaciones futuras se guardarán automáticamente en el repositorio y se aprovisionarán de nuevo en la instancia.",
-      "sync-option-history": "Historial",
       "title-bootstrap": "Elegir qué sincronizar",
       "title-connect": "Conectar a un almacenamiento externo",
       "title-finish": "Elegir ajustes adicionales",

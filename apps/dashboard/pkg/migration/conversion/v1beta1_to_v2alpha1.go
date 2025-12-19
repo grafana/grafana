@@ -1185,6 +1185,10 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1532,6 +1536,10 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1709,6 +1717,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 
 		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -2006,6 +2018,28 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 		}
 	}
 
+	// Ensure each target has a non-empty refId. We only fill missing refIds;
+	existingRefIds := make(map[string]bool)
+	for _, target := range targets {
+		if targetMap, ok := target.(map[string]interface{}); ok {
+			if refId := schemaversion.GetStringValue(targetMap, "refId"); refId != "" {
+				existingRefIds[refId] = true
+			}
+		}
+	}
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		refId := schemaversion.GetStringValue(targetMap, "refId")
+		if refId == "" {
+			refId = nextAvailableRefId(existingRefIds)
+			targetMap["refId"] = refId
+			existingRefIds[refId] = true
+		}
+	}
+
 	queries := make([]dashv2alpha1.DashboardPanelQueryKind, 0, len(targets))
 
 	for _, target := range targets {
@@ -2016,6 +2050,27 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	}
 
 	return queries
+}
+
+// nextAvailableRefId returns the next unused refId using the same sequence as the
+// frontend helper (A, B, ..., Z, AA, AB, ...).
+func nextAvailableRefId(existing map[string]bool) string {
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	var refIdFromIndex func(num int) string
+	refIdFromIndex = func(num int) string {
+		if num < len(letters) {
+			return string(letters[num])
+		}
+		return refIdFromIndex(num/len(letters)-1) + string(letters[num%len(letters)])
+	}
+
+	for i := 0; ; i++ {
+		refId := refIdFromIndex(i)
+		if !existing[refId] {
+			return refId
+		}
+	}
 }
 
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
@@ -2253,20 +2308,24 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	// We check two cases:
 	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
 	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
+	// 3. Panel has original options - need to set autoMigrateFrom and originalOptions
 	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
+	originalOptions := extractAngularOptions(panelMap)
 
 	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
 		// Check if panel type is an Angular type that needs migration
 		if newType := getAngularPanelMigration(panelType, panelMap); newType != "" {
 			autoMigrateFrom = panelType // Original Angular type
 			panelType = newType         // New modern type
+		} else if len(originalOptions) > 0 {
+			autoMigrateFrom = panelType
 		}
 	}
 
 	if autoMigrateFrom != "" {
 		options["__angularMigration"] = map[string]interface{}{
 			"autoMigrateFrom": autoMigrateFrom,
-			"originalOptions": extractAngularOptions(panelMap),
+			"originalOptions": originalOptions,
 		}
 	}
 
