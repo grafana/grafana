@@ -76,11 +76,11 @@ var PathRewriters = []filters.PathRewriter{
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// TODO: this used to be instrumented with HTTP Logging Attributes, restore in some way
-		// handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		// TODO: why is this after WithRequester?
+		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler := filters.WithRequester(delegateHandler)
+		handler = filters.WithRequester(delegateHandler)
 
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
