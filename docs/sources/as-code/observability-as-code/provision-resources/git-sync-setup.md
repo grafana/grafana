@@ -132,17 +132,24 @@ To connect your GitHub repository:
 
 ### Choose what to synchronize
 
-In this step, you can decide which elements to synchronize. The available options depend on the status of your Grafana instance:
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
-- If the instance contains resources in an incompatible data format, you'll have to migrate all the data using instance sync. Folder sync won't be supported.
-- If there's already another connection using folder sync, instance sync won't be offered.
+If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked:
+
+- You won't be able to create new alerts or library panels after setup is completed.
+- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
 
 To set up synchronization:
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+1. Select which resources you want to sync with a new Grafana folder (with up to 10 connections). You can sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
+1. Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
+1. Click **Synchronize** to continue.
+
+### Synchronize with external storage
+
+After this one time step, all future updates are automatically saved to the Git repository and provisioned back to the instance.
 
 ### Choose additional settings
 

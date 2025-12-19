@@ -47,7 +47,7 @@ Using Git Sync, you can:
 
 {{< admonition type="caution" >}}
 
-Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
 {{< /admonition >}}
 
