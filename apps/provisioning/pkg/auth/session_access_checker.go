@@ -7,9 +7,9 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -40,18 +40,20 @@ func (c *sessionAccessChecker) WithFallbackRole(role identity.RoleType) AccessCh
 // Check performs an access check with optional role-based fallback.
 // Returns nil if access is allowed, or an appropriate API error if denied.
 func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckRequest, folder string) error {
+	logger := logging.FromContext(ctx).With("logger", "sessionAccessChecker")
+
 	// Get identity from Grafana session
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		klog.V(4).InfoS("sessionAccessChecker: failed to get requester",
+		logger.Debug("failed to get requester",
 			"resource", req.Resource,
 			"verb", req.Verb,
-			"error", err,
+			"error", err.Error(),
 		)
 		return apierrors.NewUnauthorized(fmt.Sprintf("failed to get requester: %v", err))
 	}
 
-	klog.V(4).InfoS("sessionAccessChecker: got requester from session",
+	logger.Debug("checking access",
 		"identityType", requester.GetIdentityType(),
 		"orgRole", requester.GetOrgRole(),
 		"namespace", requester.GetNamespace(),
@@ -59,6 +61,7 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 		"verb", req.Verb,
 		"group", req.Group,
 		"name", req.Name,
+		"folder", folder,
 		"fallbackRole", c.fallbackRole,
 	)
 
@@ -76,21 +79,23 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 	// No fallback configured, return result directly
 	if c.fallbackRole == "" {
 		if err != nil {
-			klog.V(4).InfoS("sessionAccessChecker: access check error (no fallback)",
+			logger.Debug("access check error (no fallback)",
 				"resource", req.Resource,
 				"verb", req.Verb,
-				"error", err,
+				"error", err.Error(),
 			)
-			return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("access check failed: %w", err))
+			return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
 		}
 		if !rsp.Allowed {
-			klog.V(4).InfoS("sessionAccessChecker: access denied (no fallback)",
+			logger.Debug("access denied by RBAC (no fallback)",
 				"resource", req.Resource,
 				"verb", req.Verb,
+				"group", req.Group,
+				"allowed", rsp.Allowed,
 			)
 			return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("permission denied"))
 		}
-		klog.V(4).InfoS("sessionAccessChecker: access allowed",
+		logger.Debug("access allowed",
 			"resource", req.Resource,
 			"verb", req.Verb,
 		)
@@ -100,7 +105,7 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 	// Fallback is configured - apply fallback logic
 	if err != nil {
 		if requester.GetOrgRole().Includes(c.fallbackRole) {
-			klog.V(4).InfoS("sessionAccessChecker: access allowed via role fallback (after error)",
+			logger.Debug("access allowed via role fallback (after error)",
 				"resource", req.Resource,
 				"verb", req.Verb,
 				"fallbackRole", c.fallbackRole,
@@ -108,18 +113,18 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 			)
 			return nil // Fallback succeeded
 		}
-		klog.V(4).InfoS("sessionAccessChecker: access check error (fallback failed)",
+		logger.Debug("access check error (fallback failed)",
 			"resource", req.Resource,
 			"verb", req.Verb,
-			"error", err,
+			"error", err.Error(),
 			"fallbackRole", c.fallbackRole,
 			"orgRole", requester.GetOrgRole(),
 		)
-		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("access check failed: %w", err))
+		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
 	}
 
 	if rsp.Allowed {
-		klog.V(4).InfoS("sessionAccessChecker: access allowed",
+		logger.Debug("access allowed",
 			"resource", req.Resource,
 			"verb", req.Verb,
 		)
@@ -128,7 +133,7 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 
 	// Fall back to role for backwards compatibility
 	if requester.GetOrgRole().Includes(c.fallbackRole) {
-		klog.V(4).InfoS("sessionAccessChecker: access allowed via role fallback",
+		logger.Debug("access allowed via role fallback",
 			"resource", req.Resource,
 			"verb", req.Verb,
 			"fallbackRole", c.fallbackRole,
@@ -137,9 +142,10 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 		return nil // Fallback succeeded
 	}
 
-	klog.V(4).InfoS("sessionAccessChecker: access denied (fallback role not met)",
+	logger.Debug("access denied (fallback role not met)",
 		"resource", req.Resource,
 		"verb", req.Verb,
+		"group", req.Group,
 		"fallbackRole", c.fallbackRole,
 		"orgRole", requester.GetOrgRole(),
 	)
