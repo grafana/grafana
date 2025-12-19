@@ -16,7 +16,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene
 
 import { getAllPanelPluginMeta } from '../../state/util';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
-import { getAllSuggestions, SuggestionsResult } from '../../suggestions/getAllSuggestions';
+import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
