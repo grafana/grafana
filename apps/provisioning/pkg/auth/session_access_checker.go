@@ -87,7 +87,7 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 			return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
 		}
 		if !rsp.Allowed {
-			logger.Debug("access denied by RBAC (no fallback)",
+			logger.Debug("access check denied (no fallback)",
 				"resource", req.Resource,
 				"verb", req.Verb,
 				"group", req.Group,

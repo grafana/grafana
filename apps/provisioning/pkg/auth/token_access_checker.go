@@ -74,7 +74,7 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
 	}
 	if !rsp.Allowed {
-		logger.Debug("access denied by IAM",
+		logger.Debug("access check denied",
 			"resource", req.Resource,
 			"verb", req.Verb,
 			"group", req.Group,
