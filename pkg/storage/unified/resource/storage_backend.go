@@ -326,10 +326,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		ResourceVersion: rv,
 		Action:          action,
 		Folder:          obj.GetFolder(),
-		GUID:            uuid.New().String(),
 	}
 
 	if k.rvManager != nil {
+		dataKey.GUID = uuid.New().String()
 		rv, err := k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 			err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value))
 			if err != nil {
