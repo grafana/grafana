@@ -500,10 +500,10 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should show button text changes based on current step', async () => {
-      // Mock resources to ensure sync step is not skipped
-      mockUseGetResourceStatsQuery.mockReturnValue({
+      // Mock files to ensure sync step is not skipped for folder sync
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: {
-          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
+          items: [{ name: 'test.json', path: 'test.json' }],
         },
         isLoading: false,
         error: null,
