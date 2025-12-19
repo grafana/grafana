@@ -219,7 +219,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tableContainer: css({
     margin: theme.spacing(1),
-    flex: 1,
     overflowY: 'auto',
     overflowX: 'auto',
     minHeight: 0, // Allow flex child to shrink
