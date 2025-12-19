@@ -47,8 +47,7 @@ func TestSQLKV(t *testing.T) {
 	}, &KVTestOptions{
 		NSPrefix: "sql-kv-test",
 		SkipTests: map[string]bool{
-			TestKVConcurrent:    true,
-			TestKVUnixTimestamp: true,
+			TestKVConcurrent: true,
 		},
 	})
 }
