@@ -578,7 +578,13 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	const targetPath = "all-panels.json"
 
 	// Set up the repository.
-	helper.CreateRepo(t, TestRepo{Name: repo})
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repo,
+		Target:                 "folder",
+		ExpectedDashboards:     0,
+		ExpectedFolders:        1, // folder sync creates a folder for the repo
+		SkipResourceAssertions: false,
+	})
 
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
@@ -744,10 +750,10 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	testRepo := TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		Target:             "folder",
 		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
+		ExpectedFolders:    1, // folder sync creates a folder
 	}
 	// We create the repository
 	helper.CreateRepo(t, testRepo)

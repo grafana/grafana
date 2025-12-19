@@ -11951,6 +11951,10 @@
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
     "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "instance-sync-deprecation": {
+      "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
+      "title": "Instance sync is not fully supported"
+    },
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",

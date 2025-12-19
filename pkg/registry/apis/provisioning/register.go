@@ -721,7 +721,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
-	list := b.validator.ValidateRepository(repo)
+	isCreate := a.GetOperation() == admission.Create
+	list := b.validator.ValidateRepository(repo, isCreate)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
