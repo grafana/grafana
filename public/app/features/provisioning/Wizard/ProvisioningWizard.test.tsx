@@ -227,6 +227,15 @@ describe('ProvisioningWizard', () => {
         error: null,
         refetch: jest.fn(),
       });
+      // Mock files to ensure sync step is not skipped for folder sync
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
+        data: {
+          items: [{ name: 'test.json', path: 'test.json' }],
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
