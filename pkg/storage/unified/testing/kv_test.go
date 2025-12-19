@@ -50,7 +50,6 @@ func TestSQLKV(t *testing.T) {
 			TestKVSave:          true,
 			TestKVConcurrent:    true,
 			TestKVUnixTimestamp: true,
-			TestKVBatchDelete:   true,
 		},
 	})
 }
