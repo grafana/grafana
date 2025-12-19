@@ -184,7 +184,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleViewer), string(org.RoleEditor), string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	// Stats - granted to Admin only
