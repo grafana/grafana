@@ -11216,9 +11216,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "error-loading-some-suggestions": {
+        "message": "Some suggestions could not be loaded"
+      },
       "error-loading-suggestions": {
         "message": "An error occurred when loading visualization suggestions.",
-        "title": "Error"
+        "plugin-failed": "Failed to load panel plugin: {{ pluginId }}.",
+        "title": "Error",
+        "try-again-button": "Try again"
       },
       "unknown-viz-type": "Unknown visualization type",
       "use-this-suggestion": "Use this suggestion"
