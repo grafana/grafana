@@ -206,9 +206,16 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 
 	const pageSize int64 = 1000
 	var offset int64
+	totalPages := 0
+	hasMore := true
 
-	for {
-		children, hasMore, err := getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
+	// Using an upper limit to ensure no infinite loops can happen
+	for hasMore && totalPages < 1000 {
+		totalPages++
+
+		var err error
+		var children []string
+		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
 			return fmt.Errorf("failed to get children: %w", err)
 		}
@@ -232,6 +239,8 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 
 		offset += pageSize
 	}
+
+	return nil
 }
 
 // getChildrenBatch fetches children for multiple parents

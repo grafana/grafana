@@ -726,15 +726,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
-	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	// Check that the user is allowed to move the folder to the destination folder
 	hasAccess, evalErr := s.canMoveViaApiServer(ctx, cmd)
 	if evalErr != nil {
@@ -744,7 +735,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,
