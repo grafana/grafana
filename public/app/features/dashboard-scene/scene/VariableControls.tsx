@@ -20,13 +20,30 @@ import { AddVariableButton } from './VariableControlsAddButton';
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
 
+  // Get visible variables for drilldown layout
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+
+  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
+
+  const restVariables = visibleVariables.filter(
+    (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
+  );
+
+  // Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
+  const variablesToRender = hasDrilldownControls
+    ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
+    : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+
   return (
     <>
-      {variables
-        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-        .map((variable) => (
+      {variablesToRender.length > 0 &&
+        variablesToRender.map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
+
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );

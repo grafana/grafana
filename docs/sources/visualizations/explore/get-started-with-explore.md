@@ -71,8 +71,9 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
   - **Run query** - Click to run your query.
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
-  - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
-  - **Replace with saved query** - Reuse a saved query.
+  - **Saved queries**:
+    - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+    - **Replace query** - Reuse a saved query.
   - **+ Add query** - Add an additional query.
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
