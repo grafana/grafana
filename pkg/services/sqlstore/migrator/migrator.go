@@ -250,7 +250,7 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	if !migrationLogExists {
 		// Check if dialect can initialize database from a snapshot.
-		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName, logger)
 		if err != nil {
 			return fmt.Errorf("failed to create database from snapshot: %w", err)
 		}
