@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -230,12 +231,91 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
-	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
-		logger.Error("Failed to delete expired snapshots", "error", err.Error())
+	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+		srv.deleteKubernetesExpiredSnapshots(ctx)
 	} else {
-		logger.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+		cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
+		if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
+			logger.Error("Failed to delete expired snapshots", "error", err.Error())
+		} else {
+			logger.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+		}
 	}
+}
+
+func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
+	logger.Debug("Starting deleting expired Kubernetes snapshots")
+
+	// Create the dynamic client for Kubernetes API
+	restConfig, err := srv.clientConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		logger.Error("Failed to get REST config for Kubernetes client", "error", err.Error())
+		return
+	}
+
+	client, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		logger.Error("Failed to create Kubernetes client", "error", err.Error())
+		return
+	}
+
+	// Set up the GroupVersionResource for shortURLs
+	gvr := v0alpha1.SnapshotKind().GroupVersionResource()
+
+	// Expiration time is now
+	expirationTime := time.Now()
+	expirationTimestamp := expirationTime.Unix()
+	deletedCount := 0
+
+	// List and delete expired shortURLs across all namespaces
+	orgs, err := srv.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		logger.Error("Failed to list organizations", "error", err.Error())
+		return
+	}
+
+	for _, o := range orgs {
+		ctx, _ := identity.WithServiceIdentity(ctx, o.ID)
+		namespaceMapper := request.GetNamespaceMapper(srv.Cfg)
+		snapshots, err := client.Resource(gvr).Namespace(namespaceMapper(o.ID)).List(ctx, v1.ListOptions{})
+		if err != nil {
+			logger.Error("Failed to list snapshots", "error", err.Error())
+			return
+		}
+		// Check each shortURL for expiration
+		for _, item := range snapshots.Items {
+			// Convert unstructured object to ShortURL struct
+			var snapshot v0alpha1.Snapshot
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &snapshot)
+			if err != nil {
+				logger.Error("Failed to convert unstructured object to snapshot", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
+				continue
+			}
+
+			// Only delete expired snapshots
+			if *snapshot.Spec.Expires < expirationTimestamp {
+				namespace := snapshot.Namespace
+				name := snapshot.Name
+
+				// TODO: check this should delete the object + the blob object
+				err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
+				if err != nil {
+					// Check if it's a "not found" error, which is expected if the resource was already deleted
+					if k8serrors.IsNotFound(err) {
+						logger.Debug("Snapshot already deleted", "name", name, "namespace", namespace)
+					} else {
+						logger.Error("Failed to delete expired snapshot", "name", name, "namespace", namespace, "error", err.Error())
+					}
+				} else {
+					deletedCount++
+					logger.Debug("Successfully deleted expired snapshot", "name", name, "namespace", namespace, "creationTime", snapshot.CreationTimestamp.Unix(), "expirationTime", expirationTimestamp)
+				}
+			}
+		}
+	}
+
+	logger.Debug("Deleted expired Kubernetes snapshots", "count", deletedCount)
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
