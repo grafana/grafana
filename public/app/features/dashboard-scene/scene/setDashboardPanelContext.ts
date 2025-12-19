@@ -126,7 +126,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
 
-  context.onAddAdHocFilter = (newFilter: AdHocFilterItem) => {
+  context.onAddAdHocFilter = async (newFilter: AdHocFilterItem) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
     const queryRunner = getQueryRunnerFor(vizPanel);
@@ -134,7 +134,18 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
+
     const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
@@ -165,7 +176,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       .filter((item) => item !== undefined);
   };
 
-  context.onAddAdHocFilters = (items: AdHocFilterItem[]) => {
+  context.onAddAdHocFilters = async (items: AdHocFilterItem[]) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
     const queryRunner = getQueryRunnerFor(vizPanel);
@@ -173,7 +184,17 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
     const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     bulkUpdateAdHocFiltersVariable(filterVar, items);
   };
