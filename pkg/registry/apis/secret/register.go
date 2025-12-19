@@ -19,6 +19,14 @@ func RegisterDependencies(
 	secretDBMigrator contracts.SecretDBMigrator,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
+	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
+	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+
+	// This is needed to wire up and run DB migrations for Secrets Manager, which is not run by the generic OSS DB migrator.
+	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
+	}
+
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
 	}
@@ -26,14 +34,6 @@ func RegisterDependencies(
 	// Permissions for requests in multi-tenant mode will come from HG.
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
-	}
-
-	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
-	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
-
-	// This is needed to wire up and run DB migrations for Secrets Manager, which is not run by the generic OSS DB migrator.
-	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
-		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	return &DependencyRegisterer{}, nil
