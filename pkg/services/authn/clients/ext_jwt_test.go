@@ -53,6 +53,17 @@ var (
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
+	validIDTokenClaimsWithServiceAccount = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "service-account:3",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: "extended_jwt",
+			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
 		Claims: jwt.Claims{
 			Subject:  "user:2",
@@ -274,6 +285,29 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaims,
+				Namespace:         "default",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as service account",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithServiceAccount,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "3",
+				Type:              claims.TypeServiceAccount,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithServiceAccount,
 				Namespace:         "default",
 				AuthenticatedBy:   "extendedjwt",
 				AuthID:            "access-policy:this-uid",
