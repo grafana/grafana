@@ -46,8 +46,8 @@ func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 
 	return resource.DocumentBuilderInfo{
 		GroupResource: schema.GroupResource{
-			Group:    "iam.grafana.app",
-			Resource: "searchTeams",
+			Group:    v0alpha1.TeamResourceInfo.GroupResource().Group,
+			Resource: v0alpha1.TeamResourceInfo.GroupResource().Resource,
 		},
 		Fields:  fields,
 		Builder: new(teamSearchBuilder),

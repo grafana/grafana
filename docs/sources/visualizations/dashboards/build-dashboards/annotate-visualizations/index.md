@@ -163,9 +163,9 @@ To add a new annotation query to a dashboard, follow these steps:
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
-   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
+   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](ref:saved-queries).
 
-1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+1. (Optional) To [save the query](ref:save-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
 1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
 1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and test them as many times as needed.
 

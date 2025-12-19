@@ -18,7 +18,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   const uid = dashboard.state.uid;
   const styles = useStyles2(getStyles);
 
-  if (!links || !uid) {
+  if (!links || !uid || links.length === 0) {
     return null;
   }
 
@@ -36,6 +36,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     linksContainer: css({
+      label: 'dashboard-links-controls',
       display: 'inline-flex',
       gap: theme.spacing(1),
       marginRight: theme.spacing(1),

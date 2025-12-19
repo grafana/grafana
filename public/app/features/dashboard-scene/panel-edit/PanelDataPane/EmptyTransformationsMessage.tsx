@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
+import { DataFrame, DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -16,6 +16,7 @@ interface EmptyTransformationsProps {
   onShowPicker: () => void;
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
+  data: DataFrame[];
 }
 
 const TRANSFORMATION_IDS = [
@@ -121,6 +122,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   showIllustrations={true}
                   showPluginState={false}
                   showTags={false}
+                  data={props.data}
                 />
               ))}
           </Grid>

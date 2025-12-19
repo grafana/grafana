@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -53,7 +52,6 @@ type RepositoryController struct {
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
 	logger     logging.Logger
-	dualwrite  dualwrite.Service
 
 	jobs interface {
 		jobs.Queue
@@ -86,7 +84,6 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
@@ -114,11 +111,10 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:      jobs,
-		logger:    logging.DefaultLogger.With("logger", loggerName),
-		dualwrite: dualwrite,
-		registry:  registry,
-		tracer:    tracer,
+		jobs:     jobs,
+		logger:   logging.DefaultLogger.With("logger", loggerName),
+		registry: registry,
+		tracer:   tracer,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -355,9 +351,6 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 		return nil
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
-		return nil
-	case rc.dualwrite != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite):
-		logger.Info("skip sync as we are reading from legacy storage")
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
 		logger.Info("repository became healthy, full resync")

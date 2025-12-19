@@ -309,10 +309,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -376,6 +372,10 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   */
@@ -502,6 +502,10 @@ export interface FeatureToggles {
   * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
+  /**
+  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+  */
+  dashboardAdHocAndGroupByWrapper?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -831,6 +835,10 @@ export interface FeatureToggles {
   * Use a POST request to list rules by passing down the namespaces user has access to
   */
   fetchRulesUsingPost?: boolean;
+  /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
   /**
   * Enables the new logs panel
   * @default true
@@ -1165,6 +1173,11 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
+  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
+  * @default false
+  */
+  heatmapRowsAxisOptions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1188,11 +1201,6 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
-  /**
-  * Show insights for plugins in the plugin details page
-  * @default false
-  */
-  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */
