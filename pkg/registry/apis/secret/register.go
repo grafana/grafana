@@ -28,15 +28,12 @@ func RegisterDependencies(
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
-	// We shouldn't need to create the DB in HG, as that will use the MT api server.
-	if cfg.StackID == "" {
-		// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
-		lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
+	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
 
-		// This is needed to wire up and run DB migrations for Secrets Manager, which is not run by the generic OSS DB migrator.
-		if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
-			return nil, fmt.Errorf("running secret database migrations: %w", err)
-		}
+	// This is needed to wire up and run DB migrations for Secrets Manager, which is not run by the generic OSS DB migrator.
+	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	return &DependencyRegisterer{}, nil
