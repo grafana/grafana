@@ -52,28 +52,6 @@ for (const pluginId of panelsToCheckFirst) {
   };
 }
 
-config.panels.text = {
-  id: 'text',
-  module: 'core:plugin/text',
-  sort: idx++,
-  name: 'Text',
-  type: PluginType.panel,
-  baseUrl: 'public/app/plugins/panel',
-  skipDataQuery: true,
-  suggestions: false,
-  info: {
-    version: '1.0.0',
-    updated: '2025-01-01',
-    links: [],
-    screenshots: [],
-    author: {
-      name: 'Grafana Labs',
-    },
-    description: 'Text panel',
-    logos: { small: 'small/logo', large: 'large/logo' },
-  },
-};
-
 jest.mock('../state/util', () => {
   const originalModule = jest.requireActual('../state/util');
   return {

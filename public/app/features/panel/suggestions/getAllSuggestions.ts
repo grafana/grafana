@@ -128,25 +128,6 @@ export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsRe
 
   let pluginSuggestionsError = false;
   for (const plugin of plugins) {
-    // only for legacy suggestions, we should push empty cards into suggestions in the "no data" case.
-    if (
-      dataSummary.fieldCount === 0 &&
-      !config.featureToggles.newVizSuggestions &&
-      !plugin.meta.skipDataQuery &&
-      !plugin.meta.hideFromList
-    ) {
-      list.push({
-        name: plugin.meta.name,
-        pluginId: plugin.meta.id,
-        description: plugin.meta.info.description,
-        hash: 'plugin-empty-' + plugin.meta.id,
-        cardOptions: {
-          imgSrc: plugin.meta.info.logos.small,
-        },
-      });
-      continue;
-    }
-
     try {
       const suggestions = plugin.getSuggestions(dataSummary);
       if (suggestions) {

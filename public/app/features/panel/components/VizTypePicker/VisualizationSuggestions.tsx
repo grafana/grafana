@@ -16,7 +16,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene
 
 import { getAllPanelPluginMeta } from '../../state/util';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
-import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
+import { getAllSuggestions, SuggestionsResult } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
@@ -28,17 +28,21 @@ export interface Props {
   panel?: PanelModel;
 }
 
+const useSuggestions = (data: PanelData | undefined) => {
+  const [hasFetched, setHasFetched] = useState(false);
+  const { value, loading, error, retry } = useAsyncRetry(async () => {
+    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
+    setHasFetched(true);
+    return await getAllSuggestions(data);
+  }, [hasFetched, data]);
+  return { value, loading, error, retry };
+};
+
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const {
-    value: result,
-    loading,
-    error,
-    retry,
-  } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 75));
-    return await getAllSuggestions(data);
-  }, [data]);
+
+  const { value: result, loading, error, retry } = useSuggestions(data);
+
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
