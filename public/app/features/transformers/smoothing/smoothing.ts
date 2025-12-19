@@ -241,6 +241,7 @@ export const getSmoothingTransformer: () => SynchronousDataTransformerInfo<Smoot
             smoothedFields.push({
               ...field,
               values: smoothedValues,
+              state: undefined,
             });
           } else if (field.type !== FieldType.time) {
             // include other non-numeric, non-time fields (like labels)
