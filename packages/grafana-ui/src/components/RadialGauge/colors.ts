@@ -105,10 +105,9 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
     throw new Error('colorAtGradientPercent requires at least two color stops');
   }
 
-  // normalize and sort stops by percent. TODO: is this necessary? is gradientstops always sorted?
   const sorted = stops
-    .map((s) => ({ color: s.color, percent: Math.min(Math.max(0, s.percent), 1) }))
-    .sort((a, b) => a.percent - b.percent);
+    .map((s: GradientStop): GradientStop => ({ color: s.color, percent: Math.min(Math.max(0, s.percent), 1) }))
+    .sort((a: GradientStop, b: GradientStop) => a.percent - b.percent);
 
   // percent outside range
   if (percent <= sorted[0].percent) {
