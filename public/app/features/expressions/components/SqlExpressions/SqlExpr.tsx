@@ -68,14 +68,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     formatter: formatSQL,
   };
 
-  const initialQuery = `
-    SELECT
-      *
-    FROM
-      ${vars[0]}
-    LIMIT
-      10
-  `;
+  const initialQuery = `SELECT
+  *
+FROM
+  ${vars[0]}
+LIMIT
+  10`;
 
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
