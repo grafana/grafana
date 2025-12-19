@@ -1,9 +1,12 @@
 package historian
 
 import (
+	"context"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
@@ -21,6 +24,14 @@ var (
 
 type AlertingHistorianAppInstaller struct {
 	appsdkapiserver.AppInstaller
+}
+
+func (a *AlertingHistorianAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			return authorizer.DecisionAllow, "", nil
+		},
+	)
 }
 
 func RegisterAppInstaller(

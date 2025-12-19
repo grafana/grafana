@@ -67,6 +67,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
+export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
@@ -136,7 +137,7 @@ export interface ElasticsearchAnnotationQuery {
   index?: string;
 }
 
-export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+export type RangeMap = Record<string, { gte: number; lte: number; format: string }>;
 
 export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
 

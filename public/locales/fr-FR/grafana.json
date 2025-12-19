@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Ouvrir le lien externe"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Plus",
       "new-menu": {
@@ -2335,7 +2342,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -3320,6 +3329,7 @@
       "login-attribute-path-label": "Chemin d’attribut de connexion",
       "login-prompt-consent": "Consentement",
       "login-prompt-description": "Indique le type d’interaction utilisateur lors de la connexion via le fournisseur d’identité (IdP).",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Invite de connexion",
       "login-prompt-login": "Connexion",
       "login-prompt-select-account": "Sélectionner un compte",
@@ -3377,6 +3387,7 @@
       "use-pkce-description": "Si cette option est activée, Grafana utilisera la <2>clé de preuve pour l’échange de code (PKCE)</2> avec l’octroi de code d’autorisation OAuth2.",
       "use-pkce-label": "Utiliser PKCE",
       "use-refresh-token-description": "Si cette option est activée, Grafana récupérera un nouveau jeton d’accès à l’aide du jeton d’actualisation fourni par le fournisseur OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Utiliser le jeton d’actualisation",
       "validate-hosted-domain-description": "Si cette option est activée, Grafana fera correspondre le domaine hébergé récupéré à partir du jeton d’identification Google à la liste « {{ allowedDomainsLabel }} » spécifiée par l’utilisateur.",
       "validate-hosted-domain-label": "Valider le domaine hébergé",
@@ -3704,6 +3715,10 @@
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
       "text": "Aucun résultat n'a été trouvé pour votre requête"
+    },
+    "recently-viewed": {
+      "empty": "",
+      "title": ""
     },
     "restore": {
       "success": "",
@@ -4815,8 +4830,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valeurs séparées par une virgule"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5091,6 +5105,14 @@
         "layout": "Mise en page"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5119,6 +5141,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configurer",
       "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5463,6 +5486,12 @@
         "label": "Modifier",
         "tooltip": "Entrer dans le mode édition"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendre modifiable",
         "tooltip": "Ce tableau de bord a été marqué comme étant en lecture seule"
@@ -5483,14 +5512,6 @@
         "discard-panel-new": "Ignorer le panneau",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifier le schéma du tableau de bord v2"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entrer dans le mode édition"
-          },
-          "exit": {
-            "label": "Quitter le mode d’édition"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendre modifiable",
@@ -5942,13 +5963,25 @@
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Modifier le panneau",
         "view-panel": "Afficher le panneau"
       },
       "title": {
         "dashboard": "Tableau de bord",
-        "discard-changes-to-dashboard": "Abandonner les modifications apportées au tableau de bord ?"
+        "discard-changes-to-dashboard": "Abandonner les modifications apportées au tableau de bord ?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6121,7 +6154,10 @@
       "no-data-found": "Aucune donnée n’a été trouvée"
     },
     "inspect-json-tab": {
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcule dynamiquement l’intervalle en divisant la plage de temps par le nombre spécifié",
@@ -8827,6 +8863,13 @@
       "aria-label-default": "Choisir une couleur",
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
+    "components": {
+      "sparkline": {
+        "warning": {
+          "too-few-values": ""
+        }
+      }
+    },
     "confirm-button": {
       "aria-label-delete": "Supprimer",
       "cancel": "Annuler",
@@ -9024,6 +9067,8 @@
     "interactive-table": {
       "aria-label-collapse-all": "Réduire toutes les lignes",
       "aria-label-expand-all": "Développer toutes les lignes",
+      "aria-label-sort-column": "",
+      "expand-row-header": "",
       "expand-row-tooltip": "Basculer la ligne développée",
       "tooltip-collapse-all": "Réduire toutes les lignes",
       "tooltip-expand-all": "Développer toutes les lignes"
@@ -10138,7 +10183,8 @@
       "copy": "Copier la sélection",
       "disable-menu": "Désactiver le menu",
       "line-contains": "Ajouter car la ligne contient un filtre",
-      "line-contains-not": "Ajouter car la ligne ne contient pas de filtre"
+      "line-contains-not": "Ajouter car la ligne ne contient pas de filtre",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Résolution des horodatages",
@@ -10695,7 +10741,6 @@
       "title": "Nouveau"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nouveau tableau de bord"
     },
     "new-folder": {
@@ -11377,6 +11422,12 @@
         "latestReleaseDate": "Dernière date de sortie :",
         "latestVersion": "Dernière version",
         "license": "Licence",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Signaler un problème",
         "reportAbuse": "",
         "reportAbuseTooltip": "Signalez les problèmes liés à des plugins malveillants ou nuisibles directement à Grafana Labs.",
@@ -11823,23 +11874,20 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Lorsque vous connectez l’ensemble de votre instance, les tableaux de bord ne seront pas disponibles pendant l’exécution de la migration. Nous vous recommandons d’avertir vos utilisateurs avant de commencer le processus.",
       "modal-description-public-access": "Configurez l’accès public à votre instance Grafana pour activer l’intégration GitHub",
       "modal-description-required-features": "Activez les fonctionnalités Grafana requises pour la mise en service",
       "modal-title-set-up-public-access": "Configurer l’accès public",
       "modal-title-set-up-required-features": "Configurer les fonctionnalités requises",
       "step-description-copy-url": "À partir de la sortie ngrok, copiez l’URL de redirection https:// qui ressemble à ceci :",
-      "step-description-enable-feature-toggles": "Ajoutez ces paramètres à votre fichier custom.ini pour activer les fonctionnalités nécessaires :",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Exécutez cette commande pour créer un tunnel sécurisé vers votre Grafana local :",
       "step-description-update-grafana-config": "Ajoutez ceci à votre fichier custom.ini, en remplaçant l’URL par votre URL ngrok réelle :",
       "step-title-copy-url": "Copier l’URL publique",
       "step-title-enable-feature-toggles": "Activer les bascules de fonctionnalité requises",
       "step-title-start-ngrok": "Démarrer ngrok pour un accès public temporaire",
-      "step-title-update-grafana-config": "Mettre à jour la configuration Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "La configuration de cette connexion peut entraîner une interruption temporaire"
+      "step-title-update-grafana-config": "Mettre à jour la configuration Grafana"
     },
     "getting-started-page": {
-      "header": "Mise en service",
       "subtitle-provisioning-feature": "Afficher et gérer vos connexions de mise en service"
     },
     "git": {
@@ -11906,18 +11954,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Supprimer les référentiels",
-      "configured-repositories-while-running-legacy-storage": "Les référentiels configurés ne fonctionneront pas lors de l’exécution du stockage hérité.",
       "confirm-delete-repositories": "Voulez-vous vraiment supprimer tous les référentiels configurés ? Cette action ne peut pas être annulée.",
       "error-delete-all-repositories": "Échec de la suppression de tous les référentiels",
-      "remove-all-configured-repositories": "Supprimer tous les référentiels configurés",
       "subtitle": "Afficher et gérer vos référentiels configurés",
       "success-all-repositories-deleted": "Tous les référentiels configurés ont été supprimés",
       "tab-getting-started": "Pour commencer",
       "tab-getting-started-title": "Pour commencer",
       "tab-repositories": "Référentiels",
       "tab-repositories-title": "Liste des référentiels",
-      "title-delete-all-configured-repositories": "Supprimer tous les référentiels configurés",
-      "title-legacy-storage-detected": "Stockage hérité détecté"
+      "title-delete-all-configured-repositories": "Supprimer tous les référentiels configurés"
     },
     "http-utils": {
       "access-denied": "",
@@ -11957,7 +12002,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12037,7 +12081,6 @@
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
       "cleaning-up-resources": "Nettoyage des ressources du référentiel",
-      "legacy-storage-message": "L’instance n’exécute pas encore de stockage unifié ; l’assistant de migration est requis",
       "not-found": "introuvable",
       "not-found-message": "Référentiel introuvable",
       "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
@@ -12046,7 +12089,6 @@
       "tab-resources": "Ressources",
       "tab-resources-title": "",
       "title": "Statut du référentiel",
-      "title-legacy-storage": "Stockage hérité",
       "title-queued-for-deletion": "Mis en attente pour suppression"
     },
     "repository-type-cards": {
@@ -12142,9 +12184,7 @@
     "synchronize-step": {
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Inclure les commits pour chaque valeur historique",
-      "synchronization-options": "Options de synchronisation"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
@@ -12161,11 +12201,11 @@
     },
     "warning-title-default": "Avertissement",
     "wizard": {
-      "alert-point-1": "Les ressources ne pourront pas être créées, modifiées ou supprimées pendant ce processus. Lors de la dernière étape, elles disparaîtront.",
-      "alert-point-2": "Une fois la mise en service terminée, les ressources réapparaîtront et seront gérées via un stockage externe.",
+      "alert-point-1": "",
+      "alert-point-2": "",
       "alert-point-3": "La durée de ce processus dépend du nombre de ressources impliquées.",
-      "alert-point-4": "Les administrateurs d’instances d’entreprise peuvent afficher une bannière d’annonce aux utilisateurs. Consultez <2>ce guide</2> pour obtenir des instructions étape par étape.",
-      "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminer",
@@ -12183,7 +12223,6 @@
       "step-finish": "Choisir des paramètres supplémentaires",
       "step-synchronize": "Synchroniser avec un stockage externe",
       "sync-description": "Synchronisez les ressources avec un stockage externe. Après cette étape unique, toutes les futures mises à jour seront automatiquement enregistrées dans le référentiel et mises en service dans l’instance.",
-      "sync-option-history": "Historique",
       "title-bootstrap": "Choisir ce qui doit être synchronisé",
       "title-connect": "Se connecter à un stockage externe",
       "title-finish": "Choisir des paramètres supplémentaires",
@@ -12425,13 +12464,12 @@
       "effects": {
         "bar-glow": "",
         "center-glow": "",
+        "gradient": "",
+        "label": "",
         "rounded-bars": "",
         "spotlight": "",
         "spotlight-tooltip": ""
       },
-      "gradient": "",
-      "gradient-auto": "",
-      "gradient-none": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12606,7 +12644,6 @@
       }
     },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importer",
       "new": "Nouveau",
       "new-dashboard": "Nouveau tableau de bord",

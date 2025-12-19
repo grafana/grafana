@@ -229,6 +229,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackWriteKey:                  hs.Cfg.RudderstackWriteKey,
 		RudderstackDataPlaneUrl:              hs.Cfg.RudderstackDataPlaneURL,
 		RudderstackSdkUrl:                    hs.Cfg.RudderstackSDKURL,
+		RudderstackV3SdkUrl:                  hs.Cfg.RudderstackV3SDKURL,
 		RudderstackConfigUrl:                 hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:           hs.Cfg.RudderstackIntegrationsURL,
 		AnalyticsConsoleReporting:            hs.Cfg.FrontendAnalyticsConsoleReporting,

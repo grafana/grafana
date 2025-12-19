@@ -123,10 +123,11 @@ To create a variable, follow these steps:
 
    If you don't enter a display name, then the drop-down list label is the variable name.
 
-1. Choose a **Show on dashboard** option:
-   - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
-   - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
-   - **Nothing:** No variable drop-down list is displayed on the dashboard.
+1. Choose a **Display** option:
+   - **Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.
+   - **Above dashboard, label hidden** - The variable drop-down list displays above the dashboard, but without showing the name of the variable.
+   - **Controls menu** - The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
+   - **Hidden** - No variable drop-down list is displayed on the dashboard.
 
 1. Click one of the following links to complete the steps for adding your selected variable type:
    - [Query](#add-a-query-variable)
