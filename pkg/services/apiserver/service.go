@@ -443,20 +443,16 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// Register custom WebServices from builders
+	// Augment existing WebServices with custom routes from builders
+	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
 	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
-		registeredWebServices := builder.RegisteredWebServicesFromBuilders(builders, s.metrics, serverConfig.MergedResourceConfig)
-		existingRootPaths := make(map[string]bool)
-		for _, existingWS := range server.Handler.GoRestfulContainer.RegisteredWebServices() {
-			existingRootPaths[existingWS.RootPath()] = true
-		}
-		for _, ws := range registeredWebServices {
-			if ws != nil {
-				// Only add if a WebService with this root path doesn't already exist
-				if !existingRootPaths[ws.RootPath()] {
-					server.Handler.GoRestfulContainer.Add(ws)
-				}
-			}
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			builders,
+			s.metrics,
+			serverConfig.MergedResourceConfig,
+		); err != nil {
+			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}
 	}
 
