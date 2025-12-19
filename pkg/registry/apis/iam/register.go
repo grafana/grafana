@@ -365,7 +365,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err != nil {
 			return err
 		}
-		storage[extGroupMappingResource.StoragePath()] = dw
+
+		extGroupMappingStoreDW, ok := dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+		}
+
+		authzWrapper := storewrapper.New(extGroupMappingStoreDW, iamauthorizer.NewExternalGroupMappingAuthorizer(b.accessClient))
+		storage[extGroupMappingResource.StoragePath()] = authzWrapper
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
