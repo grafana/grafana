@@ -220,5 +220,4 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		//},
 	}
 	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
-
 }
