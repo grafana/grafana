@@ -228,17 +228,13 @@ LIMIT
       />
       {isSchemasFeatureEnabled && (
         <Button
-          icon={isSchemaInspectorOpen ? 'angle-right' : 'angle-left'}
+          icon={isSchemaInspectorOpen ? 'eye' : 'eye-slash'}
           onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
           size="sm"
           variant="secondary"
           fill="outline"
         >
-          {isSchemaInspectorOpen ? (
-            <Trans i18nKey="expressions.sql-schema.close-schema-inspector">Close schema inspector</Trans>
-          ) : (
-            <Trans i18nKey="expressions.sql-schema.open-schema-inspector">Open schema inspector</Trans>
-          )}
+          <Trans i18nKey="expressions.sql-schema.schema-inspector">Schema inspector</Trans>
         </Button>
       )}
     </Stack>
