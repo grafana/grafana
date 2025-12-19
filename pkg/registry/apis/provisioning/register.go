@@ -114,7 +114,7 @@ type APIBuilder struct {
 	access           authlib.AccessChecker
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
-	validator        repository.RepositoryValidator
+	repoValidator    repository.RepositoryValidator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -177,7 +177,7 @@ func NewAPIBuilder(
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		validator:                           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -223,7 +223,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
-	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
+// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -557,7 +557,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.repoValidator), b.VerifyAgainstExistingRepositories))
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -673,7 +673,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
-	list := b.validator.ValidateRepository(repo)
+	list := b.repoValidator.ValidateRepository(repo)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -746,7 +746,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
