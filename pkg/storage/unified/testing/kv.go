@@ -148,14 +148,13 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-save"
 
 	t.Run("save new key", func(t *testing.T) {
 		testValue := "new test value"
-		saveKVHelper(t, kv, ctx, section, "new-key", strings.NewReader(testValue))
+		saveKVHelper(t, kv, ctx, testSection, "new-key", strings.NewReader(testValue))
 
 		// Verify it was saved
-		reader, err := kv.Get(ctx, section, "new-key")
+		reader, err := kv.Get(ctx, testSection, "new-key")
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
@@ -166,6 +165,26 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("save overwrite existing key", func(t *testing.T) {
+		// First save
+		saveKVHelper(t, kv, ctx, testSection, "overwrite-key", strings.NewReader("old value"))
+
+		// Overwrite
+		newValue := "new value"
+		saveKVHelper(t, kv, ctx, testSection, "overwrite-key", strings.NewReader(newValue))
+
+		// Verify it was updated
+		reader, err := kv.Get(ctx, testSection, "overwrite-key")
+		require.NoError(t, err)
+
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, newValue, string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("save overwrite existing key (datastore)", func(t *testing.T) {
+		section := "unified/data"
 		// First save
 		saveKVHelper(t, kv, ctx, section, "overwrite-key", strings.NewReader("old value"))
 
@@ -192,10 +211,10 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("save binary data", func(t *testing.T) {
 		binaryData := []byte{0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD}
-		saveKVHelper(t, kv, ctx, section, "binary-key", bytes.NewReader(binaryData))
+		saveKVHelper(t, kv, ctx, testSection, "binary-key", bytes.NewReader(binaryData))
 
 		// Verify binary data
-		reader, err := kv.Get(ctx, section, "binary-key")
+		reader, err := kv.Get(ctx, testSection, "binary-key")
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
@@ -207,10 +226,10 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("save key with no data", func(t *testing.T) {
 		// Save a key with empty data
-		saveKVHelper(t, kv, ctx, section, "empty-key", strings.NewReader(""))
+		saveKVHelper(t, kv, ctx, testSection, "empty-key", strings.NewReader(""))
 
 		// Verify it was saved with empty data
-		reader, err := kv.Get(ctx, section, "empty-key")
+		reader, err := kv.Get(ctx, testSection, "empty-key")
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
@@ -906,18 +925,6 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
 func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, key string, value io.Reader) {
 	t.Helper()
-
-	// TODO: remove this check once the sqlkv implementation supports `Save`.
-	type testingSaver interface {
-		TestingSave(context.Context, string, []byte) error
-	}
-
-	if saver, ok := kv.(testingSaver); ok {
-		blob, err := io.ReadAll(value)
-		require.NoError(t, err)
-		require.NoError(t, saver.TestingSave(ctx, key, blob))
-		return
-	}
 
 	writer, err := kv.Save(ctx, section, key)
 	require.NoError(t, err)
