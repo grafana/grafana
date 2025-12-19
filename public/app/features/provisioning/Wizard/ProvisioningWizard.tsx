@@ -89,7 +89,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
-  const isLegacyStorage = Boolean(settingsData?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
@@ -118,16 +117,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
-  const {
-    shouldSkipSync,
-    requiresMigration,
-    isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, isLegacyStorage, syncTarget);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
-    requiresMigration,
-    repoType,
-    isLegacyStorage,
     setStepStatusInfo,
   });
 
@@ -277,8 +269,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
 
-        // Create a pull job to initialize the repository
-        const job = await createSyncJob();
+        // No migration needed when skipping sync
+        const job = await createSyncJob(false);
         if (!job) {
           return; // Don't proceed if job creation fails
         }
@@ -412,11 +404,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep
-                  isLegacyStorage={isLegacyStorage}
-                  onCancel={handleRepositoryDeletion}
-                  isCancelling={isCancelling}
-                />
+                <SynchronizeStep onCancel={handleRepositoryDeletion} isCancelling={isCancelling} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>

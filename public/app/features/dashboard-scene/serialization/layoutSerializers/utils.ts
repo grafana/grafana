@@ -40,6 +40,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -59,12 +60,22 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
+  // Extract __angularMigration data if present
+  // This data is used to run Angular panel migrations in v2 (e.g., singlestat -> stat)
+  const rawOptions = panel.spec.vizConfig.spec.options ?? {};
+  const rawAngularMigration = rawOptions.__angularMigration;
+  const angularMigration = isAngularMigrationData(rawAngularMigration) ? rawAngularMigration : undefined;
+
+  // Create clean options without __angularMigration (it's only for migration, not for the panel)
+  const options = { ...rawOptions };
+  delete options.__angularMigration;
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
-    options: panel.spec.vizConfig.spec.options,
+    options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
@@ -82,6 +93,12 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
+
+  // Set up Angular migration handler if migration data is present
+  // This enables proper migration of options from Angular panels (e.g., singlestat format/valueName)
+  if (angularMigration) {
+    vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
+  }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({

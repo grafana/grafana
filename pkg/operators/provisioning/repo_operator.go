@@ -85,7 +85,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		resourceLister,
 		controllerCfg.clients,
 		jobs,
-		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,

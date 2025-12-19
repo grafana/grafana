@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection":                schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo":            schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionList":            schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure":          schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec":            schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
@@ -221,6 +222,26 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
 	}
 }
 
@@ -1474,13 +1495,6 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"history": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Preserve history (if possible)",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Message to use when committing the changes in a single commit",
@@ -1868,12 +1882,18 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig"),
 						},
 					},
+					"connection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo"),
+						},
+					},
 				},
 				Required: []string{"title", "workflows", "sync", "type"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
 	}
 }
 
@@ -2089,13 +2109,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"legacyStorage": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

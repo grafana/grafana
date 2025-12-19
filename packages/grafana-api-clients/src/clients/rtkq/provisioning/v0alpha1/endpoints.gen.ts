@@ -1585,8 +1585,6 @@ export type DeleteJobOptions = {
   resources?: ResourceRef[];
 };
 export type MigrateJobOptions = {
-  /** Preserve history (if possible) */
-  history?: boolean;
   /** Message to use when committing the changes in a single commit */
   message?: string;
 };
@@ -1731,6 +1729,9 @@ export type BitbucketRepositoryConfig = {
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
+export type ConnectionInfo = {
+  name: string;
+};
 export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -1783,6 +1784,8 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
+  /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
+  connection?: ConnectionInfo;
   /** Repository description */
   description?: string;
   /** The repository on Git. Mutually exclusive with local | github | git. */
@@ -2042,8 +2045,6 @@ export type RepositoryViewList = {
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
-  legacyStorage?: boolean;
 };
 export type ManagerStats = {
   /** Manager identity */

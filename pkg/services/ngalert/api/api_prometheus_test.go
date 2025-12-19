@@ -2169,6 +2169,57 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
+	t.Run("compact mode with receiver_name filter returns only matching rules", func(t *testing.T) {
+		fakeStore, _, api := setupAPI(t)
+
+		ruleA := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				NamespaceUID: "folder-1",
+				RuleGroup:    "group-1",
+				OrgID:        orgID,
+			}),
+			gen.WithNotificationSettings(
+				ngmodels.NotificationSettings{
+					Receiver: "receiver-a",
+					GroupBy:  []string{"alertname"},
+				},
+			),
+		).GenerateRef()
+		fakeStore.PutRule(context.Background(), ruleA)
+
+		ruleB := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				NamespaceUID: "folder-2",
+				RuleGroup:    "group-2",
+				OrgID:        orgID,
+			}),
+			gen.WithNotificationSettings(
+				ngmodels.NotificationSettings{
+					Receiver: "receiver-b",
+					GroupBy:  []string{"alertname"},
+				},
+			),
+		).GenerateRef()
+		fakeStore.PutRule(context.Background(), ruleB)
+		r, err := http.NewRequest("GET", "/api/v1/rules?compact=true&receiver_name=receiver-a", nil)
+		require.NoError(t, err)
+		c := &contextmodel.ReqContext{
+			Context: &web.Context{Req: r},
+			SignedInUser: &user.SignedInUser{
+				OrgID:       orgID,
+				Permissions: queryPermissions,
+			},
+		}
+		resp := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+		require.Empty(t, res.Data.RuleGroups[0].Rules[0].Query, "Query should be empty in compact mode")
+	})
+
 	t.Run("provenance as expected", func(t *testing.T) {
 		fakeStore, fakeAIM, api, provStore := setupAPIFull(t)
 		// Rule without provenance
