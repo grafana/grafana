@@ -41,15 +41,3 @@ func NewStaticAudienceProvider(audiences ...string) *StaticAudienceProvider {
 func (p *StaticAudienceProvider) GetAudiences(ctx context.Context) []string {
 	return p.audiences
 }
-
-// SingleAudienceProvider is a convenience alias for a single static audience.
-type SingleAudienceProvider struct {
-	*StaticAudienceProvider
-}
-
-// NewSingleAudienceProvider creates an audience provider for a single audience.
-func NewSingleAudienceProvider(audience string) *SingleAudienceProvider {
-	return &SingleAudienceProvider{
-		StaticAudienceProvider: NewStaticAudienceProvider(audience),
-	}
-}

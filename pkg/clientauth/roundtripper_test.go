@@ -39,7 +39,7 @@ func TestTokenExchangeRoundTripper_SetsAccessTokenHeader(t *testing.T) {
 		return rr.Result(), nil
 	})
 
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewSingleAudienceProvider("test-audience"))
+	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewStaticAudienceProvider("test-audience"))
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 
 	resp, err := rt.RoundTrip(req)
@@ -62,7 +62,7 @@ func TestTokenExchangeRoundTripper_PropagatesExchangeError(t *testing.T) {
 		return nil, nil
 	})
 
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewSingleAudienceProvider("test-audience"))
+	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewStaticAudienceProvider("test-audience"))
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 
 	resp, err := rt.RoundTrip(req)
@@ -112,7 +112,7 @@ func TestTokenExchangeRoundTripper_SendsCorrectAudienceAndNamespace(t *testing.T
 				return rr.Result(), nil
 			})
 
-			rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider(tt.namespace), NewSingleAudienceProvider(tt.audience))
+			rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider(tt.namespace), NewStaticAudienceProvider(tt.audience))
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 
 			resp, err := rt.RoundTrip(req)
@@ -135,7 +135,7 @@ func TestTokenExchangeRoundTripper_DoesNotMutateOriginalRequest(t *testing.T) {
 		return rr.Result(), nil
 	})
 
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewSingleAudienceProvider("audience"))
+	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewStaticAudienceProvider("audience"))
 	originalReq, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 
 	// Ensure original request has no X-Access-Token header
@@ -159,7 +159,7 @@ func TestTokenExchangeRoundTripper_PropagatesTransportError(t *testing.T) {
 		return nil, expectedErr
 	})
 
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewSingleAudienceProvider("audience"))
+	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewStaticAudienceProvider("audience"))
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 
 	resp, err := rt.RoundTrip(req)
@@ -206,7 +206,7 @@ func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 		{
 			name:              "static providers with bearer prefix",
 			namespaceProvider: NewStaticNamespaceProvider("*"),
-			audienceProvider:  NewSingleAudienceProvider("folder.grafana.app"),
+			audienceProvider:  NewStaticAudienceProvider("folder.grafana.app"),
 			expectedNamespace: "*",
 			expectedAudiences: []string{"folder.grafana.app"},
 			expectedHeader:    "Bearer test-token",
@@ -267,7 +267,7 @@ func TestBackwardCompatibility(t *testing.T) {
 	})
 
 	// Old constructor should work exactly as before
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("my-namespace"), NewSingleAudienceProvider("my-audience"))
+	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("my-namespace"), NewStaticAudienceProvider("my-audience"))
 
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 	resp, err := rt.RoundTrip(req)

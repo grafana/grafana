@@ -71,15 +71,8 @@ func TestStaticAudienceProvider(t *testing.T) {
 	}
 }
 
-func TestSingleAudienceProvider(t *testing.T) {
-	provider := NewSingleAudienceProvider("test-audience")
-	result := provider.GetAudiences(context.Background())
-	require.Equal(t, []string{"test-audience"}, result)
-}
-
 func TestProviderInterfaces(t *testing.T) {
 	// Verify that all providers implement their interfaces
 	var _ NamespaceProvider = (*StaticNamespaceProvider)(nil)
 	var _ AudienceProvider = (*StaticAudienceProvider)(nil)
-	var _ AudienceProvider = (*SingleAudienceProvider)(nil)
 }

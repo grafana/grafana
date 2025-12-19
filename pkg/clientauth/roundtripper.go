@@ -66,7 +66,7 @@ func NewStaticTokenExchangeTransportWrapper(
 	namespace string,
 ) transport.WrapperFunc {
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return newTokenExchangeRoundTripperWithStrategies(exchanger, rt, NewStaticNamespaceProvider(namespace), NewSingleAudienceProvider(audience))
+		return newTokenExchangeRoundTripperWithStrategies(exchanger, rt, NewStaticNamespaceProvider(namespace), NewStaticAudienceProvider(audience))
 	}
 }
 
