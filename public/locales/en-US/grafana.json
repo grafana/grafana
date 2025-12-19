@@ -3813,6 +3813,7 @@
       "label-method": "Method",
       "label-payload": "Payload",
       "label-query-parameters": "Query parameters",
+      "label-successmessage": "Success Message",
       "render-test-apibutton": {
         "test-api": "Test API",
         "title-test-api": "Test API"
