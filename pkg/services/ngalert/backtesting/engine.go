@@ -77,6 +77,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 		minInterval:          cfg.MinInterval,
 		baseInterval:         cfg.BaseInterval,
 		maxEvaluations:       cfg.BacktestingMaxEvaluations,
+		jitterStrategy:       schedule.JitterStrategyFrom(cfg, toggles),
 	}
 }
 
@@ -121,8 +122,10 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 
 	start := time.Now()
 	defer func() {
-		if err != nil {
+		if err == nil {
 			logger.Info("Rule testing finished successfully", "duration", time.Since(start))
+		} else {
+			logger.Error("Rule testing finished with error", "duration", time.Since(start), "error", err)
 		}
 	}()
 
