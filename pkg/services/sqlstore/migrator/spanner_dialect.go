@@ -10,18 +10,18 @@ import (
 	"strings"
 	"time"
 
+	_ "embed"
+
 	"cloud.google.com/go/spanner"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana/pkg/infra/log"
+	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"google.golang.org/grpc/codes"
 	"xorm.io/core"
-
-	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"
-
-	_ "embed"
 
 	database "cloud.google.com/go/spanner/admin/database/apiv1"
 )
@@ -222,7 +222,7 @@ var snapshotDDL string
 //go:embed snapshot/spanner-log.json
 var snapshotMigrations string
 
-func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
+func (s *SpannerDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string, _ log.Logger) error {
 	var statements, migrationIDs []string
 	err := json.Unmarshal([]byte(snapshotDDL), &statements)
 	if err != nil {
