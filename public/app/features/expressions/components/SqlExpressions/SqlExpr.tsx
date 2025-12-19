@@ -246,7 +246,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     </Stack>
   );
 
-  const renderMainContent = (width?: number, height?: number) => (
+  const renderMainContent = () => (
     <div
       className={cx(styles.contentContainer, {
         [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
