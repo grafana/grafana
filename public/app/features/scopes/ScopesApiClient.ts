@@ -8,7 +8,7 @@ import { ScopeNavigation } from './dashboards/types';
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {
     try {
-      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }));
+      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }, { subscribe: false }));
 
       if ('data' in result && result.data) {
         // The generated API returns a Scope type compatible with @grafana/data Scope
@@ -37,7 +37,9 @@ export class ScopesApiClient {
     }
 
     try {
-      const result = await dispatch(scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({ names }));
+      const result = await dispatch(
+        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({ names }, { subscribe: false })
+      );
 
       if ('data' in result && result.data) {
         // The generated API returns items compatible with @grafana/data ScopeNode
@@ -68,11 +70,14 @@ export class ScopesApiClient {
 
     try {
       const result = await dispatch(
-        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({
-          parent: options.parent,
-          query: options.query,
-          limit,
-        })
+        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate(
+          {
+            parent: options.parent,
+            query: options.query,
+            limit,
+          },
+          { subscribe: false }
+        )
       );
 
       if ('data' in result && result.data) {
@@ -90,10 +95,13 @@ export class ScopesApiClient {
     try {
       const result = await dispatch(
         // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
-        scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate({
-          name: '',
-          scope: scopeNames,
-        })
+        scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
+          {
+            name: '',
+            scope: scopeNames,
+          },
+          { subscribe: false }
+        )
       );
 
       if ('data' in result && result.data) {
@@ -111,10 +119,13 @@ export class ScopesApiClient {
     try {
       const result = await dispatch(
         // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
-        scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate({
-          name: '',
-          scope: scopeNames,
-        })
+        scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
+          {
+            name: '',
+            scope: scopeNames,
+          },
+          { subscribe: false }
+        )
       );
 
       if ('data' in result && result.data) {
@@ -134,7 +145,9 @@ export class ScopesApiClient {
     }
 
     try {
-      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }));
+      const result = await dispatch(
+        scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }, { subscribe: false })
+      );
 
       if ('data' in result && result.data) {
         // The generated API returns a ScopeNode type compatible with @grafana/data ScopeNode
