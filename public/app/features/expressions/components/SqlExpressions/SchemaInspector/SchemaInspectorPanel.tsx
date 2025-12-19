@@ -190,44 +190,27 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
   };
 
   return (
-    <div className={styles.schemaInspector}>
-      <div className={styles.tabsBarWrapper}>
-        {refIds.length > 0 && (
-          <TabsBar>
-            {refIds.map((refId) => (
-              <Tab
-                key={refId}
-                label={refId}
-                active={activeSchemaTab === refId}
-                onChangeTab={() => setSelectedTab(refId)}
-              />
-            ))}
-          </TabsBar>
-        )}
-      </div>
+    <>
+      {refIds.length > 0 && (
+        <TabsBar>
+          {refIds.map((refId) => (
+            <Tab
+              key={refId}
+              label={refId}
+              active={activeSchemaTab === refId}
+              onChangeTab={() => setSelectedTab(refId)}
+            />
+          ))}
+        </TabsBar>
+      )}
       {renderContent()}
-    </div>
+    </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   schemaInfoContainer: css({
     padding: theme.spacing(1),
-  }),
-  schemaInspector: css({
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  // Unfortunate hack to get the close button to align with the tabs since we need to
-  // override the default styles of the TabsBar component.
-  tabsBarWrapper: css({
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: `0 ${theme.spacing(1)}`,
   }),
   tableCell: css({
     fontSize: theme.typography.bodySmall.fontSize,
