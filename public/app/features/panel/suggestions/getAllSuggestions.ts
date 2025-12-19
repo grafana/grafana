@@ -44,9 +44,11 @@ async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
       plugins.push(settled.value);
     } else {
       const pluginId = pluginIds[i];
+
+      console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
+
       if (isBuiltInPlugin(pluginId)) {
         hasErrors = true;
-        console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
       } else {
         appEvents.publish({
           type: AppEvents.alertError.name,
