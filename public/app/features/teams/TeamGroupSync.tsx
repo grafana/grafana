@@ -1,12 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FormEventHandler, useState } from 'react';
 
-import {
-  TeamGroupDto,
-  useAddTeamGroupApiMutation,
-  useGetTeamGroupsApiQuery,
-  useRemoveTeamGroupApiQueryMutation,
-} from '@grafana/api-clients/rtkq/legacy';
+import { TeamGroupDto } from '@grafana/api-clients/rtkq/legacy';
 import { Trans, t } from '@grafana/i18n';
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
@@ -14,6 +9,8 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
+
+import { useAddExternalGroupMapping, useGetExternalGroupMappings, useRemoveExternalGroupMapping } from './hooks';
 
 interface Props {
   isReadOnly: boolean;
@@ -27,9 +24,9 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
   const [newGroupId, setNewGroupId] = useState('');
   const styles = useStyles2(getStyles);
 
-  const { data: groups = [] } = useGetTeamGroupsApiQuery({ teamId: teamUid });
-  const [addTeamGroup] = useAddTeamGroupApiMutation();
-  const [removeTeamGroup] = useRemoveTeamGroupApiQueryMutation();
+  const { data: groups = [] } = useGetExternalGroupMappings({ teamId: teamUid });
+  const [addTeamGroup] = useAddExternalGroupMapping();
+  const [removeTeamGroup] = useRemoveExternalGroupMapping();
 
   const onToggleAdding = () => {
     setIsAddBoxVisible(!isAddBoxVisible);
@@ -46,11 +43,12 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
     setNewGroupId('');
   };
 
-  const onRemoveGroup = async (groupId: string | undefined) => {
-    if (!groupId) {
+  const onRemoveGroup = async (group: TeamGroupDto) => {
+    if (!group.groupId) {
       return;
     }
-    await removeTeamGroup({ teamId: teamUid, groupId });
+    // @ts-ignore
+    await removeTeamGroup({ teamId: teamUid, groupId: group.groupId, uid: group.uid });
   };
 
   const isNewGroupValid = () => {
@@ -65,7 +63,7 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
           <Button
             size="sm"
             variant="destructive"
-            onClick={() => onRemoveGroup(group.groupId)}
+            onClick={() => onRemoveGroup(group)}
             disabled={isReadOnly}
             aria-label={t('teams.team-group-sync.aria-label-remove', 'Remove group {{groupName}}', {
               groupName: group.groupId,
