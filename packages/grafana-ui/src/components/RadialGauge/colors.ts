@@ -93,6 +93,42 @@ export function buildGradientColors(
 }
 
 /**
+ *
+ * @param sortedGradientStops - gradient stops sorted by percent
+ * @param percent - percentage 0..1
+ * @returns {[GradientStop, GradientStop]} - the two gradient stops surrounding the given percentage
+ */
+export function getGradientStopsForPercent(
+  sortedGradientStops: GradientStop[],
+  percent: number
+): [GradientStop, GradientStop] {
+  if (percent <= 0) {
+    return [sortedGradientStops[0], sortedGradientStops[0]];
+  }
+  if (percent >= 1) {
+    const last = sortedGradientStops.length - 1;
+    return [sortedGradientStops[last], sortedGradientStops[last]];
+  }
+
+  // find surrounding stops using binary search
+  let lo = 0;
+  let hi = sortedGradientStops.length - 1;
+  while (lo + 1 < hi) {
+    const mid = (lo + hi) >> 1;
+    if (percent === sortedGradientStops[mid].percent) {
+      return [sortedGradientStops[mid], sortedGradientStops[mid]];
+    }
+
+    if (percent < sortedGradientStops[mid].percent) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return [sortedGradientStops[lo], sortedGradientStops[hi]];
+}
+
+/**
  * @alpha - perhaps this should go in colorManipulator.ts
  * Given color stops (each with a color and percentage 0..1) returns the color at a given percentage.
  * Uses tinycolor.mix for interpolation.
@@ -109,29 +145,7 @@ export function colorAtGradientPercent(stops: GradientStop[], percent: number): 
     .map((s: GradientStop): GradientStop => ({ color: s.color, percent: Math.min(Math.max(0, s.percent), 1) }))
     .sort((a: GradientStop, b: GradientStop) => a.percent - b.percent);
 
-  // percent outside range
-  if (percent <= sorted[0].percent) {
-    return tinycolor(sorted[0].color);
-  }
-  if (percent >= sorted[sorted.length - 1].percent) {
-    return tinycolor(sorted[sorted.length - 1].color);
-  }
-
-  // find surrounding stops using binary search
-  let lo = 0;
-  let hi = sorted.length - 1;
-  while (lo + 1 < hi) {
-    const mid = (lo + hi) >> 1;
-    if (percent <= sorted[mid].percent) {
-      hi = mid;
-    } else {
-      lo = mid;
-    }
-  }
-
-  const left = sorted[lo];
-  const right = sorted[hi];
-
+  const [left, right] = getGradientStopsForPercent(sorted, percent);
   const range = right.percent - left.percent;
   const t = range === 0 ? 0 : (percent - left.percent) / range; // 0..1
   return tinycolor.mix(left.color, right.color, t * 100);

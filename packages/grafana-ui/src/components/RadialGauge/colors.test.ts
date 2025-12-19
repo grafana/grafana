@@ -9,6 +9,7 @@ import {
   getBarEndcapColors,
   getEndpointMarkerColors,
   getGradientCss,
+  getGradientStopsForPercent,
 } from './colors';
 
 export type DeepPartial<T> = {
@@ -252,6 +253,54 @@ describe('RadialGauge color utils', () => {
       const [startDotColor, endDotColor] = getEndpointMarkerColors(gradient, 0.35);
       expect(startDotColor).toBe('#fbfbfb');
       expect(endDotColor).toBe('#111217');
+    });
+  });
+
+  describe('getGradientStopsForPercent', () => {
+    it('should return the correct gradient stops for a given percent', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      const [left, right] = getGradientStopsForPercent(gradient, 0.25);
+      expect(left).toEqual({ color: '#ff0000', percent: 0 });
+      expect(right).toEqual({ color: '#00ff00', percent: 0.5 });
+    });
+
+    it('should handle edge cases where percent is at the boundaries', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+      let [left, right] = getGradientStopsForPercent(gradient, 0);
+      expect(left).toEqual({ color: '#ff0000', percent: 0 });
+      expect(right).toEqual({ color: '#ff0000', percent: 0 });
+
+      [left, right] = getGradientStopsForPercent(gradient, 1);
+      expect(left).toEqual({ color: '#0000ff', percent: 1 });
+      expect(right).toEqual({ color: '#0000ff', percent: 1 });
+    });
+
+    it('should return the same stop if there is one that is equal to the percentage', () => {
+      const gradient = [
+        { color: '#ff0000', percent: 0 },
+        { color: '#00ff00', percent: 0.5 },
+        { color: '#0000ff', percent: 1 },
+      ];
+
+      let [left, right] = getGradientStopsForPercent(gradient, 0);
+      expect(left).toEqual({ color: '#ff0000', percent: 0 });
+      expect(right).toEqual({ color: '#ff0000', percent: 0 });
+
+      [left, right] = getGradientStopsForPercent(gradient, 0.5);
+      expect(left).toEqual({ color: '#00ff00', percent: 0.5 });
+      expect(right).toEqual({ color: '#00ff00', percent: 0.5 });
+
+      [left, right] = getGradientStopsForPercent(gradient, 1);
+      expect(left).toEqual({ color: '#0000ff', percent: 1 });
+      expect(right).toEqual({ color: '#0000ff', percent: 1 });
     });
   });
 });
