@@ -347,12 +347,19 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
 
 /**
  * Searches for scopes in the tree and waits for results.
- * The frontend uses a 500ms debounce, so we wait 600ms for the search to complete.
+ * The frontend uses a 500ms debounce, so we wait for the actual search response.
  */
 export async function searchScopes(page: Page, value: string, resultScopes?: TestScope[]) {
+  // Set up promise to wait for the search API response (triggered after debounce). These are not cached, so we should be good.
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().includes('/find/scope_node_children') && response.url().includes('query='),
+    { timeout: 10000 }
+  );
+
   await page.getByTestId('scopes-tree-search').fill(value);
-  // Wait for debounce (500ms) + API response + UI update
-  await page.waitForTimeout(700);
+
+  // Wait for the debounced search request to complete
+  await responsePromise;
 }
 
 export async function getScopeTreeName(page: Page, nth: number): Promise<string> {
