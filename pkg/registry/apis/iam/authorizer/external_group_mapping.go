@@ -85,7 +85,7 @@ func (r *ExternalGroupMappingAuthorizer) beforeWrite(ctx context.Context, obj ru
 
 	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
 	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", concreteObj, storewrapper.ErrUnexpectedType))
+		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
 	}
 
 	teamName := concreteObj.Spec.TeamRef.Name
