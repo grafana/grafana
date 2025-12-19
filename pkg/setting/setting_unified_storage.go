@@ -155,6 +155,7 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 			DualWriterMode:                      5,
 			DualWriterMigrationDataSyncDisabled: true,
 			EnableMigration:                     true,
+			AutoMigrationThreshold:              resourceCfg.AutoMigrationThreshold,
 		}
 	}
 }

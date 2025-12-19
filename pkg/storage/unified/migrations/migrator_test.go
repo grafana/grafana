@@ -171,7 +171,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
 					DualWriterMode:         grafanarest.Mode5,
 					EnableMigration:        false,
-					AutoMigrationThreshold: -1, // disable auto mode 5
+					AutoMigrationThreshold: -1, // disable auto migration
 				}
 			}
 		}
@@ -200,7 +200,7 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
-		// Disable auto mode 5 and migration for folders+dashboards to test explicit migration behavior
+		// Disable auto migration and migration for folders+dashboards to test explicit migration behavior
 		// Set DualWriterMode=5 so the k8s API reads from unified storage (which should be empty)
 		unifiedConfig := map[string]setting.UnifiedStorageConfig{
 			"folders.folder.grafana.app":       {AutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
