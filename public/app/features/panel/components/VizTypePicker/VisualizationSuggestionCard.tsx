@@ -58,9 +58,27 @@ export function VisualizationSuggestionCard({
       suggestion.cardOptions.previewModifier(preview);
     }
 
+    // const eventHandlers = ([
+    //   'onClick',
+    //   'onDoubleClick',
+    //   'onMouseMove',
+    //   'onMouseEnter',
+    //   'onMouseLeave',
+    //   'onFocus',
+    //   'onBlur',
+    // ] as const).reduce((handlers: HTMLAttributes<HTMLDivElement>, eventName) => {
+    //   handlers[eventName] = (ev) => ev.stopPropagation();
+    //   return handlers;
+    // }, {});
+
     content = (
       <button {...commonButtonProps}>
-        <div style={innerStyles} className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}>
+        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
+        <div
+          style={innerStyles}
+          className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}
+          {...{ inert: '' }}
+        >
           <PanelRenderer
             title=""
             data={data}
@@ -85,7 +103,7 @@ export function VisualizationSuggestionCard({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     selectedSuggestion: css({
-      filter: 'blur(1px) brightness(0.5)',
+      filter: `blur(1px) ${theme.isDark ? 'brightness(0.5)' : 'opacity(0.3)'}`,
     }),
     vizBox: css({
       position: 'relative',
