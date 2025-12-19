@@ -168,4 +168,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CollateBinAlertRuleNamespace(mg)
 
 	ualert.CollateBinAlertRuleGroup(mg)
+
+	accesscontrol.AddReceiverProtectedFieldsEditor(mg)
 }

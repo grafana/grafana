@@ -67,21 +67,15 @@ export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
 
-  function ComponentWithMeta(props: Props) {
-    return <Component {...props} />;
-  }
-
-  ComponentWithMeta.displayName = Component.displayName;
-  ComponentWithMeta.defaultProps = Component.defaultProps;
-  ComponentWithMeta.propTypes = Component.propTypes;
-  ComponentWithMeta.contextTypes = Component.contextTypes;
-  ComponentWithMeta.meta = {
-    pluginId: config.pluginId,
-    title: config.title ?? '',
-    description: config.description ?? '',
-    id: generateExtensionId(config.pluginId, extensionPointId, config.title),
-    type: PluginExtensionTypes.component,
-  } satisfies PluginExtensionComponentMeta;
+  const ComponentWithMeta: ComponentTypeWithExtensionMeta<Props> = Object.assign(Component, {
+    meta: {
+      pluginId: config.pluginId,
+      title: config.title ?? '',
+      description: config.description ?? '',
+      id: generateExtensionId(config.pluginId, extensionPointId, config.title),
+      type: PluginExtensionTypes.component,
+    } satisfies PluginExtensionComponentMeta,
+  });
 
   return ComponentWithMeta;
 }
