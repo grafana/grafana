@@ -2369,6 +2369,62 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}
 		})
 
+		t.Run("multi-page pagination loads provenance correctly", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			// Create 3 groups with 1 rule each: groups 1 and 3 firing, group 2 normal
+			for i := 1; i <= 3; i++ {
+				rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+					r.NamespaceUID = "ns-1"
+					r.RuleGroup = fmt.Sprintf("group-%d", i)
+					r.UID = fmt.Sprintf("rule-%d", i)
+				}, withClassicConditionSingleQuery()).GenerateRef()
+
+				alertState := eval.Normal
+				if i != 2 {
+					alertState = eval.Alerting
+				}
+				fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+					s.State = alertState
+					s.Labels = data.Labels{"test": "label"}
+					return s
+				})
+				fakeStore.PutRule(context.Background(), rule)
+			}
+
+			// Set provenance for all rules
+			err := fakeProvisioning.SetProvenance(context.Background(),
+				&ngmodels.AlertRule{UID: "rule-1", OrgID: orgID}, orgID, ngmodels.ProvenanceAPI)
+			require.NoError(t, err)
+			err = fakeProvisioning.SetProvenance(context.Background(),
+				&ngmodels.AlertRule{UID: "rule-3", OrgID: orgID}, orgID, ngmodels.ProvenanceFile)
+			require.NoError(t, err)
+
+			// Request firing groups with group_limit=2 - fetches multiple pages, skipping group 2
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=2", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 2 firing groups
+			require.Len(t, res.Data.RuleGroups, 2)
+			require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), res.Data.RuleGroups[0].Rules[0].Provenance)
+			require.Equal(t, "group-3", res.Data.RuleGroups[1].Name)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceFile), res.Data.RuleGroups[1].Rules[0].Provenance)
+		})
+
 		t.Run("state filter continues when first page has no matches", func(t *testing.T) {
 			fakeStore, fakeAIM, api := setupAPI(t)
 
