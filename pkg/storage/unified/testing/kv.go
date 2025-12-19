@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -786,35 +788,35 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-batchdelete"
+	nsPrefix += "-batchdelete"
 
 	t.Run("batch delete existing keys", func(t *testing.T) {
 		// Setup test data
 		testData := map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-			"key3": "value3",
+			namespacedKey(nsPrefix, "key1"): "value1",
+			namespacedKey(nsPrefix, "key2"): "value2",
+			namespacedKey(nsPrefix, "key3"): "value3",
 		}
 
 		// Save test data
 		for key, value := range testData {
-			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+			saveKVHelper(t, kv, ctx, testSection, key, strings.NewReader(value))
 		}
 
 		// Verify keys exist before deletion
 		for key := range testData {
-			_, err := kv.Get(ctx, section, key)
+			_, err := kv.Get(ctx, testSection, key)
 			require.NoError(t, err)
 		}
 
 		// Batch delete all keys
-		keys := []string{"key1", "key2", "key3"}
-		err := kv.BatchDelete(ctx, section, keys)
+		keys := slices.Collect(maps.Keys(testData))
+		err := kv.BatchDelete(ctx, testSection, keys)
 		require.NoError(t, err)
 
 		// Verify all keys are deleted
 		for _, key := range keys {
-			_, err := kv.Get(ctx, section, key)
+			_, err := kv.Get(ctx, testSection, key)
 			assert.Error(t, err)
 			assert.Equal(t, resource.ErrNotFound, err)
 		}
@@ -822,39 +824,40 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch delete with non-existent keys", func(t *testing.T) {
 		// Setup some test data
-		saveKVHelper(t, kv, ctx, section, "existing-key-1", strings.NewReader("value1"))
-		saveKVHelper(t, kv, ctx, section, "existing-key-2", strings.NewReader("value2"))
+		key1, key2 := namespacedKey(nsPrefix, "existing-key-1"), namespacedKey(nsPrefix, "existing-key-2")
+		saveKVHelper(t, kv, ctx, testSection, key1, strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, testSection, key2, strings.NewReader("value2"))
 
 		// Batch delete with mix of existing and non-existent keys
-		keys := []string{"existing-key-1", "non-existent-1", "existing-key-2", "non-existent-2"}
-		err := kv.BatchDelete(ctx, section, keys)
+		keys := []string{key1, namespacedKey(nsPrefix, "non-existent-1"), key2, namespacedKey(nsPrefix, "non-existent-2")}
+		err := kv.BatchDelete(ctx, testSection, keys)
 		require.NoError(t, err)
 
 		// Verify existing keys are deleted
-		_, err = kv.Get(ctx, section, "existing-key-1")
-		assert.Error(t, err)
+		_, err = kv.Get(ctx, testSection, key1)
+		require.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 
-		_, err = kv.Get(ctx, section, "existing-key-2")
-		assert.Error(t, err)
+		_, err = kv.Get(ctx, testSection, key2)
+		require.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
 
 	t.Run("batch delete with all non-existent keys", func(t *testing.T) {
 		// Batch delete keys that don't exist
-		keys := []string{"non-existent-1", "non-existent-2", "non-existent-3"}
-		err := kv.BatchDelete(ctx, section, keys)
+		keys := namespacedKeys(nsPrefix, []string{"non-existent-1", "non-existent-2", "non-existent-3"})
+		err := kv.BatchDelete(ctx, testSection, keys)
 		require.NoError(t, err)
 	})
 
 	t.Run("batch delete with empty keys list", func(t *testing.T) {
 		keys := []string{}
-		err := kv.BatchDelete(ctx, section, keys)
+		err := kv.BatchDelete(ctx, testSection, keys)
 		require.NoError(t, err)
 	})
 
 	t.Run("batch delete with empty section", func(t *testing.T) {
-		keys := []string{"some-key"}
+		keys := namespacedKeys(nsPrefix, []string{"some-key"})
 		err := kv.BatchDelete(ctx, "", keys)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
@@ -862,27 +865,27 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch delete preserves other keys", func(t *testing.T) {
 		// Setup test data
-		saveKVHelper(t, kv, ctx, section, "keep-key-1", strings.NewReader("keep-value-1"))
-		saveKVHelper(t, kv, ctx, section, "delete-key-1", strings.NewReader("delete-value-1"))
-		saveKVHelper(t, kv, ctx, section, "keep-key-2", strings.NewReader("keep-value-2"))
-		saveKVHelper(t, kv, ctx, section, "delete-key-2", strings.NewReader("delete-value-2"))
+		saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, "keep-key-1"), strings.NewReader("keep-value-1"))
+		saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, "delete-key-1"), strings.NewReader("delete-value-1"))
+		saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, "keep-key-2"), strings.NewReader("keep-value-2"))
+		saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, "delete-key-2"), strings.NewReader("delete-value-2"))
 
 		// Batch delete specific keys
-		keys := []string{"delete-key-1", "delete-key-2"}
-		err := kv.BatchDelete(ctx, section, keys)
+		keys := namespacedKeys(nsPrefix, []string{"delete-key-1", "delete-key-2"})
+		err := kv.BatchDelete(ctx, testSection, keys)
 		require.NoError(t, err)
 
 		// Verify deleted keys are gone
-		_, err = kv.Get(ctx, section, "delete-key-1")
+		_, err = kv.Get(ctx, testSection, namespacedKey(nsPrefix, "delete-key-1"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 
-		_, err = kv.Get(ctx, section, "delete-key-2")
+		_, err = kv.Get(ctx, testSection, namespacedKey(nsPrefix, "delete-key-2"))
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 
 		// Verify kept keys still exist
-		reader, err := kv.Get(ctx, section, "keep-key-1")
+		reader, err := kv.Get(ctx, testSection, namespacedKey(nsPrefix, "keep-key-1"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -890,7 +893,7 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 		err = reader.Close()
 		require.NoError(t, err)
 
-		reader, err = kv.Get(ctx, section, "keep-key-2")
+		reader, err = kv.Get(ctx, testSection, namespacedKey(nsPrefix, "keep-key-2"))
 		require.NoError(t, err)
 		value, err = io.ReadAll(reader)
 		require.NoError(t, err)
