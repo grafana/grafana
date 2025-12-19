@@ -924,6 +924,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardAdHocAndGroupByWrapper",
+        "resourceVersion": "1765841806645",
+        "creationTimestamp": "2025-12-15T23:36:46Z"
+      },
+      "spec": {
+        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-11T16:52:46Z"
@@ -1459,6 +1472,19 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesInCompactMode",
+        "resourceVersion": "1766045288124",
+        "creationTimestamp": "2025-12-18T08:08:08Z"
+      },
+      "spec": {
+        "description": "Add compact=true when fetching rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "fetchRulesUsingPost",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-01-29T12:17:44Z"
@@ -1619,6 +1645,20 @@
         "description": "Run the GRPC server",
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "heatmapRowsAxisOptions",
+        "resourceVersion": "1765353244400",
+        "creationTimestamp": "2025-12-10T07:54:04Z"
+      },
+      "spec": {
+        "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2677,20 +2717,6 @@
         "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pluginInsights",
-        "resourceVersion": "1761300628147",
-        "creationTimestamp": "2025-10-24T10:10:28Z"
-      },
-      "spec": {
-        "description": "Show insights for plugins in the plugin details page",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true,
         "expression": "false"
       }
     },

@@ -3717,6 +3717,7 @@
       "text": "No results found for your query"
     },
     "recently-viewed": {
+      "clear": "Clear history",
       "empty": "Nothing viewed yet",
       "title": "Recently viewed"
     },
@@ -7165,6 +7166,9 @@
       "time-range-label": "Lock time range"
     }
   },
+  "embedded-panel": {
+    "powered-by": "Powered by"
+  },
   "empty-list-cta": {
     "pro-tip": "ProTip: {{proTip}}"
   },
@@ -7640,39 +7644,6 @@
         }
       },
       "share-span": "Share"
-    },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Select max span operator",
-      "aria-label-select-min-span-operator": "Select min span operator",
-      "aria-label-select-service-name": "Select service name",
-      "aria-label-select-service-name-operator": "Select service name operator",
-      "aria-label-select-span-name": "Select span name",
-      "aria-label-select-span-name-operator": "Select span name operator",
-      "ariaLabel-select-max-span-duration": "Select max span duration",
-      "ariaLabel-select-min-span-duration": "Select min span duration",
-      "label-collapse": "Span Filters",
-      "label-duration": "Duration",
-      "label-service-name": "Service name",
-      "label-span-name": "Span name",
-      "label-tags": "Tags",
-      "placeholder-all-service-names": "All service names",
-      "placeholder-all-span-names": "All span names",
-      "tooltip-collapse": "Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.",
-      "tooltip-duration": "Filter by duration. Accepted units are {{units}}",
-      "tooltip-tags": "Filter by tags, process tags or log fields in your spans."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Add tag",
-      "aria-label-input-tag-value": "Input tag value",
-      "aria-label-remove-tag": "Remove tag",
-      "aria-label-select-tag-key": "Select tag key",
-      "aria-label-select-tag-operator": "Select tag operator",
-      "aria-label-select-tag-value": "Select tag value",
-      "placeholder-select-tag": "Select tag",
-      "placeholder-select-value": "Select value",
-      "placeholder-tag-value": "Tag value",
-      "tooltip-add-tag": "Add tag",
-      "tooltip-remove-tag": "Remove tag"
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
@@ -9393,6 +9364,7 @@
     "name-unit": "Unit",
     "name-value-name": "Value name",
     "name-y-axis-scale": "Y axis scale",
+    "name-y-bucket-scale": "Y bucket scale",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -9422,6 +9394,18 @@
       "label-all": "All",
       "label-hidden": "Hidden",
       "label-single": "Single"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "Range within which the scale is linear",
+      "linear-threshold-label": "Linear threshold",
+      "linear-threshold-placeholder": "1",
+      "log-base-label": "Log base",
+      "scale-options": {
+        "label-auto": "Auto",
+        "label-linear": "Linear",
+        "label-log": "Log",
+        "label-symlog": "Symlog"
+      }
     }
   },
   "help-modal": {
@@ -11422,12 +11406,6 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
-        "moreDetails": "Do you find Plugin Insights usefull? Please share your feedback <2>here</2>.",
-        "pluginInsights": {
-          "header": "Plugin insights"
-        },
-        "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
-        "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
@@ -12182,6 +12160,9 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
+      "migrate-resources-description": "Import existing dashboards from all folders into the new provisioned folder",
+      "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below."
@@ -12201,11 +12182,16 @@
     },
     "warning-title-default": "Warning",
     "wizard": {
+      "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",
       "alert-point-1": "Resources can still be created, edited, or deleted during this process, but changes may not be exported.",
-      "alert-point-2": "Once provisioning is complete, resources will be marked as managed through external storage.",
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
       "alert-point-4": "Enterprise instance administrators can display an announcement banner to notify users that migration is in progress. See <2>this guide</2> for step-by-step instructions.",
-      "alert-title": "Important: No data or configuration will be lost. Dashboards remain accessible during migration, but changes made during this process may not be exported.",
+      "alert-point-folder-cleanup": "You may need to manually remove or manage original folders after migration.",
+      "alert-point-folder-structure": "When migrating existing dashboards, the folder structure will be replicated in the repository. Original folders will be emptied of dashboards but may still contain alerts or library panels.",
+      "alert-point-instance-alerts": "Existing alerts and library panels will be lost and will not be usable after migration.",
+      "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
+      "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
+      "alert-title": "Important: Review Git Sync limitations before proceeding",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
@@ -12223,6 +12209,7 @@
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
+      "sync-option-migrate-resources": "Migrate existing resources",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
