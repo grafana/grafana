@@ -155,14 +155,20 @@ To set up synchronization:
 
 1. You can repeat this process for up to 10 connections.
 
+{{< admonition type="note" >}}
+
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
+
+{{< /admonition >}}
+
 ### Synchronize with external storage
 
-After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+In this step you proceed to synchronize the resources selected in the previous step. Optionally, you can check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder.
 
-During the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
+Select **Begin synchronization** to start the process. After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+
+Note that during the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
 How long the process takes depends upon the number of resources involved.
-
-Select **Begin synchronization** to start the process.
 
 ### Choose additional settings
 
