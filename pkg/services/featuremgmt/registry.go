@@ -186,13 +186,6 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaBackendGroup,
-			Expression:  "true",
-		},
-		{
 			Name:        "renderAuthJWT",
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:       FeatureStagePublicPreview,
