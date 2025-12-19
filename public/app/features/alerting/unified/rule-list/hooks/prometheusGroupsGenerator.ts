@@ -15,6 +15,11 @@ interface UseGeneratorHookOptions {
    */
   populateCache?: boolean;
   limitAlerts?: number;
+  /**
+   * Whether to use compact response format from the API.
+   * Typically controlled by the alertingCompactRulesResponse feature toggle.
+   */
+  compact?: boolean;
 }
 
 export function usePrometheusGroupsGenerator() {
@@ -76,15 +81,25 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         ...fetchOptions,
         limitAlerts: hookOptions.limitAlerts,
         ...fetchOptions.filter,
+        compact: hookOptions.compact,
       }).unwrap();
 
       if (hookOptions.populateCache) {
-        populateGroupsResponseCache(response.data.groups);
+        populateGroupsResponseCache(response.data.groups, {
+          limitAlerts: hookOptions.limitAlerts,
+          compact: hookOptions.compact,
+        });
       }
 
       return response;
     },
-    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
+    [
+      getGrafanaGroups,
+      hookOptions.limitAlerts,
+      hookOptions.compact,
+      hookOptions.populateCache,
+      populateGroupsResponseCache,
+    ]
   );
 
   return useCallback(

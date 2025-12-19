@@ -197,6 +197,22 @@
     },
     {
       "metadata": {
+        "name": "alertingCompactRulesResponse",
+        "resourceVersion": "1765802340688",
+        "creationTimestamp": "2025-12-15T12:24:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-12-15 12:39:00.688866597 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Returns compact API responses for alert rules list, reducing payload size by omitting the query, notification settings, and metadata",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-05-23T12:29:19Z"
