@@ -186,13 +186,6 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaBackendGroup,
-			Expression:  "true",
-		},
-		{
 			Name:        "renderAuthJWT",
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:       FeatureStagePublicPreview,
@@ -601,6 +594,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "drilldownRecommendations",
+			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "perPanelNonApplicableDrilldowns",
 			Description:  "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:        FeatureStageExperimental,
@@ -809,6 +809,13 @@ var (
 		{
 			Name:         "newDashboardWithFiltersAndGroupBy",
 			Description:  "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "dashboardAdHocAndGroupByWrapper",
+			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -1356,6 +1363,13 @@ var (
 		{
 			Name:         "fetchRulesUsingPost",
 			Description:  "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "fetchRulesInCompactMode",
+			Description:  "Add compact=true when fetching rules",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1909,6 +1923,14 @@ var (
 		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "heatmapRowsAxisOptions",
+			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,

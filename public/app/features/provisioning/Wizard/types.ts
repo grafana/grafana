@@ -9,6 +9,7 @@ export type RepoType = RepositorySpec['type'];
 export interface MigrateFormData {
   history: boolean;
   identifier: boolean;
+  migrateResources?: boolean;
 }
 
 export interface WizardFormData {

@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
@@ -32,7 +32,6 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const settings = useGetFrontendSettingsQuery();
 
   const tab = queryParams['tab'] ?? TabSelection.Overview;
 
@@ -64,16 +63,6 @@ export default function RepositoryStatusPage() {
       actions={data && <RepositoryActions repository={data} />}
     >
       <Page.Contents isLoading={query.isLoading}>
-        {settings.data?.legacyStorage && (
-          <Alert
-            title={t('provisioning.repository-status-page.title-legacy-storage', 'Legacy Storage')}
-            severity="error"
-          >
-            <Trans i18nKey="provisioning.repository-status-page.legacy-storage-message">
-              Instance is not yet running unified storage -- requires migration wizard
-            </Trans>
-          </Alert>
-        )}
         <InlineSecureValueWarning repo={data} />
         {notFound ? (
           <EmptyState

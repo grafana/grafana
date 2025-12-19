@@ -681,15 +681,23 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
+		// Provisioning requires resources to be fully migrated to unified storage.
+		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
+		// enables the data migration at startup to migrate legacy data.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 			"folders.folder.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Allow both folder and instance sync targets for tests
+		// (instance is needed for export jobs, folder for most operations)
+		ProvisioningAllowedTargets: []string{"folder", "instance"},
 	}
 	for _, o := range options {
 		o(&opts)
