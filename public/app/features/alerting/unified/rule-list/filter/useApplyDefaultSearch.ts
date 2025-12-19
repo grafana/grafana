@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useAsync } from 'react-use';
 
 import { shouldUseSavedSearches } from '../../featureToggles';
+import { useAsync } from '../../hooks/useAsync';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
@@ -28,6 +28,15 @@ export function useApplyDefaultSearch(): { isApplying: boolean } {
   const savedSearchesEnabled = shouldUseSavedSearches();
   const { updateFilters, hasActiveFilters } = useRulesFilter();
 
+  // Use the internal useAsync hook which doesn't auto-execute
+  const [{ execute }, state] = useAsync(async () => {
+    const defaultSearch = await loadDefaultSavedSearch();
+    if (defaultSearch) {
+      updateFilters(getSearchFilterFromQuery(defaultSearch.query));
+      trackSavedSearchAutoApply();
+    }
+  });
+
   // Clear session storage on unmount
   useEffect(() => {
     return () => {
@@ -35,28 +44,20 @@ export function useApplyDefaultSearch(): { isApplying: boolean } {
     };
   }, []);
 
-  // Only attempt to load default search when feature is enabled, no filters are active,
-  // and this is the first visit in the session (checked via session storage)
   const isFirstVisit = isFirstVisitInSession();
   const shouldLoadDefault = savedSearchesEnabled && !hasActiveFilters && isFirstVisit;
 
-  const defaultSearchState = useAsync(async () => {
+  // Mark as visited on first visit, regardless of whether we load defaults
+  if (isFirstVisit && state.status === 'not-executed') {
     markAsVisited();
 
-    if (!shouldLoadDefault) {
-      return;
+    // Execute only if we should load default
+    if (shouldLoadDefault) {
+      execute();
     }
+  }
 
-    const defaultSearch = await loadDefaultSavedSearch();
-    if (defaultSearch) {
-      updateFilters(getSearchFilterFromQuery(defaultSearch.query));
-      trackSavedSearchAutoApply();
-    }
-  }, [shouldLoadDefault]);
-
-  const isApplying = shouldLoadDefault && defaultSearchState.loading;
-
-  return { isApplying };
+  return { isApplying: state.status === 'loading' };
 }
 
 /**

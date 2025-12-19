@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
@@ -42,6 +42,11 @@ const loadDefaultSavedSearchMock = loadDefaultSavedSearch as jest.MockedFunction
 
 beforeEach(() => {
   loadDefaultSavedSearchMock.mockResolvedValue(null);
+  // Clear session storage to ensure clean state for each test
+  // This prevents the "visited" flag from affecting subsequent tests
+  sessionStorage.clear();
+  // Set the visited flag for non-default-search tests to prevent the hook from trying to load
+  sessionStorage.setItem('grafana.alerting.ruleList.visited', 'true');
 });
 
 const ui = {
@@ -411,6 +416,13 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
 
   testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
 
+  beforeEach(() => {
+    // Clear the visited flag so the hook detects this as a first visit
+    sessionStorage.removeItem('grafana.alerting.ruleList.visited');
+    // Clear mock call history between tests
+    loadDefaultSavedSearchMock.mockClear();
+  });
+
   it('should apply default search before rendering child components', async () => {
     const mockDefaultSearch = {
       id: '1',
@@ -425,14 +437,18 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
 
     render(<RuleListPage />);
 
-    // Wait for the component to render
-    expect(ui.filterView.get()).toBeInTheDocument();
+    // Wait for loadDefaultSavedSearch to be called
+    await waitFor(() => {
+      expect(loadDefaultSavedSearchMock).toHaveBeenCalled();
+    });
+
+    // Wait for the filter view to render with the applied search
+    await waitFor(() => {
+      expect(ui.filterView.get()).toBeInTheDocument();
+    });
 
     // Verify the search input shows the applied search query
     expect(ui.searchInput.get()).toHaveValue('state:firing');
-
-    // Verify loadDefaultSavedSearch was called
-    expect(loadDefaultSavedSearchMock).toHaveBeenCalled();
   });
 
   it('should not apply default search when URL already has search parameter', async () => {
@@ -451,19 +467,29 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
       historyOptions: { initialEntries: ['/?search=label:team=backend'] },
     });
 
+    // Wait for the component to render
+    await waitFor(() => {
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
+
     // Should show the URL's search, not the default
     expect(ui.searchInput.get()).toHaveValue('label:team=backend');
 
     // Verify loadDefaultSavedSearch was not called because filters are already active
+    // The hook should not execute at all when hasActiveFilters is true
     expect(loadDefaultSavedSearchMock).not.toHaveBeenCalled();
   });
 
-  it('should render normally when no default search exists', () => {
+  it('should render normally when no default search exists', async () => {
     loadDefaultSavedSearchMock.mockResolvedValue(null);
 
     render(<RuleListPage />);
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    // Wait for the component to render after checking for default search
+    await waitFor(() => {
+      expect(ui.groupedView.get()).toBeInTheDocument();
+    });
+
     expect(ui.searchInput.get()).toHaveValue('');
   });
 });
