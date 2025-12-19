@@ -282,7 +282,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const renderSQLEditor = () => (
     <Stack direction="column" gap={1}>
       {renderButtons()}
-      {renderMainContent(width, height)}
+      {renderMainContent()}
     </Stack>
   );
 
