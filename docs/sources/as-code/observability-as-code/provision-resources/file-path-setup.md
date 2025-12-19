@@ -134,7 +134,9 @@ Full instance sync is not available in Grafana Cloud and is experimental and uns
 
 {{< /admonition >}}
 
-If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked:
+To have access to full instance sync you must explicitly enable the option. 
+
+The following applies:
 
 - You won't be able to create new alerts or library panels after setup is completed.
 - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.

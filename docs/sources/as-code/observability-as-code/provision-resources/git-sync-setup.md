@@ -132,12 +132,9 @@ To connect your GitHub repository:
 
 ### Choose what to synchronize
 
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. 
+You can sync external resources into a new folder without affecting the rest of your instance. 
 
-- If you try to perform a full instance sync, the connection will be blocked.
-- If you opted for full instance sync, delete the provisioned repository and connect again with folder sync.
-
-You can sync external resources into a new folder without affecting the rest of your instance. To set up synchronization:
+To set up synchronization:
 
 1. Select which resources you want to sync.
 
@@ -146,6 +143,12 @@ You can sync external resources into a new folder without affecting the rest of 
 1. Click **Synchronize** to continue.
 
 1. You can repeat this process for up to 10 connections.
+
+#### Full instance sync
+
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. 
+
+To have access to this option you must enable experimental instance sync on purpose.
 
 ### Synchronize with external storage
 
