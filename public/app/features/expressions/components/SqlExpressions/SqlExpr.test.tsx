@@ -177,22 +177,22 @@ describe('Schema Inspector feature toggle', () => {
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
 
-      const closeButton = getByText('Close schema inspector');
+      const closeButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
-      expect(await findByText('Open schema inspector')).toBeInTheDocument();
+      expect(await findByText('Schema inspector')).toBeInTheDocument();
     });
 
     it('reopens panel when Open schema inspector button clicked after closing', async () => {
       const { queryByText, getByText } = render(<SqlExpr {...defaultProps} />);
 
-      const closeButton = getByText('Close schema inspector');
+      const closeButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
 
-      const reopenButton = getByText('Open schema inspector');
+      const reopenButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(reopenButton));
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
@@ -228,7 +228,7 @@ describe('Schema Inspector feature toggle', () => {
     it('does not render panel or button', () => {
       const { queryByText } = render(<SqlExpr {...defaultProps} />);
 
-      expect(queryByText('Open schema inspector')).not.toBeInTheDocument();
+      expect(queryByText('Schema inspector')).not.toBeInTheDocument();
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
     });
   });
