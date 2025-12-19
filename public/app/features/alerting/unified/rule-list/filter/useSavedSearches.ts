@@ -6,7 +6,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 
 import { useAppNotification } from '../../../../../core/copy/appNotification';
-import { contextSrv } from '../../../../../core/services/context_srv';
 import { logError, logWarning } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
@@ -22,15 +21,6 @@ const SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
  * Uses 'alerting' as the service namespace.
  */
 const userStorage = new UserStorage('alerting');
-
-/**
- * Get session storage key for the current user.
- * Using user ID ensures the flag is unique per user, handling logout/login scenarios.
- */
-function getSessionVisitedKey(): string {
-  const userId = contextSrv.user?.id ?? 'anonymous';
-  return `grafana.alerting.alertRules.visited.${userId}`;
-}
 
 /**
  * Analytics tracking functions for saved search actions.
@@ -55,7 +45,7 @@ function trackSavedSearchSetDefault(props: { action: 'set' | 'clear' }) {
   reportInteraction('grafana_alerting_saved_search_set_default', props);
 }
 
-function trackSavedSearchAutoApply() {
+export function trackSavedSearchAutoApply() {
   reportInteraction('grafana_alerting_saved_search_auto_apply');
 }
 
@@ -117,13 +107,9 @@ async function loadSavedSearchesFromStorage(): Promise<SavedSearch[]> {
   return validateSavedSearches(parsed);
 }
 
-/**
- * Checks if the current URL has a non-empty search query parameter.
- * @returns true if URL contains a search parameter with a value
- */
-function hasUrlSearchQuery(): boolean {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.has('search') && urlParams.get('search') !== '';
+export async function loadDefaultSavedSearch(): Promise<SavedSearch | null> {
+  const savedSearches = await loadSavedSearchesFromStorage();
+  return savedSearches.find((s) => s.isDefault) ?? null;
 }
 
 /**
@@ -158,12 +144,6 @@ export interface UseSavedSearchesResult {
    * @param id - The ID to set as default, or null to clear
    */
   setDefaultSearch: (id: string | null) => Promise<void>;
-  /**
-   * Get the default search to auto-apply on navigation.
-   * Only returns a search on first navigation (not refresh) and when no URL search exists.
-   * @returns The default SavedSearch or null
-   */
-  getAutoApplySearch: () => SavedSearch | null;
 }
 
 /**
@@ -203,8 +183,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
 
   // Track whether we've already loaded to prevent double-loading
   const hasLoadedRef = useRef(false);
-  // Track whether this is a fresh navigation (not refresh)
-  const isNavigationRef = useRef<boolean | null>(null);
 
   // Use useAsync for loading state management
   const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearchesFromStorage, []);
@@ -216,16 +194,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
       return;
     }
     hasLoadedRef.current = true;
-
-    const sessionKey = getSessionVisitedKey();
-
-    // Determine if this is a navigation or refresh
-    // If session storage has the visited flag, this is a refresh
-    const wasVisited = sessionStorage.getItem(sessionKey);
-    isNavigationRef.current = !wasVisited;
-
-    // Set the visited flag for future checks
-    sessionStorage.setItem(sessionKey, 'true');
 
     // Load from UserStorage using async/await pattern
     const loadSearches = async () => {
@@ -247,11 +215,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
     };
 
     loadSearches();
-
-    // Clean up session flag when component unmounts (user navigates away)
-    return () => {
-      sessionStorage.removeItem(sessionKey);
-    };
   }, [executeLoad, notifyApp]);
 
   /**
@@ -368,35 +331,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
     [savedSearches, persistSearches]
   );
 
-  /**
-   * Get the default search to auto-apply.
-   * Only returns a search on navigation (not browser refresh) and when there's no URL search query.
-   *
-   * Call this once on mount to determine if a default search should be applied.
-   */
-  const getAutoApplySearch = useCallback((): SavedSearch | null => {
-    // Only auto-apply on navigation, not refresh
-    if (!isNavigationRef.current) {
-      return null;
-    }
-
-    // Don't auto-apply if there's already a search query in the URL
-    if (hasUrlSearchQuery()) {
-      return null;
-    }
-
-    // Find and return the default search
-    const defaultSearch = savedSearches.find((s) => s.isDefault);
-    if (defaultSearch) {
-      // Track analytics
-      trackSavedSearchAutoApply();
-      // Reset navigation flag so subsequent calls don't auto-apply
-      isNavigationRef.current = false;
-    }
-
-    return defaultSearch ?? null;
-  }, [savedSearches]);
-
   // Sort saved searches: default first, then alphabetically by name
   const sortedSavedSearches = useMemo(() => sortSavedSearches(savedSearches), [savedSearches]);
 
@@ -407,7 +341,6 @@ export function useSavedSearches(): UseSavedSearchesResult {
     renameSearch,
     deleteSearch,
     setDefaultSearch,
-    getAutoApplySearch,
   };
 }
 

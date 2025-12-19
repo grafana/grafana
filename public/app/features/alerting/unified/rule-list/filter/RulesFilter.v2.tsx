@@ -82,7 +82,7 @@ type SearchQueryForm = {
   query: string;
 };
 
-export default function RulesFilter({ viewMode, onViewModeChange, savedSearchesResult }: RulesFilterProps) {
+export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -94,8 +94,6 @@ export default function RulesFilter({ viewMode, onViewModeChange, savedSearchesR
   const savedSearchesEnabled = shouldUseSavedSearches();
 
   // Saved searches hook with UserStorage persistence
-  // Use prop if provided (from RuleListPage), otherwise call hook internally
-  const internalSavedSearches = useSavedSearches();
   const {
     savedSearches,
     isLoading: savedSearchesLoading,
@@ -103,7 +101,7 @@ export default function RulesFilter({ viewMode, onViewModeChange, savedSearchesR
     renameSearch,
     deleteSearch,
     setDefaultSearch,
-  } = savedSearchesResult ?? internalSavedSearches;
+  } = useSavedSearches();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({

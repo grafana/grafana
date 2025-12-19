@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
@@ -11,28 +11,22 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { shouldUseSavedSearches } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { getSearchFilterFromQuery } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
-import { UseSavedSearchesResult, useSavedSearches } from './filter/useSavedSearches';
+import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
-interface RuleListProps {
-  savedSearchesResult: UseSavedSearchesResult;
-}
-
-function RuleList({ savedSearchesResult }: RuleListProps) {
+function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
   return (
     <Stack direction="column">
-      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} savedSearchesResult={savedSearchesResult} />
+      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       {viewMode === 'list' ? (
         <FilterView filterState={filterState} />
       ) : (
@@ -124,40 +118,16 @@ export function RuleListActions() {
 }
 
 export default function RuleListPage() {
-  const savedSearchesEnabled = shouldUseSavedSearches();
-  const savedSearchesResult = useSavedSearches();
-  const { updateFilters } = useRulesFilter();
-
-  const hasAppliedRef = useRef(false);
-  const [isReady, setIsReady] = useState(!savedSearchesEnabled);
-
-  // Apply default search once after saved searches are loaded
-  // This runs BEFORE RuleList mounts, preventing double API requests
-  useEffect(() => {
-    if (!savedSearchesEnabled || savedSearchesResult.isLoading || hasAppliedRef.current) {
-      return;
-    }
-
-    hasAppliedRef.current = true;
-
-    const defaultSearch = savedSearchesResult.getAutoApplySearch();
-    if (defaultSearch) {
-      updateFilters(getSearchFilterFromQuery(defaultSearch.query));
-    }
-
-    setIsReady(true);
-  }, [savedSearchesEnabled, savedSearchesResult, updateFilters]);
-
-  const isPageLoading = savedSearchesEnabled && !isReady;
+  const { isApplying } = useApplyDefaultSearch();
 
   return (
     <AlertingPageWrapper
       navId="alert-list"
       renderTitle={(title) => <RuleListPageTitle title={title} />}
-      isLoading={isPageLoading}
+      isLoading={isApplying}
       actions={<RuleListActions />}
     >
-      {!isPageLoading && <RuleList savedSearchesResult={savedSearchesResult} />}
+      {!isApplying && <RuleList />}
     </AlertingPageWrapper>
   );
 }

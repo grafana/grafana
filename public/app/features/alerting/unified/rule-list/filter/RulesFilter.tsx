@@ -5,16 +5,12 @@ import { config } from '@grafana/runtime';
 import RulesFilterV1 from '../../components/rules/Filter/RulesFilter.v1';
 import { SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 
-import { UseSavedSearchesResult } from './useSavedSearches';
-
 const RulesFilterV2 = lazy(() => import('./RulesFilter.v2'));
 
 export interface RulesFilterProps {
   onClear?: () => void;
   viewMode?: SupportedView;
   onViewModeChange?: (viewMode: SupportedView) => void;
-  /** Optional saved searches result passed from parent to avoid double-loading */
-  savedSearchesResult?: UseSavedSearchesResult;
 }
 
 const RulesFilter = (props: RulesFilterProps) => {

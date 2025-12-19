@@ -38,15 +38,6 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-// Mock contextSrv for user ID (used by useSavedSearches for session storage key)
-jest.mock('../../../../../core/services/context_srv', () => ({
-  contextSrv: {
-    user: {
-      id: 123,
-    },
-  },
-}));
-
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
 // Set up MSW server for other handlers (not UserStorage - that's mocked directly)
@@ -373,95 +364,6 @@ describe('useSavedSearches', () => {
 
       expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_set_default', {
         action: 'clear',
-      });
-    });
-  });
-
-  describe('getAutoApplySearch', () => {
-    it('should return default search on first navigation', async () => {
-      mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      const defaultSearch = result.current.getAutoApplySearch();
-
-      expect(defaultSearch).toEqual(expect.objectContaining({ isDefault: true }));
-    });
-
-    it('should return null on subsequent calls (same session)', async () => {
-      mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      // First call should return default
-      const firstCall = result.current.getAutoApplySearch();
-      expect(firstCall).not.toBeNull();
-
-      // Second call should return null (already auto-applied)
-      const secondCall = result.current.getAutoApplySearch();
-      expect(secondCall).toBeNull();
-    });
-
-    it('should return null when URL has search parameter', async () => {
-      // Mock URL with search parameter using Object.defineProperty
-      const originalSearch = window.location.search;
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '?search=state:firing' },
-        writable: true,
-      });
-
-      mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      const defaultSearch = result.current.getAutoApplySearch();
-
-      expect(defaultSearch).toBeNull();
-
-      // Restore
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: originalSearch },
-        writable: true,
-      });
-    });
-
-    it('should return null when no default search exists', async () => {
-      const searchesWithoutDefault = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
-      mockUserStorage.getItem.mockResolvedValue(JSON.stringify(searchesWithoutDefault));
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      const defaultSearch = result.current.getAutoApplySearch();
-
-      expect(defaultSearch).toBeNull();
-    });
-  });
-
-  describe('Per-user session tracking', () => {
-    it('should use user-specific session storage key', async () => {
-      mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
-
-      renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        // Session storage should be set with user-specific key
-        expect(sessionStorage.getItem('grafana.alerting.alertRules.visited.123')).toBe('true');
       });
     });
   });

@@ -13,7 +13,7 @@ import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
-import { UseSavedSearchesResult, useSavedSearches } from './filter/useSavedSearches';
+import { loadDefaultSavedSearch } from './filter/useSavedSearches';
 
 // This tests only checks if proper components are rendered, so we mock them
 // Both FilterView and GroupedView are tested in their own tests
@@ -26,24 +26,22 @@ jest.mock('./GroupedView', () => ({
 }));
 
 jest.mock('./filter/useSavedSearches', () => ({
-  useSavedSearches: jest.fn(),
+  ...jest.requireActual('./filter/useSavedSearches'),
+  loadDefaultSavedSearch: jest.fn(),
+  useSavedSearches: jest.fn(() => ({
+    savedSearches: [],
+    isLoading: false,
+    saveSearch: jest.fn(),
+    renameSearch: jest.fn(),
+    deleteSearch: jest.fn(),
+    setDefaultSearch: jest.fn(),
+  })),
 }));
 
-const useSavedSearchesMock = useSavedSearches as jest.MockedFunction<typeof useSavedSearches>;
-
-// Default mock implementation (no default search)
-const defaultSavedSearchesResult: UseSavedSearchesResult = {
-  savedSearches: [],
-  isLoading: false,
-  saveSearch: jest.fn(),
-  renameSearch: jest.fn(),
-  deleteSearch: jest.fn(),
-  setDefaultSearch: jest.fn(),
-  getAutoApplySearch: () => null,
-};
+const loadDefaultSavedSearchMock = loadDefaultSavedSearch as jest.MockedFunction<typeof loadDefaultSavedSearch>;
 
 beforeEach(() => {
-  useSavedSearchesMock.mockReturnValue(defaultSavedSearchesResult);
+  loadDefaultSavedSearchMock.mockResolvedValue(null);
 });
 
 const ui = {
@@ -407,11 +405,9 @@ describe('RuleListPage v2 - View switching', () => {
     expect(ui.modeSelector.list.query()).not.toBeChecked();
   });
 });
-
 describe('RuleListPage v2 - Default search auto-apply', () => {
   // These tests verify that the default search is applied at the page level,
   // BEFORE child components mount, preventing double API requests.
-  // This addresses the reviewer's suggestion to "catch it earlier in routing".
 
   testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
 
@@ -424,13 +420,8 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
       createdAt: Date.now(),
     };
 
-    // Mock getAutoApplySearch to return a default search
-    const getAutoApplySearchMock = jest.fn().mockReturnValueOnce(mockDefaultSearch).mockReturnValue(null);
-
-    useSavedSearchesMock.mockReturnValue({
-      ...defaultSavedSearchesResult,
-      getAutoApplySearch: getAutoApplySearchMock,
-    });
+    // Mock loadDefaultSavedSearch to return a default search
+    loadDefaultSavedSearchMock.mockResolvedValue(mockDefaultSearch);
 
     render(<RuleListPage />);
 
@@ -440,8 +431,8 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
     // Verify the search input shows the applied search query
     expect(ui.searchInput.get()).toHaveValue('state:firing');
 
-    // Verify getAutoApplySearch was called
-    expect(getAutoApplySearchMock).toHaveBeenCalled();
+    // Verify loadDefaultSavedSearch was called
+    expect(loadDefaultSavedSearchMock).toHaveBeenCalled();
   });
 
   it('should not apply default search when URL already has search parameter', async () => {
@@ -453,15 +444,8 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
       createdAt: Date.now(),
     };
 
-    // getAutoApplySearch should return null when URL has search param
-    // (this is handled by the hook itself)
-    const getAutoApplySearchMock = jest.fn().mockReturnValue(null);
-
-    useSavedSearchesMock.mockReturnValue({
-      ...defaultSavedSearchesResult,
-      savedSearches: [mockDefaultSearch],
-      getAutoApplySearch: getAutoApplySearchMock,
-    });
+    // loadDefaultSavedSearch should not be called when URL has search param
+    loadDefaultSavedSearchMock.mockResolvedValue(mockDefaultSearch);
 
     render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?search=label:team=backend'] },
@@ -469,13 +453,13 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
 
     // Should show the URL's search, not the default
     expect(ui.searchInput.get()).toHaveValue('label:team=backend');
+
+    // Verify loadDefaultSavedSearch was not called because filters are already active
+    expect(loadDefaultSavedSearchMock).not.toHaveBeenCalled();
   });
 
   it('should render normally when no default search exists', () => {
-    useSavedSearchesMock.mockReturnValue({
-      ...defaultSavedSearchesResult,
-      getAutoApplySearch: () => null,
-    });
+    loadDefaultSavedSearchMock.mockResolvedValue(null);
 
     render(<RuleListPage />);
 
