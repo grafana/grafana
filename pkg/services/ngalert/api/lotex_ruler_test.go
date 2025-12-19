@@ -13,10 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -117,13 +119,75 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://azp.com", Type: datasources.DS_AZURE_PROMETHEUS}},
 			expected:        "/config/v1/rules",
 		},
+		{
+			name:            "with manageAlerts explicitly set to false (feature toggle enabled)",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: createDatasourceWithManageAlerts("http://loki.com", datasources.DS_LOKI, false)},
+			err:             errManageAlertsDisabled,
+		},
+		{
+			name:            "with manageAlerts explicitly set to true (feature toggle enabled)",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: createDatasourceWithManageAlerts("http://loki.com", datasources.DS_LOKI, true)},
+			expected:        "/api/prom/rules",
+		},
+		{
+			name:            "with manageAlerts undefined (feature toggle enabled)",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_LOKI, JsonData: simplejson.New()}},
+			expected:        "/api/prom/rules",
+		},
+		{
+			name:            "with JsonData nil (feature toggle enabled)",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_LOKI, JsonData: nil}},
+			expected:        "/api/prom/rules",
+		},
 	}
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableDSAPIWithManageAlerts)
+
+	t.Run("with server default manage alerts = false", func(t *testing.T) {
+		proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_LOKI}}}}
+		ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: features, defaultManageAlertsEnabled: false}
+		httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com", nil)
+		require.NoError(t, err)
+		ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, map[string]string{":DatasourceUID": "d164"})}}
+
+		prefix, err := ruler.validateAndGetPrefix(ctx)
+		require.Empty(t, prefix)
+		require.ErrorIs(t, err, errManageAlertsDisabled)
+	})
+
+	t.Run("with server default false but datasource manageAlerts true should allow", func(t *testing.T) {
+		proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: createDatasourceWithManageAlerts("http://loki.com", datasources.DS_LOKI, true)}}}
+		ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: features, defaultManageAlertsEnabled: false}
+		httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com", nil)
+		require.NoError(t, err)
+		ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, map[string]string{":DatasourceUID": "d164"})}}
+
+		prefix, err := ruler.validateAndGetPrefix(ctx)
+		require.Equal(t, "/api/prom/rules", prefix)
+		require.NoError(t, err)
+	})
+
+	t.Run("with feature toggle disabled, manageAlerts false should allow", func(t *testing.T) {
+		proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: createDatasourceWithManageAlerts("http://loki.com", datasources.DS_LOKI, false)}}}
+		ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: featuremgmt.WithFeatures(), defaultManageAlertsEnabled: true}
+		httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com", nil)
+		require.NoError(t, err)
+		ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, map[string]string{":DatasourceUID": "d164"})}}
+
+		prefix, err := ruler.validateAndGetPrefix(ctx)
+		require.Equal(t, "/api/prom/rules", prefix)
+		require.NoError(t, err)
+	})
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup Proxy.
 			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: tt.datasourceCache}}
-			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger()}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: features, defaultManageAlertsEnabled: true}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com"+tt.urlParams, nil)
@@ -158,6 +222,16 @@ func (f fakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID 
 	}
 
 	return f.datasource, nil
+}
+
+func createDatasourceWithManageAlerts(url, dsType string, manageAlerts bool) *datasources.DataSource {
+	data := simplejson.New()
+	data.Set("manageAlerts", manageAlerts)
+	return &datasources.DataSource{
+		URL:      url,
+		Type:     dsType,
+		JsonData: data,
+	}
 }
 
 func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
@@ -207,7 +281,7 @@ func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
 
 			// Setup Proxy.
 			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
-			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: featuremgmt.WithFeatures(), defaultManageAlertsEnabled: true, requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -269,7 +343,7 @@ func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
 
 			// Setup Proxy.
 			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
-			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: featuremgmt.WithFeatures(), defaultManageAlertsEnabled: true, requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -329,7 +403,7 @@ func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
 
 			// Setup Proxy.
 			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
-			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: featuremgmt.WithFeatures(), defaultManageAlertsEnabled: true, requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -391,7 +465,7 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 
 			// Setup Proxy.
 			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
-			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), features: featuremgmt.WithFeatures(), defaultManageAlertsEnabled: true, requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)

@@ -1110,6 +1110,10 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
+  * When manageAlerts=false, disable data source API for alert rules
+  */
+  alertingDisableDSAPIWithManageAlerts?: boolean;
+  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */

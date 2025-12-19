@@ -137,7 +137,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
-		NewLotexRuler(proxy, logger),
+		NewLotexRuler(proxy, logger, api.FeatureManager, api.Cfg.DefaultDatasourceManageAlertsUIToggle),
 		&RulerSrv{
 			conditionValidator: api.ConditionValidator,
 			QuotaService:       api.QuotaService,

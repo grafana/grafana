@@ -197,6 +197,19 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDSAPIWithManageAlerts",
+        "resourceVersion": "1766143488044",
+        "creationTimestamp": "2025-12-19T11:24:48Z"
+      },
+      "spec": {
+        "description": "When manageAlerts=false, disable data source API for alert rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-05-23T12:29:19Z"
