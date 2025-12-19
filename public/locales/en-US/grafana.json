@@ -11985,7 +11985,6 @@
       "resource-not-found": "Resource not found. Please check the URL or repository.",
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
-    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
       "title": "Instance sync is not fully supported"
@@ -12094,6 +12093,9 @@
       "webhook-id": "ID:",
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
+    },
+    "repository-status": {
+      "error": "Failed to load repository"
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
