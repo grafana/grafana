@@ -6,6 +6,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,8 +34,22 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 	// Get identity from access token in context
 	id, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
+		klog.V(4).InfoS("tokenAccessChecker: no auth info in context",
+			"resource", req.Resource,
+			"verb", req.Verb,
+			"namespace", req.Namespace,
+		)
 		return apierrors.NewUnauthorized("no auth info in context")
 	}
+
+	klog.V(4).InfoS("tokenAccessChecker: got identity from token",
+		"identityType", id.GetIdentityType(),
+		"namespace", id.GetNamespace(),
+		"resource", req.Resource,
+		"verb", req.Verb,
+		"group", req.Group,
+		"name", req.Name,
+	)
 
 	// Fill in namespace from identity if not provided
 	if req.Namespace == "" {
@@ -48,10 +63,25 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 	gr := schema.GroupResource{Group: req.Group, Resource: req.Resource}
 
 	if err != nil {
+		klog.V(4).InfoS("tokenAccessChecker: access check error",
+			"resource", req.Resource,
+			"verb", req.Verb,
+			"error", err,
+		)
 		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("access check failed: %w", err))
 	}
 	if !rsp.Allowed {
+		klog.V(4).InfoS("tokenAccessChecker: access denied",
+			"resource", req.Resource,
+			"verb", req.Verb,
+			"identityType", id.GetIdentityType(),
+		)
 		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("permission denied"))
 	}
+
+	klog.V(4).InfoS("tokenAccessChecker: access allowed",
+		"resource", req.Resource,
+		"verb", req.Verb,
+	)
 	return nil
 }
