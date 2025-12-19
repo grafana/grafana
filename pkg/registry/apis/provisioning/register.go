@@ -367,7 +367,7 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	case "settings":
 		// Settings are read-only and accessible by all logged-in users (Viewer role)
 		return toAuthorizerDecision(b.accessWithViewer.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  "settings",
 			Namespace: a.GetNamespace(),
@@ -375,7 +375,7 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 	case "stats":
 		// Stats are read-only and admin-only
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  "stats",
 			Namespace: a.GetNamespace(),
