@@ -47,7 +47,7 @@ var (
 	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
 	sqlKVDelete                      = mustTemplate("sqlkv_delete.sql")
-	sqlKVBatchDelete = mustTemplate("sqlkv_batch_delete.sql")
+	sqlKVBatchDelete                 = mustTemplate("sqlkv_batch_delete.sql")
 )
 
 // sqlKVSection can be embedded in structs used when rendering query templates
