@@ -330,35 +330,26 @@ func (k *sqlKV) TestingSave(ctx context.Context, key string, value []byte) error
 }
 
 func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
-	if section == "" {
-		return nil, errors.New("section is required")
-	}
-
-	if section != dataSection && section != eventsSection {
-		return nil, errors.New("invalid section")
-	}
-
-	if key == "" {
-		return nil, errors.New("key is required")
+	sectionKey := sqlKVSectionKey{sqlKVSection{section}, key}
+	if err := sectionKey.Validate(); err != nil {
+		return nil, err
 	}
 
 	return &sqlWriteCloser{
-		kv:      k,
-		ctx:     ctx,
-		section: section,
-		key:     key,
-		buf:     &bytes.Buffer{},
-		closed:  false,
+		kv:         k,
+		ctx:        ctx,
+		sectionKey: sectionKey,
+		buf:        &bytes.Buffer{},
+		closed:     false,
 	}, nil
 }
 
 type sqlWriteCloser struct {
-	kv      *sqlKV
-	ctx     context.Context
-	section string
-	key     string
-	buf     *bytes.Buffer
-	closed  bool
+	kv         *sqlKV
+	ctx        context.Context
+	sectionKey sqlKVSectionKey
+	buf        *bytes.Buffer
+	closed     bool
 }
 
 func (w *sqlWriteCloser) Write(value []byte) (int, error) {
@@ -378,10 +369,10 @@ func (w *sqlWriteCloser) Close() error {
 
 	// do regular kv save: simple key_path + value insert with conflict check.
 	// can only do this on resource_events for now, until we drop the columns in resource_history
-	if w.section == eventsSection {
+	if w.sectionKey.Section == eventsSection {
 		_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVSaveEvent, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
-			sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+			sqlKVSectionKey: w.sectionKey,
 			Value:           w.buf.Bytes(),
 		})
 
@@ -400,11 +391,11 @@ func (w *sqlWriteCloser) Close() error {
 		// we can use the same template as the event one after we:
 		// - move PK from GUID to key_path
 		// - remove all unnecessary columns (or at least their NOT NULL constraints)
-		_, err := w.kv.Get(w.ctx, w.section, w.key)
+		_, err := w.kv.Get(w.ctx, w.sectionKey.Section, w.sectionKey.Key)
 		if errors.Is(err, ErrNotFound) {
 			_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVInsertData, sqlKVSaveRequest{
 				SQLTemplate:     sqltemplate.New(w.kv.dialect),
-				sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+				sqlKVSectionKey: w.sectionKey,
 				GUID:            uuid.New().String(),
 				Value:           w.buf.Bytes(),
 			})
@@ -422,7 +413,7 @@ func (w *sqlWriteCloser) Close() error {
 
 		_, err = dbutil.Exec(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
-			sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{w.section}, w.key},
+			sqlKVSectionKey: w.sectionKey,
 			Value:           w.buf.Bytes(),
 		})
 
@@ -438,7 +429,7 @@ func (w *sqlWriteCloser) Close() error {
 	// component will be responsible for populating the resource_version and key_path columns
 	// note that we are not touching resource_version table, neither the resource_version columns or the key_path column
 	// as the RvManager will be responsible for this
-	dataKey, err := ParseKeyWithGUID(w.key)
+	dataKey, err := ParseKeyWithGUID(w.sectionKey.Key)
 	if err != nil {
 		return fmt.Errorf("failed to parse key: %w", err)
 	}
