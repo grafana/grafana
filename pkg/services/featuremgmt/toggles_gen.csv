@@ -267,6 +267,7 @@ jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
