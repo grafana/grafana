@@ -36,9 +36,7 @@ async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
   // import the plugins in parallel using Promise.allSettled
   const plugins: PanelPlugin[] = [];
   let hasErrors = false;
-  const settledPromises = await Promise.allSettled(
-    pluginIds.map((id) => Promise.resolve().then(() => importPanelPlugin(id)))
-  );
+  const settledPromises = await Promise.allSettled(pluginIds.map(importPanelPlugin));
 
   for (let i = 0; i < settledPromises.length; i++) {
     const settled = settledPromises[i];
@@ -128,32 +126,39 @@ export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsRe
 
   const { plugins, hasErrors: pluginLoadErrors } = await getPanelsWithSuggestions();
 
+  let pluginSuggestionsError = false;
   for (const plugin of plugins) {
-    const suggestions = plugin.getSuggestions(dataSummary);
-    if (suggestions) {
-      list.push(...suggestions);
-    }
-  }
-
-  if (dataSummary.fieldCount === 0) {
-    for (const plugin of Object.values(config.panels)) {
-      if (!plugin.skipDataQuery || plugin.hideFromList) {
-        continue;
-      }
-
+    // only for legacy suggestions, we should push empty cards into suggestions in the "no data" case.
+    if (
+      dataSummary.fieldCount === 0 &&
+      !config.featureToggles.newVizSuggestions &&
+      !plugin.meta.skipDataQuery &&
+      !plugin.meta.hideFromList
+    ) {
       list.push({
-        name: plugin.name,
-        pluginId: plugin.id,
-        description: plugin.info.description,
-        hash: 'plugin-empty-' + plugin.id,
+        name: plugin.meta.name,
+        pluginId: plugin.meta.id,
+        description: plugin.meta.info.description,
+        hash: 'plugin-empty-' + plugin.meta.id,
         cardOptions: {
-          imgSrc: plugin.info.logos.small,
+          imgSrc: plugin.meta.info.logos.small,
         },
       });
+      continue;
+    }
+
+    try {
+      const suggestions = plugin.getSuggestions(dataSummary);
+      if (suggestions) {
+        list.push(...suggestions);
+      }
+    } catch (e) {
+      console.warn(`error when loading suggestions from plugin "${plugin.meta.id}"`, e);
+      pluginSuggestionsError = true;
     }
   }
 
   sortSuggestions(list, dataSummary);
 
-  return { suggestions: list, hasErrors: pluginLoadErrors };
+  return { suggestions: list, hasErrors: pluginLoadErrors || pluginSuggestionsError };
 }

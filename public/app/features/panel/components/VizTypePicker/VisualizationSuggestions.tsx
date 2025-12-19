@@ -36,10 +36,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     error,
     retry,
   } = useAsyncRetry(async () => {
-    if (!hasData(data)) {
-      return { suggestions: [], hasErrors: false };
-    }
-
+    await new Promise((resolve) => setTimeout(resolve, 75));
     return await getAllSuggestions(data);
   }, [data]);
   const suggestions = result?.suggestions;
@@ -85,10 +82,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     },
     [onChange]
   );
-
-  const handleRetry = useCallback(() => {
-    retry();
-  }, [retry]);
 
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
@@ -145,7 +138,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
             <Trans i18nKey="panel.visualization-suggestions.error-loading-some-suggestions.message">
               Some suggestions could not be loaded
             </Trans>
-            <Button variant="secondary" size="sm" onClick={handleRetry}>
+            <Button variant="secondary" size="sm" onClick={retry}>
               <Trans i18nKey="panel.visualization-suggestions.error-loading-suggestions.try-again-button">
                 Try again
               </Trans>
