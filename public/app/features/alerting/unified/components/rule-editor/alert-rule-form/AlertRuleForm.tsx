@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -60,10 +60,10 @@ import {
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { BacktestDropdownButton } from '../../backtesting/BacktestDropdownButton';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
-import { BacktestPanel } from '../BacktestPanel';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
 import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
 import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
@@ -87,12 +87,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
-
-  // Backtest panel state
-  const [isBacktestPanelOpen, setIsBacktestPanelOpen] = useState(false);
-  const [hasOpenedBacktestPanel, setHasOpenedBacktestPanel] = useState(false);
-  const [backtestTimeRange, setBacktestTimeRange] = useState<TimeRange | undefined>(undefined);
-  const [backtestTriggerRun, setBacktestTriggerRun] = useState<number>(0);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
@@ -298,69 +292,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 </Button>
               )}
 
-              {config.featureToggles.alertingBacktesting && (
-                <Dropdown
-                  overlay={
-                    <Menu>
-                      <MenuItem
-                        label={t('alerting.queryAndExpressionsStep.last15m', 'Last 15 minutes')}
-                        onClick={() => {
-                          const timeRange: TimeRange = {
-                            from: dateTime().subtract(15, 'minutes'),
-                            to: dateTime(),
-                            raw: { from: 'now-15m', to: 'now' },
-                          };
-                          setBacktestTimeRange(timeRange);
-                          setHasOpenedBacktestPanel(true);
-                          setIsBacktestPanelOpen(true);
-                          setBacktestTriggerRun(Date.now());
-                        }}
-                      />
-                      <MenuItem
-                        label={t('alerting.queryAndExpressionsStep.last1h', 'Last 1 hour')}
-                        onClick={() => {
-                          const timeRange: TimeRange = {
-                            from: dateTime().subtract(1, 'hour'),
-                            to: dateTime(),
-                            raw: { from: 'now-1h', to: 'now' },
-                          };
-                          setBacktestTimeRange(timeRange);
-                          setHasOpenedBacktestPanel(true);
-                          setIsBacktestPanelOpen(true);
-                          setBacktestTriggerRun(Date.now());
-                        }}
-                      />
-                      <MenuItem
-                        label={t('alerting.queryAndExpressionsStep.custom', 'Custom')}
-                        onClick={() => {
-                          setBacktestTimeRange(undefined);
-                          setHasOpenedBacktestPanel(true);
-                          setIsBacktestPanelOpen(true);
-                        }}
-                      />
-                    </Menu>
-                  }
-                >
-                  <Button icon="bug" type="button" variant="secondary">
-                    <Trans i18nKey="alerting.queryAndExpressionsStep.testRule">Test Rule</Trans>
-                  </Button>
-                </Dropdown>
-              )}
+              {config.featureToggles.alertingBacktesting && <BacktestDropdownButton ruleDefinition={watch()} />}
             </Stack>
           </Stack>
-
-          {/* Backtest Panel */}
-          {config.featureToggles.alertingBacktesting && hasOpenedBacktestPanel && (
-            <div style={{ marginTop: '5px' }}>
-              <BacktestPanel
-                isOpen={isBacktestPanelOpen}
-                onToggle={setIsBacktestPanelOpen}
-                ruleDefinition={watch()}
-                initialTimeRange={backtestTimeRange}
-                triggerRun={backtestTriggerRun}
-              />
-            </div>
-          )}
         </div>
       </form>
 

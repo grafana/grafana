@@ -9,7 +9,6 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
-  Collapse,
   Icon,
   LoadingPlaceholder,
   RefreshPicker,
@@ -29,14 +28,12 @@ import { useFrameSubset } from '../rules/state-history/LokiStateHistory';
 import { useRuleHistoryRecords } from '../rules/state-history/useRuleHistoryRecords';
 
 interface BacktestPanelProps {
-  isOpen: boolean;
-  onToggle: (isOpen: boolean) => void;
   ruleDefinition: RuleFormValues;
   initialTimeRange?: TimeRange;
   triggerRun?: number;
 }
 
-export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRange, triggerRun }: BacktestPanelProps) {
+export function BacktestPanel({ ruleDefinition, initialTimeRange, triggerRun }: BacktestPanelProps) {
   const styles = useStyles2(getStyles);
   const [timeRange, setTimeRange] = useState<TimeRange>(
     initialTimeRange || {
@@ -175,125 +172,118 @@ export function BacktestPanel({ isOpen, onToggle, ruleDefinition, initialTimeRan
   const notices = stateHistory?.schema?.meta?.notices || [];
 
   return (
-    <Collapse
-      label={t('alerting.backtest.panel-title', 'Rule Retroactive Testing')}
-      isOpen={isOpen}
-      collapsible
-      onToggle={onToggle}
-    >
-      <div className={styles.panelContent}>
-        {/* Fixed controls section */}
-        <div className={styles.controlsSection}>
-          <Stack direction="row" alignItems="flex-end" justifyContent="flex-end">
-            <TimeRangePicker
-              value={timeRange}
-              onChange={setTimeRange}
-              onChangeTimeZone={() => {}}
-              onMoveBackward={() => {}}
-              onMoveForward={() => {}}
-              onZoom={() => {}}
-            />
-            <RefreshPicker
-              onRefresh={handleRunBacktest}
-              onIntervalChanged={() => {}}
-              isLoading={isLoading}
-              noIntervalPicker={true}
-            />
-          </Stack>
-        </div>
-
-        {/* Scrollable results section */}
-        <div className={styles.scrollableContent}>
-          {isLoading && <LoadingPlaceholder text={t('alerting.backtest.loading', 'Running backtest...')} />}
-
-          {error && <Alert title={t('alerting.backtest.error-title', 'Failed to run backtest')}>{error.message}</Alert>}
-
-          {showRefreshBanner && !isLoading && !error && hasResults && (
-            <Alert
-              severity="info"
-              title={t('alerting.backtest.refresh-required-title', 'Rule definition updated')}
-              onRemove={() => setShowRefreshBanner(false)}
-            >
-              <Stack direction="column" gap={1}>
-                <Text>
-                  <Trans i18nKey="alerting.backtest.refresh-required-message">
-                    The rule definition has been updated. Refresh the backtest to see results with the latest changes.
-                  </Trans>
-                </Text>
-                <div>
-                  <Button variant="primary" size="sm" onClick={handleRunBacktest}>
-                    <Trans i18nKey="alerting.backtest.refresh-button">Refresh backtest</Trans>
-                  </Button>
-                </div>
-              </Stack>
-            </Alert>
-          )}
-
-          {!isLoading && !error && hasResults && notices.length > 0 && (
-            <Stack direction="column" gap={1}>
-              {notices.map((notice, index) => (
-                <Alert key={index} severity={notice.severity || 'info'} title="">
-                  {notice.text}
-                </Alert>
-              ))}
-            </Stack>
-          )}
-
-          {!isLoading && !error && hasResults && (
-            <div className={styles.resultsContainer}>
-              {!isEmpty(commonLabels) && (
-                <Stack gap={1} alignItems="center" wrap="wrap">
-                  <Stack gap={0.5} alignItems="center" minWidth="fit-content">
-                    <Text variant="bodySmall">
-                      <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
-                    </Text>
-                    <Tooltip
-                      content={t(
-                        'alerting.loki-state-history.tooltip-common-labels',
-                        'Common labels are the ones attached to all of the alert instances'
-                      )}
-                    >
-                      <Icon name="info-circle" size="sm" />
-                    </Tooltip>
-                  </Stack>
-                  <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
-                </Stack>
-              )}
-              {isEmpty(frameSubset) ? (
-                <div className={styles.emptyState}>
-                  {emptyStateMessage}
-                  {totalRecordsCount > 0 && (
-                    <Button variant="secondary" type="button" onClick={onFilterCleared}>
-                      <Trans i18nKey="alerting.loki-state-history.clear-filters">Clear filters</Trans>
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className={styles.graphWrapper}>
-                    <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
-                  </div>
-                  {hasMoreInstances && (
-                    <div className={styles.moreInstancesWarning}>
-                      <Stack direction="row" alignItems="center" gap={1}>
-                        <Icon name="exclamation-triangle" size="sm" />
-                        <small>{`Only showing ${frameSubset.length} out of ${dataFrames.length} instances. Click on the labels to narrow down the results`}</small>
-                      </Stack>
-                    </div>
-                  )}
-                  <LogRecordViewerByTimestamp
-                    records={historyRecords}
-                    commonLabels={commonLabels}
-                    onRecordsRendered={(recordRefs) => (logsRef.current = recordRefs)}
-                    onLabelClick={onLogRecordLabelClick}
-                  />
-                </>
-              )}
-            </div>
-          )}
-        </div>
+    <div className={styles.panelContent}>
+      {/* Fixed controls section */}
+      <div className={styles.controlsSection}>
+        <Stack direction="row" alignItems="flex-end" justifyContent="flex-end">
+          <TimeRangePicker
+            value={timeRange}
+            onChange={setTimeRange}
+            onChangeTimeZone={() => {}}
+            onMoveBackward={() => {}}
+            onMoveForward={() => {}}
+            onZoom={() => {}}
+          />
+          <RefreshPicker
+            onRefresh={handleRunBacktest}
+            onIntervalChanged={() => {}}
+            isLoading={isLoading}
+            noIntervalPicker={true}
+          />
+        </Stack>
       </div>
-    </Collapse>
+
+      {/* Scrollable results section */}
+      <div className={styles.scrollableContent}>
+        {isLoading && <LoadingPlaceholder text={t('alerting.backtest.loading', 'Running backtest...')} />}
+
+        {error && <Alert title={t('alerting.backtest.error-title', 'Failed to run backtest')}>{error.message}</Alert>}
+
+        {showRefreshBanner && !isLoading && !error && hasResults && (
+          <Alert
+            severity="info"
+            title={t('alerting.backtest.refresh-required-title', 'Rule definition updated')}
+            onRemove={() => setShowRefreshBanner(false)}
+          >
+            <Stack direction="column" gap={1}>
+              <Text>
+                <Trans i18nKey="alerting.backtest.refresh-required-message">
+                  The rule definition has been updated. Refresh the backtest to see results with the latest changes.
+                </Trans>
+              </Text>
+              <div>
+                <Button variant="primary" size="sm" onClick={handleRunBacktest}>
+                  <Trans i18nKey="alerting.backtest.refresh-button">Refresh backtest</Trans>
+                </Button>
+              </div>
+            </Stack>
+          </Alert>
+        )}
+
+        {!isLoading && !error && hasResults && notices.length > 0 && (
+          <Stack direction="column" gap={1}>
+            {notices.map((notice, index) => (
+              <Alert key={index} severity={notice.severity || 'info'} title="">
+                {notice.text}
+              </Alert>
+            ))}
+          </Stack>
+        )}
+
+        {!isLoading && !error && hasResults && (
+          <div className={styles.resultsContainer}>
+            {!isEmpty(commonLabels) && (
+              <Stack gap={1} alignItems="center" wrap="wrap">
+                <Stack gap={0.5} alignItems="center" minWidth="fit-content">
+                  <Text variant="bodySmall">
+                    <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
+                  </Text>
+                  <Tooltip
+                    content={t(
+                      'alerting.loki-state-history.tooltip-common-labels',
+                      'Common labels are the ones attached to all of the alert instances'
+                    )}
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+                <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
+              </Stack>
+            )}
+            {isEmpty(frameSubset) ? (
+              <div className={styles.emptyState}>
+                {emptyStateMessage}
+                {totalRecordsCount > 0 && (
+                  <Button variant="secondary" type="button" onClick={onFilterCleared}>
+                    <Trans i18nKey="alerting.loki-state-history.clear-filters">Clear filters</Trans>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className={styles.graphWrapper}>
+                  <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
+                </div>
+                {hasMoreInstances && (
+                  <div className={styles.moreInstancesWarning}>
+                    <Stack direction="row" alignItems="center" gap={1}>
+                      <Icon name="exclamation-triangle" size="sm" />
+                      <small>{`Only showing ${frameSubset.length} out of ${dataFrames.length} instances. Click on the labels to narrow down the results`}</small>
+                    </Stack>
+                  </div>
+                )}
+                <LogRecordViewerByTimestamp
+                  records={historyRecords}
+                  commonLabels={commonLabels}
+                  onRecordsRendered={(recordRefs) => (logsRef.current = recordRefs)}
+                  onLabelClick={onLogRecordLabelClick}
+                />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
