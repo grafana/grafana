@@ -4,11 +4,10 @@ import {
   mocksScopeDashboardBindings,
   subScopeLokiItems,
   subScopeMimirItems,
-} from '../tests/utils/mockData';
+} from './mockData';
 
 /**
- * Auto-mock for ScopesApiClient.
- * Jest automatically uses this when tests call: jest.mock('../ScopesApiClient')
+ * Mock ScopesApiClient for integration tests.
  */
 export const ScopesApiClient = jest.fn().mockImplementation(() => ({
   fetchScope: jest.fn().mockImplementation((name: string) => {

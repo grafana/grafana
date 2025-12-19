@@ -15,7 +15,7 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-jest.mock('../ScopesApiClient');
+jest.mock('../ScopesApiClient', () => require('./utils/mockScopesApiClient'));
 
 describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;
