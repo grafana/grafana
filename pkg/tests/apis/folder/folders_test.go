@@ -1261,15 +1261,13 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 			requestToAnotherOrg: true,
 		},
 	}
-	for _, mode := range []grafanarest.DualWriterMode{
-		// grafanarest.Mode0, // legacy only
-		// grafanarest.Mode2, // write both, read legacy
+	for _, modeDw := range []grafanarest.DualWriterMode{
+		grafanarest.Mode0, // legacy only
+		grafanarest.Mode2, // write both, read legacy
 		grafanarest.Mode3, // write both, read unified
-		// grafanarest.Mode4,
+		grafanarest.Mode4,
 	} {
-		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
-			modeDw := grafanarest.DualWriterMode(mode)
-
+		t.Run(fmt.Sprintf("Mode_%d", modeDw), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableDataMigrations: true,
 				AppModeProduction:     true,
