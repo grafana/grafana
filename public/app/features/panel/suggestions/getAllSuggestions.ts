@@ -22,21 +22,26 @@ interface PluginLoadResult {
   hasErrors: boolean;
 }
 
-/**
- * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
- */
-async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
-  // list of plugins to load is determined by the feature flag
-  const pluginIds: string[] = config.featureToggles.externalVizSuggestions
+function getPanelPluginIds(): string[] {
+  return config.featureToggles.externalVizSuggestions
     ? getAllPanelPluginMeta()
         .filter((panel) => panel.suggestions)
         .map((m) => m.id)
     : panelsToCheckFirst;
+}
 
+/**
+ * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
+ */
+export async function loadPlugins(pluginIds: string[]): Promise<PluginLoadResult> {
   // import the plugins in parallel using Promise.allSettled
   const plugins: PanelPlugin[] = [];
   let hasErrors = false;
-  const settledPromises = await Promise.allSettled(pluginIds.map(importPanelPlugin));
+  const settledPromises = await Promise.allSettled(
+    pluginIds.map(async (pluginId) => {
+      return await importPanelPlugin(pluginId);
+    })
+  );
 
   for (let i = 0; i < settledPromises.length; i++) {
     const settled = settledPromises[i];
@@ -44,7 +49,6 @@ async function getPanelsWithSuggestions(): Promise<PluginLoadResult> {
       plugins.push(settled.value);
     } else {
       const pluginId = pluginIds[i];
-
       console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
 
       if (isBuiltInPlugin(pluginId)) {
@@ -126,7 +130,8 @@ export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsRe
   const dataSummary = getPanelDataSummary(data?.series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
-  const { plugins, hasErrors: pluginLoadErrors } = await getPanelsWithSuggestions();
+  const pluginIds: string[] = getPanelPluginIds();
+  const { plugins, hasErrors: pluginLoadErrors } = await loadPlugins(pluginIds);
 
   let pluginSuggestionsError = false;
   for (const plugin of plugins) {

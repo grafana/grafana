@@ -1,4 +1,5 @@
 import {
+  AppEvents,
   DataFrame,
   FieldType,
   getDefaultTimeRange,
@@ -18,10 +19,20 @@ import {
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { config } from 'app/core/config';
+import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
+import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
 import { panelsToCheckFirst } from './consts';
-import { getAllSuggestions, sortSuggestions } from './getAllSuggestions';
+import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
+
+jest.mock('app/core/app_events', () => ({
+  appEvents: {
+    subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
+    publish: jest.fn(),
+  },
+}));
 
 config.featureToggles.externalVizSuggestions = true;
 
@@ -551,6 +562,60 @@ describe('Visualization suggestions error handling', () => {
     expect(result).toHaveProperty('suggestions');
     expect(result).toHaveProperty('hasErrors');
     expect(result.hasErrors).toBe(false);
+  });
+});
+
+// this needs to happen before any
+describe('loadPlugins', () => {
+  beforeEach(() => {
+    clearPanelPluginCache();
+  });
+
+  afterEach(() => {
+    if (jest.isMockFunction(pluginImporter.importPanel)) {
+      jest.mocked(pluginImporter.importPanel).mockRestore();
+    }
+  });
+
+  it('should swallow errors when failing to load core plugins', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    const _importPanel = pluginImporter.importPanel;
+    jest.spyOn(pluginImporter, 'importPanel').mockImplementation(async (meta) => {
+      if (meta.id === 'timeseries') {
+        throw new Error('Failed to load core panel plugin');
+      }
+      return await _importPanel(meta);
+    });
+
+    const panelIds = ['timeseries', 'table'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins).toEqual([expect.objectContaining({ meta: expect.objectContaining({ id: 'table' }) })]);
+    expect(hasErrors).toBe(true);
+    expect(appEvents.publish).not.toHaveBeenCalled();
+  });
+
+  it('should swallow errors when failing to load external plugins', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    const panelIds = ['non-existent-panel'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins).toEqual([]);
+    expect(hasErrors).toBe(false);
+    expect(appEvents.publish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: [expect.stringContaining('Failed to load panel plugin: non-existent-panel.')],
+    });
+  });
+
+  it('should load panel plugins with suggestions', async () => {
+    const panelIds = ['timeseries', 'table'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins.map((p) => p.meta.id)).toEqual(expect.arrayContaining(['timeseries', 'table']));
+    expect(hasErrors).toBe(false);
   });
 });
 
