@@ -132,20 +132,20 @@ To connect your GitHub repository:
 
 ### Choose what to synchronize
 
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. 
 
-If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked:
+- If you try to perform a full instance sync, the connection will be blocked.
+- If you opted for full instance sync, delete the provisioned repository and connect again with folder sync.
 
-- You won't be able to create new alerts or library panels after setup is completed.
-- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
+You can sync external resources into a new folder without affecting the rest of your instance. To set up synchronization:
 
-To set up synchronization:
+1. Select which resources you want to sync.
 
-1. Select which resources you want to sync with a new Grafana folder (with up to 10 connections). You can sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
-
-1. Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 
 1. Click **Synchronize** to continue.
+
+1. You can repeat this process for up to 10 connections.
 
 ### Synchronize with external storage
 

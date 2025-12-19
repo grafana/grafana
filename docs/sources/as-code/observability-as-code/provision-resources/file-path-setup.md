@@ -141,13 +141,17 @@ If you try to perform a full instance sync with resources that contain alerts or
 
 #### Set up synchronization
 
-Choose to sync certain resources to a new Grafana folder (with up to 10 connections).
+You can sync external resources into a new folder without affecting the rest of your instance. 
 
-You can sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+To set up synchronization:
 
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Select which resources you want to sync.
 
-Click **Synchronize** to continue.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
+1. Click **Synchronize** to continue.
+
+1. You can repeat this process for up to 10 connections.
 
 ### Synchronize with external storage
 
