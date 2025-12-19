@@ -10,7 +10,7 @@ import (
 
 // DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
 // If a resource has entries at or below this count, it will be migrated.
-const DefaultAutoMigrationThreshold = 0
+const DefaultAutoMigrationThreshold = 10
 
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
