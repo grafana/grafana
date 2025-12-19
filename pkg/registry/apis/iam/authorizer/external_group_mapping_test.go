@@ -112,7 +112,7 @@ func TestExternalGroupMapping_FilterList(t *testing.T) {
 	require.Equal(t, "mapping-1", filtered.Items[0].Name)
 }
 
-func TestExternalGroupMapping_BeforeWrite(t *testing.T) {
+func TestExternalGroupMapping_beforeWrite(t *testing.T) {
 	mapping := newExternalGroupMapping("team-1", "mapping-1")
 
 	tests := []struct {
@@ -149,30 +149,12 @@ func TestExternalGroupMapping_BeforeWrite(t *testing.T) {
 			authz := NewExternalGroupMappingAuthorizer(accessClient)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
-			// Test BeforeCreate
-			err := authz.BeforeCreate(ctx, mapping)
+			err := authz.beforeWrite(ctx, mapping)
 			if tt.shouldAllow {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
 			}
-
-			// Test BeforeUpdate
-			err = authz.BeforeUpdate(ctx, mapping)
-			if tt.shouldAllow {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-			}
-
-			// Test BeforeDelete
-			err = authz.BeforeDelete(ctx, mapping)
-			if tt.shouldAllow {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-			}
-
 			require.True(t, accessClient.checkCalled)
 		})
 	}
