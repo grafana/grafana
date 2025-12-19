@@ -134,7 +134,7 @@ Full instance sync is not available in Grafana Cloud and is experimental and uns
 
 {{< /admonition >}}
 
-To have access to full instance sync you must explicitly enable the option. 
+To have access to full instance sync you must explicitly enable the option.
 
 The following applies:
 
@@ -143,7 +143,7 @@ The following applies:
 
 #### Set up synchronization
 
-You can sync external resources into a new folder without affecting the rest of your instance. 
+You can sync external resources into a new folder without affecting the rest of your instance.
 
 To set up synchronization:
 

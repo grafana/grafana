@@ -132,7 +132,7 @@ To connect your GitHub repository:
 
 ### Choose what to synchronize
 
-You can sync external resources into a new folder without affecting the rest of your instance. 
+You can sync external resources into a new folder without affecting the rest of your instance.
 
 To set up synchronization:
 
@@ -146,13 +146,13 @@ To set up synchronization:
 
 {{< admonition type="note" >}}
 
-Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage). 
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
 
 {{< /admonition >}}
 
 #### Full instance sync
 
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. 
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
 To have access to this option you must enable experimental instance sync on purpose.
 
