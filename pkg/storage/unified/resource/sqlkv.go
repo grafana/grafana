@@ -11,6 +11,7 @@ import (
 	"iter"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -556,7 +557,7 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 }
 
 func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
-	panic("not implemented!")
+	return time.Now().Unix(), nil
 }
 
 func closeRows[T any](rows db.Rows, yield func(T, error) bool) {

@@ -44,11 +44,5 @@ func TestSQLKV(t *testing.T) {
 		kv, err := resource.NewSQLKV(eDB)
 		require.NoError(t, err)
 		return kv
-	}, &KVTestOptions{
-		NSPrefix: "sql-kv-test",
-		SkipTests: map[string]bool{
-			TestKVConcurrent:    true,
-			TestKVUnixTimestamp: true,
-		},
-	})
+	}, &KVTestOptions{NSPrefix: "sql-kv-test"})
 }
