@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"context"
 	"testing"
 
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -77,7 +78,7 @@ func TestRegisterMigrations(t *testing.T) {
 			})
 
 			// We pass nils for migrator dependencies because our fake registerFuncs don't use them
-			err := registerMigrations(cfg, nil, nil, nil)
+			err := registerMigrations(context.Background(), cfg, nil, nil, nil, nil)
 
 			if tt.wantErr {
 				require.Error(t, err, "expected error for mismatched enablement")

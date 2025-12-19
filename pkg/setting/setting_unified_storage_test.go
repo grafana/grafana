@@ -47,7 +47,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 					DualWriterMode:                      5,
 					DualWriterMigrationDataSyncDisabled: true,
 					EnableMigration:                     isEnabled,
-					AutoMode5Threshold:                  DefaultAutoMode5Threshold,
+					EnableAutoMigrationThreshold:        DefaultAutoMode5Threshold,
 				}, resourceCfg, migratedResource)
 			}
 		}
@@ -72,7 +72,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			DualWriterPeriodicDataSyncJobEnabled: true,
 			DataSyncerRecordsLimit:               1001,
 			DataSyncerInterval:                   time.Minute * 10,
-			AutoMode5Threshold:                   DefaultAutoMode5Threshold,
+			EnableAutoMigrationThreshold:         DefaultAutoMode5Threshold,
 		})
 
 		validateMigratedResources(false)

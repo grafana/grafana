@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// DefaultAutoMode5Threshold is the default threshold for auto mode 5 switching.
-// If a resource has entries at or below this count, it will be switched to mode 5.
-const DefaultAutoMode5Threshold = 0
+// DefaultEnableAutoMigrationThreshold is the default threshold for auto migration switching.
+// If a resource has entries at or below this count, it will be migrated.
+const DefaultEnableAutoMigrationThreshold = 0
 
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
@@ -63,8 +63,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
-		// parse autoMode5Threshold from resource section
-		autoMode5Threshold := section.Key("autoMode5Threshold").MustInt(DefaultAutoMode5Threshold)
+		// parse enableAutoMigrationThreshold from resource section
+		enableAutoMigrationThreshold := section.Key("enableAutoMigrationThreshold").MustInt(DefaultEnableAutoMigrationThreshold)
 
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
@@ -73,7 +73,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
 			EnableMigration:                      enableMigration,
-			AutoMode5Threshold:                   autoMode5Threshold,
+			EnableAutoMigrationThreshold:         enableAutoMigrationThreshold,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -185,9 +185,9 @@ func (cfg *Cfg) GetUnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	return cfg.UnifiedStorage[resource]
 }
 
-// EnableAutoMode5ForResource enables migration and sets mode 5 for a resource.
+// EnableAutoMode5 enables migration and sets mode 5 for a resource.
 // This is used when a resource has entries below the auto mode 5 threshold.
-func (cfg *Cfg) EnableAutoMode5ForResource(resource string) {
+func (cfg *Cfg) EnableAutoMode5(resource string) {
 	if cfg.UnifiedStorage == nil {
 		cfg.UnifiedStorage = make(map[string]UnifiedStorageConfig)
 	}
