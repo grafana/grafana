@@ -535,6 +535,10 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
+  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;
