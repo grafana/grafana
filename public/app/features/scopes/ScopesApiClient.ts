@@ -89,8 +89,9 @@ export class ScopesApiClient {
   public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
     try {
       const result = await dispatch(
+        // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
         scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate({
-          name: 'scope_dashboard_bindings',
+          name: '',
           scope: scopeNames,
         })
       );
@@ -109,8 +110,9 @@ export class ScopesApiClient {
   public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
     try {
       const result = await dispatch(
+        // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
         scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate({
-          name: 'scope_navigations',
+          name: '',
           scope: scopeNames,
         })
       );
