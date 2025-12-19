@@ -10,6 +10,7 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
 import {
   ScopeNavigation,
+  ScopeNavigationSpec,
   SuggestedNavigationsFolder,
   SuggestedNavigationsFoldersMap,
   SuggestedNavigationsMap,
@@ -252,9 +253,14 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ...currentFilteredFolder.suggestedNavigations,
         ...rootSubScopeFolder.suggestedNavigations,
       };
-    }
 
-    this.updateState({ folders, filteredFolders });
+      this.updateState({ folders, filteredFolders });
+
+      // Preload children for any newly added folders with preLoadSubScopeChildren
+      this.preloadSubScopeChildren(rootSubScopeFolder.folders, path);
+    } else {
+      this.updateState({ folders, filteredFolders });
+    }
   };
 
   // Helper to get a folder at a given path
@@ -315,6 +321,25 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         loading: false,
         drawerOpened: res.length > 0,
       });
+
+      // Preload children for folders with preLoadSubScopeChildren set
+      this.preloadSubScopeChildren(folders[''].folders, ['']);
+    }
+  };
+
+  /**
+   * Preloads children for folders that have preLoadSubScopeChildren set to true.
+   * This fetches the subScope items immediately when the navigation is first loaded,
+   * or when a parent subScope folder is fetched.
+   * @param foldersToCheck - The folders to check for preLoadSubScopeChildren
+   * @param basePath - The path to prepend when building the full path for each folder
+   */
+  private preloadSubScopeChildren = (foldersToCheck: SuggestedNavigationsFoldersMap, basePath: string[]) => {
+    for (const [folderKey, folder] of Object.entries(foldersToCheck)) {
+      if (folder.preLoadSubScopeChildren && folder.subScopeName) {
+        const path = [...basePath, folderKey];
+        this.fetchSubScopeItems(path, folder.subScopeName);
+      }
     }
   };
 
@@ -386,12 +411,22 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         // All folders with the same subScope will load the same content when expanded
         const folderKey = `${subScope}-${navigation.metadata.name}`;
         if (!rootNode.folders[folderKey]) {
+          let disableSubScopeSelection: ScopeNavigationSpec['disableSubScopeSelection'] = undefined;
+          if ('disableSubScopeSelection' in navigation.spec) {
+            disableSubScopeSelection = navigation.spec.disableSubScopeSelection;
+          }
+          let preLoadSubScopeChildren: ScopeNavigationSpec['preLoadSubScopeChildren'] = undefined;
+          if ('preLoadSubScopeChildren' in navigation.spec) {
+            preLoadSubScopeChildren = navigation.spec.preLoadSubScopeChildren;
+          }
           rootNode.folders[folderKey] = {
             title: navigationTitle,
             expanded,
             folders: {},
             suggestedNavigations: {},
             subScopeName: subScope,
+            disableSubScopeSelection,
+            preLoadSubScopeChildren,
           };
         }
         if (expanded && !rootNode.folders[folderKey].expanded) {

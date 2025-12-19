@@ -60,10 +60,7 @@ export function PluginDetailsPage({
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
-  const pageParam = queryParams.get('page');
-  const pageId = pageParam && isPluginTabId(pageParam) ? pageParam : undefined;
-  const { navModel, activePageId } = usePluginDetailsTabs(plugin, pageId, isNarrowScreen);
-
+  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
