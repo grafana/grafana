@@ -7,7 +7,12 @@ import {
   mocksScopeDashboardBindings,
   subScopeLokiItems,
   subScopeMimirItems,
+  navigationWithSubScope,
+  navigationWithSubScope2,
+  navigationWithSubScopeAndGroups,
 } from './mockData';
+
+export { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups };
 
 export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
 
