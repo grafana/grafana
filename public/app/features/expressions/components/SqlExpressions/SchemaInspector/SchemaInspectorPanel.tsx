@@ -221,7 +221,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(1),
     overflowY: 'auto',
     overflowX: 'auto',
-    minHeight: 0, // Allow flex child to shrink
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.primary,
