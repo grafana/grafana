@@ -14,9 +14,11 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GRAFANA_ROOT="$SCRIPT_DIR/../../../../.."
-ENTERPRISE_DIR="$SCRIPT_DIR/../../../extensions/api/clients/scope/v0alpha1"
-OSS_DIR="$SCRIPT_DIR"
+GRAFANA_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+
+# Source and destination directories for the generated API client
+ENTERPRISE_SCOPE_API_DIR="$GRAFANA_ROOT/public/app/extensions/api/clients/scope/v0alpha1"
+OSS_SCOPE_API_DIR="$SCRIPT_DIR"
 
 cd "$GRAFANA_ROOT"
 
@@ -30,12 +32,12 @@ fi
 echo "Step 1: Generating Enterprise API client from OpenAPI spec..."
 yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts
 
-if [ ! -f "$ENTERPRISE_DIR/endpoints.gen.ts" ]; then
+if [ ! -f "$ENTERPRISE_SCOPE_API_DIR/endpoints.gen.ts" ]; then
   echo "Error: Enterprise endpoints.gen.ts not found after generation"
   exit 1
 fi
 
 echo "Step 2: Copying endpoints.gen.ts from Enterprise to OSS..."
-cp "$ENTERPRISE_DIR/endpoints.gen.ts" "$OSS_DIR/endpoints.gen.ts"
+cp "$ENTERPRISE_SCOPE_API_DIR/endpoints.gen.ts" "$OSS_SCOPE_API_DIR/endpoints.gen.ts"
 
 echo "Done! Scope API client synced from Enterprise."
