@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -210,13 +209,13 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
-	// Replace empty folder with "general" on read (this was not a requirement early on)
-	if s.opts.EnableFolderSupport {
-		m, _ := utils.MetaAccessor(obj)
-		if m != nil && m.GetFolder() == "" {
-			m.SetFolder(folder.GeneralFolderUID)
-		}
-	}
+	// TODO!!! Replace empty folder with "general" on read (this was not a requirement early on)
+	// if s.opts.EnableFolderSupport {
+	// 	m, _ := utils.MetaAccessor(obj)
+	// 	if m != nil && m.GetFolder() == "" {
+	// 		m.SetFolder(folder.GeneralFolderUID)
+	// 	}
+	// }
 	return obj, err
 }
 
