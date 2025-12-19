@@ -144,6 +144,12 @@ To set up synchronization:
 
 1. You can repeat this process for up to 10 connections.
 
+{{< admonition type="note" >}}
+
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage). 
+
+{{< /admonition >}}
+
 #### Full instance sync
 
 Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. 
