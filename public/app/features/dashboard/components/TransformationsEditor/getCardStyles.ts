@@ -46,7 +46,6 @@ export const getCardStyles = (theme: GrafanaTheme2) => {
     }),
     newCard: css({
       maxWidth: '200px',
-      gridTemplateRows: 'min-content 0 1fr 0',
       marginBottom: 0,
     }),
     pluginStateInfoWrapper: css({
