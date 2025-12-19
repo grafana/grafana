@@ -44,6 +44,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	const repo = "local-repository"
 	testRepo := TestRepo{
 		Name:               repo,
+		Target:             "instance", // Export is only supported for instance sync
 		Copies:             map[string]string{}, // No initial files needed for export test
 		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
 		ExpectedFolders:    0,                   // No folders expected after sync
@@ -177,6 +178,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	const repo = "version-test-repository"
 	testRepo := TestRepo{
 		Name:               repo,
+		Target:             "instance", // Export is only supported for instance sync
 		Copies:             map[string]string{},
 		ExpectedDashboards: len(tests),
 		ExpectedFolders:    0,
