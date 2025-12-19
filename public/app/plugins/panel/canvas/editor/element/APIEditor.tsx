@@ -23,6 +23,7 @@ export interface APIEditorConfig {
   contentType?: string;
   queryParams?: Array<[string, string]>;
   headerParams?: Array<[string, string]>;
+  successMessage: string;
 }
 
 const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
@@ -121,6 +122,16 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
+  const onSuccessMessageChange = useCallback(
+    (successMessage = '') => {
+      onChange({
+        ...value,
+        successMessage,
+      });
+    },
+    [onChange, value]
+  );
+
   const renderJSON = (data: string) => {
     try {
       const json = JSON.parse(interpolateVariables(data));
@@ -192,6 +203,14 @@ export function APIEditor({ value, context, onChange }: Props) {
       <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')}>
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
+      <Field label={t('canvas.apieditor.label-successmessage', 'Success Message')}>
+        <StringValueEditor
+          context={context}
+          value={value.successMessage}
+          onChange={onSuccessMessageChange}
+          item={dummyStringSettings}
+        />
+      </Field>
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
         <Field label={t('canvas.apieditor.label-payload', 'Payload')}>
           <StringValueEditor
@@ -202,6 +221,7 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </Field>
       )}
+
       {renderTestAPIButton(value)}
       <br />
       {value?.method !== HttpRequestMethod.GET &&
