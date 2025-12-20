@@ -18,6 +18,11 @@ declare global {
      */
     dashboardApi?: {
       help: () => string;
+      schema: {
+        getSources: (space?: number) => string;
+        getDashboard: (space?: number) => Promise<string>;
+        getDashboardSync: (space?: number) => string;
+      };
       navigation: {
         getCurrent: (space?: number) => string;
         selectTab: (tabJson: string) => void;
