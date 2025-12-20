@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 
 import type { DashboardSceneJsonApiV2 } from '@grafana/runtime';
 
+import { getCurrentDashboardErrors } from './currentDashboardErrors';
 import { getCurrentDashboardKindV2 as getCurrentDashboardResourceV2 } from './currentDashboardKindV2';
 import { applyCurrentDashboardSpecV2 } from './currentDashboardSpecApplyV2';
 
@@ -51,6 +52,10 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
   getCurrentDashboard: (space = 2) => {
     const { resource } = getCurrentDashboardResourceWithFallback();
     return JSON.stringify(resource, null, space);
+  },
+
+  getCurrentDashboardErrors: (space = 2) => {
+    return JSON.stringify(getCurrentDashboardErrors(), null, space);
   },
 
   applyCurrentDashboard: (resourceJson: string) => {

@@ -2,6 +2,7 @@ import { PanelData, RawTimeRange } from '@grafana/data';
 import {
   applyCurrentDashboard,
   getCurrentDashboard,
+  getCurrentDashboardErrors,
 } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -21,6 +22,7 @@ declare global {
      */
     dashboardApi?: {
       getCurrentDashboard: (space?: number) => string;
+      getCurrentDashboardErrors: (space?: number) => string;
       applyCurrentDashboard: (resourceJson: string) => void;
     };
   }
@@ -70,6 +72,7 @@ export function initWindowRuntime() {
   // Expose the same API that plugins use via @grafana/runtime, but on `window` for easy console access.
   window.dashboardApi = {
     getCurrentDashboard,
+    getCurrentDashboardErrors,
     applyCurrentDashboard,
   };
 }

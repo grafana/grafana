@@ -5,6 +5,14 @@ export interface DashboardSceneJsonApiV2 {
   getCurrentDashboard(space?: number): string;
 
   /**
+   * Read query errors for the currently open dashboard (JSON string).
+   *
+   * This returns a JSON array of objects shaped like:
+   * `{ panelId, panelTitle, refId?, datasource?, message, severity }`.
+   */
+  getCurrentDashboardErrors(space?: number): string;
+
+  /**
    * Apply a v2beta1 Dashboard kind JSON (JSON string).
    *
    * Implementations must enforce **spec-only** updates by rejecting any changes to
@@ -43,6 +51,15 @@ export function getDashboardSceneJsonApiV2(): DashboardSceneJsonApiV2 {
  */
 export function getCurrentDashboard(space = 2): string {
   return getDashboardSceneJsonApiV2().getCurrentDashboard(space);
+}
+
+/**
+ * Plugin-friendly helper to read aggregated query errors for the current dashboard (JSON string).
+ *
+ * @public
+ */
+export function getCurrentDashboardErrors(space = 2): string {
+  return getDashboardSceneJsonApiV2().getCurrentDashboardErrors(space);
 }
 
 /**
