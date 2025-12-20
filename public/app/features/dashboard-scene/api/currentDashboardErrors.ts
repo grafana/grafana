@@ -2,9 +2,9 @@ import { DataQueryError, DataQueryErrorType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import type { SceneDataQuery, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
+import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 
 export type DashboardPanelErrorSeverity = 'error' | 'warning';
 

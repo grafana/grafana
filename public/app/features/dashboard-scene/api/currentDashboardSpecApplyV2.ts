@@ -2,7 +2,6 @@ import { isEqual } from 'lodash';
 
 import { config } from '@grafana/runtime';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { Resource } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -40,7 +39,7 @@ export function applyCurrentDashboardSpecV2(nextSpec: DashboardV2Spec): void {
   assertDashboardV2Enabled();
 
   // Validate (throws on error)
-  validateDashboardSchemaV2(nextSpec as unknown);
+  validateDashboardSchemaV2(nextSpec);
 
   const { mgr, dashboard: currentScene } = getCurrentSceneOrThrow();
 
@@ -50,7 +49,8 @@ export function applyCurrentDashboardSpecV2(nextSpec: DashboardV2Spec): void {
     throw new Error('Current dashboard is not using schema v2');
   }
 
-  const k8sMeta = currentScene.state.meta.k8s;
+  const currentResource = getCurrentDashboardKindV2();
+  const k8sMeta = currentResource.metadata;
   if (!k8sMeta) {
     throw new Error('Current dashboard is missing Kubernetes metadata');
   }
@@ -62,7 +62,7 @@ export function applyCurrentDashboardSpecV2(nextSpec: DashboardV2Spec): void {
     kind: 'DashboardWithAccessInfo',
     metadata: k8sMeta,
     spec: nextSpec,
-    status: {} as Status,
+    status: {},
     access: {
       url: currentScene.state.meta.url,
       slug: currentScene.state.meta.slug,
@@ -79,15 +79,24 @@ export function applyCurrentDashboardSpecV2(nextSpec: DashboardV2Spec): void {
 
   const nextScene = transformSaveModelSchemaV2ToScene(dto);
 
-  // Keep edit mode semantics consistent with other JSON-apply flows:
-  // - Enter edit mode if needed
-  // - Mark dirty because the spec changed
+  // IMPORTANT: Preserve the *saved baseline* (initialSaveModel) from the currently loaded dashboard,
+  // otherwise the change tracker will treat the applied spec as the new baseline and the dashboard
+  // won't become saveable (Save button stays non-primary).
+  const initialSaveModel = currentScene.getInitialSaveModel();
+  const hasBaseline = Boolean(initialSaveModel && isDashboardV2Spec(initialSaveModel));
+  if (initialSaveModel && isDashboardV2Spec(initialSaveModel)) {
+    nextScene.setInitialSaveModel(initialSaveModel, k8sMeta, 'dashboard.grafana.app/v2beta1');
+  }
+
+  // Preserve edit/view mode. Don't force-enter edit mode; that's a UI side effect.
   if (currentScene.state.isEditing) {
     nextScene.onEnterEditMode();
-  } else {
-    nextScene.onEnterEditMode();
   }
-  nextScene.setState({ isDirty: true });
+
+  // Set dirty based on the saved baseline (if present). This prevents the save button from being
+  // stuck "blue" when the applied spec matches the baseline.
+  const shouldBeDirty = hasBaseline ? !isEqual(nextSpec, initialSaveModel) : true;
+  nextScene.setState({ isDirty: shouldBeDirty });
 
   // Keep cache coherent for the currently open dashboard
   if (currentScene.state.uid) {
@@ -102,7 +111,7 @@ export function applyCurrentDashboardSpecV2(nextSpec: DashboardV2Spec): void {
  *
  * It rejects any attempt to change `apiVersion`, `kind`, `metadata`, or `status` from the currently open dashboard.
  */
-export function applyCurrentDashboardKindV2(resource: Resource<DashboardV2Spec, Status, 'Dashboard'>): void {
+export function applyCurrentDashboardKindV2(resource: Resource<DashboardV2Spec, unknown, 'Dashboard'>): void {
   assertDashboardV2Enabled();
 
   const current = getCurrentDashboardKindV2();

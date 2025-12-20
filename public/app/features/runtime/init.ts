@@ -1,9 +1,5 @@
 import { PanelData, RawTimeRange } from '@grafana/data';
-import {
-  applyCurrentDashboard,
-  getCurrentDashboard,
-  getCurrentDashboardErrors,
-} from '@grafana/runtime';
+import { getDashboardApi } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -21,9 +17,28 @@ declare global {
      * Intended for browser console usage.
      */
     dashboardApi?: {
-      getCurrentDashboard: (space?: number) => string;
-      getCurrentDashboardErrors: (space?: number) => string;
-      applyCurrentDashboard: (resourceJson: string) => void;
+      help: () => string;
+      navigation: {
+        getCurrent: (space?: number) => string;
+        selectTab: (tabJson: string) => void;
+        focusRow: (rowJson: string) => void;
+        focusPanel: (panelJson: string) => void;
+      };
+      variables: {
+        getCurrent: (space?: number) => string;
+        apply: (varsJson: string) => void;
+      };
+      timeRange: {
+        getCurrent: (space?: number) => string;
+        apply: (timeRangeJson: string) => void;
+      };
+      errors: {
+        getCurrent: (space?: number) => string;
+      };
+      dashboard: {
+        getCurrent: (space?: number) => string;
+        apply: (resourceJson: string) => void;
+      };
     };
   }
 }
@@ -70,9 +85,6 @@ export function initWindowRuntime() {
   };
 
   // Expose the same API that plugins use via @grafana/runtime, but on `window` for easy console access.
-  window.dashboardApi = {
-    getCurrentDashboard,
-    getCurrentDashboardErrors,
-    applyCurrentDashboard,
-  };
+  // Only the grouped API surface is exposed.
+  window.dashboardApi = getDashboardApi();
 }

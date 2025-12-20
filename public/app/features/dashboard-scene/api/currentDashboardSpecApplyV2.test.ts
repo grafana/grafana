@@ -58,11 +58,13 @@ describe('current dashboard spec apply API', () => {
         isEditing: true,
       },
       getSaveModel: () => currentSpec,
+      getInitialSaveModel: () => currentSpec,
     };
 
     const nextScene = {
       onEnterEditMode: jest.fn(),
       setState: jest.fn(),
+      setInitialSaveModel: jest.fn(),
     };
 
     transformSaveModelSchemaV2ToScene.mockReturnValue(nextScene);
@@ -78,10 +80,63 @@ describe('current dashboard spec apply API', () => {
     applyCurrentDashboardSpecV2(nextSpec);
 
     expect(transformSaveModelSchemaV2ToScene).toHaveBeenCalledTimes(1);
+    expect(nextScene.setInitialSaveModel).toHaveBeenCalledWith(currentSpec, currentScene.state.meta.k8s, 'dashboard.grafana.app/v2beta1');
     expect(nextScene.onEnterEditMode).toHaveBeenCalled();
     expect(nextScene.setState).toHaveBeenCalledWith({ isDirty: true });
     expect(mgr.setSceneCache).toHaveBeenCalledWith('dash-uid', nextScene);
     expect(mgr.setState).toHaveBeenCalledWith({ dashboard: nextScene });
+  });
+
+  it('applyCurrentDashboardSpecV2 does not mark dirty when the applied spec matches the saved baseline', () => {
+    const currentSpec = defaultDashboardV2Spec();
+    const nextSpec = { ...currentSpec };
+
+    const currentScene = {
+      state: {
+        uid: 'dash-uid',
+        meta: {
+          url: '/d/dash-uid/slug',
+          slug: 'slug',
+          canSave: true,
+          canEdit: true,
+          canDelete: true,
+          canShare: true,
+          canStar: true,
+          canAdmin: true,
+          publicDashboardEnabled: false,
+          k8s: {
+            name: 'dash-uid',
+            resourceVersion: '1',
+            creationTimestamp: 'now',
+            annotations: {},
+            labels: {},
+          },
+        },
+        isEditing: true,
+      },
+      getSaveModel: () => currentSpec,
+      getInitialSaveModel: () => currentSpec,
+    };
+
+    const nextScene = {
+      onEnterEditMode: jest.fn(),
+      setState: jest.fn(),
+      setInitialSaveModel: jest.fn(),
+    };
+
+    transformSaveModelSchemaV2ToScene.mockReturnValue(nextScene);
+
+    const mgr = {
+      state: { dashboard: currentScene },
+      setSceneCache: jest.fn(),
+      setState: jest.fn(),
+    };
+
+    getDashboardScenePageStateManager.mockReturnValue(mgr);
+
+    applyCurrentDashboardSpecV2(nextSpec);
+
+    expect(nextScene.setState).toHaveBeenCalledWith({ isDirty: false });
   });
 
   it('applyCurrentDashboardKindV2 rejects metadata changes and applies only spec when unchanged', () => {
