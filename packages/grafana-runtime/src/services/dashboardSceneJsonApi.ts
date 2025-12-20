@@ -65,6 +65,16 @@ export interface DashboardSceneJsonApiV2 {
   getCurrentDashboardNavigation(space?: number): string;
 
   /**
+   * Read the currently selected element (edit pane selection) (JSON string).
+   *
+   * This returns JSON shaped like:
+   * `{ isEditing: boolean, selection: null | { mode: "single" | "multi", item?: object, items?: object[] } }`.
+   *
+   * Note: selection is only meaningful in edit mode. Implementations should return `selection: null` when not editing.
+   */
+  getCurrentDashboardSelection(space?: number): string;
+
+  /**
    * Scroll/focus a row within the current dashboard (JSON string).
    *
    * Accepts JSON shaped like:
@@ -87,6 +97,29 @@ export interface DashboardSceneJsonApiV2 {
    * `apiVersion`, `kind`, `metadata`, or `status`.
    */
   applyCurrentDashboard(resourceJson: string): void;
+
+  /**
+   * Preview a set of in-place dashboard operations (JSON string).
+   *
+   * Returns JSON shaped like:
+   * `{ ok: boolean, applied?: number, unsupported?: number, errors?: string[] }`
+   *
+   * @internal Experimental: this API is intended for automation and may evolve.
+   */
+  previewCurrentDashboardOps(opsJson: string): string;
+
+  /**
+   * Apply a set of in-place dashboard operations (JSON string).
+   *
+   * Implementations should update the currently open DashboardScene in place when possible,
+   * to avoid unnecessary panel/query reloads.
+   *
+   * Returns JSON shaped like:
+   * `{ ok: boolean, applied?: number, didRebuild?: boolean, errors?: string[] }`
+   *
+   * @internal Experimental: this API is intended for automation and may evolve.
+   */
+  applyCurrentDashboardOps(opsJson: string): string;
 }
 
 let singletonInstance: DashboardSceneJsonApiV2 | undefined;
@@ -289,6 +322,21 @@ export function getDashboardApi() {
         'Read/apply dashboard:',
         '- dashboard.getCurrent(space?): string',
         '- dashboard.apply(resourceJson: string): void',
+        '- dashboard.previewOps(opsJson: string): string',
+        '- dashboard.applyOps(opsJson: string): string',
+        '  - Ops are applied in-place when possible to avoid full dashboard reloads.',
+        '  - Supported ops (JSON array elements):',
+        '    - { op: "mergePanelConfig", panelId, merge: { vizConfig: { fieldConfig: { defaults: {...} }, options: {...} } } }',
+        '    - { op: "setPanelTitle", panelId, title }',
+        '    - { op: "setGridPos", panelId, x, y, w, h }',
+        '    - { op: "addPanel", title?, pluginId?, rowTitle?, rowKey? }',
+        '    - { op: "removePanel", panelId }',
+        '    - { op: "addRow", title? }',
+        '    - { op: "removeRow", title? | rowKey? }',
+        '    - { op: "movePanelToRow", panelId, rowKey? | rowTitle? }',
+        '    - { op: "movePanelToTab", panelId, tabTitle? | tabSlug? }',
+        '    - { op: "addTab", title? }',
+        '    - { op: "removeTab", title? | slug? }',
         '  - resourceJson must be a v2beta1 Dashboard kind object:',
         '    { apiVersion: "dashboard.grafana.app/v2beta1", kind: "Dashboard", metadata: {...}, spec: {...}, status: {...} }',
         '',
@@ -311,6 +359,8 @@ export function getDashboardApi() {
         'Navigation:',
         '- navigation.getCurrent(space?): string',
         '  - returns JSON: { tab: { slug: string, title?: string } | null }',
+        '- navigation.getSelection(space?): string',
+        '  - returns JSON: { isEditing: boolean, selection: null | { mode: "single" | "multi", item?: object, items?: object[] } }',
         '- navigation.selectTab(tabJson: string): void',
         '  - accepts JSON: { title?: string, slug?: string }',
         '- navigation.focusRow(rowJson: string): void',
@@ -384,6 +434,8 @@ export function getDashboardApi() {
     dashboard: {
       getCurrent: (space = 2) => api.getCurrentDashboard(space),
       apply: (resourceJson: string) => api.applyCurrentDashboard(resourceJson),
+      previewOps: (opsJson: string) => api.previewCurrentDashboardOps(opsJson),
+      applyOps: (opsJson: string) => api.applyCurrentDashboardOps(opsJson),
     },
     errors: {
       getCurrent: (space = 2) =>
@@ -399,6 +451,7 @@ export function getDashboardApi() {
     },
     navigation: {
       getCurrent: (space = 2) => api.getCurrentDashboardNavigation(space),
+      getSelection: (space = 2) => api.getCurrentDashboardSelection(space),
       selectTab: (tabJson: string) => api.selectCurrentDashboardTab(tabJson),
       focusRow: (rowJson: string) => api.focusCurrentDashboardRow(rowJson),
       focusPanel: (panelJson: string) => api.focusCurrentDashboardPanel(panelJson),

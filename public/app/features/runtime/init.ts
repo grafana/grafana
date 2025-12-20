@@ -25,6 +25,7 @@ declare global {
       };
       navigation: {
         getCurrent: (space?: number) => string;
+        getSelection: (space?: number) => string;
         selectTab: (tabJson: string) => void;
         focusRow: (rowJson: string) => void;
         focusPanel: (panelJson: string) => void;
@@ -43,6 +44,8 @@ declare global {
       dashboard: {
         getCurrent: (space?: number) => string;
         apply: (resourceJson: string) => void;
+        previewOps: (opsJson: string) => string;
+        applyOps: (opsJson: string) => string;
       };
     };
   }

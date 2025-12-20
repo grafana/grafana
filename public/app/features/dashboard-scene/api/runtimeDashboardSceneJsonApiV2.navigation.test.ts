@@ -115,6 +115,29 @@ describe('dashboardSceneJsonApiV2 (navigation/variables/time)', () => {
     expect(nav).toEqual({ tab: { slug: tabB.getSlug(), title: 'Explore' } });
   });
 
+  it('getCurrentDashboardSelection returns null when not editing', () => {
+    const editPane = { getSelection: jest.fn(() => undefined) };
+    const dashboard = { state: { isEditing: false, editPane }, publishEvent: jest.fn() };
+    (getDashboardScenePageStateManager as jest.Mock).mockReturnValue({ state: { dashboard } });
+
+    const res = JSON.parse(dashboardSceneJsonApiV2.getCurrentDashboardSelection(0));
+    expect(res).toEqual({ isEditing: false, selection: null });
+  });
+
+  it('getCurrentDashboardSelection returns the selected tab context when editing', () => {
+    const selectedTab = new TabItem({ key: 'tab-a', title: 'Overview' });
+    const editPane = { getSelection: jest.fn(() => selectedTab) };
+    const dashboard = { state: { isEditing: true, editPane }, publishEvent: jest.fn() };
+    (getDashboardScenePageStateManager as jest.Mock).mockReturnValue({ state: { dashboard } });
+
+    const res = JSON.parse(dashboardSceneJsonApiV2.getCurrentDashboardSelection(0));
+    expect(res.isEditing).toBe(true);
+    expect(res.selection.mode).toBe('single');
+    expect(res.selection.item).toEqual(
+      expect.objectContaining({ type: 'tab', tabSlug: selectedTab.getSlug(), title: 'Overview', key: 'tab-a' })
+    );
+  });
+
   it('focusCurrentDashboardRow expands a collapsed row and calls scrollIntoView', () => {
     const row = new RowItem({ title: 'request duration', collapse: true });
     const scrollSpy = jest.spyOn(row, 'scrollIntoView').mockImplementation(() => {});
