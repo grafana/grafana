@@ -1,4 +1,8 @@
 import { PanelData, RawTimeRange } from '@grafana/data';
+import {
+  applyCurrentDashboard,
+  getCurrentDashboard,
+} from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -10,6 +14,14 @@ declare global {
       getDashboardSaveModel: () => DashboardModel | undefined;
       getDashboardTimeRange: () => { from: number; to: number; raw: RawTimeRange };
       getPanelData: () => Record<number, PanelData | undefined> | undefined;
+    };
+    /**
+     * Exposes the current-dashboard schema v2 JSON API for debugging / automation.
+     * Intended for browser console usage.
+     */
+    dashboardApi?: {
+      getCurrentDashboard: (space?: number) => string;
+      applyCurrentDashboard: (resourceJson: string) => void;
     };
   }
 }
@@ -53,5 +65,11 @@ export function initWindowRuntime() {
         return acc;
       }, {});
     },
+  };
+
+  // Expose the same API that plugins use via @grafana/runtime, but on `window` for easy console access.
+  window.dashboardApi = {
+    getCurrentDashboard,
+    applyCurrentDashboard,
   };
 }
