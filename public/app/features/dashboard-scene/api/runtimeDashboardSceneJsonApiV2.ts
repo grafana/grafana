@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 
+import { DataLink } from '@grafana/data';
 import { RefreshEvent, config, locationService, type DashboardSceneJsonApiV2 } from '@grafana/runtime';
 import {
   MultiValueVariable,
@@ -7,7 +8,10 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   sceneGraph,
+  SceneDataTransformer,
+  SceneQueryRunner,
   VizPanel,
+  type SceneDataQuery,
   type SceneObject,
   type VariableValue,
 } from '@grafana/scenes';
@@ -22,6 +26,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { addNewRowTo } from '../scene/layouts-shared/addNew';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getDefaultVizPanel,
@@ -51,7 +56,9 @@ let lastKnownGoodResource: DashboardResourceV2 | undefined;
 
 function assertDashboardV2Enabled() {
   const isKubernetesDashboardsEnabled = Boolean(config.featureToggles.kubernetesDashboards);
-  const isV2Enabled = Boolean(config.featureToggles.kubernetesDashboardsV2 || config.featureToggles.dashboardNewLayouts);
+  const isV2Enabled = Boolean(
+    config.featureToggles.kubernetesDashboardsV2 || config.featureToggles.dashboardNewLayouts
+  );
 
   if (!isKubernetesDashboardsEnabled || !isV2Enabled) {
     throw new Error('V2 dashboard kinds API requires kubernetes dashboards v2 to be enabled');
@@ -184,7 +191,10 @@ function addVizPanelToLayoutInPlace(layout: unknown, panel: VizPanel, sourceGrid
   throw new Error(`Unsupported layout type: ${layout instanceof Object ? layout.constructor?.name : typeof layout}`);
 }
 
-function toSelectedItem(obj: SceneObject, dashboard: ReturnType<typeof getCurrentDashboardSceneOrThrow>): Record<string, unknown> {
+function toSelectedItem(
+  obj: SceneObject,
+  dashboard: ReturnType<typeof getCurrentDashboardSceneOrThrow>
+): Record<string, unknown> {
   // Dashboard selection is represented as the dashboard instance itself.
   if (obj === dashboard) {
     return {
@@ -267,7 +277,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     const vars = dashboard.state.$variables?.state.variables ?? [];
 
     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-    const variables = vars.map((v) => ({ name: v.state.name, value: v.getValue() })).sort((a, b) => collator.compare(a.name, b.name));
+    const variables = vars
+      .map((v) => ({ name: v.state.name, value: v.getValue() }))
+      .sort((a, b) => collator.compare(a.name, b.name));
 
     return JSON.stringify({ variables }, null, space);
   },
@@ -366,7 +378,10 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     const title = typeof tabObj['title'] === 'string' ? tabObj['title'] : undefined;
     const slug = typeof tabObj['slug'] === 'string' ? tabObj['slug'] : undefined;
 
-    const found = dashboard.state.body instanceof TabsLayoutManager ? dashboard.state.body : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
+    const found =
+      dashboard.state.body instanceof TabsLayoutManager
+        ? dashboard.state.body
+        : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
     const tabsManager = found instanceof TabsLayoutManager ? found : null;
     if (!tabsManager) {
       throw new Error('No tab layout is active for the current dashboard');
@@ -388,7 +403,10 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     assertDashboardV2Enabled();
     const dashboard = getCurrentDashboardSceneOrThrow();
 
-    const found = dashboard.state.body instanceof TabsLayoutManager ? dashboard.state.body : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
+    const found =
+      dashboard.state.body instanceof TabsLayoutManager
+        ? dashboard.state.body
+        : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
     const tabsManager = found instanceof TabsLayoutManager ? found : null;
 
     if (!tabsManager) {
@@ -462,8 +480,12 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     const title = typeof reqObj['title'] === 'string' ? reqObj['title'] : undefined;
     const rowKey = typeof reqObj['rowKey'] === 'string' ? reqObj['rowKey'] : undefined;
 
-    const rows = sceneGraph.findAllObjects(dashboard, (o) => o instanceof RowItem).filter((o): o is RowItem => o instanceof RowItem);
-    const row = rows.find((r) => (rowKey ? r.state.key === rowKey : false) || (title ? r.state.title === title : false));
+    const rows = sceneGraph
+      .findAllObjects(dashboard, (o) => o instanceof RowItem)
+      .filter((o): o is RowItem => o instanceof RowItem);
+    const row = rows.find(
+      (r) => (rowKey ? r.state.key === rowKey : false) || (title ? r.state.title === title : false)
+    );
     if (!row) {
       throw new Error('Row not found');
     }
@@ -632,7 +654,11 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     }
 
     // Best-effort: we do not validate existence here beyond parsing; apply will.
-    return JSON.stringify({ ok: errors.length === 0, supported, unsupported, errors: errors.length ? errors : undefined }, null, 2);
+    return JSON.stringify(
+      { ok: errors.length === 0, supported, unsupported, errors: errors.length ? errors : undefined },
+      null,
+      2
+    );
   },
 
   applyCurrentDashboardOps: (opsJson: string) => {
@@ -669,7 +695,10 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     };
 
     function getRootTabsManager(): TabsLayoutManager | null {
-      const found = dashboard.state.body instanceof TabsLayoutManager ? dashboard.state.body : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
+      const found =
+        dashboard.state.body instanceof TabsLayoutManager
+          ? dashboard.state.body
+          : sceneGraph.findObject(dashboard, (o) => o instanceof TabsLayoutManager);
       return found instanceof TabsLayoutManager ? found : null;
     }
 
@@ -735,8 +764,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
           if (layout instanceof RowsLayoutManager) {
             const rows = layout.state.rows;
             const row =
-              rows.find((r) => (rowKey ? r.state.key === rowKey : false) || (rowTitle ? r.state.title === rowTitle : false)) ??
-              rows[rows.length - 1];
+              rows.find(
+                (r) => (rowKey ? r.state.key === rowKey : false) || (rowTitle ? r.state.title === rowTitle : false)
+              ) ?? rows[rows.length - 1];
             if (!row) {
               throw new Error('addPanel: no row available to add to');
             }
@@ -795,7 +825,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
           }
 
           const existingTitles = new Set(
-            nextLayout.state.rows.map((r) => r.state.title).filter((t): t is string => typeof t === 'string' && t.length > 0)
+            nextLayout.state.rows
+              .map((r) => r.state.title)
+              .filter((t): t is string => typeof t === 'string' && t.length > 0)
           );
           const baseTitle = typeof title === 'string' && title.length ? title : 'New row';
           let nextTitle = baseTitle;
@@ -826,8 +858,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
           }
 
           const rowsManager = getCurrentRowsManagerOrThrow();
-          const row =
-            rowsManager.state.rows.find((r) => (rowKey ? r.state.key === rowKey : false) || (title ? r.state.title === title : false));
+          const row = rowsManager.state.rows.find(
+            (r) => (rowKey ? r.state.key === rowKey : false) || (title ? r.state.title === title : false)
+          );
           if (!row) {
             throw new Error('Row not found');
           }
@@ -854,8 +887,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
 
           const rowsManager = getCurrentRowsManagerOrThrow();
           const targetRow =
-            rowsManager.state.rows.find((r) => (rowKey ? r.state.key === rowKey : false) || (rowTitle ? r.state.title === rowTitle : false)) ??
-            rowsManager.state.rows[rowsManager.state.rows.length - 1];
+            rowsManager.state.rows.find(
+              (r) => (rowKey ? r.state.key === rowKey : false) || (rowTitle ? r.state.title === rowTitle : false)
+            ) ?? rowsManager.state.rows[rowsManager.state.rows.length - 1];
 
           if (!targetRow) {
             throw new Error('movePanelToRow: target row not found');
@@ -923,7 +957,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
             throw new Error(`Panel not found: ${panelId}`);
           }
           if (panels.length > 1) {
-            throw new Error('movePanelToTab does not support repeated panels (multiple instances share the same panelId)');
+            throw new Error(
+              'movePanelToTab does not support repeated panels (multiple instances share the same panelId)'
+            );
           }
 
           const panel = panels[0];
@@ -986,7 +1022,9 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
             throw new Error('addTab/removeTab require TabsLayout');
           }
 
-          const tab = tabsManager.getTabsIncludingRepeats().find((t) => (slug ? t.getSlug() === slug : false) || (title ? t.state.title === title : false));
+          const tab = tabsManager
+            .getTabsIncludingRepeats()
+            .find((t) => (slug ? t.getSlug() === slug : false) || (title ? t.state.title === title : false));
           if (!tab) {
             throw new Error('Tab not found');
           }
@@ -1056,6 +1094,59 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
           continue;
         }
 
+        if (opName === 'setPanelRepeat') {
+          const panelId = op['panelId'];
+          const variableName = op['variableName'];
+          const repeatDirection = op['direction'];
+          const maxPerRow = op['maxPerRow'];
+
+          if (typeof panelId !== 'number') {
+            throw new Error(
+              'setPanelRepeat expects { panelId: number, variableName?: string, direction?: "h" | "v", maxPerRow?: number }'
+            );
+          }
+          if (variableName !== undefined && typeof variableName !== 'string') {
+            throw new Error('setPanelRepeat: variableName must be a string when provided');
+          }
+          if (repeatDirection !== undefined && repeatDirection !== 'h' && repeatDirection !== 'v') {
+            throw new Error('setPanelRepeat: direction must be "h" or "v" when provided');
+          }
+          if (maxPerRow !== undefined && typeof maxPerRow !== 'number') {
+            throw new Error('setPanelRepeat: maxPerRow must be a number when provided');
+          }
+
+          const panels = getPanelsById(panelId);
+          if (panels.length === 0) {
+            throw new Error(`Panel not found: ${panelId}`);
+          }
+          if (panels.length > 1) {
+            throw new Error(
+              'setPanelRepeat does not support repeated panels (multiple instances share the same panelId)'
+            );
+          }
+
+          const panel = panels[0];
+          const gridItem = findParent(panel, (o): o is DashboardGridItem => o instanceof DashboardGridItem);
+          if (!gridItem) {
+            throw new Error('setPanelRepeat: panel is not in a grid layout');
+          }
+
+          const nextState: Partial<DashboardGridItem['state']> = {};
+          if (variableName !== undefined) {
+            nextState.variableName = variableName;
+          }
+          if (repeatDirection !== undefined) {
+            nextState.repeatDirection = repeatDirection;
+          }
+          if (maxPerRow !== undefined) {
+            nextState.maxPerRow = maxPerRow;
+          }
+
+          gridItem.setState(nextState);
+          applied++;
+          continue;
+        }
+
         if (opName === 'mergePanelConfig') {
           const panelId = op['panelId'];
           const mergeObj = op['merge'];
@@ -1067,13 +1158,20 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
             throw new Error(`Panel not found: ${panelId}`);
           }
 
-          // Accept either { vizConfig: { fieldConfig?, options? } } or { fieldConfig?, options? }.
+          // Accept either { vizConfig: { fieldConfig?, options?, group? } } or { fieldConfig?, options?, pluginId? }.
           const vizConfigAny = mergeObj['vizConfig'];
           const vizConfig = isRecord(vizConfigAny) ? vizConfigAny : undefined;
           const fieldConfigAny = (vizConfig && vizConfig['fieldConfig']) ?? mergeObj['fieldConfig'];
           const optionsAny = (vizConfig && vizConfig['options']) ?? mergeObj['options'];
+          const pluginIdValue = mergeObj['pluginId'];
+          const pluginIdFromMerge = typeof pluginIdValue === 'string' ? pluginIdValue : undefined;
+          const pluginFromVizGroupValue = vizConfig?.['group'];
+          const pluginFromVizGroup = typeof pluginFromVizGroupValue === 'string' ? pluginFromVizGroupValue : undefined;
+          const nextPluginId = pluginIdFromMerge ?? pluginFromVizGroup;
 
           for (const panel of panels) {
+            const pluginChanged = nextPluginId && panel.state.pluginId !== nextPluginId;
+
             // Field config: support defaults merge (units, decimals, thresholds, mappings, etc).
             if (isRecord(fieldConfigAny)) {
               const defaultsAny = fieldConfigAny['defaults'];
@@ -1098,11 +1196,199 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
               panel.onOptionsChange?.(optionsAny, false);
             }
 
+            // Plugin change: allow switching visualization (e.g. stat -> timeseries) in place.
+            if (pluginChanged) {
+              // Fire-and-forget; changePluginType is async and handles plugin defaults/migration.
+              const nextFieldConfig = isRecord(fieldConfigAny)
+                ? {
+                    defaults: isRecord(fieldConfigAny['defaults']) ? fieldConfigAny['defaults'] : {},
+                    overrides: Array.isArray(fieldConfigAny['overrides']) ? fieldConfigAny['overrides'] : [],
+                  }
+                : undefined;
+              void panel.changePluginType(nextPluginId, isRecord(optionsAny) ? optionsAny : undefined, nextFieldConfig);
+            }
+
             // If merge included unknown keys, attempt a safe best-effort by merging state keys we recognize.
             // (This intentionally stays conservative; prefer fieldConfig/options.)
             const title = mergeObj['title'];
             if (typeof title === 'string') {
               panel.onTitleChange?.(title);
+            }
+          }
+
+          applied++;
+          continue;
+        }
+
+        if (opName === 'setPanelState') {
+          const panelId = op['panelId'];
+          if (typeof panelId !== 'number') {
+            throw new Error('setPanelState expects { panelId: number, ... }');
+          }
+          const panels = getPanelsById(panelId);
+          if (panels.length === 0) {
+            throw new Error(`Panel not found: ${panelId}`);
+          }
+
+          for (const panel of panels) {
+            const description = op['description'];
+            if (typeof description === 'string') {
+              panel.setState({ description });
+            }
+
+            const transparent = op['transparent'];
+            if (typeof transparent === 'boolean') {
+              panel.setState({ displayMode: transparent ? 'transparent' : undefined });
+            }
+
+            const linksValue = op['links'];
+            if (Array.isArray(linksValue)) {
+              const panelLinks = dashboardSceneGraph.getPanelLinks(panel);
+              if (panelLinks) {
+                const safeLinks = linksValue.filter(
+                  (link): link is DataLink => typeof link === 'object' && link !== null
+                );
+                panelLinks.setState({ rawLinks: safeLinks });
+              }
+            }
+          }
+
+          applied++;
+          continue;
+        }
+
+        if (opName === 'setPanelData') {
+          const panelId = op['panelId'];
+          const dataSpec = op['data'];
+          if (typeof panelId !== 'number' || !isRecord(dataSpec)) {
+            throw new Error('setPanelData expects { panelId: number, data: object }');
+          }
+          const panels = getPanelsById(panelId);
+          if (panels.length === 0) {
+            throw new Error(`Panel not found: ${panelId}`);
+          }
+
+          for (const panel of panels) {
+            const queryRunner = getQueryRunnerFor(panel);
+
+            const queriesValue = dataSpec['queries'];
+            if (Array.isArray(queriesValue) && queryRunner instanceof SceneQueryRunner) {
+              const toSceneQuery = (raw: unknown): SceneDataQuery | undefined => {
+                // Support both SceneDataQuery shape and PanelQueryKind shape.
+                if (isRecord(raw) && isRecord(raw['spec']) && isRecord(raw['spec']['query'])) {
+                  const spec = raw['spec'];
+                  const refId = typeof spec['refId'] === 'string' ? spec['refId'] : 'A';
+                  const hidden = typeof spec['hidden'] === 'boolean' ? spec['hidden'] : undefined;
+                  const innerQuery = spec['query'];
+                  if (!isRecord(innerQuery)) {
+                    return undefined;
+                  }
+                  const querySpec = isRecord(innerQuery['spec']) ? innerQuery['spec'] : undefined;
+                  const dsValue = isRecord(innerQuery['datasource']) ? innerQuery['datasource'] : undefined;
+                  const groupValue = typeof innerQuery['group'] === 'string' ? innerQuery['group'] : undefined;
+                  const uid = dsValue && typeof dsValue['uid'] === 'string' ? dsValue['uid'] : undefined;
+                  const name = dsValue && typeof dsValue['name'] === 'string' ? dsValue['name'] : undefined;
+                  const datasource =
+                    uid || name
+                      ? {
+                          uid: uid ?? name!,
+                          ...(groupValue ? { type: groupValue } : {}),
+                        }
+                      : groupValue
+                        ? { type: groupValue }
+                        : undefined;
+
+                  const result: SceneDataQuery = { refId };
+                  if (typeof hidden === 'boolean') {
+                    result.hide = hidden;
+                  }
+                  if (datasource) {
+                    result.datasource = datasource;
+                  }
+                  if (querySpec) {
+                    Object.assign(result, querySpec);
+                  }
+                  return result;
+                }
+
+                // Already a SceneDataQuery shape; accept as-is.
+                if (isRecord(raw)) {
+                  const refId = typeof raw['refId'] === 'string' ? raw['refId'] : 'A';
+                  const result: SceneDataQuery = { refId };
+                  Object.assign(result, raw);
+                  return result;
+                }
+                return undefined;
+              };
+
+              const normalizedQueries: SceneDataQuery[] = queriesValue
+                .map((q) => toSceneQuery(q))
+                .filter((q): q is SceneDataQuery => Boolean(q));
+
+              queryRunner.setState({ queries: normalizedQueries });
+              // Immediately rerun queries to reflect changes in the UI.
+              queryRunner.runQueries?.();
+            }
+
+            const queryOptions = dataSpec['queryOptions'];
+            if (isRecord(queryOptions) && queryRunner instanceof SceneQueryRunner) {
+              const nextQueryRunnerState: Record<string, unknown> = {};
+              const maxDataPoints = queryOptions['maxDataPoints'];
+              if (typeof maxDataPoints === 'number') {
+                nextQueryRunnerState.maxDataPoints = maxDataPoints;
+              }
+              const cacheTimeout = queryOptions['cacheTimeout'];
+              if (typeof cacheTimeout === 'number') {
+                nextQueryRunnerState.cacheTimeout = cacheTimeout;
+              }
+              const queryCachingTTL = queryOptions['queryCachingTTL'];
+              if (typeof queryCachingTTL === 'number') {
+                nextQueryRunnerState.queryCachingTTL = queryCachingTTL;
+              }
+              const interval = queryOptions['interval'];
+              if (typeof interval === 'string' || typeof interval === 'number') {
+                nextQueryRunnerState.minInterval = interval;
+              }
+              if (Object.keys(nextQueryRunnerState).length > 0) {
+                queryRunner.setState(nextQueryRunnerState);
+              }
+
+              const timeFrom = queryOptions['timeFrom'];
+              const timeShift = queryOptions['timeShift'];
+              const hideTimeOverride = queryOptions['hideTimeOverride'];
+              const compareWith = queryOptions['timeCompare'];
+              if (
+                typeof timeFrom === 'string' ||
+                typeof timeShift === 'string' ||
+                typeof hideTimeOverride === 'boolean' ||
+                typeof compareWith === 'string'
+              ) {
+                const existingTimeRange = panel.state.$timeRange;
+                const nextTimeRange =
+                  existingTimeRange instanceof PanelTimeRange
+                    ? existingTimeRange
+                    : new PanelTimeRange({ enabled: true });
+                const nextState: Record<string, unknown> = { enabled: true };
+                if (typeof timeFrom === 'string') {
+                  nextState.timeFrom = timeFrom;
+                }
+                if (typeof timeShift === 'string') {
+                  nextState.timeShift = timeShift;
+                }
+                if (typeof hideTimeOverride === 'boolean') {
+                  nextState.hideTimeOverride = hideTimeOverride;
+                }
+                if (typeof compareWith === 'string') {
+                  nextState.compareWith = compareWith;
+                }
+                nextTimeRange.setState(nextState);
+                panel.setState({ $timeRange: nextTimeRange });
+              }
+            }
+
+            const transformationsValue = dataSpec['transformations'];
+            if (Array.isArray(transformationsValue) && panel.state.$data instanceof SceneDataTransformer) {
+              panel.state.$data.setState({ transformations: transformationsValue });
             }
           }
 
@@ -1135,5 +1421,3 @@ export const dashboardSceneJsonApiV2: DashboardSceneJsonApiV2 = {
     );
   },
 };
-
-
