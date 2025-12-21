@@ -193,6 +193,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	newRule.For = 0
 	newRule.KeepFiringFor = 0
 	newRule.NotificationSettings = nil
+	newRule.MissingSeriesEvalsToResolve = nil
 
 	return newRule, nil
 }
