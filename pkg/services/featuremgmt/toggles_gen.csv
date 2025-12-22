@@ -24,7 +24,6 @@ influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,fa
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
-unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
@@ -123,6 +122,7 @@ suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
+alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,false
@@ -268,6 +268,7 @@ jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false

@@ -186,13 +186,6 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaBackendGroup,
-			Expression:  "true",
-		},
-		{
 			Name:        "renderAuthJWT",
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:       FeatureStagePublicPreview,
@@ -889,6 +882,13 @@ var (
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "alertingSavedSearches",
+			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
@@ -1974,6 +1974,14 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "pluginInsights",
+			Description:  "Show insights for plugins in the plugin details page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
 		},
 		{
 			Name:            "panelTimeSettings",

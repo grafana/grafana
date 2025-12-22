@@ -99,7 +99,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
 
-**To create a dashboard**:
+To create a dashboard, follow these steps:
 
 {{< shared id="create-dashboard" >}}
 
@@ -170,6 +170,28 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
 
    Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
+
+### Begin dashboard creation from data source configuration
+
+You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page.
+
+To begin building a dashboard directly from a data source, follow these steps:
+
+1. Navigate to **Connections > Data sources**.
+1. On the row of the data source for which you want to build a dashboard, click **Build a dashboard**.
+
+   The empty dashboard page opens.
+
+1. Do one of the following:
+   - Click **+Add visualization** to configure all the elements of the new dashboard.
+   - Select one of the suggested dashboards by clicking its **Use dashboard** button. This can be helpful when you're not sure how to most effectively visualize your data.
+     The suggested dashboards are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch). If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
+
+   ![Empty dashboard with add visualization and suggested dashboard options](/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v12.3.png)
+
+   {{< docs/public-preview product="Suggested dashboards" >}}
+
+1. Complete the rest of the dashboard configuration. For more detailed steps, refer to [Create a dashboard](#create-a-dashboard), beginning at step five.
 
 ## Copy a dashboard
 

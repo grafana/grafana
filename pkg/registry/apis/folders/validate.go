@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -73,6 +75,7 @@ func validateOnUpdate(ctx context.Context,
 	old *folders.Folder,
 	getter rest.Getter,
 	parents parentsGetter,
+	searcher resourcepb.ResourceIndexClient,
 	maxDepth int,
 ) error {
 	folderObj, err := utils.MetaAccessor(obj)
@@ -96,6 +99,10 @@ func validateOnUpdate(ctx context.Context,
 	newParent := folderObj.GetFolder()
 
 	switch newParent {
+	// If we move to root, we don't need to validate the depth, because the folder already existed
+	// before and wasn't too deep. This move will make it more shallow.
+	//
+	// We also don't need to validate circular references because the root folder cannot have a parent.
 	case "", folder.GeneralFolderUID:
 		return nil // OK, we do not need to validate the tree
 	case folder.SharedWithMeFolderUID:
@@ -114,9 +121,6 @@ func validateOnUpdate(ctx context.Context,
 	if !ok {
 		return fmt.Errorf("expected folder, found %T", parentObj)
 	}
-
-	//FIXME: until we have a way to represent the tree, we can only
-	// look at folder parents to check how deep the new folder tree will be
 	info, err := parents(ctx, parent)
 	if err != nil {
 		return err
@@ -130,11 +134,160 @@ func validateOnUpdate(ctx context.Context,
 		}
 	}
 
-	// if by moving a folder we exceed the max depth, return an error
+	// if by moving a folder we exceed the max depth just from its parents + itself, return an error
 	if len(info.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
 	}
+	// To try to save some computation, get the parents of the old parent (this is typically cheaper
+	// than looking at the children of the folder). If the old parent has more parents or the same
+	// number of parents as the new parent, we can return early, because we know the folder had to be
+	// safe from the creation validation. If we cannot access the older parent, we will continue to check the children.
+	if canSkipChildrenCheck(ctx, oldFolder, getter, parents, len(info.Items)) {
+		return nil
+	}
+
+	// Now comes the more expensive part: we need to check if moving this folder will cause
+	// any descendant folders to exceed the max depth.
+	//
+	// Calculate the maximum allowed subtree depth after the move.
+	allowedDepth := (maxDepth + 1) - len(info.Items)
+	if allowedDepth <= 0 {
+		return nil
+	}
+
+	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
+}
+
+// canSkipChildrenCheck determines if we can skip the expensive children depth check.
+// If the old parent depth is >= the new parent depth, the folder was already valid
+// and this move won't make descendants exceed max depth.
+func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
+	if oldFolder.GetFolder() == folder.RootFolderUID {
+		return false
+	}
+
+	oldParentObj, err := getter.Get(ctx, oldFolder.GetFolder(), &metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+
+	oldParent, ok := oldParentObj.(*folders.Folder)
+	if !ok {
+		return false
+	}
+
+	oldInfo, err := parents(ctx, oldParent)
+	if err != nil {
+		return false
+	}
+
+	oldParentDepth := len(oldInfo.Items)
+	levelDifference := newParentDepth - oldParentDepth
+	return levelDifference <= 0
+}
+
+// checkSubtreeDepth uses a hybrid DFS+batching approach:
+// 1. fetches one page of children for the current folder(s)
+// 2. batches all those children into one request to get their children
+// 3. continues depth-first (batching still) until max depth or violation
+// 4. only fetches more siblings after fully exploring current batch
+func checkSubtreeDepth(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, folderUID string, remainingDepth int, maxDepth int) error {
+	if remainingDepth <= 0 {
+		return nil
+	}
+
+	// Start with the folder being moved
+	return checkSubtreeDepthBatched(ctx, searcher, namespace, []string{folderUID}, remainingDepth, maxDepth)
+}
+
+// checkSubtreeDepthBatched checks depth for a batch of folders at the same level
+func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, remainingDepth int, maxDepth int) error {
+	if remainingDepth <= 0 || len(parentUIDs) == 0 {
+		return nil
+	}
+
+	const pageSize int64 = 1000
+	var offset int64
+	totalPages := 0
+	hasMore := true
+
+	// Using an upper limit to ensure no infinite loops can happen
+	for hasMore && totalPages < 1000 {
+		totalPages++
+
+		var err error
+		var children []string
+		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
+		if err != nil {
+			return fmt.Errorf("failed to get children: %w", err)
+		}
+
+		if len(children) == 0 {
+			return nil
+		}
+
+		// if we are at the last allowed depth and children exist, we will hit the max
+		if remainingDepth == 1 {
+			return folder.ErrMaximumDepthReached.Errorf("maximum folder depth %d would be exceeded after move", maxDepth)
+		}
+
+		if err := checkSubtreeDepthBatched(ctx, searcher, namespace, children, remainingDepth-1, maxDepth); err != nil {
+			return err
+		}
+
+		if !hasMore {
+			return nil
+		}
+
+		offset += pageSize
+	}
+
 	return nil
+}
+
+// getChildrenBatch fetches children for multiple parents
+func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, limit int64, offset int64) ([]string, bool, error) {
+	if len(parentUIDs) == 0 {
+		return nil, false, nil
+	}
+
+	resp, err := searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: namespace,
+				Group:     folders.FolderResourceInfo.GroupVersionResource().Group,
+				Resource:  folders.FolderResourceInfo.GroupVersionResource().Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      resource.SEARCH_FIELD_FOLDER,
+				Operator: string(selection.In),
+				Values:   parentUIDs,
+			}},
+		},
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to search folders: %w", err)
+	}
+
+	if resp.Error != nil {
+		return nil, false, fmt.Errorf("search error: %s", resp.Error.Message)
+	}
+
+	if resp.Results == nil || len(resp.Results.Rows) == 0 {
+		return nil, false, nil
+	}
+
+	children := make([]string, 0, len(resp.Results.Rows))
+	for _, row := range resp.Results.Rows {
+		if row.Key != nil {
+			children = append(children, row.Key.Name)
+		}
+	}
+
+	hasMore := resp.Results.NextPageToken != ""
+	return children, hasMore, nil
 }
 
 func validateOnDelete(ctx context.Context,

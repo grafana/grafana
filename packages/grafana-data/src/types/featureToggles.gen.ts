@@ -126,11 +126,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
-  /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
   renderAuthJWT?: boolean;
@@ -539,6 +534,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -1197,6 +1196,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */
