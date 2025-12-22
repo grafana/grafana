@@ -108,7 +108,7 @@ The following are configuration options for the CloudWatch data source.
 Grafana plugin requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+For authentication options and configuration details, refer to [AWS authentication](../aws-authentication/).
 
 | Setting            | Description                                                                                                                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -172,7 +172,7 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 ### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](../aws-authentication/).
 
 **Metrics-only permissions:**
 
