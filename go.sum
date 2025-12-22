@@ -2245,12 +2245,12 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20250228212059-bc4a3c128098 h1:S3tbGVSVAVLBKalWKUYRrXu63tAxXzYEA9n8Att9uzw=
-github.com/grafana/alerting v0.0.0-20250228212059-bc4a3c128098/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
 github.com/grafana/authlib v0.0.0-20240919120951-58259833c564 h1:zYF/RBulpvMqPYR3gbzJZ8t/j/Eymn5FNidSYkueNCA=
 github.com/grafana/authlib v0.0.0-20240919120951-58259833c564/go.mod h1:PFzXbCrn0GIpN4KwT6NP1l5Z1CPLfmKHnYx8rZzQcyY=
 github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd h1:sIlR7n38/MnZvX2qxDEszywXdI5soCwQ78aTDSARvus=
 github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
+github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 h1:Muoy+FMGrHj3GdFbvsMzUT7eusgii9PKf9L1ZaXDDbY=
+github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
@@ -2320,6 +2320,8 @@ github.com/grafana/sqlds/v4 v4.1.0/go.mod h1:3Z3r99mgA7+3mzQhABsNZnNtjLx7a0bGOgL
 github.com/grafana/tempo v1.5.1-0.20240604192202-01f4bc8ac2d1 h1:cSE1u4IUQ9EPcQErMZ9YVYayJTIGgH4g2E1Rp2WmGy0=
 github.com/grafana/tempo v1.5.1-0.20240604192202-01f4bc8ac2d1/go.mod h1:ttAEYdYVYBNngPulKIHkmHvjXfLfX7jDWI74jzb8jh4=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
+github.com/groundcover-com/alerting v0.0.5 h1:PaAQokVmHd0LonDYC+m7sx773MdGQ+Dinn38TKm85fU=
+github.com/groundcover-com/alerting v0.0.5/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=

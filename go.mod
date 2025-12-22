@@ -403,8 +403,8 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
-	github.com/unknwon/log v0.0.0-20200308114134-929b1006e34a // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/unknwon/log v0.0.0-20200308114134-929b1006e34a
+	github.com/valyala/bytebufferpool v1.0.0
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
@@ -463,6 +463,8 @@ require (
 )
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
+
+require github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 
 require (
 	cel.dev/expr v0.23.1 // indirect
@@ -525,6 +527,7 @@ replace (
 
 // Pin it to match the other K8s dependencies version.
 replace (
+	github.com/grafana/alerting => github.com/groundcover-com/alerting v0.0.5
 	k8s.io/api => k8s.io/api v0.31.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
 	k8s.io/client-go => k8s.io/client-go v0.31.1
@@ -532,6 +535,4 @@ replace (
 	k8s.io/utils => k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 	sigs.k8s.io/json => sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 => sigs.k8s.io/structured-merge-diff/v4 v4.4.1
-	github.com/grafana/alerting => github.com/groundcover-com/alerting v0.0.5
 )
-
