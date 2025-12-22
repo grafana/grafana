@@ -1,12 +1,16 @@
 import { within } from '@testing-library/react';
+import { produce } from 'immer';
+import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import server from '@grafana/test-utils/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   __clearRuleViewTabsForTests,
@@ -320,6 +324,52 @@ describe('RuleViewer', () => {
 
         await renderRuleViewer(rule, ruleIdentifier);
         expect(screen.queryByText('Labels')).not.toBeInTheDocument();
+      });
+
+      const createVersionHistoryMock = (includeMessage: boolean) => [
+        produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+          draft.grafana_alert.version = 2;
+          draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
+          draft.grafana_alert.updated_by = {
+            uid: 'foo',
+            name: '',
+          };
+          if (includeMessage) {
+            draft.grafana_alert.message = 'Updated evaluation interval and routing';
+          }
+        }),
+        produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+          draft.grafana_alert.version = 1;
+          draft.grafana_alert.updated = '2025-01-13T09:35:17.000Z';
+          draft.grafana_alert.updated_by = null;
+        }),
+      ];
+
+      it('shows Notes column when versions have messages', async () => {
+        server.use(
+          http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, () => {
+            return HttpResponse.json(createVersionHistoryMock(true));
+          })
+        );
+
+        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+
+        expect(await screen.findByRole('columnheader', { name: /Notes/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /Updated evaluation interval and routing/i })).toBeInTheDocument();
+      });
+
+      it('does not show Notes column when no versions have messages', async () => {
+        server.use(
+          http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, () => {
+            return HttpResponse.json(createVersionHistoryMock(false));
+          })
+        );
+
+        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+
+        await screen.findByRole('button', { name: /Compare versions/i });
+
+        expect(screen.queryByRole('columnheader', { name: /Notes/i })).not.toBeInTheDocument();
       });
     });
   });

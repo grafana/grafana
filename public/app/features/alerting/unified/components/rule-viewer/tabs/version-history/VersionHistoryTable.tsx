@@ -41,6 +41,8 @@ export function VersionHistoryTable({
     [ruleToRestoreUid]
   );
 
+  const hasAnyNotes = useMemo(() => ruleVersions.some((v) => v.grafana_alert.message), [ruleVersions]);
+
   const showConfirmation = (ruleToRestore: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
     setShowConfirmModal(true);
     setRuleToRestore(ruleToRestore);
@@ -51,6 +53,15 @@ export function VersionHistoryTable({
   };
 
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+
+  const notesColumn: Column<RulerGrafanaRuleDTO<GrafanaRuleDefinition>> = {
+    id: 'notes',
+    header: t('core.versionHistory.table.notes', 'Notes'),
+    cell: ({ row }) => {
+      const message = row.original.grafana_alert.message;
+      return message || null;
+    },
+  };
 
   const columns: Array<Column<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>> = [
     {
@@ -94,6 +105,7 @@ export function VersionHistoryTable({
         return dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')';
       },
     },
+    ...(hasAnyNotes ? [notesColumn] : []),
     {
       id: 'diff',
       disableGrow: true,

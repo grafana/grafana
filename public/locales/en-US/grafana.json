@@ -4404,6 +4404,7 @@
       },
       "no-properties-changed": "No relevant properties changed",
       "table": {
+        "notes": "Notes",
         "updated": "Date",
         "updatedBy": "Updated By",
         "version": "Version"
