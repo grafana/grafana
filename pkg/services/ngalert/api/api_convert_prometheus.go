@@ -371,6 +371,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
 	if datasourceUID == "" {
+		datasourceUID = srv.cfg.PrometheusConversion.DefaultDatasourceUID
+	}
+	if datasourceUID == "" {
 		return response.Err(errDatasourceUIDHeaderMissing)
 	}
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
