@@ -330,18 +330,19 @@ To create an ad hoc filter, follow these steps:
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 {{< admonition type="tip" >}}
-Data links preserve context. When you click a data link, Grafana carries the current
-time range, dashboard variables, and ad hoc filters so the destination opens with the
-same filters applied.
+You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
 
-Ad hoc filters are data source scoped; they apply only when the destination uses the
-same data source.
+To preserve the context of the current dashboard:
+* **Time range:** You must explicitly include the current time range in the link.
+* **Variables:** You must enable **Include all variables** to preserve existing selections.
+* **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
+
+Ad hoc filters on the current dashboard are automatically preserved.
 
 Learn more in:
-
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/)
 - [Create dashboard URL variables – Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
-  {{< /admonition >}}
+{{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
 
