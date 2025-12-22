@@ -1,24 +1,111 @@
-import { FieldDisplay } from '@grafana/data';
+import { DataFrameView, FieldDisplay } from '@grafana/data';
 
 import type { RadialGaugeProps } from './RadialGauge';
-import { calculateDimensions, toRad, getValueAngleForValue } from './utils';
+import { RadialGaugeDimensions } from './types';
+import {
+  calculateDimensions,
+  toRad,
+  getValueAngleForValue,
+  drawRadialArcPath,
+  getFieldConfigMinMax,
+  getFieldDisplayProcessor,
+  getAngleBetweenSegments,
+  getOptimalSegmentCount,
+} from './utils';
 
 describe('RadialGauge utils', () => {
-  function calc(overrides: Partial<RadialGaugeProps & { barIndex: number }> = {}) {
-    return calculateDimensions(
-      overrides.width ?? 200,
-      overrides.height ?? 200,
-      overrides.shape === 'gauge' ? 110 : 360,
-      overrides.glowBar ?? false,
-      overrides.roundedBars ?? false,
-      overrides.barWidthFactor ?? 0.4,
-      overrides.barIndex ?? 0,
-      overrides.thresholdsBar ?? false,
-      overrides.showScaleLabels ?? false
-    );
-  }
+  describe('getFieldDisplayProcessor', () => {
+    it('should return display processor from view when available', () => {
+      const mockProcessor = jest.fn();
+      const mockView = {
+        getFieldDisplayProcessor: jest.fn().mockReturnValue(mockProcessor),
+      } as unknown as DataFrameView;
+
+      const fieldDisplay: FieldDisplay = {
+        display: { numeric: 50, text: '50', color: 'blue' },
+        field: {},
+        view: mockView,
+        colIndex: 0,
+        rowIndex: 0,
+        name: 'test',
+        getLinks: () => [],
+        hasLinks: false,
+      };
+
+      const dp = getFieldDisplayProcessor(fieldDisplay);
+      expect(dp).toBe(mockProcessor);
+      expect(mockView.getFieldDisplayProcessor).toHaveBeenCalledWith(0);
+    });
+
+    it('should return default display processor when view is not available', () => {
+      const fieldDisplay: FieldDisplay = {
+        display: { numeric: 50, text: '50', color: 'blue' },
+        field: {},
+        view: undefined,
+        colIndex: 0,
+        rowIndex: 0,
+        name: 'test',
+        getLinks: () => [],
+        hasLinks: false,
+      };
+
+      const dp = getFieldDisplayProcessor(fieldDisplay);
+      expect(dp).toBeDefined();
+      expect(typeof dp).toBe('function');
+    });
+  });
+
+  describe('getFieldConfigMinMax', () => {
+    it('should return min and max from field config when defined', () => {
+      const fieldDisplay: FieldDisplay = {
+        display: { numeric: 50, text: '50', color: 'blue' },
+        field: { min: 10, max: 90 },
+        view: undefined,
+        colIndex: 0,
+        rowIndex: 0,
+        name: 'test',
+        getLinks: () => [],
+        hasLinks: false,
+      };
+
+      const [min, max] = getFieldConfigMinMax(fieldDisplay);
+      expect(min).toBe(10);
+      expect(max).toBe(90);
+    });
+
+    it('should return default min and max when not defined in field config', () => {
+      const fieldDisplay: FieldDisplay = {
+        display: { numeric: 50, text: '50', color: 'blue' },
+        field: {},
+        view: undefined,
+        colIndex: 0,
+        rowIndex: 0,
+        name: 'test',
+        getLinks: () => [],
+        hasLinks: false,
+      };
+
+      const [min, max] = getFieldConfigMinMax(fieldDisplay);
+      expect(min).toBe(0);
+      expect(max).toBe(100);
+    });
+  });
 
   describe('calculateDimensions', () => {
+    function calc(overrides: Partial<RadialGaugeProps & { barIndex: number }> = {}) {
+      return calculateDimensions(
+        overrides.width ?? 200,
+        overrides.height ?? 200,
+        overrides.shape === 'gauge' ? 110 : 360,
+        overrides.glowBar ?? false,
+        overrides.roundedBars ?? false,
+        overrides.barWidthFactor ?? 0.4,
+        overrides.barIndex ?? 0,
+        overrides.thresholdsBar ?? false,
+        overrides.showScaleLabels ?? false
+      );
+    }
+
     it('should calculate basic dimensions for a square gauge', () => {
       const result = calc();
 
@@ -192,6 +279,86 @@ describe('RadialGauge utils', () => {
 
       // Expect the angle to be clamped to the maximum range
       expect(result.angle).toBe(240);
+    });
+  });
+
+  describe('drawRadialArcPath', () => {
+    const defaultDims: RadialGaugeDimensions = Object.freeze({
+      centerX: 100,
+      centerY: 100,
+      radius: 80,
+      barWidth: 20,
+      margin: 0,
+      barIndex: 0,
+      thresholdsBarWidth: 0,
+      thresholdsBarSpacing: 0,
+      thresholdsBarRadius: 0,
+      scaleLabelsFontSize: 0,
+      scaleLabelsSpacing: 0,
+      scaleLabelsRadius: 0,
+      gaugeBottomY: 0,
+    });
+
+    it.each([
+      { description: 'quarter arc', startAngle: 0, endAngle: 90 },
+      { description: 'half arc', startAngle: 0, endAngle: 180 },
+      { description: 'three quarter arc', startAngle: 0, endAngle: 270 },
+      { description: 'rounded bars', startAngle: 0, endAngle: 270, roundedBars: true },
+      { description: 'wide bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 50 } },
+      { description: 'narrow bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 5 } },
+      { description: 'narrow radius', startAngle: 0, endAngle: 180, dimensions: { radius: 50 } },
+      {
+        description: 'center x and y',
+        startAngle: 0,
+        endAngle: 360,
+        roundedBars: true,
+        dimensions: { centerX: 150, centerY: 200 },
+      },
+    ])(`should draw correct path for $description`, ({ startAngle, endAngle, dimensions, roundedBars }) => {
+      const path = drawRadialArcPath(startAngle, endAngle, { ...defaultDims, ...dimensions }, roundedBars);
+      expect(path).toMatchSnapshot();
+    });
+
+    describe('edge cases', () => {
+      it('should adjust 360deg or greater  arcs to avoid SVG rendering issues', () => {
+        expect(drawRadialArcPath(0, 360, defaultDims)).toEqual(drawRadialArcPath(0, 359.99, defaultDims));
+        expect(drawRadialArcPath(0, 380, defaultDims)).toEqual(drawRadialArcPath(0, 380, defaultDims));
+      });
+
+      it('should return empty string if inner radius collapses to zero or below', () => {
+        const smallRadiusDims = { ...defaultDims, radius: 5, barWidth: 20 };
+        expect(drawRadialArcPath(0, 180, smallRadiusDims)).toBe('');
+      });
+    });
+  });
+
+  describe('getAngleBetweenSegments', () => {
+    it('should calculate angle between segments based on spacing and count', () => {
+      expect(getAngleBetweenSegments(2, 10, 360)).toBe(48);
+      expect(getAngleBetweenSegments(5, 15, 180)).toBe(40);
+    });
+  });
+
+  describe('getOptimalSegmentCount', () => {
+    it('should adjust segment count based on dimensions and spacing', () => {
+      const dimensions: RadialGaugeDimensions = {
+        centerX: 100,
+        centerY: 100,
+        radius: 80,
+        barWidth: 20,
+        margin: 0,
+        barIndex: 0,
+        thresholdsBarWidth: 0,
+        thresholdsBarSpacing: 0,
+        thresholdsBarRadius: 0,
+        scaleLabelsFontSize: 0,
+        scaleLabelsSpacing: 0,
+        scaleLabelsRadius: 0,
+        gaugeBottomY: 0,
+      };
+
+      expect(getOptimalSegmentCount(dimensions, 2, 10, 360)).toBe(8);
+      expect(getOptimalSegmentCount(dimensions, 1, 5, 360)).toBe(5);
     });
   });
 });

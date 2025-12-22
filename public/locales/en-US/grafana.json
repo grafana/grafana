@@ -7872,23 +7872,18 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": "Close schema inspector"
-    },
     "sql-expr": {
       "button-run-query": "Run query",
-      "modal-title": "SQL Editor",
       "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
     "sql-schema": {
-      "close-schema-inspector": "Close schema inspector",
       "error-title": "Error",
-      "inspect-button": "Inspect schema",
       "loading": "Loading schema information...",
       "no-data-title": "No schema information available",
       "no-fields-desc": "This query returned no schema information.",
       "no-fields-title": "No schema information",
-      "query-error-title": "Query error"
+      "query-error-title": "Query error",
+      "schema-inspector": "Schema inspector"
     },
     "threshold": {
       "label-input": "Input"
@@ -7963,11 +7958,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds",
-      "style": {
-        "circular": "Glowing",
-        "simple": "Simple"
-      }
+      "no-thresholds": "Gauge - no thresholds"
     },
     "threshold": "Threshold {{value}}"
   },
@@ -12493,16 +12484,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "Bar Style",
+      "bar-shape-flat": "Flat",
+      "bar-shape-rounded": "Rounded",
       "bar-width": "Bar width",
       "effects": {
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
         "gradient": "Gradient",
-        "label": "Effects",
-        "rounded-bars": "Rounded bars",
-        "spotlight": "Spotlight",
-        "spotlight-tooltip": "Only visible in dark themes"
+        "label": "Effects"
       },
+      "endpoint-marker": "Endpoint marker",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
+      "endpoint-marker-glow": "Glow",
+      "endpoint-marker-none": "None",
+      "endpoint-marker-point": "Point",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
