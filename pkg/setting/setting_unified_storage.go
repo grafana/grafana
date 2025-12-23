@@ -25,6 +25,13 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource: false,
 }
 
+// AutoMigratedResources maps resources that support auto-migration
+// TODO: remove this before Grafana 13 GA
+var AutoMigratedResources = map[string]bool{
+	FolderResource:    true,
+	DashboardResource: true,
+}
+
 // read storage configs from ini file. They look like:
 // [unified_storage.<group>.<resource>]
 // <field> = <value>
@@ -64,7 +71,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		}
 
 		// parse autoMigrationThreshold from resource section
-		autoMigrationThreshold := section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
+		autoMigrationThreshold := 0
+		autoMigrate := AutoMigratedResources[resourceName]
+		if autoMigrate {
+			autoMigrationThreshold = section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
+		}
 
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),

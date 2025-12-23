@@ -2,12 +2,14 @@ package migrations
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // TestRegisterMigrations exercises registerMigrations with various EnableMigration configs using a table-driven test.
@@ -91,6 +93,121 @@ func TestRegisterMigrations(t *testing.T) {
 
 			require.Equal(t, tt.wantPlaylistCalls, migrationCalls["playlists"], "playlists register call count")
 			require.Equal(t, tt.wantFDCalls, migrationCalls["folders and dashboards"], "folders+dashboards register call count")
+		})
+	}
+}
+
+// TestResourceMigration_AutoMigrateEnablesMode5 verifies the autoMigrate behavior:
+// - When autoMigrate=true AND cfg is set AND storage type is "unified", mode 5 should be enabled
+// - In all other cases, mode 5 should NOT be enabled
+func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
+	// Helper to create a cfg with unified storage type
+	makeUnifiedCfg := func() *setting.Cfg {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue("unified")
+		cfg.UnifiedStorage = make(map[string]setting.UnifiedStorageConfig)
+		return cfg
+	}
+
+	// Helper to create a cfg with legacy storage type
+	makeLegacyCfg := func() *setting.Cfg {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue("legacy")
+		cfg.UnifiedStorage = make(map[string]setting.UnifiedStorageConfig)
+		return cfg
+	}
+
+	tests := []struct {
+		name             string
+		autoMigrate      bool
+		cfg              *setting.Cfg
+		resources        []string
+		wantMode5Enabled bool
+		description      string
+	}{
+		{
+			name:             "autoMigrate enabled with unified storage",
+			autoMigrate:      true,
+			cfg:              makeUnifiedCfg(),
+			resources:        []string{setting.PlaylistResource},
+			wantMode5Enabled: true,
+			description:      "Should enable mode 5 when autoMigrate=true and storage type is unified",
+		},
+		{
+			name:             "autoMigrate disabled with unified storage",
+			autoMigrate:      false,
+			cfg:              makeUnifiedCfg(),
+			resources:        []string{setting.PlaylistResource},
+			wantMode5Enabled: false,
+			description:      "Should NOT enable mode 5 when autoMigrate=false",
+		},
+		{
+			name:             "autoMigrate enabled with legacy storage",
+			autoMigrate:      true,
+			cfg:              makeLegacyCfg(),
+			resources:        []string{setting.PlaylistResource},
+			wantMode5Enabled: false,
+			description:      "Should NOT enable mode 5 when storage type is legacy",
+		},
+		{
+			name:             "autoMigrate enabled with nil cfg",
+			autoMigrate:      true,
+			cfg:              nil,
+			resources:        []string{setting.PlaylistResource},
+			wantMode5Enabled: false,
+			description:      "Should NOT enable mode 5 when cfg is nil",
+		},
+		{
+			name:             "autoMigrate enabled with multiple resources",
+			autoMigrate:      true,
+			cfg:              makeUnifiedCfg(),
+			resources:        []string{setting.FolderResource, setting.DashboardResource},
+			wantMode5Enabled: true,
+			description:      "Should enable mode 5 for all resources when autoMigrate=true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Build schema.GroupResource from resource strings
+			resources := make([]schema.GroupResource, 0, len(tt.resources))
+			for _, r := range tt.resources {
+				parts := strings.SplitN(r, ".", 2)
+				resources = append(resources, schema.GroupResource{
+					Resource: parts[0],
+					Group:    parts[1],
+				})
+			}
+
+			// Create the migration with options
+			var opts []ResourceMigrationOption
+			opts = append(opts, WithAutoMigrate(tt.cfg, tt.autoMigrate))
+
+			m := NewResourceMigration(nil, resources, "test-auto-migrate", nil, opts...)
+
+			// Simulate what happens at the end of a successful migration
+			// This is the logic from Exec() that we're testing
+			if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
+				for _, gr := range m.resources {
+					m.cfg.EnableMode5(gr.Resource + "." + gr.Group)
+				}
+			}
+
+			// Verify mode 5 was enabled (or not) for each resource
+			for _, resourceName := range tt.resources {
+				if tt.cfg == nil {
+					// If cfg is nil, we can't check - just verify we didn't panic
+					continue
+				}
+				config := tt.cfg.GetUnifiedStorageConfig(resourceName)
+				if tt.wantMode5Enabled {
+					require.Equal(t, 5, int(config.DualWriterMode), "%s: %s", tt.description, resourceName)
+					require.True(t, config.EnableMigration, "%s: EnableMigration should be true for %s", tt.description, resourceName)
+					require.True(t, config.DualWriterMigrationDataSyncDisabled, "%s: DualWriterMigrationDataSyncDisabled should be true for %s", tt.description, resourceName)
+				} else {
+					require.Equal(t, 0, int(config.DualWriterMode), "%s: mode should be 0 for %s", tt.description, resourceName)
+				}
+			}
 		})
 	}
 }

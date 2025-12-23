@@ -171,14 +171,11 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 		}
 
 		// Skip if auto migration is explicitly disabled
-		if config.AutoMigrationThreshold < 0 {
+		if config.AutoMigrationThreshold <= 0 {
 			return false
 		}
 
 		threshold := int64(config.AutoMigrationThreshold)
-		if threshold == 0 {
-			threshold = int64(setting.DefaultAutoMigrationThreshold)
-		}
 
 		count, err := countResource(ctx, sqlStore, res)
 		if err != nil {
@@ -329,7 +326,7 @@ func validateRegisteredResources() error {
 	}
 
 	var missing []string
-	for expected := range setting.MigratedUnifiedResources {
+	for expected := range setting.AutoMigratedResources {
 		if !registeredMap[expected] {
 			missing = append(missing, expected)
 		}
