@@ -118,7 +118,7 @@ Alerts must also define a system scope, such as a service or infrastructure comp
 
 > [Service Center in Grafana Cloud](/docs/grafana-cloud/alerting-and-irm/service-center/) can help operate a service-oriented view of your system and align alert scope with ownership.
 
-Once scope, ownership, and alert priority are defined, routing determines where alerts go and how they escalate. **Notification routing is as important as the alerts**.
+After scope, ownership, and alert priority are defined, routing determines where alerts go and how they escalate. **Notification routing is as important as the alerts**.
 
 Alerts should be delivered to the right team and channel based on priority, ownership, and team workflows. Use [notification policies](ref:notification-policies) to define a routing tree that matches the context of your service or scope:
 
@@ -159,7 +159,7 @@ For latency and error-based alerts, percentiles are often more useful than avera
 quantile_over_time(0.95, http_duration_seconds[5m]) > 3
 ```
 
-Finally, avoid rapid resolve-and-fire notifications by using [keep_firing_for](ref:keep-firing-for) to keep alerts active briefly during recovery. This reduces flapping and unnecessary notifications.
+Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`](ref:keep-firing-for) to keep alerts active briefly during recovery. This reduces flapping and unnecessary notifications.
 
 ## Graduate symptom-based alerts into SLOs
 
