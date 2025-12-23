@@ -349,6 +349,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
+	facetLimit := 500
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -431,12 +432,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	// The facet term fields
 	if facets, ok := queryParams["facet"]; ok {
-		facetLimit := int64(50) // default limit
 		if queryParams.Has("facetLimit") {
-			if parsed, err := strconv.ParseInt(queryParams.Get("facetLimit"), 10, 64); err == nil && parsed > 0 {
+			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
 				facetLimit = parsed
 				if facetLimit > 1000 {
-					facetLimit = 1000 // cap at 1000 for performance
+					facetLimit = 1000
 				}
 			}
 		}
@@ -444,7 +444,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
-				Limit: facetLimit,
+				Limit: int64(facetLimit),
 			}
 		}
 	}
