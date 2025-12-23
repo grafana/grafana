@@ -35,9 +35,9 @@ describe('formatNumericValue', () => {
     });
 
     it('should format the example from requirements correctly', () => {
-      // 1.4153928131348452 is in readable range (> 1e-2), so should use standard notation with 4 decimals
+      // 1.4153928131348452 has > 4 decimal places, so should use scientific notation
       const result = formatNumericValue(1.4153928131348452);
-      expect(result).toBe('1.4154');
+      expect(result).toMatch(/^1\.415e\+0$/i);
     });
 
     it('should handle negative very small numbers', () => {
@@ -63,10 +63,21 @@ describe('formatNumericValue', () => {
 
     it('should limit to 4 decimal places without rounding integer parts', () => {
       expect(formatNumericValue(123.456)).toBe('123.456');
-      expect(formatNumericValue(123.456789)).toBe('123.4568');
       expect(formatNumericValue(1234.567)).toBe('1234.567');
-      expect(formatNumericValue(9999.9)).toBe('9999.9');
+      expect(formatNumericValue(9999.9)).toBe('9999.9'); // Preserves integer part, doesn't round to 10000
       expect(formatNumericValue(9999.1234)).toBe('9999.1234');
+    });
+
+    it('should use scientific notation for numbers with more than 4 decimal places', () => {
+      // Numbers with > 4 decimals should use scientific notation even in readable range
+      const result1 = formatNumericValue(123.456789);
+      expect(result1).toMatch(/^1\.235e\+2$/i);
+
+      const result2 = formatNumericValue(1.23456789);
+      expect(result2).toMatch(/^1\.235e\+0$/i);
+
+      const result3 = formatNumericValue(42.987654321);
+      expect(result3).toMatch(/^4\.299e\+1$/i);
     });
 
     it('should use standard notation for boundary value 1e4', () => {
@@ -75,9 +86,13 @@ describe('formatNumericValue', () => {
 
     it('should handle negative numbers in readable range', () => {
       expect(formatNumericValue(-0.1)).toBe('-0.1');
-      expect(formatNumericValue(-42.98765)).toBe('-42.9877');
       expect(formatNumericValue(-123.456)).toBe('-123.456');
       expect(formatNumericValue(-9999.9)).toBe('-9999.9');
+    });
+
+    it('should use scientific notation for negative numbers with excessive precision', () => {
+      const result = formatNumericValue(-42.987654321);
+      expect(result).toMatch(/^-4\.299e\+1$/i);
     });
   });
 
@@ -116,15 +131,17 @@ describe('formatNumericValue', () => {
       expect(justAbove).toMatch(/^1\.000e\+4$/i);
     });
 
-    it('should limit decimal places for very precise decimals', () => {
-      expect(formatNumericValue(1.23456789)).toBe('1.2346');
-      expect(formatNumericValue(123.456789)).toBe('123.4568');
-      expect(formatNumericValue(0.123456789)).toBe('0.1235');
+    it('should use scientific notation for very precise decimals with > 4 decimal places', () => {
+      // Numbers with > 4 decimals use scientific notation
+      expect(formatNumericValue(1.23456789)).toMatch(/^1\.235e\+0$/i);
+      expect(formatNumericValue(123.456789)).toMatch(/^1\.235e\+2$/i);
+      expect(formatNumericValue(0.123456789)).toMatch(/^1\.235e-1$/i);
     });
 
-    it('should handle floating-point precision artifacts', () => {
-      const result = formatNumericValue(0.1 + 0.2);
-      expect(result).toMatch(/^0\.3/);
+    it('should use standard notation for numbers with exactly 4 or fewer decimal places', () => {
+      expect(formatNumericValue(1.2345)).toBe('1.2345');
+      expect(formatNumericValue(0.1234)).toBe('0.1234');
+      expect(formatNumericValue(123.4567)).toBe('123.4567');
     });
   });
 });

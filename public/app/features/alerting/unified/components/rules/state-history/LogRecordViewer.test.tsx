@@ -84,7 +84,8 @@ describe('LogRecordViewerByTimestamp', () => {
 
       // Check that values are formatted correctly
       expect(screen.getByText(/cpu_usage/)).toBeInTheDocument();
-      expect(screen.getByText(/42\.9877/)).toBeInTheDocument(); // 42.987654321 → 42.9877 (4 decimals)
+      // 42.987654321 has > 4 decimals, so should use scientific notation
+      expect(screen.getByText(/4\.299e\+1/i)).toBeInTheDocument();
 
       // Large number should use scientific notation
       expect(screen.getByText(/memory_mb/)).toBeInTheDocument();
