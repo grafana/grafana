@@ -1874,7 +1874,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	}
 }
 
-func TestResetStateByRuleUID(t *testing.T) {
+func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	interval := time.Minute
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
