@@ -2,7 +2,6 @@ package annotation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -183,39 +182,25 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 					return nil, fmt.Errorf("unsupported operator %s for spec.panelID (only = supported)", r.Operator)
 				}
 			case "spec.time":
-				switch r.Operator {
-				case selection.GreaterThan:
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
 					from, err := strconv.ParseInt(r.Value, 10, 64)
 					if err != nil {
-						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
+						return nil, fmt.Errorf("invalid from value %q: %w", r.Value, err)
 					}
 					opts.From = from
-				case selection.LessThan:
-					to, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
-					}
-					opts.To = to
-				default:
-					return nil, fmt.Errorf("unsupported operator %s for spec.time (only >, < supported for ranges)", r.Operator)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.from (only = supported)", r.Operator)
 				}
 
 			case "spec.timeEnd":
-				switch r.Operator {
-				case selection.GreaterThan:
-					from, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
-					}
-					opts.From = from
-				case selection.LessThan:
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
 					to, err := strconv.ParseInt(r.Value, 10, 64)
 					if err != nil {
-						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+						return nil, fmt.Errorf("invalid to value %q: %w", r.Value, err)
 					}
 					opts.To = to
-				default:
-					return nil, fmt.Errorf("unsupported operator %s for spec.timeEnd (only >, < supported for ranges)", r.Operator)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
 				}
 
 			default:
@@ -262,7 +247,32 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	namespace := request.NamespaceValue(ctx)
+
+	obj, err := objInfo.UpdatedObject(ctx, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resource, ok := obj.(*annotationV0.Annotation)
+	if !ok {
+		return nil, false, fmt.Errorf("expected annotation")
+	}
+
+	if resource.Name != name {
+		return nil, false, fmt.Errorf("name in URL does not match name in body")
+	}
+
+	if resource.Namespace != namespace {
+		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
+	}
+
+	updated, err := s.store.Update(ctx, resource)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return updated, false, nil
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {

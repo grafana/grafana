@@ -79,15 +79,12 @@ class K8sAnnotationServer implements AnnotationServer {
   }
 
   async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
-    // Convert legacy query params to k8s list options
     const listOpts: ListOptions = {};
 
-    // Map limit parameter
     if (params.limit) {
       listOpts.limit = Number(params.limit);
     }
 
-    // Build field selectors for dashboard/panel filtering and time ranges
     const fieldSelectors: string[] = [];
 
     if (params.dashboardUID) {
@@ -98,54 +95,57 @@ class K8sAnnotationServer implements AnnotationServer {
       fieldSelectors.push(`spec.panelID=${params.panelId}`);
     }
 
-    // Handle time range filters using spec.time field  
-    // Note: < and > operators need URL encoding when passed as query parameters
-    // < becomes %3C and > becomes %3E
     if (params.from) {
-      // Use URL-encoded > operator
-      fieldSelectors.push(`spec.time%3E${params.from}`);
+      fieldSelectors.push(`spec.time=${params.from}`);
     }
 
     if (params.to) {
-      // Use URL-encoded < operator
-      fieldSelectors.push(`spec.time%3C${params.to}`);
+      fieldSelectors.push(`spec.timeEnd=${params.to}`);
     }
 
     if (fieldSelectors.length > 0) {
       listOpts.fieldSelector = fieldSelectors.join(',');
     }
 
-    // Handle tags using label selectors
-    if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
-      // Tags should be converted to label selectors
-      // Format: tag1,tag2 means annotations that have both tags
-      listOpts.labelSelector = params.tags.map((tag) => `tag=${tag}`).join(',');
-    }
-
     const result = await this.client.list(listOpts);
 
-    // Convert k8s resources to legacy annotation format
-    const annotations = result.items.map((item: Resource<K8sAnnotationSpec>) => ({
+    let annotations = result.items.map((item: Resource<K8sAnnotationSpec>) => ({
       id: item.metadata.name,
       ...item.spec,
-      panelId: item.spec.panelID, // Map panelID back to panelId
+      panelId: item.spec.panelID,
     }));
 
+    // Client-side tag filtering (tags are not in SelectableFields since they're in an array)
+    if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
+      const tags = params.tags;
+      annotations = annotations.filter((anno) => {
+        if (!anno.tags || anno.tags.length === 0) {
+          return false;
+        }
+        return tags.every((tag) => anno.tags!.includes(tag));
+      });
+    }
     return toDataFrame(annotations);
   }
 
   async forAlert(alertUID: string): Promise<StateHistoryItem[]> {
+    // For now, we filter client-side since label selector support for alertUID may not be implemented
     const result = await this.client.list({
-      labelSelector: `alertUID=${alertUID}`,
+      limit: 1000,
     });
 
-    // Return as any[] since the k8s annotation format doesn't match StateHistoryItem exactly
-    // This is a limitation of the current type definitions
-    return result.items.map((item: Resource<K8sAnnotationSpec>) => ({
-      id: item.metadata.name,
-      ...item.spec,
-      panelId: item.spec.panelID,
-    })) as any;
+    // Filter by tags that contain the alertUID
+    // Alert annotations typically have the alert UID in their tags
+    return result.items
+      .filter((item: Resource<K8sAnnotationSpec>) => {
+        // Check if any tag contains the alertUID
+        return item.spec.tags?.some((tag) => tag.includes(alertUID));
+      })
+      .map((item: Resource<K8sAnnotationSpec>) => ({
+        id: item.metadata.name,
+        ...item.spec,
+        panelId: item.spec.panelID,
+      })) as any;
   }
 
   async save(annotation: AnnotationEvent): Promise<AnnotationEvent> {
@@ -178,19 +178,27 @@ class K8sAnnotationServer implements AnnotationServer {
       throw new Error('Annotation ID is required for update');
     }
 
-    // Get the existing resource to preserve metadata
+    // Get the existing resource to preserve metadata (especially resourceVersion)
     const existing = await this.client.get(String(annotation.id));
 
-    // Update only the spec fields
+    // Update only the spec fields, preserve all metadata
     const updated: Resource<K8sAnnotationSpec> = {
-      ...existing,
+      apiVersion: existing.apiVersion,
+      kind: existing.kind,
+      metadata: {
+        ...existing.metadata,
+        // Preserve critical metadata fields for update
+      },
       spec: {
-        text: annotation.text || existing.spec.text,
-        time: annotation.time || existing.spec.time,
-        timeEnd: annotation.timeEnd ?? existing.spec.timeEnd,
-        dashboardUID: annotation.dashboardUID ? annotation.dashboardUID : existing.spec.dashboardUID,
-        panelID: annotation.panelId ?? existing.spec.panelID,
-        tags: annotation.tags ?? existing.spec.tags,
+        text: annotation.text !== undefined ? annotation.text : existing.spec.text,
+        time: annotation.time !== undefined ? annotation.time : existing.spec.time,
+        timeEnd: annotation.timeEnd !== undefined ? annotation.timeEnd : existing.spec.timeEnd,
+        dashboardUID:
+          annotation.dashboardUID !== undefined && annotation.dashboardUID !== null
+            ? annotation.dashboardUID
+            : existing.spec.dashboardUID,
+        panelID: annotation.panelId !== undefined ? annotation.panelId : existing.spec.panelID,
+        tags: annotation.tags !== undefined ? annotation.tags : existing.spec.tags,
       },
     };
 
@@ -207,7 +215,7 @@ class K8sAnnotationServer implements AnnotationServer {
   async tags(): Promise<Array<{ term: string; count: number }>> {
     // Use the custom /tags route defined in the CUE manifest
     const namespace = getAPINamespace();
-    const url = `/apis/${K8S_ANNOTATION_API_CONFIG.group}/${K8S_ANNOTATION_API_CONFIG.version}/namespaces/${namespace}/${K8S_ANNOTATION_API_CONFIG.resource}/tags`;
+    const url = `/apis/${K8S_ANNOTATION_API_CONFIG.group}/${K8S_ANNOTATION_API_CONFIG.version}/namespaces/${namespace}/tags`;
 
     const response = await getBackendSrv().get<K8sAnnotationTagsResponse>(url, { limit: 1000 });
 
