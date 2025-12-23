@@ -222,47 +222,47 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 // partial failures gracefully while still allowing retry on next startup.
 func TestResourceMigration_SkipMigrationLog(t *testing.T) {
 	tests := []struct {
-		name         string
-		ignoreErrors bool
-		hadErrors    bool
-		want         bool
-		description  string
+		name        string
+		autoMigrate bool
+		hadErrors   bool
+		want        bool
+		description string
 	}{
 		{
-			name:         "normal migration success",
-			ignoreErrors: false,
-			hadErrors:    false,
-			want:         false,
-			description:  "Normal successful migration should write to log",
+			name:        "normal migration success",
+			autoMigrate: false,
+			hadErrors:   false,
+			want:        false,
+			description: "Normal successful migration should write to log",
 		},
 		{
-			name:         "ignoreErrors migration success",
-			ignoreErrors: true,
-			hadErrors:    false,
-			want:         false,
-			description:  "Migration with ignoreErrors that succeeds should still write to log",
+			name:        "ignoreErrors migration success",
+			autoMigrate: true,
+			hadErrors:   false,
+			want:        false,
+			description: "Migration with ignoreErrors that succeeds should still write to log",
 		},
 		{
-			name:         "normal migration with errors",
-			ignoreErrors: false,
-			hadErrors:    true,
-			want:         false,
-			description:  "Migration that fails without ignoreErrors should write error to log",
+			name:        "normal migration with errors",
+			autoMigrate: false,
+			hadErrors:   true,
+			want:        false,
+			description: "Migration that fails without ignoreErrors should write error to log",
 		},
 		{
-			name:         "ignoreErrors migration with errors - skip log",
-			ignoreErrors: true,
-			hadErrors:    true,
-			want:         true,
-			description:  "Migration with ignoreErrors that has errors should SKIP log to allow retry",
+			name:        "ignoreErrors migration with errors - skip log",
+			autoMigrate: true,
+			hadErrors:   true,
+			want:        true,
+			description: "Migration with ignoreErrors that has errors should SKIP log to allow retry",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &ResourceMigration{
-				ignoreErrors: tt.ignoreErrors,
-				hadErrors:    tt.hadErrors,
+				autoMigrate: tt.autoMigrate,
+				hadErrors:   tt.hadErrors,
 			}
 			require.Equal(t, tt.want, m.SkipMigrationLog(), tt.description)
 		})

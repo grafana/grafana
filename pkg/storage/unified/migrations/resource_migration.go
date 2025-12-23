@@ -28,26 +28,18 @@ type Validator interface {
 // ResourceMigration handles migration of specific resource types from legacy to unified storage.
 type ResourceMigration struct {
 	migrator.MigrationBase
-	migrator     UnifiedMigrator
-	resources    []schema.GroupResource
-	migrationID  string
-	validators   []Validator // Optional: custom validation logic for this migration
-	log          log.Logger
-	cfg          *setting.Cfg
-	autoMigrate  bool // If true, auto-migrate resource if count is below threshold
-	ignoreErrors bool // If true, errors are logged but don't fail the migration
-	hadErrors    bool // Tracks if errors occurred during migration (used with ignoreErrors)
+	migrator    UnifiedMigrator
+	resources   []schema.GroupResource
+	migrationID string
+	validators  []Validator // Optional: custom validation logic for this migration
+	log         log.Logger
+	cfg         *setting.Cfg
+	autoMigrate bool // If true, auto-migrate resource if count is below threshold
+	hadErrors   bool // Tracks if errors occurred during migration (used with ignoreErrors)
 }
 
 // ResourceMigrationOption is a functional option for configuring ResourceMigration.
 type ResourceMigrationOption func(*ResourceMigration)
-
-// WithIgnoreErrors configures the migration to log errors but continue execution.
-func WithIgnoreErrors() ResourceMigrationOption {
-	return func(m *ResourceMigration) {
-		m.ignoreErrors = true
-	}
-}
 
 // WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
 func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
@@ -80,7 +72,7 @@ func NewResourceMigration(
 
 func (m *ResourceMigration) SkipMigrationLog() bool {
 	// If ignoreErrors is true, we skip logging to allow re-running migrations
-	return m.ignoreErrors && m.hadErrors
+	return m.autoMigrate && m.hadErrors
 }
 
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
@@ -95,7 +87,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err
 	// Track any errors that occur during migration
 	defer func() {
 		if err != nil {
-			if m.ignoreErrors {
+			if m.autoMigrate {
 				m.log.Warn("Migration error ignored", "error", err)
 			}
 			m.hadErrors = true

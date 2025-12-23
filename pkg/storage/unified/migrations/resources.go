@@ -73,7 +73,7 @@ func registerMigrations(ctx context.Context,
 		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
 			logger.Info("Auto-migration enabled for migration", "migration", migration.name)
 			enableMode5IfMigrated(ctx, migration, cfg, sqlStore)
-			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg), WithIgnoreErrors())
+			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg))
 			continue
 		}
 
@@ -178,9 +178,11 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 
 		count, err := countResource(ctx, sqlStore, res)
 		if err != nil {
-			logger.Warn("Failed to count resource for auto mode 5 check", "resource", res, "error", err)
+			logger.Warn("Failed to count resource for auto migration check", "resource", res, "error", err)
 			return false
 		}
+
+		logger.Info("Resource count for auto migration check", "resource", res, "count", count, "threshold", threshold)
 
 		if count > threshold {
 			return false
@@ -241,6 +243,7 @@ func isMigrationEnabled(migration migrationDefinition, cfg *setting.Cfg) (bool, 
 	return allEnabled, nil
 }
 
+// TODO: remove this before Grafana 13 GA
 func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (int64, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -252,10 +255,6 @@ func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (in
 		case setting.FolderResource:
 			var err error
 			count, err = sess.Table("dashboard").Where("is_folder = ?", true).Count()
-			return err
-		case setting.PlaylistResource:
-			var err error
-			count, err = sess.Table("playlist").Count()
 			return err
 		default:
 			return fmt.Errorf("unknown resource: %s", resourceName)
