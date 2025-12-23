@@ -1390,7 +1390,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
 			provenanceStore := fakes.NewFakeProvisioningStore()
-			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+			srv, ruleStore, fldr, rule := initGroup("prometheus definition", groupName, withProvenanceStore(provenanceStore))
 
 			// Mark the rule as provisioned with API provenance
 			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
@@ -1410,6 +1410,37 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, remaining)
 		})
+	})
+
+	t.Run("should not delete non-imported rule groups", func(t *testing.T) {
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		rule := models.RuleGen.
+			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(models.RuleGen.WithOrgID(1)).
+			With(models.RuleGen.WithGroupName(groupName)).
+			GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		// Attempt to delete via convert endpoint should return 404
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+		require.Equal(t, http.StatusNotFound, response.Status())
+
+		// Verify the rule is still present
+		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			UID:   rule.UID,
+			OrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, remaining)
 	})
 }
 
