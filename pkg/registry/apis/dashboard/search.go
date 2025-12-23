@@ -349,7 +349,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
-	facetLimit := 500
+	facetLimit := 50
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
