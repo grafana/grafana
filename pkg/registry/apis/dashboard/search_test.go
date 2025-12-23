@@ -812,8 +812,40 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain: false,
 				Fields:  defaultFields,
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-					"tags":   {Field: "tags", Limit: 10000},
-					"folder": {Field: "folder", Limit: 10000},
+					"tags":   {Field: "tags", Limit: 50},
+					"folder": {Field: "folder", Limit: 50},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with custom limit": {
+			queryString: "facet=tags&facetLimit=500",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 500},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with limit exceeding max": {
+			queryString: "facet=tags&facetLimit=5000",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 1000},
 				},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
