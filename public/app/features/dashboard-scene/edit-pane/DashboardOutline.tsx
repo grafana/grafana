@@ -51,11 +51,16 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
-  const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
+  const visibleChildren = useMemo(() => {
+    const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
+    return isEditing
+      ? children
+      : children.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
+  }, [editableElement, isEditing]);
 
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,6 +79,10 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     setIsCollapsed(!isCollapsed);
   };
 
+  if (elementInfo.isHidden && !isEditing) {
+    return null;
+  }
+
   return (
     // todo: add proper keyboard navigation
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -85,7 +94,11 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={{ '--depth': depth } as React.CSSProperties}
     >
-      <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
+      <div
+        className={cx(styles.row, isEditing ? styles.rowEditMode : styles.rowViewMode, {
+          [styles.rowSelected]: isSelected,
+        })}
+      >
         <div className={styles.indentation}></div>
         {isContainer && (
           <button
@@ -130,8 +143,8 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
       {isContainer && !isCollapsed && (
         <ul className={styles.nodeChildren} role="group">
-          {children.length > 0 ? (
-            children.map((child, i) => (
+          {visibleChildren.length > 0 ? (
+            visibleChildren.map((child, i) => (
               <DashboardOutlineNode
                 key={child.state.key}
                 sceneObject={child}
@@ -182,11 +195,17 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
-
+    }),
+    rowEditMode: css({
       '&:hover': {
         color: theme.colors.text.primary,
         outline: `1px dashed ${theme.colors.border.strong}`,
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+      },
+    }),
+    rowViewMode: css({
+      '&:hover': {
+        textDecoration: 'underline',
       },
     }),
     rowSelected: css({

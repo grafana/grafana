@@ -30,7 +30,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "maximum depth reached",
 			input: folder.ErrMaximumDepthReached.Errorf("Maximum nested folder depth reached"),
-			want:  response.Err(folder.ErrMaximumDepthReached.Errorf("Maximum nested folder depth reached")),
+			want:  response.Error(http.StatusBadRequest, "[folder.maximum-depth-reached] Maximum nested folder depth reached", nil),
 		},
 		{
 			name:  "bad request errors",

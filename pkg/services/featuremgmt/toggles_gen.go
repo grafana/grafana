@@ -79,10 +79,6 @@ const (
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
 
-	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger
-	FlagUnifiedRequestLog = "unifiedRequestLog"
-
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
@@ -339,6 +335,10 @@ const (
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 
+	// FlagDashboardAdHocAndGroupByWrapper
+	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
+
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
@@ -571,6 +571,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagFetchRulesInCompactMode
+	// Add compact=true when fetching rules
+	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
+
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
@@ -757,6 +761,10 @@ const (
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
+
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations

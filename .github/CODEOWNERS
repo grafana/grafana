@@ -24,7 +24,6 @@
 /NOTICE.md @torkelo
 /README.md @grafana/docs-grafana
 /ROADMAP.md @torkelo
-/SECURITY.md @grafana/security-team
 /SUPPORT.md @torkelo
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
@@ -208,7 +207,7 @@
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/opentsdb/ @grafana/partner-datasources
+/pkg/tsdb/opentsdb/ @grafana/oss-big-tent
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
 
@@ -260,7 +259,7 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
-/devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
+/devenv/dev-dashboards/datasource-opentsdb/ @grafana/oss-big-tent
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-loki/ @grafana/plugins-platform-frontend
@@ -307,7 +306,7 @@
 /devenv/docker/blocks/mysql_exporter/ @grafana/oss-big-tent
 /devenv/docker/blocks/mysql_opendata/ @grafana/oss-big-tent
 /devenv/docker/blocks/mysql_tests/ @grafana/oss-big-tent
-/devenv/docker/blocks/opentsdb/ @grafana/partner-datasources
+/devenv/docker/blocks/opentsdb/ @grafana/oss-big-tent
 /devenv/docker/blocks/postgres/ @grafana/oss-big-tent
 /devenv/docker/blocks/postgres_tests/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus/ @grafana/oss-big-tent
@@ -426,6 +425,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
+/e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
@@ -1101,7 +1101,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
-/public/app/plugins/datasource/opentsdb/ @grafana/partner-datasources
+/public/app/plugins/datasource/opentsdb/ @grafana/oss-big-tent
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/oss-big-tent
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources

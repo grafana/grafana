@@ -439,7 +439,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 						ID:       fooFolder.ID, // nolint:staticcheck
 						UID:      fooFolder.UID,
 					},
-				}, nil).Once()
+				}, nil).Twice() // Called twice due to total count call
 				id := int64(123)
 				emptyString := ""
 				query := &folder.GetFolderQuery{
@@ -455,7 +455,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing ID should return not found error", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Twice() // Called twice due to total count call
 				id := int64(111111)
 				query := &folder.GetFolderQuery{
 					ID:           &id,
@@ -475,7 +475,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 						ID:       fooFolder.ID, // nolint:staticcheck
 						UID:      fooFolder.UID,
 					},
-				}, nil).Once()
+				}, nil).Twice() // Called twice due to total count call
 				title := "foo"
 				query := &folder.GetFolderQuery{
 					Title:        &title,
@@ -489,7 +489,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Twice() // Called twice due to total count call
 				title := "does not exists"
 				query := &folder.GetFolderQuery{
 					Title:        &title,

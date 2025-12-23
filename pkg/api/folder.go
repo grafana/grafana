@@ -214,7 +214,7 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 	cmd.SignedInUser = c.SignedInUser
 	theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "move folder failed", err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	folderDTO, err := hs.newToFolderDto(c, theFolder)
