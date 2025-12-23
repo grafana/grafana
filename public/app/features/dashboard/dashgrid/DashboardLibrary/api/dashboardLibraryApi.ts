@@ -5,10 +5,10 @@ import { PluginDashboard } from 'app/types/plugins';
 import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
 
 /**
- * Panel types that might contain JavaScript code.
- * We want to filter them out due to security reasons
+ * Panel types that are known to allow JavaScript code execution.
+ * These panels are filtered out due to security concerns.
  */
-const PANEL_TYPE_FILTER_SLUGS = [
+const UNSAFE_PANEL_TYPE_SLUGS = [
   'aceiot-svg-panel',
   'ae3e-plotly-panel',
   'gapit-htmlgraphics-panel',
@@ -18,7 +18,17 @@ const PANEL_TYPE_FILTER_SLUGS = [
 ];
 
 /**
- * Arbitrary value for the minimum number of downloads to filter out dashboards as suggestions.
+ * Minimum number of downloads required for a community dashboard to be shown as a suggestion.
+ *
+ * Rationale:
+ * - Dashboards with higher download counts have been vetted by a larger community
+ * - This acts as a heuristic for quality and trustworthiness
+ * - Reduces risk of malicious or poorly-maintained dashboards
+ *
+ * Trade-offs:
+ * - May filter out legitimate but less popular dashboards
+ * - Newer dashboards with good content but low download counts won't be shown
+ * - The threshold of 10,000 is somewhat arbitrary and may need tuning based on ecosystem growth
  */
 const MIN_DOWNLOADS_FILTER = 10000;
 
@@ -133,10 +143,10 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
 // They are already ordered by downloads amount
 const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
   return dashboards.filter((item: GnetDashboard) => {
-    if (
-      item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
-      item.downloads < MIN_DOWNLOADS_FILTER
-    ) {
+    const hasUnsafePanelTypes = item.panelTypeSlugs?.some((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug));
+    const hasLowDownloads = typeof item.downloads === 'number' && item.downloads < MIN_DOWNLOADS_FILTER;
+
+    if (hasUnsafePanelTypes || hasLowDownloads) {
       console.warn(
         `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavaScript`
       );

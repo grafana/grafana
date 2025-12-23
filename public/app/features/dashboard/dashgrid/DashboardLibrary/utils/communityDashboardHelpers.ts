@@ -124,7 +124,23 @@ interface UseCommunityDashboardParams {
 }
 
 /**
- * Check if a panel contains JavaScript code. This is not a perfect check, but good enough
+ * Check if a panel contains JavaScript code using heuristic pattern matching.
+ *
+ * IMPORTANT: This is a heuristic-based detection, not a perfect mechanism.
+ *
+ * Patterns checked:
+ * - HTML/Script tags: Direct XSS attack vectors
+ * - Event handlers: Common JS injection points (onclick, onload, etc.)
+ * - Function declarations: Actual executable code patterns
+ * - eval/Function constructor: Dynamic code execution
+ * - setTimeout/setInterval: Deferred code execution
+ *
+ * What we DON'T check:
+ * - Panel title and description are excluded (already sanitized by Grafana's rendering layer)
+ * - Only the panel's options and configuration are scanned
+ *
+ * @param panel - The panel model to check
+ * @returns true if the panel might contain JavaScript code, false otherwise
  */
 function canPanelContainJS(panel: PanelModel): boolean {
   // Create a copy of the panel without title and description, as they are already sanitized
@@ -226,7 +242,9 @@ export async function onUseCommunityDashboard({
     const dashboardJson = fullDashboard.json;
 
     if (canDashboardContainJS(dashboardJson)) {
-      throw new Error(`Community dashboard ${dashboard.id} ${dashboard.name} might contain JavaScript code`);
+      throw new Error(
+        `Community dashboard ${dashboard.id} "${dashboard.name}" might contain JavaScript code and cannot be loaded for security reasons`
+      );
     }
 
     // Parse datasource requirements from __inputs
