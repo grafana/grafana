@@ -200,7 +200,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 					// If cfg is nil, we can't check - just verify we didn't panic
 					continue
 				}
-				config := tt.cfg.GetUnifiedStorageConfig(resourceName)
+				config := tt.cfg.UnifiedStorageConfig(resourceName)
 				if tt.wantMode5Enabled {
 					require.Equal(t, 5, int(config.DualWriterMode), "%s: %s", tt.description, resourceName)
 					require.True(t, config.EnableMigration, "%s: EnableMigration should be true for %s", tt.description, resourceName)

@@ -189,8 +189,8 @@ func (cfg *Cfg) UnifiedStorageType() string {
 	return defaultStorageType
 }
 
-// GetUnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
-func (cfg *Cfg) GetUnifiedStorageConfig(resource string) UnifiedStorageConfig {
+// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
 		return UnifiedStorageConfig{}
 	}

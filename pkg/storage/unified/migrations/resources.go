@@ -158,7 +158,7 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 	autoMigrate := false
 
 	for _, res := range migration.resources {
-		config := cfg.GetUnifiedStorageConfig(res)
+		config := cfg.UnifiedStorageConfig(res)
 
 		if config.DualWriterMode == 5 {
 			return false
