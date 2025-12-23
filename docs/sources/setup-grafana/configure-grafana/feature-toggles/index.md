@@ -31,7 +31,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsContextDatasourceUi`             | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
-| `unifiedRequestLog`                   | Writes error logs to the request logger                                                                                                                       | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
@@ -66,7 +65,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
+| `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
+| `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
 
@@ -95,9 +96,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
+| `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles

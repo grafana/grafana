@@ -4,7 +4,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryCard } from '../Repository/RepositoryCard';
+import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
 import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
@@ -22,6 +22,7 @@ export function RepositoryList({ items }: Props) {
 
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const { instanceConnected } = checkSyncSettings(items);
+  const hasInstanceSyncRepo = items.some((item) => item.spec?.sync?.target === 'instance');
 
   const getResourceCountSection = () => {
     if (isProvisionedInstance) {
@@ -77,6 +78,17 @@ export function RepositoryList({ items }: Props) {
   return (
     <>
       {getResourceCountSection()}
+      {hasInstanceSyncRepo && (
+        <Alert
+          title={t('provisioning.instance-sync-deprecation.title', 'Instance sync is not fully supported')}
+          severity="warning"
+        >
+          <Trans i18nKey="provisioning.instance-sync-deprecation.message">
+            Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels
+            and alerts, disconnect your repository and reconnect it using folder sync instead.
+          </Trans>
+        </Alert>
+      )}
       <Stack direction={'column'} gap={3}>
         {!instanceConnected && (
           <Stack gap={2}>
@@ -89,7 +101,7 @@ export function RepositoryList({ items }: Props) {
         )}
         <Stack direction={'column'} gap={2}>
           {filteredItems.length ? (
-            filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
+            filteredItems.map((item) => <RepositoryListItem key={item.metadata?.name} repository={item} />)
           ) : (
             <EmptyState
               variant="not-found"

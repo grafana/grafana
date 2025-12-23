@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -72,6 +73,17 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 
 	m.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", m.resources)
 
+	if mg.Dialect.DriverName() == migrator.SQLite {
+		// reuse transaction in SQLite to avoid "database is locked" errors
+		tx, err := sess.Tx()
+		if err != nil {
+			m.log.Error("Failed to get transaction from session", "error", err)
+			return fmt.Errorf("failed to get transaction: %w", err)
+		}
+		ctx = resource.ContextWithTransaction(ctx, tx.Tx)
+		m.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
+	}
+
 	for _, org := range orgs {
 		if err := m.migrateOrg(ctx, sess, org); err != nil {
 			return err
@@ -106,6 +118,10 @@ func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, 
 	if err != nil {
 		m.log.Error("Migration failed", "org_id", org.ID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, err)
+	}
+	if response.Error != nil {
+		m.log.Error("Migration reported error", "org_id", org.ID, "error", response.Error.String(), "duration", time.Since(startTime))
+		return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, fmt.Errorf("migration error: %s", response.Error.Message))
 	}
 
 	// Validate the migration results

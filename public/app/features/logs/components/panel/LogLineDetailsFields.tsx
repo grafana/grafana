@@ -267,54 +267,56 @@ export const LogLineDetailsField = ({
       <div className={styles.row}>
         {!disableActions && (
           <div className={styles.actions}>
-            {onClickFilterLabel && fieldSupportsFilters && (
-              <AsyncIconButton
-                name="search-plus"
-                onClick={filterLabel}
-                // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
-                isActive={labelFilterActive}
-                tooltipSuffix={refIdTooltip}
-              />
-            )}
-            {onClickFilterOutLabel && fieldSupportsFilters && (
+            <div className={styles.actionIcons}>
+              {onClickFilterLabel && fieldSupportsFilters && (
+                <AsyncIconButton
+                  name="search-plus"
+                  onClick={filterLabel}
+                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                  isActive={labelFilterActive}
+                  tooltipSuffix={refIdTooltip}
+                />
+              )}
+              {onClickFilterOutLabel && fieldSupportsFilters && (
+                <IconButton
+                  name="search-minus"
+                  tooltip={
+                    app === CoreApp.Explore && log.dataFrame?.refId
+                      ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                          query: log.dataFrame?.refId,
+                        })
+                      : t('logs.log-line-details.fields.filter-out', 'Filter out value')
+                  }
+                  onClick={filterOutLabel}
+                />
+              )}
+              {singleKey && displayedFields.includes(keys[0]) && (
+                <IconButton
+                  variant="primary"
+                  tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
+                  name="eye"
+                  onClick={hideField}
+                />
+              )}
+              {singleKey && !displayedFields.includes(keys[0]) && (
+                <IconButton
+                  tooltip={t(
+                    'logs.log-line-details.fields.toggle-field-button.field-instead-message',
+                    'Show this field instead of the message'
+                  )}
+                  name="eye"
+                  onClick={showField}
+                />
+              )}
               <IconButton
-                name="search-minus"
-                tooltip={
-                  app === CoreApp.Explore && log.dataFrame?.refId
-                    ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
-                        query: log.dataFrame?.refId,
-                      })
-                    : t('logs.log-line-details.fields.filter-out', 'Filter out value')
-                }
-                onClick={filterOutLabel}
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+                className={styles.statsIcon}
+                disabled={!singleKey}
+                onClick={showStats}
               />
-            )}
-            {singleKey && displayedFields.includes(keys[0]) && (
-              <IconButton
-                variant="primary"
-                tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
-                name="eye"
-                onClick={hideField}
-              />
-            )}
-            {singleKey && !displayedFields.includes(keys[0]) && (
-              <IconButton
-                tooltip={t(
-                  'logs.log-line-details.fields.toggle-field-button.field-instead-message',
-                  'Show this field instead of the message'
-                )}
-                name="eye"
-                onClick={showField}
-              />
-            )}
-            <IconButton
-              variant={showFieldsStats ? 'primary' : 'secondary'}
-              name="signal"
-              tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-              className="stats-button"
-              disabled={!singleKey}
-              onClick={showStats}
-            />
+            </div>
           </div>
         )}
         <div className={styles.label}>
@@ -387,6 +389,15 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   actions: css({
     whiteSpace: 'nowrap',
+  }),
+  actionIcons: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    paddingRight: 2,
+  }),
+  statsIcon: css({
+    margin: 0,
+    paddingRight: 4,
   }),
   label: css({
     paddingRight: theme.spacing(1),

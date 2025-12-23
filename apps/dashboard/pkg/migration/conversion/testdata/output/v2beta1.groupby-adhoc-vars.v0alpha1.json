@@ -4,110 +4,91 @@
   "metadata": {
     "name": "test-v2alpha1-groupby-adhoc-vars"
   },
-  "spec": null,
-  "status": {
-    "conversion": {
-      "failed": true,
-      "error": "backend conversion not yet implemented",
-      "storedVersion": "v2beta1",
-      "source": {
-        "kind": "Dashboard",
-        "apiVersion": "dashboard.grafana.app/v2beta1",
-        "metadata": {
-          "name": "test-v2alpha1-groupby-adhoc-vars"
-        },
-        "spec": {
-          "annotations": [],
-          "cursorSync": "",
-          "elements": {},
-          "layout": null,
-          "links": [],
-          "preload": false,
-          "tags": null,
-          "timeSettings": {
-            "from": "",
-            "to": "",
-            "autoRefresh": "",
-            "autoRefreshIntervals": null,
-            "hideTimepicker": false,
-            "fiscalYearStartMonth": 0
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "text7",
+            "value": "value7"
           },
-          "title": "Test: V2alpha1 dashboard with group by and adhoc variables",
-          "variables": [
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "description": "A group by variable",
+          "hide": 0,
+          "label": "Group By Variable",
+          "multi": false,
+          "name": "",
+          "options": [],
+          "skipUrlSync": false,
+          "type": "groupby"
+        },
+        {
+          "allowCustomValue": true,
+          "baseFilters": [
             {
-              "kind": "GroupByVariable",
-              "group": "prometheus",
-              "datasource": {
-                "name": "gdev-prometheus"
-              },
-              "spec": {
-                "name": "",
-                "current": {
-                  "text": "text7",
-                  "value": "value7"
-                },
-                "options": null,
-                "multi": false,
-                "label": "Group By Variable",
-                "hide": "dontHide",
-                "skipUrlSync": false,
-                "description": "A group by variable"
-              }
+              "condition": "AND",
+              "key": "key1",
+              "operator": "=",
+              "value": "value1"
             },
             {
-              "kind": "AdhocVariable",
-              "group": "prometheus",
-              "datasource": {
-                "name": "datasource-3"
-              },
-              "spec": {
-                "name": "adhocVar",
-                "baseFilters": [
-                  {
-                    "key": "key1",
-                    "operator": "=",
-                    "value": "value1",
-                    "condition": "AND"
-                  },
-                  {
-                    "key": "key2",
-                    "operator": "=",
-                    "value": "value2",
-                    "condition": "OR"
-                  }
-                ],
-                "filters": [
-                  {
-                    "key": "key3",
-                    "operator": "=",
-                    "value": "value3",
-                    "condition": "AND"
-                  }
-                ],
-                "defaultKeys": [
-                  {
-                    "text": "defaultKey1",
-                    "value": "defaultKey1",
-                    "group": "defaultGroup1",
-                    "expandable": true
-                  }
-                ],
-                "label": "Adhoc Variable",
-                "hide": "dontHide",
-                "skipUrlSync": false,
-                "description": "An adhoc variable",
-                "allowCustomValue": true
-              }
+              "condition": "OR",
+              "key": "key2",
+              "operator": "=",
+              "value": "value2"
             }
-          ]
-        },
-        "status": {
-          "conversion": {
-            "failed": false,
-            "storedVersion": "v2alpha1"
-          }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "datasource-3"
+          },
+          "defaultKeys": [
+            {
+              "expandable": true,
+              "group": "defaultGroup1",
+              "text": "defaultKey1",
+              "value": "defaultKey1"
+            }
+          ],
+          "description": "An adhoc variable",
+          "filters": [
+            {
+              "condition": "AND",
+              "key": "key3",
+              "operator": "=",
+              "value": "value3"
+            }
+          ],
+          "hide": 0,
+          "label": "Adhoc Variable",
+          "name": "adhocVar",
+          "skipUrlSync": false,
+          "type": "adhoc"
         }
-      }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "title": "Test: V2alpha1 dashboard with group by and adhoc variables"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
     }
   }
 }

@@ -1005,7 +1005,7 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
@@ -1162,7 +1162,8 @@
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
@@ -3401,11 +3402,12 @@
     },
     "/dashboards/home": {
       "get": {
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "tags": [
           "dashboards"
         ],
-        "summary": "Get home dashboard.",
         "operationId": "getHomeDashboard",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getHomeDashboardResponse"
@@ -9925,8 +9927,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -9970,8 +9971,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -10012,8 +10012,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -10117,6 +10116,12 @@
             "name": "team_id",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "name": "accesscontrol",
+            "in": "query"
           }
         ],
         "responses": {
@@ -18073,7 +18078,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -23164,17 +23169,10 @@
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "ExternalUID": {
-          "type": "string"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Name": {
+        "name": {
           "type": "string"
         }
       }

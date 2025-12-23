@@ -15,6 +15,9 @@ type FakeDataSourceService struct {
 	lastID                int64
 	DataSources           []*datasources.DataSource
 	SimulatePluginFailure bool
+
+	// UID -> Headers
+	DataSourceHeaders map[string]http.Header
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
@@ -152,5 +155,5 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 }
 
 func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
-	return nil, nil
+	return s.DataSourceHeaders[ds.UID], nil
 }

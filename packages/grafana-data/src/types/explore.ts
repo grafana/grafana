@@ -85,6 +85,9 @@ export interface ExploreLogsPanelState {
   refId?: string;
   displayedFields?: string[];
   sortOrder?: LogsSortOrder;
+  // Column sort state for table view. Persists between query changes.
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

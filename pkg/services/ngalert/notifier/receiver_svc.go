@@ -80,6 +80,9 @@ type receiverAccessControlService interface {
 	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 
+	HasUpdateProtected(context.Context, identity.Requester, *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, *models.Receiver) error
+
 	Access(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error)
 }
 
@@ -472,6 +475,18 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
 		return nil, err
+	}
+
+	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
+	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
+	if !canUpdateProtected {
+		diff := models.HasReceiversDifferentProtectedFields(existing, r)
+		if len(diff) > 0 {
+			err = rs.authz.AuthorizeUpdateProtected(ctx, user, r)
+			if err != nil {
+				return nil, makeProtectedFieldsAuthzError(err, diff)
+			}
+		}
 	}
 
 	// We need to perform two important steps to process settings on an updated integration:

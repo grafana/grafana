@@ -3,7 +3,7 @@
 // (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
 // but you still might need to select it for testing,
 // in that case please add the attribute data-testid={selector} in the component and
-// prefix your selector string with 'data-testid' so that when create the selectors we know to search for it on the right attribute
+// prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
 import { VersionedSelectorGroup } from '../types';
 
@@ -60,6 +60,9 @@ export const versionedComponents = {
   Sidebar: {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
+    },
+    dockToggle: {
+      '12.4.0': 'data-testid sidebar-dock-toggle',
     },
   },
   EditPaneHeader: {
@@ -443,6 +446,9 @@ export const versionedComponents = {
       PanelDataErrorMessage: {
         '10.4.0': 'data-testid Panel data error message',
       },
+      PanelGroupByHeaderAction: {
+        '12.4.0': 'data-testid Panel group by header action',
+      },
     },
     Visualization: {
       Graph: {
@@ -493,6 +499,9 @@ export const versionedComponents = {
         },
       },
       TableNG: {
+        RowExpander: {
+          '12.4.0': 'data-testid tableng row expander',
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -576,6 +585,9 @@ export const versionedComponents = {
       content: {
         '11.1.0': 'data-testid Panel editor option pane content',
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane content',
+      },
+      header: {
+        '12.4.0': 'data-testid Panel editor OptionsPane header',
       },
       select: {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
@@ -1048,6 +1060,7 @@ export const versionedComponents = {
   },
   PluginVisualization: {
     item: {
+      '12.4.0': (title: string) => `data-testid Plugin visualization item ${title}`,
       [MIN_GRAFANA_VERSION]: (title: string) => `Plugin visualization item ${title}`,
     },
     current: {
@@ -1319,6 +1332,7 @@ export const versionedComponents = {
   },
   DebugOverlay: {
     wrapper: {
+      '12.3.0': 'data-testid debug-overlay-wrapper',
       '9.2.0': 'debug-overlay',
     },
   },
@@ -1478,6 +1492,16 @@ export const versionedComponents = {
         message: {
           ['12.1.0']: 'data-testid export-image-error-message',
         },
+      },
+    },
+  },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
       },
     },
   },

@@ -133,6 +133,10 @@ After this limit is reached, the oldest deleted dashboards are permanently remov
 
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 
+{{% admonition type="note" %}}
+Only users with admin rights can access the **Restore dashboards** page.
+{{% /admonition %}}
+
 To restore one or more dashboards, follow these steps:
 
 1. In the main menu, click **Dashboards > Recently deleted** or click the **Recently deleted** button from the **Dashboards** page.
@@ -144,9 +148,13 @@ To restore one or more dashboards, follow these steps:
    - If the original folder no longer exists, you’ll need to select a new target folder.
 4. Click **Restore**.
 
-{{% admonition type="note" %}}
-Only users with admin rights can access the **Restore dashboards** page.
-{{% /admonition %}}
+### Limitations
+
+Restoring dashboards has the following limitations:
+
+- **Permissions aren't preserved** - Dashboard-specific permissions are not restored. After restoration, you'll need to manually reconfigure any custom permissions that were previously set on the dashboard.
+- **Folder-level permissions apply** - Restored dashboards inherit the permissions of the target folder you select during restoration.
+- **Version history is reset** - The dashboard's version history is not preserved. After restoration, the dashboard starts with version 1, and all previous versions are lost.
 
 ## Set up generative AI features for dashboards
 

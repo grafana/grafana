@@ -7,7 +7,7 @@ import { Field, Icon, PopoverContent, ReactUtils, Tooltip, useStyles2 } from '@g
 
 interface EditorFieldProps extends ComponentProps<typeof Field> {
   label: string;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   width?: number | string;
   optional?: boolean;
   tooltip?: PopoverContent;

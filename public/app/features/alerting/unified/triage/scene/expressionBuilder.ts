@@ -4,9 +4,12 @@ import { AdHocFilterWithLabels } from '@grafana/scenes';
  * Custom expression builder for Prometheus that properly handles regex operators.
  * Unlike the default builder, this doesn't escape regex metacharacters when using =~ or !~
  * operators, allowing users to enter raw regex patterns.
+ *
+ * Note: __name__ is excluded from filters as it represents the metric name itself,
+ * not a label, and should be handled separately in query construction.
  */
 export function prometheusExpressionBuilder(filters: AdHocFilterWithLabels[]): string {
-  const applicableFilters = filters.filter((f) => !f.nonApplicable && !f.hidden);
+  const applicableFilters = filters.filter((f) => !f.nonApplicable && !f.hidden && f.key !== '__name__');
   return applicableFilters.map(renderFilter).join(',');
 }
 

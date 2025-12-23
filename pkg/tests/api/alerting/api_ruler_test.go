@@ -53,10 +53,11 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -360,10 +361,11 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -1166,6 +1168,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1209,6 +1212,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1264,6 +1268,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1426,10 +1431,11 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -1610,7 +1616,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 									To:   apimodels.Duration(15 * time.Minute),
 								},
 								DatasourceUID: expr.DatasourceUID,
-								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}`),
 							},
 						},
 						UpdatedBy: &apimodels.UserInfo{
@@ -2681,6 +2687,7 @@ func TestIntegrationQuota(t *testing.T) {
 							   "expression":"2 + 4 \u003E 1",
 							   "intervalMs":1000,
 							   "maxDataPoints":43200,
+							   "refId":"A",
 							   "type":"math"
 							}
 						     }
@@ -2798,6 +2805,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 												"expression": "2 + 3 > 1",
 												"intervalMs": 1000,
 												"maxDataPoints": 43200,
+												"refId": "A",
 												"type": "math"
 											}
 										}
@@ -3285,6 +3293,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3331,6 +3340,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3683,6 +3693,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3729,6 +3740,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3872,6 +3884,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
+								   "refId":"A",
 		                           "type":"math"
 		                        }
 		                     }
@@ -3995,6 +4008,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }
@@ -4093,6 +4107,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }

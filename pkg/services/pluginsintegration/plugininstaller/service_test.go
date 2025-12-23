@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -27,7 +26,7 @@ func TestService_IsDisabled(t *testing.T) {
 		&setting.Cfg{
 			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
-		pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer()),
+		pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
 		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
 		&pluginfakes.FakePluginRepo{},
@@ -160,7 +159,7 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
-			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{

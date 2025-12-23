@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { CSSProperties, HTMLAttributes } from 'react';
+import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,7 +16,14 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, width, isSelected = false, onClick }: Props) {
+export function VisualizationSuggestionCard({
+  data,
+  suggestion,
+  width,
+  isSelected = false,
+  className,
+  ...restProps
+}: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -24,36 +31,41 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(styles.vizBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox),
+    className: cx(
+      className,
+      styles.vizBox,
+      config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox
+    ),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    onClick,
-  };
+    tabIndex: -1, // selection is handled by parent container
+    ...restProps,
+  } satisfies HTMLAttributes<HTMLButtonElement> & { 'data-testid': string };
+
+  let content: ReactNode;
 
   if (cardOptions.imgSrc) {
-    return (
-      <Tooltip content={suggestion.description ?? suggestion.name}>
-        <button
-          {...commonButtonProps}
-          className={cx(styles.vizBox, styles.imgBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox)}
-        >
-          <div className={styles.name}>{suggestion.name}</div>
-          <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-        </button>
-      </Tooltip>
+    content = (
+      <button {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
+        <div className={styles.name}>{suggestion.name}</div>
+        <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
+      </button>
     );
-  }
+  } else {
+    let preview = suggestion;
+    if (suggestion.cardOptions?.previewModifier) {
+      preview = cloneDeep(suggestion);
+      suggestion.cardOptions.previewModifier(preview);
+    }
 
-  let preview = suggestion;
-  if (suggestion.cardOptions?.previewModifier) {
-    preview = cloneDeep(suggestion);
-    suggestion.cardOptions.previewModifier(preview);
-  }
-
-  return (
-    <button {...commonButtonProps}>
-      <Tooltip content={suggestion.name}>
-        <div style={innerStyles} className={styles.renderContainer}>
+    content = (
+      <button {...commonButtonProps}>
+        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
+        <div
+          style={innerStyles}
+          className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}
+          {...{ inert: '' }}
+        >
           <PanelRenderer
             title=""
             data={data}
@@ -63,22 +75,22 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
             options={preview.options}
             fieldConfig={preview.fieldConfig}
           />
-          <div className={styles.hoverPane} />
         </div>
-      </Tooltip>
-    </button>
-  );
+      </button>
+    );
+  }
+
+  if (!isNewVizSuggestionsEnabled) {
+    return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
+  }
+
+  return content;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    hoverPane: css({
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      left: 0,
-      borderRadius: theme.spacing(2),
-      bottom: 0,
+    selectedSuggestion: css({
+      filter: `blur(1px) ${theme.isDark ? 'brightness(0.5)' : 'opacity(0.3)'}`,
     }),
     vizBox: css({
       position: 'relative',
@@ -96,10 +108,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         background: theme.colors.background.secondary,
       },
-    }),
-    selectedBox: css({
-      border: `2px solid ${theme.colors.primary.main}`,
-      boxShadow: `0 0 0 1px ${theme.colors.primary.main}`,
     }),
     imgBox: css({
       display: 'flex',
@@ -133,6 +141,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+    }),
+    selectedBox: css({
+      border: `1px solid ${theme.colors.primary.border}`,
+      background: theme.colors.action.selected,
     }),
   };
 };

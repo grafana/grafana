@@ -15,80 +15,121 @@
     "url": "https://github.com/grafana/grafana.git",
     "directory": "packages/grafana-api-clients"
   },
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
     },
     "./rtkq": {
-      "import": "./src/clients/rtkq/index.ts",
-      "require": "./src/clients/rtkq/index.ts"
+      "@grafana-app/source": "./src/clients/rtkq/index.ts",
+      "types": "./dist/types/clients/rtkq/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/index.cjs"
     },
     "./rtkq/advisor/v0alpha1": {
-      "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/advisor/v0alpha1/index.ts"
-    },
-    "./rtkq/correlations/v0alpha1": {
-      "import": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/correlations/v0alpha1/index.ts"
-    },
-    "./rtkq/dashboard/v0alpha1": {
-      "import": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/dashboard/v0alpha1/index.ts"
-    },
-    "./rtkq/folder/v1beta1": {
-      "import": "./src/clients/rtkq/folder/v1beta1/index.ts",
-      "require": "./src/clients/rtkq/folder/v1beta1/index.ts"
-    },
-    "./rtkq/iam/v0alpha1": {
-      "import": "./src/clients/rtkq/iam/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/iam/v0alpha1/index.ts"
-    },
-    "./rtkq/legacy": {
-      "import": "./src/clients/rtkq/legacy/index.ts",
-      "require": "./src/clients/rtkq/legacy/index.ts"
-    },
-    "./rtkq/legacy/migrate-to-cloud": {
-      "import": "./src/clients/rtkq/migrate-to-cloud/index.ts",
-      "require": "./src/clients/rtkq/migrate-to-cloud/index.ts"
-    },
-    "./rtkq/legacy/preferences": {
-      "import": "./src/clients/rtkq/preferences/user/index.ts",
-      "require": "./src/clients/rtkq/preferences/user/index.ts"
-    },
-    "./rtkq/legacy/user": {
-      "import": "./src/clients/rtkq/user/index.ts",
-      "require": "./src/clients/rtkq/user/index.ts"
-    },
-    "./rtkq/playlist/v0alpha1": {
-      "import": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/playlist/v0alpha1/index.ts"
-    },
-    "./rtkq/preferences/v1alpha1": {
-      "import": "./src/clients/rtkq/preferences/v1alpha1/index.ts",
-      "require": "./src/clients/rtkq/preferences/v1alpha1/index.ts"
+      "@grafana-app/source": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/advisor/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/advisor/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/advisor/v0alpha1/index.cjs"
     },
     "./rtkq/collections/v1alpha1": {
-      "import": "./src/clients/rtkq/collections/v1alpha1/index.ts",
-      "require": "./src/clients/rtkq/collections/v1alpha1/index.ts"
+      "@grafana-app/source": "./src/clients/rtkq/collections/v1alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/collections/v1alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/collections/v1alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/collections/v1alpha1/index.cjs"
+    },
+    "./rtkq/correlations/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/correlations/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/correlations/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/correlations/v0alpha1/index.cjs"
+    },
+    "./rtkq/dashboard/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/dashboard/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/dashboard/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/dashboard/v0alpha1/index.cjs"
+    },
+    "./rtkq/folder/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/folder/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/folder/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/folder/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/folder/v1beta1/index.cjs"
+    },
+    "./rtkq/iam/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/iam/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/iam/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/iam/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/iam/v0alpha1/index.cjs"
+    },
+    "./rtkq/legacy": {
+      "@grafana-app/source": "./src/clients/rtkq/legacy/index.ts",
+      "types": "./dist/types/clients/rtkq/legacy/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/legacy/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/legacy/index.cjs"
+    },
+    "./rtkq/legacy/migrate-to-cloud": {
+      "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts",
+      "types": "./dist/types/clients/rtkq/migrate-to-cloud/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/migrate-to-cloud/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/migrate-to-cloud/index.cjs"
+    },
+    "./rtkq/legacy/preferences": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts",
+      "types": "./dist/types/clients/rtkq/preferences/user/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/preferences/user/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/preferences/user/index.cjs"
+    },
+    "./rtkq/legacy/user": {
+      "@grafana-app/source": "./src/clients/rtkq/user/index.ts",
+      "types": "./dist/types/clients/rtkq/user/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/user/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/user/index.cjs"
+    },
+    "./rtkq/playlist/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/playlist/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/playlist/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/playlist/v0alpha1/index.cjs"
+    },
+    "./rtkq/preferences/v1alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/v1alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/preferences/v1alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/preferences/v1alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/preferences/v1alpha1/index.cjs"
     },
     "./rtkq/provisioning/v0alpha1": {
-      "import": "./src/clients/rtkq/provisioning/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/provisioning/v0alpha1/index.ts"
+      "@grafana-app/source": "./src/clients/rtkq/provisioning/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/provisioning/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/provisioning/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/provisioning/v0alpha1/index.cjs"
     },
     "./rtkq/shorturl/v1beta1": {
-      "import": "./src/clients/rtkq/shorturl/v1beta1/index.ts",
-      "require": "./src/clients/rtkq/shorturl/v1beta1/index.ts"
+      "@grafana-app/source": "./src/clients/rtkq/shorturl/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/shorturl/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/shorturl/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/shorturl/v1beta1/index.cjs"
+    },
+    "./rtkq/historian.alerting/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/historian.alerting/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/historian.alerting/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/historian.alerting/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/historian.alerting/v0alpha1/index.cjs"
+    },
+    "./rtkq/logsdrilldown/v1alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/logsdrilldown/v1alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/logsdrilldown/v1alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/logsdrilldown/v1alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/logsdrilldown/v1alpha1/index.cjs"
     }
   },
   "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [

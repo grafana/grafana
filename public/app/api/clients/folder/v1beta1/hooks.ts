@@ -103,10 +103,17 @@ const combineFolderResponses = (
 
 export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
   const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
-  // We need the legacy API call regardless, for now
-  const legacyApiCall = dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(uid));
-
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
+
+  // We need the legacy API call regardless, for now
+  const legacyApiCall = dispatch(
+    browseDashboardsAPI.endpoints.getFolder.initiate({
+      folderUID: uid,
+      accesscontrol: true,
+      isLegacyCall: shouldUseAppPlatformAPI,
+    })
+  );
+
   if (shouldUseAppPlatformAPI) {
     let virtualFolderResponse;
     if (isVirtualFolder) {
@@ -165,7 +172,9 @@ export function useGetFolderQueryFacade(uid?: string) {
   // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
   // for the access control metadata yet, and so we still take it from the old api.
   // see https://github.com/grafana/identity-access-team/issues/1103
-  const legacyFolderResult = useGetFolderQueryLegacy(uid || skipToken);
+  const legacyFolderResult = useGetFolderQueryLegacy(
+    uid ? { folderUID: uid, accesscontrol: true, isLegacyCall: true } : skipToken
+  );
   let resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
   // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
   // stitch the responses this way and access can actually return different response based on the grafana setup.
@@ -362,7 +371,6 @@ export function useCreateFolder() {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
           },
         },
-        status: {},
       },
     };
 
@@ -396,7 +404,6 @@ export function useUpdateFolder() {
         metadata: {
           name: folder.uid,
         },
-        status: {},
       },
     };
 

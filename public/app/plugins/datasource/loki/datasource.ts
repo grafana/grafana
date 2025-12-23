@@ -54,6 +54,7 @@ import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
 import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -88,15 +89,7 @@ import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
-import {
-  LokiOptions,
-  LokiQuery,
-  LokiQueryType,
-  LokiVariableQuery,
-  LokiVariableQueryType,
-  QueryStats,
-  SupportingQueryType,
-} from './types';
+import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;

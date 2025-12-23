@@ -1,0 +1,23 @@
+{
+  "config-editor": {
+    "api-key": {
+      "label": "API-nyckel",
+      "placeholder": "Ange din API-nyckel",
+      "tooltip": "Säkert json-fält (endast backend)"
+    },
+    "auth-type": {
+      "label": "Autentiseringstyp"
+    },
+    "checkbox-enabled": {
+      "label": "Kryssruta aktiverad"
+    },
+    "path": {
+      "label": "Sökväg",
+      "placeholder": "Ange sökvägen, t.ex. /api/v1",
+      "tooltip": "Json-fält som returneras till frontend"
+    },
+    "switch-enabled": {
+      "label": "Omkopplare aktiverad"
+    }
+  }
+}

@@ -49,6 +49,9 @@ type DataKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+
+	// needed to maintain backwards compatibility with unified/sql
+	GUID string
 }
 
 // GroupResource represents a unique group/resource combination
@@ -59,6 +62,12 @@ type GroupResource struct {
 
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
+}
+
+// Temporary while we need to support unified/sql/backend compatibility
+// Remove once we stop using RvManager in storage_backend.go
+func (k DataKey) StringWithGUID() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
 }
 
 func (k DataKey) Equals(other DataKey) bool {
@@ -303,7 +312,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
+	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
 	for dataKey, err := range iter {
 		if err != nil {
 			return DataKey{}, err
@@ -313,32 +322,77 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	return DataKey{}, ErrNotFound
 }
 
+type ListRequestOptions struct {
+	// Key defines the range to query (Group/Resource/Namespace/Name prefix).
+	Key ListRequestKey
+	// ContinueNamespace is the namespace to continue from.
+	// Only used when Key.Namespace is empty (cross-namespace query).
+	ContinueNamespace string
+	// ContinueName is the name to continue from.
+	ContinueName    string
+	ResourceVersion int64
+}
+
+// Validate checks that the ListRequestOptions are valid.
+func (o ListRequestOptions) Validate() error {
+	if err := o.Key.Validate(); err != nil {
+		return fmt.Errorf("invalid list request key: %w", err)
+	}
+	// ContinueNamespace is only valid for cross-namespace queries
+	if o.ContinueNamespace != "" && o.Key.Namespace != "" {
+		return fmt.Errorf("continue namespace %q not allowed when request namespace is set to %q", o.ContinueNamespace, o.Key.Namespace)
+	}
+	return nil
+}
+
 // ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
 // Only returns keys for resources that are not deleted.
 func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
-	return d.ListResourceKeysAtRevision(ctx, key, 0)
+	return d.ListResourceKeysAtRevision(ctx, ListRequestOptions{
+		Key: key,
+	})
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
-func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[DataKey, error] {
-	if err := key.Validate(); err != nil {
+func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
+	if err := options.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
-			yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
+			yield(DataKey{}, err)
 		}
+	}
+
+	rv := options.ResourceVersion
+	prefix := options.Key.Prefix()
+
+	startKey := prefix
+	if options.ContinueName != "" {
+		// Build the start key from the continue position
+		continueKey := ListRequestKey{
+			Group:     options.Key.Group,
+			Resource:  options.Key.Resource,
+			Namespace: options.Key.Namespace,
+			Name:      options.ContinueName,
+		}
+		// For cross-namespace queries, use the continue namespace
+		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
+			continueKey.Namespace = options.ContinueNamespace
+		}
+		startKey = continueKey.Prefix()
+	}
+
+	listOptions := ListOptions{
+		StartKey: startKey,
+		EndKey:   PrefixRangeEnd(prefix),
+		Sort:     SortOrderAsc,
 	}
 
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
 
-	prefix := key.Prefix()
 	// List all keys in the prefix.
-	iter := d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Sort:     SortOrderAsc,
-	})
+	iter := d.kv.Keys(ctx, dataSection, listOptions)
 
 	return func(yield func(DataKey, error) bool) {
 		var candidateKey *DataKey // The current candidate key we are iterating over
@@ -471,7 +525,13 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, dataSection, key.String())
+	var writer io.WriteCloser
+	var err error
+	if key.GUID != "" {
+		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
+	} else {
+		writer, err = d.kv.Save(ctx, dataSection, key.String())
+	}
 	if err != nil {
 		return err
 	}
@@ -490,6 +550,27 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	}
 
 	return d.kv.Delete(ctx, dataSection, key.String())
+}
+
+func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
+	for len(keys) > 0 {
+		batch := keys
+		if len(batch) > dataBatchSize {
+			batch = batch[:dataBatchSize]
+		}
+
+		keys = keys[len(batch):]
+		stringKeys := make([]string, len(batch))
+		for _, dataKey := range batch {
+			stringKeys = append(stringKeys, dataKey.String())
+		}
+
+		if err := n.kv.BatchDelete(ctx, dataSection, stringKeys); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ParseKey parses a string key into a DataKey struct
@@ -514,6 +595,33 @@ func ParseKey(key string) (DataKey, error) {
 		ResourceVersion: rv,
 		Action:          DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
+	}, nil
+}
+
+// Temporary while we need to support unified/sql/backend compatibility
+// Remove once we stop using RvManager in storage_backend.go
+func ParseKeyWithGUID(key string) (DataKey, error) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 5 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rvActionFolderGUIDParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderGUIDParts) != 4 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rv, err := strconv.ParseInt(rvActionFolderGUIDParts[0], 10, 64)
+	if err != nil {
+		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderGUIDParts[0], key, err)
+	}
+	return DataKey{
+		Group:           parts[0],
+		Resource:        parts[1],
+		Namespace:       parts[2],
+		Name:            parts[3],
+		ResourceVersion: rv,
+		Action:          DataAction(rvActionFolderGUIDParts[1]),
+		Folder:          rvActionFolderGUIDParts[2],
+		GUID:            rvActionFolderGUIDParts[3],
 	}, nil
 }
 

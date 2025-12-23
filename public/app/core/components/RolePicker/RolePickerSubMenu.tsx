@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import type { JSX } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
