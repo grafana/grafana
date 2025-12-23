@@ -39,7 +39,10 @@ func TestRegisterMigrations(t *testing.T) {
 	makeCfg := func(vals map[string]bool) *setting.Cfg {
 		cfg := &setting.Cfg{UnifiedStorage: make(map[string]setting.UnifiedStorageConfig)}
 		for k, v := range vals {
-			cfg.UnifiedStorage[k] = setting.UnifiedStorageConfig{EnableMigration: v}
+			cfg.UnifiedStorage[k] = setting.UnifiedStorageConfig{
+				EnableMigration:        v,
+				AutoMigrationThreshold: -1, // Disable auto-migration to avoid needing sqlStore
+			}
 		}
 		return cfg
 	}
@@ -88,6 +91,62 @@ func TestRegisterMigrations(t *testing.T) {
 
 			require.Equal(t, tt.wantPlaylistCalls, migrationCalls["playlists"], "playlists register call count")
 			require.Equal(t, tt.wantFDCalls, migrationCalls["folders and dashboards"], "folders+dashboards register call count")
+		})
+	}
+}
+
+// TestResourceMigration_SkipMigrationLog verifies the SkipMigrationLog behavior:
+//   - When ignoreErrors=true AND errors occurred (hadErrors=true), skip writing to migration log
+//     This allows the migration to be re-run on the next startup
+//   - In all other cases, write to migration log normally
+//
+// This is important for the folders/dashboards migration which uses WithIgnoreErrors() to handle
+// partial failures gracefully while still allowing retry on next startup.
+func TestResourceMigration_SkipMigrationLog(t *testing.T) {
+	tests := []struct {
+		name         string
+		ignoreErrors bool
+		hadErrors    bool
+		want         bool
+		description  string
+	}{
+		{
+			name:         "normal migration success",
+			ignoreErrors: false,
+			hadErrors:    false,
+			want:         false,
+			description:  "Normal successful migration should write to log",
+		},
+		{
+			name:         "ignoreErrors migration success",
+			ignoreErrors: true,
+			hadErrors:    false,
+			want:         false,
+			description:  "Migration with ignoreErrors that succeeds should still write to log",
+		},
+		{
+			name:         "normal migration with errors",
+			ignoreErrors: false,
+			hadErrors:    true,
+			want:         false,
+			description:  "Migration that fails without ignoreErrors should write error to log",
+		},
+		{
+			name:         "ignoreErrors migration with errors - skip log",
+			ignoreErrors: true,
+			hadErrors:    true,
+			want:         true,
+			description:  "Migration with ignoreErrors that has errors should SKIP log to allow retry",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &ResourceMigration{
+				ignoreErrors: tt.ignoreErrors,
+				hadErrors:    tt.hadErrors,
+			}
+			require.Equal(t, tt.want, m.SkipMigrationLog(), tt.description)
 		})
 	}
 }
