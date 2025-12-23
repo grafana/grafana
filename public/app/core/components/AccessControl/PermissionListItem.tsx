@@ -31,7 +31,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
       <td>
         <Select
           disabled={!canSet || !item.isManaged}
-          onChange={(p) => onChange(item, p.value!)}
+          onChange={(p) => p?.value && onChange(item, p.value)}
           value={permissionLevels.find((p) => p === item.permission)}
           options={permissionLevels.map((p) => ({ value: p, label: p }))}
         />
