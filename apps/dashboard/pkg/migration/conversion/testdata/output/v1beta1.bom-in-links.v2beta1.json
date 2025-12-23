@@ -23,7 +23,7 @@
           "links": [
             {
               "title": "Panel data link with BOM",
-              "url": "http://example.com/${__data.fields.cluster}﻿﻿﻿\u0026var=﻿value",
+              "url": "http://example.com/${__data.fields.cluster}\u0026var=value",
               "targetBlank": true
             }
           ],
@@ -86,7 +86,7 @@
                         "value": [
                           {
                             "title": "Override link with BOM",
-                            "url": "http://localhost:3000/d/test?var-datacenter=${__data.fields[datacenter]}﻿\u0026var-server=﻿﻿﻿${__value.raw}"
+                            "url": "http://localhost:3000/d/test?var-datacenter=${__data.fields[datacenter]}\u0026var-server=${__value.raw}"
                           }
                         ]
                       }
@@ -140,7 +140,7 @@
                   {
                     "targetBlank": true,
                     "title": "Options data link with BOM",
-                    "url": "http://example.com?series=﻿${__series.name}﻿\u0026time=﻿﻿${__value.time}"
+                    "url": "http://example.com?series=${__series.name}\u0026time=${__value.time}"
                   }
                 ],
                 "legend": {
@@ -155,7 +155,7 @@
                     {
                       "targetBlank": false,
                       "title": "Field config default link with BOM",
-                      "url": "http://example.com?field=﻿${__field.name}﻿\u0026value=${__value.raw}"
+                      "url": "http://example.com?field=${__field.name}\u0026value=${__value.raw}"
                     }
                   ]
                 },
@@ -205,7 +205,7 @@
         "type": "link",
         "icon": "external link",
         "tooltip": "",
-        "url": "http://example.com?var=${datasource}﻿\u0026other=﻿﻿﻿value",
+        "url": "http://example.com?var=${datasource}\u0026other=value",
         "tags": [],
         "asDropdown": false,
         "targetBlank": true,
