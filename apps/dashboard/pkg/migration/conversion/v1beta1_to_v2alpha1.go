@@ -1734,7 +1734,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
 			Current:     buildVariableCurrent(varMap["current"]),
-			Multi:       getBoolField(varMap, "multi", false),
+			// We set it to true by default because GroupByVariable
+			// constructor defaults to multi: true
+			Multi: getBoolField(varMap, "multi", true),
 		},
 	}
 

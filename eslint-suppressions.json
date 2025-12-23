@@ -1911,11 +1911,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
