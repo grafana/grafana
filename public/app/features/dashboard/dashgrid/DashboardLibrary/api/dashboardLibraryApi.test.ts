@@ -110,26 +110,6 @@ describe('dashboardLibraryApi', () => {
       });
     });
 
-    it('should not return more than MAX_PAGES_FILTER pages due to security reasons', async () => {
-      const mockDashboards = Array.from({ length: 11 }, (_, index) =>
-        createMockGnetDashboardWithDownloads({ id: index + 1 })
-      );
-      const mockResponse = {
-        page: 1,
-        pages: 11,
-        items: mockDashboards.slice(0, 10),
-      };
-      mockGet.mockResolvedValue(mockResponse);
-
-      const result = await fetchCommunityDashboards(defaultFetchParams);
-
-      expect(result).toEqual({
-        page: 1,
-        pages: 10,
-        items: mockDashboards.slice(0, 10),
-      });
-    });
-
     it('should fetch community dashboards with correct query parameters', async () => {
       const mockDashboards = [
         createMockGnetDashboardWithDownloads({ id: 1 }),

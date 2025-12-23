@@ -24,6 +24,8 @@ import {
   getLogoUrl,
   buildDashboardDetails,
   onUseCommunityDashboard,
+  COMMUNITY_PAGE_SIZE_QUERY,
+  COMMUNITY_RESULT_SIZE,
 } from './utils/communityDashboardHelpers';
 
 interface Props {
@@ -31,8 +33,6 @@ interface Props {
   datasourceType?: string;
 }
 
-// Constants for community dashboard pagination and API params
-const COMMUNITY_PAGE_SIZE = 6;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
@@ -74,7 +74,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         orderBy: DEFAULT_SORT_ORDER,
         direction: DEFAULT_SORT_DIRECTION,
         page: 1,
-        pageSize: COMMUNITY_PAGE_SIZE,
+        pageSize: COMMUNITY_PAGE_SIZE_QUERY,
         includeLogo: INCLUDE_LOGO,
         includeScreenshots: INCLUDE_SCREENSHOTS,
         dataSourceSlugIn: ds.type,
@@ -93,8 +93,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       return {
-        dashboards: apiResponse.items,
-        pages: apiResponse.pages,
+        dashboards: apiResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
         datasourceType: ds.type,
       };
     } catch (err) {
@@ -188,7 +187,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
               lg: 3,
             }}
           >
-            {Array.from({ length: COMMUNITY_PAGE_SIZE }).map((_, i) => (
+            {Array.from({ length: COMMUNITY_RESULT_SIZE }).map((_, i) => (
               <DashboardCard.Skeleton key={`skeleton-${i}`} />
             ))}
           </Grid>

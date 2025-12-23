@@ -15,6 +15,12 @@ import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
+// Constants for community dashboard pagination and API params
+// We want to get the most 6 downloaded dashboards, but we first query 12
+// to be sure the next filters we apply to that list doesn not reduce it below 6
+export const COMMUNITY_PAGE_SIZE_QUERY = 12;
+export const COMMUNITY_RESULT_SIZE = 6;
+
 /**
  * Extract thumbnail URL from dashboard screenshots
  */
@@ -133,24 +139,28 @@ function canPanelContainJS(panel: PanelModel): boolean {
     return true;
   }
 
+  // Patterns that indicate actual JavaScript code in values
   const valuePatterns = [
-    /<script\b/i,
-    /\bon\w+="[^"]*"/i,
-    /javascript:/i,
-    /\bfunction\b/,
-    /=>/,
-    /\breturn\b/,
-    /\bsetTimeout\b/i,
-    /\bsetInterval\b/i,
+    /<script\b/i, // HTML script tags
+    /\bon\w+\s*=\s*["'][^"']*["']/i, // HTML event handlers: onclick="..."
+    /\bjavascript\s*:/i,
+    /\bfunction\s*\(/, // Anonymous function declarations: function(
+    /\bfunction\s+[\w$]+\s*\(/, // Named function declarations: function name(
+    /=>\s*\{[^}]*\breturn\b/, // Arrow function with return statement: () => { return ... }
+    /\beval\s*\(/i, // eval() calls
+    /\bnew\s+Function\s*\(/i, // new Function() constructor
+    /\bsetTimeout\s*\(/i, // setTimeout calls
+    /\bsetInterval\s*\(/i, // setInterval calls
   ];
+
+  // Patterns for suspicious JSON keys that might indicate JS hooks
   const keyPatterns = [
-    /\bscript\b/i,
-    /\bjavascript\b/i,
-    /\bjs\b/i,
-    /\bonclick\b/i,
-    /\bbeforeRender\b/i,
-    /\bafterRender\b/i,
-    /\bhandler\b/i,
+    /"on[A-Z][a-zA-Z]*"\s*:/, // camelCase event handlers as keys: "onClick":
+    /"beforeRender"\s*:/i, // beforeRender hook as JSON key
+    /"afterRender"\s*:/i, // afterRender hook as JSON key
+    /"javascript"\s*:/i, // "javascript" as a key
+    /"customCode"\s*:/i, // Common pattern for custom code injection
+    /"script"\s*:/i, // "script" as a JSON key
   ];
 
   const hasSuspiciousValue = valuePatterns.some((pattern) => {
