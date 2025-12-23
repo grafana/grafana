@@ -27,7 +27,7 @@ export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
       display: 'flex',
       width: '100%',
       flexGrow: 0,
-      alignItems: 'center',
+      alignItems: 'flex-end',
       justifyContent: 'flex-end',
       marginBottom: theme.v1.spacing.sm,
     }),
