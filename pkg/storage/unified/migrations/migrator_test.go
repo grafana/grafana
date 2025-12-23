@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
@@ -334,5 +335,152 @@ func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, sh
 		require.NoError(t, err)
 	} else {
 		require.Error(t, err)
+	}
+}
+
+// TestIntegrationAutoMigrateThresholdExceeded verifies that auto-migration is skipped when
+// resource count exceeds the configured threshold.
+// TODO: remove this test before Grafana 13 GA
+func TestIntegrationAutoMigrateThresholdExceeded(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dashboardGVR := schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v1beta1",
+		Resource: "dashboards",
+	}
+	folderGVR := schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v1beta1",
+		Resource: "folders",
+	}
+
+	tests := []struct {
+		name            string
+		resourceKey     string
+		gvr             schema.GroupVersionResource
+		createResources func(t *testing.T, helper *apis.K8sTestHelper) []string
+	}{
+		{
+			name:        "Dashboards exceeding threshold",
+			resourceKey: fmt.Sprintf("%s.%s", dashboardGVR.Resource, dashboardGVR.Group),
+			gvr:         dashboardGVR,
+			createResources: func(t *testing.T, helper *apis.K8sTestHelper) []string {
+				uids := []string{}
+				for i := 1; i <= 3; i++ {
+					uid := createTestDashboard(t, helper, fmt.Sprintf("Threshold Dashboard %d", i))
+					uids = append(uids, uid)
+				}
+				return uids
+			},
+		},
+		{
+			name:        "Folders exceeding threshold",
+			resourceKey: fmt.Sprintf("%s.%s", folderGVR.Resource, folderGVR.Group),
+			gvr:         folderGVR,
+			createResources: func(t *testing.T, helper *apis.K8sTestHelper) []string {
+				uids := []string{}
+				for i := 1; i <= 3; i++ {
+					f := createTestFolder(t, helper, fmt.Sprintf("folder-%d", i), fmt.Sprintf("Threshold Folder %d", i), "")
+					uids = append(uids, f.UID)
+				}
+				return uids
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if db.IsTestDbSQLite() {
+				tmpDir := t.TempDir()
+				dbPath := tmpDir + "/threshold-exceeded-test.db"
+				oldVal := os.Getenv("SQLITE_TEST_DB")
+				require.NoError(t, os.Setenv("SQLITE_TEST_DB", dbPath))
+				t.Cleanup(func() {
+					if oldVal == "" {
+						_ = os.Unsetenv("SQLITE_TEST_DB")
+					} else {
+						_ = os.Setenv("SQLITE_TEST_DB", oldVal)
+					}
+				})
+			}
+
+			var org1 *apis.OrgUsers
+			var orgB *apis.OrgUsers
+			var createdUIDs []string
+
+			// Step 1: Create resources exceeding the threshold (3 resources, threshold=1)
+			t.Run("Step 1: Create resources exceeding threshold", func(t *testing.T) {
+				unifiedConfig := map[string]setting.UnifiedStorageConfig{
+					tt.resourceKey: {DualWriterMode: grafanarest.Mode0},
+				}
+				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:     true,
+					DisableAnonymous:      true,
+					DisableDataMigrations: true,
+					DisableDBCleanup:      true,
+					APIServerStorageType:  "unified",
+					UnifiedStorageConfig:  unifiedConfig,
+				})
+				t.Cleanup(helper.Shutdown)
+				org1 = &helper.Org1
+				orgB = &helper.OrgB
+
+				createdUIDs = tt.createResources(t, helper)
+				require.Len(t, createdUIDs, 3)
+			})
+
+			oldSkipTruncate := os.Getenv("SKIP_DB_TRUNCATE")
+			require.NoError(t, os.Setenv("SKIP_DB_TRUNCATE", "true"))
+			t.Cleanup(func() {
+				if oldSkipTruncate == "" {
+					_ = os.Unsetenv("SKIP_DB_TRUNCATE")
+				} else {
+					_ = os.Setenv("SKIP_DB_TRUNCATE", oldSkipTruncate)
+				}
+			})
+
+			// Step 2: Verify auto-migration is skipped due to threshold
+			t.Run("Step 2: Verify auto-migration skipped (threshold exceeded)", func(t *testing.T) {
+				// Set threshold=1, but we have 3 resources, so migration should be skipped
+				unifiedConfig := map[string]setting.UnifiedStorageConfig{
+					tt.resourceKey: {AutoMigrationThreshold: 1},
+				}
+				helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+					GrafanaOpts: testinfra.GrafanaOpts{
+						AppModeProduction:     true,
+						DisableAnonymous:      true,
+						DisableDataMigrations: false, // Allow migrations to run
+						DisableDBCleanup:      true,
+						APIServerStorageType:  "unified",
+						UnifiedStorageConfig:  unifiedConfig,
+					},
+					Org1Users: org1,
+					OrgBUsers: orgB,
+				})
+				t.Cleanup(helper.Shutdown)
+
+				namespace := authlib.OrgNamespaceFormatter(helper.Org1.OrgID)
+				cli := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      helper.Org1.Admin,
+					Namespace: namespace,
+					GVR:       tt.gvr,
+				})
+
+				// Resources should still be visible via API because we remain in Mode0 (Legacy)
+				// since migration was skipped.
+				verifyResourceCount(t, cli, 3)
+				for _, uid := range createdUIDs {
+					verifyResource(t, cli, uid, true)
+				}
+
+				// Verify migration did NOT run by checking the migration log
+				count, err := helper.GetEnv().SQLStore.GetEngine().Table("unifiedstorage_migration_log").
+					Where("migration_id = ?", "folders and dashboards migration").
+					Count()
+				require.NoError(t, err)
+				require.Equal(t, int64(0), count, "Migration should not have run")
+			})
+		})
 	}
 }
