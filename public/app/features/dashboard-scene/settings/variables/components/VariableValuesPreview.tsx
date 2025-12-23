@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { MouseEvent, useCallback, useEffect, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -33,15 +33,19 @@ export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
 
 function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
-  const data = options.map(({ label, value, properties }) => {
-    const d: Record<string, string> = { label: String(label), value: String(value) };
-    for (const key in properties) {
-      if (properties.hasOwnProperty(key)) {
-        d[key] = typeof properties[key] === 'object' ? JSON.stringify(properties[key]) : properties[key];
-      }
-    }
-    return d;
-  });
+  const data = useMemo(
+    () =>
+      options.map(({ label, value, properties }) => {
+        const d: Record<string, string> = { label: String(label), value: String(value) };
+        for (const key in properties) {
+          if (properties.hasOwnProperty(key)) {
+            d[key] = typeof properties[key] === 'object' ? JSON.stringify(properties[key]) : properties[key];
+          }
+        }
+        return d;
+      }),
+    [options]
+  );
   // the first item in data may be the "All" option, which does not have any extra properties, so we try the 2nd item to determine the column names
   const columns = Object.keys(data[1] || data[0]).map((id) => ({ id, header: id, sortType: 'alphanumeric' as const }));
 
