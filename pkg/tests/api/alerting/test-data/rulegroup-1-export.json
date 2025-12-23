@@ -70,6 +70,33 @@
           },
           "isPaused": false,
           "missing_series_evals_to_resolve": 2
+        },
+        {
+          "uid": "<dynamic>",
+          "title": "RecordingRule1",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "1 + 1",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              }
+            }
+          ],
+          "isPaused": false,
+          "record": {
+            "metric": "test_metric",
+            "from": "A",
+            "targetDatasourceUid": "test-datasource-uid"
+          }
         }
       ]
     }
