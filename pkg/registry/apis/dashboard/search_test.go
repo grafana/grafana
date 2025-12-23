@@ -812,8 +812,8 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain: false,
 				Fields:  defaultFields,
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-					"tags":   {Field: "tags", Limit: 50},
-					"folder": {Field: "folder", Limit: 50},
+					"tags":   {Field: "tags", Limit: 10000},
+					"folder": {Field: "folder", Limit: 10000},
 				},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},

@@ -426,7 +426,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
-				Limit: 50,
+				Limit: 10000,
 			}
 		}
 	}
