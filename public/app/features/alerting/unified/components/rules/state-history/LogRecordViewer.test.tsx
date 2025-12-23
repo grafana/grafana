@@ -60,4 +60,81 @@ describe('LogRecordViewerByTimestamp', () => {
     expect(within(errorRows[1]).getByText(/Error message:/)).toBeInTheDocument();
     expect(within(errorRows[1]).getByText(/explicit message/)).toBeInTheDocument();
   });
+
+  describe('Numeric Value Formatting', () => {
+    it('should format numeric values correctly in AlertInstanceValues', () => {
+      const records: LogRecord[] = [
+        {
+          timestamp: 1681739580000,
+          line: {
+            current: 'Alerting',
+            previous: 'Pending',
+            labels: {},
+            values: {
+              cpu_usage: 42.987654321,
+              memory_mb: 1234567.89,
+              disk_io: 0.001234,
+              request_count: 10000,
+            },
+          },
+        },
+      ];
+
+      render(<LogRecordViewerByTimestamp records={records} commonLabels={[]} />);
+
+      // Check that values are formatted correctly
+      expect(screen.getByText(/cpu_usage/)).toBeInTheDocument();
+      expect(screen.getByText(/42\.9877/)).toBeInTheDocument(); // 42.987654321 → 42.9877 (4 decimals)
+
+      // Large number should use scientific notation
+      expect(screen.getByText(/memory_mb/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.235e\+6/i)).toBeInTheDocument(); // 1234567.89 → scientific notation
+
+      // Small number should use scientific notation
+      expect(screen.getByText(/disk_io/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.234e-3/i)).toBeInTheDocument(); // 0.001234 → scientific notation
+
+      // Boundary value should use standard notation
+      expect(screen.getByText(/request_count/)).toBeInTheDocument();
+      expect(screen.getByText(/10000/)).toBeInTheDocument(); // 10000 → 10000
+    });
+
+    it('should format various numeric ranges correctly', () => {
+      const records: LogRecord[] = [
+        {
+          timestamp: 1681739580000,
+          line: {
+            current: 'Alerting',
+            previous: 'Pending',
+            labels: {},
+            values: {
+              small: 0.001,
+              normal: 42.5,
+              large: 123456,
+              boundary_low: 0.01,
+              boundary_high: 10000,
+            },
+          },
+        },
+      ];
+
+      render(<LogRecordViewerByTimestamp records={records} commonLabels={[]} />);
+
+      // Verify all values are present and formatted
+      expect(screen.getByText(/small/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.000e-3/i)).toBeInTheDocument(); // 0.001 → scientific notation
+
+      expect(screen.getByText(/normal/)).toBeInTheDocument();
+      expect(screen.getByText(/42\.5/)).toBeInTheDocument(); // 42.5 → standard notation
+
+      expect(screen.getByText(/large/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.235e\+5/i)).toBeInTheDocument(); // 123456 → scientific notation
+
+      expect(screen.getByText(/boundary_low/)).toBeInTheDocument();
+      expect(screen.getByText(/0\.01/)).toBeInTheDocument(); // 0.01 → standard notation (boundary)
+
+      expect(screen.getByText(/boundary_high/)).toBeInTheDocument();
+      expect(screen.getByText(/10000/)).toBeInTheDocument(); // 10000 → standard notation (boundary)
+    });
+  });
 });
