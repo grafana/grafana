@@ -50,10 +50,10 @@ func WithIgnoreErrors() ResourceMigrationOption {
 }
 
 // WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
-func WithAutoMigrate(cfg *setting.Cfg, autoMigrate bool) ResourceMigrationOption {
+func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
 	return func(m *ResourceMigration) {
 		m.cfg = cfg
-		m.autoMigrate = autoMigrate
+		m.autoMigrate = true
 	}
 }
 
@@ -136,6 +136,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err
 	}
 
 	// Auto-enable mode 5 for resources after successful migration
+	// TODO: remove this before Grafana 13 GA
 	if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
 		for _, gr := range m.resources {
 			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)

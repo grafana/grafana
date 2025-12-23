@@ -44,7 +44,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 				assert.Equal(t, exists, true, migratedResource)
 
 				expectedThreshold := 0
-				if AutoMigratedResources[migratedResource] {
+				if AutoMigratedUnifiedResources[migratedResource] {
 					expectedThreshold = DefaultAutoMigrationThreshold
 				}
 

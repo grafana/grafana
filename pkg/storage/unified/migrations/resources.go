@@ -26,7 +26,6 @@ type migrationDefinition struct {
 	migrationID  string // The ID stored in the migration log table (e.g., "playlists migration")
 	resources    []string
 	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption)
-	autoMigrate  bool
 }
 
 var resourceRegistry = []resourceDefinition{
@@ -54,14 +53,12 @@ var migrationRegistry = []migrationDefinition{
 		migrationID:  "playlists migration",
 		resources:    []string{setting.PlaylistResource},
 		registerFunc: registerPlaylistMigration,
-		autoMigrate:  false,
 	},
 	{
 		name:         "folders and dashboards",
 		migrationID:  "folders and dashboards migration",
 		resources:    []string{setting.FolderResource, setting.DashboardResource},
 		registerFunc: registerDashboardAndFolderMigration,
-		autoMigrate:  true,
 	},
 }
 
@@ -76,7 +73,7 @@ func registerMigrations(ctx context.Context,
 		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
 			logger.Info("Auto-migration enabled for migration", "migration", migration.name)
 			enableMode5IfMigrated(ctx, migration, cfg, sqlStore)
-			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg, migration.autoMigrate))
+			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg), WithIgnoreErrors())
 			continue
 		}
 
@@ -119,11 +116,6 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
 	)
 
 	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.groupResource, driverName)
-	// TODO: remove WithIgnoreErrors before Grafana 13
-	defaultOpts := []ResourceMigrationOption{
-		WithIgnoreErrors(),
-	}
-	opts = append(defaultOpts, opts...)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
@@ -161,16 +153,23 @@ func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
 	mg.AddMigration("playlists migration", playlistsMigration)
 }
 
+// TODO: remove this before Grafana 13 GA
 func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
+	autoMigrate := false
+
 	for _, res := range migration.resources {
 		config := cfg.GetUnifiedStorageConfig(res)
 
-		// Skip if already in mode 5
 		if config.DualWriterMode == 5 {
 			return false
 		}
 
-		// Skip if auto migration is explicitly disabled
+		if !setting.AutoMigratedUnifiedResources[res] {
+			continue
+		}
+
+		autoMigrate = true
+
 		if config.AutoMigrationThreshold <= 0 {
 			return false
 		}
@@ -186,6 +185,10 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 		if count > threshold {
 			return false
 		}
+	}
+
+	if !autoMigrate {
+		return false
 	}
 
 	logger.Info("Migration resource(s) below auto migration threshold", "migration", migration.name)
@@ -326,7 +329,7 @@ func validateRegisteredResources() error {
 	}
 
 	var missing []string
-	for expected := range setting.AutoMigratedResources {
+	for expected := range setting.MigratedUnifiedResources {
 		if !registeredMap[expected] {
 			missing = append(missing, expected)
 		}

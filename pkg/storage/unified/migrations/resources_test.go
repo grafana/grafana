@@ -42,8 +42,7 @@ func TestRegisterMigrations(t *testing.T) {
 		cfg := &setting.Cfg{UnifiedStorage: make(map[string]setting.UnifiedStorageConfig)}
 		for k, v := range vals {
 			cfg.UnifiedStorage[k] = setting.UnifiedStorageConfig{
-				EnableMigration:        v,
-				AutoMigrationThreshold: -1, // Disable auto-migration to avoid needing sqlStore
+				EnableMigration: v,
 			}
 		}
 		return cfg
@@ -129,7 +128,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 			name:             "autoMigrate enabled with unified storage",
 			autoMigrate:      true,
 			cfg:              makeUnifiedCfg(),
-			resources:        []string{setting.PlaylistResource},
+			resources:        []string{setting.DashboardResource},
 			wantMode5Enabled: true,
 			description:      "Should enable mode 5 when autoMigrate=true and storage type is unified",
 		},
@@ -137,7 +136,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 			name:             "autoMigrate disabled with unified storage",
 			autoMigrate:      false,
 			cfg:              makeUnifiedCfg(),
-			resources:        []string{setting.PlaylistResource},
+			resources:        []string{setting.DashboardResource},
 			wantMode5Enabled: false,
 			description:      "Should NOT enable mode 5 when autoMigrate=false",
 		},
@@ -145,7 +144,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 			name:             "autoMigrate enabled with legacy storage",
 			autoMigrate:      true,
 			cfg:              makeLegacyCfg(),
-			resources:        []string{setting.PlaylistResource},
+			resources:        []string{setting.DashboardResource},
 			wantMode5Enabled: false,
 			description:      "Should NOT enable mode 5 when storage type is legacy",
 		},
@@ -153,7 +152,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 			name:             "autoMigrate enabled with nil cfg",
 			autoMigrate:      true,
 			cfg:              nil,
-			resources:        []string{setting.PlaylistResource},
+			resources:        []string{setting.DashboardResource},
 			wantMode5Enabled: false,
 			description:      "Should NOT enable mode 5 when cfg is nil",
 		},
@@ -181,7 +180,9 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 
 			// Create the migration with options
 			var opts []ResourceMigrationOption
-			opts = append(opts, WithAutoMigrate(tt.cfg, tt.autoMigrate))
+			if tt.autoMigrate {
+				opts = append(opts, WithAutoMigrate(tt.cfg))
+			}
 
 			m := NewResourceMigration(nil, resources, "test-auto-migrate", nil, opts...)
 

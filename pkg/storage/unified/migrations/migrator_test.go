@@ -169,9 +169,8 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 			for _, gvr := range tc.resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					DualWriterMode:         grafanarest.Mode5,
-					EnableMigration:        false,
-					AutoMigrationThreshold: -1, // disable auto migration
+					DualWriterMode:  grafanarest.Mode5,
+					EnableMigration: false,
 				}
 			}
 		}
@@ -200,12 +199,6 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
-		// Disable auto migration and migration for folders+dashboards to test explicit migration behavior
-		// Set DualWriterMode=5 so the k8s API reads from unified storage (which should be empty)
-		unifiedConfig := map[string]setting.UnifiedStorageConfig{
-			"folders.folder.grafana.app":       {AutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
-			"dashboards.dashboard.grafana.app": {AutoMigrationThreshold: -1, EnableMigration: false, DualWriterMode: grafanarest.Mode5},
-		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
 				AppModeProduction:     true,
@@ -213,7 +206,6 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 				DisableDataMigrations: false, // Run migrations at startup
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -222,12 +214,13 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 		for _, state := range testStates {
 			t.Run(state.tc.name(), func(t *testing.T) {
-				// Only verify that default-enabled resources were migrated
-				// Check if all resources in this test case are enabled by default
 				shouldExist := true
 				for _, gvr := range state.tc.resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-					if !setting.MigratedUnifiedResources[resourceKey] {
+					// Resources exist if they're either:
+					// 1. In MigratedUnifiedResources (enabled by default), OR
+					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
+					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
 						shouldExist = false
 						break
 					}
