@@ -158,7 +158,7 @@ function canPanelContainJS(panel: PanelModel): boolean {
   // Patterns that indicate actual JavaScript code in values
   const valuePatterns = [
     /<script\b/i, // HTML script tags
-    /\bon\w+\s*=\s*["'][^"']*["']/i, // HTML event handlers: onclick="..."
+    /\bon\w+\s*=\s*/i, // HTML event handlers: onclick=, onload=, etc.
     /\bjavascript\s*:/i,
     /\bfunction\s*\(/, // Anonymous function declarations: function(
     /\bfunction\s+[\w$]+\s*\(/, // Named function declarations: function name(
@@ -171,12 +171,13 @@ function canPanelContainJS(panel: PanelModel): boolean {
 
   // Patterns for suspicious JSON keys that might indicate JS hooks
   const keyPatterns = [
-    /"on[A-Z][a-zA-Z]*"\s*:/, // camelCase event handlers as keys: "onClick":
+    /"on[a-zA-Z]+"\s*:/, // Event handlers as keys (both camelCase and lowercase): "onClick": or "onclick":
     /"beforeRender"\s*:/i, // beforeRender hook as JSON key
     /"afterRender"\s*:/i, // afterRender hook as JSON key
     /"javascript"\s*:/i, // "javascript" as a key
     /"customCode"\s*:/i, // Common pattern for custom code injection
     /"script"\s*:/i, // "script" as a JSON key
+    /"handler"\s*:/i, // "handler" as a JSON key - common for event handlers
   ];
 
   const hasSuspiciousValue = valuePatterns.some((pattern) => {
@@ -242,9 +243,7 @@ export async function onUseCommunityDashboard({
     const dashboardJson = fullDashboard.json;
 
     if (canDashboardContainJS(dashboardJson)) {
-      throw new Error(
-        `Community dashboard ${dashboard.id} "${dashboard.name}" might contain JavaScript code and cannot be loaded for security reasons`
-      );
+      throw new Error(`Community dashboard ${dashboard.id} "${dashboard.name}" might contain JavaScript code`);
     }
 
     // Parse datasource requirements from __inputs

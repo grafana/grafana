@@ -325,7 +325,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -350,7 +350,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -384,7 +384,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -411,7 +411,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -437,7 +437,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -458,7 +458,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -479,7 +479,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -500,7 +500,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -520,7 +520,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -540,7 +540,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -560,7 +560,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -581,7 +581,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
@@ -602,7 +602,7 @@ describe('communityDashboardHelpers', () => {
         });
 
         await expect(setup({ dashboardJson })).rejects.toThrow(
-          'Community dashboard 123 Test Dashboard might contain JavaScript code'
+          'Community dashboard 123 "Test Dashboard" might contain JavaScript code'
         );
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
