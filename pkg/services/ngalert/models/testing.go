@@ -1457,6 +1457,12 @@ func (n IntegrationMutators) AddSecureSetting(key, val string) Mutator[Integrati
 	}
 }
 
+func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
+	return func(c *Integration) {
+		delete(c.Settings, key)
+	}
+}
+
 func randomMapKey[K comparable, V any](m map[K]V) (K, V) {
 	randIdx := rand.Intn(len(m))
 	i := 0

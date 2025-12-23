@@ -228,6 +228,9 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
+	if key == "" {
+		return fmt.Errorf("key is required")
+	}
 
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()

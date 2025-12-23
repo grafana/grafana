@@ -2232,6 +2232,13 @@
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Ouvrir le lien externe"
     },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
+    },
     "receivers-section": {
       "button-more": "Plus",
       "new-menu": {
@@ -2658,6 +2665,35 @@
       "deleting": "Suppression",
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service"
+    },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
     },
     "search": {
       "property": {
@@ -3322,6 +3358,7 @@
       "login-attribute-path-label": "Chemin d’attribut de connexion",
       "login-prompt-consent": "Consentement",
       "login-prompt-description": "Indique le type d’interaction utilisateur lors de la connexion via le fournisseur d’identité (IdP).",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Invite de connexion",
       "login-prompt-login": "Connexion",
       "login-prompt-select-account": "Sélectionner un compte",
@@ -3379,6 +3416,7 @@
       "use-pkce-description": "Si cette option est activée, Grafana utilisera la <2>clé de preuve pour l’échange de code (PKCE)</2> avec l’octroi de code d’autorisation OAuth2.",
       "use-pkce-label": "Utiliser PKCE",
       "use-refresh-token-description": "Si cette option est activée, Grafana récupérera un nouveau jeton d’accès à l’aide du jeton d’actualisation fourni par le fournisseur OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Utiliser le jeton d’actualisation",
       "validate-hosted-domain-description": "Si cette option est activée, Grafana fera correspondre le domaine hébergé récupéré à partir du jeton d’identification Google à la liste « {{ allowedDomainsLabel }} » spécifiée par l’utilisateur.",
       "validate-hosted-domain-label": "Valider le domaine hébergé",
@@ -3708,6 +3746,7 @@
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
       "title": ""
     },
@@ -4821,8 +4860,7 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": "",
-          "values": "Valeurs séparées par une virgule"
+          "modal-title": ""
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -6172,7 +6210,7 @@
         "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
         "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
       },
-      "save-and-overwrite": "« Enregistrer et écraser »"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7157,6 +7195,9 @@
       "time-range-label": "Verrouiller la période temporelle"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Conseil de pro : {{proTip}}"
   },
@@ -7633,39 +7674,6 @@
       },
       "share-span": "Partager"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Sélectionner l’opérateur de la durée maximale",
-      "aria-label-select-min-span-operator": "Sélectionner l’opérateur de la durée minimale",
-      "aria-label-select-service-name": "Sélectionner le nom de service",
-      "aria-label-select-service-name-operator": "Sélectionner l’opérateur de nom de service",
-      "aria-label-select-span-name": "Sélectionner le nom de la durée",
-      "aria-label-select-span-name-operator": "Sélectionner l’opérateur de nom de la durée",
-      "ariaLabel-select-max-span-duration": "Sélectionner la durée maximale de segment",
-      "ariaLabel-select-min-span-duration": "Sélectionner la durée minimale de segment",
-      "label-collapse": "Filtres de durée",
-      "label-duration": "Durée",
-      "label-service-name": "Nom du service",
-      "label-span-name": "Nom de la durée",
-      "label-tags": "Étiquettes",
-      "placeholder-all-service-names": "Tous les noms de service",
-      "placeholder-all-span-names": "Tous les noms de durée",
-      "tooltip-collapse": "Filtrez vos plages ci-dessous. Vous pouvez continuer à appliquer des filtres jusqu’à ce que vous ayez réduit votre plage de résultats à ceux qui vous intéressent le plus.",
-      "tooltip-duration": "Filtrer par durée. Les unités acceptées sont {{units}}",
-      "tooltip-tags": "Filtrez par balises, balises de processus ou champs de journal dans vos durées."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Ajouter une balise",
-      "aria-label-input-tag-value": "Saisir la valeur de la balise",
-      "aria-label-remove-tag": "Supprimer la balise",
-      "aria-label-select-tag-key": "Sélectionner la clé de la balise",
-      "aria-label-select-tag-operator": "Sélectionner l’opérateur de la balise",
-      "aria-label-select-tag-value": "Sélectionner la valeur de la balise",
-      "placeholder-select-tag": "Choisir une balise",
-      "placeholder-select-value": "Sélectionner une valeur",
-      "placeholder-tag-value": "Valeur de la balise",
-      "tooltip-add-tag": "Ajouter une balise",
-      "tooltip-remove-tag": "Supprimer la balise"
-    },
     "span-flame-graph": {
       "flame-graph": "Graphique de flamme"
     },
@@ -7864,23 +7872,18 @@
       "label-upsample": "Sur-échantillonner",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Exécuter la requête",
-      "modal-title": "Éditeur SQL",
       "tooltip-experimental": "L’intégration des expressions SQL avec les LLM est expérimentale. Merci de signaler tout problème à l’équipe Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Entrée"
@@ -7955,11 +7958,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9385,6 +9384,7 @@
     "name-unit": "Unité",
     "name-value-name": "Nom de la valeur",
     "name-y-axis-scale": "Échelle de l’axe Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -9414,6 +9414,18 @@
       "label-all": "Tous",
       "label-hidden": "Masqué",
       "label-single": "Unique"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -10175,7 +10187,8 @@
       "copy": "Copier la sélection",
       "disable-menu": "Désactiver le menu",
       "line-contains": "Ajouter car la ligne contient un filtre",
-      "line-contains-not": "Ajouter car la ligne ne contient pas de filtre"
+      "line-contains-not": "Ajouter car la ligne ne contient pas de filtre",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Résolution des horodatages",
@@ -11194,9 +11207,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11413,6 +11431,12 @@
         "latestReleaseDate": "Dernière date de sortie :",
         "latestVersion": "Dernière version",
         "license": "Licence",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Signaler un problème",
         "reportAbuse": "",
         "reportAbuseTooltip": "Signalez les problèmes liés à des plugins malveillants ou nuisibles directement à Grafana Labs.",
@@ -11859,7 +11883,6 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Lorsque vous connectez l’ensemble de votre instance, les tableaux de bord ne seront pas disponibles pendant l’exécution de la migration. Nous vous recommandons d’avertir vos utilisateurs avant de commencer le processus.",
       "modal-description-public-access": "Configurez l’accès public à votre instance Grafana pour activer l’intégration GitHub",
       "modal-description-required-features": "Activez les fonctionnalités Grafana requises pour la mise en service",
       "modal-title-set-up-public-access": "Configurer l’accès public",
@@ -11871,8 +11894,7 @@
       "step-title-copy-url": "Copier l’URL publique",
       "step-title-enable-feature-toggles": "Activer les bascules de fonctionnalité requises",
       "step-title-start-ngrok": "Démarrer ngrok pour un accès public temporaire",
-      "step-title-update-grafana-config": "Mettre à jour la configuration Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "La configuration de cette connexion peut entraîner une interruption temporaire"
+      "step-title-update-grafana-config": "Mettre à jour la configuration Grafana"
     },
     "getting-started-page": {
       "subtitle-provisioning-feature": "Afficher et gérer vos connexions de mise en service"
@@ -11941,18 +11963,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Supprimer les référentiels",
-      "configured-repositories-while-running-legacy-storage": "Les référentiels configurés ne fonctionneront pas lors de l’exécution du stockage hérité.",
       "confirm-delete-repositories": "Voulez-vous vraiment supprimer tous les référentiels configurés ? Cette action ne peut pas être annulée.",
       "error-delete-all-repositories": "Échec de la suppression de tous les référentiels",
-      "remove-all-configured-repositories": "Supprimer tous les référentiels configurés",
       "subtitle": "Afficher et gérer vos référentiels configurés",
       "success-all-repositories-deleted": "Tous les référentiels configurés ont été supprimés",
       "tab-getting-started": "Pour commencer",
       "tab-getting-started-title": "Pour commencer",
       "tab-repositories": "Référentiels",
       "tab-repositories-title": "Liste des référentiels",
-      "title-delete-all-configured-repositories": "Supprimer tous les référentiels configurés",
-      "title-legacy-storage-detected": "Stockage hérité détecté"
+      "title-delete-all-configured-repositories": "Supprimer tous les référentiels configurés"
     },
     "http-utils": {
       "access-denied": "",
@@ -11962,7 +11981,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Afficher les détails",
       "loading-finished-job": "Chargement de mission terminée…",
@@ -11992,7 +12014,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12069,10 +12090,12 @@
       "webhook-last-event": "Dernier événement :",
       "webhook-url": "Voir le webhook"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
       "cleaning-up-resources": "Nettoyage des ressources du référentiel",
-      "legacy-storage-message": "L’instance n’exécute pas encore de stockage unifié ; l’assistant de migration est requis",
       "not-found": "introuvable",
       "not-found-message": "Référentiel introuvable",
       "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
@@ -12081,7 +12104,6 @@
       "tab-resources": "Ressources",
       "tab-resources-title": "",
       "title": "Statut du référentiel",
-      "title-legacy-storage": "Stockage hérité",
       "title-queued-for-deletion": "Mis en attente pour suppression"
     },
     "repository-type-cards": {
@@ -12175,11 +12197,12 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Inclure les commits pour chaque valeur historique",
-      "synchronization-options": "Options de synchronisation"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
@@ -12196,11 +12219,16 @@
     },
     "warning-title-default": "Avertissement",
     "wizard": {
-      "alert-point-1": "Les ressources ne pourront pas être créées, modifiées ou supprimées pendant ce processus. Lors de la dernière étape, elles disparaîtront.",
-      "alert-point-2": "Une fois la mise en service terminée, les ressources réapparaîtront et seront gérées via un stockage externe.",
+      "alert-intro": "",
+      "alert-point-1": "",
       "alert-point-3": "La durée de ce processus dépend du nombre de ressources impliquées.",
-      "alert-point-4": "Les administrateurs d’instances d’entreprise peuvent afficher une bannière d’annonce aux utilisateurs. Consultez <2>ce guide</2> pour obtenir des instructions étape par étape.",
-      "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
+      "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminer",
@@ -12218,7 +12246,7 @@
       "step-finish": "Choisir des paramètres supplémentaires",
       "step-synchronize": "Synchroniser avec un stockage externe",
       "sync-description": "Synchronisez les ressources avec un stockage externe. Après cette étape unique, toutes les futures mises à jour seront automatiquement enregistrées dans le référentiel et mises en service dans l’instance.",
-      "sync-option-history": "Historique",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Choisir ce qui doit être synchronisé",
       "title-connect": "Se connecter à un stockage externe",
       "title-finish": "Choisir des paramètres supplémentaires",
@@ -12456,16 +12484,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
