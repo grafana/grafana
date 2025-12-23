@@ -211,9 +211,41 @@ export async function moveTab(
   await page.mouse.up();
 }
 
+export async function moveRow(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  sourceRow: string,
+  targetRow: string
+) {
+  // Get target panel position
+  const targetRowElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.DashboardRow.title(targetRow))
+    .first();
+
+  // Get source panel element
+  const sourceRowElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
+    .first();
+
+  const targetBox = await targetRowElement.boundingBox();
+
+  // Perform drag and drop (dragTo() did not work in this case)
+  await sourceRowElement.hover();
+  await page.mouse.down();
+  // move to adjusted target position (relative to top left)
+  await page.mouse.move(targetBox?.x || 0, (targetBox?.y || 0) + (targetBox?.height || 0), { steps: 5 });
+  await page.mouse.up();
+}
+
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
   await page.getByText('Group into tab').click();
+}
+
+export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
+  await page.getByText('Group into row').click();
 }
 
 export async function checkRepeatedTabTitles(
@@ -231,4 +263,24 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function getRowPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
+  const boundingBox = await row.boundingBox();
+  return boundingBox;
+}
+
+export async function checkRepeatedRowTitles(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  title: string,
+  options: Array<string | number>
+) {
+  for (const option of options) {
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
+    ).toBeVisible();
+    await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`)).click();
+  }
 }
