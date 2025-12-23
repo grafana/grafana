@@ -2054,7 +2054,7 @@ Set the query offset to imported Grafana-managed rules when `query_offset` is no
 
 #### `default_datasource_uid`
 
-Set the default data source UID to use for query execution when importing Prometheus rules. This default is used when the `X-Grafana-Alerting-Datasource-UID` header is not provided during import. If not set, the header becomes required. The default value is empty.
+Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
 <hr>
 

@@ -242,7 +242,7 @@ Set to `true` to import recording rules in paused state.
 
 The UID of the data source to use for alert rule queries.
 
-If not specified in the header, Grafana uses the default configured in `unified_alerting.prometheus_conversion.default_datasource_uid`. If neither the header nor the configuration setting is provided, the request fails.
+If not specified in the header, Grafana uses the configured default from `unified_alerting.prometheus_conversion.default_datasource_uid`. If neither the header nor the configuration option is provided, the request fails.
 
 #### `X-Grafana-Alerting-Target-Datasource-UID`
 
