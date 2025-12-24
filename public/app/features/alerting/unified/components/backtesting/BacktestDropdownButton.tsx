@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { TimeRange, dateTime } from '@grafana/data';
+import { TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Menu, MenuItem } from '@grafana/ui';
 
@@ -14,8 +14,18 @@ interface BacktestDropdownButtonProps {
 
 export function BacktestDropdownButton({ ruleDefinition }: BacktestDropdownButtonProps) {
   const [isBacktestPanelOpen, setIsBacktestPanelOpen] = useState(false);
-  const [backtestTimeRange, setBacktestTimeRange] = useState<TimeRange | undefined>(undefined);
-  const [backtestTriggerRun, setBacktestTriggerRun] = useState<number>(0);
+  const [backtestTimeRange, setBacktestTimeRange] = useState<TimeRange>();
+
+  const handleTimeRangeSelect = useCallback((rawFrom: string) => {
+    const timeRange = rangeUtil.convertRawToRange({ from: rawFrom, to: 'now' });
+    setBacktestTimeRange(timeRange);
+    setIsBacktestPanelOpen(true);
+  }, []);
+
+  const handleCustomSelect = useCallback(() => {
+    setBacktestTimeRange(undefined);
+    setIsBacktestPanelOpen(true);
+  }, []);
 
   return (
     <>
@@ -24,41 +34,20 @@ export function BacktestDropdownButton({ ruleDefinition }: BacktestDropdownButto
           <Menu>
             <MenuItem
               label={t('alerting.queryAndExpressionsStep.last15m', 'Last 15 minutes')}
-              onClick={() => {
-                const timeRange: TimeRange = {
-                  from: dateTime().subtract(15, 'minutes'),
-                  to: dateTime(),
-                  raw: { from: 'now-15m', to: 'now' },
-                };
-                setBacktestTimeRange(timeRange);
-                setIsBacktestPanelOpen(true);
-                setBacktestTriggerRun(Date.now());
-              }}
+              onClick={() => handleTimeRangeSelect('now-15m')}
             />
             <MenuItem
               label={t('alerting.queryAndExpressionsStep.last1h', 'Last 1 hour')}
-              onClick={() => {
-                const timeRange: TimeRange = {
-                  from: dateTime().subtract(1, 'hour'),
-                  to: dateTime(),
-                  raw: { from: 'now-1h', to: 'now' },
-                };
-                setBacktestTimeRange(timeRange);
-                setIsBacktestPanelOpen(true);
-                setBacktestTriggerRun(Date.now());
-              }}
+              onClick={() => handleTimeRangeSelect('now-1h')}
             />
             <MenuItem
               label={t('alerting.queryAndExpressionsStep.custom', 'Custom')}
-              onClick={() => {
-                setBacktestTimeRange(undefined);
-                setIsBacktestPanelOpen(true);
-              }}
+              onClick={handleCustomSelect}
             />
           </Menu>
         }
       >
-        <Button icon="bug" type="button" variant="secondary">
+        <Button icon="bug" variant="secondary">
           <Trans i18nKey="alerting.queryAndExpressionsStep.testRule">Test Rule</Trans>
         </Button>
       </Dropdown>
@@ -72,7 +61,6 @@ export function BacktestDropdownButton({ ruleDefinition }: BacktestDropdownButto
           <BacktestPanel
             ruleDefinition={ruleDefinition}
             initialTimeRange={backtestTimeRange}
-            triggerRun={backtestTriggerRun}
           />
         </Drawer>
       )}
