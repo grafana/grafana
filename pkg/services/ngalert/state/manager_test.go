@@ -2031,6 +2031,39 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	}
 }
 
+func TestResetStateByRuleUID(t *testing.T) {
+	ctx := context.Background()
+
+	setupManager := func(historian state.Historian) *state.Manager {
+		cfg := state.ManagerCfg{
+			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:   nil,
+			InstanceStore: &state.FakeInstanceStore{},
+			Images:        &state.NoopImageService{},
+			Clock:         clock.NewMock(),
+			Historian:     historian,
+			Tracer:        tracing.InitializeTracerForTest(),
+			Log:           log.New("ngalert.state.manager"),
+		}
+
+		return state.NewManager(cfg, state.NewNoopPersister())
+	}
+
+	t.Run("with nil historian", func(t *testing.T) {
+		manager := setupManager(nil)
+
+		transitions := manager.ResetStateByRuleUID(ctx, nil, "test reason")
+		require.Empty(t, transitions)
+	})
+
+	t.Run("with historian", func(t *testing.T) {
+		manager := setupManager(&state.FakeHistorian{})
+
+		transitions := manager.ResetStateByRuleUID(ctx, nil, "test reason")
+		require.Empty(t, transitions)
+	})
+}
+
 func setCacheID(s *state.State) *state.State {
 	if s.CacheID != 0 {
 		return s
