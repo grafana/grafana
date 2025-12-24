@@ -3748,6 +3748,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
