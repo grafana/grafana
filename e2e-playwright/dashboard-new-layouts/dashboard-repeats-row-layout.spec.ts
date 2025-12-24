@@ -271,21 +271,22 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
 
-      const singleRow = await getRowPosition(dashboardPage, selectors, singleRowTitle);
+      let singleRow = await getRowPosition(dashboardPage, selectors, singleRowTitle);
 
       const repeatedRow = await getRowPosition(dashboardPage, selectors, `${repeatTitleBase}1`);
       expect(singleRow?.y).toBeLessThan(repeatedRow?.y || 0);
 
-      await saveDashboard(dashboardPage, page, selectors);
-      await page.reload();
+      setTimeout(async () => {
+        singleRow = await getRowPosition(dashboardPage, selectors, singleRowTitle);
 
-      for (let i = 1; i <= repeatOptions.length; i++) {
-        const singleRow = await getRowPosition(dashboardPage, selectors, singleRowTitle);
-
-        // verify move by row position
-        const repeatedRow = await getRowPosition(dashboardPage, selectors, `${repeatTitleBase}${i}`);
-        expect(singleRow?.y).toBeLessThan(repeatedRow?.y || 0);
-      }
+        await saveDashboard(dashboardPage, page, selectors);
+        await page.reload();
+        for (let i = 1; i <= repeatOptions.length; i++) {
+          // verify move by row position
+          const repeatedRow = await getRowPosition(dashboardPage, selectors, `${repeatTitleBase}${i}`);
+          expect(singleRow?.y).toBeLessThan(repeatedRow?.y || 0);
+        }
+      }, 500);
     });
 
     test('can view panels in repeated row', async ({ dashboardPage, selectors, page }) => {
