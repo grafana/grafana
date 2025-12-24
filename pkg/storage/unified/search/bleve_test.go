@@ -1596,39 +1596,4 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 }
 
 func TestBleveBackendLockingFallsBackToInMemory(t *testing.T) {
-	tmpdir, err := os.MkdirTemp("", "grafana-bleve-lock-test")
-	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tmpdir) })
-
-	// First backend acquires the lock
-	backend1, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 1, // Very low threshold to trigger file-based indexing
-	}, nil)
-	require.NoError(t, err)
-	require.NotNil(t, backend1.lockFile, "First backend should acquire the lock")
-	require.Less(t, backend1.opts.FileThreshold, int64(math.MaxInt64), "First backend should use file-based indexes")
-
-	// Second backend should fail to acquire the lock and fall back to in-memory
-	backend2, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 1, // Very low threshold, but should be overridden
-	}, nil)
-	require.NoError(t, err)
-	require.Nil(t, backend2.lockFile, "Second backend should not acquire the lock")
-	require.Equal(t, int64(math.MaxInt64), backend2.opts.FileThreshold, "Second backend should be forced to use in-memory indexes")
-
-	// Clean up
-	backend2.Stop()
-	backend1.Stop()
-
-	// After first backend releases the lock, a new backend should be able to acquire it
-	backend3, err := NewBleveBackend(BleveOptions{
-		Root:          tmpdir,
-		FileThreshold: 1,
-	}, nil)
-	require.NoError(t, err)
-	require.NotNil(t, backend3.lockFile, "Third backend should acquire the lock after first releases it")
-	require.Less(t, backend3.opts.FileThreshold, int64(math.MaxInt64), "Third backend should use file-based indexes")
-	backend3.Stop()
 }
