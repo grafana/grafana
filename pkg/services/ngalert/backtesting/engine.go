@@ -204,7 +204,6 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	if builder == nil {
 		return nil, errors.New("no results were produced")
 	}
-	logger.Info("Rule testing finished successfully", "duration", time.Since(start))
 	return builder.ToFrame(), nil
 }
 
