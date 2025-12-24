@@ -2052,6 +2052,10 @@ This section applies only to rules imported as Grafana-managed rules. For more i
 
 Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
 
+#### `default_datasource_uid`
+
+Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
+
 <hr>
 
 ### `[annotations]`

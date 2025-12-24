@@ -190,6 +190,8 @@ type UnifiedAlertingReservedLabelSettings struct {
 type UnifiedAlertingPrometheusConversionSettings struct {
 	// RuleQueryOffset defines a time offset to apply to rule queries during conversion from Prometheus to Grafana format
 	RuleQueryOffset time.Duration
+	// DefaultDatasourceUID is the default datasource UID to use when converting Prometheus rules if not specified via header
+	DefaultDatasourceUID string
 }
 
 type UnifiedAlertingLokiSettings struct {
@@ -536,7 +538,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
-		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+		RuleQueryOffset:      prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+		DefaultDatasourceUID: prometheusConversion.Key("default_datasource_uid").MustString(""),
 	}
 
 	rr := iniFile.Section("recording_rules")
