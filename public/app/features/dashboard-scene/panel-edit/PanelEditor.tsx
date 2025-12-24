@@ -34,6 +34,7 @@ import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
+  getDefaultVizPanel,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
 } from '../utils/utils';
@@ -272,7 +273,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this._subs.add(
         optionsPane.subscribeToState((newState, oldState) => {
           if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
-            const editPreview = newState.isVizPickerOpen ? panel.clone() : undefined;
+            const editPreview = newState.isVizPickerOpen ? getDefaultVizPanel() : undefined;
+            editPreview?.setState({
+              title: panel.state.title,
+              description: panel.state.description,
+              $data: panel.state.$data,
+            });
             this.setState({ editPreview });
             optionsPane.setState({ editPreviewRef: editPreview?.getRef() });
           }

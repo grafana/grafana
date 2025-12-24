@@ -218,12 +218,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
                             'Apply {{suggestionName}} visualization',
                             { suggestionName: suggestion.name }
                           )}
-                          onClick={() =>
-                            onChange({
-                              pluginId: suggestion.pluginId,
-                              withModKey: false,
-                            })
-                          }
+                          onClick={() => applySuggestion(suggestion, false)}
                         >
                           {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
                         </Button>
