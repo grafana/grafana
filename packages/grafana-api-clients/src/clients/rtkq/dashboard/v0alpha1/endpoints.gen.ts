@@ -243,6 +243,7 @@ const injectedRtkApi = api
             type: queryArg['type'],
             folder: queryArg.folder,
             facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
             permission: queryArg.permission,
@@ -608,6 +609,8 @@ export type GetSearchApiArg = {
   folder?: string;
   /** count distinct terms for selected fields */
   facet?: string[];
+  /** maximum number of terms to return per facet (default 50, max 1000) */
+  facetLimit?: number;
   /** tag query filter */
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
