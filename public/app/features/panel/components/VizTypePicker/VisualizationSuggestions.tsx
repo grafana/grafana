@@ -9,6 +9,7 @@ import {
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -25,7 +26,7 @@ import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
-  editPreview: VizPanel;
+  editPreview?: VizPanel;
   data?: PanelData;
   panel?: PanelModel;
   searchQuery?: string;
@@ -211,6 +212,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
                           variant="primary"
                           size={'md'}
                           className={styles.applySuggestionButton}
+                          data-testid={selectors.components.VisualizationPreview.confirm(suggestion.name)}
                           aria-label={t(
                             'panel.visualization-suggestions.apply-suggestion-aria-label',
                             'Apply {{suggestionName}} visualization',
