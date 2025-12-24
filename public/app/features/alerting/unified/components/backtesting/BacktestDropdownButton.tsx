@@ -40,10 +40,7 @@ export function BacktestDropdownButton({ ruleDefinition }: BacktestDropdownButto
               label={t('alerting.queryAndExpressionsStep.last1h', 'Last 1 hour')}
               onClick={() => handleTimeRangeSelect('now-1h')}
             />
-            <MenuItem
-              label={t('alerting.queryAndExpressionsStep.custom', 'Custom')}
-              onClick={handleCustomSelect}
-            />
+            <MenuItem label={t('alerting.queryAndExpressionsStep.custom', 'Custom')} onClick={handleCustomSelect} />
           </Menu>
         }
       >
@@ -58,10 +55,7 @@ export function BacktestDropdownButton({ ruleDefinition }: BacktestDropdownButto
           onClose={() => setIsBacktestPanelOpen(false)}
           size="md"
         >
-          <BacktestPanel
-            ruleDefinition={ruleDefinition}
-            initialTimeRange={backtestTimeRange}
-          />
+          <BacktestPanel ruleDefinition={ruleDefinition} initialTimeRange={backtestTimeRange} />
         </Drawer>
       )}
     </>

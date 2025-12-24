@@ -1,9 +1,5 @@
 import { DataFrameJSON } from '@grafana/data';
-import {
-  AlertQuery,
-  GrafanaAlertStateDecision,
-  Labels,
-} from 'app/types/unified-alerting-dto';
+import { AlertQuery, GrafanaAlertStateDecision, Labels } from 'app/types/unified-alerting-dto';
 
 import { alertingApi } from './alertingApi';
 

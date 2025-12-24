@@ -98,10 +98,7 @@ export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPane
     }
   }, [initialTimeRange, timeRange, handleRunBacktest]);
 
-  const { dataFrames, historyRecords, commonLabels } = useRuleHistoryRecords(
-    stateHistory,
-    instancesFilter
-  );
+  const { dataFrames, historyRecords, commonLabels } = useRuleHistoryRecords(stateHistory, instancesFilter);
 
   const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
 
@@ -185,7 +182,7 @@ export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPane
     </div>
   );
 }
- const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   scrollableContent: css({
     flex: 1,
     display: 'flex',
