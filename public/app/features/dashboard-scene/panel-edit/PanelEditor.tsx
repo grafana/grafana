@@ -147,6 +147,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     this.setState({ editPreview: undefined });
+    this.state.optionsPane?.setState({ editPreviewRef: undefined });
 
     // Temp fix for old edit mode
     if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
@@ -254,23 +255,26 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       );
 
       // Setup options pane
+      const optionsPane = new PanelOptionsPane({
+        panelRef: this.state.panelRef,
+        editPreviewRef: this.state.editPreview?.getRef(),
+        searchQuery: '',
+        listMode: OptionFilter.All,
+        isVizPickerOpen: isUnconfigured,
+        isNewPanel: this.state.isNewPanel,
+      });
+
       this.setState({
-        optionsPane: new PanelOptionsPane({
-          panelRef: this.state.panelRef,
-          editPreviewRef: this.state.editPreview?.getRef(),
-          searchQuery: '',
-          listMode: OptionFilter.All,
-          isVizPickerOpen: isUnconfigured,
-          isNewPanel: this.state.isNewPanel,
-        }),
+        optionsPane,
         isInitializing: false,
       });
 
       this._subs.add(
-        this.state.optionsPane!.subscribeToState((newState, oldState) => {
+        optionsPane.subscribeToState((newState, oldState) => {
           if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
-            this.setState({ editPreview: newState.isVizPickerOpen ? panel.clone() : undefined });
-            this.state.optionsPane!.setState({ editPreviewRef: this.state.editPreview?.getRef() });
+            const editPreview = newState.isVizPickerOpen ? panel.clone() : undefined;
+            this.setState({ editPreview });
+            optionsPane.setState({ editPreviewRef: editPreview?.getRef() });
           }
         })
       );
