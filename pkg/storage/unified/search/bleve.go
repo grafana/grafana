@@ -25,6 +25,7 @@ import (
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
+	bolt "go.etcd.io/bbolt"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/atomic"
@@ -571,9 +572,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 				continue
 			}
 
-			// Check if the index is locked by another process.
-			// If it is, we can't delete it, so we skip it.
-			if isLocked(filepath.Join(fpath, "store", "root.bolt")) {
+			if isIndexOpen(filepath.Join(fpath, "store", "root.bolt")) {
 				b.log.Debug("Index is locked by another process, skipping cleanup", "directory", fpath)
 				continue
 			}
@@ -645,7 +644,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 		// Check if the index is locked by another process.
 		// If it is, we can't use it, so we skip it.
-		if isLocked(filepath.Join(indexDir, "store", "root.bolt")) {
+		if isIndexOpen(filepath.Join(indexDir, "store", "root.bolt")) {
 			b.log.Debug("Index is locked by another process, skipping", "indexDir", indexDir)
 			continue
 		}
@@ -1932,4 +1931,30 @@ var TermCharacters = []string{
 	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
 	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
 	"'", "\"",
+}
+
+func isIndexOpen(boltPath string) bool {
+	// Check if the index directory exists first
+	if _, err := os.Stat(boltPath); os.IsNotExist(err) {
+		return false
+	}
+
+	// Try to open the underlying BoltDB with a short timeout.
+	// If it times out, the index is already open elsewhere.
+	db, err := bolt.Open(boltPath, 0600, &bolt.Options{
+		Timeout:  500 * time.Millisecond,
+		ReadOnly: true,
+	})
+	if err != nil {
+		// Only treat timeout error as "index is open"
+		if strings.Contains(err.Error(), "timeout") {
+			return true
+		}
+		// Other errors (file not found, permission, etc.) - not open
+		return false
+	}
+
+	// Successfully opened means no one else has it open
+	_ = db.Close()
+	return false
 }
