@@ -726,10 +726,7 @@
     "backtest": {
       "error-title": "Failed to run backtest",
       "loading": "Running backtest...",
-      "panel-title": "Rule Retroactive Testing",
-      "refresh-button": "Refresh backtest",
-      "refresh-required-message": "The rule definition has been updated. Refresh the backtest to see results with the latest changes.",
-      "refresh-required-title": "Rule definition updated"
+      "panel-title": "Rule Retroactive Testing"
     },
     "bulk-actions": {
       "delete": {
