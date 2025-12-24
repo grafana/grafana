@@ -8,5 +8,5 @@ func (am *alertmanager) MergeState(state ExternalState) error {
 	if err := am.Base.MergeSilences(state.Silences); err != nil {
 		return err
 	}
-	return am.Base.MergeFlushLog()
+	return am.Base.MergeFlushLog(state.FlushLog)
 }

@@ -407,6 +407,8 @@ func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalSt
 			rs.Silences = p.Data
 		case "nfl":
 			rs.Nflog = p.Data
+		case "fls":
+			rs.FlushLog = p.Data
 		default:
 			return rs, fmt.Errorf("unknown part key %q", p.Key)
 		}
