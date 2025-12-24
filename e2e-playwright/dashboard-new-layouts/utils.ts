@@ -226,12 +226,10 @@ export async function moveRow(
   sourceRow: string,
   targetRow: string
 ) {
-  // Get target panel position
   const targetRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.title(targetRow))
+    .getByGrafanaSelector(selectors.components.DashboardRow.wrapper(targetRow))
     .first();
 
-  // Get source panel element
   const sourceRowElement = dashboardPage
     .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
     .first();
