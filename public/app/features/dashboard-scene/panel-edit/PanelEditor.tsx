@@ -51,6 +51,7 @@ export interface PanelEditorState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
+  editPreview?: VizPanel;
   tableView?: VizPanel;
   pluginLoadErrror?: string;
   /**
@@ -144,6 +145,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const layoutItem = this._layoutItem;
     const changedState = layoutItem.state;
     const originalState = this._layoutItemState!;
+
+    this.setState({ editPreview: undefined });
 
     // Temp fix for old edit mode
     if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
@@ -254,6 +257,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setState({
         optionsPane: new PanelOptionsPane({
           panelRef: this.state.panelRef,
+          editPreviewRef: this.state.editPreview?.getRef(),
           searchQuery: '',
           listMode: OptionFilter.All,
           isVizPickerOpen: isUnconfigured,
@@ -261,6 +265,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         }),
         isInitializing: false,
       });
+
+      this._subs.add(
+        this.state.optionsPane!.subscribeToState((newState, oldState) => {
+          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
+            this.setState({ editPreview: newState.isVizPickerOpen ? panel.clone() : undefined });
+            this.state.optionsPane!.setState({ editPreviewRef: this.state.editPreview?.getRef() });
+          }
+        })
+      );
     } else {
       // plugin changed after first time initialization
       // Just update data pane
