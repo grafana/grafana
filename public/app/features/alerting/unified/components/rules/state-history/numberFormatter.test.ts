@@ -64,7 +64,7 @@ describe('formatNumericValue', () => {
     it('should limit to 4 decimal places without rounding integer parts', () => {
       expect(formatNumericValue(123.456)).toBe('123.456');
       expect(formatNumericValue(1234.567)).toBe('1234.567');
-      expect(formatNumericValue(9999.9)).toBe('9999.9'); // Preserves integer part, doesn't round to 10000
+      expect(formatNumericValue(9999.9)).toBe('9999.9');
       expect(formatNumericValue(9999.1234)).toBe('9999.1234');
     });
 
@@ -116,23 +116,18 @@ describe('formatNumericValue', () => {
 
   describe('Edge cases', () => {
     it('should handle numbers exactly at boundaries', () => {
-      // Lower boundary: exactly 1e-2 should use standard notation
       expect(formatNumericValue(0.01)).toBe('0.01');
 
-      // Just below boundary should use scientific notation
       const justBelow = formatNumericValue(0.009999);
       expect(justBelow).toMatch(/^9\.999e-3$/i);
 
-      // Upper boundary: exactly 1e4 should use standard notation
       expect(formatNumericValue(10000)).toBe('10000');
 
-      // Just above boundary should use scientific notation
       const justAbove = formatNumericValue(10001);
       expect(justAbove).toMatch(/^1\.000e\+4$/i);
     });
 
     it('should use scientific notation for very precise decimals with > 4 decimal places', () => {
-      // Numbers with > 4 decimals use scientific notation
       expect(formatNumericValue(1.23456789)).toMatch(/^1\.235e\+0$/i);
       expect(formatNumericValue(123.456789)).toMatch(/^1\.235e\+2$/i);
       expect(formatNumericValue(0.123456789)).toMatch(/^1\.235e-1$/i);
@@ -147,36 +142,29 @@ describe('formatNumericValue', () => {
 
   describe('countDecimalPlaces edge cases', () => {
     it('should handle numbers that toString() would convert to scientific notation', () => {
-      // Very small number - magnitude check handles it, countDecimalPlaces should return 0
-      // This tests that we don't try to count decimals for numbers outside readable range
       const result = formatNumericValue(1e-10);
-      expect(result).toMatch(/^1\.000e-10$/i); // Uses scientific notation based on magnitude
+      expect(result).toMatch(/^1\.000e-10$/i);
 
-      // Very large number
       const result2 = formatNumericValue(1e10);
-      expect(result2).toMatch(/^1\.000e\+10$/i); // Uses scientific notation based on magnitude
+      expect(result2).toMatch(/^1\.000e\+10$/i);
     });
 
     it('should correctly count decimals for numbers with trailing zeros', () => {
-      // These should use standard notation (≤ 4 decimals)
-      expect(formatNumericValue(1.234)).toBe('1.234'); // Trailing zero removed, 3 decimals
-      expect(formatNumericValue(1.2)).toBe('1.2'); // Trailing zeros removed, 1 decimal
-      expect(formatNumericValue(1.0)).toBe('1'); // All zeros removed, treated as integer
+      expect(formatNumericValue(1.234)).toBe('1.234');
+      expect(formatNumericValue(1.2)).toBe('1.2');
+      expect(formatNumericValue(1.0)).toBe('1');
     });
 
     it('should handle boundary values correctly', () => {
-      // Exactly at boundaries
-      expect(formatNumericValue(0.01)).toBe('0.01'); // 2 decimals, standard notation
-      expect(formatNumericValue(10000)).toBe('10000'); // Integer, standard notation
+      expect(formatNumericValue(0.01)).toBe('0.01');
+      expect(formatNumericValue(10000)).toBe('10000');
 
-      // Just inside boundaries with many decimals
-      expect(formatNumericValue(0.01001)).toMatch(/^1\.001e-2$/i); // 5 decimals, scientific notation
-      expect(formatNumericValue(9999.1234)).toBe('9999.1234'); // 4 decimals, standard notation
-      expect(formatNumericValue(9999.12345)).toMatch(/^9\.999e\+3$/i); // 5 decimals, scientific notation
+      expect(formatNumericValue(0.01001)).toMatch(/^1\.001e-2$/i);
+      expect(formatNumericValue(9999.1234)).toBe('9999.1234');
+      expect(formatNumericValue(9999.12345)).toMatch(/^9\.999e\+3$/i);
     });
 
     it('should handle numbers in readable range that have many decimals', () => {
-      // These should use scientific notation due to > 4 decimal places
       expect(formatNumericValue(1.4153928131348452)).toMatch(/^1\.415e\+0$/i);
       expect(formatNumericValue(42.987654321)).toMatch(/^4\.299e\+1$/i);
       expect(formatNumericValue(123.456789)).toMatch(/^1\.235e\+2$/i);

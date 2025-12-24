@@ -82,22 +82,17 @@ describe('LogRecordViewerByTimestamp', () => {
 
       render(<LogRecordViewerByTimestamp records={records} commonLabels={[]} />);
 
-      // Check that values are formatted correctly
       expect(screen.getByText(/cpu_usage/)).toBeInTheDocument();
-      // 42.987654321 has > 4 decimals, so should use scientific notation
       expect(screen.getByText(/4\.299e\+1/i)).toBeInTheDocument();
 
-      // Large number should use scientific notation
       expect(screen.getByText(/memory_mb/)).toBeInTheDocument();
-      expect(screen.getByText(/1\.235e\+6/i)).toBeInTheDocument(); // 1234567.89 → scientific notation
+      expect(screen.getByText(/1\.235e\+6/i)).toBeInTheDocument();
 
-      // Small number should use scientific notation
       expect(screen.getByText(/disk_io/)).toBeInTheDocument();
-      expect(screen.getByText(/1\.234e-3/i)).toBeInTheDocument(); // 0.001234 → scientific notation
+      expect(screen.getByText(/1\.234e-3/i)).toBeInTheDocument();
 
-      // Boundary value should use standard notation
       expect(screen.getByText(/request_count/)).toBeInTheDocument();
-      expect(screen.getByText(/10000/)).toBeInTheDocument(); // 10000 → 10000
+      expect(screen.getByText(/10000/)).toBeInTheDocument();
     });
 
     it('should format various numeric ranges correctly', () => {
@@ -121,21 +116,20 @@ describe('LogRecordViewerByTimestamp', () => {
 
       render(<LogRecordViewerByTimestamp records={records} commonLabels={[]} />);
 
-      // Verify all values are present and formatted
       expect(screen.getByText(/small/)).toBeInTheDocument();
-      expect(screen.getByText(/1\.000e-3/i)).toBeInTheDocument(); // 0.001 → scientific notation
+      expect(screen.getByText(/1\.000e-3/i)).toBeInTheDocument();
 
       expect(screen.getByText(/normal/)).toBeInTheDocument();
-      expect(screen.getByText(/42\.5/)).toBeInTheDocument(); // 42.5 → standard notation
+      expect(screen.getByText(/42\.5/)).toBeInTheDocument();
 
       expect(screen.getByText(/large/)).toBeInTheDocument();
-      expect(screen.getByText(/1\.235e\+5/i)).toBeInTheDocument(); // 123456 → scientific notation
+      expect(screen.getByText(/1\.235e\+5/i)).toBeInTheDocument();
 
       expect(screen.getByText(/boundary_low/)).toBeInTheDocument();
-      expect(screen.getByText(/0\.01/)).toBeInTheDocument(); // 0.01 → standard notation (boundary)
+      expect(screen.getByText(/0\.01/)).toBeInTheDocument();
 
       expect(screen.getByText(/boundary_high/)).toBeInTheDocument();
-      expect(screen.getByText(/10000/)).toBeInTheDocument(); // 10000 → standard notation (boundary)
+      expect(screen.getByText(/10000/)).toBeInTheDocument();
     });
   });
 });

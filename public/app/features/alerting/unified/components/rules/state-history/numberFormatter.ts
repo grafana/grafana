@@ -3,7 +3,6 @@ const SCIENTIFIC_NOTATION_THRESHOLD_LARGE = 1e4;
 const MAX_DECIMAL_PLACES = 4;
 const EXPONENTIAL_DECIMALS = 3; // 4 significant digits = 1 digit + 3 decimals
 
-// Create formatter once at module level (reused for all calls)
 const readableRangeFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: MAX_DECIMAL_PLACES,
   useGrouping: false,
@@ -18,7 +17,6 @@ const readableRangeFormatter = new Intl.NumberFormat(undefined, {
  * 10 decimal places is sufficient to detect if a number has > 4 decimal places.
  */
 function countDecimalPlaces(value: number): number {
-  // Early return for integers
   if (Number.isInteger(value)) {
     return 0;
   }
@@ -26,15 +24,10 @@ function countDecimalPlaces(value: number): number {
   const absValue = Math.abs(value);
 
   // Only count decimals for numbers in readable range
-  // Numbers outside this range use scientific notation based on magnitude
-  // This avoids issues where toString() would return scientific notation
-  // (e.g., 1e-10.toString() → "1e-10")
   if (absValue < SCIENTIFIC_NOTATION_THRESHOLD_SMALL || absValue > SCIENTIFIC_NOTATION_THRESHOLD_LARGE) {
     return 0;
   }
 
-  // Use toFixed(10) to ensure standard notation, avoiding scientific notation from toString()
-  // 10 decimal places is enough to detect if we have > 4 decimals
   const str = value.toFixed(10);
   const decimalIndex = str.indexOf('.');
 
@@ -58,9 +51,8 @@ function countDecimalPlaces(value: number): number {
  * @returns A formatted string representation of the number
  */
 export function formatNumericValue(value: number): string {
-  // Handle special cases
   if (!Number.isFinite(value)) {
-    return String(value); // NaN, Infinity
+    return String(value);
   }
 
   if (value === 0) {
@@ -69,22 +61,15 @@ export function formatNumericValue(value: number): string {
 
   const absValue = Math.abs(value);
 
-  // First check: Use scientific notation for values outside readable range (magnitude-based)
-  // Note: absValue < 1e-2 excludes values less than 0.01, so 0.01 itself is in readable range
-  // absValue > 1e4 excludes values greater than 10000, so 10000 itself is in readable range
   if (absValue < SCIENTIFIC_NOTATION_THRESHOLD_SMALL || absValue > SCIENTIFIC_NOTATION_THRESHOLD_LARGE) {
     return value.toExponential(EXPONENTIAL_DECIMALS);
   }
 
-  // Second check: For numbers in readable range, check decimal precision
-  // Only count decimals for numbers we know are in readable range (avoids toString() issues)
   const decimalPlaces = countDecimalPlaces(value);
 
-  // Use scientific notation if excessive decimal precision (> 4 decimals)
   if (decimalPlaces > MAX_DECIMAL_PLACES) {
     return value.toExponential(EXPONENTIAL_DECIMALS);
   }
 
-  // For human-readable range with ≤ 4 decimal places, use standard notation
   return readableRangeFormatter.format(value);
 }
