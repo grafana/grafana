@@ -2425,6 +2425,84 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceFile), res.Data.RuleGroups[1].Rules[0].Provenance)
 		})
 
+		t.Run("provenance fetch error returns error response in paginated mode", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+				r.NamespaceUID = "ns-1"
+				r.RuleGroup = "group-1"
+				r.UID = "rule-1"
+			}, withClassicConditionSingleQuery()).GenerateRef()
+
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+				s.State = eval.Alerting
+				s.Labels = data.Labels{"test": "label"}
+				return s
+			})
+			fakeStore.PutRule(context.Background(), rule)
+
+			fakeProvisioning.GetProvenancesByUIDsFunc = func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error) {
+				return nil, errors.New("database connection failed")
+			}
+
+			req, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusInternalServerError, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "failed to load provenance")
+		})
+
+		t.Run("provenance fetch error returns error response in non-paginated mode", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+				r.NamespaceUID = "ns-1"
+				r.RuleGroup = "group-1"
+				r.UID = "rule-1"
+			}, withClassicConditionSingleQuery()).GenerateRef()
+
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+				s.State = eval.Alerting
+				s.Labels = data.Labels{"test": "label"}
+				return s
+			})
+			fakeStore.PutRule(context.Background(), rule)
+
+			fakeProvisioning.GetProvenancesFunc = func(ctx context.Context, orgID int64, resourceType string) (map[string]ngmodels.Provenance, error) {
+				return nil, errors.New("database connection failed")
+			}
+
+			req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusInternalServerError, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "failed to load provenance")
+		})
+
 		t.Run("state filter continues when first page has no matches", func(t *testing.T) {
 			fakeStore, fakeAIM, api := setupAPI(t)
 

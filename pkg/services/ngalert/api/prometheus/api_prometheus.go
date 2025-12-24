@@ -539,8 +539,9 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			}
 			pageProvenances, err := ctx.provenanceStore.GetProvenancesByUIDs(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType(), uids)
 			if err != nil {
-				log.Error("Failed to load provenance", "error", err)
-			} else if ctx.provenanceRecords == nil {
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+			if ctx.provenanceRecords == nil {
 				ctx.provenanceRecords = pageProvenances
 			} else {
 				maps.Copy(ctx.provenanceRecords, pageProvenances)
@@ -550,8 +551,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			var err error
 			ctx.provenanceRecords, err = ctx.provenanceStore.GetProvenances(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType())
 			if err != nil {
-				log.Error("Failed to load provenance", "error", err)
-				ctx.provenanceRecords = make(map[string]ngmodels.Provenance)
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
 			}
 		}
 	}
