@@ -1,5 +1,5 @@
-const NOTATION_THRESHOLD_SMALL = 1e-2;
-const NOTATION_THRESHOLD_LARGE = 1e4;
+const SCIENTIFIC_NOTATION_THRESHOLD_SMALL = 1e-2;
+const SCIENTIFIC_NOTATION_THRESHOLD_LARGE = 1e4;
 const MAX_DECIMAL_PLACES = 4;
 const EXPONENTIAL_DECIMALS = 3; // 4 significant digits = 1 digit + 3 decimals
 
@@ -11,22 +11,40 @@ const readableRangeFormatter = new Intl.NumberFormat(undefined, {
 
 /**
  * Counts the number of decimal places in a number.
+ * Only processes numbers in readable range (1e-2 to 1e4) to avoid
+ * toString() scientific notation issues for very large/small numbers.
+ *
+ * Uses toFixed(10) to ensure standard notation representation.
+ * 10 decimal places is sufficient to detect if a number has > 4 decimal places.
  */
 function countDecimalPlaces(value: number): number {
+  // Early return for integers
   if (Number.isInteger(value)) {
     return 0;
   }
 
-  // Convert to string and find decimal point
-  const str = value.toString();
+  const absValue = Math.abs(value);
+
+  // Only count decimals for numbers in readable range
+  // Numbers outside this range use scientific notation based on magnitude
+  // This avoids issues where toString() would return scientific notation
+  // (e.g., 1e-10.toString() → "1e-10")
+  if (absValue < SCIENTIFIC_NOTATION_THRESHOLD_SMALL || absValue > SCIENTIFIC_NOTATION_THRESHOLD_LARGE) {
+    return 0;
+  }
+
+  // Use toFixed(10) to ensure standard notation, avoiding scientific notation from toString()
+  // 10 decimal places is enough to detect if we have > 4 decimals
+  const str = value.toFixed(10);
   const decimalIndex = str.indexOf('.');
 
   if (decimalIndex === -1) {
     return 0;
   }
 
-  // Return count of digits after decimal point
-  return str.length - decimalIndex - 1;
+  // Count decimal places, removing trailing zeros
+  const decimalPart = str.substring(decimalIndex + 1).replace(/0+$/, '');
+  return decimalPart.length;
 }
 
 /**
@@ -50,16 +68,20 @@ export function formatNumericValue(value: number): string {
   }
 
   const absValue = Math.abs(value);
+
+  // First check: Use scientific notation for values outside readable range (magnitude-based)
+  // Note: absValue < 1e-2 excludes values less than 0.01, so 0.01 itself is in readable range
+  // absValue > 1e4 excludes values greater than 10000, so 10000 itself is in readable range
+  if (absValue < SCIENTIFIC_NOTATION_THRESHOLD_SMALL || absValue > SCIENTIFIC_NOTATION_THRESHOLD_LARGE) {
+    return value.toExponential(EXPONENTIAL_DECIMALS);
+  }
+
+  // Second check: For numbers in readable range, check decimal precision
+  // Only count decimals for numbers we know are in readable range (avoids toString() issues)
   const decimalPlaces = countDecimalPlaces(value);
 
-  // Use scientific notation for:
-  // 1. Very small or very large numbers (magnitude-based)
-  // 2. OR numbers with excessive decimal precision (> 4 decimals)
-  if (
-    absValue < NOTATION_THRESHOLD_SMALL ||
-    absValue > NOTATION_THRESHOLD_LARGE ||
-    decimalPlaces > MAX_DECIMAL_PLACES
-  ) {
+  // Use scientific notation if excessive decimal precision (> 4 decimals)
+  if (decimalPlaces > MAX_DECIMAL_PLACES) {
     return value.toExponential(EXPONENTIAL_DECIMALS);
   }
 
