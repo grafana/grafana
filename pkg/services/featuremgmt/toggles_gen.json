@@ -676,7 +676,8 @@
       "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1767013056996",
-        "creationTimestamp": "2025-12-29T12:57:36Z"
+        "creationTimestamp": "2025-12-29T12:57:36Z",
+        "deletionTimestamp": "2026-01-06T09:18:36Z"
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
