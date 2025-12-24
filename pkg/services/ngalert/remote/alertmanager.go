@@ -47,6 +47,7 @@ import (
 type stateStore interface {
 	GetSilences(ctx context.Context) (string, error)
 	GetNotificationLog(ctx context.Context) (string, error)
+	GetFlushLog(ctx context.Context) (string, error)
 }
 
 // AutogenFn is a function that adds auto-generated routes to a configuration.
@@ -395,6 +396,8 @@ func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalSt
 			rs.Silences = p.Data
 		case "nfl":
 			rs.Nflog = p.Data
+		case "fls":
+			rs.FlushLog = p.Data
 		default:
 			return rs, fmt.Errorf("unknown part key %q", p.Key)
 		}
@@ -683,6 +686,12 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("error getting notification log: %w", err)
 	}
 	parts = append(parts, alertingClusterPB.Part{Key: notifier.NotificationLogFilename, Data: []byte(notificationLog)})
+
+	flushLog, err := am.state.GetFlushLog(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting flush log: %w", err)
+	}
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.FlushLogFilename, Data: []byte(flushLog)})
 
 	fs := alertingClusterPB.FullState{
 		Parts: parts,
