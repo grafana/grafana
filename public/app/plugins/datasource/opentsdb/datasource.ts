@@ -197,16 +197,9 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
             const eventList: AnnotationEvent[] = [];
 
             for (const frame of response.data) {
-              // const annotations = frame.meta?.custom?.annotations;
-              // const globalAnnotations = frame.meta?.custom?.globalAnnotations;
               const annotationObject = annotation.isGlobal
                 ? frame.meta?.custom?.globalAnnotations
                 : frame.meta?.custom?.annotations;
-
-              // let annotationObject = annotations;
-              // if (annotation.isGlobal && globalAnnotations) {
-              //   annotationObject = globalAnnotations;
-              // }
 
               if (annotationObject && isArray(annotationObject)) {
                 annotationObject.forEach((ann) => {
@@ -221,7 +214,6 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
               }
             }
 
-            console.log('be eventList', eventList);
             return eventList;
           })
         )
@@ -389,7 +381,6 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     }
 
     if (config.featureToggles.opentsdbBackendMigration) {
-      console.log('_performMetricKeyValueLookup', 'key');
       return from(this.getResource('api/search/lookup', { type: 'key', metric }));
     }
 
