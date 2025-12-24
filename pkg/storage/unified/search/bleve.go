@@ -44,6 +44,7 @@ import (
 const (
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
+	lockFileName       = ".bleve.lock"
 )
 
 // Keys used to store internal data in index.
@@ -95,6 +96,10 @@ type bleveBackend struct {
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
+
+	// lockFile holds the exclusive lock on the index directory.
+	// If nil, another process has the lock and we're using in-memory indexes.
+	lockFile *os.File
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -134,12 +139,24 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownFn = func(key resource.NamespacedResource) (bool, error) { return true, nil }
 	}
 
+	// Try to acquire an exclusive lock on the index directory.
+	// If we can't acquire the lock, another replica is using it, so we fall back to in-memory indexes.
+	lockFilePath := filepath.Join(opts.Root, lockFileName)
+	lockFile, err := tryAcquireLock(lockFilePath)
+	if err != nil {
+		l.Warn("Failed to acquire lock on index directory, falling back to in-memory indexes", "path", lockFilePath, "err", err)
+		opts.FileThreshold = math.MaxInt64 // Force all indexes to be in-memory
+	} else {
+		l.Info("Acquired exclusive lock on index directory", "path", lockFilePath)
+	}
+
 	be := &bleveBackend{
 		log:          l,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		ownsIndexFn:  ownFn,
 		indexMetrics: indexMetrics,
+		lockFile:     lockFile,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -660,6 +677,13 @@ func (b *bleveBackend) Stop() {
 
 	b.bgTasksCancel()
 	b.bgTasksWg.Wait()
+
+	// Release the lock file if we have one
+	if b.lockFile != nil {
+		if err := b.lockFile.Close(); err != nil {
+			b.log.Error("Failed to close lock file", "err", err)
+		}
+	}
 }
 
 func (b *bleveBackend) closeAllIndexes() {

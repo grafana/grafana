@@ -1153,16 +1153,28 @@ func TestCleanOldIndexes(t *testing.T) {
 
 	b, _ := setupBleveBackend(t, withRootDir(dir))
 
+	// Helper to count only directories (excluding the lock file)
+	countDirs := func(path string) []string {
+		files, err := os.ReadDir(path)
+		require.NoError(t, err)
+		var dirs []string
+		for _, f := range files {
+			if f.IsDir() {
+				dirs = append(dirs, f.Name())
+			}
+		}
+		return dirs
+	}
+
 	t.Run("with skip", func(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "index-2")
-		files, err := os.ReadDir(dir)
-		require.NoError(t, err)
-		require.Len(t, files, 1)
-		require.Equal(t, "index-2", files[0].Name())
+		dirs := countDirs(dir)
+		require.Len(t, dirs, 1)
+		require.Equal(t, "index-2", dirs[0])
 	})
 
 	t.Run("without skip", func(t *testing.T) {
@@ -1171,9 +1183,8 @@ func TestCleanOldIndexes(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "")
-		files, err := os.ReadDir(dir)
-		require.NoError(t, err)
-		require.Len(t, files, 0)
+		dirs := countDirs(dir)
+		require.Len(t, dirs, 0)
 	})
 }
 
@@ -1582,4 +1593,42 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	cnt, err := idx.DocCount(context.Background(), "", nil)
 	require.NoError(t, err)
 	return int(cnt)
+}
+
+func TestBleveBackendLockingFallsBackToInMemory(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-lock-test")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(tmpdir) })
+
+	// First backend acquires the lock
+	backend1, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 1, // Very low threshold to trigger file-based indexing
+	}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, backend1.lockFile, "First backend should acquire the lock")
+	require.Less(t, backend1.opts.FileThreshold, int64(math.MaxInt64), "First backend should use file-based indexes")
+
+	// Second backend should fail to acquire the lock and fall back to in-memory
+	backend2, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 1, // Very low threshold, but should be overridden
+	}, nil)
+	require.NoError(t, err)
+	require.Nil(t, backend2.lockFile, "Second backend should not acquire the lock")
+	require.Equal(t, int64(math.MaxInt64), backend2.opts.FileThreshold, "Second backend should be forced to use in-memory indexes")
+
+	// Clean up
+	backend2.Stop()
+	backend1.Stop()
+
+	// After first backend releases the lock, a new backend should be able to acquire it
+	backend3, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 1,
+	}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, backend3.lockFile, "Third backend should acquire the lock after first releases it")
+	require.Less(t, backend3.opts.FileThreshold, int64(math.MaxInt64), "Third backend should use file-based indexes")
+	backend3.Stop()
 }
