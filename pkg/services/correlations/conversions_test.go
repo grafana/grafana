@@ -84,7 +84,7 @@ func TestConversion(t *testing.T) {
 				Description: ptr.To("A test correlation"),
 				Config: &CorrelationConfigUpdateDTO{
 					Field:  ptr.To("test-field"),
-					Target: nil,
+					Target: &map[string]any{},
 				},
 			},
 		},

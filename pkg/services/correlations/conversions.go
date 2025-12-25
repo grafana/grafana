@@ -74,7 +74,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	if obj.Spec.Target != nil {
 		result.TargetUID = &obj.Spec.Target.Name
 		result.TargetType = ptr.To(obj.Spec.Target.Group)
-	}
+	} 
 	return result, nil
 }
 
@@ -89,7 +89,7 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 		return nil, err
 	}
 	if len(out.Target) == 0 {
-		out.Target = map[string]any{}
+		out.Target = nil
 	}
 	return out, err
 }
@@ -105,7 +105,7 @@ func ToConfig(orig correlationsV0.CorrelationConfigSpec) (*CorrelationConfig, er
 		return nil, err
 	}
 	if len(out.Target) == 0 {
-		out.Target = map[string]any{}
+		out.Target = nil
 	}
 	return out, err
 }
