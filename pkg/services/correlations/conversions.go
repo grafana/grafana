@@ -74,7 +74,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	if obj.Spec.Target != nil {
 		result.TargetUID = &obj.Spec.Target.Name
 		result.TargetType = ptr.To(obj.Spec.Target.Group)
-	} 
+	}
 	return result, nil
 }
 
