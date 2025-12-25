@@ -206,24 +206,3 @@ func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelpe
 	require.NotEmpty(t, dashUID)
 	return dashUID
 }
-
-// createTestDashboard creates a minimal dashboard and returns its UID
-func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, title string) string {
-	t.Helper()
-
-	payload := fmt.Sprintf(`{"dashboard": {"title": "%s", "panels": []}, "overwrite": false}`, title)
-
-	result := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: "POST",
-		Path:   "/api/dashboards/db",
-		Body:   []byte(payload),
-	}, &map[string]interface{}{})
-
-	require.NotNil(t, result.Response)
-	require.Equal(t, 200, result.Response.StatusCode)
-
-	uid := (*result.Result)["uid"].(string)
-	require.NotEmpty(t, uid)
-	return uid
-}
