@@ -269,9 +269,15 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 			continue
 		}
 
+		insecureSkipVerify := false
+		if ds.JsonData != nil {
+			insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		}
+
 		alertmanagers = append(alertmanagers, ExternalAMcfg{
-			URL:     amURL,
-			Headers: headers,
+			URL:                amURL,
+			Headers:            headers,
+			InsecureSkipVerify: insecureSkipVerify,
 		})
 	}
 

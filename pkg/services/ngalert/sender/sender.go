@@ -44,9 +44,10 @@ type ExternalAlertmanager struct {
 }
 
 type ExternalAMcfg struct {
-	URL     string
-	Headers http.Header
-	Timeout time.Duration
+	URL                string
+	Headers            http.Header
+	Timeout            time.Duration
+	InsecureSkipVerify bool
 }
 
 type ExternalAMOptions struct {
@@ -94,7 +95,11 @@ func WithMaxBatchSize(size int) Option {
 }
 
 func (cfg *ExternalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.URL})
+	skipVerify := "false"
+	if cfg.InsecureSkipVerify {
+		skipVerify = "true"
+	}
+	return asSHA256([]string{cfg.headerString(), cfg.URL, skipVerify})
 }
 
 // headersString transforms all the headers in a sorted way as a
@@ -292,6 +297,14 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 				amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
 			}
 		}
+
+		// Set TLS configuration if InsecureSkipVerify is enabled
+		if am.InsecureSkipVerify {
+			amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
+				InsecureSkipVerify: true,
+			}
+		}
+
 		amConfigs = append(amConfigs, amConfig)
 	}
 
