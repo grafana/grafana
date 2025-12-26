@@ -831,6 +831,48 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 				InsecureSkipVerify: true,
 			},
 		},
+		{
+			name: "datasource with TLS client auth",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+					"tlsClientKey":  []byte("client-key-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:           "https://localhost:9093",
+				TLSClientCert: "client-cert-content",
+				TLSClientKey:  "client-key-content",
+			},
+		},
+		{
+			name: "datasource with TLS client auth and skip verify",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+					"tlsAuth":       true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+					"tlsClientKey":  []byte("client-key-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+				TLSClientCert:      "client-cert-content",
+				TLSClientKey:       "client-key-content",
+			},
+		},
 	}
 
 	for _, tt := range tests {

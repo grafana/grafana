@@ -48,6 +48,8 @@ type ExternalAMcfg struct {
 	Headers            http.Header
 	Timeout            time.Duration
 	InsecureSkipVerify bool
+	TLSClientCert      string
+	TLSClientKey       string
 }
 
 type ExternalAMOptions struct {
@@ -99,7 +101,13 @@ func (cfg *ExternalAMcfg) SHA256() string {
 	if cfg.InsecureSkipVerify {
 		skipVerify = "true"
 	}
-	return asSHA256([]string{cfg.headerString(), cfg.URL, skipVerify})
+	return asSHA256([]string{
+		cfg.headerString(),
+		cfg.URL,
+		skipVerify,
+		cfg.TLSClientCert,
+		cfg.TLSClientKey,
+	})
 }
 
 // headersString transforms all the headers in a sorted way as a
@@ -317,10 +325,12 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 		}
 	}
 
-	// Set TLS configuration if InsecureSkipVerify is enabled
-	if am.InsecureSkipVerify {
+	// Set TLS configuration if any TLS options are provided
+	if am.InsecureSkipVerify || am.TLSClientCert != "" || am.TLSClientKey != "" {
 		amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: am.InsecureSkipVerify,
+			Cert:               am.TLSClientCert,
+			Key:                common_config.Secret(am.TLSClientKey),
 		}
 	}
 

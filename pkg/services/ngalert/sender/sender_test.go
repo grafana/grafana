@@ -375,6 +375,64 @@ func TestExternalAMcfgToAlertmanagerConfig(t *testing.T) {
 			expected:    nil,
 			expectError: true,
 		},
+		{
+			name: "configuration with TLS client auth",
+			cfg: ExternalAMcfg{
+				URL:           "https://alertmanager.example.com:9093",
+				TLSClientCert: "client-cert-content",
+				TLSClientKey:  "client-key-content",
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					TLSConfig: common_config.TLSConfig{
+						Cert: "client-cert-content",
+						Key:  "client-key-content",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with TLS client auth and skip verify",
+			cfg: ExternalAMcfg{
+				URL:                "https://alertmanager.example.com:9093",
+				InsecureSkipVerify: true,
+				TLSClientCert:      "client-cert-content",
+				TLSClientKey:       "client-key-content",
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					TLSConfig: common_config.TLSConfig{
+						InsecureSkipVerify: true,
+						Cert:               "client-cert-content",
+						Key:                "client-key-content",
+					},
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {

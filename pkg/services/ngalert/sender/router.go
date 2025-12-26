@@ -281,14 +281,25 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 	}
 
 	insecureSkipVerify := false
+
+	var tlsAuthEnabled bool
 	if ds.JsonData != nil {
 		insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		tlsAuthEnabled = ds.JsonData.Get("tlsAuth").MustBool(false)
+	}
+
+	var tlsClientCert, tlsClientKey string
+	if tlsAuthEnabled && ds.SecureJsonData != nil {
+		tlsClientKey = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientKey", "")
+		tlsClientCert = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientCert", "")
 	}
 
 	return ExternalAMcfg{
 		URL:                amURL,
 		Headers:            headers,
 		InsecureSkipVerify: insecureSkipVerify,
+		TLSClientCert:      tlsClientCert,
+		TLSClientKey:       tlsClientKey,
 	}, nil
 }
 
