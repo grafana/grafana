@@ -886,6 +886,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "alertingSavedSearches",
+			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "alertingDisableSendAlertsExternal",
 			Description:  "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:        FeatureStageExperimental,
@@ -1967,6 +1974,14 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "pluginInsights",
+			Description:  "Show insights for plugins in the plugin details page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
 		},
 		{
 			Name:            "panelTimeSettings",

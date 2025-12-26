@@ -13,9 +13,9 @@ import (
 func jsonEquals(dialect migrator.Dialect, column, key, value string) (string, []any) {
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(%s, CONCAT('$.', ?))) = ?", column), []any{key, value}
+		return fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?))) = ?", column), []any{key, value}
 	case migrator.Postgres:
-		return fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?) = ?", column), []any{key, value}
+		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) = ?", column), []any{key, value}
 	default:
 		return "", nil
 	}
@@ -25,9 +25,9 @@ func jsonNotEquals(dialect migrator.Dialect, column, key, value string) (string,
 	var jx string
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		jx = fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(%s, CONCAT('$.', ?)))", column)
+		jx = fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)))", column)
 	case migrator.Postgres:
-		jx = fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?)", column)
+		jx = fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?)", column)
 	default:
 		return "", nil
 	}
@@ -37,9 +37,9 @@ func jsonNotEquals(dialect migrator.Dialect, column, key, value string) (string,
 func jsonKeyMissing(dialect migrator.Dialect, column, key string) (string, []any) {
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_EXTRACT(%s, CONCAT('$.', ?)) IS NULL", column), []any{key}
+		return fmt.Sprintf("JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)) IS NULL", column), []any{key}
 	case migrator.Postgres:
-		return fmt.Sprintf("jsonb_extract_path_text(%s::jsonb, ?) IS NULL", column), []any{key}
+		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) IS NULL", column), []any{key}
 	default:
 		return "", nil
 	}

@@ -535,6 +535,10 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
+  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;
@@ -1192,6 +1196,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */

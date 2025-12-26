@@ -169,62 +169,9 @@ func HasIntegrationsDifferentProtectedFields(existing, incoming *Integration) []
 	var result []schema.IntegrationFieldPath
 	settingsDiff := diff.GetSettingsPaths()
 	for _, path := range settingsDiff {
-		if IsProtectedField(incoming.Config.Type(), path) {
+		if incoming.Config.IsProtectedField(path) {
 			result = append(result, path)
 		}
 	}
 	return result
-}
-
-// IsProtectedField returns true if the field at the given path is existing protected one.
-// This includes:
-// 1. URL fields marked as secure in the schema (e.g., webhook URLs with credentials)
-// 2. URL fields NOT marked as secure but could contain credentials (e.g., API endpoints)
-func IsProtectedField(integrationType schema.IntegrationType, path schema.IntegrationFieldPath) bool {
-	str := strings.ToLower(string(integrationType))
-	pathStr := path.String()
-
-	switch str {
-	case "prometheus-alertmanager":
-		return pathStr == "url"
-	case "dingding":
-		return pathStr == "url" // marked as secure
-	case "discord":
-		return pathStr == "url" // marked as secure (webhook URL)
-	case "googlechat":
-		return pathStr == "url" // marked as secure
-	case "jira":
-		return pathStr == "api_url"
-	case "kafka":
-		return pathStr == "kafkaRestProxy"
-	case "line":
-		return false
-	case "mqtt":
-		return pathStr == "brokerUrl"
-	case "oncall":
-		return pathStr == "url"
-	case "opsgenie":
-		return pathStr == "apiUrl"
-	case "pagerduty":
-		return pathStr == "url"
-	case "sensugo":
-		return pathStr == "url"
-	case "slack":
-		return pathStr == "url" || pathStr == "endpointUrl"
-	case "teams":
-		return pathStr == "url"
-	case "victorops":
-		return pathStr == "url" // marked as secure
-	case "webex":
-		return pathStr == "api_url"
-	case "webhook":
-		return pathStr == "url" ||
-			pathStr == "http_config.oauth2.token_url" ||
-			pathStr == "http_config.oauth2.proxy_config.proxy_url"
-	case "wecom":
-		return pathStr == "url" || // marked as secure
-			pathStr == "endpointUrl"
-	default:
-		return false
-	}
 }

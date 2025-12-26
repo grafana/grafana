@@ -2688,6 +2688,35 @@
       "text-federated": "Federacja",
       "text-provisioned": "Po aprowizacji"
     },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
+    },
     "search": {
       "property": {
         "data-source": "Źródło danych",
@@ -3749,7 +3778,10 @@
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -6222,7 +6254,7 @@
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
-      "save-and-overwrite": "„Zapisz i zastąp”"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7211,6 +7243,9 @@
       "time-range-label": "Zablokuj zakres czasu"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Wskazówka: {{proTip}}"
   },
@@ -7691,39 +7726,6 @@
       },
       "share-span": "Udostępnij"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Wybierz operator maksymalnego zakresu",
-      "aria-label-select-min-span-operator": "Wybierz operator minimalnego zakresu",
-      "aria-label-select-service-name": "Wybierz nazwę usługi",
-      "aria-label-select-service-name-operator": "Wybierz operator nazwy usługi",
-      "aria-label-select-span-name": "Wybierz nazwę zakresu",
-      "aria-label-select-span-name-operator": "Wybierz operator nazwy zakresu",
-      "ariaLabel-select-max-span-duration": "Wybierz maksymalny czas trwania zakresu",
-      "ariaLabel-select-min-span-duration": "Wybierz minimalny czas trwania zakresu",
-      "label-collapse": "Filtry zakresu",
-      "label-duration": "Czas trwania",
-      "label-service-name": "Nazwa usługi",
-      "label-span-name": "Nazwa zakresu",
-      "label-tags": "Znaczniki",
-      "placeholder-all-service-names": "Wszystkie nazwy usług",
-      "placeholder-all-span-names": "Wszystkie nazwy zakresów",
-      "tooltip-collapse": "Odfiltruj zakresy poniżej. Możesz dodawać filtry, aż zawęzisz zakres wyników do kilku najbardziej interesujących.",
-      "tooltip-duration": "Filtrowanie według czasu trwania. Akceptowane jednostki: {{units}}",
-      "tooltip-tags": "Filtruj według tagów, tagów procesu lub pól logów w swoich zakresach."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Dodaj tag",
-      "aria-label-input-tag-value": "Wpisz wartość tagu",
-      "aria-label-remove-tag": "Usuń tag",
-      "aria-label-select-tag-key": "Wybierz klucz tagu",
-      "aria-label-select-tag-operator": "Wybierz operator tagu",
-      "aria-label-select-tag-value": "Wybierz wartość tagu",
-      "placeholder-select-tag": "Wybierz tag",
-      "placeholder-select-value": "Wybierz wartość",
-      "placeholder-tag-value": "Wartość tagu",
-      "tooltip-add-tag": "Dodaj tag",
-      "tooltip-remove-tag": "Usuń tag"
-    },
     "span-flame-graph": {
       "flame-graph": "Wykres płomienia"
     },
@@ -7922,23 +7924,18 @@
       "label-upsample": "Zwiększ próbkowanie",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Uruchom zapytanie",
-      "modal-title": "Edytor SQL",
       "tooltip-experimental": "Integracja LLM z wyrażeniami SQL jest eksperymentalna. Wszelkie problemy zgłaszaj zespołowi Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Wejście"
@@ -8013,11 +8010,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9463,6 +9456,7 @@
     "name-unit": "Jednostka",
     "name-value-name": "Nazwa wartości",
     "name-y-axis-scale": "Skala osi Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatycznie",
     "placeholder-axis-width": "Automatycznie",
     "placeholder-decimals": "Automatycznie",
@@ -9492,6 +9486,18 @@
       "label-all": "Wszystkie",
       "label-hidden": "Ukryte",
       "label-single": "Pojedyncza"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -11295,9 +11301,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -12074,7 +12085,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Zobacz szczegóły",
       "loading-finished-job": "Wczytywanie zakończonego zadania…",
@@ -12180,6 +12194,9 @@
       "webhook-last-event": "Ostatnie zdarzenie:",
       "webhook-url": "Wyświetl element webhook"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
       "cleaning-up-resources": "Sprzątanie zasobów repozytorium",
@@ -12284,6 +12301,9 @@
       "tooltip-unhealthy-repository": "Nie można pobrać danych z niesprawnego repozytorium"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12303,10 +12323,15 @@
     },
     "warning-title-default": "Ostrzeżenie",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "Czas trwania tego procesu zależy od liczby zasobów.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12325,6 +12350,7 @@
       "step-finish": "Wybierz dodatkowe ustawienia",
       "step-synchronize": "Synchronizuj z zewnętrzną pamięcią masową",
       "sync-description": "Zsynchronizuj zasoby z zewnętrzną pamięcią masową. Po tym jednorazowym kroku wszystkie przyszłe aktualizacje zostaną automatycznie zapisane w repozytorium i ponownie aprowizowane w instancji.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "title-connect": "Połączenie z zewnętrzną pamięcią masową",
       "title-finish": "Wybierz dodatkowe ustawienia",
@@ -12564,16 +12590,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

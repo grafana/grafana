@@ -14,18 +14,18 @@ export interface SparklineProps extends Themeable2 {
   height: number;
   config?: FieldConfig<GraphFieldConfig>;
   sparkline: FieldSparkline;
+  showHighlights?: boolean;
 }
 
-const SparklineFn: React.FC<SparklineProps> = memo((props) => {
-  const { sparkline, config: fieldConfig, theme, width, height } = props;
-
-  const { frame: alignedDataFrame, warning } = prepareSeries(sparkline, fieldConfig);
+export const SparklineFn: React.FC<SparklineProps> = memo((props) => {
+  const { sparkline, config: fieldConfig, theme, width, height, showHighlights } = props;
+  const { frame: alignedDataFrame, warning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
   if (warning) {
     return null;
   }
 
   const data = preparePlotData2(alignedDataFrame, getStackingGroups(alignedDataFrame));
-  const configBuilder = prepareConfig(sparkline, alignedDataFrame, theme);
+  const configBuilder = prepareConfig(sparkline, alignedDataFrame, theme, showHighlights);
 
   return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
 });

@@ -2655,6 +2655,35 @@
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨"
     },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
+    },
     "search": {
       "property": {
         "data-source": "데이터 소스",
@@ -3701,7 +3730,10 @@
       "text": "쿼리에 대해 찾은 결과 없음"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -6159,7 +6191,7 @@
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },
-      "save-and-overwrite": "'저장 및 덮어쓰기'"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7142,6 +7174,9 @@
       "time-range-label": "시간 범위 잠그기"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "유용한 팁: {{proTip}} "
   },
@@ -7616,39 +7651,6 @@
       },
       "share-span": "공유"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "최대 스팬 연산자 선택",
-      "aria-label-select-min-span-operator": "최소 스팬 연산자 선택",
-      "aria-label-select-service-name": "서비스 이름 선택",
-      "aria-label-select-service-name-operator": "서비스 이름 연산자 선택",
-      "aria-label-select-span-name": "스팬 이름 선택",
-      "aria-label-select-span-name-operator": "스팬 이름 연산자 선택",
-      "ariaLabel-select-max-span-duration": "최대 스팬 기간 선택",
-      "ariaLabel-select-min-span-duration": "최소 스팬 기간 선택",
-      "label-collapse": "스팬 필터",
-      "label-duration": "지속 시간",
-      "label-service-name": "서비스 이름",
-      "label-span-name": "스팬 이름",
-      "label-tags": "태그",
-      "placeholder-all-service-names": "모든 서비스 이름",
-      "placeholder-all-span-names": "모든 스팬 이름",
-      "tooltip-collapse": "아래에서 스팬을 필터링합니다. 결과 스팬을 가장 관심 있는 몇 가지로 좁힐 때까지 필터를 계속 적용할 수 있습니다.",
-      "tooltip-duration": "지속 시간을 기준으로 필터링합니다. 허용되는 단위는 {{units}}입니다",
-      "tooltip-tags": "스팬의 태그, 프로세스 태그 또는 로그 필드를 기준으로 필터링합니다."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "태그 추가",
-      "aria-label-input-tag-value": "태그 값 입력",
-      "aria-label-remove-tag": "태그 제거",
-      "aria-label-select-tag-key": "태그 키 선택",
-      "aria-label-select-tag-operator": "태그 연산자 선택",
-      "aria-label-select-tag-value": "태그 값 선택",
-      "placeholder-select-tag": "태그 선택",
-      "placeholder-select-value": "값 선택",
-      "placeholder-tag-value": "태그 값",
-      "tooltip-add-tag": "태그 추가",
-      "tooltip-remove-tag": "태그 제거"
-    },
     "span-flame-graph": {
       "flame-graph": "불꽃 그래프"
     },
@@ -7847,23 +7849,18 @@
       "label-upsample": "업샘플",
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "쿼리 실행",
-      "modal-title": "SQL 편집기",
       "tooltip-experimental": "SQL 표현식 LLM 통합 기능은 실험 단계입니다. 문제가 발생하면 Grafana 팀에 보고해 주세요."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "입력"
@@ -7938,11 +7935,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9358,6 +9351,7 @@
     "name-unit": "단위",
     "name-value-name": "값 이름",
     "name-y-axis-scale": "Y축 스케일",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "자동",
     "placeholder-axis-width": "자동",
     "placeholder-decimals": "자동",
@@ -9387,6 +9381,18 @@
       "label-all": "전체",
       "label-hidden": "숨김",
       "label-single": "단일"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -11157,9 +11163,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11921,7 +11932,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "세부 정보 보기",
       "loading-finished-job": "완료된 작업 로딩 중...",
@@ -12027,6 +12041,9 @@
       "webhook-last-event": "마지막 이벤트:",
       "webhook-url": "웹훅 보기"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
       "cleaning-up-resources": "리포지토리 리소스 정리 및 삭제 중",
@@ -12131,6 +12148,9 @@
       "tooltip-unhealthy-repository": "상태가 좋지 않은 리포지토리를 가져올 수 없습니다"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12150,10 +12170,15 @@
     },
     "warning-title-default": "경고",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "이 프로세스의 지속 시간은 관련된 리소스 수에 따라 달라집니다.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12172,6 +12197,7 @@
       "step-finish": "추가 설정 선택",
       "step-synchronize": "외부 스토리지와 동기화",
       "sync-description": "외부 스토리지와 리소스를 동기화합니다. 이 일회성 단계 후에는 향후 모든 업데이트가 자동으로 리포지토리에 저장되고 인스턴스에 다시 프로비저닝됩니다.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "동기화할 항목 선택",
       "title-connect": "외부 스토리지에 연결",
       "title-finish": "추가 설정 선택",
@@ -12408,16 +12434,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
