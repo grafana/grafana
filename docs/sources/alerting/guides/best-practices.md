@@ -16,6 +16,11 @@ menuTitle: Best practices
 title: Best practices
 weight: 1010
 refs:
+  recovery-threshold:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/fundamentals/alert-rules/queries-conditions/#recovery-threshold
   keep-firing-for:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
@@ -163,7 +168,7 @@ For latency and error-based alerts, percentiles are often more useful than avera
 quantile_over_time(0.95, http_duration_seconds[5m]) > 3
 ```
 
-Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`](ref:keep-firing-for) to keep alerts active briefly during recovery. This reduces flapping and unnecessary notifications.
+Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`](ref:keep-firing-for) or [recovery thresholds](ref:recovery-threshold) to keep alerts active briefly during recovery. Both options reduce flapping and unnecessary notifications.
 
 ## Graduate symptom-based alerts into SLOs
 
