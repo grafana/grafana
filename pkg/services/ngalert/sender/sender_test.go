@@ -3,9 +3,14 @@ package sender
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
+	common_config "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/require"
 
@@ -226,4 +231,163 @@ func TestWithUTF8Labels(t *testing.T) {
 		require.Equal(t, "test", result.Annotations.Get("some_name"))
 		require.Equal(t, "fire", result.Labels.Get("_0x1f525"))
 	})
+}
+
+func TestExternalAMcfgToAlertmanagerConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		cfg         ExternalAMcfg
+		expected    *config.AlertmanagerConfig
+		expectError bool
+	}{
+		{
+			name: "basic configuration without TLS skip verify",
+			cfg: ExternalAMcfg{
+				URL:                "https://alertmanager.example.com:9093/alertmanager",
+				InsecureSkipVerify: false,
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "/alertmanager",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with TLS skip verify enabled",
+			cfg: ExternalAMcfg{
+				URL:                "https://alertmanager.example.com:9093",
+				InsecureSkipVerify: true,
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					TLSConfig: common_config.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with basic auth in URL",
+			cfg: ExternalAMcfg{
+				URL:                "https://user:password@alertmanager.example.com:9093",
+				InsecureSkipVerify: false,
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					BasicAuth: &common_config.BasicAuth{
+						Username: "user",
+						Password: "password",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with basic auth and TLS skip verify",
+			cfg: ExternalAMcfg{
+				URL:                "https://user:password@alertmanager.example.com:9093",
+				InsecureSkipVerify: true,
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					BasicAuth: &common_config.BasicAuth{
+						Username: "user",
+						Password: "password",
+					},
+					TLSConfig: common_config.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with custom timeout",
+			cfg: ExternalAMcfg{
+				URL:                "https://alertmanager.example.com:9093",
+				Timeout:            30 * time.Second,
+				InsecureSkipVerify: false,
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(30 * time.Second),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid URL should return error",
+			cfg: ExternalAMcfg{
+				URL:                "://invalid-url",
+				InsecureSkipVerify: false,
+			},
+			expected:    nil,
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			amConfig, err := externalAMcfgToAlertmanagerConfig(tt.cfg)
+
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, amConfig)
+		})
+	}
 }

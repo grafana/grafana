@@ -255,54 +255,15 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
-		u, err := url.Parse(am.URL)
+		amConfig, err := externalAMcfgToAlertmanagerConfig(am)
 		if err != nil {
 			return nil, nil, err
-		}
-
-		sdConfig := discovery.Configs{
-			discovery.StaticConfig{
-				{
-					Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(u.Host)}},
-				},
-			},
-		}
-
-		timeout := am.Timeout
-		if timeout == 0 {
-			timeout = defaultTimeout
-		}
-
-		amConfig := &config.AlertmanagerConfig{
-			APIVersion:              config.AlertmanagerAPIVersionV2,
-			Scheme:                  u.Scheme,
-			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(timeout),
-			ServiceDiscoveryConfigs: sdConfig,
 		}
 
 		if am.Headers != nil {
 			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
 			// so we can use it later on when working with the alertmanager config map.
 			headers[fmt.Sprintf("config-%d", i)] = am.Headers
-		}
-
-		// Check the URL for basic authentication information first
-		if u.User != nil {
-			amConfig.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
-				Username: u.User.Username(),
-			}
-
-			if password, isSet := u.User.Password(); isSet {
-				amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
-			}
-		}
-
-		// Set TLS configuration if InsecureSkipVerify is enabled
-		if am.InsecureSkipVerify {
-			amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
-				InsecureSkipVerify: true,
-			}
 		}
 
 		amConfigs = append(amConfigs, amConfig)
@@ -315,6 +276,55 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 	}
 
 	return notifierConfig, headers, nil
+}
+
+// externalAMcfgToAlertmanagerConfig converts an ExternalAMcfg to a Prometheus AlertmanagerConfig.
+func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerConfig, error) {
+	u, err := url.Parse(am.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse alertmanager URL: %w", err)
+	}
+
+	sdConfig := discovery.Configs{
+		discovery.StaticConfig{
+			{
+				Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(u.Host)}},
+			},
+		},
+	}
+
+	timeout := am.Timeout
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+
+	amConfig := &config.AlertmanagerConfig{
+		APIVersion:              config.AlertmanagerAPIVersionV2,
+		Scheme:                  u.Scheme,
+		PathPrefix:              u.Path,
+		Timeout:                 model.Duration(timeout),
+		ServiceDiscoveryConfigs: sdConfig,
+	}
+
+	// Check the URL for basic authentication information first
+	if u.User != nil {
+		amConfig.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
+			Username: u.User.Username(),
+		}
+
+		if password, isSet := u.User.Password(); isSet {
+			amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
+		}
+	}
+
+	// Set TLS configuration if InsecureSkipVerify is enabled
+	if am.InsecureSkipVerify {
+		amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
+			InsecureSkipVerify: true,
+		}
+	}
+
+	return amConfig, nil
 }
 
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
