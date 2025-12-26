@@ -82,9 +82,13 @@ The key is balance as your alerting matures. Use infrastructure alerts to suppor
 
 ## Escalate priority based on confidence
 
-Alert priority is often tied to user impact and the urgency to respond, but confidence should determine when escalation is necessary. Paging too early creates noise; paging too late means users are impacted for longer before anyone acts.
+Alert priority is often tied to user impact and the urgency to respond, but confidence should determine when escalation is necessary.
 
-Early signals are often ambiguous. A small or sudden increase in latency may not justify immediate action, but it can indicate a failure in progress. Confidence increases as signals become stronger or begin to correlate.
+In this context, escalation defines how responders are notified as confidence grows. This can include increasing alert priority, widening notification, paging additional responders, or opening an incident once intervention is clearly required.
+
+Early signals are often ambiguous, and confidence in a non-transient failure is usually low. Paging too early creates noise; paging too late means users are impacted for longer before anyone acts. A small or sudden increase in latency may not justify immediate action, but it can indicate a failure in progress.
+
+Confidence increases as signals become stronger or begin to correlate.
 
 Escalation is justified when issues are sustained or reinforced by multiple signals. For example, high latency combined with a rising error rate, or the same event firing over a sustained period. These patterns reduce the chance of transient noise and increase the likelihood of real impact.
 
