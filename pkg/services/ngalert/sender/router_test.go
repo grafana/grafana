@@ -744,3 +744,171 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 		})
 	}
 }
+
+func TestDatasourceToExternalAMcfg(t *testing.T) {
+	tests := []struct {
+		name        string
+		datasource  *datasources.DataSource
+		expected    ExternalAMcfg
+		expectError bool
+	}{
+		{
+			name: "datasource with tlsSkipVerify enabled",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+			},
+		},
+		{
+			name: "datasource with tlsSkipVerify disabled",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": false,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+		},
+		{
+			name: "datasource without tlsSkipVerify (defaults to false)",
+			datasource: &datasources.DataSource{
+				URL:      "https://localhost:9093",
+				OrgID:    1,
+				Type:     datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+		},
+		{
+			name: "mimir datasource with tlsSkipVerify",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"implementation": "mimir",
+					"tlsSkipVerify":  true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093/alertmanager",
+				InsecureSkipVerify: true,
+			},
+		},
+		{
+			name: "datasource with basic auth and tlsSkipVerify",
+			datasource: &datasources.DataSource{
+				URL:           "https://localhost:9093",
+				OrgID:         1,
+				Type:          datasources.DS_ALERTMANAGER,
+				BasicAuth:     true,
+				BasicAuthUser: "user",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("password"),
+				},
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://user:password@localhost:9093",
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := &AlertsRouter{
+				logger:            log.New("test"),
+				datasourceService: &fake_ds.FakeDataSourceService{},
+				secretService:     fake_secrets.NewFakeSecretsService(),
+			}
+
+			cfg, err := router.datasourceToExternalAMcfg(tt.datasource)
+
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, cfg)
+		})
+	}
+}
+
+func TestExternalAMcfg_SHA256WithInsecureSkipVerify(t *testing.T) {
+	tests := []struct {
+		name             string
+		cfg1             ExternalAMcfg
+		cfg2             ExternalAMcfg
+		shouldHashDiffer bool
+	}{
+		{
+			name: "different InsecureSkipVerify should produce different hashes",
+			cfg1: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+			},
+			cfg2: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+			shouldHashDiffer: true,
+		},
+		{
+			name: "same InsecureSkipVerify should produce same hashes",
+			cfg1: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+			},
+			cfg2: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+			},
+			shouldHashDiffer: false,
+		},
+		{
+			name: "both false should produce same hashes",
+			cfg1: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+			cfg2: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+			shouldHashDiffer: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hash1 := tt.cfg1.SHA256()
+			hash2 := tt.cfg2.SHA256()
+
+			if tt.shouldHashDiffer {
+				require.NotEqual(t, hash1, hash2, "Expected hashes to be different")
+			} else {
+				require.Equal(t, hash1, hash2, "Expected hashes to be the same")
+			}
+		})
+	}
+}

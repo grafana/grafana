@@ -250,38 +250,46 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
 		}
-		amURL, err := d.buildExternalURL(ds)
+
+		cfg, err := d.datasourceToExternalAMcfg(ds)
 		if err != nil {
-			d.logger.Error("Failed to build external alertmanager URL",
-				"org", ds.OrgID,
-				"uid", ds.UID,
-				"error", err)
-			continue
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		headers, err := d.datasourceService.CustomHeaders(ctx, ds)
-		cancel()
-		if err != nil {
-			d.logger.Error("Failed to get headers for external alertmanager",
+			d.logger.Error("Failed to convert datasource to external alertmanager config",
 				"org", ds.OrgID,
 				"uid", ds.UID,
 				"error", err)
 			continue
 		}
 
-		insecureSkipVerify := false
-		if ds.JsonData != nil {
-			insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
-		}
-
-		alertmanagers = append(alertmanagers, ExternalAMcfg{
-			URL:                amURL,
-			Headers:            headers,
-			InsecureSkipVerify: insecureSkipVerify,
-		})
+		alertmanagers = append(alertmanagers, cfg)
 	}
 
 	return alertmanagers, nil
+}
+
+// datasourceToExternalAMcfg converts a datasource to an ExternalAMcfg.
+func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (ExternalAMcfg, error) {
+	amURL, err := d.buildExternalURL(ds)
+	if err != nil {
+		return ExternalAMcfg{}, fmt.Errorf("failed to build external alertmanager URL: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	headers, err := d.datasourceService.CustomHeaders(ctx, ds)
+	cancel()
+	if err != nil {
+		return ExternalAMcfg{}, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+
+	insecureSkipVerify := false
+	if ds.JsonData != nil {
+		insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+	}
+
+	return ExternalAMcfg{
+		URL:                amURL,
+		Headers:            headers,
+		InsecureSkipVerify: insecureSkipVerify,
+	}, nil
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
