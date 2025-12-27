@@ -5,7 +5,7 @@ import { Group } from '@visx/group';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -115,40 +115,56 @@ export const PieChart = ({
           >
             {(pie) => (
               <>
-                {pie.arcs.map((arc) => {
-                  const color = arc.data.display.color ?? FALLBACK_COLOR;
-                  const highlightState = getHighlightState(highlightedTitle, arc);
+                {pie.arcs
+                  .sort((a, b) => {
+                    const aHasLinks = a.data.hasLinks && a.data.getLinks;
+                    const bHasLinks = b.data.hasLinks && b.data.getLinks;
+                    if (aHasLinks && !bHasLinks) {
+                      return -1;
+                    }
+                    if (!aHasLinks && bHasLinks) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+                  .map((arc) => {
+                    const color = arc.data.display.color ?? FALLBACK_COLOR;
+                    const highlightState = getHighlightState(highlightedTitle, arc);
 
-                  if (arc.data.hasLinks && arc.data.getLinks) {
-                    return (
-                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
-                        {(api) => (
-                          <PieSlice
-                            tooltip={tooltip}
-                            highlightState={highlightState}
-                            arc={arc}
-                            pie={pie}
-                            fill={getGradientColor(color)}
-                            openMenu={api.openMenu}
-                            tooltipOptions={tooltipOptions}
-                          />
-                        )}
-                      </DataLinksContextMenu>
-                    );
-                  } else {
-                    return (
-                      <PieSlice
-                        key={arc.index}
-                        highlightState={highlightState}
-                        tooltip={tooltip}
-                        arc={arc}
-                        pie={pie}
-                        fill={getGradientColor(color)}
-                        tooltipOptions={tooltipOptions}
-                      />
-                    );
-                  }
-                })}
+                    if (arc.data.hasLinks && arc.data.getLinks) {
+                      return (
+                        <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
+                          {(api) => (
+                            <PieSlice
+                              tooltip={tooltip}
+                              highlightState={highlightState}
+                              arc={arc}
+                              pie={pie}
+                              fill={getGradientColor(color)}
+                              openMenu={api.openMenu}
+                              tooltipOptions={tooltipOptions}
+                              outerRadius={layout.outerRadius}
+                              innerRadius={layout.innerRadius}
+                            />
+                          )}
+                        </DataLinksContextMenu>
+                      );
+                    } else {
+                      return (
+                        <PieSlice
+                          key={arc.index}
+                          highlightState={highlightState}
+                          tooltip={tooltip}
+                          arc={arc}
+                          pie={pie}
+                          fill={getGradientColor(color)}
+                          tooltipOptions={tooltipOptions}
+                          outerRadius={layout.outerRadius}
+                          innerRadius={layout.innerRadius}
+                        />
+                      );
+                    }
+                  })}
                 {showLabel &&
                   pie.arcs.map((arc) => {
                     const highlightState = getHighlightState(highlightedTitle, arc);
@@ -194,12 +210,114 @@ interface SliceProps {
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+  outerRadius: number;
+  innerRadius: number;
 }
 
-function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
+function PieSlice({
+  arc,
+  pie,
+  highlightState,
+  openMenu,
+  fill,
+  tooltip,
+  tooltipOptions,
+  outerRadius,
+  innerRadius,
+}: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
+  const elementRef = useRef<SVGGElement>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasDataLinksDirect = Boolean(arc.data.hasLinks && arc.data.getLinks);
+  const hasDataLinks = Boolean(openMenu) || hasDataLinksDirect;
+  const shouldBeFocusable = hasDataLinks && Boolean(openMenu);
+
+  useEffect(() => {
+    if (hasDataLinks && !openMenu && elementRef.current) {
+      const parentAnchor = elementRef.current.closest('a');
+      if (parentAnchor) {
+        if (parentAnchor.getAttribute('tabIndex') === '-1') {
+          parentAnchor.removeAttribute('tabIndex');
+        }
+
+        if (elementRef.current) {
+          const ensureNotFocusable = () => {
+            if (elementRef.current && elementRef.current.getAttribute('tabIndex') !== '-1') {
+              elementRef.current.setAttribute('tabIndex', '-1');
+            }
+          };
+          ensureNotFocusable();
+          setTimeout(ensureNotFocusable, 0);
+          setTimeout(ensureNotFocusable, 100);
+        }
+
+        const handleAnchorFocus = (e: FocusEvent) => {
+          if (eventBus) {
+            eventBus.publish({
+              type: DataHoverEvent.type,
+              payload: {
+                raw: e,
+                x: 0,
+                y: 0,
+                dataId: arc.data.display.title,
+              },
+            });
+          }
+        };
+
+        const handleAnchorBlur = (e: FocusEvent) => {
+          eventBus?.publish({
+            type: DataHoverClearEvent.type,
+            payload: {
+              raw: e,
+              x: 0,
+              y: 0,
+              dataId: arc.data.display.title,
+            },
+          });
+        };
+
+        const handleAnchorKeyDown = (e: KeyboardEvent) => {
+          if (e.key === 'Tab' && elementRef.current) {
+            elementRef.current.setAttribute('tabIndex', '-1');
+          }
+        };
+
+        const handleAnchorFocusIn = (e: FocusEvent) => {
+          const target = e.target;
+          if (target instanceof Element && target !== parentAnchor && parentAnchor.contains(target)) {
+            e.stopPropagation();
+            parentAnchor.focus();
+          }
+        };
+
+        const handleFocusIn = (e: FocusEvent) => {
+          const target = e.target;
+          if (target === parentAnchor || (target instanceof Node && parentAnchor.contains(target))) {
+            handleAnchorFocus(e);
+          }
+        };
+
+        parentAnchor.addEventListener('focus', handleAnchorFocus, true);
+        parentAnchor.addEventListener('focusin', handleFocusIn, true);
+        parentAnchor.addEventListener('blur', handleAnchorBlur, true);
+        parentAnchor.addEventListener('keydown', handleAnchorKeyDown, true);
+        parentAnchor.addEventListener('focusin', handleAnchorFocusIn, true);
+
+        return () => {
+          parentAnchor.removeEventListener('focus', handleAnchorFocus, true);
+          parentAnchor.removeEventListener('focusin', handleFocusIn, true);
+          parentAnchor.removeEventListener('blur', handleAnchorBlur, true);
+          parentAnchor.removeEventListener('keydown', handleAnchorKeyDown, true);
+          parentAnchor.removeEventListener('focusin', handleAnchorFocusIn, true);
+        };
+      }
+    }
+    return undefined;
+  }, [hasDataLinks, openMenu, eventBus, arc.data.display.title]);
 
   const onMouseOut = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
@@ -243,15 +361,162 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
     [eventBus, arc, tooltip, pie, tooltipOptions]
   );
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<SVGGElement>) => {
+      if (hasDataLinks && event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (elementRef.current) {
+          const arcCenterAngle = (arc.startAngle + arc.endAngle) / 2;
+          const arcRadius = (outerRadius + innerRadius) / 2;
+          const centerX = Math.cos(arcCenterAngle - Math.PI / 2) * arcRadius;
+          const centerY = Math.sin(arcCenterAngle - Math.PI / 2) * arcRadius;
+
+          const svgElement = elementRef.current.ownerSVGElement;
+          const svgRect = svgElement?.getBoundingClientRect();
+
+          if (svgRect) {
+            const actualX = svgRect.left + svgRect.width / 2 + centerX;
+            const actualY = svgRect.top + svgRect.height / 2 + centerY;
+
+            if (openMenu) {
+              const syntheticEvent = {
+                currentTarget: elementRef.current,
+                target: elementRef.current,
+                preventDefault: () => event.preventDefault(),
+                stopPropagation: () => event.stopPropagation(),
+                isDefaultPrevented: () => false,
+                isPropagationStopped: () => false,
+                persist: () => {},
+                nativeEvent: new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window,
+                  button: 0,
+                  buttons: 0,
+                  clientX: actualX,
+                  clientY: actualY,
+                  screenX: actualX,
+                  screenY: actualY,
+                }),
+                clientX: actualX,
+                clientY: actualY,
+                pageX: actualX,
+                pageY: actualY,
+                screenX: actualX,
+                screenY: actualY,
+                button: 0,
+                buttons: 0,
+                type: 'click',
+                bubbles: true,
+                cancelable: true,
+                defaultPrevented: false,
+                eventPhase: 0,
+                isTrusted: false,
+                timeStamp: Date.now(),
+                altKey: false,
+                ctrlKey: false,
+                shiftKey: false,
+                metaKey: false,
+                getModifierState: () => false,
+                movementX: 0,
+                movementY: 0,
+                relatedTarget: null,
+                detail: 0,
+                view: window,
+                which: 0,
+              } as unknown as React.MouseEvent<SVGGElement>;
+
+              openMenu(syntheticEvent);
+            } else {
+              const nativeMouseEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: 0,
+                buttons: 0,
+                clientX: actualX,
+                clientY: actualY,
+                screenX: actualX,
+                screenY: actualY,
+              });
+              elementRef.current.dispatchEvent(nativeMouseEvent);
+            }
+          }
+        }
+      }
+    },
+    [hasDataLinks, openMenu, arc, outerRadius, innerRadius]
+  );
+
+  const handleFocus = useCallback(
+    (event: React.FocusEvent<SVGGElement>) => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+
+      if (eventBus) {
+        eventBus.publish({
+          type: DataHoverEvent.type,
+          payload: {
+            raw: event,
+            x: 0,
+            y: 0,
+            dataId: arc.data.display.title,
+          },
+        });
+      }
+    },
+    [eventBus, arc]
+  );
+
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<SVGGElement>) => {
+      blurTimeoutRef.current = setTimeout(() => {
+        if (elementRef.current && document.activeElement !== elementRef.current) {
+          eventBus?.publish({
+            type: DataHoverClearEvent.type,
+            payload: {
+              raw: event,
+              x: 0,
+              y: 0,
+              dataId: arc.data.display.title,
+            },
+          });
+        }
+        blurTimeoutRef.current = null;
+      }, 100);
+    },
+    [eventBus, arc]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const pieStyle = getSvgStyle(highlightState, styles);
 
   return (
     <g
+      ref={elementRef}
       key={arc.data.display.title}
       className={pieStyle}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
       onClick={openMenu}
+      tabIndex={shouldBeFocusable ? 0 : -1}
+      role={shouldBeFocusable ? 'link' : undefined}
+      aria-label={shouldBeFocusable ? `${arc.data.display.title} - Data link` : undefined}
+      onKeyDown={shouldBeFocusable ? handleKeyDown : undefined}
+      onFocus={hasDataLinks ? handleFocus : undefined}
+      onBlur={hasDataLinks ? handleBlur : undefined}
+      style={{ outline: 'none' }}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
