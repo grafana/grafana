@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Adja meg az egyéni jegyzet tartalmát…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "A szabályok sikeresen törlődtek a mappából"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. intervallum = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "A kijelölt lekérdezések és kifejezések nem konvertálhatók alapértelmezettre. Ha kikapcsolja a speciális beállításokat, a lekérdezés és a feltétel visszaáll az alapértelmezett beállításokra."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Előnézet",
-      "previewCondition": "Riasztási szabály előnézeti feltétele"
+      "previewCondition": "Riasztási szabály előnézeti feltétele",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Szűrés kapcsolattartási pontok szerint",

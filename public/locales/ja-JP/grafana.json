@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "カスタム注釈内容を入力..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "ルールがフォルダから正常に削除されました"
@@ -2195,11 +2200,15 @@
       "min-interval": "最小間隔= {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "選択したクエリと式はデフォルトに変換できません。高度なオプションを無効にすると、クエリと条件はデフォルト設定にリセットされます。"
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "プレビュー",
-      "previewCondition": "アラートルール条件をプレビューする"
+      "previewCondition": "アラートルール条件をプレビューする",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "コンタクトポイントで絞り込む",

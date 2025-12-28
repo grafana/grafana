@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Masukkan konten anotasi kustom..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Aturan berhasil dihapus dari folder"
@@ -2195,11 +2200,15 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Kueri dan ekspresi yang dipilih tidak dapat dikonversi ke default. Jika Anda menonaktifkan opsi lanjutan, kueri dan kondisi Anda akan diatur ulang ke pengaturan default."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Pratinjau",
-      "previewCondition": "Pratinjau kondisi aturan peringatan"
+      "previewCondition": "Pratinjau kondisi aturan peringatan",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filter berdasarkan titik kontak",

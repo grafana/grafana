@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "사용자 지정 주석 내용을 입력하세요..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "폴더에서 규칙이 성공적으로 삭제되었습니다"
@@ -2195,11 +2200,15 @@
       "min-interval": "최소 간격 = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "선택한 쿼리와 표현식을 기본값으로 변환할 수 없습니다. 고급 옵션을 비활성화하면 쿼리와 조건이 기본 설정으로 재설정됩니다."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "미리보기",
-      "previewCondition": "경고 규칙 조건 미리보기"
+      "previewCondition": "경고 규칙 조건 미리보기",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "연락처로 필터링",

@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Wpisz treść niestandardowej adnotacji…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Reguły zostały usunięte z folderu"
@@ -2219,11 +2224,15 @@
       "min-interval": "Min. odstęp czasu = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Nie można przekonwertować wybranych zapytań i wyrażeń na domyślne. Jeśli wyłączysz opcje zaawansowane, zapytanie i warunek zostaną zresetowane do ustawień domyślnych."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Podgląd",
-      "previewCondition": "Podgląd warunku reguły alertu"
+      "previewCondition": "Podgląd warunku reguły alertu",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtruj według punktów kontaktu",

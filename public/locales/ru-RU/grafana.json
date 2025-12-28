@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Ввести содержимое пользовательской аннотации..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Правила удалены из папки"
@@ -2219,11 +2224,15 @@
       "min-interval": "Мин. интервал = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Выбранные запросы и выражения не могут быть преобразованы в используемые по умолчанию. Если вы отключите расширенные параметры, ваш запрос и условие будут сброшены до настроек по умолчанию."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Предварительный просмотр",
-      "previewCondition": "Предварительный просмотр условия правила оповещения"
+      "previewCondition": "Предварительный просмотр условия правила оповещения",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Фильтр по точкам контакта",
