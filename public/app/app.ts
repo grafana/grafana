@@ -41,6 +41,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  setDashboardSceneJsonApiV2,
 } from '@grafana/runtime';
 import {
   initOpenFeature,
@@ -85,6 +86,7 @@ import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { dashboardSceneJsonApiV2 } from './features/dashboard-scene/api/runtimeDashboardSceneJsonApiV2';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
 import { initGrafanaLive } from './features/live';
@@ -251,6 +253,10 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
+
+      // Expose current-dashboard schema-v2 JSON APIs to plugins via @grafana/runtime
+      setDashboardSceneJsonApiV2(dashboardSceneJsonApiV2);
+
       initWindowRuntime();
 
       // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
