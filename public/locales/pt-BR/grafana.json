@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Insira o conteúdo da anotação personalizada…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "As regras foram excluídas da pasta"
@@ -2203,11 +2208,15 @@
       "min-interval": "Mín. Intervalo = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "As consultas e expressões selecionadas não podem ser convertidas para o padrão. Se você desativar as opções avançadas, sua consulta e condição serão redefinidas para as configurações padrão."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Visualizar",
-      "previewCondition": "Visualizar condição de regra de alerta"
+      "previewCondition": "Visualizar condição de regra de alerta",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtrar por pontos de contato",
