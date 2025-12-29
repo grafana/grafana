@@ -40,17 +40,15 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 		}
 
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-			result := jobs.JobResourceResult{
-				Name:   item.GetName(),
-				Kind:   item.GetKind(),
-				Group:  item.GroupVersionKind().Group,
-				Action: repository.FileActionDeleted,
-			}
+			name := item.GetName()
+			kind := item.GetKind()
+			group := item.GroupVersionKind().Group
 
 			// Skip provisioned resources - only delete unprovisioned (unmanaged) resources
 			meta, err := utils.MetaAccessor(item)
 			if err != nil {
-				result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
+				resultErr := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
+				result := jobs.NewJobResourceResult(name, group, kind, "", repository.FileActionDeleted, resultErr)
 				progress.Record(ctx, result)
 				return nil // Continue with next resource
 			}
@@ -58,18 +56,20 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 			manager, _ := meta.GetManagerProperties()
 			// Skip if resource is managed by any provisioning system
 			if manager.Identity != "" {
-				result.Action = repository.FileActionIgnored
+				result := jobs.NewJobResourceResult(name, group, kind, "", repository.FileActionIgnored, nil)
 				progress.Record(ctx, result)
 				return nil // Skip this resource
 			}
 
 			// Deletion works by name, so we can use any client regardless of version
-			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", result.Group, result.Kind, result.Name, err)
+			if err := client.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+				resultErr := fmt.Errorf("deleting resource %s/%s %s: %w", group, kind, name, err)
+				result := jobs.NewJobResourceResult(name, group, kind, "", repository.FileActionDeleted, resultErr)
 				progress.Record(ctx, result)
 				return fmt.Errorf("delete resource: %w", err)
 			}
 
+			result := jobs.NewJobResourceResult(name, group, kind, "", repository.FileActionDeleted, nil)
 			progress.Record(ctx, result)
 			return nil
 		}); err != nil {

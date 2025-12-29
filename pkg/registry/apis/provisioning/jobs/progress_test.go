@@ -98,36 +98,36 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	// Record a result with a warning
 	warningErr := errors.New("deprecated API used")
 	result := JobResourceResult{
-		Name:    "test-resource",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test.json",
-		Action:  repository.FileActionUpdated,
-		Warning: warningErr,
+		name:    "test-resource",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test.json",
+		action:  repository.FileActionUpdated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result)
 
 	// Record another result with a different warning
 	warningErr2 := errors.New("missing optional field")
 	result2 := JobResourceResult{
-		Name:    "test-resource-2",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test2.json",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr2,
+		name:    "test-resource-2",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test2.json",
+		action:  repository.FileActionCreated,
+		warning: warningErr2,
 	}
 	recorder.Record(ctx, result2)
 
 	// Record a result with a warning from a different resource type
 	warningErr3 := errors.New("validation warning")
 	result3 := JobResourceResult{
-		Name:    "test-resource-3",
-		Group:   "test.grafana.app",
-		Kind:    "DataSource",
-		Path:    "datasources/test.yaml",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr3,
+		name:    "test-resource-3",
+		group:   "test.grafana.app",
+		kind:    "DataSource",
+		path:    "datasources/test.yaml",
+		action:  repository.FileActionCreated,
+		warning: warningErr3,
 	}
 	recorder.Record(ctx, result3)
 
@@ -184,24 +184,24 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 	// Record a result with an error (errors take precedence)
 	errorErr := errors.New("failed to process")
 	result := JobResourceResult{
-		Name:   "test-resource",
-		Group:  "test.grafana.app",
-		Kind:   "Dashboard",
-		Path:   "dashboards/test.json",
-		Action: repository.FileActionUpdated,
-		Error:  errorErr,
+		name:   "test-resource",
+		group:  "test.grafana.app",
+		kind:   "Dashboard",
+		path:   "dashboards/test.json",
+		action: repository.FileActionUpdated,
+		err:    errorErr,
 	}
 	recorder.Record(ctx, result)
 
 	// Record a result with only a warning
 	warningErr := errors.New("deprecated API used")
 	result2 := JobResourceResult{
-		Name:    "test-resource-2",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test2.json",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr,
+		name:    "test-resource-2",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test2.json",
+		action:  repository.FileActionCreated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result2)
 
@@ -233,12 +233,12 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 	// Record only warnings, no errors
 	warningErr := errors.New("deprecated API used")
 	result := JobResourceResult{
-		Name:    "test-resource",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test.json",
-		Action:  repository.FileActionUpdated,
-		Warning: warningErr,
+		name:    "test-resource",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test.json",
+		action:  repository.FileActionUpdated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result)
 

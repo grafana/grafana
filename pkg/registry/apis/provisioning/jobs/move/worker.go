@@ -142,18 +142,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.MoveJobOptions, paths ...string) error {
 	for _, path := range paths {
-		result := jobs.JobResourceResult{
-			Path:   path,
-			Action: repository.FileActionRenamed,
-		}
-
 		// Construct the target path by combining the job's target path with the file/folder name
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
+		var resultErr error
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
-			result.Error = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
+			resultErr = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
 		}
+		result := jobs.NewJobResourceResultWithoutKind(path, repository.FileActionRenamed, resultErr)
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err
@@ -191,12 +188,6 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 
 	resolvedPaths := make([]string, 0, len(resources))
 	for _, resource := range resources {
-		result := jobs.JobResourceResult{
-			Name:   resource.Name,
-			Group:  resource.Group,
-			Action: repository.FileActionRenamed, // Will be used for move later
-		}
-
 		gvk := schema.GroupVersionKind{
 			Group: resource.Group,
 			Kind:  resource.Kind,
@@ -206,7 +197,8 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name))
 		resourcePath, err := repositoryResources.FindResourcePath(ctx, resource.Name, gvk)
 		if err != nil {
-			result.Error = fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err)
+			resultErr := fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err)
+			result := jobs.NewJobResourceResult(resource.Name, resource.Group, resource.Kind, "", repository.FileActionRenamed, resultErr)
 			progress.Record(ctx, result)
 			// Continue with next resource instead of failing fast
 			if err := progress.TooManyErrors(); err != nil {
@@ -215,7 +207,6 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 			continue
 		}
 
-		result.Path = resourcePath
 		resolvedPaths = append(resolvedPaths, resourcePath)
 	}
 
