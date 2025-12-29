@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 import { ReactNode, useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
@@ -68,6 +70,14 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
+      {context.hasOpenPane && (
+        <SidebarButton
+          icon={'web-section-alt'}
+          onClick={context.onToggleDock}
+          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+          data-testid={selectors.components.Sidebar.dockToggle}
+        />
+      )}
     </div>
   );
 }
@@ -169,4 +179,4 @@ export const Sidebar = Object.assign(SidebarComp, {
   PaneHeader: SidebarPaneHeader,
 });
 
-export { useSidebar, type SidebarContextValue, type SidebarPosition } from './useSidebar';
+export { type SidebarPosition, type SidebarContextValue, useSidebar } from './useSidebar';

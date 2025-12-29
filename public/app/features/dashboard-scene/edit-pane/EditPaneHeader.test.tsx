@@ -13,6 +13,7 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
+import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
 import { ElementSelection } from './ElementSelection';
 
@@ -60,6 +61,11 @@ function WrapSidebar({ children }: { children: React.ReactElement }) {
 }
 
 describe('EditPaneHeader', () => {
+  const mockEditPane = {
+    state: { selection: null },
+    clearSelection: jest.fn(),
+  } as unknown as DashboardEditPane;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -74,7 +80,7 @@ describe('EditPaneHeader', () => {
 
       render(
         <WrapSidebar>
-          <EditPaneHeader element={editableElement} />
+          <EditPaneHeader element={editableElement} editPane={mockEditPane} />
         </WrapSidebar>
       );
 
@@ -91,7 +97,7 @@ describe('EditPaneHeader', () => {
 
       render(
         <WrapSidebar>
-          <EditPaneHeader element={editableElement} />
+          <EditPaneHeader element={editableElement} editPane={mockEditPane} />
         </WrapSidebar>
       );
 

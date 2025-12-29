@@ -21,12 +21,13 @@ import { ElementEditPane } from './ElementEditPane';
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
+  isDocked?: boolean;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
@@ -45,7 +46,12 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     <>
       {editableElement && (
         <Sidebar.OpenPane>
-          <ElementEditPane key={selectedObject?.state.key} element={editableElement} isNewElement={isNewElement} />
+          <ElementEditPane
+            key={selectedObject?.state.key}
+            editPane={editPane}
+            element={editableElement}
+            isNewElement={isNewElement}
+          />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (
