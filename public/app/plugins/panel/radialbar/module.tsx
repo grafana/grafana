@@ -99,6 +99,22 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       showIf: (options) => options.barShape === 'rounded' && options.segmentCount === 1,
     });
 
+    builder.addSelect({
+      path: 'textMode',
+      name: t('radialbar.config.text-mode', 'Text mode'),
+      category,
+      settings: {
+        options: [
+          { value: 'auto', label: t('radialbar.config.text-mode-auto', 'Auto') },
+          { value: 'value_and_name', label: t('radialbar.config.text-mode-value-and-name', 'Value and Name') },
+          { value: 'value', label: t('radialbar.config.text-mode-value', 'Value') },
+          { value: 'name', label: t('radialbar.config.text-mode-name', 'Name') },
+          { value: 'none', label: t('radialbar.config.text-mode-none', 'None') },
+        ],
+      },
+      defaultValue: defaultOptions.textMode,
+    });
+
     builder.addBooleanSwitch({
       path: 'sparkline',
       name: t('radialbar.config.sparkline', 'Show sparkline'),

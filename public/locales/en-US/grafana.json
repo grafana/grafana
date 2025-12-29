@@ -12516,6 +12516,12 @@
       "shape-circle": "Circle",
       "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
