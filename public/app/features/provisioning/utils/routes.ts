@@ -3,7 +3,7 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
-import { PROVISIONING_URL, CONNECT_URL, GETTING_STARTED_URL } from '../constants';
+import { PROVISIONING_URL, CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   if (!checkRequiredFeatures()) {
@@ -34,6 +34,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
           import(
             /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
           )
+      ),
+    },
+    {
+      path: CONNECTIONS_URL,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ConnectionsPage"*/ 'app/features/provisioning/Connection/ConnectionsPage')
       ),
     },
     {
