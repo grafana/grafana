@@ -64,20 +64,7 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
-
-      // set the textbox variable value
-      const type = 'variable-type Value';
-      const fieldLabel = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-      );
-      await expect(fieldLabel).toBeVisible();
-      const inputField = fieldLabel.locator('input');
-      await expect(inputField).toBeVisible();
-      await inputField.fill(variable.value);
-      await inputField.blur();
+      await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // select the variable in the dashboard and confirm the variable value is set
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).click();
@@ -149,20 +136,7 @@ test.describe(
       };
 
       await saveDashboard(dashboardPage, page, selectors);
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
-
-      // set the textbox variable value
-      const type = 'variable-type Value';
-      const fieldLabel = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-      );
-      await expect(fieldLabel).toBeVisible();
-      const inputField = fieldLabel.locator('input');
-      await expect(inputField).toBeVisible();
-      await inputField.fill(variable.value);
-      await inputField.blur();
+      await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // check the variable is visible in the dashboard
       const variableLabel = dashboardPage.getByGrafanaSelector(
@@ -179,7 +153,7 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
       ).toBeVisible();
-      
+
       // save dashboard and exit edit mode and check variable is not visible
       await saveDashboard(dashboardPage, page, selectors);
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -207,20 +181,7 @@ test.describe(
       };
 
       await saveDashboard(dashboardPage, page, selectors);
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
-
-      // set the textbox variable value
-      const type = 'variable-type Value';
-      const fieldLabel = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-      );
-      await expect(fieldLabel).toBeVisible();
-      const inputField = fieldLabel.locator('input');
-      await expect(inputField).toBeVisible();
-      await inputField.fill(variable.value);
-      await inputField.blur();
+      await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // check the variable is visible in the dashboard
       const variableLabel = dashboardPage.getByGrafanaSelector(
@@ -232,7 +193,7 @@ test.describe(
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
         .click();
       await page.getByText('Controls menu', { exact: true }).click();
-      
+
       // check that the variable is hidden under the controls menu
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
