@@ -87,7 +87,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     // Clear any panel selection when entering panel edit mode.
-    // This fixes a UX issue where clicking the panel menu (⋮) and then "Edit" causes the panel to become selected
+    // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
     dashboard.state.editPane.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
