@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { flows, type Variable } from './utils';
+import { flows, saveDashboard, type Variable } from './utils';
 
 test.use({
   featureToggles: {
@@ -139,6 +139,121 @@ test.describe(
       // assert the panel is visible and has the correct "Auto" value
       await expect(panelContent).toBeVisible();
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
+    });
+    test('can hide a variable', async ({ dashboardPage, selectors, page }) => {
+      const variable: Variable = {
+        type: 'textbox',
+        name: 'VariableUnderTest',
+        value: 'foo',
+        label: 'VariableUnderTest',
+      };
+
+      await saveDashboard(dashboardPage, page, selectors);
+      // common steps to add a new variable
+      await flows.newEditPaneVariableClick(dashboardPage, selectors);
+      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+
+      // set the textbox variable value
+      const type = 'variable-type Value';
+      const fieldLabel = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+      );
+      await expect(fieldLabel).toBeVisible();
+      const inputField = fieldLabel.locator('input');
+      await expect(inputField).toBeVisible();
+      await inputField.fill(variable.value);
+      await inputField.blur();
+
+      // check the variable is visible in the dashboard
+      const variableLabel = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
+      );
+      await expect(variableLabel).toBeVisible();
+      // hide the variable
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      await page.getByText('Hidden', { exact: true }).click();
+
+      // check that the variable is still visible
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeVisible();
+      
+      // save dashboard and exit edit mode and check variable is not visible
+      await saveDashboard(dashboardPage, page, selectors);
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeHidden();
+      // refresh and check that variable isn't visible
+      await page.reload();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeHidden();
+      // check that the variable is visible in edit mode
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeVisible();
+    });
+
+    test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
+      const variable: Variable = {
+        type: 'textbox',
+        name: 'VariableUnderTest',
+        value: 'foo',
+        label: 'VariableUnderTest',
+      };
+
+      await saveDashboard(dashboardPage, page, selectors);
+      // common steps to add a new variable
+      await flows.newEditPaneVariableClick(dashboardPage, selectors);
+      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+
+      // set the textbox variable value
+      const type = 'variable-type Value';
+      const fieldLabel = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+      );
+      await expect(fieldLabel).toBeVisible();
+      const inputField = fieldLabel.locator('input');
+      await expect(inputField).toBeVisible();
+      await inputField.fill(variable.value);
+      await inputField.blur();
+
+      // check the variable is visible in the dashboard
+      const variableLabel = dashboardPage.getByGrafanaSelector(
+        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
+      );
+      await expect(variableLabel).toBeVisible();
+      // hide the variable
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      await page.getByText('Controls menu', { exact: true }).click();
+      
+      // check that the variable is hidden under the controls menu
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeHidden();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.ControlsButton).click();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeVisible();
+
+      // save dashboard and refresh
+      await saveDashboard(dashboardPage, page, selectors);
+      await page.reload();
+
+      //check that the variable is hidden under the controls menu
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeHidden();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.ControlsButton).click();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
+      ).toBeVisible();
     });
   }
 );

@@ -37,8 +37,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   // Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
   const variablesToRender = hasDrilldownControls
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-    : 
-      variables.filter(
+    : variables.filter(
         (v) =>
           // if we're editing in dynamic dashboards, still shows hidden variable but greyed out
           (isEditingNewLayouts && v.state.hide === VariableHide.hideVariable) ||
