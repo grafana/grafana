@@ -564,35 +564,35 @@ func cleanFileSegment(input string) string {
 	return input
 }
 
-// cleanOldIndexes deletes all subdirectories inside dir, skipping directory with "skipName".
+// cleanOldIndexes deletes all subdirectories inside resourceDir, skipping directory with "skipName".
 // "skipName" can be empty.
-func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
-	files, err := os.ReadDir(dir)
+func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
+	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return
 		}
-		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
+		b.log.Warn("error cleaning folders from", "directory", resourceDir, "error", err)
 		return
 	}
-	for _, file := range files {
-		if file.IsDir() && file.Name() != skipName {
-			fpath := filepath.Join(dir, file.Name())
-			if !isPathWithinRoot(fpath, b.opts.Root) {
-				b.log.Warn("Skipping cleanup of directory", "directory", fpath)
+	for _, ent := range entries {
+		if ent.IsDir() && ent.Name() != skipName {
+			indexDir := filepath.Join(resourceDir, ent.Name())
+			if !isPathWithinRoot(indexDir, b.opts.Root) {
+				b.log.Warn("Skipping cleanup of directory", "directory", indexDir)
 				continue
 			}
 
-			if isIndexOpen(filepath.Join(fpath, "store", "root.bolt")) {
-				b.log.Debug("Index is locked by another process, skipping cleanup", "directory", fpath)
+			if isIndexOpen(indexDir) {
+				b.log.Debug("Index is opened by another process, skipping cleanup", "directory", indexDir)
 				continue
 			}
 
-			err = os.RemoveAll(fpath)
+			err = os.RemoveAll(indexDir)
 			if err != nil {
-				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
+				b.log.Error("Unable to remove old index folder", "directory", indexDir, "error", err)
 			} else {
-				b.log.Info("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", indexDir)
 			}
 		}
 	}
@@ -662,7 +662,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 
 		// Check if the index is opened by another process.
 		// If it is, we can't use it, so we skip it.
-		if isIndexOpen(filepath.Join(indexDir, "store", "root.bolt")) {
+		if isIndexOpen(indexDir) {
 			b.log.Debug("Index is opened by another process, skipping", "indexDir", indexDir)
 			return &fileIndex{IsOpen: true}
 		}
@@ -1955,7 +1955,8 @@ var TermCharacters = []string{
 	"'", "\"",
 }
 
-func isIndexOpen(boltPath string) bool {
+func isIndexOpen(indexDir string) bool {
+	boltPath := filepath.Join(indexDir, "store", "root.bolt")
 	if _, err := os.Stat(boltPath); os.IsNotExist(err) {
 		return false
 	}
