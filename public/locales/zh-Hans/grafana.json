@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "输入自定义注释内容..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "规则已成功从文件夹中删除"
@@ -2195,11 +2200,15 @@
       "min-interval": "最小间隔 = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "无法将所选查询和表达式转换为默认值。如果停用高级选项，您的查询和条件将重置为默认设置。"
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "预览",
-      "previewCondition": "预览提醒规则条件"
+      "previewCondition": "预览提醒规则条件",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "按联络点筛选",
