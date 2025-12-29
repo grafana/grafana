@@ -5,8 +5,8 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { EffectsEditor } from './EffectsEditor';
-import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
+import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
 import { radialBarSuggestionsSupplier } from './suggestions';
 

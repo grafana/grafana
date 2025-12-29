@@ -1,7 +1,7 @@
 import { PanelModel } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 
-import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
+import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './migrations';
 
 describe('Gauge Panel Migrations', () => {
   it('from old gauge', () => {
@@ -30,6 +30,34 @@ describe('Gauge Panel Migrations', () => {
     const result = gaugePanelMigrationHandler(panel as PanelModel);
     expect(result.showThresholdMarkers).toBe(false);
     expect(result.sparkline).toBe(false);
+  });
+
+  it('sets the correct text mode if displayName is set', () => {
+    const panel = {
+      id: 2,
+      options: {
+        displayName: 'My gauge',
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+        },
+        showThresholdLabels: false,
+        showThresholdMarkers: true,
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: FieldColorModeId.Fixed,
+            fixedColor: 'blue',
+          },
+        },
+        overrides: [],
+      },
+      pluginVersion: '12.3.0',
+      type: 'gauge',
+    } as Omit<PanelModel, 'fieldConfig'>;
+
+    const result = gaugePanelMigrationHandler(panel as PanelModel);
+    expect(result.textMode).toBe('value_and_name');
   });
 
   it('does not overwrite new gauge', () => {

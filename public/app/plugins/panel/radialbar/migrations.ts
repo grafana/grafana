@@ -21,6 +21,11 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
     newOptions.sparkline = false;
     newOptions.effects = { gradient: false };
 
+    // if a display name is set, set the appropriate text mode
+    if ('displayName' in newOptions && newOptions.displayName && newOptions.displayName !== '') {
+      newOptions.textMode = 'value_and_name';
+    }
+
     // Remove deprecated sizing options
     if ('sizing' in newOptions) {
       delete newOptions.sizing;
