@@ -1,6 +1,10 @@
 import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
 
 import { Button } from '../Button/Button';
+import { Drawer } from '../Drawer/Drawer';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import mdx from '../Toggletip/Toggletip.mdx';
 
@@ -130,6 +134,56 @@ LongContent.parameters = {
   controls: {
     hideNoControlsWarning: true,
     exclude: ['title', 'content', 'children'],
+  },
+};
+
+export const InsideDrawer: StoryFn<typeof Toggletip> = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Use state instead of ref to trigger re-render when container is available
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  return (
+    <>
+      <Button onClick={() => setIsDrawerOpen(true)}>Open Drawer</Button>
+      {isDrawerOpen && (
+        <Drawer title="Drawer with Toggletip" onClose={() => setIsDrawerOpen(false)}>
+          <div ref={setContainerEl}>
+            <p style={{ marginBottom: '16px' }}>
+              This demonstrates using Toggletip inside a Drawer. The <code>portalRoot</code> prop is used to render the
+              Toggletip content inside the Drawer&apos;s DOM, allowing focus to work correctly with the Drawer&apos;s
+              focus trap.
+            </p>
+            {containerEl && (
+              <Toggletip
+                title="Interactive Form"
+                content={
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Field label="Name">
+                      <Input placeholder="Enter your name" />
+                    </Field>
+                    <Button variant="primary" size="sm">
+                      Submit
+                    </Button>
+                  </div>
+                }
+                footer="Focus should work correctly within this Toggletip"
+                placement="bottom-start"
+                portalRoot={containerEl}
+              >
+                <Button>Click to show Toggletip</Button>
+              </Toggletip>
+            )}
+          </div>
+        </Drawer>
+      )}
+    </>
+  );
+};
+
+InsideDrawer.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    exclude: ['title', 'content', 'footer', 'children', 'placement', 'theme', 'closeButton', 'portalRoot'],
   },
 };
 
