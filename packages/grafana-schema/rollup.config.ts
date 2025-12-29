@@ -15,7 +15,12 @@ export default [
   {
     input: entryPoint,
     plugins,
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-schema')],
+    output: [
+      // Schema still uses publishConfig to define output directory.
+      // TODO: Migrate this package to use exports.
+      cjsOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.main) }),
+      esmOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.module) }),
+    ],
     treeshake: false,
   },
   {

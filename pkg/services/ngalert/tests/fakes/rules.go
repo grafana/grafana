@@ -2,6 +2,7 @@ package fakes
 
 import (
 	"context"
+	"maps"
 	"math/rand"
 	"slices"
 	"strings"
@@ -219,6 +220,7 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		RuleUIDs:                    q.RuleUIDs,
 		ReceiverName:                q.ReceiverName,
 		HasPrometheusRuleDefinition: q.HasPrometheusRuleDefinition,
+		LabelMatchers:               q.LabelMatchers,
 	}
 
 	ruleList, err := f.listAlertRules(query)
@@ -355,6 +357,20 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
 			continue
 		}
+
+		if len(q.LabelMatchers) > 0 {
+			matches := true
+			for _, m := range q.LabelMatchers {
+				if !m.Matches(r.Labels[m.Name]) {
+					matches = false
+					break
+				}
+			}
+			if !matches {
+				continue
+			}
+		}
+
 		copyR := models.CopyRule(r)
 		ruleList = append(ruleList, copyR)
 	}
@@ -595,6 +611,30 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	}
 
 	return f.History[guid], nil
+}
+
+func (f *RuleStore) GetAlertRuleVersionFolders(_ context.Context, orgID int64, guid string) ([]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	q := GenericRecordedQuery{
+		Name:   "GetAlertRuleVersionFolders",
+		Params: []any{orgID, guid},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+
+	folderSet := make(map[string]struct{})
+	for _, rule := range f.History[guid] {
+		folderSet[rule.NamespaceUID] = struct{}{}
+	}
+
+	return slices.Collect(maps.Keys(folderSet)), nil
 }
 
 func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {

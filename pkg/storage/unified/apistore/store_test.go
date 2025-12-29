@@ -166,6 +166,7 @@ type resourceClientMock struct {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+	resourcepb.QuotasClient
 }
 
 // always return GRPC Unauthenticated code

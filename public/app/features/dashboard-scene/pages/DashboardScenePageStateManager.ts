@@ -1082,6 +1082,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
+
+    // Template dashboards are currently in v1 schema format.
+    if (options.route === DashboardRoutes.Template) {
+      this.setActiveManager('v1');
+    }
+
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 

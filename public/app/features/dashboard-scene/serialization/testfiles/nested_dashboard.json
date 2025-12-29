@@ -1133,6 +1133,20 @@
       }
     },
     {
+      "kind": "AdhocVariable",
+      "datasource": { "name": "esmce00tbim8" },
+      "group": "opensearch",
+      "spec": {
+        "name": "adhocVar",
+        "allowCustomValue": true,
+        "filters": [],
+        "baseFilters": [],
+        "defaultKeys": [],
+        "hide": "dontHide",
+        "skipUrlSync": false
+      }
+    },
+    {
       "kind": "CustomVariable",
       "spec": {
         "allowCustomValue": true,
@@ -1153,6 +1167,13 @@
         ],
         "query": "test",
         "skipUrlSync": false
+      }
+    },
+    {
+      "kind": "DatasourceVariable",
+      "spec": {
+        "name": "datasourceVar",
+        "pluginId": "bigquery"
       }
     }
   ]

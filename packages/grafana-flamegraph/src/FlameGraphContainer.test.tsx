@@ -21,7 +21,7 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useMeasure: () => {
-    const ref = useRef();
+    const ref = useRef(null);
     return [ref, { width: 1600 }];
   },
 }));

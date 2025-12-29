@@ -1,0 +1,319 @@
+{
+  "apiVersion": "apps.grafana.com/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "logsdrilldown"
+  },
+  "spec": {
+    "appName": "logsdrilldown",
+    "group": "logsdrilldown.grafana.app",
+    "versions": [
+      {
+        "name": "v1alpha1",
+        "served": true,
+        "kinds": [
+          {
+            "kind": "LogsDrilldown",
+            "plural": "LogsDrilldowns",
+            "scope": "Namespaced",
+            "schemas": {
+              "LogsDrilldown": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": ["success", "in_progress", "failed"],
+                    "type": "string"
+                  }
+                },
+                "required": ["lastEvaluation", "state"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "defaultFields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "interceptDismissed": {
+                    "type": "boolean"
+                  },
+                  "prettifyJSON": {
+                    "type": "boolean"
+                  },
+                  "wrapLogMessage": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "LogsDrilldownDefaults",
+            "plural": "LogsDrilldownDefaults",
+            "scope": "Namespaced",
+            "schemas": {
+              "LogsDrilldownDefaults": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": ["success", "in_progress", "failed"],
+                    "type": "string"
+                  }
+                },
+                "required": ["lastEvaluation", "state"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "defaultFields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "interceptDismissed": {
+                    "type": "boolean"
+                  },
+                  "prettifyJSON": {
+                    "type": "boolean"
+                  },
+                  "wrapLogMessage": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "LogsDrilldownDefaultColumns",
+            "plural": "LogsDrilldownDefaultColumns",
+            "scope": "Namespaced",
+            "schemas": {
+              "LogsDefaultColumnsLabel": {
+                "additionalProperties": false,
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": ["key", "value"],
+                "type": "object"
+              },
+              "LogsDefaultColumnsLabels": {
+                "items": {
+                  "$ref": "#/components/schemas/LogsDefaultColumnsLabel"
+                },
+                "type": "array"
+              },
+              "LogsDefaultColumnsRecord": {
+                "additionalProperties": false,
+                "properties": {
+                  "columns": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "labels": {
+                    "$ref": "#/components/schemas/LogsDefaultColumnsLabels"
+                  }
+                },
+                "required": ["columns", "labels"],
+                "type": "object"
+              },
+              "LogsDefaultColumnsRecords": {
+                "items": {
+                  "$ref": "#/components/schemas/LogsDefaultColumnsRecord"
+                },
+                "type": "array"
+              },
+              "LogsDrilldownDefaultColumns": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": ["success", "in_progress", "failed"],
+                    "type": "string"
+                  }
+                },
+                "required": ["lastEvaluation", "state"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "records": {
+                    "$ref": "#/components/schemas/LogsDefaultColumnsRecords"
+                  }
+                },
+                "required": ["records"],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "conversion": false
+          }
+        ]
+      }
+    ],
+    "preferredVersion": "v1alpha1"
+  }
+}

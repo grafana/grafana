@@ -13,11 +13,12 @@ import {
   map as _map,
   toPairs,
 } from 'lodash';
-import { lastValueFrom, merge, Observable, of } from 'rxjs';
+import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   dateMath,
@@ -78,6 +79,20 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
 
   // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const hasValidTargets = options.targets.some((target) => target.metric && !target.hide);
+      if (!hasValidTargets) {
+        return of({ data: [] });
+      }
+
+      return super.query(options).pipe(
+        map((response) => {
+          this._saveTagKeysFromFrames(response.data);
+          return response;
+        })
+      );
+    }
+
     // migrate annotations
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
@@ -265,7 +280,20 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     this.tagKeys[metricData.metric] = tagKeys;
   }
 
+  _saveTagKeysFromFrames(frames: DataFrame[]) {
+    for (const frame of frames) {
+      const tagKeys = frame.meta?.custom?.tagKeys;
+      if (frame.name && tagKeys) {
+        this.tagKeys[frame.name] = tagKeys;
+      }
+    }
+  }
+
   _performSuggestQuery(query: string, type: string) {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('api/suggest', { type, q: query, max: this.lookupLimit }));
+    }
+
     return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).pipe(
       map((result) => {
         return result.data;

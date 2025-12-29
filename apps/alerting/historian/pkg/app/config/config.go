@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/http"
 	"net/url"
 	"time"
 
@@ -15,9 +16,14 @@ const (
 	lokiDefaultMaxQuerySize   = 65536           // 64kb
 )
 
+type LokiConfig struct {
+	lokiclient.LokiConfig
+	Transport http.RoundTripper
+}
+
 type NotificationConfig struct {
 	Enabled bool
-	Loki    lokiclient.LokiConfig
+	Loki    LokiConfig
 }
 
 type RuntimeConfig struct {
@@ -27,7 +33,7 @@ type RuntimeConfig struct {
 
 func (n *NotificationConfig) AddFlagsWithPrefix(prefix string, flags *pflag.FlagSet) {
 	flags.BoolVar(&n.Enabled, prefix+".enabled", false, "Enable notification query endpoints")
-	addLokiFlags(&n.Loki, prefix+".loki", flags)
+	addLokiFlags(&n.Loki.LokiConfig, prefix+".loki", flags)
 }
 
 func (r *RuntimeConfig) AddFlagsWithPrefix(prefix string, flags *pflag.FlagSet) {

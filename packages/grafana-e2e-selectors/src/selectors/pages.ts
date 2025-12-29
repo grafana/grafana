@@ -508,6 +508,9 @@ export const versionedPages = {
             queryOptionsRegExInputV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegEx field',
             },
+            queryOptionsRegExApplyToSelectV2: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegExApplyTo select',
+            },
             queryOptionsSortSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Sort select',
             },
@@ -566,6 +569,9 @@ export const versionedPages = {
             },
             closeButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-close-button',
+            },
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
           },
           IntervalVariable: {

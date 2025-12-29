@@ -24,10 +24,12 @@ func TestRuntimeConfig(t *testing.T) {
 			expected: RuntimeConfig{
 				Notification: NotificationConfig{
 					Enabled: false,
-					Loki: lokiclient.LokiConfig{
-						ReadPathURL:    nil,
-						MaxQueryLength: 721 * time.Hour,
-						MaxQuerySize:   65536,
+					Loki: LokiConfig{
+						LokiConfig: lokiclient.LokiConfig{
+							ReadPathURL:    nil,
+							MaxQueryLength: 721 * time.Hour,
+							MaxQuerySize:   65536,
+						},
 					},
 				},
 			},
@@ -38,10 +40,12 @@ func TestRuntimeConfig(t *testing.T) {
 			expected: RuntimeConfig{
 				Notification: NotificationConfig{
 					Enabled: true,
-					Loki: lokiclient.LokiConfig{
-						ReadPathURL:    nil,
-						MaxQueryLength: 721 * time.Hour,
-						MaxQuerySize:   65536,
+					Loki: LokiConfig{
+						LokiConfig: lokiclient.LokiConfig{
+							ReadPathURL:    nil,
+							MaxQueryLength: 721 * time.Hour,
+							MaxQuerySize:   65536,
+						},
 					},
 				},
 			},
@@ -57,13 +61,15 @@ func TestRuntimeConfig(t *testing.T) {
 			expected: RuntimeConfig{
 				Notification: NotificationConfig{
 					Enabled: false,
-					Loki: lokiclient.LokiConfig{
-						ReadPathURL:       lokiURL,
-						BasicAuthUser:     "foo",
-						BasicAuthPassword: "bar",
-						TenantID:          "baz",
-						MaxQueryLength:    721 * time.Hour,
-						MaxQuerySize:      65536,
+					Loki: LokiConfig{
+						LokiConfig: lokiclient.LokiConfig{
+							ReadPathURL:       lokiURL,
+							BasicAuthUser:     "foo",
+							BasicAuthPassword: "bar",
+							TenantID:          "baz",
+							MaxQueryLength:    721 * time.Hour,
+							MaxQuerySize:      65536,
+						},
 					},
 				},
 			},
