@@ -1,7 +1,7 @@
 import { ReactElement, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
+import { ButtonGroup, Dropdown, ToolbarButton } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -17,7 +17,7 @@ interface Props extends ToolbarActionProps {
   onButtonClick?: () => void;
   arrowLabel: string;
   arrowTestId: string;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'canvas';
 }
 
 export const ShareExportDashboardButton = ({
@@ -31,7 +31,7 @@ export const ShareExportDashboardButton = ({
   onButtonClick,
   arrowLabel,
   arrowTestId,
-  variant = 'secondary',
+  variant = 'canvas',
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,9 +60,15 @@ export const ShareExportDashboardButton = ({
         }
       }}
     >
-      <Button data-testid={buttonTestId} size="md" tooltip={buttonTooltip} variant={variant} onClick={onButtonClick}>
+      <ToolbarButton
+        data-testid={buttonTestId}
+        tooltip={buttonTooltip}
+        variant={variant}
+        onClick={onButtonClick}
+        icon="share-alt"
+      >
         {buttonLabel}
-      </Button>
+      </ToolbarButton>
       <Dropdown
         overlay={menu}
         placement="bottom-end"
@@ -76,10 +82,9 @@ export const ShareExportDashboardButton = ({
           setIsOpen(isOpen);
         }}
       >
-        <Button
+        <ToolbarButton
           aria-label={arrowLabel}
           data-testid={arrowTestId}
-          size="md"
           icon={isOpen ? 'angle-up' : 'angle-down'}
           variant={variant}
         />

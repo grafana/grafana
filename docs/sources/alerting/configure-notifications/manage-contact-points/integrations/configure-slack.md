@@ -51,8 +51,8 @@ You can customize the `title` and `body` of the Slack message using [notificatio
 
 If you are using a Slack API Token, complete the following steps.
 
-1. Follow steps 1 and 2 of the [Slack API Quickstart](https://api.slack.com/start/quickstart).
-1. Add the [chat:write.public](https://api.slack.com/scopes/chat:write.public) scope to give your app the ability to post in all public channels without joining.
+1. Follow step 1 of the [Slack API Quickstart](https://docs.slack.dev/app-management/quickstart-app-settings/#creating) to create the app.
+1. Continue onto the second step of the [Slack API Quickstart](https://docs.slack.dev/app-management/quickstart-app-settings/#scopes) and add the [chat:write.public](https://api.slack.com/scopes/chat:write.public) scope as described to give your app the ability to post in all public channels without joining.
 1. In OAuth Tokens for Your Workspace, copy the Bot User OAuth Token.
 1. Open your Slack workplace.
 1. Right click the channel you want to receive notifications in.

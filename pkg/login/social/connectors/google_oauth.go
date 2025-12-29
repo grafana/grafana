@@ -81,7 +81,15 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 	return validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
-		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		loginPromptValidator)
+}
+
+func loginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.UseRefreshToken && !slices.Contains([]string{"", "consent"}, info.LoginPrompt) {
+		return ssosettings.ErrInvalidOAuthConfig("If provided, login_prompt must be set to consent when use_refresh_token is enabled.")
+	}
+	return nil
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {

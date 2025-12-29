@@ -642,6 +642,12 @@ You must also provide the `rudderstack_write_key` to enable this feature.
 Optional.
 If tracking with RudderStack is enabled, you can provide a custom URL to load the RudderStack SDK.
 
+#### `rudderstack_v3_sdk_url`
+
+Optional.
+This is mirroring the old configuration option, which will be deprecated.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+
 #### `rudderstack_config_url`
 
 Optional.
@@ -1776,6 +1782,13 @@ Specify the frequency of polling for Alertmanager configuration changes. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
 
+#### `alertmanager_max_template_output_bytes`
+
+Maximum size in bytes that the expanded result of any single template expression (e.g. {{ .CommonAnnotations.description }}, {{ .ExternalURL }}, etc.) may reach during notification rendering.
+The limit is checked after template execution for each templated field, but before the value is inserted into the final notification payload sent to the receiver.
+If exceeded, the notification will contain output truncated up to the limit and a warning will be logged.
+The default value is 10,485,760 bytes (10Mb).
+
 #### `ha_redis_address`
 
 Redis server address or addresses. It can be a single Redis address if using Redis standalone,
@@ -2038,6 +2051,10 @@ This section applies only to rules imported as Grafana-managed rules. For more i
 #### `rule_query_offset`
 
 Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+#### `default_datasource_uid`
+
+Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
 <hr>
 

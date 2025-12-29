@@ -5,13 +5,22 @@ import { config } from '@grafana/runtime';
 import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
-export function useIsProvisionedInstance(settings?: RepositoryViewList) {
+interface UseIsProvisionedInstanceOptions {
+  settings?: RepositoryViewList;
+  skip?: boolean;
+}
+
+export function useIsProvisionedInstance(options: UseIsProvisionedInstanceOptions = {}) {
+  const { settings, skip: skipQuery } = options;
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
-  const skip = !config.featureToggles.provisioning || hasNoRole;
+  const skip = !config.featureToggles.provisioning || hasNoRole || skipQuery;
 
   const settingsQuery = useGetFrontendSettingsQuery(settings || skip ? skipToken : undefined);
-  if (!settings) {
-    settings = settingsQuery.data;
+
+  if (settingsQuery.isError) {
+    return false;
   }
-  return settings?.items?.some((item) => item.target === 'instance');
+
+  const effectiveSettings = settings ?? settingsQuery.data;
+  return effectiveSettings?.items?.some((item) => item.target === 'instance');
 }

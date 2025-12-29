@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -871,6 +873,39 @@ func TestSocialGoogle_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if use_refresh_token is enabled and login prompt is neither empty or 'consent'",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "login",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is consent",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "consent",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -886,7 +921,13 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
 			}
-			require.NoError(t, err)
+
+			if err != nil {
+				var e errutil.Error
+				require.True(t, errors.As(err, &e))
+				require.NoError(t, e, "expected no error, got %v", e.PublicMessage)
+				return
+			}
 		})
 	}
 }
@@ -1021,6 +1062,105 @@ func TestIsHDAllowed(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestSocialGoogle_AuthCodeURL(t *testing.T) {
+	testCases := []struct {
+		name    string
+		info    *social.OAuthInfo
+		opts    []oauth2.AuthCodeOption
+		state   string
+		wantURL *url.URL
+	}{
+		{
+			name: "should return the correct auth code URL",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				AuthUrl:      "https://example.com/auth",
+				LoginPrompt:  "login",
+				Scopes:       []string{"openid", "email", "profile"},
+			},
+			state: "test-state",
+			opts: []oauth2.AuthCodeOption{
+				oauth2.SetAuthURLParam("extra_param", "extra_value"),
+			},
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"login"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"extra_param":   {"extra_value"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should add access type offline and approval force if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should override configured login prompt if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			gotURL := s.AuthCodeURL(tc.state, tc.opts...)
+			parsedURL, err := url.Parse(gotURL)
+			require.NoError(t, err)
+			require.EqualValues(t, tc.wantURL, parsedURL)
 		})
 	}
 }

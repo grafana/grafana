@@ -129,7 +129,7 @@ export const getSupplementaryQueryProvider = (
     dsRequest.requestId = `${dsRequest.requestId || ''}_${i}`;
     dsRequest.targets = targets;
 
-    if (hasSupplementaryQuerySupport(datasource, type)) {
+    if (hasSupplementaryQuerySupport(datasource, type, dsRequest)) {
       if (datasource.getDataProvider) {
         return datasource.getDataProvider(type, dsRequest);
       } else if (datasource.getSupplementaryRequest) {

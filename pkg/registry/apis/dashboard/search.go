@@ -117,6 +117,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "facetLimit",
+										In:          "query",
+										Description: "maximum number of terms to return per facet (default 50, max 1000)",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "tags",
 										In:          "query",
 										Description: "tag query filter",
@@ -366,6 +375,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
+	facetLimit := 50
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -448,11 +458,19 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	// The facet term fields
 	if facets, ok := queryParams["facet"]; ok {
+		if queryParams.Has("facetLimit") {
+			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
+				facetLimit = parsed
+				if facetLimit > 1000 {
+					facetLimit = 1000
+				}
+			}
+		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
-				Limit: 50,
+				Limit: int64(facetLimit),
 			}
 		}
 	}

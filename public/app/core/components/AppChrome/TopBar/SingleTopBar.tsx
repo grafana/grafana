@@ -93,7 +93,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           justifyContent={'flex-end'}
           flex={1}
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
-          minWidth={{ xs: 'unset', lg: 0 }}
         >
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
