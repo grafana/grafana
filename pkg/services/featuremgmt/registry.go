@@ -689,6 +689,14 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "auditLoggingAppPlatform",
+			Description:     "Enable audit logging with Kubernetes under app platform",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "secretsManagementAppPlatform",
 			Description: "Enable the secrets management API and services under app platform",
 			Stage:       FeatureStageExperimental,

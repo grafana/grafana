@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Özel ek açıklama içeriği girin..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Kurallar klasörden başarıyla silindi"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. Aralık = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Seçilen sorgular ve ifadeler varsayılana dönüştürülemez. Gelişmiş seçenekleri devre dışı bırakırsanız sorgunuz ve koşulunuz varsayılan ayarlara sıfırlanır."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Ön izleme",
-      "previewCondition": "Uyarı kuralı koşulunu ön izle"
+      "previewCondition": "Uyarı kuralı koşulunu ön izle",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "",
