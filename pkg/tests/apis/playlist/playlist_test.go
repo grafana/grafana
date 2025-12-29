@@ -447,7 +447,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		_, err = clientNone.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
-		// Mone role can get but can not create edit or delete a playlist
+		// None role can get but can not create edit or delete a playlist
 		_, err = clientNone.Resource.Create(context.Background(),
 			helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
 			metav1.CreateOptions{},
