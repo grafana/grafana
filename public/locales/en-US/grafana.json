@@ -6662,11 +6662,6 @@
       "aria-label-open-query-pane": "Open query pane",
       "tooltip-open-query-pane": "Open query pane"
     },
-    "viz-panel-editable-element": {
-      "description": {
-        "duplicate-panel": "Duplicate panel"
-      }
-    },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": "Panel links"
     }
