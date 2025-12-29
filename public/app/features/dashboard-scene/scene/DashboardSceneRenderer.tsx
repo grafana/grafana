@@ -11,7 +11,6 @@ import { useSelector } from 'app/types/store';
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { DashboardScene } from './DashboardScene';
-import { FeedbackButtonNewLayout } from './FeedbackButtonNewLayout';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
@@ -110,7 +109,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
-        {config.featureToggles.dashboardNewLayouts && <FeedbackButtonNewLayout />}
       </Page>
     </>
   );
