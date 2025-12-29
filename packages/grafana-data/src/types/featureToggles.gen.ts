@@ -421,6 +421,10 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
+  * Enable audit logging with Kubernetes under app platform
+  */
+  auditLoggingAppPlatform?: boolean;
+  /**
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;

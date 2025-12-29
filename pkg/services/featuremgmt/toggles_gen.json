@@ -660,6 +660,20 @@
     },
     {
       "metadata": {
+        "name": "auditLoggingAppPlatform",
+        "resourceVersion": "1767013056996",
+        "creationTimestamp": "2025-12-29T12:57:36Z"
+      },
+      "spec": {
+        "description": "Enable audit logging with Kubernetes under app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-06-13T09:41:35Z"
