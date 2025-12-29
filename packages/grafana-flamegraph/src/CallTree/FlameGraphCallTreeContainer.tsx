@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useDebounce, usePrevious } from 'react-use';
@@ -40,6 +40,9 @@ const FlameGraphCallTreeContainer = memo(
     // Color scheme state
     const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(initialColorScheme);
 
+    // Focus state - track which node is focused
+    const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
+
     // Update color scheme when prop changes
     useEffect(() => {
       setColorScheme(initialColorScheme);
@@ -60,11 +63,38 @@ const FlameGraphCallTreeContainer = memo(
     const effectiveMatchedLabels = searchMatchedLabels || matchedLabels;
 
     // Build and filter nodes
-    const { nodes, matchingIds } = useMemo(() => {
+    const { nodes, matchingIds, focusedNode } = useMemo(() => {
       const allNodes = buildAllCallTreeNodes(data);
-      const { visibleNodes, matchingNodeIds } = filterCallTree(allNodes, effectiveMatchedLabels);
-      return { nodes: visibleNodes, matchingIds: matchingNodeIds };
-    }, [data, effectiveMatchedLabels]);
+
+      // If there's a focused node, find it and use its subtree
+      let nodesToUse = allNodes;
+      let focused: CallTreeNode | undefined;
+
+      if (focusedNodeId) {
+        // Find the focused node in the tree
+        const findNode = (nodes: CallTreeNode[], id: string): CallTreeNode | undefined => {
+          for (const node of nodes) {
+            if (node.id === id) {
+              return node;
+            }
+            if (node.subRows) {
+              const found = findNode(node.subRows, id);
+              if (found) return found;
+            }
+          }
+          return undefined;
+        };
+
+        focused = findNode(allNodes, focusedNodeId);
+        if (focused) {
+          // Use the focused node as the root
+          nodesToUse = [focused];
+        }
+      }
+
+      const { visibleNodes, matchingNodeIds } = filterCallTree(nodesToUse, effectiveMatchedLabels);
+      return { nodes: visibleNodes, matchingIds: matchingNodeIds, focusedNode: focused };
+    }, [data, effectiveMatchedLabels, focusedNodeId]);
 
     // Calculate expanded state based on search
     const calculatedExpanded = useMemo(() => {
@@ -75,6 +105,13 @@ const FlameGraphCallTreeContainer = memo(
         firstNode: nodes[0]?.id,
         expandedKeys: Object.keys(baseExpanded).filter(k => baseExpanded[k]),
       });
+
+      // If there's a focused node, expand it using react-table's row ID
+      // The focused node becomes the root, so its react-table ID is "0"
+      if (focusedNodeId && nodes.length > 0 && nodes[0].id === focusedNodeId && nodes[0].hasChildren) {
+        baseExpanded['0'] = true;
+      }
+
       if (effectiveMatchedLabels && effectiveMatchedLabels.size > 0) {
         const matchExpanded = getExpandedStateForMatches(nodes, matchingIds);
         console.log('Adding match expansion:', {
@@ -86,20 +123,47 @@ const FlameGraphCallTreeContainer = memo(
         return { ...baseExpanded, ...matchExpanded };
       }
       return baseExpanded;
-    }, [nodes, effectiveMatchedLabels, matchingIds]);
+    }, [nodes, effectiveMatchedLabels, matchingIds, focusedNodeId]);
 
     // Create a key that changes when expansion should reset, forcing table remount
     const tableKey = useMemo(() => {
       // Include matchingIds in the key so table remounts when search results change
       const expandedKeys = Object.keys(calculatedExpanded).filter(k => calculatedExpanded[k]).sort().join(',');
-      return `table-${expandedKeys}`;
-    }, [calculatedExpanded]);
+      const focusPart = focusedNodeId ? `-focus-${focusedNodeId}` : '';
+      return `table-${expandedKeys}${focusPart}`;
+    }, [calculatedExpanded, focusedNodeId]);
+
+    // Callback to handle recursive expand/collapse - will be populated after tableInstance is created
+    const handleToggleExpandRef = useRef<((node: CallTreeNode, rowId: string, isExpanded: boolean) => void) | null>(null);
 
 
     // Define columns
     const columns: Column<CallTreeNode>[] = useMemo(() => {
       if (data.isDiffFlamegraph()) {
         return [
+          {
+            Header: '',
+            id: 'actions',
+            Cell: ({ row }: { row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode> }) => (
+              <ActionsCell
+                row={row}
+                onFocus={(nodeId) => {
+                  setFocusedNodeId(nodeId);
+                  setLocalSearch('');
+                }}
+                onToggleExpand={(isExpanded) => {
+                  if (handleToggleExpandRef.current) {
+                    handleToggleExpandRef.current(row.original, row.id, isExpanded);
+                  }
+                }}
+                isFocusedRoot={row.id === '0'}
+                styles={styles}
+              />
+            ),
+            width: 50,
+            minWidth: 50,
+            disableSortBy: true,
+          },
           {
             Header: 'Function',
             accessor: 'label',
@@ -157,6 +221,29 @@ const FlameGraphCallTreeContainer = memo(
         ];
       } else {
         return [
+          {
+            Header: '',
+            id: 'actions',
+            Cell: ({ row }: { row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode> }) => (
+              <ActionsCell
+                row={row}
+                onFocus={(nodeId) => {
+                  setFocusedNodeId(nodeId);
+                  setLocalSearch('');
+                }}
+                onToggleExpand={(isExpanded) => {
+                  if (handleToggleExpandRef.current) {
+                    handleToggleExpandRef.current(row.original, row.id, isExpanded);
+                  }
+                }}
+                isFocusedRoot={row.id === '0'}
+                styles={styles}
+              />
+            ),
+            width: 50,
+            minWidth: 50,
+            disableSortBy: true,
+          },
           {
             Header: 'Function',
             accessor: 'label',
@@ -224,7 +311,10 @@ const FlameGraphCallTreeContainer = memo(
           },
         ];
       }
-    }, [data, effectiveMatchedLabels, matchingIds, onSymbolClick, colorScheme, theme, styles]);
+    }, [data, effectiveMatchedLabels, matchingIds, onSymbolClick, colorScheme, theme, styles, setLocalSearch]);
+
+    // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
+    // because it's accessed at render time, not definition time
 
     // Setup table instance with expand and sort
     // Using initialState - expansion resets when data changes so new initialState takes effect
@@ -244,7 +334,22 @@ const FlameGraphCallTreeContainer = memo(
       useExpanded
     );
 
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, toggleAllRowsExpanded } = tableInstance;
+    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, toggleAllRowsExpanded, toggleRowExpanded } = tableInstance;
+
+    // Set up the recursive expand/collapse handler now that we have toggleRowExpanded
+    // We need to find the actual row ID that react-table uses, which may differ from node.id
+    handleToggleExpandRef.current = (node: CallTreeNode, rowId: string, isExpanded: boolean) => {
+      const toggleRecursive = (rId: string, n: CallTreeNode, expand: boolean) => {
+        toggleRowExpanded(rId, expand);
+        if (n.subRows) {
+          n.subRows.forEach((child, index) => {
+            const childRowId = `${rId}.${index}`;
+            toggleRecursive(childRowId, child, expand);
+          });
+        }
+      };
+      toggleRecursive(rowId, node, !isExpanded);
+    };
 
     console.log('Table state:', {
       visibleRows: rows.length,
@@ -289,6 +394,21 @@ const FlameGraphCallTreeContainer = memo(
               className={styles.searchInput}
             />
           </div>
+
+          {focusedNode && (
+            <div className={styles.focusedItem}>
+              <Button icon="eye" fill="text" size="sm" disabled aria-label="Focused" />
+              <span className={styles.focusedItemLabel}>{focusedNode.label}</span>
+              <Button
+                icon="times"
+                fill="text"
+                size="sm"
+                onClick={() => setFocusedNodeId(undefined)}
+                tooltip="Clear focus"
+                aria-label="Clear focus"
+              />
+            </div>
+          )}
 
           <div className={styles.toolbarRight}>
             <ColorSchemeButton value={colorScheme} onChange={setColorScheme} isDiffMode={data.isDiffFlamegraph()} />
@@ -364,11 +484,12 @@ const FlameGraphCallTreeContainer = memo(
                           {row.cells.map((cell) => {
                             const { key: cellKey, ...cellProps } = cell.getCellProps();
                             const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
+                            const isActionsColumn = cell.column.id === 'actions';
                             return (
                               <td
                                 key={cellKey}
                                 {...cellProps}
-                                className={styles.td}
+                                className={cx(styles.td, isActionsColumn && styles.actionsColumnCell)}
                                 style={isValueColumn ? { textAlign: 'right' } : undefined}
                               >
                                 {cell.render('Cell', { rowIndex })}
@@ -489,6 +610,57 @@ function getRowBackgroundColor(
 }
 
 // Cell Components
+
+function ActionsCell({
+  row,
+  onFocus,
+  onToggleExpand,
+  isFocusedRoot,
+  styles,
+}: {
+  row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
+  onFocus: (nodeId: string) => void;
+  onToggleExpand: (isExpanded: boolean) => void;
+  isFocusedRoot: boolean;
+  styles: any;
+}) {
+  const hasChildren = row.original.hasChildren;
+  const isExpanded = row.isExpanded;
+
+  return (
+    <div className={styles.actionsCell}>
+      <Button
+        icon={isExpanded ? 'angle-double-up' : 'angle-double-down'}
+        fill="text"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasChildren) {
+            onToggleExpand(isExpanded);
+          }
+        }}
+        tooltip={isExpanded ? 'Collapse all' : 'Expand all'}
+        aria-label={isExpanded ? 'Collapse all' : 'Expand all'}
+        className={styles.actionButton}
+        disabled={!hasChildren}
+      />
+      {!isFocusedRoot && (
+        <Button
+          icon="eye"
+          fill="text"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFocus(row.original.id);
+          }}
+          tooltip="Focus on this subtree"
+          aria-label="Focus"
+          className={styles.actionButton}
+        />
+      )}
+    </div>
+  );
+}
 
 function FunctionCellWithExpander({
   row,
@@ -873,6 +1045,41 @@ function getStyles(theme: GrafanaTheme2) {
       height: '16px',
       minWidth: '2px',
       borderRadius: '2px',
+    }),
+    actionsCell: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      height: '20px',
+    }),
+    actionsColumnCell: css({
+      backgroundColor: theme.colors.background.secondary,
+      '&:hover': {
+        backgroundColor: theme.colors.background.secondary,
+      },
+    }),
+    actionButton: css({
+      padding: 0,
+      minWidth: 'auto',
+      height: '20px',
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+    focusedItem: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    focusedItemLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
   };
 }
