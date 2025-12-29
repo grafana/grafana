@@ -5956,6 +5956,9 @@
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
+    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
@@ -6073,9 +6076,6 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
-    },
-    "feedback-button-new-layout": {
-      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
     "general-settings-edit-view": {
       "editable_options": {
