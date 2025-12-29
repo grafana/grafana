@@ -1,4 +1,4 @@
-import { Card, useStyles2 } from '@grafana/ui';
+import { Card, Text, useStyles2 } from '@grafana/ui';
 
 import { getCardStyles } from './getCardStyles';
 
@@ -14,19 +14,11 @@ export function SqlExpressionCard({ name, description, imageUrl, onClick, testId
   const styles = useStyles2(getCardStyles);
 
   return (
-    <Card className={styles.newCard} data-testid={testId} onClick={onClick} noMargin>
-      <Card.Heading className={styles.heading}>
-        <div className={styles.titleRow}>
-          <span>{name}</span>
-        </div>
-      </Card.Heading>
-      <Card.Description className={styles.description}>
-        <span>{description}</span>
-        {imageUrl && (
-          <span>
-            <img className={styles.image} src={imageUrl} alt={name} />
-          </span>
-        )}
+    <Card className={styles.baseCard} data-testid={testId} onClick={onClick} noMargin>
+      <Card.Heading>{name}</Card.Heading>
+      <Card.Description>
+        <Text variant="bodySmall">{description}</Text>
+        {imageUrl && <img className={styles.image} src={imageUrl} alt={name} />}
       </Card.Description>
     </Card>
   );

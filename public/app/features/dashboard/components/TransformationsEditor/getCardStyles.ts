@@ -4,28 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export const getCardStyles = (theme: GrafanaTheme2) => {
   return {
-    heading: css({
-      fontWeight: 400,
-      '> button': {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: theme.spacing(1),
-      },
-    }),
-    titleRow: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'nowrap',
-      width: '100%',
-    }),
-    description: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
+    baseCard: css({
+      maxWidth: '200px',
+      marginBottom: 0,
     }),
     image: css({
       display: 'block',
@@ -39,22 +20,16 @@ export const getCardStyles = (theme: GrafanaTheme2) => {
         opacity: 0.33,
       },
     }),
-    cardApplicableInfo: css({
+    applicableInfoButton: css({
       position: 'absolute',
       bottom: theme.spacing(1),
       right: theme.spacing(1),
-    }),
-    newCard: css({
-      maxWidth: '200px',
-      marginBottom: 0,
-    }),
-    pluginStateInfoWrapper: css({
-      marginLeft: theme.spacing(0.5),
     }),
     tagsWrapper: css({
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(0.5),
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

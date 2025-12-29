@@ -7,7 +7,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, Card, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Badge, Card, IconButton, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { getCardStyles } from './getCardStyles';
@@ -48,7 +48,7 @@ export function TransformationCard({
     }
   }
 
-  const cardClasses = !isApplicable && data.length > 0 ? cx(styles.newCard, styles.cardDisabled) : styles.newCard;
+  const cardClasses = cx(styles.baseCard, { [styles.cardDisabled]: !isApplicable });
   const imageUrl = theme.isDark ? transform.imageDark : transform.imageLight;
   const description = standardTransformersRegistry.getIfExists(transform.id)?.description;
 
@@ -59,15 +59,11 @@ export function TransformationCard({
       onClick={() => onClick(transform.id)}
       noMargin
     >
-      <Card.Heading className={styles.heading}>
-        <div className={styles.titleRow}>
-          <span>{transform.name}</span>
-          {showPluginState && (
-            <span className={styles.pluginStateInfoWrapper}>
-              <PluginStateInfo state={transform.state} />
-            </span>
-          )}
-        </div>
+      <Card.Heading>
+        <Stack alignItems="center" justifyContent="space-between">
+          {transform.name}
+          {showPluginState && <PluginStateInfo state={transform.state} />}
+        </Stack>
         {showTags && transform.tags && transform.tags.size > 0 && (
           <div className={styles.tagsWrapper}>
             {Array.from(transform.tags).map((tag) => (
@@ -76,15 +72,11 @@ export function TransformationCard({
           </div>
         )}
       </Card.Heading>
-      <Card.Description className={styles.description}>
-        <span>{description}</span>
-        {showIllustrations && imageUrl && (
-          <span>
-            <img className={styles.image} src={imageUrl} alt={transform.name} />
-          </span>
-        )}
+      <Card.Description>
+        <Text variant="bodySmall">{description || ''}</Text>
+        {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt={transform.name} />}
         {!isApplicable && applicabilityDescription !== null && (
-          <IconButton className={styles.cardApplicableInfo} name="info-circle" tooltip={applicabilityDescription} />
+          <IconButton className={styles.applicableInfoButton} name="info-circle" tooltip={applicabilityDescription} />
         )}
       </Card.Description>
     </Card>
