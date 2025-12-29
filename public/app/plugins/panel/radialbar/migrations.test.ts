@@ -32,11 +32,28 @@ describe('Gauge Panel Migrations', () => {
     expect(result.sparkline).toBe(false);
   });
 
-  it('sets the correct text mode if displayName is set', () => {
+  it.each([
+    {
+      textMode: 'value_and_name',
+      displayName: 'My gauge',
+    },
+    {
+      textMode: undefined,
+      displayName: '',
+    },
+    {
+      textMode: undefined,
+      displayName: null,
+    },
+    {
+      textMode: undefined,
+      displayName: undefined,
+    },
+  ])('sets the the text mode to "$textMode" for "$displayName"', ({ textMode, displayName }) => {
     const panel = {
       id: 2,
       options: {
-        displayName: 'My gauge',
+        displayName,
         reduceOptions: {
           calcs: ['lastNotNull'],
         },
@@ -57,7 +74,7 @@ describe('Gauge Panel Migrations', () => {
     } as Omit<PanelModel, 'fieldConfig'>;
 
     const result = gaugePanelMigrationHandler(panel as PanelModel);
-    expect(result.textMode).toBe('value_and_name');
+    expect(result.textMode).toEqual(textMode);
   });
 
   it('does not overwrite new gauge', () => {
