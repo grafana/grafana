@@ -139,41 +139,33 @@ LongContent.parameters = {
 
 export const InsideDrawer: StoryFn<typeof Toggletip> = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  // Use state instead of ref to trigger re-render when container is available
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
   return (
     <>
       <Button onClick={() => setIsDrawerOpen(true)}>Open Drawer</Button>
       {isDrawerOpen && (
         <Drawer title="Drawer with Toggletip" onClose={() => setIsDrawerOpen(false)}>
-          <div ref={setContainerEl}>
-            <p style={{ marginBottom: '16px' }}>
-              This demonstrates using Toggletip inside a Drawer. The <code>portalRoot</code> prop is used to render the
-              Toggletip content inside the Drawer&apos;s DOM, allowing focus to work correctly with the Drawer&apos;s
-              focus trap.
-            </p>
-            {containerEl && (
-              <Toggletip
-                title="Interactive Form"
-                content={
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <Field label="Name">
-                      <Input placeholder="Enter your name" />
-                    </Field>
-                    <Button variant="primary" size="sm">
-                      Submit
-                    </Button>
-                  </div>
-                }
-                footer="Focus should work correctly within this Toggletip"
-                placement="bottom-start"
-                portalRoot={containerEl}
-              >
-                <Button>Click to show Toggletip</Button>
-              </Toggletip>
-            )}
-          </div>
+          <p style={{ marginBottom: '16px' }}>
+            Toggletip automatically detects when it&apos;s inside a Drawer and renders its content within the
+            Drawer&apos;s DOM, allowing focus to work correctly. No manual configuration needed!
+          </p>
+          <Toggletip
+            title="Interactive Form"
+            content={
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Field label="Name">
+                  <Input placeholder="Enter your name" />
+                </Field>
+                <Button variant="primary" size="sm">
+                  Submit
+                </Button>
+              </div>
+            }
+            footer="Focus works correctly - auto-detected!"
+            placement="bottom-start"
+          >
+            <Button>Click to show Toggletip</Button>
+          </Toggletip>
         </Drawer>
       )}
     </>

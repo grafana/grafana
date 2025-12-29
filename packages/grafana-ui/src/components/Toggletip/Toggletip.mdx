@@ -78,22 +78,22 @@ return (
 
 ### Usage inside Drawer
 
-When using Toggletip inside a Drawer or other focus-trapped container, pass the container element as `portalRoot` to ensure focus management works correctly. This renders the Toggletip content inside the Drawer's DOM tree instead of the default portal container.
-
-Use a state-based ref pattern to ensure the container is available before rendering the Toggletip:
+Toggletip automatically detects when it's inside a Drawer (or other focus-trapped container with the `data-grafana-portal-container` attribute) and adjusts its behavior accordingly. No additional configuration is needed:
 
 ```tsx
-const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-
 <Drawer title="Settings" onClose={onClose}>
-  <div ref={setContainerEl}>
-    {containerEl && (
-      <Toggletip content={<Input placeholder="Type here..." />} portalRoot={containerEl}>
-        <Button>Open Toggletip</Button>
-      </Toggletip>
-    )}
-  </div>
-</Drawer>;
+  <Toggletip content={<Input placeholder="Type here..." />}>
+    <Button>Open Toggletip</Button>
+  </Toggletip>
+</Drawer>
 ```
+
+When auto-detected inside a focus-trapped container:
+
+- The Toggletip content renders inside the Drawer's DOM tree
+- Focus management defers to the parent container's focus trap
+- Interactive elements like inputs work correctly
+
+If you need to override auto-detection or specify a custom container, use the `portalRoot` prop.
 
 <ArgTypes of={Toggletip} />
