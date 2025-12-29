@@ -1153,28 +1153,16 @@ func TestCleanOldIndexes(t *testing.T) {
 
 	b, _ := setupBleveBackend(t, withRootDir(dir))
 
-	// Helper to count only directories (excluding the lock file)
-	countDirs := func(path string) []string {
-		files, err := os.ReadDir(path)
-		require.NoError(t, err)
-		var dirs []string
-		for _, f := range files {
-			if f.IsDir() {
-				dirs = append(dirs, f.Name())
-			}
-		}
-		return dirs
-	}
-
 	t.Run("with skip", func(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "index-2")
-		dirs := countDirs(dir)
-		require.Len(t, dirs, 1)
-		require.Equal(t, "index-2", dirs[0])
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 1)
+		require.Equal(t, "index-2", files[0].Name())
 	})
 
 	t.Run("without skip", func(t *testing.T) {
@@ -1183,8 +1171,9 @@ func TestCleanOldIndexes(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "")
-		dirs := countDirs(dir)
-		require.Len(t, dirs, 0)
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 0)
 	})
 }
 
@@ -1595,5 +1584,47 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	return int(cnt)
 }
 
-func TestBleveBackendLockingFallsBackToInMemory(t *testing.T) {
+func TestBleveBackendFallbacksToMemoryStorage(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	// First, create a file-based index with one backend and keep it open
+	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index1)
+
+	// Verify first index is file-based
+	bleveIdx1, ok := index1.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx1.indexStorage)
+	checkOpenIndexes(t, reg1, 0, 1)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, reg2 := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and fallback to memory
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index2)
+
+	// Verify second index fell back to in-memory despite size being above file threshold
+	bleveIdx2, ok := index2.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageMemory, bleveIdx2.indexStorage)
+
+	// Verify metrics show 1 memory index and 0 file indexes for backend2
+	checkOpenIndexes(t, reg2, 1, 0)
+
+	// Verify the in-memory index works correctly
+	require.Equal(t, 10, docCount(t, index2))
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
 }
