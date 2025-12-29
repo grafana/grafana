@@ -47,5 +47,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
 const getStyles = (theme: GrafanaTheme2) => ({
   dropdownButton: css({
     display: 'inline-flex',
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
   }),
 });

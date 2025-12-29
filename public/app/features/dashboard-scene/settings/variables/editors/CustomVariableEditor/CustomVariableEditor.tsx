@@ -1,12 +1,8 @@
 import { FormEvent, useCallback } from 'react';
 
-import { t } from '@grafana/i18n';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { CustomVariable } from '@grafana/scenes';
 
-import { OptionsPaneItemDescriptor } from '../../../../../dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { CustomVariableForm } from '../../components/CustomVariableForm';
-
-import { PaneItem } from './PaneItem';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
@@ -66,18 +62,4 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
-}
-
-export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  if (!(variable instanceof CustomVariable)) {
-    return [];
-  }
-
-  return [
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      id: 'custom-variable-values',
-      render: ({ props }) => <PaneItem id={props.id} variable={variable} />,
-    }),
-  ];
 }

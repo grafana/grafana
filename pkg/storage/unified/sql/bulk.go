@@ -281,13 +281,13 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		}
 
 		if b.dialect.DialectName() == "sqlite" {
-			nextRV, err := b.rvManager.lock(ctx, tx, key.Group, key.Resource)
+			nextRV, err := b.rvManager.Lock(ctx, tx, key.Group, key.Resource)
 			if err != nil {
 				b.log.Error("error locking RV", "error", err, "key", resource.NSGR(key))
 			} else {
 				b.log.Info("successfully locked RV", "nextRV", nextRV, "key", resource.NSGR(key))
 				// Save the incremented RV
-				if err := b.rvManager.saveRV(ctx, tx, key.Group, key.Resource, nextRV); err != nil {
+				if err := b.rvManager.SaveRV(ctx, tx, key.Group, key.Resource, nextRV); err != nil {
 					b.log.Error("error saving RV", "error", err, "key", resource.NSGR(key))
 				} else {
 					b.log.Info("successfully saved RV", "rv", nextRV, "key", resource.NSGR(key))

@@ -18,6 +18,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodels "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -1012,6 +1013,10 @@ type ListAlertRulesQuery struct {
 	SearchRuleGroup string
 
 	HasPrometheusRuleDefinition *bool
+
+	// LabelMatchers filters rules by their labels.
+	// Only equality and inequality matchers are supported, no regex operators.
+	LabelMatchers labels.Matchers
 }
 
 type ListAlertRulesExtendedQuery struct {
