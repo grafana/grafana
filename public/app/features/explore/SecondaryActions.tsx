@@ -4,6 +4,8 @@ import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
@@ -43,6 +45,8 @@ export function SecondaryActions({
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  // TODO: contextSrv.isSignedIn is not needed but added to make the frontend retrocompatible, remove it after backend reaches rrcs.
+  const canReadQueries = contextSrv.isSignedIn || contextSrv.hasPermission(AccessControlAction.QueriesRead);
 
   return (
     <div className={styles.containerMargin}>
@@ -57,7 +61,7 @@ export function SecondaryActions({
           >
             <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
           </ToolbarButton>
-          {queryLibraryEnabled && (
+          {queryLibraryEnabled && canReadQueries && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
