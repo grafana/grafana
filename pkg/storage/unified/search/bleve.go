@@ -416,41 +416,49 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
-		}
-
-		if index != nil {
-			build = false
-			logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
-			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
-		} else {
-			// Building index from scratch. Index name has a time component in it to be unique, but if
-			// we happen to create non-unique name, we bump the time and try again.
-
-			indexDir := ""
-			now := time.Now()
-			for index == nil {
-				fileIndexName = formatIndexName(now)
-				indexDir = filepath.Join(resourceDir, fileIndexName)
-				if !isPathWithinRoot(indexDir, b.opts.Root) {
-					return nil, fmt.Errorf("invalid path %s", indexDir)
-				}
-
-				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
-				if errors.Is(err, bleve.ErrorIndexPathExists) {
-					now = now.Add(time.Second) // Bump time for next try
-					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
-					continue
-				}
-				if err != nil {
-					return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
-				}
+			var foundLocked bool
+			index, fileIndexName, indexRV, foundLocked = b.findPreviousFileBasedIndex(resourceDir)
+			if foundLocked {
+				newIndexType = indexStorageMemory
 			}
-
-			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
-			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
-	} else {
+
+		if newIndexType == indexStorageFile {
+			if index != nil {
+				build = false
+				logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
+				defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
+			} else {
+				// Building index from scratch. Index name has a time component in it to be unique, but if
+				// we happen to create non-unique name, we bump the time and try again.
+
+				indexDir := ""
+				now := time.Now()
+				for index == nil {
+					fileIndexName = formatIndexName(now)
+					indexDir = filepath.Join(resourceDir, fileIndexName)
+					if !isPathWithinRoot(indexDir, b.opts.Root) {
+						return nil, fmt.Errorf("invalid path %s", indexDir)
+					}
+
+					index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
+					if errors.Is(err, bleve.ErrorIndexPathExists) {
+						now = now.Add(time.Second) // Bump time for next try
+						index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
+						continue
+					}
+					if err != nil {
+						return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
+					}
+				}
+
+				logWithDetails.Info("Building index using filesystem", "directory", indexDir)
+				defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
+			}
+		}
+	}
+
+	if newIndexType == indexStorageMemory {
 		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
@@ -628,10 +636,10 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64, bool) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
-		return nil, "", 0
+		return nil, "", 0, false
 	}
 
 	for _, ent := range entries {
@@ -646,7 +654,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 		// If it is, we can't use it, so we skip it.
 		if isIndexOpen(filepath.Join(indexDir, "store", "root.bolt")) {
 			b.log.Debug("Index is locked by another process, skipping", "indexDir", indexDir)
-			continue
+			return nil, "", 0, true
 		}
 
 		idx, err := bleve.Open(indexDir)
@@ -662,10 +670,10 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			continue
 		}
 
-		return idx, indexName, indexRV
+		return idx, indexName, indexRV, false
 	}
 
-	return nil, "", 0
+	return nil, "", 0, false
 }
 
 // Stop closes all indexes and stops background tasks.
