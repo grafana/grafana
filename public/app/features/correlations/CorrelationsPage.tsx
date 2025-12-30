@@ -158,7 +158,6 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations]
   );
 
-  console.log(correlations?.totalCount, correlations?.limit);
   const corrData = correlations?.correlations ?? [];
   const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
