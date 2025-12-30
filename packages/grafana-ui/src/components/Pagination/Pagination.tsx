@@ -132,7 +132,7 @@ export const Pagination = ({
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
-            disabled={!hasNextPage || currentPage === numberOfPages}
+            disabled={hasNextPage === false || currentPage === numberOfPages}
           >
             <Icon name="angle-right" />
           </Button>
