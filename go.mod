@@ -44,8 +44,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
 	github.com/blevesearch/bleve/v2 v2.5.0 // @grafana/grafana-search-and-storage
 	github.com/blevesearch/bleve_index_api v1.2.7 // @grafana/grafana-search-and-storage
-	github.com/blugelabs/bluge v0.2.2 // @grafana/grafana-backend-group
-	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 	github.com/centrifugal/centrifuge v0.38.0 // @grafana/grafana-app-platform-squad
@@ -324,7 +322,6 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
-	github.com/RoaringBitmap/roaring v1.9.3 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.4.5 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
@@ -355,7 +352,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.29.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.5 // indirect
-	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -378,12 +374,9 @@ require (
 	github.com/blevesearch/zapx/v15 v15.4.1 // indirect
 	github.com/blevesearch/zapx/v16 v16.2.2 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
-	github.com/blugelabs/ice v1.0.0 // indirect
-	github.com/blugelabs/ice/v2 v2.0.1 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
-	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/centrifugal/protocol v0.17.0 // indirect
@@ -402,7 +395,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
-	github.com/dgryski/go-metro v0.0.0-20180109044635-280f6062b5bc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
