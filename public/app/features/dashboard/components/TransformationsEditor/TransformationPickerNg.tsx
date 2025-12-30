@@ -5,7 +5,7 @@ import { DataFrame, GrafanaTheme2, TransformerRegistryItem, SelectableValue } fr
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, FilterPill, Grid, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
@@ -162,16 +162,17 @@ interface TransformationsGridProps {
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   return (
-    <Stack direction="row" gap={1} wrap>
+    <Grid columns={3} gap={1}>
       {transformations.map((transform) => (
         <TransformationCard
-          key={transform.id}
-          transform={transform}
-          showIllustrations={showIllustrations}
-          onClick={onClick}
           data={data}
+          fullWidth
+          key={transform.id}
+          onClick={onClick}
+          showIllustrations={showIllustrations}
+          transform={transform}
         />
       ))}
-    </Stack>
+    </Grid>
   );
 }

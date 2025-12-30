@@ -13,24 +13,26 @@ import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo
 import { getCardStyles } from './getCardStyles';
 
 export interface TransformationCardProps {
-  transform: TransformerRegistryItem;
+  data?: DataFrame[];
+  fullWidth?: boolean;
   onClick: (id: string) => void;
   showIllustrations?: boolean;
-  data?: DataFrame[];
   showPluginState?: boolean;
   showTags?: boolean;
+  transform: TransformerRegistryItem;
 }
 
 export function TransformationCard({
-  transform,
-  showIllustrations,
-  onClick,
   data = [],
+  fullWidth = false,
+  onClick,
+  showIllustrations,
   showPluginState = true,
   showTags = true,
+  transform,
 }: TransformationCardProps) {
   const theme = useTheme2();
-  const styles = useStyles2(getCardStyles);
+  const styles = useStyles2(getCardStyles, fullWidth);
 
   // Check to see if the transform is applicable to the given data
   let applicabilityScore = TransformationApplicabilityLevels.Applicable;
