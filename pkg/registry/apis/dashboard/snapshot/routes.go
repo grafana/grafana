@@ -187,6 +187,18 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Tags:        tags,
 							OperationId: "getSnapshotSettings",
 							Description: "Get Snapshot sharing settings",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
@@ -219,7 +231,6 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
-						// SignedInUser: user, ????????????
 					}
 
 					vars := mux.Vars(r)
@@ -233,20 +244,6 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
 						return
 					}
-
-					//dashboardsnapshots.GetSnapshotSharingOptions(wrap, config)
-					//cfg, err := config.Get(wrap.Req.Context())
-					//if err != nil || cfg == nil {
-					//	wrap.JsonApiErr(http.StatusInternalServerError, "failed to load settings configuration", err)
-					//	return
-					//}
-					//
-					//wrap.JSON(http.StatusOK, dashv0.SnapshotSharingOptions{
-					//	SnapshotsEnabled:     cfg.SnapshotEnabled,
-					//	ExternalEnabled:      cfg.ExternalEnabled,
-					//	ExternalSnapshotName: cfg.ExternalSnapshotName,
-					//	ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
-					//})
 
 					wrap.JSON(http.StatusOK, options)
 				},
