@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
@@ -37,19 +34,8 @@ const DatasourceUID = dashboard.GrafanaDatasourceUID
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
 var (
-	_                                       backend.QueryDataHandler   = (*Service)(nil)
-	_                                       backend.CheckHealthHandler = (*Service)(nil)
-	namespace                                                          = "grafana"
-	subsystem                                                          = "grafanads"
-	dashboardSearchNotServedRequestsCounter                            = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "dashboard_search_requests_not_served_total",
-			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
-		},
-		[]string{"reason"},
-	)
+	_ backend.QueryDataHandler   = (*Service)(nil)
+	_ backend.CheckHealthHandler = (*Service)(nil)
 )
 
 func ProvideService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
