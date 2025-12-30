@@ -120,9 +120,24 @@ export const RadialArcPath = memo(
     return (
       <>
         {/* FIXME: optimize this by only using clippath + foreign obj for gradients */}
-        <clipPath id={id}>
-          <path d={path} />
-        </clipPath>
+        <defs>
+          <mask id={id} maskUnits="userSpaceOnUse">
+            <rect
+              x={centerX - radius - barWidth}
+              y={centerY - radius - barWidth}
+              width={(radius + barWidth) * 2}
+              height={(radius + barWidth) * 2}
+              fill="black"
+            />
+            <path
+              d={path}
+              fill="none"
+              stroke="white"
+              strokeWidth={barWidth}
+              strokeLinecap={roundedBars ? 'round' : 'butt'}
+            />
+          </mask>
+        </defs>
 
         <g filter={glowFilter}>
           <foreignObject
@@ -130,7 +145,7 @@ export const RadialArcPath = memo(
             y={centerY - radius - barWidth}
             width={(radius + barWidth) * 2}
             height={(radius + barWidth) * 2}
-            clipPath={`url(#${id})`}
+            mask={`url(#${id})`}
           >
             <div style={bgDivStyle} />
           </foreignObject>
