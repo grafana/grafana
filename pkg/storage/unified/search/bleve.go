@@ -1258,13 +1258,17 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 		searchQuery.AddQuery(queryAnalyzed)
 
-		// Query 4: check text against the panel titles
-		panelAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
-		panelAnalyzed.SetField(resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE)
-		panelAnalyzed.SetBoost(1.0)
-		panelAnalyzed.Analyzer = standard.Name
-		panelAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
-		searchQuery.AddQuery(panelAnalyzed)
+		// TODO: pass the set of fields to analyze along with the query
+		// This should be enabled by panelTitleSearch
+		if false {
+			// Query 4: check text against the panel titles
+			panelAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
+			panelAnalyzed.SetField(resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE)
+			panelAnalyzed.SetBoost(1.0)
+			panelAnalyzed.Analyzer = standard.Name
+			panelAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
+			searchQuery.AddQuery(panelAnalyzed)
+		}
 
 		queries = append(queries, searchQuery)
 	}

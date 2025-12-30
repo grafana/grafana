@@ -282,7 +282,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc.Tags = summary.Tags
 
 	panelTitles := []string{}
-	layoutTypes := []string{} // useful in v2 for rows, tabs, etc
 	panelTypes := []string{}
 	transformations := []string{}
 	dsTypes := []string{}
@@ -290,8 +289,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	for p := range summary.PanelIterator() {
 		switch p.Type {
 		case "": // ignore
-		case "row":
-			layoutTypes = append(layoutTypes, "row") // row is a hacked panel type
+		case "row": // row should map to a layout type when we support v2 constructs
 		default:
 			panelTypes = append(panelTypes, p.Type)
 		}
@@ -331,23 +329,20 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
-	if len(layoutTypes) > 0 {
-		sort.Strings(layoutTypes)
-	}
 	if len(panelTitles) > 0 {
-		doc.Fields[DASHBOARD_PANEL_TITLE] = slices.Compact(panelTitles)
+		doc.Fields[DASHBOARD_PANEL_TITLE] = panelTitles
 	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
-		doc.Fields[DASHBOARD_PANEL_TYPES] = slices.Compact(panelTypes)
+		doc.Fields[DASHBOARD_PANEL_TYPES] = slices.Compact(panelTypes) // distinct values
 	}
 	if len(dsTypes) > 0 {
 		sort.Strings(dsTypes)
-		doc.Fields[DASHBOARD_DS_TYPES] = slices.Compact(dsTypes)
+		doc.Fields[DASHBOARD_DS_TYPES] = slices.Compact(dsTypes) // distinct values
 	}
 	if len(transformations) > 0 {
 		sort.Strings(transformations)
-		doc.Fields[DASHBOARD_TRANSFORMATIONS] = slices.Compact(transformations)
+		doc.Fields[DASHBOARD_TRANSFORMATIONS] = slices.Compact(transformations) // distinct values
 	}
 
 	for k, v := range s.Stats[summary.UID] {

@@ -298,12 +298,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.ds_type?.length) {
-      // filter resource types
       uri += '&dataSourceType=' + query.ds_type;
     }
 
     if (query.panel_type?.length) {
-      // filter resource types
       uri += '&panelType=' + query.panel_type;
     }
 
