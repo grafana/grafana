@@ -1,6 +1,8 @@
 package migrator
 
 import (
+	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -270,4 +272,156 @@ func NewTableCharsetMigration(tableName string, columns []*Column) *TableCharset
 
 func (m *TableCharsetMigration) SQL(d Dialect) string {
 	return d.UpdateTableSQL(m.tableName, m.columns)
+}
+
+type addPrimaryKeyMigration struct {
+	MigrationBase
+	tableName string
+	uniqueKey Index
+
+	// Used for Sqlite recreation of the table. Temporary table will have tableName + "_new" suffix.
+	table Table
+}
+
+func (m *addPrimaryKeyMigration) SQL(d Dialect) string {
+	if d.DriverName() == SQLite {
+		// Final SQL will do following in the individual statements:
+		// 1. Create new temporary table
+		// 2. Copy data from old table to temporary table
+		// 3. Drop old table, rename temporary table to original name
+		// 4. Recreate indexes for table.
+		//
+		// For example:
+		//
+		//	CREATE TABLE file_new
+		//	(
+		//		path                    TEXT     NOT NULL,
+		//		path_hash               TEXT     NOT NULL,
+		//		parent_folder_path_hash TEXT     NOT NULL,
+		//		contents                BLOB     NOT NULL,
+		//		etag                    TEXT     NOT NULL,
+		//		cache_control           TEXT     NOT NULL,
+		//		content_disposition     TEXT     NOT NULL,
+		//		updated                 DATETIME NOT NULL,
+		//		created                 DATETIME NOT NULL,
+		//		size                    INTEGER  NOT NULL,
+		//		mime_type               TEXT     NOT NULL,
+		//
+		//		PRIMARY KEY (path_hash)
+		//	);
+		//
+		//	INSERT INTO file_new (path, path_hash, parent_folder_path_hash, contents, etag, cache_control, content_disposition, updated, created, size, mime_type)
+		//	SELECT path, path_hash, parent_folder_path_hash, contents, etag, cache_control, content_disposition, updated, created, size, mime_type FROM file;
+		//
+		//	DROP TABLE file;
+		//	ALTER TABLE file_new RENAME TO file;
+		//
+		//	CREATE INDEX IDX_file_parent_folder_path_hash ON file (parent_folder_path_hash);
+
+		tempTable := m.table
+		tempTable.Name = m.tableName + "_new"
+
+		statements := strings.Builder{}
+
+		statements.WriteString(d.CreateTableSQL(&tempTable))
+		statements.WriteString("\n") // CreateTableSQL adds semicolon
+
+		cols := make([]string, 0, len(tempTable.Columns))
+		for _, col := range tempTable.Columns {
+			cols = append(cols, col.Name)
+		}
+		statements.WriteString(d.CopyTableData(m.tableName, tempTable.Name, cols, cols))
+		statements.WriteString(";\n")
+
+		statements.WriteString(d.DropTable(m.tableName))
+		statements.WriteString(";\n")
+
+		statements.WriteString(d.RenameTable(tempTable.Name, m.tableName))
+		statements.WriteString(";\n")
+
+		for _, idx := range tempTable.Indices {
+			// Use real table name, not temporary one now
+			statements.WriteString(d.CreateIndexSQL(m.tableName, idx))
+			statements.WriteString("\n") // CreateIndexSQL adds semicolon
+		}
+
+		return statements.String()
+	} else if d.DriverName() == Postgres {
+		quotesCols := make([]string, 0, len(m.uniqueKey.Cols))
+		for _, c := range m.uniqueKey.Cols {
+			quotesCols = append(quotesCols, d.Quote(c))
+		}
+
+		return fmt.Sprintf(`
+		DO $$
+		BEGIN
+			-- Drop the unique constraint if it exists
+			DROP INDEX IF EXISTS %s;
+
+			-- Add primary key if it doesn't already exist
+			IF NOT EXISTS (SELECT 1 FROM pg_index i WHERE indrelid = '%s'::regclass AND indisprimary) THEN
+				ALTER TABLE %s ADD PRIMARY KEY (%s);
+			END IF;
+		END $$;`, d.Quote(m.uniqueKey.XName(m.tableName)), m.tableName, d.Quote(m.tableName), strings.Join(quotesCols, ","))
+	} else {
+		return ""
+	}
+}
+
+// ConvertUniqueKeyToPrimaryKey adds series of migrations to convert existing unique key to PRIMARY KEY.
+// For Sqlite this means recreating the table, which only works if there are no foreign keys referencing the table.
+func ConvertUniqueKeyToPrimaryKey(mg *Migrator, uniqueKey Index, finalTable Table) {
+	tableName := finalTable.Name
+	if tableName == "" {
+		panic("invalid table name")
+	}
+	if len(uniqueKey.Cols) == 0 || uniqueKey.Type != UniqueIndex {
+		panic("invalid unique type")
+	}
+	if !slices.Equal(uniqueKey.Cols, finalTable.PrimaryKeys) {
+		panic("invalid primary key in the final table")
+	}
+
+	colPks := map[string]bool{}
+	for _, col := range finalTable.Columns {
+		if col.IsPrimaryKey {
+			colPks[col.Name] = true
+		}
+	}
+	for _, c := range uniqueKey.Cols {
+		if !colPks[c] {
+			panic(fmt.Sprintf("column %s is not part of primary key in the table definition", c))
+		}
+	}
+
+	columnsList := strings.Join(uniqueKey.Cols, ",")
+
+	mysqlQuote := NewDialect(MySQL).Quote
+	mysqlQuotedColumns := make([]string, 0, len(uniqueKey.Cols))
+	for _, col := range uniqueKey.Cols {
+		mysqlQuotedColumns = append(mysqlQuotedColumns, mysqlQuote(col))
+	}
+
+	// migration 1 is to handle cases where the table was created with sql_generate_invisible_primary_key = ON
+	// in this case we need to do the conversion in one sql statement
+	mysqlMigration1 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`
+	  ALTER TABLE %s
+	  DROP PRIMARY KEY,
+	  DROP COLUMN my_row_id,
+	  DROP INDEX %s,
+	  ADD PRIMARY KEY (%s);
+	`, tableName, uniqueKey.XName(tableName), strings.Join(mysqlQuotedColumns, ",")))
+	mysqlMigration1.Condition = &IfColumnExistsCondition{TableName: tableName, ColumnName: "my_row_id"}
+	mg.AddMigration(fmt.Sprintf("drop my_row_id and add primary key with columns %s to table %s if my_row_id exists (auto-generated mysql column)", columnsList, tableName), mysqlMigration1)
+
+	mysqlMigration2 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s DROP INDEX %s`, tableName, uniqueKey.XName(tableName)))
+	mysqlMigration2.Condition = &IfIndexExistsCondition{TableName: tableName, IndexName: uniqueKey.XName(tableName)}
+	mg.AddMigration(fmt.Sprintf("drop unique index %s from %s table if it exists (mysql)", uniqueKey.XName(tableName), tableName), mysqlMigration2)
+
+	mysqlMigration3 := NewRawSQLMigration("").Mysql(fmt.Sprintf(`ALTER TABLE %s ADD PRIMARY KEY (%s)`, tableName, strings.Join(mysqlQuotedColumns, ",")))
+	mysqlMigration3.Condition = &IfPrimaryKeyNotExistsCondition{TableName: tableName}
+	mg.AddMigration(fmt.Sprintf("add primary key with columns %s to table %s if it doesn't exist (mysql)", columnsList, tableName), mysqlMigration3)
+
+	// postgres and sqlite statements are idempotent so we can have only one condition-less migration
+	mg.AddMigration(fmt.Sprintf("add primary key with columns %s to table %s (postgres and sqlite)", columnsList, tableName), &addPrimaryKeyMigration{tableName: tableName, uniqueKey: uniqueKey, table: finalTable})
 }

@@ -187,4 +187,33 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("increase resource_uid column length", NewRawSQLMigration("").
 		Mysql("ALTER TABLE cloud_migration_resource MODIFY resource_uid NVARCHAR(255);").
 		Postgres("ALTER TABLE cloud_migration_resource ALTER COLUMN resource_uid TYPE VARCHAR(255);"))
+
+	migrationSnapshotPartitionTable := Table{
+		Name: "cloud_migration_snapshot_partition",
+		Columns: []*Column{
+			{Name: "snapshot_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "partition_number", Type: DB_Int, Nullable: false},
+			{Name: "resource_type", Type: DB_Varchar, Length: 255, Nullable: false},
+			{Name: "data", Type: DB_LongBlob, Nullable: false},
+		},
+	}
+
+	mg.AddMigration("create cloud_migration_snapshot_partition table v1", NewAddTableMigration(migrationSnapshotPartitionTable))
+	srpUniqueIndex := Index{
+		Name: "srp_unique",
+		Cols: []string{"snapshot_uid", "resource_type", "partition_number"}, Type: UniqueIndex,
+	}
+	mg.AddMigration("add cloud_migration_snapshot_partition srp_unique index", NewAddIndexMigration(migrationSnapshotPartitionTable, &srpUniqueIndex))
+
+	updatedCloudMigrationSnapshotPartitionTable := Table{
+		Name: "cloud_migration_snapshot_partition",
+		Columns: []*Column{
+			{Name: "snapshot_uid", Type: DB_NVarchar, Length: 40, Nullable: false, IsPrimaryKey: true},
+			{Name: "partition_number", Type: DB_Int, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource_type", Type: DB_Varchar, Length: 255, Nullable: false, IsPrimaryKey: true},
+			{Name: "data", Type: DB_LongBlob, Nullable: false},
+		},
+		PrimaryKeys: []string{"snapshot_uid", "resource_type", "partition_number"},
+	}
+	ConvertUniqueKeyToPrimaryKey(mg, srpUniqueIndex, updatedCloudMigrationSnapshotPartitionTable)
 }
