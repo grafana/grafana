@@ -130,7 +130,9 @@ export function RadialGauge(props: RadialGaugeProps) {
     // FIXME: I want to move the ids for these filters into a context which the children
     // can reference via a hook, rather than passing them down as props
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
+    const spotlightGradientRef = endpointMarker === 'glow' ? `url(#${spotlightGradientId})` : undefined;
     const glowFilterId = `glow-${gaugeId}`;
+    const glowFilterRef = glowBar ? `url(#${glowFilterId})` : undefined;
 
     if (endpointMarker === 'glow') {
       defs.push(
@@ -153,7 +155,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           fieldDisplay={displayValue}
           angleRange={angleRange}
           startAngle={startAngle}
-          glowFilter={`url(#${glowFilterId})`}
+          glowFilter={glowFilterRef}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
           shape={shape}
@@ -169,8 +171,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           angleRange={angleRange}
           startAngle={startAngle}
           roundedBars={roundedBars}
-          glowFilter={glowBar ? `url(#${glowFilterId})` : undefined}
-          endpointMarkerGlowFilter={endpointMarker === 'glow' ? `url(#${spotlightGradientId})` : undefined}
+          glowFilter={glowFilterRef}
+          endpointMarkerGlowFilter={spotlightGradientRef}
           shape={shape}
           gradient={gradientStops}
           fieldDisplay={displayValue}
@@ -233,7 +235,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               endAngle={endAngle}
               angleRange={angleRange}
               roundedBars={roundedBars}
-              glowFilter={glowBar ? `url(#${glowFilterId})` : undefined}
+              glowFilter={glowFilterRef}
               shape={shape}
               gradient={gradientStops}
             />
