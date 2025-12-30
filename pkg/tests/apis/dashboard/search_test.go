@@ -66,6 +66,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			uid = uid[:40] // avoid uid too long, max 40 characters
 		}
 
+		// nolint:gosec
 		data, err := os.ReadFile(p)
 		require.NoError(t, err)
 
@@ -138,6 +139,16 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			user:   helper.Org1.Admin,
 			params: "", // only dashboards
 		},
+		{
+			name:   "simple-query",
+			user:   helper.Org1.Admin,
+			params: "query=stacking",
+		},
+		{
+			name:   "with-text-panel",
+			user:   helper.Org1.Admin,
+			params: "field=panel_types&panelType=text",
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -146,9 +157,10 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			require.NoError(t, err)
 
 			fname := fmt.Sprintf("testdata/searchV0/t%02d-%s.json", i, tc.name)
+			// nolint:gosec
 			snapshot, err := os.ReadFile(fname)
 			if err != nil {
-				assert.Failf(t, "Failed to read snapshot: %s", fname)
+				assert.Failf(t, "Failed to read snapshot", "file: %s", fname)
 				err = os.WriteFile(fname, jj, 0o644)
 				require.NoErrorf(t, err, "Failed to write snapshot file %s", fname)
 				return

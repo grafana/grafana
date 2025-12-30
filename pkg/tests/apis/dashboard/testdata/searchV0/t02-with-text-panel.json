@@ -1,0 +1,19 @@
+{
+  "totalHits": 1,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-formats",
+      "title": "Panel Tests - Timeseries - Supported input formats",
+      "field": {
+        "panel_types": [
+          "table",
+          "text",
+          "timeseries"
+        ]
+      }
+    }
+  ],
+  "queryCost": 1196,
+  "maxScore": 1.7779163711321142
+}
