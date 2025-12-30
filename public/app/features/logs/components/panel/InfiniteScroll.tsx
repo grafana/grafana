@@ -256,7 +256,11 @@ export const InfiniteScroll = ({
       if (props.visibleStartIndex === 0) {
         noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
       }
-      if (noScrollRef.current || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (noScrollRef.current) {
+        setInfiniteLoaderState('idle');
+        return;
+      }
+      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
         return;
       }
       const lastLogIndex = logs.length - 1;
@@ -267,7 +271,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, logs.length, scrollElement]
+    [infiniteLoaderState, logs, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);

@@ -3783,17 +3783,28 @@
         "type": "object",
         "required": [
           "title",
-          "content"
+          "content",
+          "kind"
         ],
         "properties": {
           "content": {
             "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupTemplateKind"
           },
           "title": {
             "type": "string"
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupTemplateKind": {
+        "type": "string",
+        "enum": [
+          "grafana",
+          "mimir"
+        ]
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval": {
         "type": "object",

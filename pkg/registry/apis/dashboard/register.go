@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -122,6 +123,7 @@ type DashboardsAPIBuilder struct {
 	snapshotService              dashboardsnapshots.Service
 	snapshotOptions              dashv0.SnapshotSharingOptions
 	namespacer                   request.NamespaceMapper
+	dashboardActivityChannel     live.DashboardActivityChannel
 	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
 
@@ -151,6 +153,7 @@ func RegisterAPIService(
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
+	dashboardActivityChannel live.DashboardActivityChannel,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -185,6 +188,7 @@ func RegisterAPIService(
 		snapshotService:              snapshotService,
 		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
+		dashboardActivityChannel:     dashboardActivityChannel,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -218,7 +222,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
@@ -227,12 +231,13 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		search:                 search,
 		isStandalone:           true,
 	}
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -696,9 +701,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
-	storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
-		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
 		Storage:                 dw,
+		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		live:                    b.dashboardActivityChannel,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

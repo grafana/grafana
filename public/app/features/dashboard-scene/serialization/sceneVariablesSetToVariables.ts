@@ -102,6 +102,10 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       }
       variables.push(variableObj);
     } else if (sceneUtils.isCustomVariable(variable)) {
+      let options: VariableOption[] = [];
+      if (keepQueryOptions) {
+        options = variableValueOptionsToVariableOptions(variable.state);
+      }
       const customVariable: VariableModel = {
         ...commonProperties,
         current: {
@@ -110,7 +114,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
-        options: [],
+        options,
         query: variable.state.query,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
@@ -550,7 +554,7 @@ export function sceneVariablesSetToSchemaV2Variables(
             ...validateFiltersOrigin(variable.state.originFilters),
             ...validateFiltersOrigin(variable.state.filters),
           ],
-          defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };

@@ -495,6 +495,9 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		currentY = getMaxYFromPanels(nestedPanels, currentY)
 	} else if tab.Spec.Layout.GridLayoutKind != nil {
 		// GridLayout inside tab
+		baseY := currentY
+		maxY := currentY
+
 		for _, item := range tab.Spec.Layout.GridLayoutKind.Spec.Items {
 			element, ok := elements[item.Spec.Element.Name]
 			if !ok {
@@ -502,7 +505,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 			}
 
 			adjustedItem := item
-			adjustedItem.Spec.Y = item.Spec.Y + currentY
+			adjustedItem.Spec.Y = item.Spec.Y + baseY
 
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
@@ -511,10 +514,12 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 			panels = append(panels, panel)
 
 			panelEndY := adjustedItem.Spec.Y + item.Spec.Height
-			if panelEndY > currentY {
-				currentY = panelEndY
+			if panelEndY > maxY {
+				maxY = panelEndY
 			}
 		}
+
+		currentY = maxY
 	} else if tab.Spec.Layout.AutoGridLayoutKind != nil {
 		// AutoGridLayout inside tab - convert with Y offset
 		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, tab.Spec.Layout.AutoGridLayoutKind, currentY)
@@ -1059,7 +1064,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 
 	// Convert queries (targets)
-	targets := make([]map[string]interface{}, 0, len(spec.Data.Spec.Queries))
+	// Use []interface{} for consistency with JSON unmarshaling and other code paths
+	targets := make([]interface{}, 0, len(spec.Data.Spec.Queries))
 	for _, query := range spec.Data.Spec.Queries {
 		target := convertPanelQueryToV1(&query)
 		targets = append(targets, target)
@@ -1967,16 +1973,16 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 			"options": override.Matcher.Options,
 		}
 
+		properties := make([]map[string]interface{}, 0, len(override.Properties))
 		if len(override.Properties) > 0 {
-			properties := make([]map[string]interface{}, 0, len(override.Properties))
 			for _, prop := range override.Properties {
 				properties = append(properties, map[string]interface{}{
 					"id":    prop.Id,
 					"value": prop.Value,
 				})
 			}
-			overrideMap["properties"] = properties
 		}
+		overrideMap["properties"] = properties
 
 		result = append(result, overrideMap)
 	}
@@ -2068,11 +2074,9 @@ func convertRegexMapToV1(regexMap *dashv2alpha1.DashboardRegexMap) map[string]in
 		return nil
 	}
 
-	options := []map[string]interface{}{
-		{
-			"pattern": regexMap.Options.Pattern,
-			"result":  convertValueMappingResultToV1(regexMap.Options.Result),
-		},
+	options := map[string]interface{}{
+		"pattern": regexMap.Options.Pattern,
+		"result":  convertValueMappingResultToV1(regexMap.Options.Result),
 	}
 
 	return map[string]interface{}{
