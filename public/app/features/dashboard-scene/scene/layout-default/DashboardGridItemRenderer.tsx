@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
@@ -23,17 +23,21 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     itemHeight ?? 10
   );
 
-  function LazyPanelWrapper({ item }: { item: VizPanel }) {
-    return isLazy ? (
-      <LazyLoader key={item.state.key!} className={panelWrapper}>
-        <item.Component model={item} />
-      </LazyLoader>
-    ) : (
-      <div className={panelWrapper}>
-        <item.Component model={item} />
-      </div>
-    );
-  }
+  const LazyPanelWrapper = useMemo(
+    () =>
+      memo(function LazyPanelWrapperInner({ item }: { item: VizPanel }) {
+        return isLazy ? (
+          <LazyLoader className={panelWrapper}>
+            <item.Component model={item} />
+          </LazyLoader>
+        ) : (
+          <div className={panelWrapper}>
+            <item.Component model={item} />
+          </div>
+        );
+      }),
+    [isLazy]
+  );
 
   if (soloPanelContext) {
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
@@ -41,7 +45,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
 
   if (!variableName) {
     return (
-      <div className={panelWrapper} ref={model.containerRef}>
+      <div ref={model.containerRef}>
         <LazyPanelWrapper item={body} key={body.state.key!} />
       </div>
     );
