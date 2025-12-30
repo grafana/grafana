@@ -172,7 +172,3 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 
 	return response
 }
-
-type requestModel struct {
-	QueryType string `json:"queryType"`
-}
