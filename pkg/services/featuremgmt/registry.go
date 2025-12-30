@@ -495,9 +495,9 @@ var (
 		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",

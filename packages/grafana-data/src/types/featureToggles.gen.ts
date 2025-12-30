@@ -325,7 +325,7 @@ export interface FeatureToggles {
   queryServiceFromUI?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
-  * @default false
+  * @default true
   */
   cloudWatchBatchQueries?: boolean;
   /**
