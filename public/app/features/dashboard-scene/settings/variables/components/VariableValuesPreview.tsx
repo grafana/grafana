@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VariableValueOption } from '@grafana/scenes';
+import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -35,24 +35,21 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
   const styles = useStyles2(getStyles);
 
   const { data, columns } = useMemo(() => {
-    const data = options.map(({ label, value, properties }) => {
-      const row: Record<string, string> = { label: String(label), value: String(value) };
-      for (const key in properties) {
-        // see https://github.com/TanStack/table/issues/1671
-        row[sanitizeKey(key)] = typeof properties[key] === 'object' ? JSON.stringify(properties[key]) : properties[key];
-      }
-      return row;
-    });
-
-    // the first item in data may be the "All" option, which does not have any extra properties, so we try the 2nd item to determine the column names
-    const columns = Object.keys(data[1] ?? data[0] ?? {}).map((id) => ({
-      id,
-      // see https://github.com/TanStack/table/issues/1671
-      header: unsanitizeKey(id),
-      sortType: 'alphanumeric' as const,
+    const data = options.map(({ label, value, properties }) => ({
+      label: String(label),
+      value: String(value),
+      ...flattenProperties(properties),
     }));
 
-    return { data, columns };
+    return {
+      data,
+      columns: Object.keys(data[0] ?? {}).map((id) => ({
+        id,
+        // see https://github.com/TanStack/table/issues/1671
+        header: unsanitizeKey(id),
+        sortType: 'alphanumeric' as const,
+      })),
+    };
   }, [options]);
 
   return (
@@ -68,6 +65,27 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
 
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
+
+function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
+  if (properties === undefined) {
+    return {};
+  }
+
+  const result: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(properties)) {
+    const newPath = path ? `${path}.${key}` : key;
+
+    if (typeof value === 'object') {
+      Object.assign(result, flattenProperties(value, newPath));
+    } else {
+      // see https://github.com/TanStack/table/issues/1671
+      result[sanitizeKey(newPath)] = value;
+    }
+  }
+
+  return result;
+}
 
 function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
