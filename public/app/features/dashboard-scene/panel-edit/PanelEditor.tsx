@@ -120,7 +120,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dataObject.subscribeToState(async () => {
         const { data } = dataObject.state;
         if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-          const suggestions = await getAllSuggestions(data);
+          const { suggestions } = await getAllSuggestions(data);
 
           if (suggestions.length > 0) {
             const defaultFirstSuggestion = suggestions[0];
