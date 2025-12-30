@@ -452,10 +452,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	if facets, ok := queryParams["facet"]; ok {
 		if queryParams.Has("facetLimit") {
 			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
-				facetLimit = parsed
-				if facetLimit > 1000 {
-					facetLimit = 1000
-				}
+				facetLimit = min(parsed, 1000)
 			}
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
@@ -468,11 +465,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	// The tags filter
-	if tags, ok := queryParams["tag"]; ok {
+	if v, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "tags",
 			Operator: "=",
-			Values:   tags,
+			Values:   v,
 		})
 	}
 
@@ -495,11 +492,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	// The libraryPanel filter
-	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+	if v, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
-			Values:   libraryPanel,
+			Values:   v,
 		})
 	}
 
