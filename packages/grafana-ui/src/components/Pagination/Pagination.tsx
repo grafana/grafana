@@ -19,6 +19,8 @@ export interface Props {
   /** Small version only shows the current page and the navigation buttons. */
   showSmallVersion?: boolean;
   className?: string;
+  /** If we are using cursor based pagination, disable next page button when we have no cursor */
+  hasNextPage?: boolean;
 }
 
 /**
@@ -33,6 +35,7 @@ export const Pagination = ({
   hideWhenSinglePage,
   showSmallVersion,
   className,
+  hasNextPage,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
@@ -122,13 +125,14 @@ export const Pagination = ({
           </Button>
         </li>
         {pageButtons}
+        {pageButtons.length === 0 && <li className={styles.item}>{currentPage}</li>}
         <li className={styles.item}>
           <Button
             aria-label={nextPageLabel}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
-            disabled={currentPage === numberOfPages}
+            disabled={!hasNextPage || currentPage === numberOfPages}
           >
             <Icon name="angle-right" />
           </Button>

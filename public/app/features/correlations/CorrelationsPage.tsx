@@ -42,6 +42,7 @@ type CorrelationsPageProps = {
     | Status
   >;
   error?: Error;
+  hasNextPage?: boolean;
 };
 
 const collator = new Intl.Collator();
@@ -57,7 +58,7 @@ const loaderWrapper = css({
 });
 
 export default function CorrelationsPage(props: CorrelationsPageProps) {
-  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn } = props;
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn, hasNextPage } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
@@ -157,6 +158,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations]
   );
 
+  console.log(correlations?.totalCount, correlations?.limit);
   const corrData = correlations?.correlations ?? [];
   const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
@@ -231,6 +233,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
                   }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
+                hasNextPage={hasNextPage}
               />
             </>
           )}

@@ -23,7 +23,7 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
         config: {
           field: item.spec.config.field,
           target: {
-            url: item.spec.config.target.url || '',
+            url: item.spec.config?.target?.url || '',
           },
           transformations: [], // todo fix
         },
@@ -73,5 +73,6 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
     isLoading,
     error: fmtedError,
     remainingItems: currentData?.metadata.remainingItemCount || 0,
+    doesContinue: currentData?.metadata.continue !== undefined,
   };
 };

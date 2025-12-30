@@ -24,8 +24,8 @@ export function CorrelationsPageLegacy() {
 function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
   let totalItems = useRef(0);
-  const limit = 100;
-  const { currentData, isLoading, error, remainingItems } = useCorrelationsK8s(limit, page);
+  const limit = 10;
+  const { currentData, isLoading, error, remainingItems, doesContinue } = useCorrelationsK8s(limit, page);
   const [deleteCorrelation] = useDeleteCorrelationMutation();
   if (page === 1) {
     totalItems.current = remainingItems;
@@ -54,6 +54,7 @@ function CorrelationsPageAppPlatform() {
         const deleteData = deleteCorrelation({ name: params.uid });
         return deleteData.unwrap();
       }}
+      hasNextPage={doesContinue}
     />
   );
 }
