@@ -19,7 +19,7 @@ export interface SparklineProps extends Themeable2 {
 
 export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   const { sparkline, config: fieldConfig, theme, width, height, showHighlights } = props;
-  
+
   const { frame: alignedDataFrame, warning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
   if (warning) {
     return null;
