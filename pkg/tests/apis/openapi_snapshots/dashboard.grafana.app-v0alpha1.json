@@ -2176,6 +2176,18 @@
         ],
         "description": "Get Snapshot sharing settings",
         "operationId": "getSnapshotSettings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
         "responses": {
           "200": {
             "content": {
