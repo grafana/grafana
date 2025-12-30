@@ -79,13 +79,13 @@ export function PluginUsage({ plugin }: Props) {
     return (
       <Alert
         title={t(
-          'plugins.plugin-usage.title-missing-feature-toggle-unified-storage-search',
+          'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
           'Missing feature toggle: {{toggle}}',
           { toggle: 'unifiedStorageSearchUI' }
         )}
         severity="warning"
       >
-        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-unified-storage-search">
+        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-panel-title-search">
           Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle
         </Trans>
       </Alert>
