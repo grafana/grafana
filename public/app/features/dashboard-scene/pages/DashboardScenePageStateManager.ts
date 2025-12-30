@@ -114,7 +114,7 @@ interface DashboardScenePageStateManagerLike<T> {
  * Creates scene creation options with appropriate layout creator
  * based on feature flags and dashboard type.
  */
-function getSceneCreationOptions(
+export function getSceneCreationOptions(
   loadOptions?: LoadDashboardOptions,
   meta?: { isSnapshot?: boolean }
 ): SceneCreationOptions | undefined {
