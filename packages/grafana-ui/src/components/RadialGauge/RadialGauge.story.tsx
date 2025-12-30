@@ -32,24 +32,6 @@ const meta: Meta<StoryProps> = {
     controls: {
       exclude: ['theme', 'values', 'vizCount'],
     },
-    a11y: {
-      config: {
-        rules: [
-          {
-            id: 'scrollable-region-focusable',
-            selector: 'body',
-            enabled: false,
-          },
-          // NOTE: this is necessary due to a false positive with the filered svg glow in one of the examples.
-          // The color-contrast in this component should be accessible!
-          {
-            id: 'color-contrast',
-            selector: 'text',
-            enabled: false,
-          },
-        ],
-      },
-    },
   },
   args: {
     barWidthFactor: 0.2,
