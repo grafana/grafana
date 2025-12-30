@@ -169,8 +169,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           angleRange={angleRange}
           startAngle={startAngle}
           roundedBars={roundedBars}
-          glowFilter={`url(#${glowFilterId})`}
-          endpointMarkerGlowFilter={`url(#${spotlightGradientId})`}
+          glowFilter={glowBar ? `url(#${glowFilterId})` : undefined}
+          endpointMarkerGlowFilter={endpointMarker === 'glow' ? `url(#${spotlightGradientId})` : undefined}
           shape={shape}
           gradient={gradientStops}
           fieldDisplay={displayValue}
@@ -182,7 +182,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     // These elements are only added for first value / bar
     if (barIndex === 0) {
       if (glowBar) {
-        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} barWidth={dimensions.barWidth} />);
+        defs.push(<GlowGradient key={glowFilterId} id={glowFilterId} barWidth={dimensions.barWidth} />);
       }
 
       if (glowCenter) {
@@ -233,7 +233,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               endAngle={endAngle}
               angleRange={angleRange}
               roundedBars={roundedBars}
-              glowFilter={`url(#${glowFilterId})`}
+              glowFilter={glowBar ? `url(#${glowFilterId})` : undefined}
               shape={shape}
               gradient={gradientStops}
             />
