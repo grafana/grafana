@@ -88,7 +88,7 @@ export const createReducer =
     }
 
     if (changeEditorTypeAndResetQuery.match(action)) {
-      // Returns the default bugcket agg. We will always want to set the default when switching types
+      // Returns the default bucket agg. We will always want to set the default when switching types
       return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
     }
 
