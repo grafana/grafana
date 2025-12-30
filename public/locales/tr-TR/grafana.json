@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Özel ek açıklama içeriği girin..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Kurallar klasörden başarıyla silindi"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. Aralık = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Seçilen sorgular ve ifadeler varsayılana dönüştürülemez. Gelişmiş seçenekleri devre dışı bırakırsanız sorgunuz ve koşulunuz varsayılan ayarlara sıfırlanır."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Ön izleme",
-      "previewCondition": "Uyarı kuralı koşulunu ön izle"
+      "previewCondition": "Uyarı kuralı koşulunu ön izle",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "",
@@ -2665,6 +2674,35 @@
       "deleting": "Siliniyor",
       "text-federated": "Şirket dışı",
       "text-provisioned": "Sağlanan"
+    },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
     },
     "search": {
       "property": {
@@ -3717,7 +3755,10 @@
       "text": "Sorgunuz için sonuç bulunamadı"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -6180,7 +6221,7 @@
         "title-someone-else-has-updated-this-dashboard": "Başka biri bu panoyu güncelledi",
         "would-still-dashboard": "Yine de bu panoyu kaydetmek istiyor musunuz?"
       },
-      "save-and-overwrite": "\"Kaydet ve üzerine yaz\""
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7165,6 +7206,9 @@
       "time-range-label": "Zaman aralığını kilitle"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Uzman ipucu: {{proTip}}"
   },
@@ -7641,39 +7685,6 @@
       },
       "share-span": "Paylaş"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Maksimum zaman aralığı işlecini seçin",
-      "aria-label-select-min-span-operator": "Minimum zaman aralığı işlecini seçin",
-      "aria-label-select-service-name": "Hizmet adını seç",
-      "aria-label-select-service-name-operator": "Hizmet adını işlecini seç",
-      "aria-label-select-span-name": "Zaman aralığı adı seç",
-      "aria-label-select-span-name-operator": "Zaman aralığı adı işleci seçin",
-      "ariaLabel-select-max-span-duration": "Maksimum zaman aralığı süresini seçin",
-      "ariaLabel-select-min-span-duration": "Minimum zaman aralığı süresini seçin",
-      "label-collapse": "Zaman aralığı filtreleri",
-      "label-duration": "Süre",
-      "label-service-name": "Hizmet adı",
-      "label-span-name": "Zaman aralığı adı",
-      "label-tags": "Etiketler",
-      "placeholder-all-service-names": "Tüm hizmet adları",
-      "placeholder-all-span-names": "Tüm zaman aralığı adları",
-      "tooltip-collapse": "Aşağıdaki zaman aralıklarınızı filtreleyin. İlginizi en çok çeken birkaç sonucu daraltana kadar filtre uygulamaya devam edebilirsiniz.",
-      "tooltip-duration": "Süreye göre filtreleyin. Kabul edilen birimler: {{units}}",
-      "tooltip-tags": "Zamanlardaki etiketlere, işlem etiketlerine veya günlük kaydı alanlarına göre filtreleyin."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Etiket ekle",
-      "aria-label-input-tag-value": "Etiket değeri girin",
-      "aria-label-remove-tag": "Etiketi kaldır",
-      "aria-label-select-tag-key": "Etiket anahtarını seçin",
-      "aria-label-select-tag-operator": "Etiket işlecini seçin",
-      "aria-label-select-tag-value": "Etiket değerini seçin",
-      "placeholder-select-tag": "Etiket seçin",
-      "placeholder-select-value": "Değer seçin",
-      "placeholder-tag-value": "Etiket değeri",
-      "tooltip-add-tag": "Etiket ekle",
-      "tooltip-remove-tag": "Etiketi kaldır"
-    },
     "span-flame-graph": {
       "flame-graph": "Alev grafiği"
     },
@@ -7872,23 +7883,18 @@
       "label-upsample": "Örneklemeyi artır",
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "",
-      "modal-title": "",
       "tooltip-experimental": ""
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Girdi"
@@ -7963,11 +7969,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9393,6 +9395,7 @@
     "name-unit": "Birim",
     "name-value-name": "Değer adı",
     "name-y-axis-scale": "Y ekseni ölçeği",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Otomatik",
     "placeholder-axis-width": "Otomatik",
     "placeholder-decimals": "Otomatik",
@@ -9422,6 +9425,18 @@
       "label-all": "Tümü",
       "label-hidden": "Gizli",
       "label-single": "Tek"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -11203,9 +11218,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11972,7 +11992,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Ayrıntıları görüntüleyin",
       "loading-finished-job": "Tamamlanan iş yükleniyor...",
@@ -12078,6 +12101,9 @@
       "webhook-last-event": "Son Olay:",
       "webhook-url": "Web Kancasını Görüntüle"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Depolara geri dön",
       "cleaning-up-resources": "Depo kaynakları temizleniyor",
@@ -12182,6 +12208,9 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12201,10 +12230,15 @@
     },
     "warning-title-default": "Uyarı",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "Bu işlemin süresi dâhil olan kaynakların sayısına bağlıdır.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12223,6 +12257,7 @@
       "step-finish": "Ek ayarlar seçin",
       "step-synchronize": "Harici depolama ile senkronize et",
       "sync-description": "Kaynakları harici depolama ile senkronize edin. Bu tek seferlik adımdan sonra tüm gelecekteki güncellemeler otomatik olarak depoya kaydedilecek ve örneğe geri sağlanacaktır.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Nelerin senkronize edileceğini seçin",
       "title-connect": "Harici depolamaya bağlan",
       "title-finish": "Ek ayarlar seçin",
@@ -12460,16 +12495,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",

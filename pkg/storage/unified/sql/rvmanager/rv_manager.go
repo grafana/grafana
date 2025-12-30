@@ -1,4 +1,4 @@
-package sql
+package rvmanager
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -19,6 +20,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type contextKey string
+
+const txKey contextKey = "rvmanager_db_tx"
+
+func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
+	return context.WithValue(ctx, txKey, tx)
+}
+
+func TxFromCtx(ctx context.Context) (db.Tx, bool) {
+	tx, ok := ctx.Value(txKey).(db.Tx)
+	return tx, ok
+}
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (
 	rvmWriteDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
@@ -62,8 +78,8 @@ const (
 	defaultBatchTimeout     = 5 * time.Second
 )
 
-// resourceVersionManager handles resource version operations
-type resourceVersionManager struct {
+// ResourceVersionManager handles resource version operations
+type ResourceVersionManager struct {
 	dialect    sqltemplate.Dialect
 	db         db.DB
 	batchMu    sync.RWMutex
@@ -100,7 +116,7 @@ type ResourceManagerOptions struct {
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
-func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionManager, error) {
+func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionManager, error) {
 	if opts.MaxBatchSize == 0 {
 		opts.MaxBatchSize = defaultMaxBatchSize
 	}
@@ -113,7 +129,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 	if opts.DB == nil {
 		return nil, errors.New("db is required")
 	}
-	return &resourceVersionManager{
+	return &ResourceVersionManager{
 		dialect:          opts.Dialect,
 		db:               opts.DB,
 		batchChMap:       make(map[string]chan *writeOp),
@@ -123,7 +139,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*resourceVersionMan
 }
 
 // ExecWithRV executes the given function with an incremented resource version
-func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
+func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
 	rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
 	defer rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
 
@@ -179,7 +195,7 @@ func (m *resourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 }
 
 // startBatchProcessor is responsible for processing batches of write operations
-func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
+func (m *ResourceVersionManager) startBatchProcessor(group, resource string) {
 	ctx := context.TODO()
 	batchKey := fmt.Sprintf("%s/%s", group, resource)
 
@@ -216,7 +232,11 @@ func (m *resourceVersionManager) startBatchProcessor(group, resource string) {
 	}
 }
 
-func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
+var readCommitted = &sql.TxOptions{
+	Isolation: sql.LevelReadCommitted,
+}
+
+func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource string, batch []writeOp) {
 	ctx, span := tracer.Start(ctx, "sql.resourceVersionManager.execBatch")
 	defer span.End()
 
@@ -245,7 +265,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 	guids := make([]string, len(batch)) // The GUIDs of the created resources in the same order as the batch
 	rvs := make([]int64, len(batch))    // The RVs of the created resources in the same order as the batch
 
-	err = m.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err = m.db.WithTx(ctx, readCommitted, func(ctx context.Context, tx db.Tx) error {
 		span.AddEvent("starting_batch_transaction")
 
 		writeTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
@@ -268,7 +288,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		lockTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
 		}))
-		rv, err := m.lock(ctx, tx, group, resource)
+		rv, err := m.Lock(ctx, tx, group, resource)
 		lockTimer.ObserveDuration()
 		if err != nil {
 			span.AddEvent("resource_version_lock_failed", trace.WithAttributes(
@@ -287,12 +307,12 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
-			guidToSnowflakeRV[guid] = snowflakeFromRv(rv)
+			guidToSnowflakeRV[guid] = SnowflakeFromRv(rv)
 			rvs[i] = rv
 			rv++
 		}
 		// Update the resource version for the created resources in both the resource and the resource history
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
+		if _, err := dbutil.Exec(ctx, tx, SqlResourceUpdateRV, SqlResourceUpdateRVRequest{
 			SQLTemplate: sqltemplate.New(m.dialect),
 			GUIDToRV:    guidToRV,
 		}); err != nil {
@@ -303,7 +323,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		}
 		span.AddEvent("resource_versions_updated")
 
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
+		if _, err := dbutil.Exec(ctx, tx, SqlResourceHistoryUpdateRV, SqlResourceUpdateRVRequest{
 			SQLTemplate:       sqltemplate.New(m.dialect),
 			GUIDToRV:          guidToRV,
 			GUIDToSnowflakeRV: guidToSnowflakeRV,
@@ -316,7 +336,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		span.AddEvent("resource_history_versions_updated")
 
 		// Record the latest RV in the resource version table
-		err = m.saveRV(ctx, tx, group, resource, rv)
+		err = m.SaveRV(ctx, tx, group, resource, rv)
 		if err != nil {
 			span.AddEvent("save_rv_failed", trace.WithAttributes(
 				attribute.String("error", err.Error()),
@@ -346,24 +366,34 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 
 // takes a unix microsecond rv and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
-func snowflakeFromRv(rv int64) int64 {
+func SnowflakeFromRv(rv int64) int64 {
 	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
 }
 
-// lock locks the resource version for the given key
-func (m *resourceVersionManager) lock(ctx context.Context, x db.ContextExecer, group, resource string) (nextRV int64, err error) {
+// helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
+// if comparison fails
+func IsRvEqual(rv1, rv2 int64) bool {
+	if rv1 == rv2 {
+		return true
+	}
+
+	return rv1 == SnowflakeFromRv(rv2)
+}
+
+// Lock locks the resource version for the given key
+func (m *ResourceVersionManager) Lock(ctx context.Context, x db.ContextExecer, group, resource string) (nextRV int64, err error) {
 	// 1. Lock the row and prevent concurrent updates until the transaction is committed
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+	res, err := dbutil.QueryRow(ctx, x, SqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(m.dialect),
 		Group:       group,
 		Resource:    resource,
-		Response:    new(resourceVersionResponse),
+		Response:    new(ResourceVersionResponse),
 		ReadOnly:    false, // Lock the row for update
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// If there wasn't a row for this resource, create it
-		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
+		if _, err = dbutil.Exec(ctx, x, SqlResourceVersionInsert, SqlResourceVersionUpsertRequest{
 			SQLTemplate: sqltemplate.New(m.dialect),
 			Group:       group,
 			Resource:    resource,
@@ -372,11 +402,11 @@ func (m *resourceVersionManager) lock(ctx context.Context, x db.ContextExecer, g
 		}
 
 		// Fetch the newly created resource version
-		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+		res, err = dbutil.QueryRow(ctx, x, SqlResourceVersionGet, sqlResourceVersionGetRequest{
 			SQLTemplate: sqltemplate.New(m.dialect),
 			Group:       group,
 			Resource:    resource,
-			Response:    new(resourceVersionResponse),
+			Response:    new(ResourceVersionResponse),
 			ReadOnly:    true,
 		})
 		if err != nil {
@@ -390,8 +420,8 @@ func (m *resourceVersionManager) lock(ctx context.Context, x db.ContextExecer, g
 	return max(res.CurrentEpoch, res.ResourceVersion+1), nil
 }
 
-func (m *resourceVersionManager) saveRV(ctx context.Context, x db.ContextExecer, group, resource string, rv int64) error {
-	_, err := dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
+func (m *ResourceVersionManager) SaveRV(ctx context.Context, x db.ContextExecer, group, resource string, rv int64) error {
+	_, err := dbutil.Exec(ctx, x, SqlResourceVersionUpdate, SqlResourceVersionUpsertRequest{
 		SQLTemplate:     sqltemplate.New(m.dialect),
 		Group:           group,
 		Resource:        resource,

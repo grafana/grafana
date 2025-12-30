@@ -642,6 +642,12 @@ You must also provide the `rudderstack_write_key` to enable this feature.
 Optional.
 If tracking with RudderStack is enabled, you can provide a custom URL to load the RudderStack SDK.
 
+#### `rudderstack_v3_sdk_url`
+
+Optional.
+This is mirroring the old configuration option, which will be deprecated.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+
 #### `rudderstack_config_url`
 
 Optional.
@@ -2045,6 +2051,10 @@ This section applies only to rules imported as Grafana-managed rules. For more i
 #### `rule_query_offset`
 
 Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+#### `default_datasource_uid`
+
+Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
 <hr>
 

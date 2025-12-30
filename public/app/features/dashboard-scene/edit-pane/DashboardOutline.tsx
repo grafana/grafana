@@ -94,7 +94,11 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={{ '--depth': depth } as React.CSSProperties}
     >
-      <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
+      <div
+        className={cx(styles.row, isEditing ? styles.rowEditMode : styles.rowViewMode, {
+          [styles.rowSelected]: isSelected,
+        })}
+      >
         <div className={styles.indentation}></div>
         {isContainer && (
           <button
@@ -191,11 +195,17 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
-
+    }),
+    rowEditMode: css({
       '&:hover': {
         color: theme.colors.text.primary,
         outline: `1px dashed ${theme.colors.border.strong}`,
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+      },
+    }),
+    rowViewMode: css({
+      '&:hover': {
+        textDecoration: 'underline',
       },
     }),
     rowSelected: css({
