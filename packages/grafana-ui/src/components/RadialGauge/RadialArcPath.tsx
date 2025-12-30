@@ -56,7 +56,7 @@ export const RadialArcPath = memo(
     const boxY = Math.round(centerY - radius - barWidth - pad);
     const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
 
-    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: boxSize, marginLeft: boxX };
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
     if ('color' in rest) {
       bgDivStyle.backgroundColor = rest.color;
     } else {
