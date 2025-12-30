@@ -144,6 +144,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "panelType",
+										In:          "query",
+										Description: "find dashboards using panels of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dataSourceType",
+										In:          "query",
+										Description: "find dashboards using datasources of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
 										Description: "permission needed for the resource (view, edit, admin)",
@@ -455,6 +473,24 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      "tags",
 			Operator: "=",
 			Values:   tags,
+		})
+	}
+
+	// filter by panelType
+	if v, ok := queryParams["panelType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	// filter by panelType
+	if v, ok := queryParams["dataSourceType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Operator: "=",
+			Values:   v,
 		})
 	}
 

@@ -79,6 +79,14 @@
         "type": "graph"
       },
       {
+        "id": 20,
+        "type": "graph"
+      },
+      {
+        "id": 30,
+        "type": "graph"
+      },
+      {
         "collapsed": true,
         "gridPos": {
           "h": 1,
@@ -101,6 +109,10 @@
               "uid": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
             },
             "title": "blue pie"
+          },
+          {
+            "id": 40,
+            "type": "pie"
           }
         ],
         "title": "collapsed row",

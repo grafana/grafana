@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,6 +19,7 @@ import (
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
+const DASHBOARD_PANEL_TITLE = "panel_title"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
 const DASHBOARD_LIBRARY_PANEL_REFERENCE = "reference.LibraryPanel"
@@ -54,10 +56,20 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			Description: "How many links appear on the page",
 		},
 		{
+			Name:        DASHBOARD_PANEL_TITLE,
+			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+			IsArray:     true,
+			Description: "The panel title text",
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+				Filterable: false, // full text
+				FreeText:   true,
+			},
+		},
+		{
 			Name:        DASHBOARD_PANEL_TYPES,
 			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 			IsArray:     true,
-			Description: "How many links appear on the page",
+			Description: "The panel types used in this dashboard",
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
@@ -269,13 +281,23 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
 
+	panelTitles := []string{}
+	layoutTypes := []string{} // useful in v2 for rows, tabs, etc
 	panelTypes := []string{}
 	transformations := []string{}
 	dsTypes := []string{}
 
-	for _, p := range summary.Panels {
-		if p.Type != "" {
+	for p := range summary.PanelIterator() {
+		switch p.Type {
+		case "": // ignore
+		case "row":
+			layoutTypes = append(layoutTypes, "row") // row is a hacked panel type
+		default:
 			panelTypes = append(panelTypes, p.Type)
+		}
+
+		if len(p.Title) > 0 {
+			panelTitles = append(panelTitles, p.Title)
 		}
 		if len(p.Transformer) > 0 {
 			transformations = append(transformations, p.Transformer...)
@@ -309,17 +331,23 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
+	if len(layoutTypes) > 0 {
+		sort.Strings(layoutTypes)
+	}
+	if len(panelTitles) > 0 {
+		doc.Fields[DASHBOARD_PANEL_TITLE] = slices.Compact(panelTitles)
+	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
-		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes
+		doc.Fields[DASHBOARD_PANEL_TYPES] = slices.Compact(panelTypes)
 	}
 	if len(dsTypes) > 0 {
 		sort.Strings(dsTypes)
-		doc.Fields[DASHBOARD_DS_TYPES] = dsTypes
+		doc.Fields[DASHBOARD_DS_TYPES] = slices.Compact(dsTypes)
 	}
 	if len(transformations) > 0 {
 		sort.Strings(transformations)
-		doc.Fields[DASHBOARD_TRANSFORMATIONS] = transformations
+		doc.Fields[DASHBOARD_TRANSFORMATIONS] = slices.Compact(transformations)
 	}
 
 	for k, v := range s.Stats[summary.UID] {

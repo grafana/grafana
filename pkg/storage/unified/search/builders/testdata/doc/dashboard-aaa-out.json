@@ -32,10 +32,15 @@
     "errors_last_7_days": 1,
     "grafana.app/deprecatedInternalID": 141,
     "link_count": 0,
+    "panel_title": [
+      "green pie",
+      "blue pie",
+      "collapsed row"
+    ],
     "panel_types": [
       "barchart",
       "graph",
-      "row"
+      "pie"
     ],
     "schema_version": 38
   },
@@ -45,6 +50,12 @@
       "group": "my-custom-plugin",
       "kind": "DataSource",
       "name": "DSUID"
+    },
+    {
+      "relation": "depends-on",
+      "group": "dashboards.grafana.app",
+      "kind": "LibraryPanel",
+      "name": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
     },
     {
       "relation": "depends-on",

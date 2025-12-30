@@ -297,6 +297,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
     }
 
+    if (query.ds_type?.length) {
+      // filter resource types
+      uri += '&dataSourceType=' + query.ds_type;
+    }
+
+    if (query.panel_type?.length) {
+      // filter resource types
+      uri += '&panelType=' + query.panel_type;
+    }
+
     if (query.tags?.length) {
       uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }

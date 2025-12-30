@@ -74,17 +74,17 @@ export function PluginUsage({ plugin }: Props) {
     return <Spinner />;
   }
 
-  if (!config.featureToggles.panelTitleSearch) {
+  if (!config.featureToggles.unifiedStorageSearchUI) {
     return (
       <Alert
         title={t(
-          'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
+          'plugins.plugin-usage.title-missing-feature-toggle-unified-storage-search',
           'Missing feature toggle: {{toggle}}',
-          { toggle: 'panelTitleSearch' }
+          { toggle: 'unifiedStorageSearchUI' }
         )}
         severity="warning"
       >
-        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-panel-title-search">
+        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-unified-storage-search">
           Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle
         </Trans>
       </Alert>
