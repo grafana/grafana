@@ -15,8 +15,9 @@ export function getPublicOrAbsoluteUrl(path: unknown): string {
   // NOTE: The value of `path` could be either an URL string or a relative
   //       path to a Grafana CDN asset served from the CDN.
   const isUrl = path.indexOf(':/') > 0;
+  const publicPath = window.__grafana_public_path__ || '/';
 
-  return isUrl ? path : `${window.__grafana_public_path__}build/${path}`;
+  return isUrl ? path : `${publicPath}build/${path}`;
 }
 
 export function getResourceDimension(

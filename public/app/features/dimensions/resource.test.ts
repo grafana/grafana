@@ -203,4 +203,25 @@ describe('getPublicOrAbsoluteUrl', () => {
     expect(getPublicOrAbsoluteUrl({ path: 'icon.png' })).toEqual('');
     expect(getPublicOrAbsoluteUrl(['icon.png'])).toEqual('');
   });
+
+  it('should handle undefined publicPath gracefully', () => {
+    const originalPath = window.__grafana_public_path__;
+
+    // @ts-ignore - Intentionally testing runtime edge case
+    window.__grafana_public_path__ = undefined;
+
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+
+    window.__grafana_public_path__ = originalPath;
+  });
+
+  it('should handle empty string publicPath gracefully', () => {
+    const originalPath = window.__grafana_public_path__;
+
+    window.__grafana_public_path__ = '';
+
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+
+    window.__grafana_public_path__ = originalPath;
+  });
 });
