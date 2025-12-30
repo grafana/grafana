@@ -275,6 +275,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
             const panel = this.state.panelRef.resolve();
             let editPreview: VizPanel | undefined;
             if (newState.isVizPickerOpen) {
+              // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
               const editPreviewBuilder = PanelBuilders.timeseries()
                 .setTitle(panel.state.title)
                 .setDescription(panel.state.description);
