@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId } from 'react';
+import { useId, ReactNode } from 'react';
 
 import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -106,9 +106,9 @@ export function RadialGauge(props: RadialGaugeProps) {
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
 
-  const defs: React.ReactNode[] = [];
-  const graphics: React.ReactNode[] = [];
-  let sparklineElement: React.ReactNode | null = null;
+  const defs: ReactNode[] = [];
+  const graphics: ReactNode[] = [];
+  let sparklineElement: ReactNode | null = null;
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
@@ -259,7 +259,7 @@ export function RadialGauge(props: RadialGaugeProps) {
   const body = (
     <>
       <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
-        <defs>{defs}</defs>
+        {defs.length > 0 && <defs>{defs}</defs>}
         {graphics}
       </svg>
       {sparklineElement}

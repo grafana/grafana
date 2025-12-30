@@ -155,6 +155,8 @@ export function calculateDimensions(
   }
 
   return {
+    vizWidth: width,
+    vizHeight: height,
     margin,
     gaugeBottomY: centerY + belowCenterY,
     radius: innerRadius,
