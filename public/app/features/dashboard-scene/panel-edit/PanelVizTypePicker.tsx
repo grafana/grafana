@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { useSessionStorage } from 'react-use';
+import { useMedia, useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, useTheme2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -45,15 +45,18 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
 
 export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
   const filterId = useId();
   const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null);
 
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+
   useEffect(() => {
-    if (searchInputRef) {
+    if (searchInputRef && !isMobile) {
       searchInputRef.focus();
     }
-  }, [searchInputRef]);
+  }, [searchInputRef, isMobile]);
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
