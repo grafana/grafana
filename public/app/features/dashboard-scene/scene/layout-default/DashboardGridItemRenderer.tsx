@@ -27,7 +27,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     () =>
       memo(function LazyPanelWrapperInner({ item }: { item: VizPanel }) {
         return isLazy ? (
-          <LazyLoader className={panelWrapper}>
+          <LazyLoader key={item.state.key!} className={panelWrapper}>
             <item.Component model={item} />
           </LazyLoader>
         ) : (
