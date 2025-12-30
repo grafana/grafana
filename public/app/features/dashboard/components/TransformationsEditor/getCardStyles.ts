@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getCardStyles = (theme: GrafanaTheme2, fullWidth = false) => ({
+export const getCardStyles = (theme: GrafanaTheme2, fullWidth?: boolean) => ({
   baseCard: css({
     maxWidth: fullWidth ? 'none' : '200px',
     width: fullWidth ? '100%' : 'auto',
