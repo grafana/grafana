@@ -246,6 +246,8 @@ const injectedRtkApi = api
             facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
+            panelType: queryArg.panelType,
+            dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
@@ -670,6 +672,10 @@ export type SearchDashboardsAndFoldersApiArg = {
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
+  /** find dashboards using panels of a given plugin type */
+  panelType?: string;
+  /** find dashboards using datasources of a given plugin type */
+  dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin) */
   permission?: 'view' | 'edit' | 'admin';
   /** sortable field */
