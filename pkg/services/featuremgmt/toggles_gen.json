@@ -2017,8 +2017,9 @@
     {
       "metadata": {
         "name": "kubernetesDashboardsV2",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-12-02T08:42:19Z"
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z",
+        "deletionTimestamp": "2025-12-05T13:43:57Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",

@@ -98,7 +98,7 @@ You can share dashboards in the following ways:
 - [As a report](#schedule-a-report)
 - [As a snapshot](#share-a-snapshot)
 - [As a PDF export](#export-a-dashboard-as-pdf)
-- [As a JSON file export](#export-a-dashboard-as-json)
+- [As a JSON file export](#export-a-dashboard-as-code)
 - [As an image export](#export-a-dashboard-as-an-image)
 
 When you share a dashboard externally as a link or by email, those dashboards are included in a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
