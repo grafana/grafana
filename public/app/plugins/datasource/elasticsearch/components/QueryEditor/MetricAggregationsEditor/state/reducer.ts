@@ -4,7 +4,7 @@ import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasourc
 
 import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 
@@ -63,6 +63,11 @@ export const reducer = (
           ...metricAggregationConfig[action.payload.type].defaults,
         } as MetricAggregation;
       });
+  }
+
+  if (changeEditorTypeAndResetQuery.match(action)) {
+    // Reset to default metric when switching to editor types
+    return [defaultMetricAgg('1')];
   }
 
   if (changeMetricField.match(action)) {

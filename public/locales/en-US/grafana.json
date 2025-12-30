@@ -5967,6 +5967,9 @@
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
+    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
