@@ -126,11 +126,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
-  /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
   renderAuthJWT?: boolean;
@@ -426,6 +421,10 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
+  * Enable audit logging with Kubernetes under app platform
+  */
+  auditLoggingAppPlatform?: boolean;
+  /**
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;
@@ -499,6 +498,10 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
+  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+  */
+  dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -535,6 +538,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -1164,6 +1171,11 @@ export interface FeatureToggles {
   * @default false
   */
   externalVizSuggestions?: boolean;
+  /**
+  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
+  * @default false
+  */
+  heatmapRowsAxisOptions?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true

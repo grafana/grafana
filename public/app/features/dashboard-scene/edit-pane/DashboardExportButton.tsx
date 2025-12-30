@@ -18,7 +18,7 @@ const newExportButtonSelector = selectors.pages.Dashboard.DashNav.NewExportButto
 
 export function ShareExportDashboardButton({ dashboard }: Props) {
   return (
-    <Dropdown overlay={<ExportMenu dashboard={dashboard} />} placement="left-end">
+    <Dropdown overlay={<ExportMenu dashboard={dashboard} />} placement="left-start">
       <Sidebar.Button
         icon="download-alt"
         data-testid={newExportButtonSelector.Menu.container}

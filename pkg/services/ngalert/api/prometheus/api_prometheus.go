@@ -54,6 +54,7 @@ type StatusReader interface {
 
 type ProvenanceStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]ngmodels.Provenance, error)
+	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error)
 }
 
 type PrometheusSrv struct {
@@ -328,14 +329,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	span.AddEvent("User permissions checked")
 	span.SetAttributes(attribute.Int("allowedNamespaces", len(allowedNamespaces)))
 
-	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
-	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
-		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
-	}
-
 	ruleResponse = PrepareRuleGroupStatusesV2(
 		srv.log,
 		srv.store,
@@ -347,7 +340,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 		RuleStatusMutatorGenerator(srv.status),
 		RuleAlertStateMutatorGenerator(srv.manager),
-		provenanceRecords,
+		srv.provenanceStore,
 	)
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
@@ -357,7 +350,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 type RuleStatusMutator func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule)
 
 // mutator function used to attach alert states to the rule and returns the totals and filtered totals
-type RuleAlertStateMutator func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (total map[string]int64, filteredTotal map[string]int64)
+type RuleAlertStateMutator func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (total map[string]int64, filteredTotal map[string]int64)
 
 func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
 	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule) {
@@ -377,31 +370,17 @@ func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
 }
 
 func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
-	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (map[string]int64, map[string]int64) {
+	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
 		states := manager.GetStatesForRuleUID(source.OrgID, source.UID)
 		totals := make(map[string]int64)
 		totalsFiltered := make(map[string]int64)
 		for _, alertState := range states {
 			activeAt := alertState.StartsAt
-			valString := ""
-			if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
-				valString = FormatValues(alertState)
-			}
 			stateKey := strings.ToLower(alertState.State.String())
 			totals[stateKey] += 1
 			// Do not add error twice when execution error state is Error
 			if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
 				totals["error"] += 1
-			}
-			alert := apimodels.Alert{
-				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
-				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
-
-				// TODO: or should we make this two fields? Using one field lets the
-				// frontend use the same logic for parsing text on annotations and this.
-				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
-				ActiveAt: &activeAt,
-				Value:    valString,
 			}
 
 			// Set the state of the rule based on the state of its alerts.
@@ -442,7 +421,23 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 				totalsFiltered["error"] += 1
 			}
 
-			toMutate.Alerts = append(toMutate.Alerts, alert)
+			if limitAlerts != 0 {
+				valString := ""
+				if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
+					valString = FormatValues(alertState)
+				}
+
+				toMutate.Alerts = append(toMutate.Alerts, apimodels.Alert{
+					Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+					Annotations: apimodels.LabelsFromMap(alertState.Annotations),
+
+					// TODO: or should we make this two fields? Using one field lets the
+					// frontend use the same logic for parsing text on annotations and this.
+					State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
+					ActiveAt: &activeAt,
+					Value:    valString,
+				})
+			}
 		}
 		return totals, totalsFiltered
 	}
@@ -452,6 +447,7 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 type paginationContext struct {
 	opts              RuleGroupStatusesOptions
 	provenanceRecords map[string]ngmodels.Provenance
+	provenanceStore   ProvenanceStore
 	ruleStatusMutator RuleStatusMutator
 	alertStateMutator RuleAlertStateMutator
 
@@ -529,6 +525,37 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		attribute.Bool("store_continue_token_set", newToken != ""),
 	)
 	span.AddEvent("Alert rules retrieved from store")
+
+	// Load provenance for this page's rules
+	if ctx.provenanceStore != nil {
+		maxGroups := getInt64WithDefault(ctx.opts.Query, "group_limit", -1)
+		maxRules := getInt64WithDefault(ctx.opts.Query, "rule_limit", -1)
+
+		if maxGroups > 0 || maxRules > 0 {
+			// Paginated, fetch and merge provenances for this page
+			uids := make([]string, 0, len(ruleList))
+			for _, rule := range ruleList {
+				uids = append(uids, rule.UID)
+			}
+			pageProvenances, err := ctx.provenanceStore.GetProvenancesByUIDs(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType(), uids)
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+			if ctx.provenanceRecords == nil {
+				ctx.provenanceRecords = pageProvenances
+			} else {
+				maps.Copy(ctx.provenanceRecords, pageProvenances)
+			}
+		} else if ctx.provenanceRecords == nil {
+			// Not paginated, fetch all once
+			var err error
+			ctx.provenanceRecords, err = ctx.provenanceStore.GetProvenances(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType())
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+		}
+	}
+	span.AddEvent("Provenances retrieved from store")
 
 	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
 
@@ -641,7 +668,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 	return allGroups, rulesTotals, continueToken, nil
 }
 
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -833,7 +860,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	span.SetAttributes(attribute.Bool("compact", compact))
 	pagCtx := &paginationContext{
 		opts:               opts,
-		provenanceRecords:  provenanceRecords,
+		provenanceRecords:  nil,
+		provenanceStore:    provenanceStore,
 		ruleStatusMutator:  ruleStatusMutator,
 		alertStateMutator:  alertStateMutator,
 		namespaceUIDs:      namespaceUIDs,
@@ -1227,7 +1255,7 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 		}
 
 		// mutate rule for alert states
-		totals, totalsFiltered := ruleAlertStateMutator(rule, &alertingRule, stateFilterSet, matchers, labelOptions)
+		totals, totalsFiltered := ruleAlertStateMutator(rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
 
 		if alertingRule.State != "" {
 			rulesTotals[alertingRule.State] += 1

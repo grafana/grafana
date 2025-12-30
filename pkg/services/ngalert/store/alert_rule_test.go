@@ -2462,6 +2462,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleNonempty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
 			ruleGen.WithTitle("rule_nonempty")))
+		// include a rule with no labels at all,
+		// to ensure we handle that case correctly.
+		// JSON functions need to be able to handle null and empty string values.
+		ruleNoLabels := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{}),
+			ruleGen.WithTitle("rule_no_labels")))
 
 		tc := []struct {
 			name          string
@@ -2487,7 +2493,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 			{
 				name: "special characters in labels are handled correctly",
@@ -2536,7 +2542,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNoLabels},
 			},
 			{
 				name: "inequality matcher on non-existent label matches all rules",
@@ -2546,7 +2552,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 						return m
 					}(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 		}
 

@@ -113,6 +113,7 @@ func ProvideMigratorDashboardAccessor(
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
 		accessControl:          accessControl,
+		log:                    log.New("legacy.dashboard.migrator.accessor"),
 	}
 }
 
@@ -136,6 +137,7 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
 		accessControl:          accessControl,
+		log:                    log.New("legacy.dashboard.accessor"),
 	}
 }
 

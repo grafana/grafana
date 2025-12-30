@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Masukkan konten anotasi kustom..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Aturan berhasil dihapus dari folder"
@@ -2195,11 +2200,15 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Kueri dan ekspresi yang dipilih tidak dapat dikonversi ke default. Jika Anda menonaktifkan opsi lanjutan, kueri dan kondisi Anda akan diatur ulang ke pengaturan default."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Pratinjau",
-      "previewCondition": "Pratinjau kondisi aturan peringatan"
+      "previewCondition": "Pratinjau kondisi aturan peringatan",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filter berdasarkan titik kontak",
@@ -2654,6 +2663,35 @@
       "deleting": "Menghapus",
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan"
+    },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
     },
     "search": {
       "property": {
@@ -3701,7 +3739,10 @@
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -6159,7 +6200,7 @@
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
       },
-      "save-and-overwrite": "'Simpan dan timpa'"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7142,6 +7183,9 @@
       "time-range-label": "Kunci rentang waktu"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Kiat Pro: {{proTip}}"
   },
@@ -7616,39 +7660,6 @@
       },
       "share-span": "Bagikan"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Pilih operator rentang maksimum",
-      "aria-label-select-min-span-operator": "Pilih operator rentang min",
-      "aria-label-select-service-name": "Pilih nama layanan",
-      "aria-label-select-service-name-operator": "Pilih operator nama layanan",
-      "aria-label-select-span-name": "Pilih nama rentang",
-      "aria-label-select-span-name-operator": "Pilih operator nama rentang",
-      "ariaLabel-select-max-span-duration": "Pilih durasi rentang maksimum",
-      "ariaLabel-select-min-span-duration": "Pilih durasi rentang minimum",
-      "label-collapse": "Filter Rentang",
-      "label-duration": "Durasi",
-      "label-service-name": "Nama layanan",
-      "label-span-name": "Nama rentang",
-      "label-tags": "Tag",
-      "placeholder-all-service-names": "Semua nama layanan",
-      "placeholder-all-span-names": "Semua nama rentang",
-      "tooltip-collapse": "Filter rentang Anda di bawah ini. Anda dapat terus menerapkan filter hingga Anda mempersempit rentang hasil Anda menjadi beberapa pilihan yang paling Anda minati.",
-      "tooltip-duration": "Filter menurut durasi. Unit yang diterima adalah {{units}}",
-      "tooltip-tags": "Filter berdasarkan tag, tag proses, atau bidang log di rentang Anda."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Tambah tag",
-      "aria-label-input-tag-value": "Masukkan nilai tag",
-      "aria-label-remove-tag": "Hapus tag",
-      "aria-label-select-tag-key": "Pilih kunci tag",
-      "aria-label-select-tag-operator": "Pilih operator tag",
-      "aria-label-select-tag-value": "Pilih nilai tag",
-      "placeholder-select-tag": "Pilih tag",
-      "placeholder-select-value": "Pilih nilai",
-      "placeholder-tag-value": "Nilai tag",
-      "tooltip-add-tag": "Tambah tag",
-      "tooltip-remove-tag": "Hapus tag"
-    },
     "span-flame-graph": {
       "flame-graph": "Grafik api"
     },
@@ -7847,23 +7858,18 @@
       "label-upsample": "Tingkatkan sample",
       "tooltip-s-m-h": "10 dtk, 1 mnt, 30 mnt, 1 jm"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Jalankan kueri",
-      "modal-title": "Editor SQL",
       "tooltip-experimental": "Integrasi LLM Ekspresi SQL bersifat eksperimental. Harap laporkan masalah apa pun kepada tim Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Input"
@@ -7938,11 +7944,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9358,6 +9360,7 @@
     "name-unit": "Unit",
     "name-value-name": "Nama nilai",
     "name-y-axis-scale": "Skala sumbu Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Otomatis",
     "placeholder-axis-width": "Otomatis",
     "placeholder-decimals": "Otomatis",
@@ -9387,6 +9390,18 @@
       "label-all": "Semua",
       "label-hidden": "Tersembunyi",
       "label-single": "Tunggal"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -11157,9 +11172,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11921,7 +11941,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Lihat detail",
       "loading-finished-job": "Memuat pekerjaan yang sudah selesai...",
@@ -12027,6 +12050,9 @@
       "webhook-last-event": "Peristiwa Terakhir:",
       "webhook-url": "Lihat Webhook"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Kembali ke repositori",
       "cleaning-up-resources": "Membersihkan sumber daya repositori",
@@ -12131,6 +12157,9 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12150,10 +12179,15 @@
     },
     "warning-title-default": "Peringatan",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "Durasi proses ini bergantung pada jumlah sumber daya yang terlibat.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12172,6 +12206,7 @@
       "step-finish": "Pilih pengaturan tambahan",
       "step-synchronize": "Sinkronkan dengan penyimpanan eksternal",
       "sync-description": "Sinkronkan sumber daya dengan penyimpanan eksternal. Setelah langkah satu kali ini, semua pembaruan mendatang akan disimpan secara otomatis ke repositori dan disediakan kembali ke instans.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Pilih item yang akan disinkronkan",
       "title-connect": "Hubungkan ke penyimpanan eksternal",
       "title-finish": "Pilih pengaturan tambahan",
@@ -12408,16 +12443,21 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
