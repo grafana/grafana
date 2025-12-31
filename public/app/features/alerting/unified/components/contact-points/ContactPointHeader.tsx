@@ -38,6 +38,10 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
+  const provenance = usingK8sApi
+    ? getAnnotation(contactPoint, K8sAnnotations.Provenance) || contactPoint.provenance
+    : contactPoint.provenance;
+
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
@@ -209,9 +213,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
             {referencedByRulesText}
           </TextLink>
         )}
-        {provisioned && (
-          <ProvisioningBadge tooltip provenance={getAnnotation(contactPoint, K8sAnnotations.Provenance)} />
-        )}
+        {provisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
