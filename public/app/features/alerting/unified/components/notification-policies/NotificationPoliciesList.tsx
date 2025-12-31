@@ -99,6 +99,7 @@ export const NotificationPoliciesList = () => {
     }
     return;
   }, [defaultPolicy]);
+  const routeProvenance = defaultPolicy?.provenance;
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -245,6 +246,7 @@ export const NotificationPoliciesList = () => {
             contactPointsState={contactPointsState.receivers}
             readOnly={!hasConfigurationAPI}
             provisioned={rootRoute[ROUTES_META_SYMBOL]?.provisioned}
+            provenance={routeProvenance}
             alertManagerSourceName={selectedAlertmanager}
             onAddPolicy={openAddModal}
             onEditPolicy={openEditModal}
