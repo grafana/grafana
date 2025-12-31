@@ -8,7 +8,7 @@ manifest: {
 	// By default, an app's API group is LOWER(REPLACE(appName, '-', '')).ext.grafana.com,
 	// but there are cases where this needs to be changed.
 	// Keep in mind that changing this after an app is deployed can cause problems with clients and/or kind data.
-	// groupOverride: foo.ext.grafana.app
+	groupOverride: "dashvalidator.grafana.app"
 
 	// versions is a map of versions supported by your app. Version names should follow the format "v<integer>" or
 	// "v<integer>(alpha|beta)<integer>". Each version contains the kinds your app manages for that version.
