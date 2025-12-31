@@ -535,6 +535,11 @@ export const versionedComponents = {
           '12.3.0': 'data-testid viz-tooltip-wrapper',
         },
       },
+      Gauge: {
+        Container: {
+          '12.4.0': 'data-testid gauge container',
+        },
+      },
     },
   },
   VizLegend: {
