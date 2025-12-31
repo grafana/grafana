@@ -102,6 +102,8 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 	helper := apis.NewK8sTestHelper(t, opts)
 	defer helper.Shutdown()
 
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
 	tests := []struct {
 		Name       string
 		Definition FolderDefinition
@@ -246,6 +248,8 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 			"parentUid": parent,
 		})
 		require.NoError(t, err)
+
+		apis.AwaitZanzanaReconcileNext(t, h)
 
 		var statusCode int
 		result := client.Post().AbsPath("api", "folders").
