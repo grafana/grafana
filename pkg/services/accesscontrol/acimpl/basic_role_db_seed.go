@@ -14,7 +14,7 @@ const (
 
 // refreshBasicRolePermissionsInDB ensures basic role permissions are fully derived from in-memory registrations
 func (s *Service) refreshBasicRolePermissionsInDB(ctx context.Context, rolesSnapshot map[string][]accesscontrol.Permission) error {
-	if s.sql == nil {
+	if s.sql == nil || s.seeder == nil {
 		return nil
 	}
 
