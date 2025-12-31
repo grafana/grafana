@@ -99,13 +99,15 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	}
 
 	if opts.StartImageRenderer {
-		container = container.WithEnvVariable("START_IMAGE_RENDERER", "true").
-			WithExec([]string{"apt-get", "update"}).
-			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
+		imageRendererSvc := d.Container().From("grafana/grafana-image-renderer:" + opts.ImageRendererVersion).
+			WithExposedPort(8081).
+			AsService()
 
-		if opts.ImageRendererVersion != "" {
-			container = container.WithEnvVariable("IMAGE_RENDERER_VERSION", opts.ImageRendererVersion)
-		}
+		container = container.WithServiceBinding("image-renderer", imageRendererSvc).
+			WithExec([]string{"apt-get", "update"}).
+			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"}).
+			WithEnvVariable("GF_RENDERING_CALLBACK_URL", "http://grafana:3001/").
+			WithEnvVariable("GF_RENDERING_SERVER_URL", "http://image-renderer:8081/render")
 	}
 
 	// We add all GF_ environment variables to allow for overriding Grafana configuration.
