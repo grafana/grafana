@@ -847,7 +847,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService, registerer)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
@@ -1509,7 +1509,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService, registerer)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
