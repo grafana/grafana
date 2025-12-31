@@ -105,6 +105,7 @@ export interface GrafanaManagedContactPoint {
   id?: string;
   metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
   provisioned?: boolean;
+  provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 

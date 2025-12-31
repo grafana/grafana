@@ -15,6 +15,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
+import { Provenance } from '../../types/provenance';
 import { extractReceivers } from '../../utils/receivers';
 import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
@@ -146,9 +147,18 @@ export function enhanceContactPointsWithMetadata({
 
     const id = getContactPointIdentifier(contactPoint);
 
+    // Extract provenance from contactPoint first; else, search in its receivers
+    const contactPointProvenance =
+      'provenance' in contactPoint &&
+      contactPoint.provenance !== undefined &&
+      contactPoint.provenance !== Provenance.None
+        ? contactPoint.provenance
+        : receivers.find((receiver) => Boolean(receiver.provenance))?.provenance;
+
     return {
       ...contactPoint,
       id,
+      provenance: contactPointProvenance,
       policies:
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? []),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {

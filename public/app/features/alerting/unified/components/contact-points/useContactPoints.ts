@@ -21,7 +21,9 @@ import { useAsync } from '../../hooks/useAsync';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
+import { Provenance } from '../../types/provenance';
 import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -78,10 +80,14 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
 type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
+  const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
+  const provenance = metadataProvenance === 'none' ? Provenance.None : metadataProvenance;
+
   return {
     id: item.metadata.name || item.metadata.uid || item.spec.title,
     name: item.spec.title,
     provisioned: isK8sEntityProvisioned(item),
+    provenance: provenance,
     grafana_managed_receiver_configs: item.spec.integrations,
     metadata: item.metadata,
   };
