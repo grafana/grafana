@@ -31,13 +31,33 @@ export function ScopesInput({
   onInputClick,
   onRemoveAllClick,
 }: ScopesInputProps) {
-  const scopeNodeId = appliedScopes[0]?.scopeNodeId;
+  const firstScope = appliedScopes[0];
+  const scope = scopes[firstScope?.scopeId];
   const styles = useStyles2(getStyles);
-  const parentNodeIdFromRecentScopes = appliedScopes[0]?.parentNodeId; // This is only set from recent scopes TODO: remove after recent scopes refactor
+
+  // Prefer scopeNodeId from defaultPath if available (most reliable source)
+  let scopeNodeId: string | undefined;
+  if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+    // Extract scopeNodeId from the last element of defaultPath
+    scopeNodeId = scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
+  } else {
+    // Fallback to scopeNodeId from appliedScopes for backwards compatibility
+    scopeNodeId = firstScope?.scopeNodeId;
+  }
+
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
 
-  // Get parent from scope node if available, otherwise fallback to parent
-  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
+  // Prefer parentNodeId from defaultPath if available
+  let parentNodeId: string | undefined;
+  if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 1) {
+    // Extract parentNodeId from the second-to-last element of defaultPath
+    parentNodeId = scope.spec.defaultPath[scope.spec.defaultPath.length - 2];
+  } else {
+    // Fallback to parent from scope node or recent scopes
+    const parentNodeIdFromRecentScopes = firstScope?.parentNodeId;
+    parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
+  }
+
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
