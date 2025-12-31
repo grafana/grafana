@@ -225,7 +225,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, err
+		// Convert parsing errors to API errors for the HTTP response
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
 	}
 
 	// Make sure the value is valid

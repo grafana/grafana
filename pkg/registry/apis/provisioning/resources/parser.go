@@ -72,6 +72,27 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}, nil
 }
 
+// ParseError represents an error that occurred during resource parsing.
+// It implements the WarningError interface (defined in the jobs package) to be
+// classified as a warning in job progress.
+type ParseError struct {
+	Message string
+}
+
+func (e *ParseError) Error() string {
+	return e.Message
+}
+
+// IsWarning implements the WarningError interface to mark this as a warning.
+func (e *ParseError) IsWarning() bool {
+	return true
+}
+
+// NewParseError creates a new ParseError with the given message.
+func NewParseError(message string) *ParseError {
+	return &ParseError{Message: message}
+}
+
 type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
@@ -144,7 +165,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, apierrors.NewBadRequest("unable to read file as a resource")
+			return nil, NewParseError("unable to read file as a resource")
 		}
 	}
 
@@ -172,7 +193,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
+		return nil, NewParseError("the file namespace does not match target namespace")
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
