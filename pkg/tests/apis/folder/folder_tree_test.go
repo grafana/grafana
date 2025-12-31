@@ -249,6 +249,8 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 		})
 		require.NoError(t, err)
 
+		apis.AwaitZanzanaReconcileNext(t, h)
+
 		var statusCode int
 		result := client.Post().AbsPath("api", "folders").
 			Body(body).
@@ -258,8 +260,6 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 		require.NoError(t, result.Error(), f.Name)
 		require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 		parent = f.Name
-
-		apis.AwaitZanzanaReconcileNext(t, h)
 
 		if len(f.Permissions) > 0 {
 			for _, def := range f.Permissions {
@@ -278,7 +278,6 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 					require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 				}
 			}
-			apis.AwaitZanzanaReconcileNext(t, h)
 		}
 	}
 
