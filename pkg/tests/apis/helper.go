@@ -905,7 +905,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
+			e2 := os.WriteFile(fpath, pretty, 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}
