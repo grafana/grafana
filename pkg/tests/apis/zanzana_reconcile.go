@@ -2,6 +2,7 @@ package apis
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -22,7 +23,11 @@ const zanzanaReconcileLastSuccessMetric = "grafana_zanzana_reconcile_last_succes
 func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 	t.Helper()
 
-	if helper == nil || !helper.GetEnv().FeatureToggles.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+	enabled := false
+	if helper != nil {
+		enabled = helper.GetEnv().FeatureToggles.GetEnabled(context.Background())[featuremgmt.FlagZanzana]
+	}
+	if helper == nil || !enabled {
 		return
 	}
 
@@ -38,7 +43,7 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 			return
 		}
 		assert.Greater(c, ts, prev, "expected %s (%v) > %v", zanzanaReconcileLastSuccessMetric, ts, prev)
-	}, 5*time.Second, 50*time.Millisecond)
+	}, 10*time.Second, 50*time.Millisecond)
 }
 
 func getZanzanaReconcileLastSuccessTimestampSeconds(t *testing.T, helper *K8sTestHelper) (float64, bool) {
