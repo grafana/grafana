@@ -873,10 +873,19 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
 		}
 
-		var prettyJSON bytes.Buffer
-		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		schema := map[string]any{}
+		err := json.Unmarshal(rsp.Body, &schema)
 		require.NoError(t, err)
-		pretty := prettyJSON.String()
+		info, found, err := unstructured.NestedMap(schema, "info", "plugin")
+		require.NoError(t, err)
+		if found {
+			delete(info, "version") // the version is unstable in test environments
+			err = unstructured.SetNestedMap(schema, info, "info", "plugin")
+			require.NoError(t, err)
+		}
+
+		pretty, err := json.MarshalIndent(schema, "", "  ")
+		require.NoError(t, err)
 
 		write := false
 		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
@@ -885,7 +894,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
 		body, err := os.ReadFile(fpath)
 		if err == nil {
-			if !assert.JSONEq(t, string(body), pretty) {
+			if !assert.JSONEq(t, string(body), string(pretty)) {
 				t.Logf("openapi spec has changed: %s", path)
 				t.Fail()
 				write = true

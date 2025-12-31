@@ -4,8 +4,7 @@
     "description": "Generates test data in different forms",
     "title": "testdata.datasource.grafana.app/v0alpha1",
     "plugin": {
-      "plugin": "grafana-testdata-datasource",
-      "version": "12.4.0-pre"
+      "plugin": "grafana-testdata-datasource"
     }
   },
   "paths": {
