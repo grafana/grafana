@@ -102,6 +102,8 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 	helper := apis.NewK8sTestHelper(t, opts)
 	defer helper.Shutdown()
 
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
 	tests := []struct {
 		Name       string
 		Definition FolderDefinition
@@ -154,6 +156,8 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 			tt.Definition.RequireUniqueName(t, make(map[string]bool))
 
 			tt.Definition.CreateWithLegacyAPI(t, helper, "")
+
+			apis.AwaitZanzanaReconcileNext(t, helper)
 
 			for _, expect := range tt.Expected {
 				unstructured, client := getFolderClients(t, expect.User)
