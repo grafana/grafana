@@ -1293,6 +1293,9 @@ export const versionedComponents = {
     card: {
       [MIN_GRAFANA_VERSION]: (name: string) => `data-testid suggestion-${name}`,
     },
+    confirm: {
+      '12.4.0': (name: string) => `data-testid suggestion-${name} confirm button`,
+    },
   },
   ColorSwatch: {
     name: {
