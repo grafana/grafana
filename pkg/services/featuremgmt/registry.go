@@ -573,13 +573,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "kubernetesDashboardsV2",
-			Description:  "Use the v2 kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -685,6 +678,14 @@ var (
 			FrontendOnly:    false,
 			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "auditLoggingAppPlatform",
+			Description:     "Enable audit logging with Kubernetes under app platform",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
 		},

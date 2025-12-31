@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/xlab/treeprint"
@@ -31,6 +32,33 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestIntegrationFolderTreeZanzana(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	runIntegrationFolderTree(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: grafanarest.Mode5,
+			},
+			folderV1.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+		EnableFeatureToggles: []string{
+			"zanzana",
+			"zanzanaNoLegacyClient",
+			"kubernetesAuthzZanzanaSync",
+		},
+		UnifiedStorageEnableSearch:    true,
+		ZanzanaReconciliationInterval: 100 * time.Millisecond,
+		DisableZanzanaCache:           true,
+	})
+}
+
 func TestIntegrationFolderTree(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -47,7 +75,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
 				DisableDataMigrations: true,
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
@@ -62,113 +90,120 @@ func TestIntegrationFolderTree(t *testing.T) {
 				},
 				UnifiedStorageEnableSearch: mode >= grafanarest.Mode3, // make sure modes 0-3 work without search enabled
 			})
-			defer helper.Shutdown()
+		})
+	}
+}
 
-			tests := []struct {
-				Name       string
-				Definition FolderDefinition
-				Expected   []ExpectedTree
-			}{
-				{
-					Name: "admin-only-tree",
-					Definition: FolderDefinition{
+func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, opts)
+	defer helper.Shutdown()
+
+	tests := []struct {
+		Name       string
+		Definition FolderDefinition
+		Expected   []ExpectedTree
+	}{
+		{
+			Name: "admin-only-tree",
+			Definition: FolderDefinition{
+				Children: []FolderDefinition{
+					{Name: "top",
+						Creator: helper.Org1.Admin,
 						Children: []FolderDefinition{
-							{Name: "top",
+							{Name: "middle",
 								Creator: helper.Org1.Admin,
 								Children: []FolderDefinition{
-									{Name: "middle",
+									{Name: "child",
 										Creator: helper.Org1.Admin,
-										Children: []FolderDefinition{
-											{Name: "child",
-												Creator: helper.Org1.Admin,
-												Permissions: []FolderPermission{{
-													Permission: "View",
-													User:       helper.Org1.None,
-												}},
-											},
-										},
+										Permissions: []FolderPermission{{
+											Permission: "View",
+											User:       helper.Org1.None,
+										}},
 									},
 								},
 							},
 						},
 					},
-					Expected: []ExpectedTree{
-						{User: helper.Org1.Admin, Listing: `
+				},
+			},
+			Expected: []ExpectedTree{
+				{User: helper.Org1.Admin, Listing: `
 						└── top (admin,edit,save,delete)
 						....└── middle (admin,edit,save,delete)
 						........└── child (admin,edit,save,delete)`},
-						{User: helper.Org1.Viewer, Listing: `
+				{User: helper.Org1.Viewer, Listing: `
 						└── top (view)
 						....└── middle (view)
 						........└── child (view)`},
-						{User: helper.Org1.None, Listing: `
+				{User: helper.Org1.None, Listing: `
 						└── sharedwithme (???)
 						....└── child (view)`,
-							E403: []string{"top", "middle"},
-						},
-					},
+					E403: []string{"top", "middle"},
 				},
-			}
+			},
+		},
+	}
 
-			var statusCode int
-			for _, tt := range tests {
-				t.Run(tt.Name, func(t *testing.T) {
-					tt.Definition.RequireUniqueName(t, make(map[string]bool))
+	var statusCode int
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.Definition.RequireUniqueName(t, make(map[string]bool))
 
-					tt.Definition.CreateWithLegacyAPI(t, helper, "")
-					// CreateWithLegacyAPI
+			tt.Definition.CreateWithLegacyAPI(t, helper, "")
 
-					for _, expect := range tt.Expected {
-						unstructured, client := getFolderClients(t, expect.User)
-						t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
-							legacy := getFoldersFromLegacyAPISearch(t, client)
-							legacy.requireEqual(t, expect.Listing, "legacy")
+			for _, expect := range tt.Expected {
+				unstructured, client := getFolderClients(t, expect.User)
+				t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
+					legacy := getFoldersFromLegacyAPISearch(t, client)
+					legacy.requireEqual(t, expect.Listing, "legacy")
 
-							listed := getFoldersFromAPIServerList(t, unstructured)
-							listed.requireEqual(t, expect.Listing, "listed")
+					listed := getFoldersFromAPIServerList(t, unstructured)
+					listed.requireEqual(t, expect.Listing, "listed")
 
-							search := getFoldersFromDashboardV0Search(t, client, expect.User.Identity.GetNamespace())
-							search.requireEqual(t, expect.Listing, "search")
+					search := getFoldersFromDashboardV0Search(t, client, expect.User.Identity.GetNamespace())
+					search.requireEqual(t, expect.Listing, "search")
 
-							// ensure sure GET also works on each folder we can list
-							listed.forEach(func(fv *FolderView) {
-								if fv.Name == folder.SharedWithMeFolderUID {
-									return // skip it
-								}
-								found, err := unstructured.Get(context.Background(), fv.Name, v1.GetOptions{})
-								require.NoErrorf(t, err, "getting folder: %s", fv.Name)
-								require.Equal(t, found.GetName(), fv.Name)
-							})
+					// ensure sure GET also works on each folder we can list
+					listed.forEach(func(fv *FolderView) {
+						if fv.Name == folder.SharedWithMeFolderUID {
+							return // skip it
+						}
+						found, err := unstructured.Get(context.Background(), fv.Name, v1.GetOptions{})
+						require.NoErrorf(t, err, "getting folder: %s", fv.Name)
+						require.Equal(t, found.GetName(), fv.Name)
+					})
 
-							// Forbidden things should really be hidden
-							for _, name := range expect.E403 {
-								_, err := unstructured.Get(context.Background(), name, v1.GetOptions{})
-								require.Error(t, err)
-								require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
+					// Forbidden things should really be hidden
+					for _, name := range expect.E403 {
+						_, err := unstructured.Get(context.Background(), name, v1.GetOptions{})
+						require.Error(t, err)
+						require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
 
-								result := client.Get().AbsPath("api", "folders", name).
-									Do(context.Background()).
-									StatusCode(&statusCode)
-								require.Equal(t, int(http.StatusForbidden), statusCode)
-								require.Error(t, result.Error())
+						result := client.Get().AbsPath("api", "folders", name).
+							Do(context.Background()).
+							StatusCode(&statusCode)
+						require.Equal(t, int(http.StatusForbidden), statusCode)
+						require.Error(t, result.Error())
 
-								// Verify sub-resources are hidden
-								for _, sub := range []string{"access", "parents", "children", "counts"} {
-									_, err := unstructured.Get(context.Background(), name, v1.GetOptions{}, sub)
-									require.Error(t, err, "expect error for subresource", sub)
-									require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
-								}
+						// Verify sub-resources are hidden
+						for _, sub := range []string{"access", "parents", "children", "counts"} {
+							_, err := unstructured.Get(context.Background(), name, v1.GetOptions{}, sub)
+							require.Error(t, err, "expect error for subresource", sub)
+							require.Truef(t, apierrors.IsForbidden(err), "error: %w", err) // 404 vs 403 ????
+						}
 
-								// Verify legacy API access is also hidden
-								for _, sub := range []string{"permissions", "counts"} {
-									result := client.Get().AbsPath("api", "folders", name, sub).
-										Do(context.Background()).
-										StatusCode(&statusCode)
-									require.Equalf(t, int(http.StatusForbidden), statusCode, "legacy access to: %s", sub)
-									require.Error(t, result.Error())
-								}
-							}
-						})
+						// Verify legacy API access is also hidden
+						for _, sub := range []string{"permissions", "counts"} {
+							result := client.Get().AbsPath("api", "folders", name, sub).
+								Do(context.Background()).
+								StatusCode(&statusCode)
+							require.Equalf(t, int(http.StatusForbidden), statusCode, "legacy access to: %s", sub)
+							require.Error(t, result.Error())
+						}
 					}
 				})
 			}

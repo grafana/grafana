@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,7 +63,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -128,7 +128,6 @@ type DashboardsAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
@@ -154,7 +153,14 @@ func RegisterAPIService(
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
 	dashboardActivityChannel live.DashboardActivityChannel,
+	configProvider configprovider.ConfigProvider,
 ) *DashboardsAPIBuilder {
+	cfg, err := configProvider.Get(context.Background())
+	if err != nil {
+		logging.DefaultLogger.Error("failed to load settings configuration instance", "stackId", cfg.StackID, "err", err)
+		return nil
+	}
+
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -237,7 +243,7 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -747,7 +753,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
-			Options:      b.snapshotOptions,
 		}
 		storage[snapshots.StoragePath()] = snapshotLegacyStore
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)

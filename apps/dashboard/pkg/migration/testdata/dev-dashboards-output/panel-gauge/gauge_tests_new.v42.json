@@ -1760,6 +1760,22 @@
           "startValue": 0
         }
       ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "unary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true,
+            "unary": {
+              "operator": "round",
+              "fieldName": "A-series"
+            }
+          }
+        }
+      ],
       "title": "Active gateways",
       "type": "radialbar"
     },
@@ -1841,6 +1857,22 @@
           "seriesCount": 1,
           "spread": 6,
           "startValue": 0
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "unary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true,
+            "unary": {
+              "operator": "round",
+              "fieldName": "A-series"
+            }
+          }
         }
       ],
       "title": "Active pods",

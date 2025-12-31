@@ -723,6 +723,11 @@
       "placeholder-value-input": "Enter a {{key}}...",
       "placeholder-value-input-default": "Enter custom annotation content..."
     },
+    "backtest": {
+      "error-title": "Failed to run backtest",
+      "loading": "Running backtest...",
+      "panel-title": "Rule Retroactive Testing"
+    },
     "bulk-actions": {
       "delete": {
         "success": "Rules successfully deleted from folder"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "Custom",
       "disableAdvancedOptions": {
         "text": "The selected queries and expressions cannot be converted to default. If you deactivate advanced options, your query and condition will be reset to default settings."
       },
+      "last15m": "Last 15 minutes",
+      "last1h": "Last 1 hour",
       "preview": "Preview",
-      "previewCondition": "Preview alert rule condition"
+      "previewCondition": "Preview alert rule condition",
+      "testRule": "Test Rule"
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filter by contact points",
@@ -5957,6 +5966,9 @@
       "custom-options": "Custom options",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
@@ -12507,6 +12519,12 @@
       "shape-circle": "Circle",
       "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }

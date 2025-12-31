@@ -16,6 +16,9 @@ const (
 	TypeNamespace      = common.TypeGroupResouce
 )
 
+// TokenPermissionUpdate is required for callers to perform write operations against Zanzana (Mutate/Write).
+const TokenPermissionUpdate = "zanzana:update" //nolint:gosec // G101: permission identifier, not a credential.
+
 const (
 	RelationTeamMember = common.RelationTeamMember
 	RelationTeamAdmin  = common.RelationTeamAdmin

@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "输入自定义注释内容..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "规则已成功从文件夹中删除"
@@ -2195,11 +2200,15 @@
       "min-interval": "最小间隔 = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "无法将所选查询和表达式转换为默认值。如果停用高级选项，您的查询和条件将重置为默认设置。"
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "预览",
-      "previewCondition": "预览提醒规则条件"
+      "previewCondition": "预览提醒规则条件",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "按联络点筛选",
@@ -3732,6 +3741,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5934,6 +5945,9 @@
       "custom-options": "自定义选项",
       "name-values-separated-comma": "以逗号分隔的值",
       "selection-options": "选择内容选项"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "回到列表",
@@ -12453,6 +12467,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

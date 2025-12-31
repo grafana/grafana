@@ -156,6 +156,8 @@ type UnifiedAlertingSettings struct {
 
 	// AlertmanagerMaxTemplateOutputSize specifies the maximum allowed size for rendered template output in bytes.
 	AlertmanagerMaxTemplateOutputSize int64
+
+	BacktestingMaxEvaluations int
 }
 
 type RecordingRuleSettings struct {
@@ -592,6 +594,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.AlertmanagerMaxTemplateOutputSize = ua.Key("alertmanager_max_template_output_bytes").MustInt64(10485760)
 	if uaCfg.AlertmanagerMaxTemplateOutputSize < 0 {
 		return fmt.Errorf("setting 'alertmanager_max_template_output_bytes' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.BacktestingMaxEvaluations = ua.Key("backtesting_max_evaluations").MustInt(100)
+	if uaCfg.BacktestingMaxEvaluations < 0 {
+		uaCfg.BacktestingMaxEvaluations = 100
 	}
 
 	cfg.UnifiedAlerting = uaCfg
