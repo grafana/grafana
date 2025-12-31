@@ -832,7 +832,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider, httpclientProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1498,7 +1498,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider, httpclientProvider)
 	if err != nil {
 		return nil, err
 	}
