@@ -211,9 +211,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
 		}
-		if r.metrics.lastSuccess != nil {
-			r.metrics.lastSuccess.SetToCurrentTime()
-		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
@@ -242,6 +239,10 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 		for _, ns := range namespaces {
 			run(ctx, ns)
 		}
+		if r.metrics.lastSuccess != nil {
+			// mark as complete after reconciling across all namespaces
+			r.metrics.lastSuccess.SetToCurrentTime()
+		}
 		return
 	}
 
@@ -249,6 +250,10 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
 		for _, ns := range namespaces {
 			run(ctx, ns)
+		}
+		if r.metrics.lastSuccess != nil {
+			// mark as complete after reconciling across all namespaces
+			r.metrics.lastSuccess.SetToCurrentTime()
 		}
 	})
 	if err != nil {

@@ -168,14 +168,13 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
 	org2Ctx := createTestContext(t, helper, helper.OrgB, rest.Mode5)
 
-	// TODO
-	//	t.Run("Dashboard LIST API test", func(t *testing.T) {
-	//		runDashboardListTests(t, org1Ctx)
-	//	})
-	//
-	// t.Run("Dashboard permission tests", func(t *testing.T) {
-	//	runDashboardPermissionTests(t, org1Ctx, true)
-	// })
+	t.Run("Dashboard LIST API test", func(t *testing.T) {
+		runDashboardListTests(t, org1Ctx)
+	})
+
+	t.Run("Dashboard permission tests", func(t *testing.T) {
+		runDashboardPermissionTests(t, org1Ctx, true)
+	})
 
 	t.Run("Authorization tests for all identity types", func(t *testing.T) {
 		runAuthorizationTests(t, org1Ctx)
