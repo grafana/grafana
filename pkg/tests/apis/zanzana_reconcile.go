@@ -43,7 +43,7 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 			return
 		}
 		assert.Greater(c, ts, prev, "expected %s (%v) > %v", zanzanaReconcileLastSuccessMetric, ts, prev)
-	}, 10*time.Second, 50*time.Millisecond)
+	}, 30*time.Second, 50*time.Millisecond)
 }
 
 func getZanzanaReconcileLastSuccessTimestampSeconds(t *testing.T, helper *K8sTestHelper) (float64, bool) {

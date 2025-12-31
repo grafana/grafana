@@ -177,7 +177,7 @@ func (r *ZanzanaReconciler) hasBasicRolePermissions(ctx context.Context) bool {
 func (r *ZanzanaReconciler) waitForBasicRolesSeeded(ctx context.Context) {
 	// Best-effort: don't block forever. If we can't observe basic roles, proceed anyway.
 	const (
-		maxWait  = 30 * time.Second
+		maxWait  = 15 * time.Second
 		interval = 1 * time.Second
 	)
 

@@ -157,8 +157,6 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 
 			tt.Definition.CreateWithLegacyAPI(t, helper, "")
 
-			apis.AwaitZanzanaReconcileNext(t, helper)
-
 			for _, expect := range tt.Expected {
 				unstructured, client := getFolderClients(t, expect.User)
 				t.Run(fmt.Sprintf("query as %s", expect.User.Identity.GetLogin()), func(t *testing.T) {
@@ -261,6 +259,8 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 		require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 		parent = f.Name
 
+		apis.AwaitZanzanaReconcileNext(t, h)
+
 		if len(f.Permissions) > 0 {
 			for _, def := range f.Permissions {
 				// http://localhost:3000/api/access-control/folders/feyx0ezuwqwowb/users/aeyx0jzgix9fkd
@@ -278,6 +278,7 @@ func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelp
 					require.Equal(t, int(http.StatusOK), statusCode, f.Name)
 				}
 			}
+			apis.AwaitZanzanaReconcileNext(t, h)
 		}
 	}
 
