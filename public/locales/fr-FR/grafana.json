@@ -5967,6 +5967,9 @@
       "name-values-separated-comma": "Valeurs séparées par des virgules",
       "selection-options": "Options de sélection"
     },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Retour à la liste",
       "label-icon": "Icône",
@@ -12516,6 +12519,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
