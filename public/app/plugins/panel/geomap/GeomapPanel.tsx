@@ -72,6 +72,7 @@ export class GeomapPanel extends Component<Props, State> {
   mapDiv?: HTMLDivElement;
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
+  private isInitialDataLoad = true;
 
   constructor(props: Props) {
     super(props);
@@ -215,12 +216,13 @@ export class GeomapPanel extends Component<Props, State> {
 
     // Because data changed, check map view and change if needed (data fit)
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
-    if (v && v.id === MapCenterID.Fit) {
+    if (v && v.id === MapCenterID.Fit && this.isInitialDataLoad) {
       const view = this.initMapView(this.props.options.view);
 
       if (this.map && view) {
         this.map.setView(view);
       }
+      this.isInitialDataLoad = false;
     }
 
     // Update legends when data changes
@@ -236,6 +238,8 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.map) {
       this.map.dispose();
     }
+
+    this.isInitialDataLoad = true;
 
     const { options } = this.props;
 
