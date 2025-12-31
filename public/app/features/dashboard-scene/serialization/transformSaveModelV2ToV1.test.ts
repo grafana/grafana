@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -203,6 +203,9 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
         // Frontend path: Transform v2beta1 through Scene
         const frontendSpec = transformV2ToV1UsingFrontendTransformers(jsonInput);
 
+        // if backend spec panel.datasource was defined, we need to add it to matching panels in frontend spec
+        normalizeDSRefs(backendSpec, frontendSpec);
+
         // Compare specs (excluding metadata fields)
         expect(removeMetadata(backendSpec)).toEqual(removeMetadata(frontendSpec));
       });
@@ -273,4 +276,34 @@ function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccess
 
   const frontendOutput = transformSceneToSaveModel(scene, false);
   return loadAndSerializeV1SaveModel(frontendOutput);
+}
+
+/**
+ * Normalizes the datasource references between backend and frontend specs.
+ *
+ * This function is used to ensure that the datasource references are the same between
+ * the backend and frontend specs.
+ *
+ * In V2 schema there's no panel-level datasource, but during backend v2 -> v1 conversion,
+ * the panel datasource needs to be set because some components like CSVExportPage rely on it to resolve the datasource.
+ */
+function normalizeDSRefs(backendSpec: Dashboard, frontendSpec: Dashboard) {
+  backendSpec?.panels?.forEach((backendPanel) => {
+    frontendSpec?.panels?.forEach((frontendPanel) => {
+      if (!frontendPanel) {
+        return;
+      }
+      if (backendPanel.type === 'row' && 'panels' in backendPanel && 'panels' in frontendPanel) {
+        backendPanel.panels.forEach((subPanel) => {
+          frontendPanel.panels.forEach((subFrontendPanel) => {
+            if (subPanel.id === subFrontendPanel.id) {
+              subFrontendPanel.datasource = subPanel.datasource;
+            }
+          });
+        });
+      } else if (backendPanel.id === frontendPanel.id) {
+        frontendPanel.datasource = backendPanel.datasource;
+      }
+    });
+  });
 }
