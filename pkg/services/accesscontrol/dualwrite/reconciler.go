@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -118,6 +119,9 @@ func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
+	// Ensure we don't reconcile an empty/partial RBAC state before fixed roles are seeded.
+	// This matters most during startup where fixed-role seeding runs as another background service.
+	r.waitForFixedRolesSeeded(ctx)
 	r.reconcile(ctx)
 
 	// FIXME:
@@ -129,6 +133,49 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 			r.reconcile(ctx)
 		case <-ctx.Done():
 			return ctx.Err()
+		}
+	}
+}
+
+func (r *ZanzanaReconciler) waitForFixedRolesSeeded(ctx context.Context) {
+	// Best-effort: don't block forever. If we can't observe fixed roles, proceed anyway.
+	const (
+		maxWait  = 30 * time.Second
+		interval = 1 * time.Second
+	)
+
+	deadline := time.NewTimer(maxWait)
+	defer deadline.Stop()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	hasFixedRoles := func(ctx context.Context) bool {
+		var count int64
+		// "fixed:%" roles are seeded into the global org (0).
+		_ = r.store.WithDbSession(ctx, func(sess *db.Session) error {
+			n, err := sess.Table("role").
+				Where("org_id = ?", accesscontrol.GlobalOrgID).
+				Where("name LIKE ?", accesscontrol.FixedRolePrefix+"%").
+				Count()
+			if err != nil {
+				return err
+			}
+			count = n
+			return nil
+		})
+		return count > 0
+	}
+
+	for {
+		if hasFixedRoles(ctx) {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-deadline.C:
+			return
+		case <-ticker.C:
 		}
 	}
 }
