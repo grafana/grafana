@@ -49,7 +49,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
     // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
     // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
-    const useLazyForSoloPanel = soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
+    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
