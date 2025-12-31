@@ -8,6 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
+import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
@@ -89,8 +90,11 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   );
 
   if (soloPanelContext) {
-    // Solo panels should render immediately without lazy loading
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
+    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
+    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
+    const useLazyForSoloPanel = soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   const isDragging = !!draggingKey;

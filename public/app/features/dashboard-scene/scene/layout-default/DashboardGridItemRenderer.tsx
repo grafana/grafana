@@ -6,6 +6,7 @@ import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { useDashboardState } from '../../utils/utils';
+import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
@@ -45,8 +46,11 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   );
 
   if (soloPanelContext) {
-    // Solo panels should render immediately without lazy loading
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
+    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
+    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
+    const useLazyForSoloPanel = soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   if (!variableName) {
