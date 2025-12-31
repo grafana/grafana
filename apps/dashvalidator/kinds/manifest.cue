@@ -46,6 +46,49 @@ v1alpha1: {
 	// If not present, default values within the codegen trait are used.
 	// If you wish to specify codegen per-version, put this section in the version's object
 	// (for example, <no value>v1alpha1) instead.
+
+	routes: {
+		namespaced: {
+			"/check": {
+				"POST": {
+					request: {
+						body: {
+							dashboardJson: {...}
+							datasourceMappings: [...{
+								uid:   string
+								type:  string
+								name?: string
+							}]
+						}
+					}
+					response: {
+						compatibilityScore: number
+						datasourceResults: [...{
+							uid:            string
+							type:           string
+							name?:          string
+							totalQueries:   int
+							checkedQueries: int
+							totalMetrics:   int
+							foundMetrics:   int
+							missingMetrics: [...string]
+							queryBreakdown: [...{
+								panelTitle:   string
+								panelID:      int
+								queryRefId:   string
+								totalMetrics: int
+								foundMetrics: int
+								missingMetrics: [...string]
+								compatibilityScore: number
+							}]
+							compatibilityScore: number
+						}]
+					}
+				}
+			}
+		}
+		cluser: {}
+	}
 	codegen: {
 		// [OPTIONAL]
 		// ts contains TypeScript code generation properties for the kind

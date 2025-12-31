@@ -43,9 +43,268 @@ var appManifestData = app.ManifestData{
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
+				Namespaced: map[string]spec3.PathProps{
+					"/check": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createCheck",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Required: true,
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"dashboardJson": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		AdditionalProperties: &spec.SchemaOrBool{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"object"},
+																					AdditionalProperties: &spec.SchemaOrBool{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{},
+																						},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+																"datasourceMappings": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"object"},
+																					Properties: map[string]spec.Schema{
+																						"name": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"type": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"uid": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																					},
+																					Required: []string{
+																						"uid",
+																						"type",
+																					},
+																				}},
+																		},
+																	},
+																},
+															},
+															Required: []string{
+																"dashboardJson",
+																"datasourceMappings",
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"compatibilityScore": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"number"},
+																			},
+																		},
+																		"datasourceResults": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"checkedQueries": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"integer"},
+																									},
+																								},
+																								"compatibilityScore": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"number"},
+																									},
+																								},
+																								"foundMetrics": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"integer"},
+																									},
+																								},
+																								"missingMetrics": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"array"},
+																										Items: &spec.SchemaOrArray{
+																											Schema: &spec.Schema{
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												}},
+																										},
+																									},
+																								},
+																								"name": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"queryBreakdown": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"array"},
+																										Items: &spec.SchemaOrArray{
+																											Schema: &spec.Schema{
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"object"},
+																													Properties: map[string]spec.Schema{
+																														"compatibilityScore": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"number"},
+																															},
+																														},
+																														"foundMetrics": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"integer"},
+																															},
+																														},
+																														"missingMetrics": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"array"},
+																																Items: &spec.SchemaOrArray{
+																																	Schema: &spec.Schema{
+																																		SchemaProps: spec.SchemaProps{
+																																			Type: []string{"string"},
+																																		}},
+																																},
+																															},
+																														},
+																														"panelID": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"integer"},
+																															},
+																														},
+																														"panelTitle": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"string"},
+																															},
+																														},
+																														"queryRefId": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"string"},
+																															},
+																														},
+																														"totalMetrics": {
+																															SchemaProps: spec.SchemaProps{
+																																Type: []string{"integer"},
+																															},
+																														},
+																													},
+																													Required: []string{
+																														"panelTitle",
+																														"panelID",
+																														"queryRefId",
+																														"totalMetrics",
+																														"foundMetrics",
+																														"missingMetrics",
+																														"compatibilityScore",
+																													},
+																												}},
+																										},
+																									},
+																								},
+																								"totalMetrics": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"integer"},
+																									},
+																								},
+																								"totalQueries": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"integer"},
+																									},
+																								},
+																								"type": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"uid": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"uid",
+																								"type",
+																								"totalQueries",
+																								"checkedQueries",
+																								"totalMetrics",
+																								"foundMetrics",
+																								"missingMetrics",
+																								"queryBreakdown",
+																								"compatibilityScore",
+																							},
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"compatibilityScore",
+																		"datasourceResults",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+				},
+				Cluster: map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{},
 			},
 		},
 	},
@@ -70,7 +329,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v1alpha1||<namespace>/check|POST": v1alpha1.CreateCheck{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
@@ -94,7 +355,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v1alpha1||<namespace>/check|POST": v1alpha1.CreateCheckRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
