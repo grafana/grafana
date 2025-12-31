@@ -1,8 +1,18 @@
 package jobs
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
+
+// WarningError is an interface for errors that should be classified as warnings
+// in job progress tracking rather than errors. Any error type can implement this
+// interface to be automatically classified as a warning.
+type WarningError interface {
+	error
+	IsWarning() bool
+}
 
 // JobResourceResult represents the result of a resource operation in a job.
 type JobResourceResult struct {
@@ -35,7 +45,8 @@ func NewSkippedJobResourceResult(name, group, kind, path string, err error) JobR
 }
 
 func isWarningError(err error) bool {
-	return false
+	var warningErr WarningError
+	return errors.As(err, &warningErr) && warningErr.IsWarning()
 }
 
 // newJobResourceResult creates a new JobResourceResult.

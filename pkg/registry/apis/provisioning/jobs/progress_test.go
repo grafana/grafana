@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -251,4 +252,70 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 	assert.Empty(t, finalStatus.Errors)
 	require.NotNil(t, finalStatus.Warnings)
 	assert.Len(t, finalStatus.Warnings, 1)
+}
+
+func TestJobProgressRecorderWarningClassification(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a progress recorder
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+	// Test that ParseError (which implements WarningError) is automatically classified as a warning
+	parseErr := resources.NewParseError("unable to read file as a resource")
+	result := NewJobResourceResult(
+		"test-resource",
+		"test.grafana.app",
+		"Dashboard",
+		"dashboards/test.json",
+		repository.FileActionCreated,
+		parseErr,
+	)
+
+	// Verify that ParseError was classified as a warning, not an error
+	assert.Nil(t, result.Error(), "ParseError should be classified as warning, not error")
+	assert.NotNil(t, result.Warning(), "ParseError should be classified as warning")
+	assert.Equal(t, parseErr, result.Warning())
+
+	// Record the result
+	recorder.Record(ctx, result)
+
+	// Verify it's stored as a warning in summaries
+	recorder.mu.RLock()
+	require.Len(t, recorder.summaries, 1)
+	dashboardSummary := recorder.summaries["test.grafana.app:Dashboard"]
+	require.NotNil(t, dashboardSummary)
+	assert.Equal(t, int64(1), dashboardSummary.Warning)
+	assert.Len(t, dashboardSummary.Warnings, 1)
+	assert.Contains(t, dashboardSummary.Warnings[0], "unable to read file as a resource")
+	assert.Equal(t, int64(0), dashboardSummary.Error)
+	assert.Len(t, dashboardSummary.Errors, 0)
+	recorder.mu.RUnlock()
+
+	// Complete the job and verify final status
+	finalStatus := recorder.Complete(ctx, nil)
+	assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+	assert.Equal(t, "completed with warnings", finalStatus.Message)
+	assert.Empty(t, finalStatus.Errors)
+	require.NotNil(t, finalStatus.Warnings)
+	assert.Len(t, finalStatus.Warnings, 1)
+	assert.Contains(t, finalStatus.Warnings[0], "unable to read file as a resource")
+
+	// Test that regular errors are still classified as errors
+	regularErr := errors.New("regular error")
+	result2 := NewJobResourceResult(
+		"test-resource-2",
+		"test.grafana.app",
+		"Dashboard",
+		"dashboards/test2.json",
+		repository.FileActionUpdated,
+		regularErr,
+	)
+
+	// Verify that regular error was classified as an error, not a warning
+	assert.NotNil(t, result2.Error(), "Regular error should be classified as error")
+	assert.Nil(t, result2.Warning(), "Regular error should not be classified as warning")
+	assert.Equal(t, regularErr, result2.Error())
 }
