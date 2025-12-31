@@ -45,7 +45,8 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   );
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
+    // Solo panels should render immediately without lazy loading
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   if (!variableName) {

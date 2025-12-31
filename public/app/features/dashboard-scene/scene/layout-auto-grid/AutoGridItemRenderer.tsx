@@ -89,7 +89,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   );
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], isLazy);
+    // Solo panels should render immediately without lazy loading
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   const isDragging = !!draggingKey;
