@@ -119,9 +119,9 @@ func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
-	// Ensure we don't reconcile an empty/partial RBAC state before fixed roles are seeded.
-	// This matters most during startup where fixed-role seeding runs as another background service.
-	r.waitForFixedRolesSeeded(ctx)
+	// Ensure we don't reconcile an empty/partial RBAC state before OSS has seeded basic role permissions.
+	// This matters most during startup where fixed-role loading + basic-role permission refresh runs as another background service.
+	r.waitForBasicRolesSeeded(ctx)
 	r.reconcile(ctx)
 
 	// FIXME:
@@ -137,8 +137,33 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
-func (r *ZanzanaReconciler) waitForFixedRolesSeeded(ctx context.Context) {
-	// Best-effort: don't block forever. If we can't observe fixed roles, proceed anyway.
+func (r *ZanzanaReconciler) hasBasicRolePermissions(ctx context.Context) bool {
+	var count int64
+	// Basic role permissions are stored on "basic:%" roles in the global org (0).
+	// In a fresh DB, this will be empty until fixed roles are registered and the basic role permission refresh runs.
+	type row struct {
+		Count int64 `xorm:"count"`
+	}
+	_ = r.store.WithDbSession(ctx, func(sess *db.Session) error {
+		var rr row
+		_, err := sess.SQL(
+			`SELECT COUNT(*) AS count
+			 FROM role INNER JOIN permission AS p ON p.role_id = role.id
+			 WHERE role.org_id = ? AND role.name LIKE ?`,
+			accesscontrol.GlobalOrgID,
+			accesscontrol.BasicRolePrefix+"%",
+		).Get(&rr)
+		if err != nil {
+			return err
+		}
+		count = rr.Count
+		return nil
+	})
+	return count > 0
+}
+
+func (r *ZanzanaReconciler) waitForBasicRolesSeeded(ctx context.Context) {
+	// Best-effort: don't block forever. If we can't observe basic roles, proceed anyway.
 	const (
 		maxWait  = 30 * time.Second
 		interval = 1 * time.Second
@@ -149,25 +174,8 @@ func (r *ZanzanaReconciler) waitForFixedRolesSeeded(ctx context.Context) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	hasFixedRoles := func(ctx context.Context) bool {
-		var count int64
-		// "fixed:%" roles are seeded into the global org (0).
-		_ = r.store.WithDbSession(ctx, func(sess *db.Session) error {
-			n, err := sess.Table("role").
-				Where("org_id = ?", accesscontrol.GlobalOrgID).
-				Where("name LIKE ?", accesscontrol.FixedRolePrefix+"%").
-				Count()
-			if err != nil {
-				return err
-			}
-			count = n
-			return nil
-		})
-		return count > 0
-	}
-
 	for {
-		if hasFixedRoles(ctx) {
+		if r.hasBasicRolePermissions(ctx) {
 			return
 		}
 		select {
