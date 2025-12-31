@@ -203,7 +203,6 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
         // Frontend path: Transform v2beta1 through Scene
         const frontendSpec = transformV2ToV1UsingFrontendTransformers(jsonInput);
 
-        // if backend spec panel.datasource was defined, we need to add it to matching panels in frontend spec
         normalizeDSRefs(backendSpec, frontendSpec);
 
         // Compare specs (excluding metadata fields)
@@ -285,7 +284,8 @@ function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccess
  * the backend and frontend specs.
  *
  * In V2 schema there's no panel-level datasource, but during backend v2 -> v1 conversion,
- * the panel datasource needs to be set because some components like CSVExportPage rely on it to resolve the datasource.
+ * the panel datasource needs to be set because some components like CSVExportPage rely on it
+ * to resolve the datasource.
  */
 function normalizeDSRefs(backendSpec: Dashboard, frontendSpec: Dashboard) {
   backendSpec?.panels?.forEach((backendPanel) => {
