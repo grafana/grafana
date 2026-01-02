@@ -30,7 +30,6 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
-  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -47,6 +46,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
@@ -74,6 +74,7 @@ import {
 } from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { parseURL } from '../hooks/useStateSync/parseURL';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
@@ -82,6 +83,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+import { migrateLegacyColumns } from './utils/columnMigration';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getExploreBaseUrl } from './utils/url';
 
@@ -201,8 +203,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
+  // Use Redux state as single source of truth
+  const displayedFields = useMemo(() => panelState?.logs?.displayedFields ?? [], [panelState?.logs?.displayedFields]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -212,6 +215,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
+  const { location } = useGrafana();
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
@@ -322,7 +326,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(
           changePanelState(exploreId, 'logs', {
             ...state.panelsState.logs,
-            columns: logsPanelState.columns ?? panelState?.logs?.columns,
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
@@ -336,7 +339,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [
       dispatch,
       exploreId,
-      panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
       panelState?.logs?.tableSortBy,
@@ -345,14 +347,38 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
+  // Migration: Convert legacy 'columns' parameter from URL to 'displayedFields'
   useEffect(() => {
-    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields,
-      });
+    // Parse URL to check for legacy columns
+    const urlParams = location.getSearchObject();
+    const [urlState] = parseURL(urlParams);
+
+    // Find the pane - exploreId might not match the URL pane key directly
+    const urlPane = urlState.panes[exploreId] ?? Object.values(urlState.panes)[0];
+
+    if (!urlPane?.panelsState?.logs) {
+      return;
     }
-  }, [displayedFields, panelState?.logs, updatePanelState]);
+
+    // Get current displayedFields to use as defaults for merge
+    const currentDisplayedFields = displayedFields;
+
+    // Use migration utility to parse and transform legacy columns
+    const mergedFields = migrateLegacyColumns(urlPane.panelsState.logs, currentDisplayedFields, visualisationType);
+    if (!mergedFields) {
+      return;
+    }
+
+    // Update displayedFields in Redux state - URL sync will handle URL update
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined, // Remove columns from URL
+        displayedFields: mergedFields,
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   // actions
   const onLogRowHover = useCallback(
@@ -541,30 +567,48 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const showField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
 
       if (index === -1) {
-        const updatedDisplayedFields = displayedFields.concat(key);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.concat(key);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
       if (index > -1) {
-        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.filter((k) => key !== k);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const clearDisplayedFields = useCallback(() => {
-    setDisplayedFields([]);
-  }, []);
+    updatePanelState({
+      displayedFields: defaultDisplayedFields,
+    });
+  }, [defaultDisplayedFields, updatePanelState]);
+
+  // Wrapper function for setDisplayedFields prop - updates Redux directly
+  const setDisplayedFields = useCallback(
+    (fields: string[]) => {
+      updatePanelState({
+        displayedFields: fields,
+      });
+    },
+    [updatePanelState]
+  );
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
@@ -1003,6 +1047,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
                 displayedFields={displayedFields}
+                defaultDisplayedFields={defaultDisplayedFields}
                 exploreId={props.exploreId}
                 absoluteRange={props.absoluteRange}
                 logRows={props.logRows}
@@ -1042,6 +1087,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                   displayedFields={displayedFields}
+                  defaultDisplayedFields={defaultDisplayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
                   app={CoreApp.Explore}
