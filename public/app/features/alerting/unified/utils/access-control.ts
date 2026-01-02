@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -129,11 +130,14 @@ export function evaluateAccess(actions: AccessControlAction[]) {
 }
 
 export function getRulesAccess() {
+  const dmAlertsDisabled = config.featureToggles.alertingDisableDMAlerts === true;
+
   return {
     canCreateGrafanaRules:
       contextSrv.hasPermission(AccessControlAction.FoldersRead) &&
       contextSrv.hasPermission(rulesPermissions.create.grafana),
     canCreateCloudRules:
+      !dmAlertsDisabled &&
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
       contextSrv.hasPermission(rulesPermissions.create.external),
     canEditRules: (rulesSourceName: string) => {
