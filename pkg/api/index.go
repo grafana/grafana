@@ -220,6 +220,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
+	if data.Settings.FeatureToggles == nil {
+		data.Settings.FeatureToggles = map[string]bool{}
+	}
+
+	data.Settings.FeatureToggles["default_sidebar_docked"] = setting.FeatureToggleConfig.DefaultSidebarDocked
+
 	data.NavTree.Sort()
 
 	return &data, nil
