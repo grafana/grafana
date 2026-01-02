@@ -146,14 +146,16 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
-          {config.featureToggles.profilesExemplars && <EditorField label={'Exemplars'} tooltip={<>Include profile exemplars in the time series.</>}>
-            <InlineSwitch
-              value={query.includeExemplars || false}
-              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                onQueryChange({...query, includeExemplars: event.currentTarget.checked});
-              }}
-            />
-          </EditorField>}
+          {config.featureToggles.profilesExemplars && (
+            <EditorField label={'Exemplars'} tooltip={<>Include profile exemplars in the time series.</>}>
+              <InlineSwitch
+                value={query.includeExemplars || false}
+                onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                  onQueryChange({ ...query, includeExemplars: event.currentTarget.checked });
+                }}
+              />
+            </EditorField>
+          )}
         </div>
       </QueryOptionGroup>
     </Stack>
