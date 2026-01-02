@@ -111,7 +111,7 @@ func Test_setRequestVariables(t *testing.T) {
 		im: &fakeInstance{
 			services: map[string]datasourceService{
 				cloudMonitor: {
-					url:    routes[cloudMonitor].url,
+					url:    buildURL(cloudMonitor, "googleapis.com"),
 					client: &http.Client{},
 				},
 			},
