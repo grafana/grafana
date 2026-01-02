@@ -15,7 +15,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
-import { Provenance } from '../../types/provenance';
 import { extractReceivers } from '../../utils/receivers';
 import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
