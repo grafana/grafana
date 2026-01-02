@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { DataQuery, DataSourceRef } from '@grafana/schema/dist/esm/index';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -18,7 +19,10 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   let dataProvider: SceneDataProvider | undefined = undefined;
 
   dataProvider = new SceneQueryRunner({
-    datasource: panel.datasource ?? undefined,
+    // If panel.datasource is not defined, we use the first datasource from the targets (queries)
+    // This is to match the backend behavior when converting dashboard from V2 dashboard to V1
+    // Also, SceneQueryRunner has the same logic
+    datasource: panel.datasource ?? findFirstDatasource(panel.targets),
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
@@ -36,4 +40,18 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     $data: dataProvider,
     transformations: panel.transformations || [],
   });
+}
+
+function findFirstDatasource(targets: DataQuery[]): DataSourceRef | undefined {
+  const datasource = targets.find((t) => t.datasource?.type !== '' || t.datasource?.uid !== '');
+  if (!datasource) {
+    return undefined;
+  }
+
+  const dsRef: DataSourceRef = {
+    ...(datasource.datasource?.type && { type: datasource.datasource?.type }),
+    ...(datasource.datasource?.uid && { uid: datasource.datasource?.uid }),
+  };
+
+  return dsRef;
 }
