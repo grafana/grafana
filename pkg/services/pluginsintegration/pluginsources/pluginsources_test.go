@@ -1,4 +1,4 @@
-package sources
+package pluginsources
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,7 +24,7 @@ func TestSources_List(t *testing.T) {
 
 		pCfg := &config.PluginManagementCfg{
 			PluginsPath: filepath.Join(testdata, "pluginRootWithDist"),
-			PluginSettings: setting.PluginSettings{
+			PluginSettings: config.PluginSettings{
 				"foo": map[string]string{
 					"path": filepath.Join(testdata, "test-app"),
 				},
@@ -41,7 +42,7 @@ func TestSources_List(t *testing.T) {
 		require.Len(t, srcs, 5)
 
 		require.Equal(t, srcs[0].PluginClass(ctx), plugins.ClassCore)
-		if localSrc, ok := srcs[0].(*LocalSource); ok {
+		if localSrc, ok := srcs[0].(*sources.LocalSource); ok {
 			require.Equal(t, localSrc.Paths(), []string{
 				filepath.Join(testdata, "app", "plugins", "datasource"),
 				filepath.Join(testdata, "app", "plugins", "panel"),
@@ -56,7 +57,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, "", sig.SigningOrg)
 
 		require.Equal(t, srcs[1].PluginClass(ctx), plugins.ClassExternal)
-		if localSrc, ok := srcs[1].(*LocalSource); ok {
+		if localSrc, ok := srcs[1].(*sources.LocalSource); ok {
 			require.Equal(t, localSrc.Paths(), []string{
 				filepath.Join(testdata, "pluginRootWithDist", "datasource"),
 			})
@@ -68,7 +69,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, plugins.Signature{}, sig)
 
 		require.Equal(t, srcs[2].PluginClass(ctx), plugins.ClassExternal)
-		if localSrc, ok := srcs[2].(*LocalSource); ok {
+		if localSrc, ok := srcs[2].(*sources.LocalSource); ok {
 			require.Equal(t, localSrc.Paths(), []string{
 				filepath.Join(testdata, "pluginRootWithDist", "dist"),
 			})
@@ -80,7 +81,7 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, plugins.Signature{}, sig)
 
 		require.Equal(t, srcs[3].PluginClass(ctx), plugins.ClassExternal)
-		if localSrc, ok := srcs[3].(*LocalSource); ok {
+		if localSrc, ok := srcs[3].(*sources.LocalSource); ok {
 			require.Equal(t, localSrc.Paths(), []string{
 				filepath.Join(testdata, "pluginRootWithDist", "panel"),
 			})
@@ -113,7 +114,7 @@ func TestSources_List(t *testing.T) {
 			if _, exists := uris[class]; !exists {
 				uris[class] = map[string]struct{}{}
 			}
-			if localSrc, ok := src.(*LocalSource); ok {
+			if localSrc, ok := src.(*sources.LocalSource); ok {
 				for _, path := range localSrc.Paths() {
 					uris[class][path] = struct{}{}
 				}

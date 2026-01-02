@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -414,7 +413,7 @@ func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequ
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
-	cleanPath, err := util.CleanRelativePath(name)
+	cleanPath, err := CleanRelativePath(name)
 	if err != nil {
 		// CleanRelativePath should clean and make the path relative so this is not expected to fail
 		return nil, err
