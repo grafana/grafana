@@ -22,17 +22,25 @@ import (
 )
 
 const (
-	nameAttributePathKey    = "name_attribute_path"
-	loginAttributePathKey   = "login_attribute_path"
-	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
+	nameAttributePathKey                = "name_attribute_path"
+	loginAttributePathKey               = "login_attribute_path"
+	idTokenAttributeNameKey             = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
+	backChannelLogoutEnabledKey         = "backchannel_logout_enabled"
+	backChannelLogoutURLKey             = "backchannel_logout_url"
+	backChannelLogoutSessionRequiredKey = "backchannel_logout_session_required"
+	backChannelLogoutIssuerKey          = "backchannel_logout_issuer"
 )
 
 var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
-	nameAttributePathKey:    {Type: String},
-	loginAttributePathKey:   {Type: String},
-	idTokenAttributeNameKey: {Type: String},
-	teamIdsKey:              {Type: String},
-	allowedOrganizationsKey: {Type: String},
+	nameAttributePathKey:                {Type: String},
+	loginAttributePathKey:               {Type: String},
+	idTokenAttributeNameKey:             {Type: String},
+	teamIdsKey:                          {Type: String},
+	allowedOrganizationsKey:             {Type: String},
+	backChannelLogoutEnabledKey:         {Type: Bool, DefaultValue: false},
+	backChannelLogoutURLKey:             {Type: String},
+	backChannelLogoutSessionRequiredKey: {Type: Bool, DefaultValue: true},
+	backChannelLogoutIssuerKey:          {Type: String},
 }
 
 var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
@@ -230,6 +238,7 @@ type UserInfoJson struct {
 	Email       string              `json:"email"`
 	Upn         string              `json:"upn"`
 	Attributes  map[string][]string `json:"attributes"`
+	Sid         string              `json:"sid"` // OIDC session ID for back-channel logout
 	rawJSON     []byte
 	source      string
 }
@@ -327,6 +336,11 @@ func (s *SocialGenericOAuth) extractBasicUserFields(userInfo *social.BasicUserIn
 		if userInfo.Email != "" {
 			s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
 		}
+	}
+
+	if userInfo.SessionID == "" && data.Sid != "" {
+		userInfo.SessionID = data.Sid
+		s.log.Debug("Set user info session ID from sid claim", "sessionID", userInfo.SessionID)
 	}
 }
 
