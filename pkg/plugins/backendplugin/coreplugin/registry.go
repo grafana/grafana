@@ -10,8 +10,8 @@ import (
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -94,7 +94,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 	}
 }
 
-func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
@@ -204,7 +204,7 @@ var ErrCorePluginNotFound = errors.New("core plugin not found")
 
 // NewPlugin factory for creating and initializing a single core plugin.
 // Note: cfg only needed for mssql connection pooling defaults.
-func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*plugins.Plugin, error) {
+func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*plugins.Plugin, error) {
 	jsonData := plugins.JSONData{
 		ID:       pluginID,
 		AliasIDs: []string{},
