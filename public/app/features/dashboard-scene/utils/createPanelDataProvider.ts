@@ -43,14 +43,14 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
 }
 
 function findFirstDatasource(targets: DataQuery[]): DataSourceRef | undefined {
-  const datasource = targets.find((t) => t.datasource?.type !== '' || t.datasource?.uid !== '');
+  const datasource = targets.find((t) => t.datasource !== null)?.datasource;
   if (!datasource) {
     return undefined;
   }
 
   const dsRef: DataSourceRef = {
-    ...(datasource.datasource?.type && { type: datasource.datasource?.type }),
-    ...(datasource.datasource?.uid && { uid: datasource.datasource?.uid }),
+    ...(datasource?.type && { type: datasource?.type }),
+    ...(datasource?.uid && { uid: datasource?.uid }),
   };
 
   return dsRef;
