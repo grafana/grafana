@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
+import { useAsync, useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Grid } from '@grafana/ui';
+import { Button, useStyles2, Grid, Alert } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
@@ -26,6 +26,8 @@ import {
   getLogoUrl,
   buildDashboardDetails,
   onUseCommunityDashboard,
+  COMMUNITY_PAGE_SIZE_QUERY,
+  COMMUNITY_RESULT_SIZE,
 } from './utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
@@ -43,7 +45,7 @@ type SuggestedDashboardsResult = {
 };
 
 // Constants for suggested dashboards API params
-const SUGGESTED_COMMUNITY_PAGE_SIZE = 2;
+const MAX_SUGGESTED_DASHBOARDS_PREVIEW = 2;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_SCREENSHOTS = true;
@@ -91,14 +93,14 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
           orderBy: DEFAULT_SORT_ORDER,
           direction: DEFAULT_SORT_DIRECTION,
           page: 1,
-          pageSize: SUGGESTED_COMMUNITY_PAGE_SIZE,
+          pageSize: COMMUNITY_PAGE_SIZE_QUERY,
           includeScreenshots: INCLUDE_SCREENSHOTS,
           dataSourceSlugIn: ds.type,
           includeLogo: INCLUDE_LOGO,
         }),
       ]);
 
-      const community = communityResponse.items;
+      const community = communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE);
 
       // Mix: 1 provisioned + 2 community
       const mixed: MixedDashboard[] = [];
@@ -130,7 +132,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
 
       // Determine if there are more dashboards available beyond what we're showing
       // Show "View all" if: more than 1 provisioned exists OR we got the full page size of community dashboards
-      const hasMoreDashboards = provisioned.length > 1 || community.length >= SUGGESTED_COMMUNITY_PAGE_SIZE;
+      const hasMoreDashboards = provisioned.length > 1 || community.length > MAX_SUGGESTED_DASHBOARDS_PREVIEW;
 
       return { dashboards: mixed, hasMoreDashboards };
     } catch (error) {
@@ -233,35 +235,38 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
-  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
-    if (!datasourceUid) {
-      return;
-    }
+  const [{ error: isPreviewCommunityDashboardError }, onPreviewCommunityDashboard] = useAsyncFn(
+    async (dashboard: GnetDashboard) => {
+      if (!datasourceUid) {
+        return;
+      }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    if (!ds) {
-      return;
-    }
+      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      if (!ds) {
+        return;
+      }
 
-    // Track item click
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-      datasourceTypes: [ds.type],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+      // Track item click
+      DashboardLibraryInteractions.itemClicked({
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        datasourceTypes: [ds.type],
+        libraryItemId: String(dashboard.id),
+        libraryItemTitle: dashboard.name,
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+        discoveryMethod: DISCOVERY_METHODS.BROWSE,
+      });
 
-    onUseCommunityDashboard({
-      dashboard,
-      datasourceUid,
-      datasourceType: ds.type,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      onShowMapping: onShowMapping,
-    });
-  };
+      await onUseCommunityDashboard({
+        dashboard,
+        datasourceUid,
+        datasourceType: ds.type,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+        onShowMapping: onShowMapping,
+      });
+    },
+    [datasourceUid, onShowMapping]
+  );
 
   // Don't render if no dashboards or still loading
   if (!loading && (!result || result.dashboards.length === 0)) {
@@ -297,7 +302,16 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
             </Button>
           )}
         </div>
-
+        {isPreviewCommunityDashboardError && (
+          <div>
+            <Alert
+              title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
+              severity="error"
+            >
+              <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+            </Alert>
+          </div>
+        )}
         <Grid
           gap={4}
           columns={{
