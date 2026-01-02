@@ -71,7 +71,6 @@ type cachingDatasourceProvider struct {
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
-	group, _ := plugins.GetDatasourceGroupNameFromPluginID(pluginJson.ID)
 	return &scopedDatasourceProvider{
 		plugin:          pluginJson,
 		dsService:       q.dsService,
@@ -81,7 +80,7 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 			mapper: q.converter.mapper,
 			plugin: pluginJson.ID,
 			alias:  pluginJson.AliasIDs,
-			group:  group,
+			group:  pluginJson.ID,
 		},
 	}
 }
