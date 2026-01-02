@@ -45,6 +45,7 @@ import (
 const (
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
+	boltTimeout        = "500ms"
 )
 
 // Keys used to store internal data in index.
@@ -657,8 +658,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
 
-		runtimeConfig := map[string]interface{}{"bolt_timeout": "500ms"}
-		idx, err := bleve.OpenUsing(indexDir, runtimeConfig)
+		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 		if err != nil {
 			if errors.Is(err, bolterrors.ErrTimeout) {
 				b.log.Debug("Index is opened by another process (timeout), skipping", "indexDir", indexDir)
