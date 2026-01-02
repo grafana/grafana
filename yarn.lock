@@ -7323,6 +7323,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@remix-run/router@npm:1.23.1":
+  version: 1.23.1
+  resolution: "@remix-run/router@npm:1.23.1"
+  checksum: 10/f54845ad174564f157a2255aec8446a7f4f4e543d9d6ef9ec749d32d1fdc57273d9cc80574f87f411c2790fbe51a242273abe7002d118515038eaf4aefd3d988
+  languageName: node
+  linkType: hard
+
 "@rollup/plugin-dynamic-import-vars@npm:2.1.5":
   version: 2.1.5
   resolution: "@rollup/plugin-dynamic-import-vars@npm:2.1.5"
@@ -12247,19 +12254,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.6.3, ajv@npm:^8.9.0":
-  version: 8.12.0
-  resolution: "ajv@npm:8.12.0"
-  dependencies:
-    fast-deep-equal: "npm:^3.1.1"
-    json-schema-traverse: "npm:^1.0.0"
-    require-from-string: "npm:^2.0.2"
-    uri-js: "npm:^4.2.2"
-  checksum: 10/b406f3b79b5756ac53bfe2c20852471b08e122bc1ee4cde08ae4d6a800574d9cd78d60c81c69c63ff81e4da7cd0b638fafbb2303ae580d49cf1600b9059efb85
-  languageName: node
-  linkType: hard
-
-"ajv@npm:^8.17.1":
+"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.17.1, ajv@npm:^8.6.3, ajv@npm:^8.9.0":
   version: 8.17.1
   resolution: "ajv@npm:8.17.1"
   dependencies:
@@ -17755,17 +17750,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventsource-parser@npm:^3.0.0":
+"eventsource-parser@npm:^3.0.0, eventsource-parser@npm:^3.0.1":
   version: 3.0.6
   resolution: "eventsource-parser@npm:3.0.6"
   checksum: 10/febf7058b9c2168ecbb33e92711a1646e06bd1568f60b6eb6a01a8bf9f8fcd29cc8320d57247059cacf657a296280159f21306d2e3ff33309a9552b2ef889387
-  languageName: node
-  linkType: hard
-
-"eventsource-parser@npm:^3.0.1":
-  version: 3.0.2
-  resolution: "eventsource-parser@npm:3.0.2"
-  checksum: 10/a42b0c494eb8026a88e9a3d313f5cc3efc4b81bdf59e64a13f69972ed71b7a4317f3c5d36410128e2c23193364ae8d851afda12738bb71fa40946c82c5bb3027
   languageName: node
   linkType: hard
 
@@ -28874,17 +28862,17 @@ __metadata:
   linkType: hard
 
 "react-router-dom-v5-compat@npm:^6.26.1":
-  version: 6.26.1
-  resolution: "react-router-dom-v5-compat@npm:6.26.1"
+  version: 6.30.2
+  resolution: "react-router-dom-v5-compat@npm:6.30.2"
   dependencies:
-    "@remix-run/router": "npm:1.19.1"
+    "@remix-run/router": "npm:1.23.1"
     history: "npm:^5.3.0"
-    react-router: "npm:6.26.1"
+    react-router: "npm:6.30.2"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
     react-router-dom: 4 || 5
-  checksum: 10/c8249404e0b219ff00797ae0ff8818394a07309b62617a9a4e47d5a8769801098431ceec38eca8c712cbee4a04843326cb2334ed15ea08b7848b5ce5a58ad0a3
+  checksum: 10/603152ee9a7230eb31d347d054f122b03d0176bae83f59d666ed8c8417e84918c75309bdf4c04e4115a727742b45d479b0c8001b42b7c8ec90dc97c2fd4e26a1
   languageName: node
   linkType: hard
 
@@ -28945,6 +28933,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 10/b3761515c75da65a1678f005d08a6285ceccd9df7237ae6fdd9ab2ab816ef328435b75610f705ecd9ecd41c6878fd22eb9b44c5391cdef2e1ed99ddbc78de8a4
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.30.2":
+  version: 6.30.2
+  resolution: "react-router@npm:6.30.2"
+  dependencies:
+    "@remix-run/router": "npm:1.23.1"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10/537bd68aa9e8125e1b20702180d4d875421150280e2c4c039c663a105da05956a457cb4d0f4f6a56605d6cadf9b1c1282dc45a9845f81bdca9bc87364eafc073
   languageName: node
   linkType: hard
 
@@ -34949,17 +34948,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25 || ^4.0":
+"zod@npm:^3.25 || ^4.0, zod@npm:^4.0.0":
   version: 4.1.13
   resolution: "zod@npm:4.1.13"
   checksum: 10/0679190318928f69fcb07751063719de232c663b13955fcdb55db59839569d39f3f29b955cb0cba7af0b724233f88c06b3e84c550397ad4e68f8088fa6799d88
-  languageName: node
-  linkType: hard
-
-"zod@npm:^4.0.0":
-  version: 4.0.15
-  resolution: "zod@npm:4.0.15"
-  checksum: 10/a91e998d519b697a82e0f5ceea8b9c1e3a2ebc80ef6a275fc71b7f7b052cd4ab45140525c4ba93ad60fa28e0c72dc6f6c326be954aa3f621699b9a2d05fbdf1c
   languageName: node
   linkType: hard
 
