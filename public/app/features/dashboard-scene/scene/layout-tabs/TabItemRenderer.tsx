@@ -11,7 +11,6 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
-import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
 import { TabItem } from './TabItem';
 
@@ -92,7 +91,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               onSelect?.(evt);
             }}
             label={titleInterpolated}
-            data-dashboard-drop-target-key={isDashboardLayoutGrid(layout) ? model.state.key : undefined}
+            data-tab-activation-key={key}
             {...titleCollisionProps}
           />
         </div>
