@@ -45,15 +45,14 @@ type DataSourceAPIBuilderConfig struct {
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
-
-	pluginJSON           plugins.JSONData
-	client               PluginClient // will only ever be called with the same plugin id!
-	datasources          PluginDatasourceProvider
-	contextProvider      PluginContextWrapper
-	accessControl        accesscontrol.AccessControl
-	queryTypes           *queryV0.QueryTypeDefinitionList
-	cfg                  DataSourceAPIBuilderConfig
-	dataSourceCRUDMetric *prometheus.HistogramVec
+	pluginJSON             plugins.JSONData
+	client                 PluginClient // will only ever be called with the same plugin id!
+	datasources            PluginDatasourceProvider
+	contextProvider        PluginContextWrapper
+	accessControl          accesscontrol.AccessControl
+	queryTypes             *queryV0.QueryTypeDefinitionList
+	cfg                    DataSourceAPIBuilderConfig
+	dataSourceCRUDMetric   *prometheus.HistogramVec
 }
 
 func RegisterAPIService(
@@ -95,7 +94,7 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
-		groupName := plugins.AddDatasourceSuffix(pluginJSON.ID)
+		groupName := pluginJSON.ID + ".datasource.grafana.app"
 		builder, err = NewDataSourceAPIBuilder(
 			groupName,
 			pluginJSON,
