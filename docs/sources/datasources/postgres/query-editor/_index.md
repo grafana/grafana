@@ -279,7 +279,41 @@ Refer to [Templates](ref:templates) for an introduction to creating template var
 
 If you add a `Query` template variable you can write a PostgreSQL query to retrieve items such as measurement names, key names, or key values, which will be displayed in the drop-down menu.
 
-For example, you can use a variable to retrieve all the values from the `hostname` column in a table by creating the following query in the templating variable _Query_ setting.
+The PostgreSQL variable query editor supports both **Builder** and **Code** modes, similar to the standard query editor.
+
+#### Builder mode for variables
+
+{{< admonition type="note" >}}
+Builder mode for variable queries is currently behind the `postgresVariableQueryEditor` feature toggle.
+{{< /admonition >}}
+
+Builder mode provides a visual interface for creating variable queries. When using Builder mode for variable queries, the **Alias** dropdown includes predefined options `__text` and `__value` to easily create key/value variables.
+
+{{< figure src="/static/img/docs/postgresql-variable-query-editor.png" class="docs-image--no-shadow" caption="PostgreSQL variable query editor in Builder mode" >}}
+
+For example, to create a variable that displays hostnames but uses IDs as values:
+
+1. Select your table from the **Table** dropdown.
+2. Add a column for the display text (for example, `hostname`) and set its **Alias** to `__text`.
+3. Add another column for the value (for example, `id`) and set its **Alias** to `__value`.
+
+This generates a query equivalent to `SELECT hostname AS __text, id AS __value FROM host`.
+
+#### Multiple properties
+
+When you create a key/value variable with `__text` and `__value`, you can also include additional columns to store extra properties. These additional properties can be accessed using dot notation.
+
+For example, if you have a variable named `server` with columns for `hostname` (as `__text`), `id` (as `__value`), and `region`, you can access the region property using `${server.region}`.
+
+To add multiple properties:
+
+1. Set up your `__text` and `__value` columns as described above.
+2. Add additional columns for any extra properties you want to include.
+3. Access the properties in your queries or panels using `${variableName.propertyName}`.
+
+#### Code mode for variables
+
+In Code mode, you can write PostgreSQL queries directly. For example, you can use a variable to retrieve all the values from the `hostname` column in a table by creating the following query in the templating variable _Query_ setting.
 
 ```sql
 SELECT hostname FROM host
@@ -297,7 +331,9 @@ To use time range dependent macros like `$__timeFilter(column)` in your query, y
 SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
 ```
 
-Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column must contain unique values (if not, only the first value is used). This allows the drop-down options to display a text-friendly name as the text while using an ID as the value. For example, a query could use `hostname` as the text and `id` as the value:
+Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column must contain unique values (if not, only the first value is used). This allows the drop-down options to display a text-friendly name as the text while using an ID as the value.
+
+You can create key/value variables using Builder mode by selecting the predefined `__text` and `__value` alias options, or write the query directly in Code mode. For example, a query could use `hostname` as the text and `id` as the value:
 
 ```sql
 SELECT hostname AS __text, id AS __value FROM host

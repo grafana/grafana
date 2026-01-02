@@ -2,20 +2,19 @@ import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  getDefaultTimeRange,
+  CoreApp,
   DataFrame,
   DataFrameView,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
-  CoreApp,
+  getDefaultTimeRange,
   getSearchFilterScopedVar,
   LegacyMetricFindQueryOptions,
-  VariableWithMultiSupport,
+  MetricFindValue,
+  ScopedVars,
   TimeRange,
+  VariableWithMultiSupport,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 import {
@@ -24,15 +23,16 @@ import {
   FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  toDataQueryResponse,
-  TemplateSrv,
   reportInteraction,
+  TemplateSrv,
+  toDataQueryResponse,
 } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
+import { DB, QueryFormat, SQLOptions, SQLQuery, SqlQueryModel } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
@@ -182,7 +182,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return;
   }
 
-  async metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: SQLQuery | string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]> {
     const range = options?.range;
     if (range == null) {
       // i cannot create a scenario where this happens, we handle it just to be sure.
@@ -194,12 +194,17 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       refId = options.variable.name;
     }
 
+    const queryString = typeof query === 'string' ? query : query.rawSql;
+    if (!queryString) {
+      return [];
+    }
+
     const scopedVars = {
       ...options?.scopedVars,
-      ...getSearchFilterScopedVar({ query, wildcardChar: '%', options }),
+      ...getSearchFilterScopedVar({ query: queryString, wildcardChar: '%', options }),
     };
 
-    const rawSql = this.templateSrv.replace(query, scopedVars, this.interpolateVariable);
+    const rawSql = this.templateSrv.replace(queryString, scopedVars, this.interpolateVariable);
 
     const interpolatedQuery: SQLQuery = {
       refId: refId,
