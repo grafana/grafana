@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
@@ -208,7 +209,7 @@ type Cfg struct {
 	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
+	PluginSettings                   config.PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string

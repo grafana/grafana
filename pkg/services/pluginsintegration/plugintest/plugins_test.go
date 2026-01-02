@@ -163,7 +163,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
-	ms := mssql.ProvideService(cfg)
+	ms := mssql.ProvideService()
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
 	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil, features)

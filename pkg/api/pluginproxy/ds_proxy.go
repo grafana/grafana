@@ -300,11 +300,11 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		r1, err := util.CleanRelativePath(proxy.proxyPath)
+		r1, err := plugins.CleanRelativePath(proxy.proxyPath)
 		if err != nil {
 			return err
 		}
-		r2, err := util.CleanRelativePath(route.Path)
+		r2, err := plugins.CleanRelativePath(route.Path)
 		if err != nil {
 			return err
 		}

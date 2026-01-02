@@ -6,17 +6,14 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -204,7 +201,7 @@ var ErrCorePluginNotFound = errors.New("core plugin not found")
 
 // NewPlugin factory for creating and initializing a single core plugin.
 // Note: cfg only needed for mssql connection pooling defaults.
-func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*plugins.Plugin, error) {
+func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) (*plugins.Plugin, error) {
 	jsonData := plugins.JSONData{
 		ID:       pluginID,
 		AliasIDs: []string{},
@@ -241,7 +238,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case MySQL:
 		svc = mysql.ProvideService()
 	case MSSQL:
-		svc = mssql.ProvideService(cfg)
+		svc = mssql.ProvideService()
 	case Pyroscope:
 		svc = pyroscope.ProvideService(httpClientProvider)
 	case Parca:

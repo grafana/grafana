@@ -14,10 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/util"
 )
 
-var walk = util.Walk
+var walk = plugins.Walk
 
 var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
@@ -217,7 +216,7 @@ func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
 			}
 
 			if fi.Name() == "node_modules" {
-				return util.ErrWalkSkipDir
+				return plugins.ErrWalkSkipDir
 			}
 
 			if fi.IsDir() {

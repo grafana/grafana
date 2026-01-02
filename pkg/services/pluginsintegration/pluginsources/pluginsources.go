@@ -1,4 +1,4 @@
-package sources
+package pluginsources
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +28,7 @@ func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Servic
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	r := []plugins.PluginSource{
-		NewLocalSource(
+		sources.NewLocalSource(
 			plugins.ClassCore,
 			s.corePluginPaths(),
 		),
@@ -38,7 +39,7 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {
-	localSrcs, err := DirAsLocalSources(s.cfg, s.cfg.PluginsPath, plugins.ClassExternal)
+	localSrcs, err := sources.DirAsLocalSources(s.cfg, s.cfg.PluginsPath, plugins.ClassExternal)
 	if err != nil {
 		s.log.Error("Failed to load external plugins", "error", err)
 		return []plugins.PluginSource{}
@@ -53,20 +54,20 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 }
 
 func (s *Service) pluginSettingSources() []plugins.PluginSource {
-	sources := make([]plugins.PluginSource, 0, len(s.cfg.PluginSettings))
+	srcs := make([]plugins.PluginSource, 0, len(s.cfg.PluginSettings))
 	for _, ps := range s.cfg.PluginSettings {
 		path, exists := ps["path"]
 		if !exists || path == "" {
 			continue
 		}
 		if s.cfg.DevMode {
-			sources = append(sources, NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
+			srcs = append(srcs, sources.NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
 		} else {
-			sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
+			srcs = append(srcs, sources.NewLocalSource(plugins.ClassExternal, []string{path}))
 		}
 	}
 
-	return sources
+	return srcs
 }
 
 // corePluginPaths provides a list of the Core plugin file system paths
