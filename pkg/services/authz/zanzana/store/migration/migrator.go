@@ -17,6 +17,10 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
+var (
+	openFGATables = []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
+)
+
 func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
 	connStr := grafanaDBConfig.ConnectionString
 	// running grafana migrations
@@ -88,8 +92,9 @@ func resetOpenFGASchema(engine, uri string) error {
 	}
 	defer db.Close()
 
-	openfgaTables := []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
-	for _, table := range openfgaTables {
+	for _, table := range openFGATables {
+		// strings are hard-coded, so this is safe.
+		// #nosec G201 nosemgrep: gosec.G201
 		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", table)); err != nil {
 			return fmt.Errorf("failed to drop openfga table %s: %w", table, err)
 		}
@@ -99,8 +104,7 @@ func resetOpenFGASchema(engine, uri string) error {
 }
 
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
-	openfgaTables := []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
-	for _, table := range openfgaTables {
+	for _, table := range openFGATables {
 		m.AddMigration(fmt.Sprintf("Drop existing openfga table %s", table), migrator.NewDropTableMigration(table))
 	}
 
