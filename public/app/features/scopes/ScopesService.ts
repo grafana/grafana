@@ -151,11 +151,25 @@ export class ScopesService implements ScopesContextValue {
     // Update the URL based on change in the scopes state
     this.subscriptions.push(
       selectorService.subscribeToState((state, prevState) => {
-        const oldScopeNodeId = prevState.appliedScopes[0]?.scopeNodeId;
-        const newScopeNodeId = state.appliedScopes[0]?.scopeNodeId;
-
         const oldScopeNames = prevState.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
+
+        // Extract scopeNodeId from defaultPath when available
+        const getScopeNodeId = (appliedScopes: typeof state.appliedScopes, scopes: typeof state.scopes) => {
+          const firstScope = appliedScopes[0];
+          if (!firstScope) {
+            return undefined;
+          }
+          const scope = scopes[firstScope.scopeId];
+          // Prefer defaultPath when available
+          if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+            return scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
+          }
+          return firstScope.scopeNodeId;
+        };
+
+        const oldScopeNodeId = getScopeNodeId(prevState.appliedScopes, prevState.scopes);
+        const newScopeNodeId = getScopeNodeId(state.appliedScopes, state.scopes);
 
         const scopesChanged = !isEqual(oldScopeNames, newScopeNames);
         const scopeNodeChanged = oldScopeNodeId !== newScopeNodeId;
@@ -230,7 +244,7 @@ export class ScopesService implements ScopesContextValue {
     if (this.state.enabled !== enabled) {
       this.updateState({ enabled });
       if (enabled) {
-        const scopeNodeId = this.selectorService.state.appliedScopes[0]?.scopeNodeId;
+        const scopeNodeId = this.getScopeNodeIdForUrl();
         this.locationService.partial(
           {
             scopes: this.selectorService.state.appliedScopes.map((s) => s.scopeId),
@@ -242,6 +256,29 @@ export class ScopesService implements ScopesContextValue {
       }
     }
   };
+
+  /**
+   * Extracts the scopeNodeId for URL syncing, preferring defaultPath when available.
+   * When a scope has defaultPath, that is the source of truth for the node ID.
+   * @private
+   */
+  private getScopeNodeIdForUrl(): string | undefined {
+    const firstScope = this.selectorService.state.appliedScopes[0];
+    if (!firstScope) {
+      return undefined;
+    }
+
+    const scope = this.selectorService.state.scopes[firstScope.scopeId];
+
+    // Prefer scopeNodeId from defaultPath if available (most reliable source)
+    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+      // Extract scopeNodeId from the last element of defaultPath
+      return scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
+    }
+
+    // Fallback to scopeNodeId from appliedScopes for backwards compatibility
+    return firstScope.scopeNodeId;
+  }
 
   /**
    * Returns observable that emits when relevant parts of the selectorService state change.
