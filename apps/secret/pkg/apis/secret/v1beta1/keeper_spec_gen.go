@@ -4,14 +4,26 @@ package v1beta1
 
 // +k8s:openapi-gen=true
 type KeeperAWSConfig struct {
-	AccessKeyID     KeeperCredentialValue `json:"accessKeyID"`
-	SecretAccessKey KeeperCredentialValue `json:"secretAccessKey"`
-	KmsKeyID        *string               `json:"kmsKeyID,omitempty"`
+	Region     string               `json:"region"`
+	AccessKey  *KeeperAWSAccessKey  `json:"accessKey,omitempty"`
+	AssumeRole *KeeperAWSAssumeRole `json:"assumeRole,omitempty"`
+	KmsKeyID   *string              `json:"kmsKeyID,omitempty"`
 }
 
 // NewKeeperAWSConfig creates a new KeeperAWSConfig object.
 func NewKeeperAWSConfig() *KeeperAWSConfig {
-	return &KeeperAWSConfig{
+	return &KeeperAWSConfig{}
+}
+
+// +k8s:openapi-gen=true
+type KeeperAWSAccessKey struct {
+	AccessKeyID     KeeperCredentialValue `json:"accessKeyID"`
+	SecretAccessKey KeeperCredentialValue `json:"secretAccessKey"`
+}
+
+// NewKeeperAWSAccessKey creates a new KeeperAWSAccessKey object.
+func NewKeeperAWSAccessKey() *KeeperAWSAccessKey {
+	return &KeeperAWSAccessKey{
 		AccessKeyID:     *NewKeeperCredentialValue(),
 		SecretAccessKey: *NewKeeperCredentialValue(),
 	}
@@ -34,6 +46,17 @@ type KeeperCredentialValue struct {
 // NewKeeperCredentialValue creates a new KeeperCredentialValue object.
 func NewKeeperCredentialValue() *KeeperCredentialValue {
 	return &KeeperCredentialValue{}
+}
+
+// +k8s:openapi-gen=true
+type KeeperAWSAssumeRole struct {
+	AssumeRoleArn string `json:"assumeRoleArn"`
+	ExternalID    string `json:"externalID"`
+}
+
+// NewKeeperAWSAssumeRole creates a new KeeperAWSAssumeRole object.
+func NewKeeperAWSAssumeRole() *KeeperAWSAssumeRole {
+	return &KeeperAWSAssumeRole{}
 }
 
 // +k8s:openapi-gen=true
