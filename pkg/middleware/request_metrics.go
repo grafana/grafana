@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -114,8 +115,12 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 					handler = "notfound"
 				} else {
 					// log requests where we could not identify handler so we can register them.
-					//nolint:staticcheck // not yet migrated to OpenFeature
-					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+					evalCtx := openfeature.TransactionContext(r.Context())
+					flag, err := openfeature.NewDefaultClient().BooleanValueDetails(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown, false, evalCtx)
+					if err != nil {
+						log.Error("failed to evaluate feature flag: %w", err)
+					}
+					if flag.Value {
 						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}
 				}
