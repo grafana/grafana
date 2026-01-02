@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
-	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -21,6 +21,25 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// extractPathParam extracts a path parameter from the request URL path.
+// It looks for the segment after the given prefix in the path.
+// For example, extractPathParam("/namespaces/default/...", "/namespaces/") returns "default".
+func extractPathParam(urlPath, prefix string) string {
+	idx := strings.Index(urlPath, prefix)
+	if idx == -1 {
+		return ""
+	}
+	// Start after the prefix
+	start := idx + len(prefix)
+	// Find the next slash or end of string
+	end := strings.Index(urlPath[start:], "/")
+	if end == -1 {
+		// No trailing slash, take the rest of the path
+		return urlPath[start:]
+	}
+	return urlPath[start : start+end]
+}
 
 func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
@@ -110,8 +129,9 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						// SignedInUser: user, ????????????
 					}
 
-					vars := mux.Vars(r)
-					info, err := authlib.ParseNamespace(vars["namespace"])
+					// Extract namespace from path: /.../namespaces/{namespace}/...
+					namespace := extractPathParam(r.URL.Path, "/namespaces/")
+					info, err := authlib.ParseNamespace(namespace)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
@@ -156,8 +176,8 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
-					vars := mux.Vars(r)
-					key := vars["deleteKey"]
+					// Extract deleteKey from path: /.../delete/{deleteKey}
+					key := extractPathParam(r.URL.Path, "/delete/")
 
 					err := dashboardsnapshots.DeleteWithKey(ctx, key, service)
 					if err != nil {
@@ -233,8 +253,9 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					}
 
-					vars := mux.Vars(r)
-					info, err := authlib.ParseNamespace(vars["namespace"])
+					// Extract namespace from path: /.../namespaces/{namespace}/...
+					namespace := extractPathParam(r.URL.Path, "/namespaces/")
+					info, err := authlib.ParseNamespace(namespace)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
