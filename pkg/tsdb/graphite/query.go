@@ -27,6 +27,8 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		req      *http.Request
 		formData url.Values
 	}{}
+	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
+	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -97,7 +99,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId)
+		queryFrames, err := s.toDataFrames(res, refId, fromAlert)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -192,7 +194,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 	return graphiteReq, formData, emptyQuery, nil
 }
 
-func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -215,7 +217,9 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = series.Target
+				if fromAlert {
+					value = series.Target
+				}
 			}
 			switch value := value.(type) {
 			case string:
