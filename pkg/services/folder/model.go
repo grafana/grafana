@@ -31,6 +31,10 @@ const (
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
+func IsRootFolder(f string) bool {
+	return f == "" || f == GeneralFolderUID
+}
+
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
