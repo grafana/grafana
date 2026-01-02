@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, setYAxisRangeContext, clearYAxisRangeContext } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { AdHocFilterModel } from '../../../internal';
@@ -267,6 +267,36 @@ export const TooltipPlugin2 = ({
         }
 
         pendingPinned = false;
+      }
+
+      // Extract Y-axis range for tooltip decimal calculation
+      if (_plot && (_isHovering || selectedRange != null)) {
+        let yMin: number | undefined;
+        let yMax: number | undefined;
+
+        // Iterate through scales to find Y-axis min/max
+        for (let key in _plot.scales) {
+          if (key !== 'x') {
+            const scale = _plot.scales[key];
+            // Check that min and max are valid numbers (not null, not undefined, not NaN)
+            if (scale.min != null && scale.max != null &&
+                typeof scale.min === 'number' && typeof scale.max === 'number' &&
+                !isNaN(scale.min) && !isNaN(scale.max)) {
+              yMin = yMin === undefined ? scale.min : Math.min(yMin, scale.min);
+              yMax = yMax === undefined ? scale.max : Math.max(yMax, scale.max);
+            }
+          }
+        }
+
+        // Set Y-axis range context if we found valid values
+        if (yMin !== undefined && yMax !== undefined) {
+          setYAxisRangeContext(yMin, yMax);
+        } else {
+          clearYAxisRangeContext();
+        }
+      } else {
+        // Clear context when not hovering
+        clearYAxisRangeContext();
       }
 
       let state: TooltipContainerState = {
