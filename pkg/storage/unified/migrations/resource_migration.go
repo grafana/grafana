@@ -71,7 +71,7 @@ func NewResourceMigration(
 }
 
 func (m *ResourceMigration) SkipMigrationLog() bool {
-	// If ignoreErrors is true, we skip logging to allow re-running migrations
+	// Skip populating the log table if auto-migrate is enabled and errors occurred
 	return m.autoMigrate && m.hadErrors
 }
 

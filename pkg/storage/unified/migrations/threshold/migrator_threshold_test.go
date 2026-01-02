@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// TODO: remove this test before Grafana 13 GA
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
