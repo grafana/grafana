@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	"github.com/prometheus/alertmanager/flushlog/flushlogpb"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
@@ -228,15 +229,13 @@ func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-type NoValidation struct {
-}
+type NoValidation struct{}
 
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
-type RejectingValidation struct {
-}
+type RejectingValidation struct{}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
 	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
@@ -363,6 +362,51 @@ func createNotificationLog(groupKey string, receiverName string, sentAt, expires
 		},
 		ExpiresAt: expiresAt,
 	}
+}
+
+// https://github.com/grafana/prometheus-alertmanager/blob/main/flushlog/flushlog.go#L136-L136
+type flushLogState map[uint64]*flushlogpb.MeshFlushLog
+
+func (s flushLogState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+func createFlushLog(groupFingerprint uint64, ts, expiresAt time.Time) *flushlogpb.MeshFlushLog {
+	return &flushlogpb.MeshFlushLog{
+		FlushLog: &flushlogpb.FlushLog{
+			GroupFingerprint: groupFingerprint,
+			Timestamp:        ts,
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// decodeFlushLogState copied from decodeState in prometheus-alertmanager/flushlog/flushlog.go
+func decodeFlushLogState(r io.Reader) (flushLogState, error) {
+	st := flushLogState{}
+	for {
+		var e flushlogpb.MeshFlushLog
+		_, err := pbutil.ReadDelimited(r, &e)
+		if err == nil {
+			if e.FlushLog == nil || e.FlushLog.GroupFingerprint == 0 || e.FlushLog.Timestamp.IsZero() {
+				return nil, errInvalidState
+			}
+			st[e.FlushLog.GroupFingerprint] = &e
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
 }
 
 type call struct {
