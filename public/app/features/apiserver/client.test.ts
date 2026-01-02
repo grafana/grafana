@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { APIVersions, ScopedResourceClient } from './client';
+import { DatasourceAPIVersions, ScopedResourceClient } from './client';
 import { GroupVersionResource } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -28,13 +28,13 @@ describe('DatasourceAPIVersions', () => {
   it('get', async () => {
     const getMock = jest.fn().mockResolvedValue({
       groups: [
-        { name: 'grafana-testdata-datasource', preferredVersion: { version: 'v1' } },
-        { name: 'prometheus', preferredVersion: { version: 'v2' } },
-        { name: 'myorg-myplugin', preferredVersion: { version: 'v3' } },
+        { name: 'grafana-testdata-datasource.datasource.grafana.app', preferredVersion: { version: 'v1' } },
+        { name: 'prometheus.datasource.grafana.app', preferredVersion: { version: 'v2' } },
+        { name: 'myorg-myplugin.datasource.grafana.app', preferredVersion: { version: 'v3' } },
       ],
     });
     getBackendSrv().get = getMock;
-    const apiVersions = new APIVersions();
+    const apiVersions = new DatasourceAPIVersions();
     expect(await apiVersions.get('grafana-testdata-datasource')).toBe('v1');
     expect(await apiVersions.get('prometheus')).toBe('v2');
     expect(await apiVersions.get('graphite')).toBeUndefined();

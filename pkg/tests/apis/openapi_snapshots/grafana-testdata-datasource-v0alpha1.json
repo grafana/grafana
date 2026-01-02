@@ -5,7 +5,7 @@
     "title": "grafana-testdata-datasource/v0alpha1"
   },
   "paths": {
-    "/apis/grafana-testdata-datasource/v0alpha1/": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -36,7 +36,7 @@
         }
       }
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/connections/{name}/query": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/query": {
       "post": {
         "tags": [
           "Connections (deprecated)"
@@ -96,7 +96,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/datasources": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources": {
       "get": {
         "tags": [
           "DataSource"
@@ -254,7 +254,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/datasources/{name}": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}": {
       "get": {
         "tags": [
           "DataSource"
@@ -322,7 +322,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/datasources/{name}/health": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/health": {
       "get": {
         "tags": [
           "DataSource"
@@ -371,7 +371,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/datasources/{name}/query": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/query": {
       "post": {
         "tags": [
           "DataSource"
@@ -429,7 +429,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/datasources/{name}/resource": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource": {
       "get": {
         "tags": [
           "DataSource"
@@ -478,7 +478,7 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource/v0alpha1/namespaces/{namespace}/queryconvert/{name}": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/queryconvert/{name}": {
       "post": {
         "tags": [
           "QueryDataRequest"
@@ -620,7 +620,7 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "grafana-testdata-datasource/v0alpha1"
+              "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
             ]
           },
           "kind": {

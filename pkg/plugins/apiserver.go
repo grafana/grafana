@@ -29,10 +29,3 @@ func GetDatasourceGroupNameFromPluginID(pluginId string) (string, error) {
 func AddDatasourceSuffix(pluginId string) string {
 	return fmt.Sprintf("%s.datasource.grafana.app", pluginId)
 }
-
-// GetPluginIDFromDatasourceGroup maps a datasource group name to its plugin ID.
-// Works with both old style (testdata.datasource.grafana.app) and
-// new style (grafana-testdata-datasource.datasource.grafana.app).
-func GetPluginIDFromDatasourceGroup(group string) string {
-	return strings.TrimSuffix(group, ".datasource.grafana.app")
-}

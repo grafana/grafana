@@ -149,7 +149,7 @@ function setSavedFromUIAnnotation(meta: Partial<ObjectMeta>) {
   meta.annotations[AnnoKeySavedFromUI] = config.buildInfo.versionString;
 }
 
-export class APIVersions {
+export class DatasourceAPIVersions {
   private apiVersions?: { [pluginID: string]: string };
 
   async get(pluginID: string): Promise<string | undefined> {
@@ -159,7 +159,10 @@ export class APIVersions {
     const apis = await getBackendSrv().get<K8sAPIGroupList>('/apis');
     const apiVersions: { [pluginID: string]: string } = {};
     apis.groups.forEach((group) => {
-      apiVersions[group.name] = group.preferredVersion.version;
+      if (group.name.includes('datasource.grafana.app')) {
+        const id = group.name.split('.')[0];
+        apiVersions[id] = group.preferredVersion.version;
+      }
     });
     this.apiVersions = apiVersions;
     return apiVersions[pluginID];
