@@ -155,7 +155,7 @@ func ProvideService(
 		features:                          features,
 		rr:                                rr,
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
