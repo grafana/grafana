@@ -11,6 +11,7 @@ import { DataTransformerID } from './ids';
 import { reduceFields, reduceTransformer, ReduceTransformerMode, ReduceTransformerOptions } from './reduce';
 
 const seriesAWithSingleField = toDataFrame({
+  refId: 'A',
   name: 'A',
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
@@ -19,6 +20,7 @@ const seriesAWithSingleField = toDataFrame({
 });
 
 const seriesAWithMultipleFields = toDataFrame({
+  refId: 'B',
   name: 'A',
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
@@ -28,6 +30,7 @@ const seriesAWithMultipleFields = toDataFrame({
 });
 
 const seriesAWithAllNulls = toDataFrame({
+  refId: 'C',
   name: 'A',
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
@@ -36,6 +39,7 @@ const seriesAWithAllNulls = toDataFrame({
 });
 
 const seriesBWithSingleField = toDataFrame({
+  refId: 'D',
   name: 'B',
   fields: [
     { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
@@ -44,6 +48,7 @@ const seriesBWithSingleField = toDataFrame({
 });
 
 const seriesBWithMultipleFields = toDataFrame({
+  refId: 'E',
   name: 'B',
   fields: [
     { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
@@ -53,6 +58,7 @@ const seriesBWithMultipleFields = toDataFrame({
 });
 
 const seriesBWithAllNulls = toDataFrame({
+  refId: 'F',
   name: 'B',
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
@@ -65,7 +71,7 @@ describe('Reducer Transformer', () => {
     mockTransformationsRegistry([reduceTransformer]);
   });
 
-  it('reduces multiple data frames with many fields', async () => {
+  it('reduces multiple data frames with many fields and dynamic refId', async () => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
@@ -135,6 +141,7 @@ describe('Reducer Transformer', () => {
           },
         ];
 
+        expect(processed[0].refId).toBe('reduce-B-E');
         expect(processed.length).toEqual(1);
         expect(processed[0].length).toEqual(4);
         expect(processed[0].fields).toEqual(expected);
@@ -142,12 +149,13 @@ describe('Reducer Transformer', () => {
     );
   });
 
-  it('reduces multiple data frames with single field', async () => {
+  it('reduces multiple data frames with single field and static refId', async () => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
+      refId: 'test',
     };
 
     await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])).toEmitValuesWith(
@@ -187,6 +195,7 @@ describe('Reducer Transformer', () => {
         ];
 
         expect(processed.length).toEqual(1);
+        expect(processed[0].refId).toBe('test');
         expect(processed[0].length).toEqual(2);
         expect(processed[0].fields).toEqual(expected);
       }
