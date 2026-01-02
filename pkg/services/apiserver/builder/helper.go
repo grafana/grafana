@@ -79,7 +79,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler = filters.WithRequester(delegateHandler)
+		handler = filters.WithRequester(handler)
 
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
