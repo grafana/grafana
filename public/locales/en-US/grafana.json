@@ -9321,7 +9321,9 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(right y-axis)"
+      "right-axis-indicator": "(right y-axis)",
+      "show-all-series": "Show all series",
+      "show-all-series-tooltip": "Currently loaded series are hidden by previous selection. Click to show all series."
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",

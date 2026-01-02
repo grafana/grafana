@@ -53,7 +53,7 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
-import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
+import { isHideSeriesOverride, seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 import { PanelOptionsLogger } from './panelOptionsLogger';
 
@@ -106,6 +106,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         sync: this.getSync,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
+        onResetAllSeriesVisibility: this.onSeriesVisibilityReset,
         onAnnotationCreate: this.onAnnotationCreate,
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
@@ -169,6 +170,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
+  };
+
+  onSeriesVisibilityReset = () => {
+    this.onFieldConfigChange({
+      ...this.props.panel.fieldConfig,
+      overrides: this.props.panel.fieldConfig.overrides.filter((rule) => !isHideSeriesOverride(rule)),
+    });
   };
 
   onToggleLegendSort = (sortKey: string) => {
