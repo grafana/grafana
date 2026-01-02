@@ -1,0 +1,218 @@
+{
+  "user": {
+    "isSignedIn": true,
+    "id": 0,
+    "uid": "",
+    "login": "",
+    "email": "",
+    "name": "",
+    "theme": "dark",
+    "lightTheme": false,
+    "orgCount": 1,
+    "orgId": 1,
+    "orgName": "Main Org.",
+    "orgRole": "Viewer",
+    "isGrafanaAdmin": false,
+    "gravatarUrl": "",
+    "timezone": "browser",
+    "weekStart": "browser",
+    "locale": "en-US",
+    "regionalFormat": "",
+    "language": "en-US",
+    "helpFlags1": 0,
+    "hasEditPermissionInFolders": false,
+    "authenticatedBy": "",
+    "permissions": {
+      "datasources:explore": true,
+      "datasources:query": true,
+      "datasources:read": true,
+      "datasources:create": true,
+      "datasources:write": true,
+      "datasources:delete": true
+    },
+    "analytics": {
+      "identifier": ""
+    }
+  },
+  "settings": {
+    "namespace": "stacks-11",
+    "defaultDatasource": "-- Grafana --",
+    "datasources": {},
+    "minRefreshInterval": "5s",
+    "panels": {},
+    "apps": {},
+    "appUrl": "http://localhost:12345/",
+    "appSubUrl": "",
+    "allowOrgCreate": false,
+    "authProxyEnabled": false,
+    "ldapEnabled": false,
+    "jwtHeaderName": "",
+    "jwtUrlLogin": false,
+    "liveEnabled": true,
+    "autoAssignOrg": true,
+    "verifyEmailEnabled": false,
+    "sigV4AuthEnabled": false,
+    "azureAuthEnabled": false,
+    "rbacEnabled": true,
+    "exploreEnabled": true,
+    "helpEnabled": true,
+    "profileEnabled": true,
+    "newsFeedEnabled": true,
+    "queryHistoryEnabled": true,
+    "googleAnalyticsId": "",
+    "googleAnalytics4Id": "",
+    "rudderstackWriteKey": "",
+    "rudderstackDataPlaneUrl": "",
+    "feedbackLinksEnabled": true,
+    "disableLoginForm": false,
+    "disableUserSignUp": true,
+    "loginHint": "",
+    "passwordHint": "",
+    "viewersCanEdit": false,
+    "disableSanitizeHtml": false,
+    "auth": {
+      "disableLogin": false
+    },
+    "buildInfo": {
+      "hideVersion": false,
+      "version": "12.4.0-dev",
+      "commit": "dev",
+      "commitShort": "dev",
+      "buildstamp": 0,
+      "edition": "Open Source",
+      "latestVersion": "",
+      "hasUpdate": false,
+      "env": "development"
+    },
+    "licenseInfo": {
+      "expiry": 0,
+      "stateInfo": "",
+      "licenseUrl": "",
+      "edition": "Open Source"
+    },
+    "featureToggles": {
+      "unifiedStorageSearch": true,
+      "unifiedStorageSearchUI": true
+    },
+    "anonymousEnabled": false,
+    "rendererAvailable": false,
+    "http2Enabled": false,
+    "pluginCatalogURL": "https://grafana.com/grafana/plugins/",
+    "pluginAdminEnabled": true,
+    "pluginAdminExternalManageEnabled": true,
+    "pluginCatalogHiddenPlugins": [],
+    "expressionsEnabled": true,
+    "awsAllowedAuthProviders": ["keys"],
+    "awsAssumeRoleEnabled": false,
+    "azure": {
+      "cloud": "AzureCloud"
+    },
+    "caching": {
+      "enabled": false
+    },
+    "unifiedAlertingEnabled": true,
+    "unifiedAlerting": {
+      "minInterval": "10s"
+    },
+    "oauth": {},
+    "samlEnabled": false,
+    "samlName": "",
+    "dateFormats": {
+      "fullDate": "YYYY-MM-DD HH:mm:ss",
+      "useBrowserLocale": false,
+      "interval": {
+        "second": "HH:mm:ss",
+        "minute": "HH:mm",
+        "hour": "MM/DD HH:mm",
+        "day": "MM/DD",
+        "month": "YYYY-MM",
+        "year": "YYYY"
+      },
+      "defaultTimezone": "browser",
+      "defaultWeekStart": "browser"
+    },
+    "licensing": {
+      "usageBilling": {
+        "enabled": false
+      }
+    }
+  },
+  "navTree": [
+    {
+      "id": "home",
+      "text": "Home",
+      "icon": "home-alt",
+      "url": "/",
+      "sortWeight": -4000
+    },
+    {
+      "id": "dashboards/browse",
+      "text": "Dashboards",
+      "subTitle": "Create and manage dashboards to visualize your data",
+      "icon": "apps",
+      "url": "/dashboards",
+      "sortWeight": -3700,
+      "children": [
+        {
+          "id": "dashboards/playlists",
+          "text": "Playlists",
+          "subTitle": "Groups of dashboards that are displayed in a sequence",
+          "icon": "presentation-play",
+          "url": "/playlists"
+        },
+        {
+          "id": "dashboards/snapshots",
+          "text": "Snapshots",
+          "subTitle": "Interactive, publically available, parsing of data",
+          "icon": "camera",
+          "url": "/dashboard/snapshots"
+        },
+        {
+          "id": "dashboards/library-panels",
+          "text": "Library panels",
+          "subTitle": "Reusable panels that can be added to multiple dashboards",
+          "icon": "library-panel",
+          "url": "/library-panels"
+        },
+        {
+          "id": "dashboards/public",
+          "text": "Public dashboards",
+          "subTitle": "Manage public dashboards",
+          "url": "/public-dashboards"
+        },
+        {
+          "id": "dashboards/new",
+          "text": "New dashboard",
+          "icon": "plus",
+          "url": "/dashboard/new",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        },
+        {
+          "id": "dashboards/folder/new",
+          "text": "New folder",
+          "icon": "plus",
+          "url": "/dashboards/folder/new",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        },
+        {
+          "id": "dashboards/import",
+          "text": "Import dashboard",
+          "icon": "plus",
+          "url": "/dashboard/import",
+          "hideFromTabs": true,
+          "isCreateAction": true
+        }
+      ]
+    },
+    {
+      "id": "explore",
+      "text": "Explore",
+      "subTitle": "Explore your data",
+      "icon": "compass",
+      "url": "/explore",
+      "sortWeight": -3600
+    }
+  ]
+}
