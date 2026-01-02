@@ -143,6 +143,7 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 		DisableAuthZClientCache:             true,
 		DisableZanzanaServerCheckQueryCache: true,
 		APIServerStorageType:                "unified",
+		DBMaxConns:                          4,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
 				DualWriterMode: rest.Mode5,
@@ -170,9 +171,7 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
 	org2Ctx := createTestContext(t, helper, helper.OrgB, rest.Mode5)
 
-	t.Run("Dashboard LIST API test", func(t *testing.T) {
-		runDashboardListTests(t, org1Ctx)
-	})
+	apis.AwaitZanzanaReconcileNext(t, helper)
 
 	t.Run("Dashboard permission tests", func(t *testing.T) {
 		runDashboardPermissionTests(t, org1Ctx, true)
@@ -188,6 +187,44 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	t.Run("Cross-organization tests", func(t *testing.T) {
 		runCrossOrgTests(t, org1Ctx, org2Ctx)
 	})
+}
+
+// list tests will go very slowly if the cache is disabled - allow the cache solely for Lists
+func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		DBMaxConns:            4,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+			"folders.folder.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+		},
+		EnableFeatureToggles: []string{
+			"zanzana",
+			"zanzanaNoLegacyClient",
+			"kubernetesAuthzZanzanaSync",
+		},
+		UnifiedStorageEnableSearch:    true,
+		ZanzanaReconciliationInterval: 100 * time.Millisecond,
+	})
+
+	t.Cleanup(func() {
+		helper.Shutdown()
+	})
+
+	apis.AwaitZanzanaReconcileNext(t, helper)
+	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	runDashboardListTests(t, org1Ctx)
 }
 
 // TestIntegrationDashboardAPI tests the dashboard K8s API

@@ -19,8 +19,8 @@ import (
 const zanzanaReconcileLastSuccessMetric = "grafana_zanzana_reconcile_last_success_timestamp_seconds"
 
 // AwaitZanzanaReconcileNext waits for a Zanzana reconciliation cycle whose last-success timestamp
-// is greater than "now + 200ms". This avoids races where a reconcile completed just before the call
-// (and we'd otherwise treat it as "the next" reconcile).
+// is greater than "now + 1s" (the metrics report to the nearest second).
+// This avoids races where a reconcile completed just before the call (and we'd otherwise treat it as "the next" reconcile).
 //
 // It is a no-op unless the `zanzana` feature toggle is enabled for the running test env.
 func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
@@ -34,7 +34,7 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 		return
 	}
 
-	thresholdSeconds := float64(time.Now().Add(200*time.Millisecond).UnixNano()) / float64(time.Second)
+	thresholdSeconds := float64(time.Now().Add(1*time.Second).UnixNano()) / float64(time.Second)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		ts, ok := getZanzanaReconcileLastSuccessTimestampSeconds(t, helper)
