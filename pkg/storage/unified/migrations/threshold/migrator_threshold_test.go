@@ -124,7 +124,6 @@ func TestIntegrationAutoMigrateThresholdExceeded(t *testing.T) {
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
 				DisableDataMigrations: false, // Allow migration system to run
-				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				UnifiedStorageConfig:  unifiedConfig,
 			},

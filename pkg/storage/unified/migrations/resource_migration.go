@@ -129,7 +129,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err
 
 	// Auto-enable mode 5 for resources after successful migration
 	// TODO: remove this before Grafana 13 GA
-	if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
+	if m.autoMigrate {
 		for _, gr := range m.resources {
 			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
 			m.cfg.EnableMode5(gr.Resource + "." + gr.Group)
