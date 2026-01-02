@@ -2075,6 +2075,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "profilesExemplars",
+			Description:  "Enables profiles exemplars support in profiles drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 

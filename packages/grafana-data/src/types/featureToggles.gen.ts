@@ -1255,4 +1255,8 @@ export interface FeatureToggles {
   * Enables support for variables whose values can have multiple properties
   */
   multiPropsVariables?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }
