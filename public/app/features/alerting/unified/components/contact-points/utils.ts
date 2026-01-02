@@ -149,9 +149,7 @@ export function enhanceContactPointsWithMetadata({
 
     // Extract provenance from contactPoint first; else, search in its receivers
     const contactPointProvenance =
-      'provenance' in contactPoint &&
-      contactPoint.provenance !== undefined &&
-      contactPoint.provenance !== Provenance.None
+      'provenance' in contactPoint && contactPoint.provenance !== undefined
         ? contactPoint.provenance
         : receivers.find((receiver) => Boolean(receiver.provenance))?.provenance;
 
