@@ -67,7 +67,7 @@ refs:
 
 Designing and configuring an effective alerting system takes time. This guide focuses on building alerting systems that scale with real-world operations.
 
-The practices described here apply regardless of tooling. Whether you use Prometheus, Grafana Alerting, or another stack, the same constraints apply: complex systems, imperfect signals, and humans on call.
+The practices described here are intentionally high-level and apply regardless of tooling. Whether you use Prometheus, Grafana Alerting, or another stack, the same constraints apply: complex systems, imperfect signals, and humans on call.
 
 Alerting is never finished. It evolves with incidents, organizational changes, and the systems it’s meant to protect.
 
