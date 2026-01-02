@@ -3,6 +3,7 @@ package aggregatorrunner
 import (
 	"context"
 
+	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
@@ -19,6 +20,10 @@ func (n NoopAggregatorConfigurator) Configure(opts *options.Options, config *gen
 
 func (n NoopAggregatorConfigurator) Run(ctx context.Context, transport *options.RoundTripperFunc, stoppedCh chan error) (*genericapiserver.GenericAPIServer, error) {
 	return nil, nil
+}
+
+func (n *NoopAggregatorConfigurator) SetCRDInformer(_ apiextensionsinformers.CustomResourceDefinitionInformer) {
+	// noop
 }
 
 func ProvideNoopAggregatorConfigurator() AggregatorRunner {
