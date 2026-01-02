@@ -39,9 +39,6 @@ var (
 type DataSourceAPIBuilderConfig struct {
 	LoadQueryTypes bool
 	UseDualWriter  bool
-
-	// This should be removed once we are using the full api group names everywhere
-	UseFullPluginIDInGroupName bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -98,16 +95,17 @@ func RegisterAPIService(
 		}
 
 		// Register the plugin with the new apiGroup naming convention. The other endpoint will be deleted in the near future.
-		builder, err = NewDataSourceAPIBuilder(pluginJSON,
+		groupName := plugins.AddDatasourceSuffix(pluginJSON.ID)
+		builder, err = NewDataSourceAPIBuilder(groupName,
+			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
 			DataSourceAPIBuilderConfig{
 				//nolint:staticcheck // not yet migrated to OpenFeature
-				LoadQueryTypes:             features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:              false,
-				UseFullPluginIDInGroupName: true,
+				LoadQueryTypes: features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:  false,
 			},
 		)
 		if err != nil {
@@ -131,6 +129,7 @@ type PluginClient interface {
 }
 
 func NewDataSourceAPIBuilder(
+	groupName string,
 	plugin plugins.JSONData,
 	client PluginClient,
 	datasources PluginDatasourceProvider,
@@ -138,20 +137,8 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
-	var group string
-	var err error
-
-	if cfg.UseFullPluginIDInGroupName {
-		group = plugins.GetFullDatasourceGroupNameFromPluginID(plugin.ID)
-	} else {
-		group, err = plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	builder := &DataSourceAPIBuilder{
-		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
@@ -159,9 +146,10 @@ func NewDataSourceAPIBuilder(
 		accessControl:          accessControl,
 		cfg:                    cfg,
 	}
+	var err error
 	if cfg.LoadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(group)
+		builder.queryTypes, err = getHardcodedQueryTypes(groupName)
 	}
 	return builder, err
 }
