@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -93,26 +94,49 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       map[string]string{},
 		})
 
+		code := query.GetResponseCode(rsp)
+
 		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
-			responder.Object(int(backend.StatusBadRequest),
-				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
-					"A": {
-						Error:       errors.New(e.LogMessage),
-						ErrorSource: backend.ErrorSourceDownstream,
-						Status:      backend.StatusBadRequest,
-					},
-				}}},
-			)
-			return
+			err = nil
+			rsp = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				"A": {
+					Error:       errors.New(e.LogMessage),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusBadRequest,
+				},
+			}}
 		}
-
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		responder.Object(query.GetResponseCode(rsp),
+
+		// Respond with raw protobuf when requested
+		for _, accept := range req.Header.Values("Accept") {
+			if accept == query.PROTOBUF_CONTENT_TYPE { // pluginv2.QueryDataResponse
+				p, err := backend.ToProto().QueryDataResponse(rsp)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				data, err := proto.Marshal(p)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				w.Header().Add("Content-Type", query.PROTOBUF_CONTENT_TYPE)
+				w.WriteHeader(code)
+				_, err = w.Write(data)
+				if err != nil {
+					logging.FromContext(ctx).Warn("unable to write protobuf result", "err", err)
+				}
+				return
+			}
+		}
+
+		responder.Object(code,
 			&query.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
