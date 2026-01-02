@@ -50,14 +50,18 @@ export const RadialArcPath = memo(
   }: RadialArcPathProps) => {
     const id = useId();
 
-    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: '100%', height: '100%' };
+    const { vizWidth, vizHeight, radius, centerX, centerY, barWidth } = dimensions;
+    const pad = Math.ceil(Math.max(2, barWidth / 2)); // pad to cover stroke caps and glow in Safari
+    const boxX = Math.round(centerX - radius - barWidth - pad);
+    const boxY = Math.round(centerY - radius - barWidth - pad);
+    const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
+
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
     if ('color' in rest) {
       bgDivStyle.backgroundColor = rest.color;
     } else {
       bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
     }
-
-    const { radius, centerX, centerY, barWidth } = dimensions;
 
     const path = drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars);
 
@@ -120,18 +124,21 @@ export const RadialArcPath = memo(
     return (
       <>
         {/* FIXME: optimize this by only using clippath + foreign obj for gradients */}
-        <clipPath id={id}>
-          <path d={path} />
-        </clipPath>
+        <defs>
+          <mask id={id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+            <rect x={boxX} y={boxY} width={boxSize} height={boxSize} fill="black" />
+            <path
+              d={path}
+              fill="none"
+              stroke="white"
+              strokeWidth={barWidth}
+              strokeLinecap={roundedBars ? 'round' : 'butt'}
+            />
+          </mask>
+        </defs>
 
         <g filter={glowFilter}>
-          <foreignObject
-            x={centerX - radius - barWidth}
-            y={centerY - radius - barWidth}
-            width={(radius + barWidth) * 2}
-            height={(radius + barWidth) * 2}
-            clipPath={`url(#${id})`}
-          >
+          <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
             <div style={bgDivStyle} />
           </foreignObject>
           {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}

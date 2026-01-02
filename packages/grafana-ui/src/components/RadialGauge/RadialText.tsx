@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import {
@@ -9,7 +8,6 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
 import { calculateFontSize } from '../../utils/measureText';
 
 import { RadialShape, RadialTextMode, RadialGaugeDimensions } from './types';
@@ -50,7 +48,6 @@ export const RadialText = memo(
     valueManualFontSize,
     nameManualFontSize,
   }: RadialTextProps) => {
-    const styles = useStyles2(getStyles);
     const { centerX, centerY, radius, barWidth } = dimensions;
 
     if (textMode === 'none') {
@@ -106,10 +103,9 @@ export const RadialText = memo(
     const valueY = showName ? centerY - nameHeight * (1 - VALUE_SPACE_PERCENTAGE) : centerY;
     const nameY = showValue ? valueY + valueHeight * VALUE_SPACE_PERCENTAGE : centerY;
     const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
-    const suffixShift = (valueFontSize - unitFontSize * LINE_HEIGHT_FACTOR) / 2;
 
     // adjust the text up on gauges and when sparklines are present
-    let yOffset = 0;
+    let yOffset = valueFontSize / 4;
     if (shape === 'gauge') {
       // we render from the center of the gauge, so move up by half of half of the total height
       yOffset -= (valueHeight + nameHeight) / 4;
@@ -126,15 +122,12 @@ export const RadialText = memo(
             y={valueY}
             fontSize={valueFontSize}
             fill={theme.colors.text.primary}
-            className={styles.text}
             textAnchor="middle"
-            dominantBaseline="middle"
+            dominantBaseline="text-bottom"
           >
             <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
             <tspan>{displayValue.text}</tspan>
-            <tspan className={styles.text} fontSize={unitFontSize} dy={suffixShift}>
-              {displayValue.suffix ?? ''}
-            </tspan>
+            <tspan fontSize={unitFontSize}>{displayValue.suffix ?? ''}</tspan>
           </text>
         )}
         {showName && (
@@ -143,7 +136,7 @@ export const RadialText = memo(
             x={centerX}
             y={nameY}
             textAnchor="middle"
-            dominantBaseline="middle"
+            dominantBaseline="text-bottom"
             fill={nameColor}
           >
             {displayValue.title}
@@ -155,9 +148,3 @@ export const RadialText = memo(
 );
 
 RadialText.displayName = 'RadialText';
-
-const getStyles = (_theme: GrafanaTheme2) => ({
-  text: css({
-    verticalAlign: 'bottom',
-  }),
-});

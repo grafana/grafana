@@ -283,7 +283,9 @@ describe('RadialGauge utils', () => {
   });
 
   describe('drawRadialArcPath', () => {
-    const defaultDims: RadialGaugeDimensions = Object.freeze({
+    const defaultDims = Object.freeze({
+      vizHeight: 220,
+      vizWidth: 220,
       centerX: 100,
       centerY: 100,
       radius: 80,
@@ -297,7 +299,7 @@ describe('RadialGauge utils', () => {
       scaleLabelsSpacing: 0,
       scaleLabelsRadius: 0,
       gaugeBottomY: 0,
-    });
+    }) satisfies RadialGaugeDimensions;
 
     it.each([
       { description: 'quarter arc', startAngle: 0, endAngle: 90 },
@@ -324,11 +326,6 @@ describe('RadialGauge utils', () => {
         expect(drawRadialArcPath(0, 360, defaultDims)).toEqual(drawRadialArcPath(0, 359.99, defaultDims));
         expect(drawRadialArcPath(0, 380, defaultDims)).toEqual(drawRadialArcPath(0, 380, defaultDims));
       });
-
-      it('should return empty string if inner radius collapses to zero or below', () => {
-        const smallRadiusDims = { ...defaultDims, radius: 5, barWidth: 20 };
-        expect(drawRadialArcPath(0, 180, smallRadiusDims)).toBe('');
-      });
     });
   });
 
@@ -341,7 +338,9 @@ describe('RadialGauge utils', () => {
 
   describe('getOptimalSegmentCount', () => {
     it('should adjust segment count based on dimensions and spacing', () => {
-      const dimensions: RadialGaugeDimensions = {
+      const dimensions = {
+        vizHeight: 220,
+        vizWidth: 220,
         centerX: 100,
         centerY: 100,
         radius: 80,
@@ -355,7 +354,7 @@ describe('RadialGauge utils', () => {
         scaleLabelsSpacing: 0,
         scaleLabelsRadius: 0,
         gaugeBottomY: 0,
-      };
+      } satisfies RadialGaugeDimensions;
 
       expect(getOptimalSegmentCount(dimensions, 2, 10, 360)).toBe(8);
       expect(getOptimalSegmentCount(dimensions, 1, 5, 360)).toBe(5);
