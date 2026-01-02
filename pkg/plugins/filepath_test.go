@@ -1,12 +1,10 @@
-package util
+package plugins
 
 import (
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestCleanRelativePath(t *testing.T) {
@@ -34,7 +32,7 @@ func TestCleanRelativePath(t *testing.T) {
 	}
 
 	for _, tt := range testcases {
-		path, err := plugins.CleanRelativePath(tt.input)
+		path, err := CleanRelativePath(tt.input)
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedPath, path)
 	}

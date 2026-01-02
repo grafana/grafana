@@ -15,8 +15,7 @@ import (
 
 func TestSources_List(t *testing.T) {
 	t.Run("Plugin sources are populated by default and listed in specific order", func(t *testing.T) {
-		testdata, err := filepath.Abs("../testdata")
-		require.NoError(t, err)
+		testdata := testDataDir(t)
 
 		cfg := &setting.Cfg{
 			StaticRootPath: testdata,
@@ -94,9 +93,7 @@ func TestSources_List(t *testing.T) {
 	})
 
 	t.Run("Plugin sources are populated with symbolic links", func(t *testing.T) {
-		testdata, err := filepath.Abs("../testdata")
-		require.NoError(t, err)
-
+		testdata := testDataDir(t)
 		cfg := &setting.Cfg{
 			StaticRootPath: testdata,
 		}
@@ -130,4 +127,13 @@ func TestSources_List(t *testing.T) {
 			filepath.Join(testdata, "symbolic-plugin-dirs", "plugin"): {},
 		}, "should include external symlinked plugin")
 	})
+}
+
+func testDataDir(t *testing.T) string {
+	dir, err := filepath.Abs("../../../plugins/manager/testdata")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return ""
+	}
+	return dir
 }
