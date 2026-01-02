@@ -1307,13 +1307,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "investigationsBackend",
-			Description: "Enable the investigations backend API",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "k8SFolderCounts",
 			Description: "Enable folder's api server counts",
 			Stage:       FeatureStageExperimental,

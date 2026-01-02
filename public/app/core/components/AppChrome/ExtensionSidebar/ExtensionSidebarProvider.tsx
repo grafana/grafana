@@ -11,7 +11,6 @@ import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
-  'grafana-investigations-app',
   'grafana-assistant-app',
   'grafana-dash-app',
   // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.

@@ -791,11 +791,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
-  /**
   * Enable folder's api server counts
   * @default false
   */
