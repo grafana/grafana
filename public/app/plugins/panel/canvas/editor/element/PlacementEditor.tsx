@@ -1,10 +1,12 @@
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { PositionDimensionConfig, ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
-import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { PositionDimensionEditor } from 'app/features/dimensions/editors/PositionDimensionEditor';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { HorizontalConstraint, Options, Placement, VerticalConstraint } from '../../panelcfg.gen';
 
@@ -12,7 +14,7 @@ import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
 import { CanvasEditorOptions } from './elementEditor';
 
-const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
+const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
 
 type Props = StandardEditorProps<unknown, CanvasEditorOptions, Options>;
 
@@ -61,8 +63,9 @@ export function PlacementEditor({ item }: Props) {
   const { options } = element;
   const { placement, constraint: layout } = options;
 
-  if (placement) {
-    placement.rotation = placement?.rotation ?? 0;
+  // Initialize rotation if not set
+  if (placement && !placement.rotation) {
+    placement.rotation = { fixed: 0, min: 0, max: 360, mode: ScalarDimensionMode.Clamped };
   }
 
   const reselectElementAfterChange = () => {
@@ -95,20 +98,34 @@ export function PlacementEditor({ item }: Props) {
     reselectElementAfterChange();
   };
 
-  const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
-    element.options.placement![placement] = value ?? element.options.placement![placement];
-    element.applyLayoutStylesToDiv();
-    settings.scene.clearCurrentSelection(true);
-    reselectElementAfterChange();
+  const onPositionChange = (value: PositionDimensionConfig | undefined, key: keyof Placement) => {
+    if (value && key !== 'rotation') {
+      element.options.placement![key] = value as any;
+      element.updateData(settings.scene.context);
+      element.applyLayoutStylesToDiv();
+      settings.scene.clearCurrentSelection(true);
+      reselectElementAfterChange();
+    }
+  };
+
+  const onRotationChange = (value?: ScalarDimensionConfig) => {
+    if (value) {
+      element.options.placement!.rotation = value;
+      element.updateData(settings.scene.context);
+      element.applyLayoutStylesToDiv();
+      settings.scene.clearCurrentSelection(true);
+      reselectElementAfterChange();
+    }
   };
 
   const constraint = element.tempConstraint ?? layout ?? {};
+  const editorContext = { ...settings.scene.context, data: settings.scene.context.getPanelData()?.series ?? [] };
 
   return (
     <div>
       <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
       <br />
-      <Field label={t('canvas.placement-editor.label-constraints', 'Constraints')}>
+      <Field label={t('canvas.placement-editor.label-constraints', 'Constraints')} noMargin>
         <Stack direction="row">
           <ConstraintSelectionBox
             onVerticalConstraintChange={onVerticalConstraintChange}
@@ -134,7 +151,7 @@ export function PlacementEditor({ item }: Props) {
 
       <br />
 
-      <Field label={t('canvas.placement-editor.label-position', 'Position')}>
+      <Field label={t('canvas.placement-editor.label-position', 'Position')} noMargin>
         <>
           {places.map((p) => {
             const v = placement![p];
@@ -142,18 +159,40 @@ export function PlacementEditor({ item }: Props) {
               return null;
             }
 
-            // Need to set explicit min/max for rotation as logic only can handle 0-360
-            const min = p === 'rotation' ? 0 : undefined;
-            const max = p === 'rotation' ? 360 : undefined;
-
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput min={min} max={max} value={v} onChange={(v) => onPositionChange(v, p)} />
+                  <PositionDimensionEditor
+                    value={v as PositionDimensionConfig}
+                    context={editorContext}
+                    onChange={(val) => onPositionChange(val, p)}
+                    item={{} as any}
+                  />
                 </InlineField>
               </InlineFieldRow>
             );
           })}
+          {placement?.rotation && (
+            <InlineFieldRow>
+              <InlineField label={t('canvas.placement-editor.label-rotation', 'rotation')} labelWidth={8} grow={true}>
+                <ScalarDimensionEditor
+                  value={placement.rotation}
+                  context={editorContext}
+                  onChange={onRotationChange}
+                  item={
+                    {
+                      id: 'rotation',
+                      name: 'Rotation',
+                      settings: {
+                        min: 0,
+                        max: 360,
+                      },
+                    } as StandardEditorsRegistryItem<ScalarDimensionConfig>
+                  }
+                />
+              </InlineField>
+            </InlineFieldRow>
+          )}
         </>
       </Field>
     </div>

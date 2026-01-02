@@ -38,6 +38,15 @@ TextDimensionConfig: {
   fixed?: string
 }@cuetsy(kind="interface")
 
+PositionDimensionMode: "fixed" | "field" @cuetsy(kind="enum")
+
+// Simple position/coordinate dimension - just fixed value or field value, no scaling/clamping
+PositionDimensionConfig: {
+  BaseDimensionConfig
+  mode: PositionDimensionMode
+  fixed?: number
+}@cuetsy(kind="interface")
+
 ResourceDimensionMode: "fixed" | "field" | "mapping" @cuetsy(kind="enum")
 
 // Links to a resource (image/svg path)
