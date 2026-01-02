@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Ange innehåll för anpassad kommentar …"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Reglerna har raderats från mappen"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. Intervall = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "De valda frågorna och uttrycken kan inte konverteras till standard. Om du inaktiverar avancerade alternativ kommer din fråga och ditt villkor att återställas till standardinställningarna."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Förhandsgranska",
-      "previewCondition": "Förhandsgranska varningsregeltillstånd"
+      "previewCondition": "Förhandsgranska varningsregeltillstånd",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtrera efter kontaktpunkter",
@@ -3748,6 +3757,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5955,6 +5966,9 @@
       "custom-options": "Anpassade alternativ",
       "name-values-separated-comma": "Värden åtskilda med kommatecken",
       "selection-options": "Urvalsalternativ"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Tillbaka till listan",
@@ -12505,6 +12519,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

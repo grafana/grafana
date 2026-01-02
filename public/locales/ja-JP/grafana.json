@@ -720,6 +720,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "カスタム注釈内容を入力..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "ルールがフォルダから正常に削除されました"
@@ -2195,11 +2200,15 @@
       "min-interval": "最小間隔= {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "選択したクエリと式はデフォルトに変換できません。高度なオプションを無効にすると、クエリと条件はデフォルト設定にリセットされます。"
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "プレビュー",
-      "previewCondition": "アラートルール条件をプレビューする"
+      "previewCondition": "アラートルール条件をプレビューする",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "コンタクトポイントで絞り込む",
@@ -3732,6 +3741,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5934,6 +5945,9 @@
       "custom-options": "カスタムオプション",
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
@@ -12453,6 +12467,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

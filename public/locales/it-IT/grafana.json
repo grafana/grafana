@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Inserisci il contenuto dell'annotazione personalizzata..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Regole eliminate dalla cartella"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min Intervallo = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Le query e le espressioni selezionate non possono essere convertite in predefinite. Se disattivi le opzioni avanzate, la query e la condizione verranno ripristinate alle impostazioni predefinite."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Anteprima",
-      "previewCondition": "Anteprima condizione regola di avviso"
+      "previewCondition": "Anteprima condizione regola di avviso",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtra per punti di contatto",
@@ -3748,6 +3757,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5955,6 +5966,9 @@
       "custom-options": "Opzioni personalizzate",
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Torna all'elenco",
@@ -12505,6 +12519,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

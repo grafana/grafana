@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Introduce el contenido de la anotación personalizada..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Reglas eliminadas correctamente de la carpeta"
@@ -2203,11 +2208,15 @@
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Las consultas y expresiones seleccionadas no se pueden convertir a predeterminadas. Si desactivas las opciones avanzadas, tu consulta y condición se restablecerán a la configuración predeterminada."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Vista previa",
-      "previewCondition": "Vista previa de la condición de la regla de alerta"
+      "previewCondition": "Vista previa de la condición de la regla de alerta",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtrar por puntos de contacto",
@@ -3748,6 +3757,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5955,6 +5966,9 @@
       "custom-options": "Opciones personalizadas",
       "name-values-separated-comma": "Valores separados por comas",
       "selection-options": "Opciones de selección"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Regresar a la lista",
@@ -12505,6 +12519,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

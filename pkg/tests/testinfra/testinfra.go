@@ -609,6 +609,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.ZanzanaReconciliationInterval != 0 {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("zanzana_reconciliation_interval", opts.ZanzanaReconciliationInterval.String())
+		require.NoError(t, err)
+	}
+
+	if opts.DisableZanzanaCache {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("disable_zanzana_cache", "true")
+		require.NoError(t, err)
+	}
+
 	dashboardsSection, err := getOrCreateSection("dashboards")
 	require.NoError(t, err)
 	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
@@ -687,6 +701,8 @@ type GrafanaOpts struct {
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool
+	ZanzanaReconciliationInterval         time.Duration
+	DisableZanzanaCache                   bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string

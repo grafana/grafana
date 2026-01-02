@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Wpisz treść niestandardowej adnotacji…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Reguły zostały usunięte z folderu"
@@ -2219,11 +2224,15 @@
       "min-interval": "Min. odstęp czasu = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Nie można przekonwertować wybranych zapytań i wyrażeń na domyślne. Jeśli wyłączysz opcje zaawansowane, zapytanie i warunek zostaną zresetowane do ustawień domyślnych."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Podgląd",
-      "previewCondition": "Podgląd warunku reguły alertu"
+      "previewCondition": "Podgląd warunku reguły alertu",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtruj według punktów kontaktu",
@@ -3780,6 +3789,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5997,6 +6008,9 @@
       "custom-options": "Opcje niestandardowe",
       "name-values-separated-comma": "Wartości rozdzielone przecinkami",
       "selection-options": "Opcje wyboru"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Powrót do listy",
@@ -12609,6 +12623,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
