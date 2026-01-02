@@ -34,8 +34,16 @@ interface ScopesDashboardsServiceState {
   navScopePath?: string[];
 }
 
+export interface NavigationUrlInfo {
+  nearestSubscope?: string;
+  subscopePath?: string[];
+}
+
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
   private locationSubscription: Subscription | undefined;
+  // Index mapping navigation URLs to their subscope info for O(1) lookup
+  private navigationUrlIndex: Map<string, NavigationUrlInfo> = new Map();
+
   constructor(private apiClient: ScopesApiClient) {
     super({
       drawerOpened: false,
@@ -199,6 +207,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
+    let filteredItems: Array<ScopeDashboardBinding | ScopeNavigation> = [];
 
     try {
       // Fetch navigations for this subScope
@@ -210,7 +219,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
-      const filteredItems = filterItemsWithSubScopesInPath(subScopeItems, path, subScopeName, this.state.folders);
+      filteredItems = filterItemsWithSubScopesInPath(subScopeItems, path, subScopeName, this.state.folders);
 
       // Group the items and add them to the subScope folder
       subScopeFolders = this.groupSuggestedItems(filteredItems);
@@ -254,10 +263,14 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ...rootSubScopeFolder.suggestedNavigations,
       };
 
+      // Build the subscope path for these items and add to the index
+      const subscopePath = this.getSubscopePathFromFolderPath(path, folders);
+      this.addNavigationsToIndex(filteredItems, subscopePath);
+
       this.updateState({ folders, filteredFolders });
 
       // Preload children for any newly added folders with preLoadSubScopeChildren
-      this.preloadSubScopeChildren(rootSubScopeFolder.folders, path);
+      await this.preloadSubScopeChildren(rootSubScopeFolder.folders, path);
     } else {
       this.updateState({ folders, filteredFolders });
     }
@@ -290,6 +303,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     if (forScopeNames.length === 0) {
+      this.navigationUrlIndex.clear();
       this.updateState({
         dashboards: [],
         filteredFolders: {},
@@ -314,6 +328,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const folders = this.groupSuggestedItems(res);
       const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
+      // Build navigation URL index directly from the response (no subscope info for top-level)
+      this.navigationUrlIndex.clear();
+      this.addNavigationsToIndex(res, []);
+
       this.updateState({
         scopeNavigations: res,
         filteredFolders,
@@ -323,7 +341,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       });
 
       // Preload children for folders with preLoadSubScopeChildren set
-      this.preloadSubScopeChildren(folders[''].folders, ['']);
+      await this.preloadSubScopeChildren(folders[''].folders, ['']);
     }
   };
 
@@ -334,13 +352,17 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
    * @param foldersToCheck - The folders to check for preLoadSubScopeChildren
    * @param basePath - The path to prepend when building the full path for each folder
    */
-  private preloadSubScopeChildren = (foldersToCheck: SuggestedNavigationsFoldersMap, basePath: string[]) => {
+  private preloadSubScopeChildren = async (foldersToCheck: SuggestedNavigationsFoldersMap, basePath: string[]) => {
+    const preloadPromises: Array<Promise<void>> = [];
+
     for (const [folderKey, folder] of Object.entries(foldersToCheck)) {
       if (folder.preLoadSubScopeChildren && folder.subScopeName) {
         const path = [...basePath, folderKey];
-        this.fetchSubScopeItems(path, folder.subScopeName);
+        preloadPromises.push(this.fetchSubScopeItems(path, folder.subScopeName));
       }
     }
+
+    await Promise.all(preloadPromises);
   };
 
   public groupSuggestedItems = (
@@ -503,6 +525,78 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
+
+  /**
+   * Adds navigation URLs to the index with their subscope info.
+   * Called when processing navigation items from API responses.
+   */
+  private addNavigationsToIndex = (items: Array<ScopeDashboardBinding | ScopeNavigation>, subscopePath: string[]) => {
+    const info: NavigationUrlInfo =
+      subscopePath.length > 0
+        ? {
+            nearestSubscope: subscopePath[subscopePath.length - 1],
+            subscopePath: [...subscopePath],
+          }
+        : {};
+
+    for (const item of items) {
+      if ('url' in item.spec && typeof item.spec.url === 'string') {
+        this.navigationUrlIndex.set(item.spec.url, info);
+      } else if ('dashboard' in item.spec) {
+        // Dashboard items have URL format /d/{dashboardId}
+        this.navigationUrlIndex.set('/d/' + item.spec.dashboard, info);
+      }
+    }
+  };
+
+  /**
+   * Gets the subscope path by traversing the folder path and collecting subScopeName values.
+   */
+  private getSubscopePathFromFolderPath = (folderPath: string[], folders: SuggestedNavigationsFoldersMap): string[] => {
+    const subscopePath: string[] = [];
+    let currentLevel = folders;
+
+    for (const key of folderPath) {
+      const folder = currentLevel[key];
+      if (folder?.subScopeName) {
+        subscopePath.push(folder.subScopeName);
+      }
+      if (folder?.folders) {
+        currentLevel = folder.folders;
+      }
+    }
+
+    return subscopePath;
+  };
+
+  /**
+   * Finds navigation info for the given path using the URL index for O(1) lookup.
+   * Returns subscope information if the navigation was found within a subscope folder.
+   */
+  public findNavigationInfo = (
+    currentPath: string
+  ): { found: boolean; nearestSubscope?: string; subscopePath?: string[] } => {
+    // Check each indexed URL using isCurrentPath for proper path matching
+    for (const [url, info] of this.navigationUrlIndex) {
+      if (isCurrentPath(currentPath, url)) {
+        return {
+          found: true,
+          nearestSubscope: info.nearestSubscope,
+          subscopePath: info.subscopePath,
+        };
+      }
+    }
+
+    return { found: false };
+  };
+
+  /**
+   * Checks if the given path matches any navigation URL in the entire folder structure,
+   * including navigations loaded by subscopes.
+   */
+  public isPathInNavigations = (currentPath: string): boolean => {
+    return this.findNavigationInfo(currentPath).found;
+  };
 }
 
 /**
