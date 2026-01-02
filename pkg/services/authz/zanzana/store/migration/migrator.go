@@ -84,13 +84,17 @@ func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Lo
 }
 
 // resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
-// openfga tables are derived state and state will be rebuilt from reconcilation.
-func resetOpenFGASchema(engine, uri string) error {
+// openfga tables are derived state and state will be rebuilt from reconciliation.
+func resetOpenFGASchema(engine, uri string) (retErr error) {
 	db, err := openDB(engine, uri)
 	if err != nil {
 		return fmt.Errorf("failed to open db for openfga schema reset: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil && retErr == nil {
+			retErr = fmt.Errorf("failed to close db: %w", err)
+		}
+	}()
 
 	for _, table := range openFGATables {
 		// strings are hard-coded, so this is safe.

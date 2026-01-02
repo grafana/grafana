@@ -15,7 +15,7 @@ func TestRunOpenFGAMigrations_ResetsGooseVersionTableOnErrNoNextVersion(t *testi
 	tmpDir := t.TempDir()
 	dbPath := tmpDir + "/openfga-test.db"
 
-	// intentionally corrupt the goose verison table
+	// intentionally corrupt the goose version table
 	db, err := goose.OpenDBWithDriver("sqlite3", dbPath)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
