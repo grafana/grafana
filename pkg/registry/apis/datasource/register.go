@@ -95,7 +95,8 @@ func RegisterAPIService(
 		}
 
 		groupName := plugins.AddDatasourceSuffix(pluginJSON.ID)
-		builder, err = NewDataSourceAPIBuilder(groupName,
+		builder, err = NewDataSourceAPIBuilder(
+			groupName,
 			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
