@@ -94,7 +94,6 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
-		// Register the plugin with the new apiGroup naming convention. The other endpoint will be deleted in the near future.
 		groupName := plugins.AddDatasourceSuffix(pluginJSON.ID)
 		builder, err = NewDataSourceAPIBuilder(groupName,
 			pluginJSON,
