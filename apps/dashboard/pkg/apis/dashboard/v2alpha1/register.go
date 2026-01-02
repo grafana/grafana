@@ -99,5 +99,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 }
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return RegisterDefaults(scheme)
+	if err := RegisterDefaults(scheme); err != nil {
+		return err
+	}
+	// Register custom defaults to ensure unique refIds in panel queries
+	return RegisterCustomDefaults(scheme)
 }
