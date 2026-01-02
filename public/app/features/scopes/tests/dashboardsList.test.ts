@@ -35,15 +35,13 @@ import {
   dashboardWithRootFolder,
   dashboardWithRootFolderAndOtherFolder,
   dashboardWithTwoFolders,
-  getDatasource,
-  getInstanceSettings,
-  getMock,
   navigationWithSubScope,
   navigationWithSubScope2,
   navigationWithSubScopeDifferent,
   navigationWithSubScopeAndGroups,
   subScopeMimirItems,
-} from './utils/mocks';
+} from './utils/mockData';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -54,6 +52,8 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+jest.mock('../ScopesApiClient', () => require('./utils/mockScopesApiClient'));
 
 describe('Dashboards list', () => {
   let fetchDashboardsSpy: jest.SpyInstance;

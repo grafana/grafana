@@ -25,7 +25,8 @@ import {
   expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
+import { mocksScopes } from './utils/mockData';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
 
@@ -37,6 +38,8 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+jest.mock('../ScopesApiClient', () => require('./utils/mockScopesApiClient'));
 
 describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
