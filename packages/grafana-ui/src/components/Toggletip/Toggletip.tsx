@@ -11,7 +11,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
-import { memo, cloneElement, isValidElement, useRef, useState, type JSX } from 'react';
+import { memo, cloneElement, isValidElement, useRef, useState, useMemo, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -47,6 +47,11 @@ export interface ToggletipProps {
   show?: boolean;
   /** Callback function to be called when the toggletip is opened */
   onOpen?: () => void;
+  /** Optional root element for the portal. When Toggletip is inside a focus-trapped container like Drawer,
+   *  the portal root is auto-detected via the `data-grafana-portal-container` attribute. Use this prop
+   *  to override auto-detection or specify a custom container. When inside a focus-trapped container,
+   *  the Toggletip disables its own modal focus trap, deferring focus management to the parent. */
+  portalRoot?: HTMLElement;
 }
 
 /**
@@ -67,6 +72,7 @@ export const Toggletip = memo(
     fitContent = false,
     onOpen,
     show,
+    portalRoot,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
@@ -110,16 +116,30 @@ export const Toggletip = memo(
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
+    // Auto-detect portal container from reference element's ancestors
+    // This allows Toggletip to work automatically inside Drawer and other focus-trapped containers
+    const [referenceElement, setReferenceElement] = useState<Element | null>(null);
+    const autoDetectedPortalRoot = useMemo(() => {
+      if (portalRoot) {
+        return portalRoot;
+      }
+      const container = referenceElement?.closest('[data-grafana-portal-container]');
+      return container instanceof HTMLElement ? container : undefined;
+    }, [portalRoot, referenceElement]);
+
     return (
       <>
         {cloneElement(children, {
-          ref: refs.setReference,
+          ref: (node: Element | null) => {
+            refs.setReference(node);
+            setReferenceElement(node);
+          },
           tabIndex: 0,
           'aria-expanded': isOpen,
           ...getReferenceProps(),
         })}
         {isOpen && (
-          <Portal>
+          <Portal root={autoDetectedPortalRoot}>
             <FloatingFocusManager context={context} modal={true}>
               <div
                 data-testid="toggletip-content"

@@ -76,4 +76,24 @@ return (
 );
 ```
 
+### Usage inside Drawer
+
+Toggletip automatically detects when it's inside a Drawer (or other focus-trapped container with the `data-grafana-portal-container` attribute) and adjusts its behavior accordingly. No additional configuration is needed:
+
+```tsx
+<Drawer title="Settings" onClose={onClose}>
+  <Toggletip content={<Input placeholder="Type here..." />}>
+    <Button>Open Toggletip</Button>
+  </Toggletip>
+</Drawer>
+```
+
+When auto-detected inside a focus-trapped container:
+
+- The Toggletip content renders inside the Drawer's DOM tree
+- Focus management defers to the parent container's focus trap
+- Interactive elements like inputs work correctly
+
+If you need to override auto-detection or specify a custom container, use the `portalRoot` prop.
+
 <ArgTypes of={Toggletip} />

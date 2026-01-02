@@ -131,6 +131,7 @@ export function Drawer({
     >
       <FocusScope restoreFocus contain autoFocus>
         <div
+          data-grafana-portal-container
           aria-label={
             typeof title === 'string'
               ? selectors.components.Drawer.General.title(title)

@@ -1,6 +1,10 @@
 import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
 
 import { Button } from '../Button/Button';
+import { Drawer } from '../Drawer/Drawer';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import mdx from '../Toggletip/Toggletip.mdx';
 
@@ -130,6 +134,48 @@ LongContent.parameters = {
   controls: {
     hideNoControlsWarning: true,
     exclude: ['title', 'content', 'children'],
+  },
+};
+
+export const InsideDrawer: StoryFn<typeof Toggletip> = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setIsDrawerOpen(true)}>Open Drawer</Button>
+      {isDrawerOpen && (
+        <Drawer title="Drawer with Toggletip" onClose={() => setIsDrawerOpen(false)}>
+          <p style={{ marginBottom: '16px' }}>
+            Toggletip automatically detects when it&apos;s inside a Drawer and renders its content within the
+            Drawer&apos;s DOM, allowing focus to work correctly. No manual configuration needed!
+          </p>
+          <Toggletip
+            title="Interactive Form"
+            content={
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Field label="Name">
+                  <Input placeholder="Enter your name" />
+                </Field>
+                <Button variant="primary" size="sm">
+                  Submit
+                </Button>
+              </div>
+            }
+            footer="Focus works correctly - auto-detected!"
+            placement="bottom-start"
+          >
+            <Button>Click to show Toggletip</Button>
+          </Toggletip>
+        </Drawer>
+      )}
+    </>
+  );
+};
+
+InsideDrawer.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    exclude: ['title', 'content', 'footer', 'children', 'placement', 'theme', 'closeButton', 'portalRoot'],
   },
 };
 
