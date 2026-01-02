@@ -8,11 +8,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// nolint:unused
-var migratedUnifiedResources = []string{
-	//"playlists.playlist.grafana.app",
-	"folders.folder.grafana.app",
-	"dashboards.dashboard.grafana.app",
+const (
+	PlaylistResource  = "playlists.playlist.grafana.app"
+	FolderResource    = "folders.folder.grafana.app"
+	DashboardResource = "dashboards.dashboard.grafana.app"
+)
+
+// MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
+var MigratedUnifiedResources = map[string]bool{
+	PlaylistResource:  true, // enabled by default
+	FolderResource:    false,
+	DashboardResource: false,
 }
 
 // read storage configs from ini file. They look like:
@@ -47,12 +53,19 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dataSyncerInterval from resource section
 		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
 
+		// parse EnableMigration from resource section
+		enableMigration := MigratedUnifiedResources[resourceName]
+		if section.HasKey("enableMigration") {
+			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
+		}
+
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
 			DualWriterMigrationDataSyncDisabled:  dualWriterMigrationDataSyncDisabled,
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
+			EnableMigration:                      enableMigration,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -62,8 +75,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
-		cfg.Logger.Info("Unified migration configs not yet enforced")
-		//cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
+		cfg.Logger.Info("Unified migration configs enforced")
+		cfg.enforceMigrationToUnifiedConfigs()
 	} else {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
@@ -101,11 +114,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
+	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
+	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }
 
-// nolint:unused
 // enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5
 // All migrated resources in MigratedUnifiedResources are set to mode 5 and unified search is enabled
 func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
@@ -116,14 +131,22 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		section.Key("enable_search").SetValue("true")
 		cfg.EnableSearch = true
 	}
-	for _, resource := range migratedUnifiedResources {
-		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
-		if oldCfg, ok := cfg.UnifiedStorage[resource]; ok {
-			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", oldCfg)
+	for resource, enabledByDefault := range MigratedUnifiedResources {
+		resourceCfg, ok := cfg.UnifiedStorage[resource]
+		if ok {
+			if !resourceCfg.EnableMigration {
+				cfg.Logger.Info("Resource migration disabled", "resource", resource)
+				continue
+			}
+			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
+		} else if !enabledByDefault {
+			continue
 		}
+		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
 			DualWriterMode:                      5,
 			DualWriterMigrationDataSyncDisabled: true,
+			EnableMigration:                     true,
 		}
 	}
 }

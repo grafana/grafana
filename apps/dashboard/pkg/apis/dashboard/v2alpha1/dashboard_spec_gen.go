@@ -31,6 +31,8 @@ type DashboardAnnotationQuerySpec struct {
 	Name       string                          `json:"name"`
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Mappings define how to convert data frame fields to annotation event fields.
+	Mappings map[string]DashboardAnnotationEventFieldMapping `json:"mappings,omitempty"`
 	// Catch-all field for datasource-specific properties
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -82,6 +84,24 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
 		Ids:     []uint32{},
+	}
+}
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+// +k8s:openapi-gen=true
+type DashboardAnnotationEventFieldMapping struct {
+	// Source type for the field value
+	Source *string `json:"source,omitempty"`
+	// Constant value to use when source is "text"
+	Value *string `json:"value,omitempty"`
+	// Regular expression to apply to the field value
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewDashboardAnnotationEventFieldMapping creates a new DashboardAnnotationEventFieldMapping object.
+func NewDashboardAnnotationEventFieldMapping() *DashboardAnnotationEventFieldMapping {
+	return &DashboardAnnotationEventFieldMapping{
+		Source: (func(input string) *string { return &input })("field"),
 	}
 }
 
@@ -1344,6 +1364,7 @@ type DashboardQueryVariableSpec struct {
 	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
+	RegexApplyTo       *DashboardVariableRegexApplyTo                `json:"regexApplyTo,omitempty"`
 	Sort               DashboardVariableSort                         `json:"sort"`
 	Definition         *string                                       `json:"definition,omitempty"`
 	Options            []DashboardVariableOption                     `json:"options"`
@@ -1373,6 +1394,7 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 		SkipUrlSync:      false,
 		Query:            *NewDashboardDataQueryKind(),
 		Regex:            "",
+		RegexApplyTo:     (func(input DashboardVariableRegexApplyTo) *DashboardVariableRegexApplyTo { return &input })(DashboardVariableRegexApplyToValue),
 		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
@@ -1421,6 +1443,16 @@ const (
 	DashboardVariableRefreshNever              DashboardVariableRefresh = "never"
 	DashboardVariableRefreshOnDashboardLoad    DashboardVariableRefresh = "onDashboardLoad"
 	DashboardVariableRefreshOnTimeRangeChanged DashboardVariableRefresh = "onTimeRangeChanged"
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+// +k8s:openapi-gen=true
+type DashboardVariableRegexApplyTo string
+
+const (
+	DashboardVariableRegexApplyToValue DashboardVariableRegexApplyTo = "value"
+	DashboardVariableRegexApplyToText  DashboardVariableRegexApplyTo = "text"
 )
 
 // Sort variable options

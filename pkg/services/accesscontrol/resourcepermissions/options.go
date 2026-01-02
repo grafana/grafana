@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -16,6 +17,9 @@ type Options struct {
 	Resource string
 	// ResourceAttribute is the attribute the scope should be based on (e.g. id or uid)
 	ResourceAttribute string
+	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app")
+	// If not set, defaults to "{Resource}.grafana.app"
+	APIGroup string
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
 	// ResourceTranslator is a translator function that will be called before each action, it can be used to translate a resource id to a different format.
@@ -45,4 +49,6 @@ type Options struct {
 	InheritedScopesSolver InheritedScopesSolver
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
+	// RestConfigProvider if configured enables K8s API redirect for resource permissions
+	RestConfigProvider apiserver.RestConfigProvider
 }

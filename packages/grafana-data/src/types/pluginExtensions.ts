@@ -30,6 +30,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
   category?: string;
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
@@ -86,6 +87,7 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
    */
   component: React.ComponentType<Props>;
 };
+
 export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
   /**
    * The target extension points where the component will be added
@@ -106,6 +108,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
       category: string;
+      openInNewTab: boolean;
     }>
   | undefined;
 
@@ -137,6 +140,10 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
+
+  // (Optional) If true, opens the link in a new tab (renders with target="_blank")
+  // (Important: this is not guaranteed, depends on the extension point if it implements it.)
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {

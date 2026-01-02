@@ -1,4 +1,4 @@
-import { BootData } from '@grafana/data';
+import { BootData, PanelPluginMeta } from '@grafana/data';
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.describe(
@@ -22,7 +22,7 @@ test.describe(
       await dashboardPage.addPanel();
 
       // Get panel types from window object
-      const panelTypes = await page.evaluate(() => {
+      const panelTypes: PanelPluginMeta[] = await page.evaluate(() => {
         // @grafana/plugin-e2e doesn't export the full bootdata config
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const win = window as typeof window & { grafanaBootData: BootData };
@@ -45,7 +45,9 @@ test.describe(
           await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
 
           // Verify panel type is selected
-          await expect(vizPicker).toHaveText(panel.name, { timeout: 10000 });
+          await expect(
+            dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)
+          ).toHaveText(panel.name, { timeout: 10000 });
 
           // Wait for panel to finish rendering
           await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });

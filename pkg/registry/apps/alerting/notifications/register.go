@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -97,7 +98,12 @@ func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVers
 	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
 		return timeinterval.NewStorage(api.MuteTimings, namespacer)
 	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
-		return templategroup.NewStorage(api.Templates, namespacer)
+		srv := api.Templates
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+			srv = srv.WithIncludeImported()
+		}
+		return templategroup.NewStorage(srv, namespacer)
 	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
 		return routingtree.NewStorage(api.Policies, namespacer)
 	}

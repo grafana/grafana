@@ -316,6 +316,21 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
 
+	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
+	require.NoError(t, err)
+	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
+	require.NoError(t, err)
+	if !opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+		require.NoError(t, err)
+		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
+		require.NoError(t, err)
+
+		// so staticFlags can be provided to static provider
+		_, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+	}
+
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
 	_, err = anonSect.NewKey("enabled", "true")
@@ -346,6 +361,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
+
+	if opts.DisableAuthZClientCache {
+		authzSect, err := cfg.NewSection("authorization")
+		require.NoError(t, err)
+		_, err = authzSect.NewKey("cache_ttl", "0")
+		require.NoError(t, err)
+	}
 
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
@@ -532,6 +554,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
 			require.NoError(t, err)
+			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
+			require.NoError(t, err)
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {
@@ -556,6 +580,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningAllowedTargets) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -576,6 +606,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
 		_, err = apiserverSection.NewKey("run_secrets_db_migrations", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.ZanzanaReconciliationInterval != 0 {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("zanzana_reconciliation_interval", opts.ZanzanaReconciliationInterval.String())
+		require.NoError(t, err)
+	}
+
+	if opts.DisableZanzanaCache {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("disable_zanzana_cache", "true")
 		require.NoError(t, err)
 	}
 
@@ -645,6 +689,7 @@ type GrafanaOpts struct {
 	UnifiedStorageEnableSearch            bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
+	ProvisioningAllowedTargets            []string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
@@ -654,6 +699,10 @@ type GrafanaOpts struct {
 	DisableDBCleanup                      bool
 	DisableDataMigrations                 bool
 	SecretsManagerEnableDBMigrations      bool
+	OpenFeatureAPIEnabled                 bool
+	DisableAuthZClientCache               bool
+	ZanzanaReconciliationInterval         time.Duration
+	DisableZanzanaCache                   bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string

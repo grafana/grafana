@@ -10,8 +10,10 @@ import (
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,6 +34,7 @@ const (
 
 type receiversAuthz interface {
 	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, ReceiverStatus) error
 }
 
 type AlertmanagerSrv struct {
@@ -210,10 +213,15 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers); err != nil {
+	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers, func(receiverName string, paths []schema.IntegrationFieldPath) error {
+		return srv.receiverAuthz.AuthorizeUpdateProtected(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiverName})
+	}); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		if errors.As(err, &errutil.Error{}) {
+			return response.Err(err)
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}

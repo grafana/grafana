@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
@@ -41,7 +43,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: pluginsv0alpha1.PluginKind(),
 			},
 			{
-				Kind: pluginsv0alpha1.PluginMetaKind(),
+				Kind: pluginsv0alpha1.MetaKind(),
 			},
 		},
 	}
@@ -67,8 +69,9 @@ type PluginAppConfig struct {
 }
 
 func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
-) (appsdkapiserver.AppInstaller, error) {
+) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager: metaProviderManager,
 	}
@@ -83,32 +86,37 @@ func ProvideAppInstaller(
 		return nil, err
 	}
 
-	appInstaller := &pluginAppInstaller{
+	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
 		metaManager:  metaProviderManager,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
 }
 
-type pluginAppInstaller struct {
+type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	metaManager *meta.ProviderManager
+	authorizer  authorizer.Authorizer
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
 	ready      chan struct{}
+	readyOnce  sync.Once
 }
 
-func (p *pluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
+func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
 	if p.restConfig == nil {
 		p.restConfig = &restConfig
-		close(p.ready)
+		p.readyOnce.Do(func() {
+			close(p.ready)
+		})
 	}
 	return p.AppInstaller.InitializeApp(restConfig)
 }
 
-func (p *pluginAppInstaller) InstallAPIs(
+func (p *PluginAppInstaller) InstallAPIs(
 	server appsdkapiserver.GenericAPIServer,
 	restOptsGetter generic.RESTOptionsGetter,
 ) error {
@@ -129,13 +137,17 @@ func (p *pluginAppInstaller) InstallAPIs(
 		return client, nil
 	}
 
-	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
+	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewPluginMetaStorage(p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
 		replace: replacedStorage,
 	}
 	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
+}
+
+func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return p.authorizer
 }

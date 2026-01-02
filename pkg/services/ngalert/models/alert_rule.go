@@ -18,12 +18,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodels "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -397,6 +399,20 @@ type Namespaced interface {
 
 type Namespace folder.FolderReference
 
+func NewNamespace(f *folder.Folder) Namespace {
+	return Namespace(*f.ToFolderReference())
+}
+
+func (n Namespace) ValidateForRuleStorage() error {
+	if n.UID == "" {
+		return fmt.Errorf("cannot store rules in folder without UID")
+	}
+	if n.ManagedBy == utils.ManagerKindRepo {
+		return fmt.Errorf("cannot store rules in folder managed by Git Sync")
+	}
+	return nil
+}
+
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
 }
@@ -462,6 +478,10 @@ func (alertRule *AlertRule) GetPanelID() int64 {
 		return *alertRule.PanelID
 	}
 	return -1
+}
+
+func (alertRule *AlertRule) GetInterval() time.Duration {
+	return time.Duration(alertRule.IntervalSeconds) * time.Second
 }
 
 type LabelOption func(map[string]string)
@@ -985,6 +1005,10 @@ type ListAlertRulesQuery struct {
 
 	ReceiverName     string
 	TimeIntervalName string
+
+	// DataSourceUIDs allows searching for alert rules using data sources
+	// that match any of the given UIDs exactly (case sensitive).
+	DataSourceUIDs []string
 	// SearchTitle allows searching for alert rules that contain
 	// the given string in their title (case insensitive)
 	SearchTitle string
@@ -993,6 +1017,10 @@ type ListAlertRulesQuery struct {
 	SearchRuleGroup string
 
 	HasPrometheusRuleDefinition *bool
+
+	// LabelMatchers filters rules by their labels.
+	// Only equality and inequality matchers are supported, no regex operators.
+	LabelMatchers labels.Matchers
 }
 
 type ListAlertRulesExtendedQuery struct {
@@ -1003,6 +1031,7 @@ type ListAlertRulesExtendedQuery struct {
 	Limit         int64
 	RuleLimit     int64
 	ContinueToken string
+	Compact       bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

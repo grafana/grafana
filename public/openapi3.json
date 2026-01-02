@@ -7612,7 +7612,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -15008,7 +15008,7 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ]
       }
@@ -15166,7 +15166,8 @@
         },
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ]
       }
@@ -17650,6 +17651,8 @@
     },
     "/dashboards/home": {
       "get": {
+        "deprecated": true,
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "operationId": "getHomeDashboard",
         "responses": {
           "200": {
@@ -17662,7 +17665,6 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get home dashboard.",
         "tags": [
           "dashboards"
         ]
@@ -24689,8 +24691,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24728,8 +24729,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24767,8 +24767,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

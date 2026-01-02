@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -232,7 +230,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -255,7 +253,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,
@@ -659,10 +657,6 @@ const injectedRtkApi = api
       postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
         invalidatesTags: ['dashboards'],
-      }),
-      getHomeDashboard: build.query<GetHomeDashboardApiResponse, GetHomeDashboardApiArg>({
-        query: () => ({ url: `/dashboards/home` }),
-        providesTags: ['dashboards'],
       }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
@@ -2576,8 +2570,6 @@ export type PostDashboardApiResponse = /** status 200 (empty) */ {
 export type PostDashboardApiArg = {
   saveDashboardCommand: SaveDashboardCommand;
 };
-export type GetHomeDashboardApiResponse = /** status 200 (empty) */ GetHomeDashboardResponse;
-export type GetHomeDashboardApiArg = void;
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -3448,16 +3440,16 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
 export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
@@ -4401,51 +4393,6 @@ export type SaveDashboardCommand = {
   overwrite?: boolean;
   userId?: number;
 };
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type GetHomeDashboardResponse = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-} & {
-  redirectUri?: string;
-};
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
   description?: string;
@@ -4536,6 +4483,45 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
 };
 export type DashboardFullWithMeta = {
   dashboard?: Json;
@@ -6621,8 +6607,6 @@ export const {
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
   usePostDashboardMutation,
-  useGetHomeDashboardQuery,
-  useLazyGetHomeDashboardQuery,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,

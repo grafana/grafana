@@ -122,8 +122,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     query: DashboardQuery,
     filters: AdHocVariableFilter[]
   ): DataFrame[] {
-    const annotations = data.annotations ?? [];
+    // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
+      const annotations = data.annotations ?? [];
       return annotations.map((frame) => ({
         ...frame,
         meta: {
@@ -131,34 +132,34 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           dataTopic: DataTopic.Series,
         },
       }));
-    } else {
-      const series = data.series.map((s) => {
-        return {
-          ...s,
-          fields: s.fields.map((field: Field) => ({
-            ...field,
-            config: {
-              ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
-              filterable: query.adHocFiltersEnabled
-                ? field.type === FieldType.string || field.type === FieldType.number
-                : field.config.filterable,
-            },
-            state: {
-              ...field.state,
-            },
-          })),
-        };
-      });
-
-      if (!query.adHocFiltersEnabled || filters.length === 0) {
-        return [...series, ...annotations];
-      }
-
-      // Apply AdHoc filters to series data
-      const filteredSeries = series.map((frame) => this.applyAdHocFilters(frame, filters));
-      return [...filteredSeries, ...annotations];
     }
+
+    // For regular queries, only return series data
+    const series = data.series.map((s) => {
+      return {
+        ...s,
+        fields: s.fields.map((field: Field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
+            filterable: query.adHocFiltersEnabled
+              ? field.type === FieldType.string || field.type === FieldType.number
+              : field.config.filterable,
+          },
+          state: {
+            ...field.state,
+          },
+        })),
+      };
+    });
+
+    if (!query.adHocFiltersEnabled || filters.length === 0) {
+      return series;
+    }
+
+    // Apply AdHoc filters to series data
+    return series.map((frame) => this.applyAdHocFilters(frame, filters));
   }
 
   /**

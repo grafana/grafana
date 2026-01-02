@@ -84,7 +84,12 @@ export function useFilteredRulesIteratorProvider() {
 
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
-    const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
+    const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
+
+    // Short-circuit: if all provided data source names are invalid, return empty results (no rules can match).
+    if (hasInvalidDataSourceNames) {
+      return { iterable: empty(), abortController };
+    }
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(options.grafanaManagedLimit, backendFilter)

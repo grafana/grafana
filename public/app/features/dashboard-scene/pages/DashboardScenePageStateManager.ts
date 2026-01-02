@@ -441,7 +441,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp, options);
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
@@ -959,7 +959,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 }
 
 export function shouldForceV2API(): boolean {
-  return Boolean(config.featureToggles.kubernetesDashboardsV2 || config.featureToggles.dashboardNewLayouts);
+  return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
@@ -1082,6 +1082,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
+
+    // Template dashboards are currently in v1 schema format.
+    if (options.route === DashboardRoutes.Template) {
+      this.setActiveManager('v1');
+    }
+
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 

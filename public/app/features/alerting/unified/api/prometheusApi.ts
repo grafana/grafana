@@ -37,6 +37,7 @@ type PromRulesOptions = WithNotificationOptions<{
 export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
+  datasources?: string[];
   panelId?: number;
   limitAlerts?: number;
   ruleLimit?: number;
@@ -46,6 +47,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   title?: string;
   searchGroupName?: string;
   type?: 'alerting' | 'recording';
+  ruleMatchers?: string[];
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -98,8 +100,10 @@ export const prometheusApi = alertingApi.injectEndpoints({
         limitAlerts,
         groupNextToken,
         title,
+        datasources,
         searchGroupName,
         dashboardUid,
+        ruleMatchers,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -114,9 +118,11 @@ export const prometheusApi = alertingApi.injectEndpoints({
           rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
+          datasource_uid: datasources,
           'search.rule_name': title,
           'search.rule_group': searchGroupName,
           dashboard_uid: dashboardUid,
+          rule_matcher: ruleMatchers,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
