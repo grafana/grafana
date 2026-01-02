@@ -1842,6 +1842,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingDisableDSAPIWithManageAlerts",
+			Description:  "When manageAlerts=false, disable data source API for alert rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,

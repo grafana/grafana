@@ -718,6 +718,10 @@ const (
 	// Enables the alerting triage feature
 	FlagAlertingTriage = "alertingTriage"
 
+	// FlagAlertingDisableDSAPIWithManageAlerts
+	// When manageAlerts=false, disable data source API for alert rules
+	FlagAlertingDisableDSAPIWithManageAlerts = "alertingDisableDSAPIWithManageAlerts"
+
 	// FlagGraphiteBackendMode
 	// Enables the Graphite data source full backend mode
 	FlagGraphiteBackendMode = "graphiteBackendMode"

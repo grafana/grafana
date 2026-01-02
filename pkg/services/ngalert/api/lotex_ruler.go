@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,9 +11,11 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -37,29 +40,48 @@ var subtypeToPrefix = map[string]string{
 	Mimir:      mimirPrefix,
 }
 
+var (
+	errManageAlertsDisabled = errutil.Forbidden(
+		"alerting.manageAlertsDisabled",
+		errutil.WithPublicMessage("Alert management is disabled for this datasource"),
+	).Errorf("manage alerts is disabled")
+)
+
 // The requester is primarily used for testing purposes, allowing us to inject a different implementation of withReq.
 type requester interface {
 	withReq(ctx *contextmodel.ReqContext, method string, u *url.URL, body io.Reader, extractor func(*response.NormalResponse) (any, error), headers map[string]string) response.Response
 }
 
 type LotexRuler struct {
-	log log.Logger
+	log                        log.Logger
+	features                   featuremgmt.FeatureToggles
+	defaultManageAlertsEnabled bool
 	*AlertingProxy
 	requester requester
 }
 
-func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
+func NewLotexRuler(proxy *AlertingProxy, log log.Logger, features featuremgmt.FeatureToggles, defaultManageAlertsEnabled bool) *LotexRuler {
 	return &LotexRuler{
-		log:           log,
-		AlertingProxy: proxy,
-		requester:     proxy,
+		log:                        log,
+		features:                   features,
+		defaultManageAlertsEnabled: defaultManageAlertsEnabled,
+		AlertingProxy:              proxy,
+		requester:                  proxy,
 	}
+}
+
+// handleValidateError returns appropriate error response: 403 for manageAlerts, 500 for others
+func handleValidateError(err error) response.Response {
+	if errors.Is(err, errManageAlertsDisabled) {
+		return errorToResponse(err)
+	}
+	return ErrResp(500, err, "")
 }
 
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 
 	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
@@ -83,7 +105,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContex
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 
 	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
@@ -117,7 +139,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, na
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 
 	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
@@ -145,7 +167,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 
 	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
@@ -179,7 +201,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 
 	return r.requester.withReq(
@@ -198,7 +220,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
-		return ErrResp(500, err, "")
+		return handleValidateError(err)
 	}
 	yml, err := yaml.Marshal(conf)
 	if err != nil {
@@ -223,6 +245,21 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
 	if err != nil {
 		return "", err
+	}
+
+	// nolint:staticcheck // not yet migrated to OpenFeature
+	if r.features.IsEnabledGlobally(featuremgmt.FlagAlertingDisableDSAPIWithManageAlerts) {
+		// Check if manageAlerts is disabled for this datasource
+		// Use server default if not explicitly set in datasource jsonData
+		manageAlerts := r.defaultManageAlertsEnabled
+		if ds.JsonData != nil {
+			if manageAlertsVal, ok := ds.JsonData.CheckGet("manageAlerts"); ok {
+				manageAlerts = manageAlertsVal.MustBool(r.defaultManageAlertsEnabled)
+			}
+		}
+		if !manageAlerts {
+			return "", errManageAlertsDisabled
+		}
 	}
 
 	// Validate URL
