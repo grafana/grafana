@@ -144,8 +144,6 @@ For example, a database failure can trigger several alerts at the same time like
 
 Grouping should follow operational boundaries such as service or owner, as defined by notification policies. Downstream or cascading failures should be grouped together so they surface as one issue rather than many.
 
-Configure [timing options](ref:timing-options) along with [silences](ref:silences) to reduce repeated notifications during active incidents.
-
 ## Mitigate flapping alerts
 
 Short-lived failure spikes often trigger alerts that auto-resolve quickly. Alerting on transient failures creates noise and leads responders to ignore them.
@@ -185,6 +183,8 @@ For example, instead of several teams alerting on high latency, a single SLO can
 Every incident is an opportunity to improve alerting. After each incident, evaluate whether alerts helped responders act quickly or added unnecessary noise.
 
 Assess which alerts fired, and how they influenced incident response. Review whether alerts triggered too late, too early, or without enough context, and adjust thresholds, priority, or escalation based on what actually happened.
+
+Use [silences](ref:silences) during active incidents to reduce repeated notifications, but scope them carefully to avoid silencing unrelated alerts.
 
 Post-mortems should evaluate alerts with root causes and lessons learned. If responders lacked key information during the incident, enrich alerts with additional context, dashboards, or better guidance.
 
