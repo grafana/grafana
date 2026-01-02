@@ -34,16 +34,6 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 }
 
 // FIXME: ProgressRecorder should be initialized in the queue
-type JobResourceResult struct {
-	Name    string
-	Group   string
-	Kind    string
-	Path    string
-	Action  repository.FileAction
-	Error   error
-	Warning error
-}
-
 type jobProgressRecorder struct {
 	mu                  sync.RWMutex
 	started             time.Time
@@ -81,11 +71,11 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.mu.Lock()
 	r.resultCount++
 
-	if result.Error != nil {
+	if result.Error() != nil {
 		shouldLogError = true
-		logErr = result.Error
+		logErr = result.Error()
 		if len(r.errors) < 20 {
-			r.errors = append(r.errors, result.Error.Error())
+			r.errors = append(r.errors, result.Error().Error())
 		}
 		r.errorCount++
 	}
@@ -93,7 +83,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
-	logger := logging.FromContext(ctx).With("path", result.Path, "group", result.Group, "kind", result.Kind, "action", result.Action, "name", result.Name)
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
 	} else {
@@ -180,26 +170,26 @@ func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 
 func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	// Note: This method is called from Record() which already holds the lock
-	key := result.Group + ":" + result.Kind
+	key := result.Group() + ":" + result.Kind()
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Group: result.Group,
-			Kind:  result.Kind,
+			Group: result.Group(),
+			Kind:  result.Kind(),
 		}
 		r.summaries[key] = summary
 	}
 
-	if result.Error != nil {
-		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
+	if result.Error() != nil {
+		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error().Error(), result.Path(), result.Name(), result.Action())
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
-	} else if result.Warning != nil {
-		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning.Error(), result.Path, result.Name, result.Action)
+	} else if result.Warning() != nil {
+		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning().Error(), result.Path(), result.Name(), result.Action())
 		summary.Warnings = append(summary.Warnings, warningMsg)
 		summary.Warning++
 	} else {
-		switch result.Action {
+		switch result.Action() {
 		case repository.FileActionDeleted:
 			summary.Delete++
 		case repository.FileActionUpdated:

@@ -101,52 +101,40 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 					return nil, tracing.Error(span, fmt.Errorf("unable to create empty file folder: %w", err))
 				}
 
-				progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-					Path:   safeSegment,
-					Action: repository.FileActionCreated,
-					Group:  resources.FolderResource.Group,
-					Kind:   resources.FolderKind.Kind,
-					Name:   folder,
-				})
+				result := jobs.NewJobResourceResult(folder, resources.FolderResource.Group, resources.FolderKind.Kind, safeSegment, repository.FileActionCreated, nil)
+				progress.Record(ensureFolderCtx, result)
 				ensureFolderSpan.End()
 				continue
 			}
 
-			progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionIgnored,
-			})
+			result := jobs.NewJobResourceResultWithoutKind(change.Path, repository.FileActionIgnored, nil)
+			progress.Record(ensureFolderCtx, result)
 			ensureFolderSpan.End()
 			continue
 		}
 
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-		}
+		var result jobs.JobResourceResult
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+			var resultErr error
 			if err != nil {
 				writeSpan.RecordError(err)
-				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+				resultErr = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			result = jobs.NewJobResourceResult(name, gvk.Group, gvk.Kind, change.Path, change.Action, resultErr)
 			writeSpan.End()
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
+			var resultErr error
 			if err != nil {
 				removeSpan.RecordError(err)
-				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
+				resultErr = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			result = jobs.NewJobResourceResult(name, gvk.Group, gvk.Kind, change.Path, change.Action, resultErr)
 
 			if folderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = folderName
@@ -156,13 +144,12 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		case repository.FileActionRenamed:
 			renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
 			name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+			var resultErr error
 			if err != nil {
 				renameSpan.RecordError(err)
-				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
+				resultErr = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			result = jobs.NewJobResourceResult(name, gvk.Group, gvk.Kind, change.Path, change.Action, resultErr)
 
 			if oldFolderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = oldFolderName
@@ -171,6 +158,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			renameSpan.End()
 		case repository.FileActionIgnored:
 			// do nothing
+			result = jobs.NewJobResourceResultWithoutKind(change.Path, change.Action, nil)
 		}
 		progress.Record(ctx, result)
 	}
