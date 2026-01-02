@@ -10,9 +10,13 @@ interface Props {
   onRunQuery: () => void;
 }
 
+// This offset was chosen by testing to match Prometheus behavior
+const EDITOR_HEIGHT_OFFSET = 2;
+
 export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const handleEditorDidMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -22,6 +26,20 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
         onRunQuery();
       });
+
+      // Make the editor resize itself so that the content fits (grows taller when necessary)
+      const updateElementHeight = () => {
+        const containerDiv = containerRef.current;
+        if (containerDiv !== null) {
+          const pixelHeight = editor.getContentHeight();
+          containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
+          const pixelWidth = containerDiv.clientWidth;
+          editor.layout({ width: pixelWidth, height: pixelHeight });
+        }
+      };
+
+      editor.onDidContentSizeChange(updateElementHeight);
+      updateElementHeight();
     },
     [onRunQuery]
   );
@@ -65,7 +83,17 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
 
   return (
     <Box>
-      <div className={styles.header}>
+      <div ref={containerRef} className={styles.editorContainer}>
+        <CodeEditor
+          value={value ?? ''}
+          language="json"
+          width="100%"
+          onBlur={handleQueryChange}
+          monacoOptions={monacoOptions}
+          onEditorDidMount={handleEditorDidMount}
+        />
+      </div>
+      <div className={styles.footer}>
         <Stack gap={1}>
           <Button
             size="sm"
@@ -76,20 +104,8 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
           >
             Format
           </Button>
-          <Button size="sm" variant="primary" icon="play" onClick={onRunQuery} tooltip="Run query (Ctrl/Cmd+Enter)">
-            Run
-          </Button>
         </Stack>
       </div>
-      <CodeEditor
-        value={value ?? ''}
-        language="json"
-        height={200}
-        width="100%"
-        onBlur={handleQueryChange}
-        monacoOptions={monacoOptions}
-        onEditorDidMount={handleEditorDidMount}
-      />
     </Box>
   );
 }
@@ -100,7 +116,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(1),
   }),
-  header: css({
+  editorContainer: css({
+    width: '100%',
+    overflow: 'hidden',
+  }),
+  footer: css({
     display: 'flex',
     justifyContent: 'flex-end',
     padding: theme.spacing(0.5, 0),
