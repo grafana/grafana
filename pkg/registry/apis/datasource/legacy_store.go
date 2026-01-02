@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,11 +10,15 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var (
@@ -84,7 +89,16 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if !ok {
 		return nil, fmt.Errorf("expected a datasource object")
 	}
-	return s.datasources.CreateDataSource(ctx, ds)
+	obj, err := s.datasources.CreateDataSource(ctx, ds)
+	if err != nil {
+		switch {
+		case errors.Is(err, datasources.ErrDataSourceNameExists):
+			return nil, apierrors.NewInvalid(s.resourceInfo.GroupVersionKind().GroupKind(), ds.Name, field.ErrorList{
+				field.Invalid(field.NewPath("spec", "title"), ds.Spec.Title(), "a datasource with this title already exists")})
+		}
+		return nil, err
+	}
+	return obj, nil
 }
 
 // Update implements rest.Updater.
