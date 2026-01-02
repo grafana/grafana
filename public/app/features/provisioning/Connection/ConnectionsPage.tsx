@@ -1,7 +1,8 @@
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Stack, Text } from '@grafana/ui';
+import { Alert, EmptyState, LinkButton, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { CONNECTIONS_URL } from '../constants';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { getErrorMessage } from '../utils/httpUtils';
 
@@ -18,13 +19,9 @@ export default function ConnectionsPage() {
       navId="provisioning"
       subTitle={t('provisioning.connections.page-subtitle', 'View and manage your app connections')}
       actions={
-        <Button
-          variant="primary"
-          disabled
-          tooltip={t('provisioning.connections.create-tooltip', 'Connection creation coming soon')}
-        >
+        <LinkButton variant="primary" href={`${CONNECTIONS_URL}/new`}>
           <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
-        </Button>
+        </LinkButton>
       }
     >
       <Page.Contents isLoading={isLoading}>
