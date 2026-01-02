@@ -345,10 +345,12 @@ export class V2DashboardSerializer
     // initialize autossigned variable ds references map
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
-        // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
-          const datasourceType = variable.spec.query.group || undefined;
-          this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
+        if (variable) {
+          // for query variables that dont have a ds defined add them to the list
+          if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
+            const datasourceType = variable.spec.query.group || undefined;
+            this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
+          }
         }
       }
     }
