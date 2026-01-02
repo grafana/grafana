@@ -266,7 +266,8 @@ export function createDashboardSceneFromDashboardModel(
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
   const isReport = options?.route === DashboardRoutes.Report;
-  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1';
+  const targetVersion =
+    options?.targetVersion ?? (shouldForceV2API() && !oldModel.meta.isSnapshot && !isReport ? 'v2' : 'v1');
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -354,7 +355,7 @@ export function createDashboardSceneFromDashboardModel(
 
   let body: DashboardLayoutManager;
 
-  if (serializerVersion === 'v2' && oldModel.panels.some((p) => p.type === 'row')) {
+  if (targetVersion === 'v2' && oldModel.panels.some((p) => p.type === 'row')) {
     body = createRowsFromPanels(oldModel.panels);
   } else {
     body = new DefaultGridLayoutManager({
@@ -404,7 +405,7 @@ export function createDashboardSceneFromDashboardModel(
         hideTimeControls: oldModel.timepicker.hidden,
       }),
     },
-    serializerVersion
+    targetVersion
   );
 
   // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
