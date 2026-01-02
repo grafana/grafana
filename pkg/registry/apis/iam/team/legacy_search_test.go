@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"math"
 	"testing"
@@ -25,7 +26,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 			Limit:  10,
 			Page:   1,
 			Query:  "test",
-			Fields: []string{"name", "email", "provisioned", "externalUID"},
+			Fields: []string{"name", "email", "provisioned", "externalUID", "memberCount", "permission", "accessControl"},
 		}
 
 		mockTeamService.ExpectedSearchTeamsResult = team.SearchTeamQueryResult{
@@ -36,6 +37,9 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 					Email:         "test@example.com",
 					IsProvisioned: true,
 					ExternalUID:   "testExternalUID",
+					MemberCount:   10,
+					Permission:    team.PermissionTypeAdmin,
+					AccessControl: map[string]bool{"test": true},
 				},
 			},
 			TotalCount: 1,
@@ -48,7 +52,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(1), resp.TotalHits)
 		require.Len(t, resp.Results.Rows, 1)
-		require.Len(t, resp.Results.Columns, 5)
+		require.Len(t, resp.Results.Columns, 8)
 		require.Equal(t, "default", resp.Results.Rows[0].Key.Namespace)
 		require.Equal(t, "iam.grafana.com", resp.Results.Rows[0].Key.Group)
 		require.Equal(t, "teams", resp.Results.Rows[0].Key.Resource)
@@ -58,6 +62,9 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 		require.Equal(t, "test@example.com", string(resp.Results.Rows[0].Cells[2]))
 		require.Equal(t, "true", string(resp.Results.Rows[0].Cells[3]))
 		require.Equal(t, "testExternalUID", string(resp.Results.Rows[0].Cells[4]))
+		require.Equal(t, 10, int(binary.BigEndian.Uint64(resp.Results.Rows[0].Cells[5])))
+		require.Equal(t, team.PermissionTypeAdmin, team.PermissionType(binary.BigEndian.Uint32(resp.Results.Rows[0].Cells[6])))
+		require.Equal(t, "{\"test\":true}", string(resp.Results.Rows[0].Cells[7]))
 	})
 
 	t.Run("returns error if page is negative", func(t *testing.T) {
