@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"sync"
 
 	"github.com/grafana/authlib/authn"
@@ -15,8 +14,8 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/clientauth"
 )
 
 var (
@@ -73,10 +72,8 @@ func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeCl
 	for gr, dialConfig := range cfg {
 		configProviders[gr] = func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
-				Host: dialConfig.Host,
-				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-					return auth.NewRoundTripper(exchangeClient, rt, dialConfig.Audience)
-				},
+				Host:          dialConfig.Host,
+				WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(exchangeClient, dialConfig.Audience, clientauth.WildcardNamespace),
 				TLSClientConfig: rest.TLSClientConfig{
 					Insecure: dialConfig.Insecure,
 					CAFile:   dialConfig.CAFile,
