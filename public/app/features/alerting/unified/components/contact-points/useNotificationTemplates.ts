@@ -273,6 +273,7 @@ export function useValidateNotificationTemplate({
 
 interface NotificationTemplateMetadata {
   isProvisioned: boolean;
+  provenance?: string;
 }
 
 export function useNotificationTemplateMetadata(
@@ -286,5 +287,6 @@ export function useNotificationTemplateMetadata(
 
   return {
     isProvisioned: Boolean(template.provenance) && template.provenance !== PROVENANCE_NONE,
+    provenance: template.provenance,
   };
 }

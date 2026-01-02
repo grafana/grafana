@@ -3,6 +3,8 @@ import { ComponentPropsWithoutRef } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
 
+import { Provenance } from '../types/provenance';
+
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
   Template = 'template',
@@ -46,11 +48,17 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
-  const badge = <Badge text={t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned')} color="purple" />;
+  const isConvertedPrometheus = provenance === Provenance.ConvertedPrometheus;
+  const badgeText = isConvertedPrometheus
+    ? t('alerting.provisioning-badge.badge.text-converted-prometheus', 'Provisioned from Prometheus/Mimir')
+    : t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned');
+  const badgeColor = isConvertedPrometheus ? 'blue' : 'purple';
+  const badge = <Badge text={badgeText} color={badgeColor} />;
 
   if (tooltip) {
+    const provenanceText = isConvertedPrometheus ? 'Prometheus/Mimir' : provenance;
     const provenanceTooltip = (
-      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance }}>
+      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance: provenanceText }}>
         This resource has been provisioned via {{ provenance }} and cannot be edited through the UI
       </Trans>
     );

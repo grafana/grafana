@@ -50,6 +50,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -93,6 +94,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
       },
       "name": "lotsa-emails",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -129,6 +131,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
       },
       "name": "OnCall Conctact point",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -178,6 +181,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provenance": "api",
       "provisioned": true,
     },
     {
@@ -243,6 +247,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
       },
       "name": "Slack with multiple channels",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
   ],
@@ -301,6 +306,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -344,6 +350,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       },
       "name": "lotsa-emails",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -383,6 +390,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       },
       "name": "OnCall Conctact point",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
     {
@@ -432,6 +440,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provenance": "api",
       "provisioned": true,
     },
     {
@@ -497,6 +506,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       },
       "name": "Slack with multiple channels",
       "policies": [],
+      "provenance": "",
       "provisioned": false,
     },
   ],

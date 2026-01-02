@@ -105,6 +105,7 @@ export interface GrafanaManagedContactPoint {
   id?: string;
   metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
   provisioned?: boolean;
+  provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 
@@ -145,6 +146,7 @@ export type Route = {
   /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
   [ROUTES_META_SYMBOL]?: {
     provisioned?: boolean;
+    provenance?: string;
     resourceVersion?: string;
     name?: string;
   };

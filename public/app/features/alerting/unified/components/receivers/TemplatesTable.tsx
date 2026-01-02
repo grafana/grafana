@@ -128,7 +128,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
   const isGrafanaAlertmanager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
+  const { isProvisioned, provenance } = useNotificationTemplateMetadata(notificationTemplate);
 
   const { uid, title: name, content: template, missing } = notificationTemplate;
   const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
@@ -139,7 +139,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
           <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
         </td>
         <td>
-          {name} {isProvisioned && <ProvisioningBadge />}{' '}
+          {name} {isProvisioned && <ProvisioningBadge provenance={provenance} />}{' '}
           {missing && !isGrafanaAlertmanager && (
             <Tooltip
               content={
