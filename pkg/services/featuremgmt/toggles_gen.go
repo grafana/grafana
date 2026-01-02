@@ -135,6 +135,10 @@ const (
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
 
+	// FlagReportingCsvEncodingOptions
+	// Enables CSV encoding options in the reporting feature
+	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
+
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
