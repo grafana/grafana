@@ -25,3 +25,7 @@ func GetDatasourceGroupNameFromPluginID(pluginId string) (string, error) {
 	}
 	return fmt.Sprintf("%s.datasource.grafana.app", strings.Join(parts[:len(parts)-1], "-")), nil
 }
+
+func GetFullDatasourceGroupNameFromPluginID(pluginId string) string {
+	return fmt.Sprintf("%s.datasource.grafana.app", pluginId)
+}

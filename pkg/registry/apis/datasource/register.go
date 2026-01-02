@@ -41,21 +41,22 @@ type DataSourceAPIBuilderConfig struct {
 	LoadQueryTypes bool
 	UseDualWriter  bool
 
-	// This should be removed once we are using the shorter api group names everywhere
-	UseShorterAPIGroupName bool
+	// This should be removed once we are using the full api group names everywhere
+	UseFullPluginIDInGroupName bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
 
-	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same plugin id!
-	datasources     PluginDatasourceProvider
-	contextProvider PluginContextWrapper
-	accessControl   accesscontrol.AccessControl
-	queryTypes      *queryV0.QueryTypeDefinitionList
-	cfg             DataSourceAPIBuilderConfig
+	pluginJSON           plugins.JSONData
+	client               PluginClient // will only ever be called with the same plugin id!
+	datasources          PluginDatasourceProvider
+	contextProvider      PluginContextWrapper
+	accessControl        accesscontrol.AccessControl
+	queryTypes           *queryV0.QueryTypeDefinitionList
+	cfg                  DataSourceAPIBuilderConfig
+	dataSourceCRUDMetric *prometheus.HistogramVec
 }
 
 func RegisterAPIService(
@@ -97,28 +98,7 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
-		// TODO: can we just do a hard swap here? The api server isnt using this, right?
-		// TODO remove this builder once query service is using the shorter api group name everywhere
-		builder, err = NewDataSourceAPIBuilder(
-			pluginJSON,
-			client,
-			datasources.GetDatasourceProvider(pluginJSON),
-			contextProvider,
-			accessControl,
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
-			false, // useShorterAPIGroupName
-		)
-		if err != nil {
-			return nil, err
-		}
-		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
-
-		apiRegistrar.RegisterAPI(builder)
-
-		// Also register the plugin with the new apiGroup naming convention. The other endpoint will be deleted in the near future.
+		// Register the plugin with the new apiGroup naming convention. The other endpoint will be deleted in the near future.
 		builder, err = NewDataSourceAPIBuilder(pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
@@ -126,14 +106,16 @@ func RegisterAPIService(
 			accessControl,
 			DataSourceAPIBuilderConfig{
 				//nolint:staticcheck // not yet migrated to OpenFeature
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:          false,
-				UseShorterAPIGroupName: features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				LoadQueryTypes:             features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:              false,
+				UseFullPluginIDInGroupName: true,
 			},
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -160,8 +142,8 @@ func NewDataSourceAPIBuilder(
 	var group string
 	var err error
 
-	if cfg.UseShorterAPIGroupName {
-		group = plugin.ID
+	if cfg.UseFullPluginIDInGroupName {
+		group = plugins.GetFullDatasourceGroupNameFromPluginID(plugin.ID)
 	} else {
 		group, err = plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 		if err != nil {
