@@ -81,7 +81,7 @@ Reliability metrics that impact users—latency, errors, availability—are bett
 
 That said, infrastructure signals still matter. They can act as early warning indicators and are often useful when alerting maturity is low. A sustained spike in CPU or memory usage might not justify a page, but it can help explain or anticipate symptom-based failures.
 
-Infrastructure alerts tend to be noisy, and responders often ignore them.
+Infrastructure alerts tend to be noisy and are often ignored when treated like paging signals. They are usually better suited for lower-severity channels such as dashboards, alert lists, or non-paging destinations like a dedicated Slack channel, where they can be monitored without interrupting on-call.
 
 The key is balance as your alerting matures. Use infrastructure alerts to support diagnosis and prevention, not as a replacement for symptom-based alerts.
 
