@@ -631,7 +631,7 @@
       "transformations": [
         {
           "id": "convertFieldType",
-          "options":  {
+          "options": {
             "conversions": [
               {
                 "destinationType": "number",

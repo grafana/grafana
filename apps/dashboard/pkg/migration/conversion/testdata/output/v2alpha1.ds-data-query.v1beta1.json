@@ -150,6 +150,9 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -245,6 +248,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -341,6 +348,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -400,6 +410,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "gdev-testdata"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {

@@ -27,6 +27,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
