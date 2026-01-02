@@ -27,6 +27,7 @@ import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -822,10 +823,14 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('Should convert legacy rows to new rows', () => {
-      const scene = transformSaveModelToScene({
-        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
-        meta: {},
-      });
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+          meta: {},
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const layout = scene.state.body as RowsLayoutManager;
       const row1 = layout.state.rows[0];
@@ -857,10 +862,14 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('Should convert legacy rows to new rows with free panels before first row', () => {
-      const scene = transformSaveModelToScene({
-        dashboard: rowsAfterFreePanels as DashboardDataDTO,
-        meta: {},
-      });
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: rowsAfterFreePanels as DashboardDataDTO,
+          meta: {},
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const layout = scene.state.body as RowsLayoutManager;
       const row1 = layout.state.rows[0];

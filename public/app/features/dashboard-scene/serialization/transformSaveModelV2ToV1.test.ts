@@ -6,6 +6,8 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
+
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -228,22 +230,26 @@ function removeMetadata(spec: Dashboard): Partial<Dashboard> {
  * identical processing.
  */
 function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
-  const scene = transformSaveModelToScene({
-    dashboard: dashboard as DashboardDataDTO,
-    meta: {
-      isNew: false,
-      isFolder: false,
-      canSave: true,
-      canEdit: true,
-      canDelete: false,
-      canShare: false,
-      canStar: false,
-      canAdmin: false,
-      isSnapshot: false,
-      provisioned: false,
-      version: 1,
+  const scene = transformSaveModelToScene(
+    {
+      dashboard: dashboard as DashboardDataDTO,
+      meta: {
+        isNew: false,
+        isFolder: false,
+        canSave: true,
+        canEdit: true,
+        canDelete: false,
+        canShare: false,
+        canStar: false,
+        canAdmin: false,
+        isSnapshot: false,
+        provisioned: false,
+        version: 1,
+      },
     },
-  });
+    undefined,
+    getSceneCreationOptions()
+  );
 
   return transformSceneToSaveModel(scene, false);
 }
