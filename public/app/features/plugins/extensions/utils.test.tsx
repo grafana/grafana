@@ -997,6 +997,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getAppPluginConfigs()', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1024,10 +1025,12 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     test('should return the app plugin configs based on the provided plugin ids', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1044,12 +1047,15 @@ describe('Plugin Extensions / Utils', () => {
       };
 
       expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
+        // eslint-disable-next-line no-restricted-syntax
         config.apps['myorg-first-app'],
+        // eslint-disable-next-line no-restricted-syntax
         config.apps['myorg-third-app'],
       ]);
     });
 
     test('should simply ignore the app plugin ids that do not belong to a config', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1065,6 +1071,7 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
+      // eslint-disable-next-line no-restricted-syntax
       expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
     });
   });
@@ -1076,6 +1083,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExtensionPointPluginDependencies()', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1103,12 +1111,14 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     test('should return the app plugin ids that register extensions to a link extension point', () => {
       const extensionPointId = 'myorg-first-app/link/v1';
 
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1145,6 +1155,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should return the app plugin ids that register extensions to a component extension point', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1182,6 +1193,7 @@ describe('Plugin Extensions / Utils', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       // None of the apps are extending the extension point
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1205,6 +1217,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1290,6 +1303,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExposedComponentPluginDependencies()', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1317,12 +1331,14 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1358,6 +1374,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1436,6 +1453,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getAppPluginDependencies()', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1463,10 +1481,12 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     test('should not end up in an infinite loop if there are circular dependencies', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1500,6 +1520,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     test('should not end up in an infinite loop if a plugin depends on itself', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1526,6 +1547,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExtensionPointPluginMeta()', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const mockExtensionPointId = 'test-extension-point';
     const mockApp1: AppPluginConfig = {
@@ -1581,14 +1603,17 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {};
     });
 
     afterEach(() => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     it('should return empty map when no plugins have extensions for the point', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         app1: { ...mockApp1, extensions: { ...mockApp1.extensions, addedComponents: [], addedLinks: [] } },
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
@@ -1599,6 +1624,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return map with plugins that have components for the extension point', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         app1: mockApp1,
         app2: mockApp2,
@@ -1618,6 +1644,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should filter out plugins that do not have any extensions for the point', () => {
+      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         app1: mockApp1,
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },

@@ -151,6 +151,7 @@ export const isAddedLinkMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
+  // eslint-disable-next-line no-restricted-syntax
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
@@ -183,6 +184,7 @@ export const isAddedFunctionMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register function extension. Reason:';
+  // eslint-disable-next-line no-restricted-syntax
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.filter(({ title }) => title === metaInfo.title) : null;
 
@@ -215,6 +217,7 @@ export const isAddedComponentMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register component extension. Reason:';
+  // eslint-disable-next-line no-restricted-syntax
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app
     ? app.extensions.addedComponents.filter(({ title }) => title === metaInfo.title)
@@ -249,6 +252,7 @@ export const isExposedComponentMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register exposed component extension. Reason:';
+  // eslint-disable-next-line no-restricted-syntax
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.filter(({ id }) => id === metaInfo.id) : null;
 

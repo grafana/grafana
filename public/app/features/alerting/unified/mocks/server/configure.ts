@@ -214,6 +214,7 @@ export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
 
 /** Make a given plugin ID respond with a 404, as if it isn't installed at all */
 export const removePlugin = (pluginId: string) => {
+  // eslint-disable-next-line no-restricted-syntax
   delete config.apps[pluginId];
   server.use(getPluginMissingHandler(pluginId));
 };

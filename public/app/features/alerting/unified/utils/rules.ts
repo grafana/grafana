@@ -273,6 +273,7 @@ export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): R
 }
 
 function isPluginInstalled(pluginId: string) {
+  // eslint-disable-next-line no-restricted-syntax
   return Boolean(config.apps[pluginId]);
 }
 
