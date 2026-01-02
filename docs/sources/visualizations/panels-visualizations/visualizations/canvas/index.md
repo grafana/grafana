@@ -117,6 +117,12 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="250px" alt="Add a custom image URL" >}}
 
+   {{< admonition type="caution" >}}
+   Using the `public/img` directory as a server for custom images is not supported.
+   It was possible to do so before Grafana v12.1.1, but this was not a supported behavior.
+   If you stored images at this directory prior to Grafana v12.1.1, those image paths will no longer function, and you'll need to move them an accessible URL.
+   {{< /admonition >}}
+
 1. Click **Select**.
 1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
 
@@ -172,6 +178,12 @@ To upload a custom image, follow these steps:
 1. Enter the URL in the field below the **URL** tab.
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="250px" alt="Add a custom image URL" >}}
+
+   {{< admonition type="caution" >}}
+   Using the `public/img` directory as a server for custom images is not supported.
+   It was possible to do so before Grafana v12.1.1, but this was not a supported behavior.
+   If you stored images at this directory prior to Grafana v12.1.1, those image paths will no longer function, and you'll need to move them an accessible URL.
+   {{< /admonition >}}
 
 1. Click **Select**.
 
