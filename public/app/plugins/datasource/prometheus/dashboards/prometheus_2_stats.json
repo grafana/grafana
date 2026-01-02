@@ -443,8 +443,7 @@
           "expr": "prometheus_tsdb_wal_corruptions_total{job=\"prometheus\"}",
           "format": "time_series",
           "legendFormat": "",
-          "refId": "A",
-          "step": 60
+          "refId": "A"
         }
       ],
       "title": "WAL Corruptions",
@@ -1230,8 +1229,7 @@
           "expr": "max(prometheus_rule_group_duration_seconds{job=\"prometheus\"}) by (quantile)",
           "format": "time_series",
           "legendFormat": "{{quantile}}",
-          "refId": "A",
-          "step": 10
+          "refId": "A"
         }
       ],
       "timeFrom": null,
@@ -1317,15 +1315,13 @@
           "expr": "rate(prometheus_rule_group_iterations_missed_total{job=\"prometheus\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "missed",
-          "refId": "B",
-          "step": 10
+          "refId": "B"
         },
         {
           "expr": "rate(prometheus_rule_group_iterations_total{job=\"prometheus\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "iterations",
-          "refId": "A",
-          "step": 10
+          "refId": "A"
         }
       ],
       "timeFrom": null,
