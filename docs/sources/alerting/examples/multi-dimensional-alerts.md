@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/
+aliases:
+  - ../best-practices/multi-dimensional-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/multi-dimensional-alerts/
 description: This example shows how a single alert rule can generate multiple alert instances using time series data.
 keywords:
   - grafana
@@ -8,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Examples of multi-dimensional alerts
+menuTitle: Multi-dimensional alerts
 title: Example of multi-dimensional alerts on time series data
 weight: 1101
 refs:

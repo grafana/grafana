@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/dynamic-labels
+aliases:
+  - ../best-practices/dynamic-labels/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/dynamic-labels
 description: This example shows how to define dynamic labels based on query values, along with important behavior to keep in mind when using them.
 keywords:
   - grafana
@@ -10,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Examples of dynamic labels
+menuTitle: Dynamic labels
 title: Example of dynamic labels in alert instances
 weight: 1104
 refs:

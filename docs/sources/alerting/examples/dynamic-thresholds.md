@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/dynamic-thresholds
+aliases:
+  - ../best-practices/dynamic-thresholds/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-thresholds/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/dynamic-thresholds
 description: This example shows how to use a distinct threshold value per dimension using multi-dimensional alerts and a Math expression.
 keywords:
   - grafana
@@ -10,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Examples of dynamic thresholds
+menuTitle: Dynamic thresholds
 title: Example of dynamic thresholds per dimension
 weight: 1105
 refs:

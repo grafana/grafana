@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/missing-data/
+aliases:
+  - ../best-practices/missing-data/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
+canonical: https://grafana.com/docs/grafana/latest/alerting/guides/missing-data/
 description: Learn how to detect missing metrics and design alerts that handle gaps in data in Prometheus and Grafana Alerting.
 keywords:
   - grafana
@@ -14,7 +16,7 @@ labels:
     - oss
 menuTitle: Handle missing data
 title: Handle missing data in Grafana Alerting
-weight: 1020
+weight: 1030
 refs:
   connectivity-errors-guide:
     - pattern: /docs/grafana/
