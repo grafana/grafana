@@ -1238,6 +1238,8 @@ type DashboardDashboardLink struct {
 	KeepTime bool `json:"keepTime"`
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	Placement *string `json:"placement,omitempty"`
+	// The source that registered the link (if any)
+	Source *DashboardControlSourceRef `json:"source,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1265,6 +1267,21 @@ const (
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 // +k8s:openapi-gen=true
 const DashboardDashboardLinkPlacement = "inControlsMenu"
+
+// Source information for controls (e.g. variables or links)
+// +k8s:openapi-gen=true
+type DashboardControlSourceRef struct {
+	Uid string `json:"uid"`
+	// E.g. "prometheus"
+	SourceId string `json:"sourceId"`
+	// E.g. "datasource"
+	SourceType string `json:"sourceType"`
+}
+
+// NewDashboardControlSourceRef creates a new DashboardControlSourceRef object.
+func NewDashboardControlSourceRef() *DashboardControlSourceRef {
+	return &DashboardControlSourceRef{}
+}
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.

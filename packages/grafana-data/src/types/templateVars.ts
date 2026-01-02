@@ -195,6 +195,13 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  source?: ControlSourceRef;
+}
+
+export interface ControlSourceRef {
+  uid: string;
+  sourceId: string;
+  sourceType: string;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

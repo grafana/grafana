@@ -1,7 +1,8 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil, TypedVariableModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { DashboardLink } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -41,6 +42,11 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  getDsRefsFromV1Dashboard,
+  getDsRefsFromV2Dashboard,
+  loadDefaultControlsFromDatasources,
+} from '../utils/dashboardControls';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -85,6 +91,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  defaultVariables?: TypedVariableModel[];
+  defaultLinks?: DashboardLink[];
 }
 
 export type HomeDashboardDTO = DashboardDTO & {
@@ -114,6 +122,9 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
+  abstract getDefaultControls(
+    rsp: T
+  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -370,6 +381,10 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
+    const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
+    options.defaultVariables = defaultVariables;
+    options.defaultLinks = defaultLinks;
+
     return this.transformResponseToScene(rsp, options);
   }
 
@@ -610,6 +625,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
+  public getDefaultControls(
+    rsp: DashboardDTO
+  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+    const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
+
+    return loadDefaultControlsFromDatasources(datasourceRefs);
+  }
+
   public async fetchDashboard({
     type,
     slug,
@@ -816,7 +839,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     if (rsp) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
@@ -827,6 +850,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
+  }
+
+  public async getDefaultControls(
+    rsp: DashboardWithAccessInfo<DashboardV2Spec>
+  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+    const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
+
+    return loadDefaultControlsFromDatasources(datasourceRefs);
   }
 
   public async fetchDashboard({
@@ -1100,6 +1131,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
+  }
+
+  public async getDefaultControls(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
+  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.getDefaultControls(rsp);
+    }
+    return this.v1Manager.getDefaultControls(rsp);
   }
 }
 

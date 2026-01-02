@@ -167,25 +167,48 @@ jest.mock('@grafana/scenes', () => ({
 
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with custom settings', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      title: 'My custom title',
+      description: 'My custom description',
+      tags: ['tag1', 'tag2'],
+      timezone: 'America/New_York',
+      weekStart: 'monday',
+      graphTooltip: 1,
+      editable: false,
+      refresh: '5m',
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        refresh_intervals: ['5m', '15m', '30m', '1h'],
+        hidden: true,
+      },
+      links: [{ ...NEW_LINK, title: 'Link 1' }],
+    };
+
     it('Should transform back to persisted model', () => {
-      const dashboardWithCustomSettings = {
-        ...dashboard_to_load1,
-        title: 'My custom title',
-        description: 'My custom description',
-        tags: ['tag1', 'tag2'],
-        timezone: 'America/New_York',
-        weekStart: 'monday',
-        graphTooltip: 1,
-        editable: false,
-        refresh: '5m',
-        timepicker: {
-          ...dashboard_to_load1.timepicker,
-          refresh_intervals: ['5m', '15m', '30m', '1h'],
-          hidden: true,
-        },
-        links: [{ ...NEW_LINK, title: 'Link 1' }],
-      };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+
+    it('Should not transform back links that are registered by a datasource', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: {
+          ...dashboardWithCustomSettings,
+          links: [
+            { ...NEW_LINK, title: 'Link 1' },
+
+            // This link should not be part of the JSON model, as it was registered by (and managed by) a datasource plugin
+            {
+              ...NEW_LINK,
+              title: 'Link 2',
+              source: { uid: '123456', sourceId: 'prometheus', sourceType: 'datasource' },
+            },
+          ],
+        } as DashboardDataDTO,
+        meta: {},
+      });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -195,6 +218,65 @@ describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+    it('Should not transform back variables registered by a datasource', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: {
+          ...dashboard_to_load1,
+          templating: {
+            list: [
+              ...dashboard_to_load1.templating.list,
+              {
+                current: {
+                  selected: true,
+                  text: ['a'],
+                  value: ['a'],
+                },
+                hide: 0,
+                includeAll: true,
+                multi: true,
+                name: 'customVar',
+                options: [
+                  {
+                    selected: false,
+                    text: 'All',
+                    value: '$__all',
+                  },
+                  {
+                    selected: true,
+                    text: 'a',
+                    value: 'a',
+                  },
+                  {
+                    selected: false,
+                    text: 'b',
+                    value: 'b',
+                  },
+                  {
+                    selected: false,
+                    text: 'c',
+                    value: 'c',
+                  },
+                ],
+                query: 'a, b, c',
+                skipUrlSync: false,
+                type: 'custom',
+
+                // This marks that the variable was registered by a datasource
+                source: {
+                  uid: '123456',
+                  sourceId: 'prometheus',
+                  sourceType: 'datasource',
+                },
+              },
+            ],
+          },
+        } as DashboardDataDTO,
+        meta: {},
+      });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();

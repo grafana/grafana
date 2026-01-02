@@ -94,6 +94,14 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+jest.mock('../utils/dashboardControls', () => ({
+  ...jest.requireActual('../utils/dashboardControls'),
+  loadDefaultControlsFromDatasources: jest.fn().mockResolvedValue({
+    defaultVariables: [],
+    defaultLinks: [],
+  }),
+}));
+
 const createTestStore = () =>
   configureStore({
     reducer: {

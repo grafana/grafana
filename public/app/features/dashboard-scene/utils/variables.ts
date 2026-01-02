@@ -22,8 +22,8 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 
 const DEFAULT_DATASOURCE = 'default';
 
-export function createVariablesForDashboard(oldModel: DashboardModel) {
-  const variableObjects = oldModel.templating.list
+export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: TypedVariableModel[] = []) {
+  const variableObjects = [...oldModel.templating.list, ...defaultVariables]
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -42,7 +42,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...variableObjects],
   });
 }
 
@@ -143,6 +143,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    source: variable.source,
   };
   if (variable.type === 'adhoc') {
     const originFilters: AdHocVariableFilter[] = [];
