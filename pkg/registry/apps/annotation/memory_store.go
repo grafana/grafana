@@ -98,20 +98,20 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	return created, nil
 }
 
-func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; !exists {
-		return nil, fmt.Errorf("annotation not found")
+		return fmt.Errorf("annotation not found")
 	}
 
 	updated := anno.DeepCopy()
 	m.data[key] = updated
 
-	return updated, nil
+	return nil
 }
 
 func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error {
@@ -155,4 +155,8 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	}
 
 	return tags, nil
+}
+
+func (m *memoryStore) Tags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
+	return nil, fmt.Errorf("not implemented")
 }
