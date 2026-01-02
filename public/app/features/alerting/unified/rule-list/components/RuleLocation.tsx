@@ -12,9 +12,13 @@ interface RuleLocationProps {
   application?: RulesSourceApplication;
 }
 
+const NoGroupPrefix = 'no_group_for_rule_';
+const isNoGroup = (group: string) => group.startsWith(NoGroupPrefix);
+
 export function RuleLocation({ namespace, group, groupUrl, rulesSource, application }: RuleLocationProps) {
   const isGrafanaApp = application === 'grafana';
   const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
+  const groupText = isNoGroup(group) ? 'Ungrouped' : group;
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
@@ -32,10 +36,10 @@ export function RuleLocation({ namespace, group, groupUrl, rulesSource, applicat
         <Icon size="sm" name="angle-right" />
         {groupUrl ? (
           <TextLink href={groupUrl} color="secondary" variant="bodySmall" inline={false}>
-            {group}
+            {groupText}
           </TextLink>
         ) : (
-          group
+          groupText
         )}
       </Stack>
     </Stack>

@@ -33,6 +33,9 @@ interface Props {
   viewMode: ViewMode;
 }
 
+const NoGroupPrefix = 'no_group_for_rule_';
+const isNoGroup = (group: string) => group.startsWith(NoGroupPrefix);
+
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
   const rulesSourceName = getRulesSourceName(rulesSource);
@@ -164,11 +167,14 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   }
 
   // ungrouped rules are rules that are in the "default" group name
-  const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
-  ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
-  );
+  let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
+  if (isListView) {
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
+  } else if (isNoGroup(group.name)) {
+    groupName = (
+      <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={`${group.rules[0].name} (Ungrouped)`} />
+    );
+  }
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
