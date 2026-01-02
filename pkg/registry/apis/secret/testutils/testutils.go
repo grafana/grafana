@@ -120,6 +120,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		usageStats,
 		enc,
 		ossProviders,
+		&manager.NoopDataKeyCache{},
+		cfg,
 	)
 	require.NoError(t, err)
 
