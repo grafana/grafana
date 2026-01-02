@@ -76,4 +76,24 @@ return (
 );
 ```
 
+### Usage inside Drawer
+
+When using Toggletip inside a Drawer or other focus-trapped container, pass the container element as `portalRoot` to ensure focus management works correctly. This renders the Toggletip content inside the Drawer's DOM tree instead of the default portal container.
+
+Use a state-based ref pattern to ensure the container is available before rendering the Toggletip:
+
+```tsx
+const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+<Drawer title="Settings" onClose={onClose}>
+  <div ref={setContainerEl}>
+    {containerEl && (
+      <Toggletip content={<Input placeholder="Type here..." />} portalRoot={containerEl}>
+        <Button>Open Toggletip</Button>
+      </Toggletip>
+    )}
+  </div>
+</Drawer>;
+```
+
 <ArgTypes of={Toggletip} />
