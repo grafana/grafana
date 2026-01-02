@@ -8,7 +8,7 @@ import (
 
 var _ authorizer.Authorizer = (*impersonationAuthorizer)(nil)
 
-func newImpersonationAuthorizer() *impersonationAuthorizer {
+func NewImpersonationAuthorizer() *impersonationAuthorizer {
 	return &impersonationAuthorizer{}
 }
 

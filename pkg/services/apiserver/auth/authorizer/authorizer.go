@@ -30,7 +30,7 @@ type GrafanaAuthorizer struct {
 //     an authorizer or return authorizer.DecisionNoOpinion
 func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
-		newImpersonationAuthorizer(),
+		NewImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
 		newNamespaceAuthorizer(),
 	}
