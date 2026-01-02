@@ -29,6 +29,10 @@ type JobProgressRecorder interface {
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
+	// HasDirPathFailedCreation checks if a path has any folder creations that failed
+	HasDirPathFailedCreation(path string) bool
+	// HasDirPathFailedDeletion checks if a folderPath has any folder deletions that failed
+	HasDirPathFailedDeletion(folderPath string) bool
 }
 
 // Worker is a worker that can process a job

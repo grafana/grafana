@@ -80,6 +80,34 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		return
 	}
 
+	// Check if we need to skip this action because of a previous  failure on a parent/child folder
+	if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
+		// Skip this resource since its parent folder failed to be created
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_nested_resource")
+		progress.Record(skipCtx, jobs.JobResourceResult{
+			Path:    change.Path,
+			Action:  repository.FileActionIgnored,
+			Warning: fmt.Errorf("skipped: parent folder creation failed"),
+		})
+		skipSpan.End()
+		return
+	}
+
+	if change.Action == repository.FileActionDeleted && safepath.IsDir(change.Path) {
+		if progress.HasDirPathFailedDeletion(change.Path) {
+			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_folder_with_failed_deletions")
+			progress.Record(skipCtx, jobs.JobResourceResult{
+				Path:    change.Path,
+				Action:  repository.FileActionIgnored,
+				Group:   resources.FolderKind.Group,
+				Kind:    resources.FolderKind.Kind,
+				Warning: fmt.Errorf("skipped: child resource deletions failed"),
+			})
+			skipSpan.End()
+			return
+		}
+	}
+
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
 		result := jobs.JobResourceResult{
@@ -138,6 +166,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
 			progress.Record(ctx, result)
+
 			return
 		}
 
