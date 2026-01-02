@@ -103,6 +103,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 
 export interface CustomVariableModel extends VariableWithMultiSupport {
   type: 'custom';
+  valuesFormat?: 'csv' | 'json';
 }
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {

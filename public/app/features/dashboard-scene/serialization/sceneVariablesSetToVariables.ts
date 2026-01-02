@@ -120,6 +120,9 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        // Ensure we persist the backend default when not specified to stay aligned with
+        // transformSaveModelSchemaV2ToScene which injects 'csv' on load.
+        valuesFormat: variable.state.valuesFormat ?? 'csv',
       };
       variables.push(customVariable);
     } else if (sceneUtils.isDataSourceVariable(variable)) {
@@ -408,6 +411,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          valuesFormat: variable.state.valuesFormat ?? 'csv',
         },
       };
       variables.push(customVariable);

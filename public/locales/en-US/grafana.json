@@ -4871,7 +4871,8 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable"
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5964,7 +5965,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
-      "name-values-separated-comma": "Values separated by comma",
+      "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br />Check <4>our docs</4> for more information.",
+      "name-json-values": "JSON",
+      "name-values-separated-comma": "CSV",
       "selection-options": "Selection options"
     },
     "dashboard-edit-pane-renderer": {
@@ -6551,6 +6554,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": "Change variable query"
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
@@ -6633,7 +6641,8 @@
       "tooltip-show-usages": "Show usages"
     },
     "variable-values-preview": {
-      "preview-of-values": "Preview of values",
+      "preview-of-values_one": "Preview of values ({{count}})",
+      "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
     },
     "version-history": {

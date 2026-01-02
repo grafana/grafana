@@ -866,6 +866,7 @@ describe('DashboardSceneSerializer', () => {
               query: 'app1',
               skipUrlSync: false,
               allowCustomValue: true,
+              valuesFormat: 'csv',
             },
           },
         ]);
