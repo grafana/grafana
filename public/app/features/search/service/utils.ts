@@ -60,8 +60,11 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 }
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
-  if (item && isSharedWithMe(item.uid)) {
+  if (item.uid === 'teamfolders') {
     return 'users-alt';
+  }
+  if (item && isSharedWithMe(item.uid)) {
+    return 'share-alt';
   } else {
     return getIconForKind(item.kind, isOpen);
   }

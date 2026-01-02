@@ -29,7 +29,7 @@ export async function listFolders(
     });
   }
 
-  return folders.map((item) => ({
+  const result = folders.map((item) => ({
     kind: 'folder',
     uid: item.uid,
     title: item.title,
@@ -40,6 +40,20 @@ export async function listFolders(
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
   }));
+
+  if (!parentUID) {
+    // result.unshift({
+    //   kind: 'folder',
+    //   uid: 'teamfolders',
+    //   title: 'Team folders',
+    //   parentTitle,
+    //   parentUID,
+    //   managedBy: undefined,
+    //   url: undefined,
+    // });
+  }
+
+  return result;
 }
 
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {

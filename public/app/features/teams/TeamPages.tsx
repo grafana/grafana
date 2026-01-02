@@ -11,6 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
+import { OwnedResources } from './OwnedResources';
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
@@ -26,9 +27,10 @@ enum PageTypes {
   Members = 'members',
   Settings = 'settings',
   GroupSync = 'groupsync',
+  Resources = 'resources',
 }
 
-const PAGES = ['members', 'settings', 'groupsync'];
+const PAGES = ['members', 'settings', 'groupsync', 'resources'];
 
 const pageNavSelector = createSelector(
   [
@@ -59,24 +61,30 @@ const TeamPages = memo(() => {
   const renderPage = () => {
     const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
 
-    const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team!);
+    if (!team) {
+      return null;
+    }
+
+    const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team);
     const canReadTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsRead,
-      team!
+      team
     );
     const canWriteTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsWrite,
-      team!
+      team
     );
 
     switch (currentPage) {
       case PageTypes.Members:
         if (canReadTeamPermissions) {
-          return <TeamPermissions team={team!} />;
+          return <TeamPermissions team={team} />;
         }
         return null;
       case PageTypes.Settings:
-        return canReadTeam && <TeamSettings team={team!} />;
+        return canReadTeam && <TeamSettings team={team} />;
+      case PageTypes.Resources:
+        return canReadTeam && <OwnedResources team={team} />;
       case PageTypes.GroupSync:
         if (isSyncEnabled.current) {
           if (canReadTeamPermissions) {
