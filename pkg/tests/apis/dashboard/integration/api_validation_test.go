@@ -137,10 +137,12 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		DisableDataMigrations:               true,
+		AppModeProduction:                   true,
+		DisableAnonymous:                    true,
+		DisableAuthZClientCache:             true,
+		DisableZanzanaServerCheckQueryCache: true,
+		APIServerStorageType:                "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
 				DualWriterMode: rest.Mode5,
@@ -1070,6 +1072,8 @@ func createFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, titl
 	if err != nil {
 		return nil, err
 	}
+
+	apis.AwaitZanzanaReconcileNext(t, helper)
 
 	meta, _ := utils.MetaAccessor(createdFolder)
 

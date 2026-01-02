@@ -369,6 +369,21 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.DisableZanzanaServerCheckQueryCache {
+		zanzanaServerSect, err := cfg.NewSection("zanzana.server")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_enabled", "false")
+		require.NoError(t, err)
+	}
+
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
@@ -703,6 +718,7 @@ type GrafanaOpts struct {
 	DisableAuthZClientCache               bool
 	ZanzanaReconciliationInterval         time.Duration
 	DisableZanzanaCache                   bool
+	DisableZanzanaServerCheckQueryCache   bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string
