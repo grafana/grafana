@@ -67,7 +67,8 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
     for (let i = 0; i < itemsToLookAt; i++) {
-      const itemLabel = items[i].label ?? items[i].value.toString();
+      const label = items[i].label;
+      const itemLabel = (typeof label === 'object' ? label.text : label) ?? items[i].value.toString();
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
     }
 
