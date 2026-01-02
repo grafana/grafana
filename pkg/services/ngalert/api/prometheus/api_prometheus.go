@@ -573,8 +573,11 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
 			ctx.ruleStatusMutator, ctx.alertStateMutator, ctx.compact,
 		)
-		ruleGroup.Totals = totals
-		accumulateTotals(result.totalsDelta, totals)
+		// Only set totals if limit_rules is not 0
+		if ctx.limitRulesPerGroup != 0 {
+			ruleGroup.Totals = totals
+			accumulateTotals(result.totalsDelta, totals)
+		}
 
 		if len(ctx.stateFilterSet) > 0 {
 			filterRulesByState(ruleGroup, ctx.stateFilterSet)
@@ -590,7 +593,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			ruleGroup.Rules = ruleGroup.Rules[0:ctx.limitRulesPerGroup]
 		}
 
-		if len(ruleGroup.Rules) > 0 {
+		if len(ruleGroup.Rules) > 0 || ctx.limitRulesPerGroup == 0 {
 			result.groups = append(result.groups, *ruleGroup)
 		}
 	}
@@ -668,6 +671,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 	return allGroups, rulesTotals, continueToken, nil
 }
 
+// nolint:gocyclo
 func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
@@ -745,6 +749,13 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		attribute.Int("health_filter_count", len(healthFilterSet)),
 		attribute.StringSlice("health_filter", slices.Collect(maps.Keys(healthFilterSet))),
 	)
+
+	if limitRulesPerGroup == 0 && (len(stateFilterSet) > 0 || len(healthFilterSet) > 0) {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = "limit_rules=0 cannot be used together with state or health filters"
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
 
 	var labelOptions []ngmodels.LabelOption
 	if !getBoolWithDefault(opts.Query, queryIncludeInternalLabels, false) {
@@ -896,8 +907,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleResponse.Data.RuleGroups = groups
 	ruleResponse.Data.NextToken = continueToken
 
-	// Only return Totals if there is no pagination
-	if maxGroups == -1 && maxRules == -1 {
+	// Only return Totals if there is no pagination and limit_rules is not 0
+	if maxGroups == -1 && maxRules == -1 && limitRulesPerGroup != 0 {
 		ruleResponse.Data.Totals = rulesTotals
 	}
 
@@ -942,6 +953,10 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
 		return badRequestError(err)
+	}
+
+	if limitRulesPerGroup == 0 && (len(stateFilterSet) > 0 || len(healthFilterSet) > 0) {
+		return badRequestError(errors.New("limit_rules=0 cannot be used together with state or health filters"))
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -1030,9 +1045,12 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 
 		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, false)
-		ruleGroup.Totals = totals
-		for k, v := range totals {
-			rulesTotals[k] += v
+		// Only set totals if limit_rules is not 0
+		if limitRulesPerGroup != 0 {
+			ruleGroup.Totals = totals
+			for k, v := range totals {
+				rulesTotals[k] += v
+			}
 		}
 
 		if len(stateFilterSet) > 0 {
@@ -1051,15 +1069,15 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
-		if len(ruleGroup.Rules) > 0 {
+		if len(ruleGroup.Rules) > 0 || limitRulesPerGroup == 0 {
 			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 		}
 	}
 
 	ruleResponse.Data.NextToken = newToken
 
-	// Only return Totals if there is no pagination
-	if maxGroups == -1 {
+	// Only return Totals if there is no pagination and limit_rules is not 0
+	if maxGroups == -1 && limitRulesPerGroup != 0 {
 		ruleResponse.Data.Totals = rulesTotals
 	}
 

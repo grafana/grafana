@@ -7525,7 +7525,7 @@
      },
      {
       "default": -1,
-      "description": "Limit the number of rules per group.",
+      "description": "Limit the number of rules per group. When set to 0, returns empty rule groups (only group metadata without rules).\nlimit_rules=0 cannot be used together with state or health filters, and returns an empty response.",
       "format": "int64",
       "in": "query",
       "name": "limit_rules",

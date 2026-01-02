@@ -247,6 +247,10 @@ const (
 	// Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
 	FlagAlertingUIUseFullyCompatBackendFilters = "alertingUIUseFullyCompatBackendFilters"
 
+	// FlagAlertingUIUseLimitRules
+	// Enables the UI to use limit_rules=0 when calling the API and rules information is not needed
+	FlagAlertingUIUseLimitRules = "alertingUIUseLimitRules"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
