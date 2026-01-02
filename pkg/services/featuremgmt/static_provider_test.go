@@ -93,3 +93,178 @@ ABCD = true
 	enabledFeatureManager := mgr.GetEnabled(ctx)
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }
+
+func Test_StaticProvider_FailfastOnMismatchedType(t *testing.T) {
+	staticFlags := map[string]setting.FeatureToggle{"oldBooleanFlag": {
+		Type:  setting.Boolean,
+		Name:  "oldBooleanFlag",
+		Value: true,
+	}}
+
+	flag := FeatureFlag{
+		Name:       "oldBooleanFlag",
+		Expression: "1.0",
+		Type:       Float,
+	}
+	_, err := newStaticProvider(staticFlags, []FeatureFlag{flag})
+	assert.EqualError(t, err, "type mismatch for flag 'oldBooleanFlag' detected")
+}
+
+func Test_StaticProvider_TypedFlags(t *testing.T) {
+	tests := []struct {
+		flags         FeatureFlag
+		defaultValue  any
+		expectedValue any
+	}{
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "true",
+				Type:       Boolean,
+			},
+			defaultValue:  false,
+			expectedValue: true,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1.0",
+				Type:       Float,
+			},
+			defaultValue:  0.0,
+			expectedValue: 1.0,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "blue",
+				Type:       String,
+			},
+			defaultValue:  "red",
+			expectedValue: "blue",
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1",
+				Type:       Integer,
+			},
+			defaultValue:  int64(0),
+			expectedValue: int64(1),
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: `{ "foo": "bar" }`,
+				Type:       Structure,
+			},
+			defaultValue:  nil,
+			expectedValue: map[string]any{"foo": "bar"},
+		},
+	}
+
+	for _, tt := range tests {
+		provider, err := newStaticProvider(nil, []FeatureFlag{tt.flags})
+		assert.NoError(t, err)
+
+		var result any
+		switch tt.flags.Type {
+		case Boolean:
+			result = provider.BooleanEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(bool), openfeature.FlattenedContext{}).Value
+		case Float:
+			result = provider.FloatEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(float64), openfeature.FlattenedContext{}).Value
+		case String:
+			result = provider.StringEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(string), openfeature.FlattenedContext{}).Value
+		case Integer:
+			result = provider.IntEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(int64), openfeature.FlattenedContext{}).Value
+		case Structure:
+			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue, openfeature.FlattenedContext{}).Value
+		}
+
+		assert.Equal(t, tt.expectedValue, result)
+	}
+}
+func Test_StaticProvider_ConfigOverride(t *testing.T) {
+	tests := []struct {
+		name          string
+		typ           FeatureFlagType
+		originalValue string
+		configValue   any
+	}{
+		{
+			name:          "bool",
+			typ:           Boolean,
+			originalValue: "false",
+			configValue:   true,
+		},
+		{
+			name:          "int",
+			typ:           Integer,
+			originalValue: "0",
+			configValue:   int64(1),
+		},
+		{
+			name:          "float",
+			typ:           Float,
+			originalValue: "0.0",
+			configValue:   1.0,
+		},
+		{
+			name:          "string",
+			typ:           String,
+			originalValue: "foo",
+			configValue:   "bar",
+		},
+		{
+			name:          "structure",
+			typ:           Structure,
+			originalValue: "{}",
+			configValue:   make(map[string]any),
+		},
+	}
+
+	for _, tt := range tests {
+		configFlags, standardFlags := makeFlags(tt)
+		provider, err := newStaticProvider(configFlags, standardFlags)
+		assert.NoError(t, err)
+
+		var result any
+		switch tt.typ {
+		case Boolean:
+			result = provider.BooleanEvaluation(t.Context(), tt.name, false, openfeature.FlattenedContext{}).Value
+		case Float:
+			result = provider.FloatEvaluation(t.Context(), tt.name, 0.0, openfeature.FlattenedContext{}).Value
+		case String:
+			result = provider.StringEvaluation(t.Context(), tt.name, "foo", openfeature.FlattenedContext{}).Value
+		case Integer:
+			result = provider.IntEvaluation(t.Context(), tt.name, 1, openfeature.FlattenedContext{}).Value
+		case Structure:
+			result = provider.ObjectEvaluation(t.Context(), tt.name, make(map[string]any), openfeature.FlattenedContext{}).Value
+		}
+
+		assert.Equal(t, tt.configValue, result)
+	}
+}
+
+func makeFlags(tt struct {
+	name          string
+	typ           FeatureFlagType
+	originalValue string
+	configValue   any
+}) (map[string]setting.FeatureToggle, []FeatureFlag) {
+	orig := FeatureFlag{
+		Name:       tt.name,
+		Expression: tt.originalValue,
+		Type:       tt.typ,
+	}
+
+	config := map[string]setting.FeatureToggle{
+		tt.name: {
+			Name:  tt.name,
+			Type:  setting.FeatureFlagType(tt.typ.String()),
+			Value: tt.configValue,
+		},
+	}
+
+	return config, []FeatureFlag{orig}
+}

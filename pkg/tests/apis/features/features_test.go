@@ -44,6 +44,6 @@ func TestIntegrationFeatures(t *testing.T) {
 			"value": true,
 			"key":"`+flag+`",
 			"reason":"static provider evaluation result",
-			"variant":"enabled"}`, string(rsp.Body))
+			"variant":"default"}`, string(rsp.Body))
 	})
 }

@@ -29,7 +29,7 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 		return nil, fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
 
-	staticProvider, err := newStaticProvider(staticFlags)
+	staticProvider, err := newStaticProvider(staticFlags, standardFeatureFlags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create static provider: %w", err)
 	}
