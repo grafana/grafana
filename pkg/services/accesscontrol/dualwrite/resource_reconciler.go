@@ -3,6 +3,7 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -23,10 +24,30 @@ type resourceReconciler struct {
 	legacy  legacyTupleCollector
 	zanzana zanzanaTupleCollector
 	client  zanzana.Client
+
+	// orphan cleanup (used for managed permissions only) - when the last managed permission for an object is removed,
+	// the DB collector stops returning that object, so the per-object reconciliation loop never runs and stale tuples can remain in Zanzana.
+	// we use this cleanup to remove those stale tuples from Zanzana.
+	orphanObjectPrefix string
+	orphanRelations    []string
 }
 
-func newResourceReconciler(name string, legacy legacyTupleCollector, zanzana zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
-	return resourceReconciler{name, legacy, zanzana, client}
+func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaCollector zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
+	r := resourceReconciler{name: name, legacy: legacy, zanzana: zanzanaCollector, client: client}
+
+	// only enable orphan cleanup for the managed-permissions reconcilers
+	switch name {
+	case "managed folder permissions":
+		// prefix looks like `folder:`
+		r.orphanObjectPrefix = zanzana.TypeFolder + ":"
+		r.orphanRelations = append([]string{}, zanzana.RelationsFolder...)
+	case "managed dashboard permissions":
+		// prefix looks like `resource:dashboard.grafana.app/dashboards/`
+		r.orphanObjectPrefix = zanzana.NewObjectEntry(zanzana.TypeResource, "dashboard.grafana.app", "dashboards", "", "") + "/"
+		r.orphanRelations = append([]string{}, zanzana.RelationsResouce...)
+	}
+
+	return r
 }
 
 func (r resourceReconciler) reconcile(ctx context.Context, namespace string) error {
@@ -87,6 +108,16 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		}
 	}
 
+	// remove stale managed-permission tuples for objects that disappeared from legacy output
+	// (needed when the last managed permission for a resource is removed)
+	if r.orphanObjectPrefix != "" && len(r.orphanRelations) > 0 {
+		orphans, err := r.collectOrphanDeletes(ctx, namespace, res)
+		if err != nil {
+			return fmt.Errorf("failed to collect orphan deletes (%s): %w", r.name, err)
+		}
+		deletes = append(deletes, orphans...)
+	}
+
 	if len(writes) == 0 && len(deletes) == 0 {
 		return nil
 	}
@@ -118,4 +149,74 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 
 	return nil
+}
+
+func (r resourceReconciler) collectOrphanDeletes(
+	ctx context.Context,
+	namespace string,
+	legacy map[string]map[string]*openfgav1.TupleKey,
+) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	seen := map[string]struct{}{}
+	out := []*openfgav1.TupleKeyWithoutCondition{}
+
+	// OpenFGA does not support "filter by relation only" with an empty object
+	// so we have to list all tuples (paginated) and filter them in-memory
+	all, err := r.readAllTuples(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	allowedRel := map[string]struct{}{}
+	for _, rel := range r.orphanRelations {
+		allowedRel[rel] = struct{}{}
+	}
+
+	for _, tuple := range all {
+		if tuple == nil || tuple.Key == nil {
+			continue
+		}
+		if _, ok := allowedRel[tuple.Key.Relation]; !ok {
+			continue
+		}
+		if !strings.HasPrefix(tuple.Key.Object, r.orphanObjectPrefix) {
+			continue
+		}
+		// if legacy still has this object, it's not orphaned
+		if _, ok := legacy[tuple.Key.Object]; ok {
+			continue
+		}
+		key := tuple.Key.User + "|" + tuple.Key.Relation + "|" + tuple.Key.Object
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, &openfgav1.TupleKeyWithoutCondition{
+			User:     tuple.Key.User,
+			Relation: tuple.Key.Relation,
+			Object:   tuple.Key.Object,
+		})
+	}
+
+	return out, nil
+}
+
+func (r resourceReconciler) readAllTuples(ctx context.Context, namespace string) ([]*authzextv1.Tuple, error) {
+	var (
+		out           []*authzextv1.Tuple
+		continueToken string
+	)
+	for {
+		res, err := r.client.Read(ctx, &authzextv1.ReadRequest{
+			Namespace:         namespace,
+			ContinuationToken: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, res.Tuples...)
+		continueToken = res.ContinuationToken
+		if continueToken == "" {
+			return out, nil
+		}
+	}
 }
