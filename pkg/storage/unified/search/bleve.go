@@ -25,7 +25,7 @@ import (
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
-	bolt "go.etcd.io/bbolt"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/atomic"
@@ -418,8 +418,10 @@ func (b *bleveBackend) BuildIndex(
 		if cachedIndex == nil && !rebuild {
 			result := b.findPreviousFileBasedIndex(resourceDir)
 			if result != nil && result.IsOpen {
-				// Index file exists but is opened by another process, fallback to memory
+				// Index file exists but is opened by another process, fallback to memory.
+				// Keep the name so we can skip cleanup of that directory.
 				newIndexType = indexStorageMemory
+				fileIndexName = result.Name
 			} else if result != nil && result.Index != nil {
 				// Found and opened existing index successfully
 				index = result.Index
@@ -583,11 +585,6 @@ func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 				continue
 			}
 
-			if isIndexOpen(indexDir) {
-				b.log.Debug("Index is opened by another process, skipping cleanup", "directory", indexDir)
-				continue
-			}
-
 			err = os.RemoveAll(indexDir)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", indexDir, "error", err)
@@ -660,15 +657,13 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
 
-		// Check if the index is opened by another process.
-		// If it is, we can't use it, so we skip it.
-		if isIndexOpen(indexDir) {
-			b.log.Debug("Index is opened by another process, skipping", "indexDir", indexDir)
-			return &fileIndex{IsOpen: true}
-		}
-
-		idx, err := bleve.Open(indexDir)
+		runtimeConfig := map[string]interface{}{"bolt_timeout": "500ms"}
+		idx, err := bleve.OpenUsing(indexDir, runtimeConfig)
 		if err != nil {
+			if errors.Is(err, bolterrors.ErrTimeout) {
+				b.log.Debug("Index is opened by another process (timeout), skipping", "indexDir", indexDir)
+				return &fileIndex{Name: indexName, IsOpen: true}
+			}
 			b.log.Debug("error opening index", "indexDir", indexDir, "err", err)
 			continue
 		}
@@ -1953,28 +1948,4 @@ var TermCharacters = []string{
 	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
 	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
 	"'", "\"",
-}
-
-func isIndexOpen(indexDir string) bool {
-	boltPath := filepath.Join(indexDir, "store", "root.bolt")
-	if _, err := os.Stat(boltPath); os.IsNotExist(err) {
-		return false
-	}
-
-	// Try to open the underlying BoltDB with a short timeout.
-	// If it times out, the index is already open elsewhere.
-	db, err := bolt.Open(boltPath, 0600, &bolt.Options{
-		Timeout:  500 * time.Millisecond,
-		ReadOnly: true,
-	})
-	if err != nil {
-		// Only treat timeout error as "index is open"
-		if strings.Contains(err.Error(), "timeout") {
-			return true
-		}
-		return false
-	}
-
-	_ = db.Close()
-	return false
 }

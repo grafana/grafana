@@ -1584,7 +1584,7 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	return int(cnt)
 }
 
-func TestBleveBackendFallbacksToMemoryStorage(t *testing.T) {
+func TestBleveBackendFallsBackToMemory(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
@@ -1624,6 +1624,34 @@ func TestBleveBackendFallbacksToMemoryStorage(t *testing.T) {
 
 	// Verify the in-memory index works correctly
 	require.Equal(t, 10, docCount(t, index2))
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
+}
+
+func TestBleveSkipCleanOldIndexesOnMemoryFallback(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1, _ := setupBleveBackend(t, withRootDir(tmpDir))
+	_, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and fallback to memory
+	_, err = backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+
+	// Verify that the index directory still exists (i.e., cleanOldIndexes was skipped)
+	verifyDirEntriesCount(t, backend2.getResourceDir(ns), 1)
 
 	// Clean up: close first backend to release the file lock
 	backend1.Stop()
