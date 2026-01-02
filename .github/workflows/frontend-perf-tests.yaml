@@ -7,6 +7,7 @@ on:
 
 jobs:
   performance-tests:
+    if: github.event.repository.fork == false
     permissions:
       contents: read
       id-token: write
@@ -34,7 +35,7 @@ jobs:
         uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
-          registry: 'us-docker.pkg.dev'
+          registry: "us-docker.pkg.dev"
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
