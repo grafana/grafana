@@ -131,6 +131,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` on your keyboard
 - `d+k`: Toggle kiosk mode (hides the menu).
 - `d+e`: Expand all rows.
 - `d+s`: Dashboard settings.
+- `d+p`: Toggle panel performance metrics in panel headers to show query, transform, and render times.
 - `Ctrl+K`: Opens the command palette.
 - `Esc`: Exits panel when in full screen view or edit mode. Also returns you to the dashboard from dashboard settings.
 

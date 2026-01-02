@@ -32,6 +32,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PanelPerformanceMetrics } from '../../scene/PanelPerformanceMetrics';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -56,6 +57,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   );
 
   titleItems.push(new PanelNotices());
+  titleItems.push(new PanelPerformanceMetrics());
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
@@ -128,6 +130,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   );
 
   titleItems.push(new PanelNotices());
+  titleItems.push(new PanelPerformanceMetrics());
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
