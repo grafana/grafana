@@ -40,6 +40,26 @@ type testBackend struct {
 	test.TestDBProvider
 }
 
+func expectSuccessfulResourceVersionLock(t *testing.T, dbp test.TestDBProvider, rv int64, timestamp int64) {
+	dbp.SQLMock.ExpectQuery("select resource_version, unix_timestamp for update").
+		WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
+			AddRow(rv, timestamp))
+}
+
+func expectSuccessfulResourceVersionSaveRV(t *testing.T, dbp test.TestDBProvider) {
+	dbp.SQLMock.ExpectExec("update resource set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("update resource_history set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("update resource_version set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
+func expectSuccessfulResourceVersionExec(t *testing.T, dbp test.TestDBProvider, cbs ...func()) {
+	for _, cb := range cbs {
+		cb()
+	}
+	expectSuccessfulResourceVersionLock(t, dbp, 100, 200)
+	expectSuccessfulResourceVersionSaveRV(t, dbp)
+}
+
 func (b testBackend) ExecWithResult(expectedSQL string, lastInsertID int64, rowsAffected int64) {
 	b.SQLMock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(lastInsertID, rowsAffected))
 }

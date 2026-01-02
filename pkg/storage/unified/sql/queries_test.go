@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
@@ -162,10 +163,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceUpdateRV: {
+			rvmanager.SqlResourceUpdateRV: {
 				{
 					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						GUIDToRV: map[string]int64{
 							"guid1": 123,
@@ -228,10 +229,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceHistoryUpdateRV: {
+			rvmanager.SqlResourceHistoryUpdateRV: {
 				{
 					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						GUIDToRV: map[string]int64{
 							"guid1": 123,
@@ -334,23 +335,23 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionGet: {
+			rvmanager.SqlResourceVersionGet: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionGetRequest{
+					Data: &rvmanager.SqlResourceVersionGetRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
-						Response:    new(resourceVersionResponse),
+						Response:    new(rvmanager.ResourceVersionResponse),
 						ReadOnly:    false,
 					},
 				},
 			},
 
-			sqlResourceVersionUpdate: {
+			rvmanager.SqlResourceVersionUpdate: {
 				{
 					Name: "increment resource version",
-					Data: &sqlResourceVersionUpsertRequest{
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						Resource:        "resource",
 						Group:           "group",
@@ -359,10 +360,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionInsert: {
+			rvmanager.SqlResourceVersionInsert: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionUpsertRequest{
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						ResourceVersion: int64(12354),
 					},

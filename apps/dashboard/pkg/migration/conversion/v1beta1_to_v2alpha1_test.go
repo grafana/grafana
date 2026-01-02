@@ -210,6 +210,48 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				assert.Equal(t, "", query.Spec.Query.Kind, "Query kind should be empty when datasource is empty object {}")
 			},
 		},
+		{
+			name: "missing refIds are assigned while existing refIds are preserved",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "bargauge",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "",
+											"scenarioId": "random_walk",
+										},
+										map[string]interface{}{
+											"refId":      "A",
+											"scenarioId": "random_walk",
+										},
+										map[string]interface{}{
+											"refId":      "",
+											"scenarioId": "random_walk",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 3)
+				assert.Equal(t, "B", panel.Spec.Data.Spec.Queries[0].Spec.RefId)
+				assert.Equal(t, "A", panel.Spec.Data.Spec.Queries[1].Spec.RefId)
+				assert.Equal(t, "C", panel.Spec.Data.Spec.Queries[2].Spec.RefId)
+			},
+		},
 	}
 
 	for _, tt := range testCases {
