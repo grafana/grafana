@@ -76,7 +76,6 @@ var PathRewriters = []filters.PathRewriter{
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// TODO: why is this after WithRequester?
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
