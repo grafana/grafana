@@ -72,10 +72,17 @@
       "priority": 0
     },
     {
+      "name": "panel_title",
+      "type": "string",
+      "format": "",
+      "description": "The panel title text",
+      "priority": 0
+    },
+    {
       "name": "panel_types",
       "type": "string",
       "format": "",
-      "description": "How many links appear on the page",
+      "description": "The panel types used in this dashboard",
       "priority": 0
     },
     {
@@ -214,6 +221,7 @@
         null,
         null,
         null,
+        null,
         null
       ],
       "object": {
@@ -237,6 +245,7 @@
         null,
         11,
         "repo",
+        null,
         null,
         null,
         [
@@ -280,6 +289,7 @@
         null,
         10,
         "repo",
+        null,
         null,
         null,
         [
