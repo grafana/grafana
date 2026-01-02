@@ -79,6 +79,20 @@ export const flows = {
       await variableLabelInput.blur();
     }
   },
+  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
+    await flows.newEditPaneVariableClick(dashboardPage, selectors);
+    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    // set the textbox variable value
+    const type = 'variable-type Value';
+    const fieldLabel = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+    );
+    await expect(fieldLabel).toBeVisible();
+    const inputField = fieldLabel.locator('input');
+    await expect(inputField).toBeVisible();
+    await inputField.fill(variable.value);
+    await inputField.blur();
+  },
 };
 
 export type Variable = {
