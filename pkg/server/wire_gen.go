@@ -691,7 +691,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	libraryElementService := libraryelements.ProvideService(cfg, sqlStore, routeRegisterImpl, folderimplService, featureToggles, accessControl, dashboardService, eventualRestConfigProvider, userService)
+	libraryElementService := libraryelements.ProvideService(cfg, sqlStore, routeRegisterImpl, folderimplService, folderimplService, featureToggles, accessControl, dashboardService, eventualRestConfigProvider, userService)
 	libraryPanelService, err := librarypanels.ProvideService(cfg, sqlStore, routeRegisterImpl, libraryElementService, folderimplService)
 	if err != nil {
 		return nil, err
@@ -1353,7 +1353,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	libraryElementService := libraryelements.ProvideService(cfg, sqlStore, routeRegisterImpl, folderimplService, featureToggles, accessControl, dashboardService, eventualRestConfigProvider, userService)
+	libraryElementService := libraryelements.ProvideService(cfg, sqlStore, routeRegisterImpl, folderimplService, folderimplService, featureToggles, accessControl, dashboardService, eventualRestConfigProvider, userService)
 	libraryPanelService, err := librarypanels.ProvideService(cfg, sqlStore, routeRegisterImpl, libraryElementService, folderimplService)
 	if err != nil {
 		return nil, err
