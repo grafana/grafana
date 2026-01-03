@@ -20,8 +20,7 @@ func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFuncti
 }
 
 // AugmentWebServicesWithCustomRoutes adds custom routes from builders to existing WebServices
-// in the container. It uses the OpenAPI specs directly from builders to create properly
-// configured routes, avoiding the need to create temporary WebServices and merge them.
+// in the container.
 func AugmentWebServicesWithCustomRoutes(
 	container *restful.Container,
 	builders []APIGroupBuilder,
