@@ -46,7 +46,7 @@ func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFrom
 	return GetDefaultBuildHandlerChainFunc
 }
 
-// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)/
+// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
 var PathRewriters = []filters.PathRewriter{
 	{
 		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
