@@ -153,7 +153,7 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		operationID := operation.OperationId
 		if operationID == "" {
 			// Generate from path if not specified
-			operationID = GenerateOperationNameFromPath(routePath)
+			operationID = generateOperationNameFromPath(routePath)
 		}
 		operationID = prefixRouteIDWithK8sVerbIfNotPresent(operationID, method)
 		routeBuilder = routeBuilder.Operation(operationID)
@@ -229,7 +229,7 @@ var httpMethodToK8sVerb = map[string]string{
 	http.MethodHead:    "connect",
 }
 
-// GenerateOperationNameFromPath creates an operation name from a route path.
+// generateOperationNameFromPath creates an operation name from a route path.
 // The operation name is used by the OpenAPI generator and should be descriptive.
 // It uses meaningful path segments to create readable yet unique operation names.
 // Examples:
@@ -237,7 +237,7 @@ var httpMethodToK8sVerb = map[string]string{
 //   - "/snapshots/create" -> "SnapshotsCreate"
 //   - "ofrep/v1/evaluate/flags" -> "OfrepEvaluateFlags"
 //   - "ofrep/v1/evaluate/flags/{flagKey}" -> "OfrepEvaluateFlagsFlagKey"
-func GenerateOperationNameFromPath(routePath string) string {
+func generateOperationNameFromPath(routePath string) string {
 	// Remove leading slash and split by path segments
 	parts := strings.Split(strings.TrimPrefix(routePath, "/"), "/")
 
