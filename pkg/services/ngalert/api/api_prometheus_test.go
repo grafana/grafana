@@ -805,9 +805,20 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			OrgID:        orgID,
 		})).GenerateManyRef(3)
 
+		// Plugin rule with __grafana_origin label for plugins filter test
+		pluginRule := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    "plugins-test-plugin",
+				NamespaceUID: "folder-2",
+				OrgID:        orgID,
+			}),
+			gen.WithLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}),
+		).GenerateRef()
+
 		ruleStore.PutRule(context.Background(), rulesInGroup1...)
 		ruleStore.PutRule(context.Background(), rulesInGroup2...)
 		ruleStore.PutRule(context.Background(), rulesInGroup3...)
+		ruleStore.PutRule(context.Background(), pluginRule)
 
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
@@ -818,7 +829,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakes.NewFakeProvisioningStore(),
 		)
 
-		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
+		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3, []*ngmodels.AlertRule{pluginRule}), orgID)
 		user := &user.SignedInUser{
 			OrgID:       orgID,
 			Permissions: permissions,
@@ -947,6 +958,68 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[1].Rules[0].UID)
 				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[0].Rules[0].UID)
 			}
+		})
+
+		t.Run("should filter rules by plugins parameter", func(t *testing.T) {
+			t.Run("returns all groups when plugins filter not specified", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "should return all groups including plugin group")
+			})
+
+			t.Run("excludes plugin rules when plugins=hide", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=hide", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return non-plugin groups")
+				for _, group := range result.Data.RuleGroups {
+					require.NotEqual(t, "plugins-test-plugin", group.Name, "should not include plugin group")
+				}
+			})
+
+			t.Run("returns only plugin rules when plugins=only", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=only", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return plugin group")
+				require.Equal(t, "plugins-test-plugin", result.Data.RuleGroups[0].Name)
+			})
+
+			t.Run("returns all groups when plugins filter has invalid value", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=invalid", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "invalid value should return all groups")
+			})
 		})
 	})
 

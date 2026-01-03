@@ -134,3 +134,93 @@ func TestBuildLabelMatcherJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildLabelKeyExistsCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		column   string
+		key      string
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "labels GLOB ?",
+			wantArgs: []any{`*"__grafana_origin":*`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := buildLabelKeyExistsCondition(tt.dialect, tt.column, tt.key)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
+
+func TestBuildLabelKeyMissingCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		column   string
+		key      string
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "labels NOT GLOB ?",
+			wantArgs: []any{`*"__grafana_origin":*`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := buildLabelKeyMissingCondition(tt.dialect, tt.column, tt.key)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}

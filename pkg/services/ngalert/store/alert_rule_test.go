@@ -2592,6 +2592,54 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			require.ErrorContains(t, err, "is not supported")
 		})
 	})
+
+	t.Run("filter by PluginOriginFilter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		testOrgID := int64(12345)
+		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+
+		regularRule := createRule(t, store, testRuleGen)
+		pluginRule := createRule(t, store, testRuleGen.With(
+			models.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		))
+
+		tc := []struct {
+			name          string
+			filter        models.PluginOriginFilter
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should return all rules when PluginOriginFilterNone",
+				filter:        models.PluginOriginFilterNone,
+				expectedRules: []*models.AlertRule{regularRule, pluginRule},
+			},
+			{
+				name:          "should filter out plugin rules when PluginOriginFilterHide",
+				filter:        models.PluginOriginFilterHide,
+				expectedRules: []*models.AlertRule{regularRule},
+			},
+			{
+				name:          "should return only plugin rules when PluginOriginFilterOnly",
+				filter:        models.PluginOriginFilterOnly,
+				expectedRules: []*models.AlertRule{pluginRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{
+						OrgID: testOrgID,
+					},
+					PluginOriginFilter: tt.filter,
+				}
+				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
 }
 
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {

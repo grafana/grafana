@@ -34,14 +34,26 @@ func jsonNotEquals(dialect migrator.Dialect, column, key, value string) (string,
 	return fmt.Sprintf("(%s IS NULL OR %s != ?)", jx, jx), []any{key, key, value}
 }
 
-func jsonKeyMissing(dialect migrator.Dialect, column, key string) (string, []any) {
+func jsonKeyMissing(dialect migrator.Dialect, column, key string) (string, []any, error) {
+	return jsonKeyCondition(dialect, column, key, false)
+}
+
+func jsonKeyExists(dialect migrator.Dialect, column, key string) (string, []any, error) {
+	return jsonKeyCondition(dialect, column, key, true)
+}
+
+func jsonKeyCondition(dialect migrator.Dialect, column, key string, exists bool) (string, []any, error) {
+	nullCheck := "IS NULL"
+	if exists {
+		nullCheck = "IS NOT NULL"
+	}
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)) IS NULL", column), []any{key}
+		return fmt.Sprintf("JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)) %s", column, nullCheck), []any{key}, nil
 	case migrator.Postgres:
-		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) IS NULL", column), []any{key}
+		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) %s", column, nullCheck), []any{key}, nil
 	default:
-		return "", nil
+		return "", nil, fmt.Errorf("unsupported dialect for JSON key condition: %s", dialect.DriverName())
 	}
 }
 
@@ -69,6 +81,14 @@ func globKeyMissing(column, key string) (string, []any, error) {
 		return "", nil, err
 	}
 	return column + " NOT GLOB ?", []any{"*" + pattern + "*"}, nil
+}
+
+func globKeyExists(column, key string) (string, []any, error) {
+	pattern, err := buildGlobKeyPattern(key)
+	if err != nil {
+		return "", nil, err
+	}
+	return column + " GLOB ?", []any{"*" + pattern + "*"}, nil
 }
 
 // Search for `"key":"value"`

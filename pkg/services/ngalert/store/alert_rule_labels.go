@@ -18,6 +18,20 @@ func buildLabelMatcherCondition(dialect migrator.Dialect, column string, m *labe
 	return buildLabelMatcherJSON(dialect, column, m)
 }
 
+func buildLabelKeyExistsCondition(dialect migrator.Dialect, column string, key string) (string, []any, error) {
+	if dialect.DriverName() == migrator.SQLite {
+		return globKeyExists(column, key)
+	}
+	return jsonKeyExists(dialect, column, key)
+}
+
+func buildLabelKeyMissingCondition(dialect migrator.Dialect, column string, key string) (string, []any, error) {
+	if dialect.DriverName() == migrator.SQLite {
+		return globKeyMissing(column, key)
+	}
+	return jsonKeyMissing(dialect, column, key)
+}
+
 func buildLabelMatcherGlob(column string, m *labels.Matcher) (string, []any, error) {
 	switch {
 	case m.Type == labels.MatchEqual && m.Value == "":
@@ -37,7 +51,10 @@ func buildLabelMatcherJSON(dialect migrator.Dialect, column string, m *labels.Ma
 	switch {
 	case m.Type == labels.MatchEqual && m.Value == "":
 		eqSQL, eqArgs := jsonEquals(dialect, column, m.Name, "")
-		missingSQL, missingArgs := jsonKeyMissing(dialect, column, m.Name)
+		missingSQL, missingArgs, err := jsonKeyMissing(dialect, column, m.Name)
+		if err != nil {
+			return "", nil, err
+		}
 		return "(" + eqSQL + " OR " + missingSQL + ")", append(eqArgs, missingArgs...), nil
 	case m.Type == labels.MatchEqual:
 		sql, args := jsonEquals(dialect, column, m.Name, m.Value)
