@@ -3,8 +3,19 @@ import { Unsubscribable } from 'rxjs';
 
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { AbsoluteTimeEvent, CopyTimeEvent, PasteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import { getState } from 'app/store/store';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  RunQueriesEvent,
+  ShiftTimeEvent,
+  ZoomOutEvent,
+} from 'app/types/events';
 import { useDispatch } from 'app/types/store';
+
+import { runQueries } from '../state/query';
+import { selectPanesEntries } from '../state/selectors';
 
 import {
   copyTimeRangeToClipboard,
@@ -21,7 +32,22 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
 
+    // Explore-specific: run queries shortcut
+    keybindings.bind('e r', () => {
+      getAppEvents().publish(new RunQueriesEvent());
+    });
+
     const tearDown: Unsubscribable[] = [];
+
+    tearDown.push(
+      getAppEvents().subscribe(RunQueriesEvent, () => {
+        // Read panes at event time to avoid re-subscribing when panes change
+        const panes = selectPanesEntries(getState());
+        panes.forEach(([exploreId]) => {
+          dispatch(runQueries({ exploreId }));
+        });
+      })
+    );
 
     tearDown.push(
       getAppEvents().subscribe(AbsoluteTimeEvent, () => {
@@ -54,6 +80,7 @@ export function useKeyboardShortcuts() {
     );
 
     return () => {
+      keybindings.unbind('e r');
       tearDown.forEach((u) => u.unsubscribe());
     };
   }, [dispatch, keybindings]);

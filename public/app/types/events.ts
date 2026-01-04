@@ -160,6 +160,10 @@ export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayl
   static type = 'absolute-time';
 }
 
+export class RunQueriesEvent extends BusEventBase {
+  static type = 'run-queries';
+}
+
 export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
