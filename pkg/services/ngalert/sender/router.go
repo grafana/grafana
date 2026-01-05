@@ -289,9 +289,17 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 	}
 
 	var tlsClientCert, tlsClientKey string
-	if tlsAuthEnabled && ds.SecureJsonData != nil {
+	if tlsAuthEnabled {
+		if ds.SecureJsonData == nil {
+			return ExternalAMcfg{}, errors.New("tlsAuth is enabled but TLS client certificate and key are not configured")
+		}
+
 		tlsClientKey = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientKey", "")
 		tlsClientCert = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientCert", "")
+
+		if tlsClientCert == "" || tlsClientKey == "" {
+			return ExternalAMcfg{}, errors.New("tlsAuth is enabled but TLS client certificate or key is empty")
+		}
 	}
 
 	return ExternalAMcfg{

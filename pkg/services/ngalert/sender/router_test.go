@@ -874,6 +874,62 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 				TLSClientKey:       "client-key-content",
 			},
 		},
+		{
+			name: "tlsAuth enabled but SecureJsonData is nil - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: nil,
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but tlsClientCert is empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientKey": []byte("client-key-content"),
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but tlsClientKey is empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but both cert and key are empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{},
+			},
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -44,12 +44,15 @@ type ExternalAlertmanager struct {
 }
 
 type ExternalAMcfg struct {
-	URL                string
-	Headers            http.Header
-	Timeout            time.Duration
+	URL     string
+	Headers http.Header
+	Timeout time.Duration
+	// InsecureSkipVerify determines whether the server's TLS certificate should be verified.
 	InsecureSkipVerify bool
-	TLSClientCert      string
-	TLSClientKey       string
+	// TLSClientCert specifies the TLS client certificate used for secure communication.
+	TLSClientCert string
+	// TLSClientKey specifies the private key associated with the TLS client certificate for secure communication.
+	TLSClientKey string
 }
 
 type ExternalAMOptions struct {
@@ -325,8 +328,13 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 		}
 	}
 
+	// Validate that if TLS client cert is provided, key must also be provided (and vice versa)
+	if (am.TLSClientCert != "" && am.TLSClientKey == "") || (am.TLSClientCert == "" && am.TLSClientKey != "") {
+		return nil, fmt.Errorf("TLS client certificate and key must both be provided or both be empty")
+	}
+
 	// Set TLS configuration if any TLS options are provided
-	if am.InsecureSkipVerify || am.TLSClientCert != "" || am.TLSClientKey != "" {
+	if am.InsecureSkipVerify || am.TLSClientCert != "" {
 		amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
 			InsecureSkipVerify: am.InsecureSkipVerify,
 			Cert:               am.TLSClientCert,

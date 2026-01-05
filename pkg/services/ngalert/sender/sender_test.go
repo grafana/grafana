@@ -433,6 +433,24 @@ func TestExternalAMcfgToAlertmanagerConfig(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "TLS client cert provided but key missing - should error",
+			cfg: ExternalAMcfg{
+				URL:           "https://alertmanager.example.com:9093",
+				TLSClientCert: "client-cert-content",
+			},
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name: "TLS client key provided but cert missing - should error",
+			cfg: ExternalAMcfg{
+				URL:          "https://alertmanager.example.com:9093",
+				TLSClientKey: "client-key-content",
+			},
+			expected:    nil,
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
