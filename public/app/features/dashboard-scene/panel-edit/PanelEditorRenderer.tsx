@@ -81,7 +81,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
+  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView, editPreview } = model.useState();
   const panel = model.getPanel();
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
@@ -113,7 +113,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} />
+          <VizWrapper panel={editPreview ?? panel} tableView={tableView} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal

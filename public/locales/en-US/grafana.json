@@ -3135,9 +3135,12 @@
       "table": "Table"
     },
     "welcome-header": {
+      "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
       "description-alert-rules": "Define the condition that must be met before an alert rule fires",
       "description-configure-firing-alert-instances-routed-contact": "Configure how firing alert instances are routed to contact points",
       "description-configure-receives-notifications": "Configure who receives notifications and how they are sent",
+      "href-text-alert-activity": "View alert activity",
+      "title-alert-activity": "Alert activity",
       "title-alert-rules": "Alert rules",
       "title-contact-points": "Contact points",
       "title-notification-policies": "Notification policies"
@@ -12519,6 +12522,12 @@
       "shape-circle": "Circle",
       "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
       "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
@@ -14388,6 +14397,17 @@
       },
       "name": {
         "series-to-rows": "Series to rows"
+      }
+    },
+    "smoothing": {
+      "description": "Reduce noise in time series data through adaptive downsampling.",
+      "effective-resolution": "Effective: {{value}}",
+      "effective-resolution-tooltip": "Resolution is limited to 2× the number of data points ({{points}}).",
+      "is-applicable-description": "The Smoothing transformation requires at least one time series frame to function. You currently have none.",
+      "name": "Smoothing",
+      "resolution": {
+        "label": "Resolution",
+        "tooltip": "Controls smoothing intensity. Lower values create more aggressive smoothing. Both original and smoothed data are displayed."
       }
     },
     "sort-by-transformer-editor": {
