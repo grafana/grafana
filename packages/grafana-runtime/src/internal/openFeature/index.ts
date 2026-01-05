@@ -29,6 +29,5 @@ export async function initOpenFeature() {
 }
 
 export function evaluateBooleanFlag(flagName: FeatureFlagName, defaultValue: boolean): boolean {
-  console.log('deets', OpenFeature.getClient().getBooleanDetails('recentlyViewedDashboards', false));
   return OpenFeature.getClient().getBooleanValue(flagName, defaultValue);
 }

@@ -55,6 +55,13 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+jest.mock('@grafana/runtime/internal', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime/internal'),
+    evaluateBooleanFlag: jest.fn().mockReturnValue(false),
+  };
+});
+
 function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof testRender>[1] = {}) {
   return testRender(ui, {
     preloadedState: {
@@ -128,6 +135,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       const previousFlag = config.featureToggles.restoreDashboards;
       config.featureToggles.restoreDashboards = true;
       mockPermissions.canDeleteDashboards = false;
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       render(<BrowseDashboardsPage queryParams={{}} />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
