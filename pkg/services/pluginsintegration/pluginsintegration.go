@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -154,8 +155,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 	provisionedplugins.NewNoop,
 	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
-	sources.ProvideService,
-	wire.Bind(new(sources.Registry), new(*sources.Service)),
+	pluginsources.ProvideService,
+	wire.Bind(new(sources.Registry), new(*pluginsources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 	pluginassets2.NewLocalProvider,
