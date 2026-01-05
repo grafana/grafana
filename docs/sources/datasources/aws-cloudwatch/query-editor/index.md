@@ -34,11 +34,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -183,7 +178,7 @@ If you use the expression field to reference another query, such as `queryA * 2`
 When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
 
 While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
-You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
+You can limit the search to one or a set of accounts, as documented in the [AWS documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 
 ### Period macro
 
@@ -198,7 +193,7 @@ The link provided is valid for any account but displays the expected metrics onl
 
 {{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
 
-This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
+This feature is not available for metrics based on [metric math expressions](#use-metric-math-expressions).
 
 ### Use Metric Insights syntax
 
@@ -306,9 +301,9 @@ The CloudWatch plugin monitors and troubleshoots applications that span multiple
 
 To enable cross-account observability, complete the following steps:
 
-1. Go to the [Amazon CloudWatch documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
+1. Go to the [Amazon CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
 
-1. Add [two API actions](https://grafana.com//docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
 After you have configured it, you'll see a **Monitoring account** badge in the query editor header.
