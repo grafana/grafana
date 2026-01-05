@@ -408,7 +408,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		}
 
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",

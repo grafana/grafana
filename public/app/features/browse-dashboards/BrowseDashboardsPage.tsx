@@ -13,7 +13,6 @@ import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
-import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
@@ -104,7 +103,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     canCreateDashboards,
     canCreateFolders,
   } = getFolderPermissions(folder);
-  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
   const permissions = {
@@ -155,7 +153,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       renderTitle={renderTitle}
       actions={
         <>
-          {config.featureToggles.restoreDashboards && hasAdminRights && (
+          {config.featureToggles.restoreDashboards && canDeleteDashboards && (
             <LinkButton
               variant="secondary"
               href={getConfig().appSubUrl + '/dashboard/recently-deleted'}

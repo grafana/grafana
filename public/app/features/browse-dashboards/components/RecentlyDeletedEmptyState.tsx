@@ -19,8 +19,8 @@ export const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyS
       role="alert"
     >
       <Trans i18nKey={'recently-deleted.page.no-deleted-dashboards-text'}>
-        When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization
-        administrator can restore recently-deleted dashboards.
+        When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Users with delete
+        permissions can restore the dashboards they deleted, and admins can restore any user's deleted dashboards.
       </Trans>
     </EmptyState>
   );
