@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/tracing"
 )
 
 func TestNewPlugin(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNewPlugin(t *testing.T) {
 				tc.ExpectedID = tc.ID
 			}
 
-			p, err := NewPlugin(tc.ID, httpclient.NewProvider(), tracing.InitializeTracerForTest())
+			p, err := NewPlugin(tc.ID, httpclient.NewProvider(), tracing.NoopTracer())
 			if tc.ExpectedNotFoundErr {
 				require.ErrorIs(t, err, ErrCorePluginNotFound)
 				require.Nil(t, p)

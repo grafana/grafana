@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -78,13 +77,12 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 
 	pluginJSONPaths := make([]string, 0, len(s.paths))
 	for _, path := range s.paths {
-		exists, err := fs.Exists(path)
-		if err != nil {
+		if _, err := os.Stat(path); err != nil {
+			if os.IsNotExist(err) {
+				s.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+				continue
+			}
 			s.log.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
-			continue
-		}
-		if !exists {
-			s.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
 			continue
 		}
 
