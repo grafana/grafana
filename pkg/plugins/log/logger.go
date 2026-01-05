@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"log/slog"
+	"sync"
 )
 
 // loggerFactory is a function that creates a Logger given a name.
@@ -16,14 +17,33 @@ func SetLoggerFactory(factory func(name string) Logger) {
 	loggerFactory = factory
 }
 
+var slogLogManager = &slogLoggerManager{
+	cache: sync.Map{},
+}
+
 func New(name string) Logger {
 	if loggerFactory != nil {
 		return loggerFactory(name)
 	}
-	return &slogLogger{
+	// add a caching layer since slog doesn't perform any caching itself
+	return slogLogManager.getOrCreate(name)
+}
+
+type slogLoggerManager struct {
+	cache sync.Map
+}
+
+func (m *slogLoggerManager) getOrCreate(name string) Logger {
+	if cached, ok := m.cache.Load(name); ok {
+		return cached.(*slogLogger)
+	}
+
+	logger := &slogLogger{
 		logger: slog.Default().With("logger", name),
 		name:   name,
 	}
+	actual, _ := m.cache.LoadOrStore(name, logger)
+	return actual.(*slogLogger)
 }
 
 type slogLogger struct {
