@@ -83,6 +83,24 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
               onClick={() => dashboard.openV2SchemaEditor()}
             /> */}
             <Sidebar.Divider />
+            <Sidebar.Button
+              style={{ color: '#ff671d' }}
+              icon="comment-alt-message"
+              onClick={() =>
+                window.open(
+                  'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
+                  '_blank'
+                )
+              }
+              title={t(
+                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                'Give feedback on the new dashboard editing experience'
+              )}
+              tooltip={t(
+                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                'Give feedback on the new dashboard editing experience'
+              )}
+            />
           </>
         )}
         {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}

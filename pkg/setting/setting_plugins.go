@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -15,11 +16,8 @@ const (
 	PluginUpdateStrategyMinor  = "minor"
 )
 
-// PluginSettings maps plugin id to map of key/value settings.
-type PluginSettings map[string]map[string]string
-
-func extractPluginSettings(sections []*ini.Section) PluginSettings {
-	psMap := PluginSettings{}
+func extractPluginSettings(sections []*ini.Section) config.PluginSettings {
+	psMap := config.PluginSettings{}
 	for _, section := range sections {
 		sectionName := section.Name()
 		if !strings.HasPrefix(sectionName, "plugin.") {

@@ -49,6 +49,9 @@ type DataKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+
+	// needed to maintain backwards compatibility with unified/sql
+	GUID string
 }
 
 // GroupResource represents a unique group/resource combination
@@ -59,6 +62,12 @@ type GroupResource struct {
 
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
+}
+
+// Temporary while we need to support unified/sql/backend compatibility
+// Remove once we stop using RvManager in storage_backend.go
+func (k DataKey) StringWithGUID() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
 }
 
 func (k DataKey) Equals(other DataKey) bool {
@@ -516,7 +525,13 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, dataSection, key.String())
+	var writer io.WriteCloser
+	var err error
+	if key.GUID != "" {
+		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
+	} else {
+		writer, err = d.kv.Save(ctx, dataSection, key.String())
+	}
 	if err != nil {
 		return err
 	}
@@ -580,6 +595,33 @@ func ParseKey(key string) (DataKey, error) {
 		ResourceVersion: rv,
 		Action:          DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
+	}, nil
+}
+
+// Temporary while we need to support unified/sql/backend compatibility
+// Remove once we stop using RvManager in storage_backend.go
+func ParseKeyWithGUID(key string) (DataKey, error) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 5 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rvActionFolderGUIDParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderGUIDParts) != 4 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rv, err := strconv.ParseInt(rvActionFolderGUIDParts[0], 10, 64)
+	if err != nil {
+		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderGUIDParts[0], key, err)
+	}
+	return DataKey{
+		Group:           parts[0],
+		Resource:        parts[1],
+		Namespace:       parts[2],
+		Name:            parts[3],
+		ResourceVersion: rv,
+		Action:          DataAction(rvActionFolderGUIDParts[1]),
+		Folder:          rvActionFolderGUIDParts[2],
+		GUID:            rvActionFolderGUIDParts[3],
 	}, nil
 }
 
