@@ -20,7 +20,7 @@ import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
-import { useTeamOwnedFolder } from './useTeamOwnedFolder';
+import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
 
@@ -83,22 +83,30 @@ export function NestedFolderPicker({
   id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const { folder: teamFolder } = useTeamOwnedFolder();
-  const effectiveValue = value || teamFolder?.name;
-  const selectedFolder = useGetFolderQueryFacade(effectiveValue);
+  const { foldersByTeam } = useGetTeamFolders();
+  const firstTeamFolder = foldersByTeam[0]?.folder;
+  const getSelectedFolderResult = useGetFolderQueryFacade(value);
+
+  useEffect(() => {
+    if (!value && firstTeamFolder && onChange) {
+      onChange(firstTeamFolder.name, firstTeamFolder.title);
+    }
+  }, [value, firstTeamFolder, onChange]);
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
-  const isForbidden = getStatusFromError(selectedFolder.error) === 403;
+  const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
+
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({});
   const overlayId = useId();
+
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
@@ -115,12 +123,6 @@ export function NestedFolderPicker({
     rootFolderUID,
     rootFolderItem,
   });
-
-  useEffect(() => {
-    if (value === undefined && teamFolder && onChange) {
-      onChange(teamFolder.name, teamFolder.title);
-    }
-  }, [onChange, teamFolder, value]);
 
   useEffect(() => {
     if (!search) {
@@ -219,22 +221,18 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
-  const teamFolderTreeItem = useMemo(() => {
-    if (!teamFolder) {
-      return undefined;
-    }
-
-    return {
+  const teamFolderTreeItems = useMemo(() => {
+    return foldersByTeam.map(({ folder }) => ({
       isOpen: false,
       level: 0,
       item: {
         kind: 'folder' as const,
-        title: teamFolder.title,
-        uid: teamFolder.name,
-        parentUID: teamFolder.folder,
+        title: folder.title,
+        uid: folder.name,
+        parentUID: folder.folder,
       },
-    };
-  }, [teamFolder]);
+    }));
+  }, [foldersByTeam]);
 
   const flatTree = useMemo(() => {
     let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
@@ -256,8 +254,8 @@ export function NestedFolderPicker({
         })) ?? [];
     }
 
-    if (teamFolderTreeItem) {
-      flatTree = [teamFolderTreeItem, ...flatTree];
+    if (teamFolderTreeItems.length) {
+      flatTree = [...teamFolderTreeItems, ...flatTree];
     }
 
     // It's not super optimal to filter these in an additional iteration, but
@@ -277,7 +275,7 @@ export function NestedFolderPicker({
     }
 
     return flatTree;
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItem]);
+  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -306,7 +304,7 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = selectedFolder.data?.title;
+  let label = getSelectedFolderResult.data?.title;
   if (!label) {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
@@ -315,7 +313,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={selectedFolder.data} />
+      <FolderRepo folder={getSelectedFolderResult.data} />
     </Stack>
   ) : (
     ''
@@ -328,7 +326,7 @@ export function NestedFolderPicker({
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
-        isLoading={selectedFolder.isLoading}
+        isLoading={getSelectedFolderResult.isLoading}
         autoFocus={autoFocusButton}
         ref={refs.setReference}
         aria-label={
@@ -393,7 +391,7 @@ export function NestedFolderPicker({
 
             <NestedFolderList
               items={flatTree}
-              selectedFolder={effectiveValue}
+              selectedFolder={value}
               focusedItemIndex={focusedItemIndex}
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}

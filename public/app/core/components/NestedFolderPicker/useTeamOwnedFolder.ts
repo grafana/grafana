@@ -1,37 +1,82 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
+import type { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { TeamDto } from '@grafana/api-clients/rtkq/legacy';
-import { useGetSearchQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { isFetchError } from '@grafana/runtime';
+import { useGetSearchQuery, useLazyGetSearchQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { api as profileApi } from 'app/features/profile/api';
 
+type FolderByTeam = {
+  team: TeamDto;
+  folder: DashboardHit;
+};
+
 /**
- * Returns the first folder owned by any team the current user belongs to.
- * Uses the dashboard v0alpha1 search API with the `owner` filter.
+ * Returns folders owned by teams the current user belongs to.
  */
-export function useTeamOwnedFolder() {
-  const [teams, setTeams] = useState<TeamDto[] | null>(null);
-  const [teamError, setTeamError] = useState<Error | null>(null);
+export function useGetTeamFolders() {
+  const { teams, error: teamError } = useTeams();
+
+  const [triggerSearch] = useLazyGetSearchQuery();
+  const [foldersByTeam, setFoldersByTeam] = useState<FolderByTeam[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(false);
+  const [foldersError, setFoldersError] = useState<unknown>(undefined);
 
   useEffect(() => {
-    let cancelled = false;
-    profileApi
-      .loadTeams()
-      .then((result) => {
-        if (!cancelled) {
-          setTeams(result);
+    if (!teams || teamError) {
+      return;
+    }
+
+    setFoldersLoading(true);
+    setFoldersError(undefined);
+
+    const requests = teams.map((team) => {
+      const owner = team.uid ?? team.name;
+      const request = triggerSearch({ owner, type: 'folder' }, true);
+      return { team, request };
+    });
+
+    Promise.allSettled(requests.map((r) => r.request.unwrap()))
+      .then((results) => {
+        const next = requests.reduce<FolderByTeam[]>((acc, r, idx) => {
+          const result = results[idx];
+          const folder = result.status === 'fulfilled' ? result.value.hits?.[0] : undefined;
+          if (folder) {
+            acc.push({ team: r.team, folder });
+          }
+          return acc;
+        }, []);
+        setFoldersByTeam(next);
+      })
+      .catch((err: unknown) => {
+        if (!isAbortError(err)) {
+          setFoldersError(err);
         }
       })
-      .catch((err) => {
-        if (!cancelled) {
-          setTeamError(err);
-        }
+      .finally(() => {
+        setFoldersLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      for (const r of requests) {
+        r.request.abort();
+      }
     };
-  }, []);
+  }, [teams, teamError, triggerSearch]);
+
+  return {
+    foldersByTeam,
+    isLoading: (teams === null && !teamError) || foldersLoading,
+    error: teamError ?? foldersError,
+  };
+}
+
+/**
+ * Returns the first folder owned by any team the current user belongs to.
+ */
+export function useTeamOwnedFolder() {
+  const { teams, error: teamError } = useTeams();
 
   const owner = useMemo(() => {
     if (!teams || teams.length === 0) {
@@ -62,4 +107,55 @@ export function useTeamOwnedFolder() {
     isLoading: (teams === null && !teamError) || isFetching,
     error: teamError ?? searchError,
   };
+}
+
+function useTeams() {
+  const [teams, setTeams] = useState<TeamDto[] | null>(null);
+  const [teamError, setTeamError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    profileApi
+      .loadTeams({ abortSignal: abortController.signal })
+      .then((result) => {
+        setTeams(result);
+      })
+      .catch((err: unknown) => {
+        if (!isAbortError(err)) {
+          if (err instanceof Error) {
+            setTeamError(err);
+            return;
+          }
+
+          if (isFetchError(err)) {
+            setTeamError(new Error(err.data?.message ?? err.statusText ?? 'Failed to load teams'));
+            return;
+          }
+
+          setTeamError(new Error('Failed to load teams'));
+        }
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
+  return {
+    teams,
+    error: teamError,
+  };
+}
+
+// TODO maybe there should be a common utility like this
+function isAbortError(err: unknown) {
+  if (err instanceof DOMException && err.name === 'AbortError') {
+    return true;
+  }
+
+  if (isFetchError(err) && (err.cancelled || err.statusText === 'Request was aborted')) {
+    return true;
+  }
+
+  return false;
 }
