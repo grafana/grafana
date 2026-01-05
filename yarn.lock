@@ -16497,6 +16497,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"downsample@npm:1.4.0":
+  version: 1.4.0
+  resolution: "downsample@npm:1.4.0"
+  checksum: 10/ad0ab937e368546b577b564b13d7f39cd85a92bf29d56562aaa6ed10bac19e91ee75ab58f38050a9e8bf601c1abcfda942541880a84c89ba78d1775a229636d1
+  languageName: node
+  linkType: hard
+
 "downshift@npm:^9.0.6":
   version: 9.0.10
   resolution: "downshift@npm:9.0.10"
@@ -19629,6 +19636,7 @@ __metadata:
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
     diff: "npm:^8.0.0"
+    downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
     esbuild: "npm:0.25.8"
     esbuild-loader: "npm:4.3.0"
