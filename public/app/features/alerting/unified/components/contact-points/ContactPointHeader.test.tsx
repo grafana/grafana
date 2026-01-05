@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { ContactPointHeader } from './ContactPointHeader';
@@ -44,7 +44,7 @@ describe('ContactPointHeader', () => {
         ...mockContactPoint,
         metadata: {
           annotations: {
-            [K8sAnnotations.Provenance]: Provenance.File,
+            [K8sAnnotations.Provenance]: KnownProvenance.File,
           },
         },
       };
@@ -59,7 +59,7 @@ describe('ContactPointHeader', () => {
         ...mockContactPoint,
         metadata: {
           annotations: {
-            [K8sAnnotations.Provenance]: Provenance.ConvertedPrometheus,
+            [K8sAnnotations.Provenance]: KnownProvenance.ConvertedPrometheus,
           },
         },
       };
@@ -76,7 +76,7 @@ describe('ContactPointHeader', () => {
     it('shows Provisioned badge when contact point has file provenance via non-K8s API', () => {
       const contactPointNonK8s = {
         ...mockContactPoint,
-        provenance: Provenance.File,
+        provenance: KnownProvenance.File,
         metadata: undefined,
       };
 
@@ -91,7 +91,7 @@ describe('ContactPointHeader', () => {
     it('shows correct badge when contact point has converted_prometheus provenance via non-K8s API', () => {
       const contactPointNonK8s = {
         ...mockContactPoint,
-        provenance: Provenance.ConvertedPrometheus,
+        provenance: KnownProvenance.ConvertedPrometheus,
         metadata: undefined,
       };
 

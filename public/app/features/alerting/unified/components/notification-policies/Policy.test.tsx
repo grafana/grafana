@@ -17,7 +17,7 @@ import {
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import {
@@ -352,7 +352,7 @@ describe('Policy', () => {
         onDeletePolicy={noop}
         onShowAlertInstances={noop}
         provisioned
-        provenance={Provenance.File}
+        provenance={KnownProvenance.File}
       />
     );
 
@@ -379,7 +379,7 @@ describe('Policy', () => {
         onDeletePolicy={noop}
         onShowAlertInstances={noop}
         provisioned
-        provenance={Provenance.ConvertedPrometheus}
+        provenance={KnownProvenance.ConvertedPrometheus}
       />
     );
 

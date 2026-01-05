@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { setAlertmanagerConfig } from '../../mocks/server/entities/alertmanagers';
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 
 import { useContactPointsWithStatus } from './useContactPoints';
 
@@ -118,7 +118,7 @@ describe('useContactPoints', () => {
 
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'api-provenance-contact-point');
         expect(contactPoint).toBeDefined();
-        expect(contactPoint?.provenance).toBe(Provenance.API);
+        expect(contactPoint?.provenance).toBe(KnownProvenance.API);
       });
 
       it('should extract provenance when provenance is "file"', async () => {
@@ -163,7 +163,7 @@ describe('useContactPoints', () => {
 
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'file-provenance-contact-point');
         expect(contactPoint).toBeDefined();
-        expect(contactPoint?.provenance).toBe(Provenance.File);
+        expect(contactPoint?.provenance).toBe(KnownProvenance.File);
       });
 
       it('should extract provenance when provenance is "converted_prometheus"', async () => {
@@ -208,10 +208,10 @@ describe('useContactPoints', () => {
 
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'mimir-provenance-contact-point');
         expect(contactPoint).toBeDefined();
-        expect(contactPoint?.provenance).toBe(Provenance.ConvertedPrometheus);
+        expect(contactPoint?.provenance).toBe(KnownProvenance.ConvertedPrometheus);
       });
 
-      it('should map "none" provenance annotation to Provenance.None', async () => {
+      it('should map "none" provenance annotation to KnownProvenance.None', async () => {
         const config: AlertManagerCortexConfig = {
           template_files: {},
           alertmanager_config: {
@@ -254,8 +254,8 @@ describe('useContactPoints', () => {
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'none-provenance-contact-point');
         expect(contactPoint).toBeDefined();
         // The mock handler sets PROVENANCE_NONE ('none') when no provenance is found
-        // parseK8sReceiver converts 'none' to Provenance.None
-        expect(contactPoint?.provenance).toBe(Provenance.None);
+        // parseK8sReceiver converts 'none' to KnownProvenance.None
+        expect(contactPoint?.provenance).toBe(KnownProvenance.None);
       });
 
       it('should handle missing annotations gracefully', async () => {
@@ -324,7 +324,7 @@ describe('useContactPoints', () => {
                       addresses: 'test@example.com',
                     },
                     secureFields: {},
-                    provenance: Provenance.File, // Provenance on receiver config
+                    provenance: KnownProvenance.File, // Provenance on receiver config
                   },
                 ],
               },
@@ -350,7 +350,7 @@ describe('useContactPoints', () => {
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'non-k8s-provenance-contact-point');
         expect(contactPoint).toBeDefined();
         // Provenance should be extracted from receiver config and set on contact point
-        expect(contactPoint?.provenance).toBe(Provenance.File);
+        expect(contactPoint?.provenance).toBe(KnownProvenance.File);
       });
     });
   });

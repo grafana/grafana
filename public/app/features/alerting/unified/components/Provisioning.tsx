@@ -3,7 +3,7 @@ import { ComponentPropsWithoutRef } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
 
-import { Provenance } from '../types/provenance';
+import { KnownProvenance } from '../types/knownProvenance';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
@@ -48,7 +48,7 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
-  const isConvertedPrometheus = provenance === Provenance.ConvertedPrometheus;
+  const isConvertedPrometheus = provenance === KnownProvenance.ConvertedPrometheus;
   const badgeText = isConvertedPrometheus
     ? t('alerting.provisioning-badge.badge.text-converted-prometheus', 'Provisioned from Prometheus/Mimir')
     : t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned');

@@ -6,7 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { NotificationTemplate } from '../contact-points/useNotificationTemplates';
 
@@ -17,25 +17,25 @@ const mockTemplates: NotificationTemplate[] = [
     uid: 'mimir-template',
     title: 'mimir-template',
     content: '{{ define "mimir-template" }}Template from Mimir{{ end }}',
-    provenance: Provenance.ConvertedPrometheus,
+    provenance: KnownProvenance.ConvertedPrometheus,
   },
   {
     uid: 'file-template',
     title: 'file-template',
     content: '{{ define "file-template" }}File provisioned template{{ end }}',
-    provenance: Provenance.File,
+    provenance: KnownProvenance.File,
   },
   {
     uid: 'api-template',
     title: 'api-template',
     content: '{{ define "api-template" }}API provisioned template{{ end }}',
-    provenance: Provenance.API,
+    provenance: KnownProvenance.API,
   },
   {
     uid: 'no-provenance-template',
     title: 'no-provenance-template',
     content: '{{ define "no-provenance-template" }}No provenance template{{ end }}',
-    provenance: Provenance.None,
+    provenance: KnownProvenance.None,
   },
   {
     uid: 'undefined-provenance-template',
@@ -86,7 +86,7 @@ describe('TemplatesTable', () => {
     });
   });
 
-  it('does not show badge for templates with Provenance.None or empty string provenance', () => {
+  it('does not show badge for templates with KnownProvenance.None or empty string provenance', () => {
     // no-provenance-template and undefined-provenance-template
     [mockTemplates[3], mockTemplates[4]].forEach((template) => {
       renderWithProvider([template]);

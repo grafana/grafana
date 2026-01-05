@@ -21,7 +21,7 @@ import {
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { FormAmRoute } from '../../types/amroutes';
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
@@ -238,7 +238,7 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,
       },
-      provenance: getAnnotation(route, K8sAnnotations.Provenance) || Provenance.None,
+      provenance: getAnnotation(route, K8sAnnotations.Provenance) || KnownProvenance.None,
     };
   });
 }

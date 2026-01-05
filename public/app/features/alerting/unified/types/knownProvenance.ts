@@ -1,4 +1,4 @@
-export enum Provenance {
+export enum KnownProvenance {
   None = '',
   API = 'api',
   File = 'file',

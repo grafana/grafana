@@ -1,6 +1,6 @@
 import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 
-import { Provenance } from '../../types/provenance';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from './constants';
@@ -144,7 +144,7 @@ describe('enhanceContactPointsWithMetadata', () => {
           type: 'email',
           settings: { addresses: 'test@example.com' },
           secureFields: {},
-          provenance: Provenance.API,
+          provenance: KnownProvenance.API,
         },
       ],
     };
@@ -155,13 +155,13 @@ describe('enhanceContactPointsWithMetadata', () => {
       status: [],
     });
 
-    expect(enhanced[0].provenance).toBe(Provenance.API);
+    expect(enhanced[0].provenance).toBe(KnownProvenance.API);
   });
 
   it('should prefer contact point provenance over receiver config provenance', () => {
     const contactPoint: GrafanaManagedContactPoint = {
       name: 'test-contact-point',
-      provenance: Provenance.File, // Provenance on contact point (from K8s)
+      provenance: KnownProvenance.File, // Provenance on contact point (from K8s)
       grafana_managed_receiver_configs: [
         {
           uid: 'test-uid',
@@ -169,7 +169,7 @@ describe('enhanceContactPointsWithMetadata', () => {
           type: 'email',
           settings: { addresses: 'test@example.com' },
           secureFields: {},
-          provenance: Provenance.API, // Different provenance on receiver config
+          provenance: KnownProvenance.API, // Different provenance on receiver config
         },
       ],
     };
@@ -180,7 +180,7 @@ describe('enhanceContactPointsWithMetadata', () => {
       status: [],
     });
 
-    expect(enhanced[0].provenance).toBe(Provenance.File);
+    expect(enhanced[0].provenance).toBe(KnownProvenance.File);
   });
 
   it('should extract provenance from first receiver config that has it', () => {
@@ -201,7 +201,7 @@ describe('enhanceContactPointsWithMetadata', () => {
           type: 'slack',
           settings: { recipient: '#channel' },
           secureFields: {},
-          provenance: Provenance.ConvertedPrometheus, // Provenance on second receiver
+          provenance: KnownProvenance.ConvertedPrometheus, // Provenance on second receiver
         },
       ],
     };
@@ -212,7 +212,7 @@ describe('enhanceContactPointsWithMetadata', () => {
       status: [],
     });
 
-    expect(enhanced[0].provenance).toBe(Provenance.ConvertedPrometheus);
+    expect(enhanced[0].provenance).toBe(KnownProvenance.ConvertedPrometheus);
   });
 
   it('should have undefined provenance when neither contact point nor receiver configs have provenance', () => {
