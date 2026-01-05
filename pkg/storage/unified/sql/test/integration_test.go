@@ -108,7 +108,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx)
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
