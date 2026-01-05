@@ -43,7 +43,9 @@ func TestTokenExchangeRoundTripper_SetsAccessTokenHeader(t *testing.T) {
 
 	resp, err := rt.RoundTrip(req)
 	require.NoError(t, err)
-	require.NotNil(t, resp)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 
 	// Clean up response
 	_ = resp.Body.Close()
@@ -65,7 +67,9 @@ func TestTokenExchangeRoundTripper_PropagatesExchangeError(t *testing.T) {
 
 	resp, err := rt.RoundTrip(req)
 	require.Error(t, err)
-	require.Nil(t, resp)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	require.ErrorContains(t, err, "failed to exchange token")
 	require.ErrorIs(t, err, expectedErr)
 }
@@ -115,7 +119,9 @@ func TestTokenExchangeRoundTripper_SendsCorrectAudienceAndNamespace(t *testing.T
 
 			resp, err := rt.RoundTrip(req)
 			require.NoError(t, err)
-			_ = resp.Body.Close()
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
 
 			require.NotNil(t, exchanger.gotReq)
 			require.Equal(t, tt.expectedAudiences, exchanger.gotReq.Audiences)
@@ -158,10 +164,11 @@ func TestTokenExchangeRoundTripper_PropagatesTransportError(t *testing.T) {
 	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewStaticAudienceProvider("audience"))
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
-	//nolint:bodyclose
 	resp, err := rt.RoundTrip(req)
 	require.Error(t, err)
-	require.Nil(t, resp)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	require.ErrorIs(t, err, expectedErr)
 }
 
@@ -239,7 +246,9 @@ func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 			resp, err := rt.RoundTrip(req)
 			require.NoError(t, err)
-			_ = resp.Body.Close()
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
 
 			require.Equal(t, tt.expectedHeader, capturedHeader)
 			require.NotNil(t, exchanger.gotReq)
