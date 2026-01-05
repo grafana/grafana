@@ -1,4 +1,4 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
 import { RadialGaugeDimensions } from './types';
 
@@ -25,13 +25,14 @@ export function GlowGradient({ id, barWidth }: GlowGradientProps) {
   );
 }
 
-const CENTER_GLOW_OPACITY = 0.15;
+const CENTER_GLOW_OPACITY = 0.25;
 
 export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
+  const transparentColor = colorManipulator.alpha(color, CENTER_GLOW_OPACITY);
   return (
     <radialGradient id={`circle-glow-${gaugeId}`} r="50%" fr="0%">
-      <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
-      <stop offset="90%" stopColor={color} stopOpacity={0} />
+      <stop offset="0%" stopColor={transparentColor} />
+      <stop offset="90%" stopColor={'#ffffff00'} />
     </radialGradient>
   );
 }
@@ -44,13 +45,14 @@ export interface CenterGlowProps {
 
 export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
   const gradientId = `circle-glow-${gaugeId}`;
+  const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
 
   return (
     <>
       <defs>
         <radialGradient id={gradientId} r="50%" fr="0%">
-          <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
-          <stop offset="90%" stopColor={color} stopOpacity={0} />
+          <stop offset="0%" stopColor={transparentColor} />
+          <stop offset="90%" stopColor="#ffffff00" />
         </radialGradient>
       </defs>
       <g>
@@ -86,9 +88,9 @@ export function SpotlightGradient({
 
   return (
     <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
-      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
+      <stop offset="0%" stopColor="#ffffff00" />
+      <stop offset="95%" stopColor="#ffffff88" />
+      {roundedBars && <stop offset="100%" stopColor={roundedBars ? '#ffffffbb' : 'white'} />}
     </linearGradient>
   );
 }

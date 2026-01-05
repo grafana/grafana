@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Özel ek açıklama içeriği girin..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Kurallar klasörden başarıyla silindi"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. Aralık = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Seçilen sorgular ve ifadeler varsayılana dönüştürülemez. Gelişmiş seçenekleri devre dışı bırakırsanız sorgunuz ve koşulunuz varsayılan ayarlara sıfırlanır."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Ön izleme",
-      "previewCondition": "Uyarı kuralı koşulunu ön izle"
+      "previewCondition": "Uyarı kuralı koşulunu ön izle",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "",
@@ -3748,6 +3757,8 @@
     "recently-viewed": {
       "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5955,6 +5966,9 @@
       "custom-options": "Özel seçenekler",
       "name-values-separated-comma": "Virgülle ayrılmış değerler",
       "selection-options": "Seçim ayarları"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Listeye geri dön",
@@ -12505,6 +12519,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }

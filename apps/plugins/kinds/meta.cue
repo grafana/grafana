@@ -137,7 +137,7 @@ metaV0Alpha1: {
 	type?:       "dashboard" | "page" | "panel" | "datasource"
 	name?:       string
 	component?:  string
-	role?:       "Admin" | "Editor" | "Viewer"
+	role?:       "Admin" | "Editor" | "Viewer" | "None"
 	action?:     string
 	path?:       string
 	addToNav?:   bool
