@@ -23,7 +23,7 @@ func TestJsonEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) = ?",
+			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ?",
 			wantArgs: []any{"team", "alerting"},
 		},
 		{
@@ -32,7 +32,7 @@ func TestJsonEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "jsonb_extract_path_text(labels::jsonb, ?) = ?",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) = ?",
 			wantArgs: []any{"team", "alerting"},
 		},
 	}
@@ -62,7 +62,7 @@ func TestJsonNotEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) != ?)",
+			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) != ?)",
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 		{
@@ -71,7 +71,7 @@ func TestJsonNotEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "(jsonb_extract_path_text(labels::jsonb, ?) IS NULL OR jsonb_extract_path_text(labels::jsonb, ?) != ?)",
+			wantSQL:  "(jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL OR jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) != ?)",
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 	}
@@ -99,7 +99,7 @@ func TestJsonKeyMissing(t *testing.T) {
 			dialect:  migrator.NewMysqlDialect(),
 			column:   "labels",
 			key:      "team",
-			wantSQL:  "JSON_EXTRACT(labels, CONCAT('$.', ?)) IS NULL",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL",
 			wantArgs: []any{"team"},
 		},
 		{
@@ -107,14 +107,52 @@ func TestJsonKeyMissing(t *testing.T) {
 			dialect:  migrator.NewPostgresDialect(),
 			column:   "labels",
 			key:      "team",
-			wantSQL:  "jsonb_extract_path_text(labels::jsonb, ?) IS NULL",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL",
 			wantArgs: []any{"team"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql, args := jsonKeyMissing(tt.dialect, tt.column, tt.key)
+			sql, args, err := jsonKeyMissing(tt.dialect, tt.column, tt.key)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
+
+func TestJsonKeyExists(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		column   string
+		key      string
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := jsonKeyExists(tt.dialect, tt.column, tt.key)
+			require.NoError(t, err)
 			require.Equal(t, tt.wantSQL, sql)
 			require.Equal(t, tt.wantArgs, args)
 		})

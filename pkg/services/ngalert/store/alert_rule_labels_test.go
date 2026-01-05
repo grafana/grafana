@@ -73,42 +73,42 @@ func TestBuildLabelMatcherJSON(t *testing.T) {
 			name:     "MySQL MatchEqual with non-empty value",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) = ?",
+			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ?",
 			wantArgs: []any{"team", "alerting"},
 		},
 		{
 			name:     "MySQL MatchEqual with empty value",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: ""},
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) = ? OR JSON_EXTRACT(labels, CONCAT('$.', ?)) IS NULL)",
+			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ? OR JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL)",
 			wantArgs: []any{"team", "", "team"},
 		},
 		{
 			name:     "MySQL MatchNotEqual",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchNotEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(labels, CONCAT('$.', ?))) != ?)",
+			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) != ?)",
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 		{
 			name:     "PostgreSQL MatchEqual with non-empty value",
 			dialect:  migrator.NewPostgresDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "jsonb_extract_path_text(labels::jsonb, ?) = ?",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) = ?",
 			wantArgs: []any{"team", "alerting"},
 		},
 		{
 			name:     "PostgreSQL MatchEqual with empty value",
 			dialect:  migrator.NewPostgresDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: ""},
-			wantSQL:  "(jsonb_extract_path_text(labels::jsonb, ?) = ? OR jsonb_extract_path_text(labels::jsonb, ?) IS NULL)",
+			wantSQL:  "(jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) = ? OR jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL)",
 			wantArgs: []any{"team", "", "team"},
 		},
 		{
 			name:     "PostgreSQL MatchNotEqual",
 			dialect:  migrator.NewPostgresDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchNotEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "(jsonb_extract_path_text(labels::jsonb, ?) IS NULL OR jsonb_extract_path_text(labels::jsonb, ?) != ?)",
+			wantSQL:  "(jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL OR jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) != ?)",
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 		{
@@ -128,6 +128,96 @@ func TestBuildLabelMatcherJSON(t *testing.T) {
 				require.Contains(t, err.Error(), tt.errContains)
 				return
 			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
+
+func TestBuildLabelKeyExistsCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		column   string
+		key      string
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NOT NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "labels GLOB ?",
+			wantArgs: []any{`*"__grafana_origin":*`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := buildLabelKeyExistsCondition(tt.dialect, tt.column, tt.key)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSQL, sql)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+}
+
+func TestBuildLabelKeyMissingCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		dialect  migrator.Dialect
+		column   string
+		key      string
+		wantSQL  string
+		wantArgs []any
+	}{
+		{
+			name:     "MySQL",
+			dialect:  migrator.NewMysqlDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "PostgreSQL",
+			dialect:  migrator.NewPostgresDialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "jsonb_extract_path_text(NULLIF(labels, '')::jsonb, ?) IS NULL",
+			wantArgs: []any{"__grafana_origin"},
+		},
+		{
+			name:     "SQLite",
+			dialect:  migrator.NewSQLite3Dialect(),
+			column:   "labels",
+			key:      "__grafana_origin",
+			wantSQL:  "labels NOT GLOB ?",
+			wantArgs: []any{`*"__grafana_origin":*`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args, err := buildLabelKeyMissingCondition(tt.dialect, tt.column, tt.key)
 			require.NoError(t, err)
 			require.Equal(t, tt.wantSQL, sql)
 			require.Equal(t, tt.wantArgs, args)

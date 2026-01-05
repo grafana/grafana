@@ -208,13 +208,21 @@ func NewMetaExtensions() *MetaExtensions {
 
 // +k8s:openapi-gen=true
 type MetaSpec struct {
-	PluginJSON MetaJSONData `json:"pluginJSON"`
+	PluginJson   MetaJSONData               `json:"pluginJson"`
+	Class        MetaSpecClass              `json:"class"`
+	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
+	BaseURL      *string                    `json:"baseURL,omitempty"`
+	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
+	Angular      *MetaV0alpha1SpecAngular   `json:"angular,omitempty"`
+	Translations map[string]string          `json:"translations,omitempty"`
+	// +listType=atomic
+	Children []string `json:"children,omitempty"`
 }
 
 // NewMetaSpec creates a new MetaSpec object.
 func NewMetaSpec() *MetaSpec {
 	return &MetaSpec{
-		PluginJSON: *NewMetaJSONData(),
+		PluginJson: *NewMetaJSONData(),
 	}
 }
 
@@ -413,6 +421,40 @@ func NewMetaV0alpha1ExtensionsExtensionPoints() *MetaV0alpha1ExtensionsExtension
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1SpecModule struct {
+	Path            string                                 `json:"path"`
+	Hash            *string                                `json:"hash,omitempty"`
+	LoadingStrategy *MetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy,omitempty"`
+}
+
+// NewMetaV0alpha1SpecModule creates a new MetaV0alpha1SpecModule object.
+func NewMetaV0alpha1SpecModule() *MetaV0alpha1SpecModule {
+	return &MetaV0alpha1SpecModule{}
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1SpecSignature struct {
+	Status MetaV0alpha1SpecSignatureStatus `json:"status"`
+	Type   *MetaV0alpha1SpecSignatureType  `json:"type,omitempty"`
+	Org    *string                         `json:"org,omitempty"`
+}
+
+// NewMetaV0alpha1SpecSignature creates a new MetaV0alpha1SpecSignature object.
+func NewMetaV0alpha1SpecSignature() *MetaV0alpha1SpecSignature {
+	return &MetaV0alpha1SpecSignature{}
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1SpecAngular struct {
+	Detected bool `json:"detected"`
+}
+
+// NewMetaV0alpha1SpecAngular creates a new MetaV0alpha1SpecAngular object.
+func NewMetaV0alpha1SpecAngular() *MetaV0alpha1SpecAngular {
+	return &MetaV0alpha1SpecAngular{}
+}
+
+// +k8s:openapi-gen=true
 type MetaJSONDataType string
 
 const (
@@ -462,6 +504,15 @@ const (
 	MetaIncludeRoleAdmin  MetaIncludeRole = "Admin"
 	MetaIncludeRoleEditor MetaIncludeRole = "Editor"
 	MetaIncludeRoleViewer MetaIncludeRole = "Viewer"
+	MetaIncludeRoleNone   MetaIncludeRole = "None"
+)
+
+// +k8s:openapi-gen=true
+type MetaSpecClass string
+
+const (
+	MetaSpecClassCore     MetaSpecClass = "core"
+	MetaSpecClassExternal MetaSpecClass = "external"
 )
 
 // +k8s:openapi-gen=true
@@ -471,4 +522,34 @@ const (
 	MetaV0alpha1DependenciesPluginsTypeApp        MetaV0alpha1DependenciesPluginsType = "app"
 	MetaV0alpha1DependenciesPluginsTypeDatasource MetaV0alpha1DependenciesPluginsType = "datasource"
 	MetaV0alpha1DependenciesPluginsTypePanel      MetaV0alpha1DependenciesPluginsType = "panel"
+)
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1SpecModuleLoadingStrategy string
+
+const (
+	MetaV0alpha1SpecModuleLoadingStrategyFetch  MetaV0alpha1SpecModuleLoadingStrategy = "fetch"
+	MetaV0alpha1SpecModuleLoadingStrategyScript MetaV0alpha1SpecModuleLoadingStrategy = "script"
+)
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1SpecSignatureStatus string
+
+const (
+	MetaV0alpha1SpecSignatureStatusInternal MetaV0alpha1SpecSignatureStatus = "internal"
+	MetaV0alpha1SpecSignatureStatusValid    MetaV0alpha1SpecSignatureStatus = "valid"
+	MetaV0alpha1SpecSignatureStatusInvalid  MetaV0alpha1SpecSignatureStatus = "invalid"
+	MetaV0alpha1SpecSignatureStatusModified MetaV0alpha1SpecSignatureStatus = "modified"
+	MetaV0alpha1SpecSignatureStatusUnsigned MetaV0alpha1SpecSignatureStatus = "unsigned"
+)
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1SpecSignatureType string
+
+const (
+	MetaV0alpha1SpecSignatureTypeGrafana     MetaV0alpha1SpecSignatureType = "grafana"
+	MetaV0alpha1SpecSignatureTypeCommercial  MetaV0alpha1SpecSignatureType = "commercial"
+	MetaV0alpha1SpecSignatureTypeCommunity   MetaV0alpha1SpecSignatureType = "community"
+	MetaV0alpha1SpecSignatureTypePrivate     MetaV0alpha1SpecSignatureType = "private"
+	MetaV0alpha1SpecSignatureTypePrivateGlob MetaV0alpha1SpecSignatureType = "private-glob"
 )

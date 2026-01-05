@@ -580,6 +580,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningAllowedTargets) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -600,6 +606,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
 		_, err = apiserverSection.NewKey("run_secrets_db_migrations", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.ZanzanaReconciliationInterval != 0 {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("zanzana_reconciliation_interval", opts.ZanzanaReconciliationInterval.String())
+		require.NoError(t, err)
+	}
+
+	if opts.DisableZanzanaCache {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("disable_zanzana_cache", "true")
 		require.NoError(t, err)
 	}
 
@@ -669,6 +689,7 @@ type GrafanaOpts struct {
 	UnifiedStorageEnableSearch            bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
+	ProvisioningAllowedTargets            []string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
@@ -680,6 +701,8 @@ type GrafanaOpts struct {
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool
+	ZanzanaReconciliationInterval         time.Duration
+	DisableZanzanaCache                   bool
 
 	// Allow creating grafana dir beforehand
 	Dir     string

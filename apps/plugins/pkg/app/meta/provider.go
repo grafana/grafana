@@ -14,7 +14,7 @@ var (
 
 // Result contains plugin metadata along with its recommended TTL.
 type Result struct {
-	Meta pluginsv0alpha1.MetaJSONData
+	Meta pluginsv0alpha1.MetaSpec
 	TTL  time.Duration
 }
 

@@ -26,9 +26,10 @@ const (
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string     `json:"uid"`
-	Action    actionType `json:"action"` // saved, editing, deleted
-	SessionID string     `json:"sessionId,omitempty"`
+	UID             string     `json:"uid"`
+	Action          actionType `json:"action"` // saved, editing, deleted
+	SessionID       string     `json:"sessionId,omitempty"`
+	ResourceVersion string     `json:"rv,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
@@ -105,10 +106,11 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, uid string) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, uid string, rv string) error {
 	return h.publish(orgID, dashboardEvent{
-		UID:    uid,
-		Action: ActionSaved,
+		UID:             uid,
+		Action:          ActionSaved,
+		ResourceVersion: rv,
 	})
 }
 

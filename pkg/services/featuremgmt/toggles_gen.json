@@ -500,6 +500,19 @@
     },
     {
       "metadata": {
+        "name": "alertingSavedSearches",
+        "resourceVersion": "1765453147546",
+        "creationTimestamp": "2025-12-11T11:39:07Z"
+      },
+      "spec": {
+        "description": "Enables saved searches for alert rules list",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingTriage",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -643,6 +656,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/frontend-ops",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "auditLoggingAppPlatform",
+        "resourceVersion": "1767013056996",
+        "creationTimestamp": "2025-12-29T12:57:36Z"
+      },
+      "spec": {
+        "description": "Enable audit logging with Kubernetes under app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -924,6 +951,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardAdHocAndGroupByWrapper",
+        "resourceVersion": "1765841806645",
+        "creationTimestamp": "2025-12-15T23:36:46Z"
+      },
+      "spec": {
+        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-11T16:52:46Z"
@@ -1179,6 +1219,19 @@
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services"
+      }
+    },
+    {
+      "metadata": {
+        "name": "drilldownRecommendations",
+        "resourceVersion": "1764855550769",
+        "creationTimestamp": "2025-12-04T13:39:10Z"
+      },
+      "spec": {
+        "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -1446,6 +1499,19 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesInCompactMode",
+        "resourceVersion": "1766045288124",
+        "creationTimestamp": "2025-12-18T08:08:08Z"
+      },
+      "spec": {
+        "description": "Add compact=true when fetching rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "fetchRulesUsingPost",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-01-29T12:17:44Z"
@@ -1606,6 +1672,20 @@
         "description": "Run the GRPC server",
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "heatmapRowsAxisOptions",
+        "resourceVersion": "1765353244400",
+        "creationTimestamp": "2025-12-10T07:54:04Z"
+      },
+      "spec": {
+        "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -1937,8 +2017,9 @@
     {
       "metadata": {
         "name": "kubernetesDashboardsV2",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-12-02T08:42:19Z"
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z",
+        "deletionTimestamp": "2025-12-05T13:43:57Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",
@@ -3476,7 +3557,8 @@
       "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "deletionTimestamp": "2025-12-18T14:21:02Z"
       },
       "spec": {
         "description": "Writes error logs to the request logger",
