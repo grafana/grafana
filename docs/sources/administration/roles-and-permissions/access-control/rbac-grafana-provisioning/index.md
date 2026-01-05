@@ -6,7 +6,6 @@ description: Learn about RBAC Grafana provisioning and view an example YAML prov
   file that configures Grafana role assignments.
 labels:
   products:
-    - cloud
     - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
