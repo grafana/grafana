@@ -7988,6 +7988,10 @@
           "avatarUrl": {
             "type": "string"
           },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
@@ -12877,6 +12881,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
