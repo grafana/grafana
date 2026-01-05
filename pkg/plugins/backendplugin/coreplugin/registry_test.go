@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewPlugin(t *testing.T) {
@@ -46,7 +45,7 @@ func TestNewPlugin(t *testing.T) {
 				tc.ExpectedID = tc.ID
 			}
 
-			p, err := NewPlugin(tc.ID, setting.NewCfg(), httpclient.NewProvider(), tracing.NoopTracer(), featuremgmt.WithFeatures())
+			p, err := NewPlugin(tc.ID, httpclient.NewProvider(), tracing.NoopTracer())
 			if tc.ExpectedNotFoundErr {
 				require.ErrorIs(t, err, ErrCorePluginNotFound)
 				require.Nil(t, p)
