@@ -1727,4 +1727,3 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		require.LessOrEqual(t, successes, 1, "at most one create should succeed (errors: %v)", errorMessages)
 	})
 }
-
