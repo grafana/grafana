@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -24,12 +26,21 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context) (resource.KVBackend,
 	require.NoError(t, err)
 	kv, err := resource.NewSQLKV(eDB)
 	require.NoError(t, err)
+	db, err := eDB.Init(ctx)
+	require.NoError(t, err)
+
+	dialect := sqltemplate.DialectForDriver(db.DriverName())
+	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+		Dialect: dialect,
+		DB:      db,
+	})
+	require.NoError(t, err)
+
 	kvOpts := resource.KVBackendOptions{
 		KvStore: kv,
+		RvManager: rvManager,
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
-	require.NoError(t, err)
-	db, err := eDB.Init(ctx)
 	require.NoError(t, err)
 	return backend, db
 }
@@ -47,7 +58,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 	cases := []struct {
 		name string
-		fn   func(*testing.T, resource.StorageBackend, string, sqldb.DB)
+		fn   func(*testing.T, resource.StorageBackend, resource.StorageBackend, string, sqldb.DB)
 	}{
 		{TestKeyPathGeneration, runTestIntegrationBackendKeyPathGeneration},
 	}
@@ -61,164 +72,211 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		t.Run(tc.name, func(t *testing.T) {
 			kvbackend, db := newKvBackend(context.Background())
 			sqlbackend, _ := newSqlBackend(context.Background())
-			tc.fn(t, kvbackend, opts.NSPrefix, db)
+			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
 }
 
-func runTestIntegrationBackendKeyPathGeneration(t *testing.T, backend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
 	ctx := testutil.NewDefaultTestContext(t)
 
-	t.Run("Create resource", func(t *testing.T) {
-		// Create a test resource
+	// Test SQL backend with 3 writes, 3 updates, 3 deletes
+	t.Run("SQL Backend Operations", func(t *testing.T) {
+		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
+	})
+
+	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
+	t.Run("SQL KV Backend Operations", func(t *testing.T) {
+		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
+	})
+}
+
+// runKeyPathTest performs 3 writes, 3 updates, and 3 deletes on a backend then verifies that key_path is properly
+// generated across both backends
+func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix string, db sqldb.DB, ctx context.Context) {
+	// Create storage server from backend
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	// Track the current resource version for each resource (index 0, 1, 2 for resources 1, 2, 3)
+	currentRVs := make([]int64, 3)
+
+	// Create 3 resources
+	for i := 1; i <= 3; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "playlists",
-			Namespace: nsPrefix + "-default",
-			Name:      "test-playlist-crud",
+			Namespace: nsPrefix,
+			Name:      fmt.Sprintf("test-playlist-%d", i),
 		}
 
-		// Create the K8s unstructured object
-		testObj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": "playlist.grafana.app/v0alpha1",
-				"kind":       "Playlist",
-				"metadata": map[string]interface{}{
-					"name":      "test-playlist-crud",
-					"namespace": nsPrefix + "-default",
-					"uid":       "test-uid-crud-123",
-				},
-				"spec": map[string]interface{}{
-					"title": "My Test Playlist",
-				},
+		// Create resource JSON with folder annotation for resource 2
+		resourceJSON := fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "test-playlist-%d",
+				"namespace": "%s",
+				"uid": "test-uid-%d"%s
 			},
-		}
-
-		// Get metadata accessor
-		metaAccessor, err := utils.MetaAccessor(testObj)
-		require.NoError(t, err)
-
-		// Serialize to JSON
-		jsonBytes, err := testObj.MarshalJSON()
-		require.NoError(t, err)
-
-		// Create WriteEvent
-		writeEvent := resource.WriteEvent{
-			Type:       resourcepb.WatchEvent_ADDED,
-			Key:        key,
-			Value:      jsonBytes,
-			Object:     metaAccessor,
-			PreviousRV: 0, // Always 0 for new resources
-			GUID:       "create-guid-crud-123",
-		}
-
-		// Create the resource using WriteEvent
-		createRV, err := backend.WriteEvent(ctx, writeEvent)
-		require.NoError(t, err)
-		require.Greater(t, createRV, int64(0))
-
-		// Verify created resource key_path
-		verifyKeyPath(t, db, ctx, key, "created", createRV, "")
-
-		t.Run("Update resource", func(t *testing.T) {
-			// Update the resource
-			testObj.Object["spec"] = map[string]interface{}{
-				"title": "My Updated Playlist",
+			"spec": {
+				"title": "My Test Playlist %d"
 			}
+		}`, i, nsPrefix, i, getAnnotationsJSON(i == 2), i)
 
-			updatedMetaAccessor, err := utils.MetaAccessor(testObj)
-			require.NoError(t, err)
-
-			updatedJsonBytes, err := testObj.MarshalJSON()
-			require.NoError(t, err)
-
-			updateEvent := resource.WriteEvent{
-				Type:       resourcepb.WatchEvent_MODIFIED,
-				Key:        key,
-				Value:      updatedJsonBytes,
-				Object:     updatedMetaAccessor,
-				PreviousRV: createRV,
-				GUID:       fmt.Sprintf("update-guid-%d", createRV),
-			}
-
-			// Update the resource
-			updateRV, err := backend.WriteEvent(ctx, updateEvent)
-			require.NoError(t, err)
-			require.Greater(t, updateRV, createRV)
-
-			// Verify updated resource key_path
-			verifyKeyPath(t, db, ctx, key, "updated", updateRV, "")
-
-			t.Run("Delete resource", func(t *testing.T) {
-				deleteEvent := resource.WriteEvent{
-					Type:       resourcepb.WatchEvent_DELETED,
-					Key:        key,
-					Value:      updatedJsonBytes, // Keep the last known value
-					Object:     updatedMetaAccessor,
-					PreviousRV: updateRV,
-					GUID:       fmt.Sprintf("delete-guid-%d", updateRV),
-				}
-
-				// Delete the resource
-				deleteRV, err := backend.WriteEvent(ctx, deleteEvent)
-				require.NoError(t, err)
-				require.Greater(t, deleteRV, updateRV)
-
-				// Verify deleted resource key_path
-				verifyKeyPath(t, db, ctx, key, "deleted", deleteRV, "")
-			})
+		// Create the resource using server.Create
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: []byte(resourceJSON),
 		})
-	})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+		currentRVs[i-1] = created.ResourceVersion
 
-	t.Run("Resource with folder", func(t *testing.T) {
-		// Create a resource in a folder
-		folderKey := &resourcepb.ResourceKey{
-			Group:     "dashboard.grafana.app",
-			Resource:  "dashboards",
-			Namespace: nsPrefix + "-default",
-			Name:      "my-dashboard",
+		// Verify created resource key_path (with folder for resource 2)
+		if i == 2 {
+			verifyKeyPath(t, db, ctx, key, "created", created.ResourceVersion, "test-folder")
+		} else {
+			verifyKeyPath(t, db, ctx, key, "created", created.ResourceVersion, "")
+		}
+	}
+
+	// Update the 3 resources
+	for i := 1; i <= 3; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: nsPrefix,
+			Name:      fmt.Sprintf("test-playlist-%d", i),
 		}
 
-		// Create dashboard object with folder
-		dashboardObj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v0alpha1",
-				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
-					"name":      "my-dashboard",
-					"namespace": nsPrefix + "-default",
-					"uid":       "dash-uid-456",
-					"annotations": map[string]interface{}{
-						"grafana.app/folder": "test-folder",
-					},
-				},
-				"spec": map[string]interface{}{
-					"title": "My Dashboard",
-				},
+		// Create updated resource JSON with folder annotation for resource 2
+		updatedResourceJSON := fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "test-playlist-%d",
+				"namespace": "%s",
+				"uid": "test-uid-%d"%s
 			},
+			"spec": {
+				"title": "My Updated Playlist %d"
+			}
+		}`, i, nsPrefix, i, getAnnotationsJSON(i == 2), i)
+
+		// Update the resource using server.Update
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           []byte(updatedResourceJSON),
+			ResourceVersion: currentRVs[i-1], // Use the resource version returned by previous operation
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+		require.Greater(t, updated.ResourceVersion, currentRVs[i-1])
+		currentRVs[i-1] = updated.ResourceVersion // Update to the latest resource version
+
+		// Verify updated resource key_path (with folder for resource 2)
+		if i == 2 {
+			verifyKeyPath(t, db, ctx, key, "updated", updated.ResourceVersion, "test-folder")
+		} else {
+			verifyKeyPath(t, db, ctx, key, "updated", updated.ResourceVersion, "")
+		}
+	}
+
+	// Delete the 3 resources
+	for i := 1; i <= 3; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: nsPrefix,
+			Name:      fmt.Sprintf("test-playlist-%d", i),
 		}
 
-		folderMetaAccessor, err := utils.MetaAccessor(dashboardObj)
+		// Delete the resource using server.Delete
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             key,
+			ResourceVersion: currentRVs[i-1], // Use the resource version from previous operation
+		})
 		require.NoError(t, err)
+		require.Greater(t, deleted.ResourceVersion, currentRVs[i-1])
 
-		folderJsonBytes, err := dashboardObj.MarshalJSON()
-		require.NoError(t, err)
-
-		folderWriteEvent := resource.WriteEvent{
-			Type:       resourcepb.WatchEvent_ADDED,
-			Key:        folderKey,
-			Value:      folderJsonBytes,
-			Object:     folderMetaAccessor,
-			PreviousRV: 0,
-			GUID:       "folder-guid-456",
+		// Verify deleted resource key_path (with folder for resource 2)
+		if i == 2 {
+			verifyKeyPath(t, db, ctx, key, "deleted", deleted.ResourceVersion, "test-folder")
+		} else {
+			verifyKeyPath(t, db, ctx, key, "deleted", deleted.ResourceVersion, "")
 		}
+	}
+}
 
-		// Create the dashboard in folder
-		folderRV, err := backend.WriteEvent(ctx, folderWriteEvent)
-		require.NoError(t, err)
-		require.Greater(t, folderRV, int64(0))
+// verifyKeyPath is a helper function to verify key_path generation
+func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
+	var query string
+	if db.DriverName() == "postgres" {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
+	} else {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
+	}
+	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
+	require.NoError(t, err)
 
-		// Verify folder resource key_path includes folder
-		verifyKeyPath(t, db, ctx, folderKey, "created", folderRV, "test-folder")
-	})
+	require.True(t, rows.Next(), "Resource not found in resource_history table - both SQL and KV backends should write to this table")
+
+	var keyPath string
+	var actualRV int64
+	var actualAction int
+	var actualFolder string
+
+	err = rows.Scan(&keyPath, &actualRV, &actualAction, &actualFolder)
+	require.NoError(t, err)
+	err = rows.Close()
+	require.NoError(t, err)
+
+	// Verify basic key_path format
+	require.Contains(t, keyPath, "unified/data/")
+	require.Contains(t, keyPath, key.Group)
+	require.Contains(t, keyPath, key.Resource)
+	require.Contains(t, keyPath, key.Namespace)
+	require.Contains(t, keyPath, key.Name)
+
+	// Verify action suffix
+	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
+
+	// Verify snowflake calculation
+	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
+	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
+
+	// Verify folder if specified
+	if expectedFolder != "" {
+		require.Equal(t, expectedFolder, actualFolder)
+		require.Contains(t, keyPath, expectedFolder)
+	}
+
+	// Verify action code matches
+	var expectedActionCode int
+	switch action {
+	case "created":
+		expectedActionCode = 1
+	case "updated":
+		expectedActionCode = 2
+	case "deleted":
+		expectedActionCode = 3
+	}
+	require.Equal(t, expectedActionCode, actualAction)
+
+}
+
+// getAnnotationsJSON returns the annotations JSON string for the folder annotation if needed
+func getAnnotationsJSON(withFolder bool) string {
+	if withFolder {
+		return `,
+				"annotations": {
+					"grafana.app/folder": "test-folder"
+				}`
+	}
+	return ""
 }

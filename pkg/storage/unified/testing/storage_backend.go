@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -1729,64 +1728,3 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 	})
 }
 
-// verifyKeyPath is a helper function to verify key_path generation
-func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
-	var query string
-	if db.DriverName() == "postgres" {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
-	} else {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
-	}
-	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
-	require.NoError(t, err)
-
-	require.True(t, rows.Next())
-
-	var keyPath string
-	var actualRV int64
-	var actualAction int
-	var actualFolder string
-
-	err = rows.Scan(&keyPath, &actualRV, &actualAction, &actualFolder)
-	require.NoError(t, err)
-	err = rows.Close()
-	require.NoError(t, err)
-
-	// Verify basic key_path format
-	require.Contains(t, keyPath, "unified/data/")
-	require.Contains(t, keyPath, key.Group)
-	require.Contains(t, keyPath, key.Resource)
-	require.Contains(t, keyPath, key.Namespace)
-	require.Contains(t, keyPath, key.Name)
-
-	// Verify action suffix
-	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
-
-	// Verify snowflake calculation
-	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
-	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
-
-	// Verify folder if specified
-	if expectedFolder != "" {
-		require.Equal(t, expectedFolder, actualFolder)
-		require.Contains(t, keyPath, expectedFolder)
-	}
-
-	// Verify action code matches
-	var expectedActionCode int
-	switch action {
-	case "created":
-		expectedActionCode = 1
-	case "updated":
-		expectedActionCode = 2
-	case "deleted":
-		expectedActionCode = 3
-	}
-	require.Equal(t, expectedActionCode, actualAction)
-
-	t.Logf("Action: %s, RV: %d, Snowflake: %d", action, resourceVersion, expectedSnowflake)
-	t.Logf("Key_path: %s", keyPath)
-	if expectedFolder != "" {
-		t.Logf("Folder: %s", actualFolder)
-	}
-}

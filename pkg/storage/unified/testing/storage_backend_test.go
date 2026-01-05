@@ -55,7 +55,6 @@ func TestSQLKVStorageBackend(t *testing.T) {
 			TestCreateNewResource:         true,
 			TestGetResourceLastImportTime: true,
 			TestOptimisticLocking:         true,
-			TestKeyPathGeneration:         true,
 		},
 	})
 }
