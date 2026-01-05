@@ -167,3 +167,99 @@ func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, re
 		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
 	}, claims.NoopZookie{}, nil
 }
+
+func (c *LegacyAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	ident, ok := id.(identity.Requester)
+	if !ok {
+		return claims.BatchCheckResponse{}, errors.New("expected identity.Requester for legacy access control")
+	}
+
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+
+	// Cache checkers by action to avoid recreating them for each check
+	checkerCache := make(map[string]func(scopes ...string) bool)
+
+	for _, check := range req.Checks {
+		opts, ok := c.opts[check.Resource]
+		if !ok {
+			// For now w  fallback to grafana admin if no options are found for resource.
+			if ident.GetIsGrafanaAdmin() {
+				results[check.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+			} else {
+				results[check.CorrelationID] = claims.BatchCheckResult{Allowed: false}
+			}
+			continue
+		}
+
+		// Check if verb should be skipped
+		if opts.Unchecked[check.Verb] {
+			results[check.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+			continue
+		}
+
+		action, ok := opts.Mapping[check.Verb]
+		if !ok {
+			results[check.CorrelationID] = claims.BatchCheckResult{
+				Allowed: false,
+				Error:   fmt.Errorf("missing action for %s %s", check.Verb, check.Resource),
+			}
+			continue
+		}
+
+		// Get or create cached checker for this action
+		checker, ok := checkerCache[action]
+		if !ok {
+			checker = Checker(ident, action)
+			checkerCache[action] = checker
+		}
+
+		// Handle list and create verbs (no specific name)
+		// TODO: Should we allow list/create without name in a BatchCheck request?
+		if check.Name == "" {
+			if check.Verb == utils.VerbList || check.Verb == utils.VerbCreate {
+				// For list/create without name, check if user has the action at all
+				// TODO: Is this correct for Create?
+				results[check.CorrelationID] = claims.BatchCheckResult{
+					Allowed: len(ident.GetPermissions()[action]) > 0,
+				}
+			} else {
+				results[check.CorrelationID] = claims.BatchCheckResult{
+					Allowed: false,
+					Error:   fmt.Errorf("unhandled authorization: %s %s", check.Group, check.Verb),
+				}
+			}
+			continue
+		}
+
+		// Check with resolver or direct scope
+		var allowed bool
+		if opts.Resolver != nil {
+			ns, err := claims.ParseNamespace(check.Namespace)
+			if err != nil {
+				results[check.CorrelationID] = claims.BatchCheckResult{
+					Allowed: false,
+					Error:   err,
+				}
+				continue
+			}
+			scopes, err := opts.Resolver.Resolve(ctx, ns, check.Name)
+			if err != nil {
+				results[check.CorrelationID] = claims.BatchCheckResult{
+					Allowed: false,
+					Error:   err,
+				}
+				continue
+			}
+			allowed = checker(scopes...)
+		} else {
+			allowed = checker(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, check.Name))
+		}
+
+		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: allowed}
+	}
+
+	return claims.BatchCheckResponse{
+		Results: results,
+		Zookie:  claims.NoopZookie{},
+	}, nil
+}

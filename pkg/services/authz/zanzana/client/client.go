@@ -68,11 +68,11 @@ func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error 
 	return err
 }
 
-func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Check")
+func (c *Client) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.BatchCheck")
 	defer span.End()
 
-	return c.authzext.BatchCheck(ctx, req)
+	return c.authzlibclient.BatchCheck(ctx, id, req)
 }
 
 func (c *Client) WriteNew(ctx context.Context, req *authzextv1.WriteRequest) error {

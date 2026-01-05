@@ -132,3 +132,54 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 
 	return shadowItemChecker, authlib.NoopZookie{}, err
 }
+
+func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	acResChan := make(chan authlib.BatchCheckResponse, 1)
+	acErrChan := make(chan error, 1)
+
+	go func() {
+		if c.zanzanaClient == nil {
+			return
+		}
+
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
+		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
+		res, err := c.zanzanaClient.BatchCheck(zanzanaCtxTimeout, id, req)
+		if err != nil {
+			c.logger.Error("Failed to run zanzana batch check", "error", err)
+		}
+		timer.ObserveDuration()
+
+		acRes := <-acResChan
+		acErr := <-acErrChan
+
+		if acErr == nil {
+			// Compare results for each correlation ID
+			for corrID, acResult := range acRes.Results {
+				zanzanaResult, exists := res.Results[corrID]
+				if !exists {
+					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.logger.Warn("Zanzana batch check missing result", "correlationId", corrID, "user", id.GetUID())
+					continue
+				}
+				if zanzanaResult.Allowed != acResult.Allowed {
+					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "correlationId", corrID, "user", id.GetUID())
+				} else {
+					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				}
+			}
+		}
+	}()
+
+	timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("rbac"))
+	res, err := c.accessClient.BatchCheck(ctx, id, req)
+	timer.ObserveDuration()
+	acResChan <- res
+	acErrChan <- err
+
+	return res, err
+}
