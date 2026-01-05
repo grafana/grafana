@@ -65,7 +65,7 @@ Start here if you're new to expressions. These examples demonstrate fundamental 
 
 **Result:** Memory usage as a percentage (0-100).
 
-**Tip:** This pattern works for any "used / total * 100" calculation.
+**Tip:** This pattern works for any "used / total \* 100" calculation.
 
 ---
 
@@ -521,4 +521,3 @@ Add panel descriptions or annotation text explaining what complex expressions ca
 ### Monitor expression performance
 
 If dashboards become slow, check if expressions are processing too much data. Consider moving heavy aggregations to recording rules or data source queries.
-

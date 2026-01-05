@@ -251,4 +251,3 @@ Expressions work differently in alerting contexts than in panels:
 - Most alert conditions need single values (use Reduce operations).
 - Test your expressions with the same time ranges your alerts will use.
 - Legacy dashboard alerts don't support expressions - use [Grafana Alerting](ref:grafana-alerting) instead.
-

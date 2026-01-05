@@ -102,13 +102,13 @@ Test each query independently to identify which one returns NoData, then investi
 **Causes and solutions:**
 
 - **Label mismatch:** Series from `$A` and `$B` have different labels that prevent automatic matching.
-  
+
   **Example:** `$A` has `{host="web01", region="us-east"}` but `$B` has `{server="web01", region="us-east"}`. The different label names (`host` vs `server`) prevent matching.
-  
+
   **Solution:** Modify your queries to use consistent label names, or ensure one set of series has no labels (which matches anything).
 
 - **No overlapping timestamps:** Time series need matching timestamps for math operations.
-  
+
   **Solution:** Use the Resample operation to align timestamps to a common interval.
 
 ### Timestamp mismatch errors
@@ -121,7 +121,7 @@ Test each query independently to identify which one returns NoData, then investi
 -- Query A
 SELECT NOW() AS "time", COUNT(*) as "errors" FROM error_log;
 
--- Query B  
+-- Query B
 SELECT NOW() AS "time", COUNT(*) as "requests" FROM request_log;
 ```
 
@@ -242,7 +242,7 @@ When writing SQL queries for use with expressions:
 
 ```sql
 -- Good: Consistent time bucket
-SELECT 
+SELECT
   DATE_TRUNC('minute', timestamp) AS "time",
   COUNT(*) as "value"
 FROM events
@@ -330,6 +330,7 @@ Expressions run on the Grafana server, so understanding performance implications
 **1. Push processing to data sources:**
 
 Instead of:
+
 ```
 Query A: SELECT value FROM metrics
 Expression B: Reduce(Mean, $A)
@@ -337,6 +338,7 @@ Expression C: $B > 100
 ```
 
 Do in data source:
+
 ```
 Query A: SELECT AVG(value) FROM metrics
 Expression B: $A > 100
@@ -353,12 +355,14 @@ Expression B: $A > 100
 If you only need a single value for alerting, reduce first then perform math rather than calculating across every point:
 
 **Less efficient:**
+
 ```
 Expression A: $QueryA * 100 (multiplies every point)
 Expression B: Reduce(Mean, $A)
 ```
 
 **More efficient:**
+
 ```
 Expression A: Reduce(Mean, $QueryA)
 Expression B: $A * 100 (multiplies one value)
@@ -434,16 +438,16 @@ Use transformations when:
 
 ### Comparison table
 
-| Feature | Expressions | Transformations |
-|---------|------------|-----------------|
-| Works in alerts | Yes | No |
-| Combines data sources | Yes | No |
-| Available operations | 3 types (Math, Reduce, Resample) | 20+ types |
-| Execution | Server-side | Client-side (browser) |
-| Data source support | Backend only | All data sources |
-| Label matching | Automatic | Manual |
-| Table operations | Limited | Extensive |
-| Performance | Uses server resources | Uses browser resources |
+| Feature               | Expressions                      | Transformations        |
+| --------------------- | -------------------------------- | ---------------------- |
+| Works in alerts       | Yes                              | No                     |
+| Combines data sources | Yes                              | No                     |
+| Available operations  | 3 types (Math, Reduce, Resample) | 20+ types              |
+| Execution             | Server-side                      | Client-side (browser)  |
+| Data source support   | Backend only                     | All data sources       |
+| Label matching        | Automatic                        | Manual                 |
+| Table operations      | Limited                          | Extensive              |
+| Performance           | Uses server resources            | Uses browser resources |
 
 ### Use both together
 
@@ -466,11 +470,13 @@ This approach lets you leverage the strengths of both systems.
 **From transformations to expressions:**
 
 Consider this when:
+
 - You need the same logic in alerting
 - You're combining data sources
 - Server-side processing would improve performance
 
 **Limitations:**
+
 - May need to redesign complex transformations
 - Some transformation operations have no expression equivalent
 - Need backend data sources
@@ -478,11 +484,13 @@ Consider this when:
 **From expressions to transformations:**
 
 Consider this when:
+
 - You need more complex data manipulation
 - You're working with browser-based data sources
 - You need advanced table operations
 
 **Limitations:**
+
 - Can't use in alerting
 - Can't combine different data sources
 - May need to change query structure
@@ -504,4 +512,3 @@ When asking for help, include:
 - Simplified example of your queries and expressions
 - Expected vs actual results
 - Any error messages from Query Inspector or logs
-
