@@ -34,6 +34,11 @@ import {
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
 
+export function isRouteProvisioned(route: Route): boolean {
+  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
+  return provenance !== undefined && provenance !== null;
+}
+
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
 const {
@@ -83,7 +88,6 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
   return {
     ...route,
     [ROUTES_META_SYMBOL]: {
-      provisioned: Boolean(route.provenance && route.provenance !== PROVENANCE_NONE),
       provenance: route.provenance,
     },
   };
@@ -234,11 +238,11 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
       ...route.spec.defaults,
       routes: route.spec.routes?.map(k8sSubRouteToRoute),
       [ROUTES_META_SYMBOL]: {
-        provisioned: isK8sEntityProvisioned(route),
+        provenance: getAnnotation(route, K8sAnnotations.Provenance),
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,
       },
-      provenance: getAnnotation(route, K8sAnnotations.Provenance) || KnownProvenance.None,
+      provenance: getAnnotation(route, K8sAnnotations.Provenance),
     };
   });
 }

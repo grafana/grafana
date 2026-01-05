@@ -145,7 +145,6 @@ export type Route = {
   provenance?: string;
   /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
   [ROUTES_META_SYMBOL]?: {
-    provisioned?: boolean;
     provenance?: string;
     resourceVersion?: string;
     name?: string;
