@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 )
 
 const (
