@@ -447,8 +447,10 @@ function getQueryForLoki(
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
     expr += ' | logfmt | json | drop __error__, __error_details__ | trace_id="${__span.traceId}"';
-  }
-  if (filterBySpanID && span.spanID) {
+    if (filterBySpanID && span.spanID) {
+      expr += ' | span_id="${__span.spanId}"';
+    }
+  } else if (filterBySpanID && span.spanID) {
     expr += ' | logfmt | json | drop __error__, __error_details__ | span_id="${__span.spanId}"';
   }
 
