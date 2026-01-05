@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -896,60 +897,87 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 	}
 }
 
-func TestExternalAMcfg_SHA256WithInsecureSkipVerify(t *testing.T) {
+func TestExternalAMcfg_SHA256(t *testing.T) {
+	// Golden config with all fields populated
+	goldenCfg := ExternalAMcfg{
+		URL: "https://localhost:9093",
+		Headers: http.Header{
+			"X-Custom-Header": []string{"value1"},
+			"Authorization":   []string{"Bearer token"},
+		},
+		Timeout:            30 * time.Second,
+		InsecureSkipVerify: true,
+		TLSClientCert:      "client-cert-content",
+		TLSClientKey:       "client-key-content",
+	}
+	goldenHash := goldenCfg.SHA256()
+
 	tests := []struct {
-		name             string
-		cfg1             ExternalAMcfg
-		cfg2             ExternalAMcfg
-		shouldHashDiffer bool
+		name         string
+		mutateFn     func(ExternalAMcfg) ExternalAMcfg
+		shouldDiffer bool
 	}{
 		{
-			name: "different InsecureSkipVerify should produce different hashes",
-			cfg1: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: true,
+			name: "mutate URL - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.URL = "https://different-host:9093"
+				return cfg
 			},
-			cfg2: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: false,
-			},
-			shouldHashDiffer: true,
+			shouldDiffer: true,
 		},
 		{
-			name: "same InsecureSkipVerify should produce same hashes",
-			cfg1: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: true,
+			name: "mutate Headers - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.Headers = http.Header{
+					"X-Different-Header": []string{"different-value"},
+				}
+				return cfg
 			},
-			cfg2: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: true,
-			},
-			shouldHashDiffer: false,
+			shouldDiffer: true,
 		},
 		{
-			name: "both false should produce same hashes",
-			cfg1: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: false,
+			name: "mutate Timeout - hash should NOT change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.Timeout = 60 * time.Second
+				return cfg
 			},
-			cfg2: ExternalAMcfg{
-				URL:                "https://localhost:9093",
-				InsecureSkipVerify: false,
+			shouldDiffer: false,
+		},
+		{
+			name: "mutate InsecureSkipVerify - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.InsecureSkipVerify = false
+				return cfg
 			},
-			shouldHashDiffer: false,
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate TLSClientCert - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.TLSClientCert = "different-cert"
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate TLSClientKey - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.TLSClientKey = "different-key"
+				return cfg
+			},
+			shouldDiffer: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hash1 := tt.cfg1.SHA256()
-			hash2 := tt.cfg2.SHA256()
+			mutatedCfg := tt.mutateFn(goldenCfg)
+			mutatedHash := mutatedCfg.SHA256()
 
-			if tt.shouldHashDiffer {
-				require.NotEqual(t, hash1, hash2, "Expected hashes to be different")
+			if tt.shouldDiffer {
+				require.NotEqual(t, goldenHash, mutatedHash, "Expected hash to change after mutation")
 			} else {
-				require.Equal(t, hash1, hash2, "Expected hashes to be the same")
+				require.Equal(t, goldenHash, mutatedHash, "Expected hash to remain the same after mutation")
 			}
 		})
 	}
