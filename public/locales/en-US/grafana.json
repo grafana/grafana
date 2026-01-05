@@ -5927,7 +5927,8 @@
       "custom-options": "Custom options",
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br />Check <4>our docs</4> for more information.",
       "name-json-values": "JSON",
-      "name-values-separated-comma": "CSV",
+      "name-csv-values": "CSV",
+      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-link-form": {

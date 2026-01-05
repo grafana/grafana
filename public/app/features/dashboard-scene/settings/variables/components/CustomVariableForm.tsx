@@ -121,7 +121,9 @@ export function ValuesFormatSelector({ valuesFormat, onValuesFormatChange }: Val
         options={[
           {
             value: 'csv',
-            label: t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'CSV'),
+            label: config.featureToggles.multiPropsVariables
+              ? t('dashboard-scene.custom-variable-form.name-csv-values', 'CSV')
+              : t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma'),
           },
           {
             value: 'json',
