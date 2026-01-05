@@ -25,9 +25,9 @@ func TestValidateSecureValue(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
-				Keeper:      &keeper,
 				Decrypters:  []string{"app1", "app2"},
 			},
+			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
 		}
 
 		t.Run("the `description` must be present", func(t *testing.T) {
@@ -179,28 +179,6 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := &secretv1beta1.SecureValue{ObjectMeta: objectMeta}
 
 			errs := validator.Validate(sv, nil, admission.Update)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec", errs[0].Field)
-		})
-
-		t.Run("when trying to change the `keeper`, it returns an error", func(t *testing.T) {
-			keeperA := "a-keeper"
-			keeperAnother := "another-keeper"
-			oldSv := &secretv1beta1.SecureValue{
-				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Keeper: &keeperA,
-				},
-			}
-
-			sv := &secretv1beta1.SecureValue{
-				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Keeper: &keeperAnother,
-				},
-			}
-
-			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 		})

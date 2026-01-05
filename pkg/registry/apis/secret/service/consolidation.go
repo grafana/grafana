@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -60,21 +61,21 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 
 	for _, ev := range encryptedValues {
 		// Decrypt the value using its old data key.
-		decryptedValue, err := s.encryptionManager.Decrypt(ctx, ev.Namespace, ev.EncryptedData)
+		decryptedValue, err := s.encryptionManager.Decrypt(ctx, xkube.Namespace(ev.Namespace), ev.EncryptedPayload)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to decrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue
 		}
 
 		// Re-encrypt the value using a new data key.
-		reEncryptedValue, err := s.encryptionManager.Encrypt(ctx, ev.Namespace, decryptedValue)
+		reEncryptedValue, err := s.encryptionManager.Encrypt(ctx, xkube.Namespace(ev.Namespace), decryptedValue)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to re-encrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue
 		}
 
 		// Update the encrypted value in the store.
-		err = s.encryptedValueStore.Update(ctx, ev.Namespace, ev.Name, ev.Version, reEncryptedValue)
+		err = s.encryptedValueStore.Update(ctx, xkube.Namespace(ev.Namespace), ev.Name, ev.Version, reEncryptedValue)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to update encrypted value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue

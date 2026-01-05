@@ -1,3 +1,4 @@
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
@@ -150,6 +151,28 @@ describe('Silences', () => {
       expect(activeSilences).toHaveLength(expectedActiveSilences);
       expect(activeSilences[0]).toHaveTextContent('foo=bar');
       expect(activeSilences[1]).toHaveTextContent('foo!=bar');
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'fetches silenced alerts with correct filter parameters',
+    async () => {
+      let capturedParams: URLSearchParams | undefined;
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          capturedParams = new URL(request.url).searchParams;
+          return HttpResponse.json([]);
+        })
+      );
+
+      renderSilences();
+
+      await waitFor(() => expect(capturedParams).toBeDefined());
+
+      expect(capturedParams?.get('silenced')).toBe('true');
+      expect(capturedParams?.get('active')).toBe('false');
+      expect(capturedParams?.get('inhibited')).toBe('false');
     },
     TEST_TIMEOUT
   );

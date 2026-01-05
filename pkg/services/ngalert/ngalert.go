@@ -194,8 +194,11 @@ func (ng *AlertNG) init() error {
 	var opts []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
 	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
@@ -408,6 +411,8 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -419,6 +424,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		false, // imported resources are not exposed via provisioning APIs
 	)
 
 	// Provisioning
@@ -504,13 +510,6 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using protobuf-based alert instance store")
 		instanceStore = protoInstanceStore
-		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
-		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
-		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
-		}
 	} else {
 		logger.Info("Using simple database alert instance store")
 		instanceStore = simpleInstanceStore
@@ -525,7 +524,15 @@ func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.Manager
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using rule state persister")
-		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Info("Compressed storage with periodic save enabled")
+			ticker := clock.New().Ticker(cfg.StatePeriodicSaveInterval)
+			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
+		} else {
+			logger.Info("Compressed storage FullSync disabled")
+			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
+		}
 	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
 		logger.Info("Using periodic state persister")
 		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
@@ -713,6 +720,7 @@ func configureNotificationHistorian(
 	l log.Logger,
 	tracer tracing.Tracer,
 ) (nfstatus.NotificationHistorian, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) || !cfg.Enabled {
 		met.Info.Set(0)
 		return nil, nil

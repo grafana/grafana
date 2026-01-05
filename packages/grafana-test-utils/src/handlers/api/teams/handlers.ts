@@ -79,7 +79,7 @@ const teamsGroupsHandler = () =>
     return HttpResponse.json(team.groups);
   });
 
-const teamsUpdateGroupsHandler = () =>
+const teamsAddGroupHandler = () =>
   http.post<{ uid: string }, { groupId: string }>('/api/teams/:uid/groups', async ({ params, request }) => {
     const teamData = mockTeamsMap.get(params.uid);
     const body = await request.json();
@@ -93,6 +93,29 @@ const teamsUpdateGroupsHandler = () =>
     mockTeamsMap.set(params.uid, updatedTeam);
 
     return HttpResponse.json({ message: 'Group added to Team' });
+  });
+
+const teamsRemoveGroupHandler = () =>
+  http.delete<{ uid: string }>('/api/teams/:uid/groups', async ({ params, request }) => {
+    const teamData = mockTeamsMap.get(params.uid);
+    const url = new URL(request.url);
+    const groupId = url.searchParams.get('groupId');
+
+    if (!teamData) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+
+    if (!groupId) {
+      return HttpResponse.json({ message: 'Missing groupId' }, { status: 400 });
+    }
+
+    const updatedTeam = {
+      ...teamData,
+      groups: teamData.groups.filter((g) => g.groupId !== groupId),
+    };
+    mockTeamsMap.set(params.uid, updatedTeam);
+
+    return HttpResponse.json({ message: 'Group removed from Team' });
   });
 
 const searchTeamsHandler = () =>
@@ -127,14 +150,36 @@ const createTeamHandler = () =>
     return HttpResponse.json({ message: 'Team created', teamId: 10, uid: 'aethyfifmhwcgd' }, { status: 200 });
   });
 
+const updateTeamHandler = () =>
+  http.put<{ uid: string }, { name: string; email: string }>('/api/teams/:uid', async ({ params, request }) => {
+    const teamData = mockTeamsMap.get(params.uid);
+    const body = await request.json();
+    if (!teamData) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+    const updatedTeam = {
+      ...teamData,
+      team: {
+        ...teamData.team,
+        name: body.name,
+        email: body.email,
+      },
+    };
+    mockTeamsMap.set(params.uid, updatedTeam);
+
+    return HttpResponse.json({ message: 'Team updated' });
+  });
+
 const handlers = [
   teamsPreferencesHandler(),
   teamsGroupsHandler(),
-  teamsUpdateGroupsHandler(),
+  teamsAddGroupHandler(),
+  teamsRemoveGroupHandler(),
   searchTeamsHandler(),
   getTeamHandler(),
   deleteTeamHandler(),
   createTeamHandler(),
+  updateTeamHandler(),
 ];
 
 export default handlers;

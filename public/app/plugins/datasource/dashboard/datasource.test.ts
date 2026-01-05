@@ -10,9 +10,10 @@ import {
   FieldType,
   DataFrame,
   AdHocVariableFilter,
+  DataTopic,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, config } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
@@ -178,16 +179,6 @@ describe('DashboardDatasource', () => {
 
     // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
-      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
-
-      beforeEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = true;
-      });
-
-      afterEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
-      });
-
       it('should apply basic filtering end-to-end through public query method', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
@@ -222,46 +213,6 @@ describe('DashboardDatasource', () => {
         expect(result?.data[0].fields[0].values).toEqual(['John']);
         expect(result?.data[0].fields[1].values).toEqual([25]);
         expect(result?.data[0].length).toBe(1);
-      });
-
-      it('should respect feature toggle and not filter when disabled', async () => {
-        // Temporarily disable the feature toggle for this test
-        config.featureToggles.dashboardDsAdHocFiltering = false;
-
-        const testFrame = createTestFrame([
-          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
-          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
-        ]);
-
-        const scene = new SceneFlexLayout({
-          children: [
-            new SceneFlexItem({
-              body: new VizPanel({
-                key: getVizPanelKeyForPanelId(1),
-                $data: new SceneDataNode({
-                  data: {
-                    series: [testFrame],
-                    state: LoadingState.Done,
-                    timeRange: getDefaultTimeRange(),
-                  },
-                }),
-              }),
-            }),
-          ],
-        });
-
-        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
-        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
-
-        const observable = ds.query(createQueryRequest(filters, scene));
-
-        let result: DataQueryResponse | undefined;
-        observable.subscribe({ next: (data) => (result = data) });
-
-        // Should return unfiltered data since feature toggle is disabled
-        expect(result?.data[0].fields[0].values).toEqual(['John', 'Jane', 'Bob']);
-        expect(result?.data[0].fields[1].values).toEqual([25, 30, 35]);
-        expect(result?.data[0].length).toBe(3);
       });
 
       it('should respect per-panel adHocFiltersEnabled setting and not filter when disabled', async () => {
@@ -723,26 +674,7 @@ describe('DashboardDatasource', () => {
     });
 
     describe('getDrilldownsApplicability', () => {
-      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
       const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
-
-      beforeEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = true;
-      });
-
-      afterEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
-      });
-
-      it('should return empty array when feature toggle is disabled', async () => {
-        config.featureToggles.dashboardDsAdHocFiltering = false;
-
-        const result = await ds.getDrilldownsApplicability({
-          filters: [{ key: 'name', operator: '=', value: 'test' }],
-        });
-
-        expect(result).toEqual([]);
-      });
 
       it('should mark supported operators as applicable', async () => {
         const result = await ds.getDrilldownsApplicability({
@@ -843,7 +775,123 @@ describe('DashboardDatasource', () => {
       });
     });
   });
+
+  describe('Annotation Handling', () => {
+    it('should NOT include annotations from source panel in regular query response', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Should only have series data, no annotations
+      expect(rsp?.data.length).toBe(1);
+      expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+
+      // Verify no annotation frames are included
+      const annotationFrames = rsp?.data.filter((frame) => frame.meta?.dataTopic === DataTopic.Annotations);
+      expect(annotationFrames?.length).toBe(0);
+    });
+
+    it('should return annotations as series when query topic is DataTopic.Annotations', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1, topic: DataTopic.Annotations });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Should return annotation data as series (with dataTopic changed to Series)
+      expect(rsp?.data.length).toBe(1);
+      expect(rsp?.data[0].name).toBe('Test Annotation');
+      // The dataTopic should be changed to Series when querying for annotations
+      expect(rsp?.data[0].meta?.dataTopic).toBe(DataTopic.Series);
+    });
+
+    it('should not leak annotations when source panel has annotations and toggle is off', async () => {
+      // This test ensures that when annotations are toggled off at the dashboard level,
+      // DashboardDS panels don't continue showing them from the source panel's cached data
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // Verify that annotations from source panel are NOT included in response
+      // This is critical for annotation toggle to work correctly on DashboardDS panels
+      const hasAnnotations = rsp?.data.some(
+        (frame) => frame.meta?.dataTopic === DataTopic.Annotations || frame.name === 'Test Annotation'
+      );
+      expect(hasAnnotations).toBe(false);
+    });
+
+    it('should only return series data even when source has both series and annotations', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      // All returned frames should be series data, not annotations
+      rsp?.data.forEach((frame) => {
+        expect(frame.meta?.dataTopic).not.toBe(DataTopic.Annotations);
+      });
+
+      // Should have the series data from the source panel
+      expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+    });
+  });
 });
+
+function setupWithAnnotations(query: DashboardQuery, requestId?: string) {
+  const annotationFrame: DataFrame = {
+    name: 'Test Annotation',
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      { name: 'text', type: FieldType.string, values: ['Annotation 1', 'Annotation 2'], config: {} },
+    ],
+    length: 2,
+    meta: {
+      dataTopic: DataTopic.Annotations,
+    },
+  };
+
+  const sourceData = new SceneDataTransformer({
+    $data: new SceneDataNode({
+      data: {
+        series: [arrayToDataFrame([1, 2, 3])],
+        annotations: [annotationFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      },
+    }),
+    transformations: [],
+  });
+
+  const scene = new SceneFlexLayout({
+    children: [
+      new SceneFlexItem({
+        body: new VizPanel({
+          key: getVizPanelKeyForPanelId(1),
+          $data: sourceData,
+        }),
+      }),
+    ],
+  });
+
+  const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+  const observable = ds.query({
+    timezone: 'utc',
+    targets: [query],
+    requestId: requestId ?? '',
+    interval: '',
+    intervalMs: 0,
+    range: getDefaultTimeRange(),
+    scopedVars: {
+      __sceneObject: new SafeSerializableSceneObject(scene),
+    },
+    app: '',
+    startTime: 0,
+  });
+
+  return { observable, sourceData };
+}
 
 function setup(query: DashboardQuery, requestId?: string) {
   const sourceData = new SceneDataTransformer({

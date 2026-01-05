@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
@@ -18,9 +18,9 @@ type ReturnType = {
 };
 
 function getCurrentPageId(
-  pageId: PluginTabIds | undefined,
   isNarrowScreen: boolean | undefined,
-  defaultTab: string
+  defaultTab: string,
+  pageId?: PluginTabIds | string | null
 ): PluginTabIds | string {
   if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
     return defaultTab;
@@ -30,7 +30,7 @@ function getCurrentPageId(
 
 export const usePluginDetailsTabs = (
   plugin?: CatalogPlugin,
-  pageId?: PluginTabIds,
+  pageId?: PluginTabIds | string | null,
   isNarrowScreen?: boolean
 ): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
@@ -38,7 +38,7 @@ export const usePluginDetailsTabs = (
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
 
-  const currentPageId = getCurrentPageId(pageId, isNarrowScreen, defaultTab);
+  const currentPageId = getCurrentPageId(isNarrowScreen, defaultTab, pageId);
 
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);

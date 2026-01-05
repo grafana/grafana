@@ -60,22 +60,24 @@ import (
 //	    { "refId": "A", "datasource": "default" }
 //	  ]
 //	}
-func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
+func V33(dsIndexProvider DataSourceIndexProvider) SchemaVersionMigrationFunc {
 	return func(ctx context.Context, dashboard map[string]interface{}) error {
-		datasources := dsInfo.GetDataSourceInfo(ctx)
 		if dashboard == nil {
 			dashboard = map[string]interface{}{}
 		}
 		dashboard["schemaVersion"] = int(33)
 
-		migratePanelsV33(dashboard, datasources)
+		// Build datasource index directly from provider for O(1) lookups
+		index := dsIndexProvider.Index(ctx)
+
+		migratePanelsV33(dashboard, index)
 
 		return nil
 	}
 }
 
 // migratePanelsV33 updates datasource references in dashboard panels for V33 migration
-func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSourceInfo) {
+func migratePanelsV33(dashboard map[string]interface{}, index *DatasourceIndex) {
 	if dashboard == nil {
 		return
 	}
@@ -90,7 +92,7 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 			continue
 		}
 
-		migratePanelDatasourcesV33(panelMap, datasources)
+		migratePanelDatasourcesV33(panelMap, index)
 
 		// Handle nested panels in collapsed rows
 		nestedPanels, hasNested := panelMap["panels"].([]interface{})
@@ -103,15 +105,15 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 			if !ok {
 				continue
 			}
-			migratePanelDatasourcesV33(np, datasources)
+			migratePanelDatasourcesV33(np, index)
 		}
 	}
 }
 
 // migratePanelDatasourcesV33 updates datasource references in a single panel and its targets for V33 migration
-func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []DataSourceInfo) {
+func migratePanelDatasourcesV33(panelMap map[string]interface{}, index *DatasourceIndex) {
 	// Handle panel datasource - always set result (even if nil)
-	if result := MigrateDatasourceNameToRef(panelMap["datasource"], map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
+	if result := MigrateDatasourceNameToRef(panelMap["datasource"], map[string]bool{"returnDefaultAsNull": true}, index); result != nil {
 		panelMap["datasource"] = result
 	} else {
 		panelMap["datasource"] = nil
@@ -135,7 +137,7 @@ func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []D
 		}
 
 		// Only set target datasource if migration result is not nil
-		if targetRef := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources); targetRef != nil {
+		if targetRef := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, index); targetRef != nil {
 			targetMap["datasource"] = targetRef
 		}
 		// If targetRef is nil, leave target.datasource unchanged (preserves "default" strings, etc.)

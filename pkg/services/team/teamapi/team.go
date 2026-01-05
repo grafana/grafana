@@ -312,6 +312,10 @@ type GetTeamByIDParams struct {
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
 }
 
 // swagger:parameters deleteTeamByID
@@ -344,6 +348,13 @@ type SearchTeamsParams struct {
 	// If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.
 	// required:false
 	Query string `json:"query"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
 }
 
 // swagger:parameters createTeam

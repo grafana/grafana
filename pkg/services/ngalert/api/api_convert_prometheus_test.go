@@ -15,7 +15,7 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -73,6 +73,46 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "Missing datasource UID header")
+	})
+
+	t.Run("without datasource UID header but with config default should succeed", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		// Set the config default
+		srv.cfg.PrometheusConversion.DefaultDatasourceUID = existingDSUID
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(datasourceUIDHeader, "")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify that the config default datasource was used
+		assertRulesUseDatasource(t, ruleStore, existingDSUID, 2)
+	})
+
+	t.Run("header should take precedence over config default", func(t *testing.T) {
+		srv, dsCache, ruleStore := createConvertPrometheusSrv(t)
+		// Add another datasource
+		anotherDS := &datasources.DataSource{
+			UID:  "another-ds",
+			Type: datasources.DS_PROMETHEUS,
+		}
+		dsCache.DataSources = append(dsCache.DataSources, anotherDS)
+
+		// Set the config default to one DS
+		srv.cfg.PrometheusConversion.DefaultDatasourceUID = "another-ds"
+
+		// But use the header to specify a different one
+		rc := createRequestCtx()
+		rc.Req.Header.Set(datasourceUIDHeader, existingDSUID)
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify that the header datasource was used, not the config default
+		assertRulesUseDatasource(t, ruleStore, existingDSUID, 2)
 	})
 
 	t.Run("with invalid datasource should return error", func(t *testing.T) {
@@ -504,6 +544,68 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			// Prometheus rule definition should not be saved when provenance is disabled
 			require.Nil(t, r.Metadata.PrometheusStyleRule)
 		}
+	})
+
+	t.Run("with version message header should pass message to rule store", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		makeGroup := func(alertname string) apimodels.PrometheusRuleGroup {
+			return apimodels.PrometheusRuleGroup{
+				Name:     "Test Group",
+				Interval: prommodel.Duration(1 * time.Minute),
+				Rules: []apimodels.PrometheusRule{
+					{
+						Alert: alertname,
+						Expr:  "up == 0",
+						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Labels: map[string]string{
+							"severity": "critical",
+						},
+					},
+				},
+			}
+		}
+
+		// Create a rule with the X-Grafana-Alerting-Version-Message to check it's passed to InsertRule.
+
+		rc1 := createRequestCtx()
+		rc1.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #1")
+		response1 := srv.RouteConvertPrometheusPostRuleGroup(rc1, fldr.Title, makeGroup("AlertV1"))
+		require.Equal(t, http.StatusAccepted, response1.Status())
+
+		inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.InsertRule)
+			return a, ok
+		})
+		require.Len(t, inserts, 1)
+		cmd1 := inserts[0].([]models.InsertRule)
+		require.Len(t, cmd1, 1)
+		require.Equal(t, "version #1", cmd1[0].Message)
+
+		// Now update the rule to check it gets passed to UpdateRule.
+
+		rc2 := createRequestCtx()
+		rc2.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #2")
+		response2 := srv.RouteConvertPrometheusPostRuleGroup(rc2, fldr.Title, makeGroup("AlertV2"))
+		require.Equal(t, http.StatusAccepted, response2.Status())
+
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Len(t, updates, 1)
+		cmd2 := updates[0].([]models.UpdateRule)
+		require.Len(t, cmd2, 1)
+		require.Equal(t, "version #2", cmd2[0].Message)
 	})
 
 	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
@@ -1328,7 +1430,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
 			provenanceStore := fakes.NewFakeProvisioningStore()
-			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+			srv, ruleStore, fldr, rule := initGroup("prometheus definition", groupName, withProvenanceStore(provenanceStore))
 
 			// Mark the rule as provisioned with API provenance
 			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
@@ -1348,6 +1450,37 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, remaining)
 		})
+	})
+
+	t.Run("should not delete non-imported rule groups", func(t *testing.T) {
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		rule := models.RuleGen.
+			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(models.RuleGen.WithOrgID(1)).
+			With(models.RuleGen.WithGroupName(groupName)).
+			GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		// Attempt to delete via convert endpoint should return 404
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+		require.Equal(t, http.StatusNotFound, response.Status())
+
+		// Verify the rule is still present
+		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			UID:   rule.UID,
+			OrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, remaining)
 	})
 }
 
@@ -1665,6 +1798,26 @@ func createRequestCtx() *contextmodel.ReqContext {
 			Resp: web.NewResponseWriter("GET", httptest.NewRecorder()),
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+}
+
+// assertRulesUseDatasource retrieves all alert rules from the store and verifies they use the expected datasource
+func assertRulesUseDatasource(t *testing.T, ruleStore *fakes.RuleStore, expectedDatasourceUID string, expectedRuleCount int) {
+	t.Helper()
+
+	rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		OrgID: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, rules, expectedRuleCount)
+
+	for _, rule := range rules {
+		if rule.Record == nil {
+			require.NotEmpty(t, rule.Data)
+			require.Equal(t, expectedDatasourceUID, rule.Data[0].DatasourceUID, rule.Title, expectedDatasourceUID)
+		} else {
+			require.Equal(t, expectedDatasourceUID, rule.Record.TargetDatasourceUID)
+		}
 	}
 }
 

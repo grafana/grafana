@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -186,7 +187,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	defer func() { _ = res.Close() }()
 
 	if !res.Next() {
-		return nil, contracts.ErrKeeperNotFound
+		return nil, fmt.Errorf("keeper=%s: %w", name, contracts.ErrKeeperNotFound)
 	}
 
 	var keeper keeperDB
@@ -199,6 +200,10 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	}
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+	if keeper.Namespace != namespace || keeper.Name != name {
+		return nil, fmt.Errorf("bug: expected to find keeper namespace=%+v name=%+v but got keeper namespace=%+v name%+v",
+			namespace, name, keeper.Namespace, keeper.Name)
 	}
 
 	return &keeper, nil
@@ -404,6 +409,10 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
 		}
 
+		if row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to list keepers for namespace %+v but got one from namespace %+v", namespace, row.Namespace)
+		}
+
 		keeper, err := row.toKubernetes()
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
@@ -568,9 +577,10 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (_ secretv1beta1.KeeperConfig, getErr error) {
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string, opts contracts.ReadOpts) (_ secretv1beta1.KeeperConfig, getErr error) {
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetKeeperConfig", trace.WithAttributes(
 		attribute.String("namespace", namespace),
+		attribute.String("name", name),
 		attribute.Bool("isForUpdate", opts.ForUpdate),
 	))
 	start := time.Now()
@@ -581,6 +591,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 		args := []any{
 			"namespace", namespace,
+			"name", name,
 			"isForUpdate", strconv.FormatBool(opts.ForUpdate),
 		}
 
@@ -597,14 +608,12 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}()
 
 	// Check if keeper is the systemwide one.
-	if name == nil {
+	if name == contracts.SystemKeeperName {
 		return &secretv1beta1.SystemKeeperConfig{}, nil
 	}
 
-	span.SetAttributes(attribute.String("name", *name))
-
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, namespace, *name, opts)
+	kp, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -613,4 +622,114 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 	return keeperConfig, nil
+}
+
+func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
+	req := setKeeperAsActive{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+
+	query, err := sqltemplate.Execute(sqlKeeperSetAsActive, req)
+	if err != nil {
+		return fmt.Errorf("template %q: %w", sqlKeeperSetAsActive.Name(), err)
+	}
+
+	// Check keeper exists. No need to worry about time of check to time of use
+	// since trying to activate a just deleted keeper will result in all
+	// keepers being inactive and defaulting to the system keeper.
+	if _, err := s.read(ctx, namespace.String(), name, contracts.ReadOpts{}); err != nil {
+		return fmt.Errorf("reading keeper before setting as active: %w", err)
+	}
+
+	_, err = s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("setting keeper as active %q: %w", query, err)
+	}
+
+	return nil
+}
+
+func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace string) (keeper *secretv1beta1.Keeper, readErr error) {
+	start := time.Now()
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetActiveKeeper", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
+	defer func() {
+		success := readErr == nil
+
+		args := []any{
+			"namespace", namespace,
+		}
+
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "KeeperMetadataStorage.GetActiveKeeper failed")
+			span.RecordError(readErr)
+			args = append(args, "error", readErr)
+		}
+
+		logging.FromContext(ctx).Info("KeeperMetadataStorage.GetActiveKeeper", args...)
+
+		s.metrics.KeeperMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	req := &readActiveKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
+	}
+
+	query, err := sqltemplate.Execute(sqlKeeperReadActive, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperReadActive.Name(), err)
+	}
+
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("executing query to fetch active keeper in namespace %s: %w", namespace, err)
+	}
+	defer func() { _ = res.Close() }()
+
+	if !res.Next() {
+		return nil, contracts.ErrKeeperNotFound
+	}
+
+	var keeperDB keeperDB
+	err = res.Scan(
+		&keeperDB.GUID, &keeperDB.Name, &keeperDB.Namespace, &keeperDB.Annotations, &keeperDB.Labels, &keeperDB.Created,
+		&keeperDB.CreatedBy, &keeperDB.Updated, &keeperDB.UpdatedBy, &keeperDB.Description, &keeperDB.Type, &keeperDB.Payload,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
+	}
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	keeper, readErr = keeperDB.toKubernetes()
+	if readErr != nil {
+		return keeper, fmt.Errorf("converting from keeperDB to kubernetes struct: %w", err)
+	}
+
+	if keeperDB.Namespace != namespace {
+		return nil, fmt.Errorf("bug: expected to find keeper to namespace %+v but got one for namespace %+v", namespace, keeperDB.Namespace)
+	}
+
+	return keeper, nil
+}
+
+func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error) {
+	keeper, err := s.GetActiveKeeper(ctx, namespace)
+	if err != nil {
+		// When there are not active keepers, default to the system keeper
+		if errors.Is(err, contracts.ErrKeeperNotFound) {
+			return contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}, nil
+		}
+		return "", nil, fmt.Errorf("fetching active keeper from db: %w", err)
+	}
+
+	return keeper.Name, getKeeperConfig(keeper), nil
 }

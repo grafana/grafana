@@ -11,7 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, AlertState, TestReceiversPayload } from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse
@@ -160,9 +160,24 @@ const getReceiversHandler = () =>
   });
 
 const testReceiversHandler = () =>
-  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', () => {
-    // TODO: scaffold out response as needed by tests
-    return HttpResponse.json({});
+  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', async ({ request }) => {
+    const body: TestReceiversPayload = await request.clone().json();
+    const { receivers = [] } = body;
+
+    // Build response with successful test results for each receiver
+    const testResults = receivers.map((receiver) => ({
+      name: receiver.name,
+      grafana_managed_receiver_configs: (receiver.grafana_managed_receiver_configs || []).map((config) => ({
+        name: config.name || config.type,
+        uid: config.uid,
+        status: 'ok' as const,
+      })),
+    }));
+
+    return HttpResponse.json({
+      notified_at: new Date().toISOString(),
+      receivers: testResults,
+    });
   });
 
 const getGroupsHandler = () =>

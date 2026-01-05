@@ -28,6 +28,7 @@ type fileWatcher struct {
 	timers   map[string]*time.Timer
 	watcher  *fsnotify.Watcher
 	logger   logging.Logger
+	closed   bool
 }
 
 // File watcher that buffers events for 100ms before actually firing them
@@ -77,22 +78,21 @@ func NewFileWatcher(path string, accept func(string) bool) (FileWatcher, error) 
 
 // Keep watching for changes until the context is done
 func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
+	defer f.cleanup(events)
+
 	for {
 		select {
 		case <-ctx.Done():
-			close(events)
 			return
 
 		case _, ok := <-f.watcher.Errors:
 			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				close(events)
 				return
 			}
 
 		// Read from Events.
 		case e, ok := <-f.watcher.Events:
 			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				close(events)
 				return
 			}
 			name := filepath.Base(e.Name)
@@ -114,6 +114,11 @@ func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
 			if !ok {
 				nameCopy := e.Name
 				t = time.AfterFunc(math.MaxInt64, func() {
+					// before sending the event, check if the watcher has been closed
+					if f.closed {
+						return
+					}
+
 					path, _ := strings.CutPrefix(nameCopy, f.prefix)
 					events <- path
 
@@ -127,4 +132,18 @@ func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
 			t.Reset(f.waitFor)
 		}
 	}
+}
+
+// stop all pending timers and close the event channel
+func (f *fileWatcher) cleanup(events chan<- string) {
+	f.timersMu.Lock()
+	defer f.timersMu.Unlock()
+
+	for _, timer := range f.timers {
+		timer.Stop()
+	}
+	f.timers = make(map[string]*time.Timer)
+
+	close(events)
+	f.closed = true
 }

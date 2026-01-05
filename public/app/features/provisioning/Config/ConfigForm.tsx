@@ -28,7 +28,6 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
-import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
@@ -38,6 +37,7 @@ import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -79,10 +79,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(
-    () => getTargetOptions(settings.data?.allowedTargets || ['instance', 'folder']),
-    [settings.data]
-  );
+  const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
   const {
@@ -180,7 +177,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            <InlineSecureValueWarning repo={data} />
             <Field
               noMargin
               label={gitFields.tokenConfig.label}
@@ -303,6 +299,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               onChange: (e) => {
                 if (e.target.checked) {
                   setValue('prWorkflow', false);
+                  setValue('enablePushToConfiguredBranch', false);
                 }
               },
             })}
@@ -323,6 +320,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
               description={gitFields.prWorkflowConfig.description}
             />
           </Field>
+        )}
+        {isGitBased && (
+          <EnablePushToConfiguredBranchOption<RepositoryFormData>
+            register={register}
+            registerName="enablePushToConfiguredBranch"
+            readOnly={readOnly}
+          />
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 

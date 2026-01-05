@@ -4,12 +4,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 )
 
 const (
+	// InstallSync is the module name for the install sync service.
+	InstallSync = installsync.ServiceName
+
 	// PluginStore is the module name for the plugin store service.
 	PluginStore = pluginstore.ServiceName
 
@@ -46,10 +50,11 @@ func dependencyMap() map[string][]string {
 		Tracing:            {},
 		GrafanaAPIServer:   {Tracing},
 		PluginStore:        {GrafanaAPIServer},
-		PluginInstaller:    {PluginStore},
+		InstallSync:        {PluginStore},
+		PluginInstaller:    {InstallSync},
 		FixedRolesLoader:   {PluginInstaller},
 		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning},
+		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
 		BackgroundServices: {Core},
 	}
 }

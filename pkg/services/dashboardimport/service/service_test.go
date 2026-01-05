@@ -160,6 +160,159 @@ func TestImportDashboardService(t *testing.T) {
 	})
 }
 
+func TestInterpolateDashboardService(t *testing.T) {
+	t.Run("InterpolateDashboard with plugin ID should load from plugin", func(t *testing.T) {
+		pluginDashboardService := &pluginDashboardServiceMock{
+			loadPluginDashboardFunc: loadTestDashboard,
+		}
+
+		s := &ImportDashboardService{
+			pluginDashboardService: pluginDashboardService,
+			features:               featuremgmt.WithFeatures(),
+		}
+
+		req := &dashboardimport.ImportDashboardRequest{
+			PluginId: "prometheus",
+			Path:     "dashboard.json",
+			Inputs: []dashboardimport.ImportDashboardInput{
+				{Name: "*", Type: "datasource", Value: "prom"},
+			},
+		}
+
+		result, err := s.InterpolateDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify datasource was interpolated
+		panel := result.Get("panels").GetIndex(0)
+		require.Equal(t, "prom", panel.Get("datasource").MustString())
+	})
+
+	t.Run("InterpolateDashboard with dashboard JSON should apply interpolation", func(t *testing.T) {
+		s := &ImportDashboardService{
+			features: featuremgmt.WithFeatures(),
+		}
+
+		// Create test dashboard with template variables
+		testDashboard := simplejson.New()
+		testDashboard.Set("title", "Test Community Dashboard")
+		testDashboard.Set("uid", "test-uid")
+
+		// Add __inputs section (required by template evaluator)
+		inputs := []interface{}{
+			map[string]interface{}{
+				"name":     "DS_PROMETHEUS",
+				"type":     "datasource",
+				"pluginId": "prometheus",
+			},
+			map[string]interface{}{
+				"name":     "DS_LOKI",
+				"type":     "datasource",
+				"pluginId": "loki",
+			},
+		}
+		testDashboard.Set("__inputs", inputs)
+
+		panels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "${DS_PROMETHEUS}",
+				},
+			},
+			map[string]interface{}{
+				"id": 2,
+				"datasource": map[string]interface{}{
+					"uid": "${DS_LOKI}",
+				},
+			},
+		}
+		testDashboard.Set("panels", panels)
+
+		req := &dashboardimport.ImportDashboardRequest{
+			Dashboard: testDashboard,
+			Inputs: []dashboardimport.ImportDashboardInput{
+				{Name: "DS_PROMETHEUS", Type: "datasource", PluginId: "prometheus", Value: "my-prometheus"},
+				{Name: "DS_LOKI", Type: "datasource", PluginId: "loki", Value: "my-loki"},
+			},
+		}
+
+		result, err := s.InterpolateDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify datasources were interpolated correctly
+		panel1 := result.Get("panels").GetIndex(0)
+		require.Equal(t, "my-prometheus", panel1.Get("datasource").Get("uid").MustString())
+
+		panel2 := result.Get("panels").GetIndex(1)
+		require.Equal(t, "my-loki", panel2.Get("datasource").Get("uid").MustString())
+	})
+
+	t.Run("InterpolateDashboard with dashboard JSON and wildcard datasource", func(t *testing.T) {
+		s := &ImportDashboardService{
+			features: featuremgmt.WithFeatures(),
+		}
+
+		// Create test dashboard with simple datasource reference
+		testDashboard := simplejson.New()
+		testDashboard.Set("title", "Test Dashboard")
+
+		// Add __inputs section for wildcard matching
+		inputs := []interface{}{
+			map[string]interface{}{
+				"name":     "DS_TEST",
+				"type":     "datasource",
+				"pluginId": "testdata",
+			},
+		}
+		testDashboard.Set("__inputs", inputs)
+
+		panels := []interface{}{
+			map[string]interface{}{
+				"id":         1,
+				"datasource": "${DS_TEST}",
+			},
+		}
+		testDashboard.Set("panels", panels)
+
+		req := &dashboardimport.ImportDashboardRequest{
+			Dashboard: testDashboard,
+			Inputs: []dashboardimport.ImportDashboardInput{
+				{Name: "*", Type: "datasource", Value: "default-datasource"},
+			},
+		}
+
+		result, err := s.InterpolateDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// With wildcard, it should replace any datasource template
+		panel := result.Get("panels").GetIndex(0)
+		datasource := panel.Get("datasource").MustString()
+		// The wildcard matcher should have replaced the template
+		require.NotEqual(t, "${DS_TEST}", datasource)
+	})
+
+	t.Run("InterpolateDashboard without plugin ID or dashboard should fail", func(t *testing.T) {
+		s := &ImportDashboardService{
+			features: featuremgmt.WithFeatures(),
+		}
+
+		req := &dashboardimport.ImportDashboardRequest{
+			PluginId:  "",
+			Dashboard: nil,
+			Inputs:    []dashboardimport.ImportDashboardInput{},
+		}
+
+		// This should fail with validation error
+		result, err := s.InterpolateDashboard(context.Background(), req)
+		require.Error(t, err)
+		require.Nil(t, result)
+		require.Contains(t, err.Error(), "either PluginId or Dashboard must be provided")
+	})
+}
+
 func loadTestDashboard(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
 	// It's safe to ignore gosec warning G304 since this is a test and arguments comes from test configuration.
 	// nolint:gosec

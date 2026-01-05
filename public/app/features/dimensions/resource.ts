@@ -7,16 +7,17 @@ import { findField, getLastNotNullFieldValue } from './utils';
 //---------------------------------------------------------
 // Resource dimension
 //---------------------------------------------------------
-export function getPublicOrAbsoluteUrl(path: string): string {
-  if (!path) {
+export function getPublicOrAbsoluteUrl(path: unknown): string {
+  if (!path || typeof path !== 'string') {
     return '';
   }
 
   // NOTE: The value of `path` could be either an URL string or a relative
   //       path to a Grafana CDN asset served from the CDN.
   const isUrl = path.indexOf(':/') > 0;
+  const publicPath = window.__grafana_public_path__ || '/';
 
-  return isUrl ? path : `${window.__grafana_public_path__}build/${path}`;
+  return isUrl ? path : `${publicPath}build/${path}`;
 }
 
 export function getResourceDimension(
@@ -55,13 +56,22 @@ export function getResourceDimension(
   }
 
   // mode === ResourceDimensionMode.Field case
-  const getImageOrIcon = (value: string): string => {
-    let url = value;
+  const getImageOrIcon = (value: unknown): string => {
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      return '';
+    }
+
+    let url = typeof value === 'string' ? value : '';
     if (field && field.display) {
       const displayValue = field.display(value);
       if (displayValue.icon) {
         url = displayValue.icon;
       }
+    }
+
+    const noIconFound = !url;
+    if (noIconFound) {
+      return '';
     }
 
     return getPublicOrAbsoluteUrl(url);

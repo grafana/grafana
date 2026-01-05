@@ -202,6 +202,11 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"
+		// or perform exact match if requested
+		if query.TitleExactMatch {
+			request.Query = query.Title
+		}
+
 		// if using query, you need to specify the fields you want
 		request.Fields = dashboardsearch.IncludeFields
 	}
@@ -618,12 +623,14 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	if err != nil {
 		return err
 	}
+	descFolders = folder.SortByPostorder(descFolders)
 
 	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
 	// must delete children first, then the parent folder
+	s.log.InfoContext(ctx, "deleting folder with descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "folderUIDs", strings.Join(folders, ","))
 	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
@@ -644,6 +651,21 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		//	/* TODO: after a decision regarding folder deletion permissions has been made
+		//	(https://github.com/grafana/grafana-enterprise/issues/5144),
+		//	remove the following call to DeleteInFolders
+		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+		//	*/
+		// Obs: DeleteInFolders only deletes dangling library panels (not linked to any dashboard) and throws errors if there are connections
+		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+			s.log.Error("failed to delete dangling library panels in folders", "error", err, "folders", strings.Join(folders, ","))
+			return err
+		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
 		request := &resourcepb.ResourceSearchRequest{
@@ -704,19 +726,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
-	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-	}
-
 	// Check that the user is allowed to move the folder to the destination folder
 	hasAccess, evalErr := s.canMoveViaApiServer(ctx, cmd)
 	if evalErr != nil {
@@ -726,30 +735,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	// here we get the folder, we need to get the height of current folder
-	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
-	}
-
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
-	}
-
-	for _, parent := range parents {
-		// if the current folder is already a parent of newparent, we should return error
-		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
-		}
-	}
-
-	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,

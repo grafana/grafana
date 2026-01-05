@@ -240,6 +240,15 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          dismiss();
+        }
+        return;
+      }
+
       // this tooltip is Portaled, but actions inside it create forms in Modals
       const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
 
@@ -330,6 +339,30 @@ export const TooltipPlugin2 = ({
               let onUp = (e: MouseEvent) => {
                 u.cursor.drag!.x = true;
                 u.cursor.drag!.y = false;
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      }
+
+      // add zoom-in cursor during drag-to-zoom interaction
+      if (queryZoom != null || clientZoom) {
+        u.over.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0) {
+              u.over.classList.add('zoom-drag');
+
+              let onUp = () => {
+                u.over.classList.remove('zoom-drag');
                 document.removeEventListener('mouseup', onUp, true);
               };
 

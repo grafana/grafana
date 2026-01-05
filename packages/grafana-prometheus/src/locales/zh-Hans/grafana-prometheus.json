@@ -175,7 +175,7 @@
         "label-scrape-interval": "抓取间隔",
         "label-series-limit": "序列限制",
         "label-use-series-endpoint": "使用序列端点",
-        "more-info": "",
+        "more-info": "有关在数据源中配置 prometheus 类型和版本的更多信息，请参阅<2>预配文档</2>。",
         "placeholder-example-maxsourceresolutionmtimeout": "示例：{{example}}",
         "title-interval-behaviour": "间隔行为",
         "title-other": "其他",

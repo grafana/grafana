@@ -13,6 +13,18 @@ recordingRulev0alpha1: recordingRuleKind & {
 	schema: {
 		spec: v0alpha1.RecordingRuleSpec
 	}
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	selectableFields: [
 		"spec.title",
 		"spec.paused",

@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider, { SliderProps } from 'rc-slider';
+import Slider, { SliderProps } from '@rc-component/slider';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';

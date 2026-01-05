@@ -58,22 +58,22 @@ export function useRegisterScopesActions(
  * @param parentId
  */
 function useScopeTreeActions(searchQuery: string, parentId?: string | null) {
-  const { updateNode, selectScope, resetSelection, nodes, tree, selectedScopes } = useScopeServicesState();
+  const { filterNode, selectScope, resetSelection, nodes, tree, selectedScopes } = useScopeServicesState();
 
   // Initialize the scopes the first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
-    updateNode('', true, '');
+    filterNode('', '');
     resetSelection();
     return () => {
       resetSelection();
     };
-  }, [updateNode, resetSelection]);
+  }, [filterNode, resetSelection]);
 
   // Load the next level of scopes when the parentId changes.
   useEffect(() => {
     const parentScopeId = !parentId || parentId === 'scopes' ? '' : last(parentId.split('/'))!;
-    updateNode(parentScopeId, true, searchQuery);
-  }, [updateNode, searchQuery, parentId]);
+    filterNode(parentScopeId, searchQuery);
+  }, [filterNode, searchQuery, parentId]);
 
   return useMemo(
     () => mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope),

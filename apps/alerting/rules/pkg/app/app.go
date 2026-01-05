@@ -6,16 +6,29 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 )
 
 func New(cfg app.Config) (app.App, error) {
 	managedKinds := make([]simple.AppManagedKind, 0)
+	runtimeCfg, ok := cfg.SpecificConfig.(config.RuntimeConfig)
+	if !ok {
+		return nil, config.ErrInvalidRuntimeConfig
+	}
 	for _, kinds := range apis.GetKinds() {
 		for _, kind := range kinds {
-			managedKinds = append(managedKinds, simple.AppManagedKind{Kind: kind})
+			managedKind := simple.AppManagedKind{
+				Kind:      kind,
+				Validator: buildKindValidator(kind, runtimeCfg),
+				Mutator:   buildKindMutator(kind, runtimeCfg),
+			}
+			managedKinds = append(managedKinds, managedKind)
 		}
 	}
 
@@ -43,4 +56,24 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Validator {
+	switch kind.Kind() {
+	case "AlertRule":
+		return alertrule.NewValidator(cfg)
+	case "RecordingRule":
+		return recordingrule.NewValidator(cfg)
+	}
+	return nil
+}
+
+func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Mutator {
+	switch kind.Kind() {
+	case "AlertRule":
+		return alertrule.NewMutator(cfg)
+	case "RecordingRule":
+		return recordingrule.NewMutator(cfg)
+	}
+	return nil
 }

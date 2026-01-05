@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -50,11 +51,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -154,8 +155,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 	provisionedplugins.NewNoop,
 	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
-	sources.ProvideService,
-	wire.Bind(new(sources.Registry), new(*sources.Service)),
+	pluginsources.ProvideService,
+	wire.Bind(new(sources.Registry), new(*pluginsources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 	pluginassets2.NewLocalProvider,
@@ -200,7 +201,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares,
 		clientmiddleware.NewTracingHeaderMiddleware(),
-		clientmiddleware.NewClearAuthHeadersMiddleware(),
+		clientmiddleware.NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),

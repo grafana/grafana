@@ -1,14 +1,18 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
-import { GaugeDimensions } from './utils';
+import { RadialGaugeDimensions } from './types';
 
 export interface GlowGradientProps {
   id: string;
-  radius: number;
+  barWidth: number;
 }
 
-export function GlowGradient({ id, radius }: GlowGradientProps) {
-  const glowSize = 0.03 * radius;
+const MIN_GLOW_SIZE = 0.75;
+const GLOW_FACTOR = 0.08;
+
+export function GlowGradient({ id, barWidth }: GlowGradientProps) {
+  // 0.75 is the minimum glow size, and it scales with bar width
+  const glowSize = MIN_GLOW_SIZE + barWidth * GLOW_FACTOR;
 
   return (
     <filter id={id} filterUnits="userSpaceOnUse">
@@ -21,6 +25,43 @@ export function GlowGradient({ id, radius }: GlowGradientProps) {
   );
 }
 
+const CENTER_GLOW_OPACITY = 0.25;
+
+export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
+  const transparentColor = colorManipulator.alpha(color, CENTER_GLOW_OPACITY);
+  return (
+    <radialGradient id={`circle-glow-${gaugeId}`} r="50%" fr="0%">
+      <stop offset="0%" stopColor={transparentColor} />
+      <stop offset="90%" stopColor={'#ffffff00'} />
+    </radialGradient>
+  );
+}
+
+export interface CenterGlowProps {
+  dimensions: RadialGaugeDimensions;
+  gaugeId: string;
+  color?: string;
+}
+
+export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
+  const gradientId = `circle-glow-${gaugeId}`;
+  const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
+
+  return (
+    <>
+      <defs>
+        <radialGradient id={gradientId} r="50%" fr="0%">
+          <stop offset="0%" stopColor={transparentColor} />
+          <stop offset="90%" stopColor="#ffffff00" />
+        </radialGradient>
+      </defs>
+      <g>
+        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
+      </g>
+    </>
+  );
+}
+
 export function SpotlightGradient({
   id,
   dimensions,
@@ -29,11 +70,15 @@ export function SpotlightGradient({
   theme,
 }: {
   id: string;
-  dimensions: GaugeDimensions;
+  dimensions: RadialGaugeDimensions;
   angle: number;
   roundedBars: boolean;
   theme: GrafanaTheme2;
 }) {
+  if (theme.isLight) {
+    return null;
+  }
+
   const angleRadian = ((angle - 90) * Math.PI) / 180;
 
   let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
@@ -41,54 +86,11 @@ export function SpotlightGradient({
   let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
   let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
 
-  if (theme.isLight) {
-    return (
-      <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor={'black'} stopOpacity={0.0} />
-        <stop offset="90%" stopColor={'black'} stopOpacity={0.0} />
-        <stop offset="91%" stopColor={'black'} stopOpacity={1} />
-      </linearGradient>
-    );
-  }
-
   return (
     <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
-      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
+      <stop offset="0%" stopColor="#ffffff00" />
+      <stop offset="95%" stopColor="#ffffff88" />
+      {roundedBars && <stop offset="100%" stopColor={roundedBars ? '#ffffffbb' : 'white'} />}
     </linearGradient>
-  );
-}
-
-export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
-  return (
-    <radialGradient id={`circle-glow-${gaugeId}`} r={'50%'} fr={'0%'}>
-      <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-      <stop offset="90%" stopColor={color} stopOpacity={0} />
-    </radialGradient>
-  );
-}
-
-export interface CenterGlowProps {
-  dimensions: GaugeDimensions;
-  gaugeId: string;
-  color?: string;
-}
-
-export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
-  const gradientId = `circle-glow-${gaugeId}`;
-
-  return (
-    <>
-      <defs>
-        <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
-          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-          <stop offset="90%" stopColor={color} stopOpacity={0} />
-        </radialGradient>
-      </defs>
-      <g>
-        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
-      </g>
-    </>
   );
 }

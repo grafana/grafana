@@ -10,6 +10,7 @@ import {
   TooltipPlugin2,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
@@ -25,6 +26,7 @@ import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
@@ -109,6 +111,7 @@ export const StatusHistoryPanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
       >
         {(builder, alignedFrame) => {
           // TODO: refactor frame prep not to do this here, should be memod at panel level once GraphNG is dissolved
@@ -119,6 +122,7 @@ export const StatusHistoryPanel = ({
               {cursorSync !== DashboardCursorSync.Off && (
                 <EventBusPlugin config={builder} eventBus={eventBus} frame={seriesFrame} />
               )}
+              <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
                   config={builder}
@@ -170,6 +174,7 @@ export const StatusHistoryPanel = ({
               {seriesFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
+                  multiLane={options.annotations?.multiLane}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

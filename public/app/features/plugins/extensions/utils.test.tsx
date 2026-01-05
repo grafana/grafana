@@ -3,7 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
 import { config, AppPluginConfig } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
@@ -785,7 +785,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
 
       expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
@@ -818,7 +817,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
 
       expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
@@ -965,7 +963,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
     });
 
@@ -995,7 +992,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
         message: 'Test error',
         componentStack: expect.any(String),
-        digest: expect.any(String),
       });
     });
   });

@@ -86,7 +86,7 @@ describe('browse-dashboards MoveModal', () => {
       it('displays summary of affected items', async () => {
         render(<MoveModal {...props} />);
 
-        expect(await screen.findByText(/This action will move the following content/i)).toBeInTheDocument();
+        expect(await screen.findByText(/This action will move the folder/i)).toBeInTheDocument();
 
         expect(await screen.findByText(/5 item/)).toBeInTheDocument();
         expect(screen.getByText(/2 folder/)).toBeInTheDocument();

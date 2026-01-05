@@ -43,7 +43,7 @@ test.describe(
 
         await setScopes(page);
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         const firstDbName = await scopesDashboards.first().textContent();
         const scopeDashboardsCount = await scopesDashboards.count();
@@ -60,7 +60,7 @@ test.describe(
 
         await setScopes(page);
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         // assert the panel is visible and has the correct value
         const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
@@ -94,7 +94,7 @@ test.describe(
 
             await setScopes(page, { title: 'CUJ Dashboard 3', uid: NAVIGATE_TO });
 
-            await expect(scopeSelectorInput).toHaveValue(/.+/);
+            await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
             const pills = await adhocFilterPills.allTextContents();
             const processedPills = pills
@@ -138,7 +138,7 @@ test.describe(
 
         await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         const pillCount = await adhocFilterPills.count();
         const pillTexts = await adhocFilterPills.allTextContents();

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/i18n",
-  "version": "12.3.0-pre",
+  "version": "12.4.0-pre",
   "description": "Grafana Internationalization Library",
   "keywords": [
     "grafana",
@@ -14,33 +14,32 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-i18n"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "module": "src/index.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
     },
     "./internal": {
-      "import": "./src/internal/index.ts",
-      "require": "./src/internal/index.ts"
+      "@grafana-app/source": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
+      "@grafana-app/source": "./src/eslint/index.cjs",
       "types": "./src/eslint/index.d.ts",
-      "import": "./src/eslint/index.cjs",
-      "require": "./src/eslint/index.cjs"
+      "default": "./src/eslint/index.cjs"
     }
   },
   "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
     "dist",
+    "src/eslint/**/*",
     "./README.md",
     "./CHANGELOG.md",
     "LICENSE_APACHE2"

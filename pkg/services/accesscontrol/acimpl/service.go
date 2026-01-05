@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -96,6 +97,12 @@ func ProvideOSSService(
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
 		permRegistry:   permRegistry,
+		sql:            db,
+		serverLock:     lock,
+	}
+
+	if backend, ok := store.(*database.AccessControlStore); ok {
+		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
 	}
 
 	return s
@@ -112,8 +119,11 @@ type Service struct {
 	rolesMu        sync.RWMutex
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
+	seeder         *seeding.Seeder
 	permRegistry   permreg.PermissionRegistry
 	isInitialized  bool
+	sql            db.DB
+	serverLock     *serverlock.ServerLockService
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -431,15 +441,52 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	defer span.End()
 
 	s.rolesMu.Lock()
-	defer s.rolesMu.Unlock()
-
+	registrations := s.registrations.Slice()
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		s.registerRolesLocked(registration)
 		return true
 	})
 
 	s.isInitialized = true
+
+	rolesSnapshot := s.getBasicRolePermissionsLocked()
+	s.rolesMu.Unlock()
+
+	if s.seeder != nil {
+		if err := s.seeder.SeedRoles(ctx, registrations); err != nil {
+			return err
+		}
+		if err := s.seeder.RemoveAbsentRoles(ctx); err != nil {
+			return err
+		}
+	}
+
+	if err := s.refreshBasicRolePermissionsInDB(ctx, rolesSnapshot); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// getBasicRolePermissionsSnapshotFromRegistrationsLocked computes the desired basic role permissions from the
+// current registration list, using the shared seeding registration logic.
+//
+// it has to be called while holding the roles lock
+func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Permission {
+	desired := map[accesscontrol.SeedPermission]struct{}{}
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		seeding.AppendDesiredPermissions(desired, s.log, &registration.Role, registration.Grants, registration.Exclude, true)
+		return true
+	})
+
+	out := make(map[string][]accesscontrol.Permission)
+	for sp := range desired {
+		out[sp.BuiltInRole] = append(out[sp.BuiltInRole], accesscontrol.Permission{
+			Action: sp.Action,
+			Scope:  sp.Scope,
+		})
+	}
+	return out
 }
 
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
@@ -474,6 +521,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	defer span.End()
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
+	updatedBasicRoles := false
 	for _, r := range acRegs {
 		if err := pluginutils.ValidatePluginRole(ID, r.Role); err != nil {
 			return err
@@ -500,8 +548,20 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 		if initialized {
 			s.rolesMu.Lock()
 			s.registerRolesLocked(r)
+			updatedBasicRoles = true
 			s.rolesMu.Unlock()
 			s.cache.Flush()
+		}
+	}
+
+	if updatedBasicRoles {
+		s.rolesMu.RLock()
+		rolesSnapshot := s.getBasicRolePermissionsLocked()
+		s.rolesMu.RUnlock()
+
+		// plugin roles can be declared after startup - keep DB in sync
+		if err := s.refreshBasicRolePermissionsInDB(ctx, rolesSnapshot); err != nil {
+			return err
 		}
 	}
 
@@ -741,6 +801,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SaveExternalServiceRole")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -757,6 +818,7 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteExternalServiceRole")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil

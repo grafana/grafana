@@ -3,7 +3,7 @@
 # Others can set up the YAML LSP manually, which supports schemas: https://github.com/redhat-developer/yaml-language-server
 
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
-version: "2"
+version: '2'
 run:
   timeout: 15m
   concurrency: 10
@@ -83,6 +83,16 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
+        apps-dashboard:
+          list-mode: lax
+          files:
+            - ./apps/dashboard/*
+            - ./apps/dashboard/**/*
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/dashboard is not allowed to import grafana core
         apps-secret:
           list-mode: lax
           files:
@@ -105,6 +115,8 @@ linters:
             - '**/pkg/tsdb/graphite/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
+            - '**/pkg/tsdb/opentsdb/*'
+            - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
             - '**/pkg/tsdb/tempo/*'
@@ -179,7 +191,9 @@ linters:
             - pkg: io/ioutil
               desc: 'Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details.'
             - pkg: gopkg.in/yaml.v2
-              desc: Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available
+              desc: use go.yaml.in/yaml/v3 instead
+            - pkg: gopkg.in/yaml.v3
+              desc: use go.yaml.in/yaml/v3 instead
             - pkg: github.com/pkg/errors
               desc: 'Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library.'
             - pkg: github.com/xorcare/pointer
@@ -277,16 +291,16 @@ linters:
         text: G306
       - linters:
           - gosec
-        text: "401"
+        text: '401'
       - linters:
           - gosec
-        text: "402"
+        text: '402'
       - linters:
           - gosec
-        text: "501"
+        text: '501'
       - linters:
           - gosec
-        text: "404"
+        text: '404'
       - linters:
           - errorlint
         text: non-wrapping format verb for fmt.Errorf

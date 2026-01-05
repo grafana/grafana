@@ -1,6 +1,5 @@
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
-import { KioskMode } from 'app/types/dashboard';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
@@ -15,7 +14,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'kiosk', 'shareView'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -26,7 +25,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanel,
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? 'true' : undefined,
       shareView: state.shareView,
       orgId: contextSrv.user.orgId.toString(),
     };
@@ -114,12 +112,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       if (!!layout.state.grid.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
         layout.state.grid.setState({ UNSAFE_fitPanels });
-      }
-    }
-
-    if (typeof values.kiosk === 'string') {
-      if (values.kiosk === 'true' || values.kiosk === '') {
-        update.kioskMode = KioskMode.Full;
       }
     }
 
