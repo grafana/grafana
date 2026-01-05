@@ -3596,16 +3596,23 @@
       },
       "TemplateGroupSpec": {
         "type": "object",
-        "required": ["title", "content"],
+        "required": ["title", "content", "kind"],
         "properties": {
           "content": {
             "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateGroupTemplateKind"
           },
           "title": {
             "type": "string"
           }
         },
         "additionalProperties": false
+      },
+      "TemplateGroupTemplateKind": {
+        "type": "string",
+        "enum": ["grafana", "mimir"]
       },
       "TimeInterval": {
         "type": "object",

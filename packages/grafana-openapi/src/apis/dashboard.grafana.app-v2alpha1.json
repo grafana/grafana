@@ -2714,6 +2714,9 @@
             "type": "string",
             "default": ""
           },
+          "regexApplyTo": {
+            "$ref": "#/components/schemas/DashboardVariableRegexApplyTo"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -3490,6 +3493,11 @@
         "description": "Options to config when to refresh a variable\n`never`: Never refresh the variable\n`onDashboardLoad`: Queries the data source every time the dashboard loads.\n`onTimeRangeChanged`: Queries the data source when the dashboard time range changes.",
         "type": "string",
         "enum": ["never", "onDashboardLoad", "onTimeRangeChanged"]
+      },
+      "DashboardVariableRegexApplyTo": {
+        "description": "Determine whether regex applies to variable value or display text\nAccepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)",
+        "type": "string",
+        "enum": ["value", "text"]
       },
       "DashboardVariableSort": {
         "description": "Sort variable options\nAccepted values are:\n`disabled`: No sorting\n`alphabeticalAsc`: Alphabetical ASC\n`alphabeticalDesc`: Alphabetical DESC\n`numericalAsc`: Numerical ASC\n`numericalDesc`: Numerical DESC\n`alphabeticalCaseInsensitiveAsc`: Alphabetical Case Insensitive ASC\n`alphabeticalCaseInsensitiveDesc`: Alphabetical Case Insensitive DESC\n`naturalAsc`: Natural ASC\n`naturalDesc`: Natural DESC\nVariableSort enum with default value",
