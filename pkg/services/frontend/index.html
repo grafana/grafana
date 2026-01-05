@@ -250,11 +250,14 @@
             }
           }
 
-          return null;
+          return undefined;
         }
 
         function getSessionExpiration() {
-          const value = getCookie("grafana_session_expiry") || "0";
+          const value = getCookie("grafana_session_expiry");
+          if (!value) {
+            return undefined;
+          }
           const realExpiresSeconds = parseInt(value, 10);
           const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
           const expiration = new Date(expiresSeconds * 1000);
@@ -332,7 +335,7 @@
                 const now = new Date();
 
                 // If the session has expired, don't continue trying to fetch boot data
-                if (now >= sessionExpiration) {
+                if (sessionExpiration && now >= sessionExpiration) {
                   await rotateSession();
                 }
               } catch (error) {
