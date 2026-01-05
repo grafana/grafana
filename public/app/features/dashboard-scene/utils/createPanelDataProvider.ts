@@ -20,8 +20,6 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
 
   dataProvider = new SceneQueryRunner({
     // If panel.datasource is not defined, we use the first datasource from the targets (queries)
-    // This is to match the backend behavior when converting dashboard from V2 dashboard to V1
-    // Also, SceneQueryRunner has the same logic
     datasource: panel.datasource ?? findFirstDatasource(panel.targets),
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
@@ -43,7 +41,7 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
 }
 
 function findFirstDatasource(targets: DataQuery[]): DataSourceRef | undefined {
-  const datasource = targets.find((t) => t.datasource !== null)?.datasource;
+  const datasource = targets.find((t) => Boolean(t.datasource))?.datasource;
   if (!datasource) {
     return undefined;
   }
