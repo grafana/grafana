@@ -271,7 +271,6 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 		expectedActionCode = 3
 	}
 	require.Equal(t, expectedActionCode, actualAction)
-
 }
 
 // getAnnotationsJSON returns the annotations JSON string for the folder annotation if needed
