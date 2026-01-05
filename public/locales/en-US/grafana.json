@@ -5216,6 +5216,13 @@
       "title-matched_one": "Matched {{count}}/{{totalCount}} options",
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
+    "add": {
+      "pane-header": "Add",
+      "new-panel": {
+        "title": "Panel",
+        "description": "Drag or click to add a panel"
+      }
+    },
     "outline": {
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
@@ -5432,6 +5439,10 @@
       "dashboard-options": {
         "title": "Options",
         "tooltip": "Dashboard options"
+      },
+      "add": {
+        "title": "Add",
+        "tooltip": "Add a new element"
       },
       "edit-schema": {
         "title": "Code",

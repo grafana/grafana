@@ -1,38 +1,42 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { SceneObject, SceneObjectState, useSceneObjectState, VizPanel } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
-  isDocked?: boolean;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
+  const [selectedLayoutElement, setSelectedLayoutElement] = useState(selectedObject);
 
   const editableElement = useMemo(() => {
     if (selection) {
@@ -41,6 +45,26 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
 
     return undefined;
   }, [selection]);
+
+  // saves the row or tab selected when opening the 'add' pane, so new panels can later be added to it
+  const onSetLayoutElement = (obj: SceneObject<SceneObjectState> | undefined) => {
+    if (obj instanceof RowItem || obj instanceof TabItem) {
+      setSelectedLayoutElement(obj);
+    } else if (!(obj instanceof VizPanel)) {
+      setSelectedLayoutElement(dashboard);
+    }
+  };
+
+  const onAddNewPanel = () => {
+    if (selectedLayoutElement) {
+      const panel = getDefaultVizPanel();
+      if (selectedLayoutElement instanceof DashboardScene) {
+        dashboard.addPanel(panel);
+      } else if (selectedLayoutElement instanceof RowItem || selectedLayoutElement instanceof TabItem) {
+        selectedLayoutElement.getLayout().addPanel(panel);
+      }
+    }
+  };
 
   return (
     <>
@@ -52,6 +76,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
             element={editableElement}
             isNewElement={isNewElement}
           />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'add' && (
+        <Sidebar.OpenPane>
+          <DashboardSidePaneNew onAddPanel={onAddNewPanel} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (
@@ -68,6 +97,18 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
                 <RedoButton dashboard={dashboard} />
               </>
             )}
+            <Sidebar.Button
+              icon="plus"
+              isAddButton
+              onClick={() => {
+                onSetLayoutElement(selectedObject);
+                editPane.openPane('add');
+              }}
+              title={t('dashboard.sidebar.add.title', 'Add')}
+              tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
+              data-testid={selectors.pages.Dashboard.Sidebar.addButton}
+              active={selectedObject === null || openPane === 'add'}
+            />
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}

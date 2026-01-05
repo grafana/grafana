@@ -16,10 +16,11 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   tooltip?: string;
   title: string;
+  isAddButton?: boolean;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, isAddButton, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
     const context = useContext(SidebarContext);
 
@@ -31,7 +32,8 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
       styles.button,
       context.compact && styles.compact,
       active && styles.active,
-      context.position === 'left' && styles.leftButton
+      context.position === 'left' && styles.leftButton,
+      isAddButton && 'primary'
     );
 
     return (
@@ -44,7 +46,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
+          <div>{renderIcon(icon, isAddButton)}</div>
           {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
@@ -54,13 +56,13 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
 
 SidebarButton.displayName = 'SidebarButton';
 
-function renderIcon(icon: IconName | React.ReactNode, compact?: boolean) {
+function renderIcon(icon: IconName | React.ReactNode, isAddButton?: boolean) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={compact ? `lg` : `lg`} />;
+    return <Icon name={icon} size={isAddButton ? 'xl' : 'lg'} />;
   }
 
   return icon;
@@ -83,7 +85,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-
+      '&.primary': css({
+        svg: {
+          backgroundColor: theme.colors.primary.main,
+          color: theme.colors.getContrastText(theme.colors.primary.main),
+          borderRadius: theme.shape.radius.sm,
+          padding: 2,
+        },
+      }),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
           duration: theme.transitions.duration.short,
@@ -145,7 +154,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       whiteSpace: 'nowrap',
     }),
-    iconWrapper: css({}),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
