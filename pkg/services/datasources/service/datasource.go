@@ -51,6 +51,7 @@ type Service struct {
 	pluginStore               pluginstore.Store
 	pluginClient              plugins.Client
 	basePluginContextProvider plugincontext.BasePluginContextProvider
+	retriever                 DataSourceRetriever
 
 	ptc proxyTransportCache
 }
@@ -70,6 +71,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
+	retriever DataSourceRetriever,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -89,6 +91,7 @@ func ProvideService(
 		pluginStore:               pluginStore,
 		pluginClient:              pluginClient,
 		basePluginContextProvider: basePluginContextProvider,
+		retriever:                 retriever,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -119,6 +122,8 @@ type DataSourceRetriever interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
 	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
+	// GetAllDataSources gets all datasources.
+	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -175,11 +180,11 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
-	return s.SQLStore.GetDataSource(ctx, query)
+	return s.retriever.GetDataSource(ctx, query)
 }
 
 func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	return s.SQLStore.GetDataSourceInNamespace(ctx, namespace, name, group)
+	return s.retriever.GetDataSourceInNamespace(ctx, namespace, name, group)
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
@@ -187,7 +192,7 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 }
 
 func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
-	return s.SQLStore.GetAllDataSources(ctx, query)
+	return s.retriever.GetAllDataSources(ctx, query)
 }
 
 func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
