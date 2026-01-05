@@ -1,7 +1,5 @@
 import { HttpResponse, http } from 'msw';
 
-import { ExternalGroupMapping } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-
 import { mockTeamsMap } from '../../../../fixtures/teams';
 
 const getDisplayMapping = () =>
@@ -31,7 +29,7 @@ const getDisplayMapping = () =>
   });
 
 const listExternalGroupMappings = () =>
-  http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings', () => {
+  http.get<{ namespace: string }>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings', () => {
     const items = [];
     for (const [teamName, data] of mockTeamsMap.entries()) {
       for (const group of data.groups) {
@@ -55,7 +53,8 @@ const listExternalGroupMappings = () =>
   });
 
 const createExternalGroupMapping = () =>
-  http.post<{ namespace: string }, ExternalGroupMapping>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  http.post<{ namespace: string }, any>(
     '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings',
     async ({ request }) => {
       const body = await request.json();
@@ -79,19 +78,22 @@ const createExternalGroupMapping = () =>
   );
 
 const deleteExternalGroupMapping = () =>
-  http.delete('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings/:name', ({ params }) => {
-    const { name } = params;
+  http.delete<{ namespace: string; name: string }>(
+    '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings/:name',
+    ({ params }) => {
+      const { name } = params;
 
-    for (const [teamName, data] of mockTeamsMap.entries()) {
-      const groupIndex = data.groups.findIndex((g) => `mapping-${teamName}-${g.groupId}` === name);
-      if (groupIndex !== -1) {
-        data.groups.splice(groupIndex, 1);
-        return HttpResponse.json({ status: 'Success' });
+      for (const [teamName, data] of mockTeamsMap.entries()) {
+        const groupIndex = data.groups.findIndex((g) => `mapping-${teamName}-${g.groupId}` === name);
+        if (groupIndex !== -1) {
+          data.groups.splice(groupIndex, 1);
+          return HttpResponse.json({ status: 'Success' });
+        }
       }
-    }
 
-    return HttpResponse.json({ status: 'Failure', message: 'Not found' }, { status: 404 });
-  });
+      return HttpResponse.json({ status: 'Failure', message: 'Not found' }, { status: 404 });
+    }
+  );
 
 export default [
   getDisplayMapping(),

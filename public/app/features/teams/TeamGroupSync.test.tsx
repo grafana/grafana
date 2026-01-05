@@ -25,9 +25,8 @@ describe('TeamGroupSync', () => {
     expect(await screen.findAllByRole('row')).toHaveLength(MOCK_TEAM_GROUPS.length + 1); // items plus table header
   });
 
-  it('should call add group', async () => {
+  it('should add group', async () => {
     const { user } = setup();
-    // Wait for the groups to load so the "Add group" button appears
     await screen.findAllByRole('row');
 
     await user.click(screen.getAllByRole('button', { name: /add group/i })[0]);
@@ -43,10 +42,8 @@ describe('TeamGroupSync', () => {
     const { user } = setup();
     const groupToRemove = MOCK_TEAM_GROUPS[0].groupId;
 
-    // Wait for group to be rendered
     await screen.findByRole('row', { name: new RegExp(groupToRemove, 'i') });
 
-    // Remove group
     await user.click(screen.getByRole('button', { name: `Remove group ${groupToRemove}` }));
 
     await waitFor(() =>
@@ -74,9 +71,8 @@ describe('TeamGroupSync with kubernetesExternalGroupMapping enabled', () => {
     expect(await screen.findAllByRole('row')).toHaveLength(MOCK_TEAM_GROUPS.length + 1); // items plus table header
   });
 
-  it('should call add group', async () => {
+  it('should add group', async () => {
     const { user } = setup();
-    // Wait for the groups to load so the "Add group" button appears
     await screen.findAllByRole('row');
 
     await user.click(screen.getAllByRole('button', { name: /add group/i })[0]);
@@ -92,10 +88,8 @@ describe('TeamGroupSync with kubernetesExternalGroupMapping enabled', () => {
     const { user } = setup();
     const groupToRemove = MOCK_TEAM_GROUPS[0].groupId;
 
-    // Wait for group to be rendered
     await screen.findByRole('row', { name: new RegExp(groupToRemove, 'i') });
 
-    // Remove group
     await user.click(screen.getByRole('button', { name: `Remove group ${groupToRemove}` }));
 
     await waitFor(() =>
