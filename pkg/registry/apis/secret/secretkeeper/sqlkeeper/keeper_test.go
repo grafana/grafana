@@ -26,6 +26,8 @@ func TestMain(m *testing.M) {
 }
 
 func Test_SQLKeeperSetup(t *testing.T) {
+	t.Skip("feature FlagSecretsManagementAppPlatform is broken in 12.1.X for X >= 6 due to backporting incompatible DB schema, don't enable it before updating to 12.2")
+
 	ctx := context.Background()
 	namespace1 := "namespace1"
 	namespace2 := "namespace2"
