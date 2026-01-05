@@ -30,11 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// AlertRuleMaxTitleLength is the maximum length of the alert rule title
-const AlertRuleMaxTitleLength = 190
+const (
+	// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+	AlertRuleMaxTitleLength = 190
 
-// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
-const AlertRuleMaxRuleGroupNameLength = 190
+	// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+	AlertRuleMaxRuleGroupNameLength = 190
+)
 
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
@@ -970,6 +972,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.PluginOriginFilter != ngmodels.PluginOriginFilterNone {
+		q, err = st.filterByPluginOrigin(query.PluginOriginFilter, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
 	// FIXME: record is nullable but we don't save it as null when it's nil
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
@@ -1425,6 +1434,32 @@ func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Ses
 		sess = sess.And(sql, args...)
 	}
 	return sess, nil
+}
+
+// filterByPluginOrigin adds filtering for plugin-originated rules based on the __grafana_origin label.
+func (st DBstore) filterByPluginOrigin(filter ngmodels.PluginOriginFilter, sess *xorm.Session) (*xorm.Session, error) {
+	if filter == ngmodels.PluginOriginFilterNone {
+		return sess, nil
+	}
+
+	var sql string
+	var args []any
+	var err error
+
+	switch filter {
+	case ngmodels.PluginOriginFilterHide:
+		sql, args, err = buildLabelKeyMissingCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	case ngmodels.PluginOriginFilterOnly:
+		sql, args, err = buildLabelKeyExistsCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	default:
+		return nil, fmt.Errorf("unknown plugin origin filter %q", filter)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sess.And(sql, args...), nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
