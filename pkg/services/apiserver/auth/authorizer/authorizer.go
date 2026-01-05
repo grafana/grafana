@@ -40,10 +40,6 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
 	authorizers = append(authorizers, &authorizerForAPI{apis})
 
-	// org role authorizer is last -- and will return allow for verbs that match expectations
-	// it is only helpful here for remote APIs in some cloud use-cases.
-	//nolint:staticcheck // remove once build handler chains are untangled between local and remote APIs handling
-	authorizers = append(authorizers, NewRoleAuthorizer())
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),
