@@ -218,17 +218,17 @@ func (d JSONData) DashboardIncludes() []*Includes {
 // Route describes a plugin route that is defined in
 // the plugin.json file for a plugin.
 type Route struct {
-	Path         string          `json:"path"`
-	Method       string          `json:"method"`
-	ReqRole      identity.RoleType    `json:"reqRole"`
-	ReqAction    string          `json:"reqAction"`
-	URL          string          `json:"url"`
-	URLParams    []URLParam      `json:"urlParams"`
-	Headers      []Header        `json:"headers"`
-	AuthType     string          `json:"authType"`
-	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
-	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
-	Body         json.RawMessage `json:"body"`
+	Path         string            `json:"path"`
+	Method       string            `json:"method"`
+	ReqRole      identity.RoleType `json:"reqRole"`
+	ReqAction    string            `json:"reqAction"`
+	URL          string            `json:"url"`
+	URLParams    []URLParam        `json:"urlParams"`
+	Headers      []Header          `json:"headers"`
+	AuthType     string            `json:"authType"`
+	TokenAuth    *JWTTokenAuth     `json:"tokenAuth"`
+	JwtTokenAuth *JWTTokenAuth     `json:"jwtTokenAuth"`
+	Body         json.RawMessage   `json:"body"`
 }
 
 // Header describes an HTTP header that is forwarded with
