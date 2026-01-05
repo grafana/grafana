@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Generates test data in different forms",
-    "title": "grafana-testdata-datasource/v0alpha1"
+    "title": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
   },
   "paths": {
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/": {
@@ -68,7 +68,7 @@
         "deprecated": true,
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "QueryDataResponse"
         }
@@ -137,7 +137,7 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "DataSource"
         }
@@ -285,7 +285,7 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "DataSource"
         }
@@ -343,7 +343,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "HealthCheckResult"
         }
@@ -401,7 +401,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "QueryDataResponse"
         }
@@ -450,7 +450,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "Status"
         }
@@ -499,7 +499,7 @@
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource",
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "QueryDataRequest"
         }
@@ -660,7 +660,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "grafana-testdata-datasource",
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "DataSource",
             "version": "v0alpha1"
           }
@@ -703,7 +703,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "grafana-testdata-datasource",
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "DataSourceList",
             "version": "v0alpha1"
           }
@@ -744,7 +744,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "grafana-testdata-datasource",
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "HealthCheckResult",
             "version": "v0alpha1"
           }
@@ -833,7 +833,7 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "grafana-testdata-datasource",
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "QueryDataResponse",
             "version": "v0alpha1"
           }
