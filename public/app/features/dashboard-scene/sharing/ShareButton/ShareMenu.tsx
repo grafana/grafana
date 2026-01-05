@@ -6,8 +6,10 @@ import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
@@ -40,9 +42,38 @@ export function resetDashboardShareDrawerItems() {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const onMenuItemClick = (shareView: string) => {
-    locationService.partial({ shareView });
-  };
+  const publishSaveEvent = useCallback(
+    ({ onSaveSuccess }: { onSaveSuccess: () => void }) => {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard.toolbar.new.share-export.modal.title', 'Save changes to dashboard?'),
+          text: t(
+            'dashboard.toolbar.new.share-export.modal.text',
+            'You have unsaved changes to this dashboard. You need to save them before you can share it.'
+          ),
+          icon: 'exclamation-triangle',
+          noText: t('dashboard.toolbar.new.share-export.modal.noText', 'Discard'),
+          yesText: t('dashboard.toolbar.new.share-export.modal.yesText', 'Save'),
+          yesButtonVariant: 'primary',
+          onConfirm: () => dashboard.openSaveDrawer({ onSaveSuccess }),
+        })
+      );
+    },
+    [dashboard]
+  );
+
+  const onMenuItemClick = useCallback(
+    (shareView: string) => {
+      // Prompt user to save changes if there are unsaved changes
+      if (dashboard.state.isEditing && dashboard.state.isDirty) {
+        publishSaveEvent({ onSaveSuccess: () => locationService.partial({ shareView }) });
+        return;
+      }
+      // Share the dashboard, if no unsaved changes
+      locationService.partial({ shareView });
+    },
+    [dashboard, publishSaveEvent]
+  );
 
   const buildMenuItems = useCallback(() => {
     const menuItems: ShareDrawerMenuItem[] = [];
@@ -84,7 +115,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel]);
+  }, [panel, onMenuItemClick]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
