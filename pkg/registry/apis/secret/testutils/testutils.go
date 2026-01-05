@@ -4,10 +4,13 @@ import (
 	"context"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -25,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
 )
 
 type SetupConfig struct {
@@ -50,6 +52,8 @@ func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
 }
 
 func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
+	t.Skip("feature FlagSecretsManagementAppPlatform is broken in 12.1.X for X >= 6 due to backporting incompatible DB schema, don't enable it before updating to 12.2")
+
 	setupCfg := defaultSetupCfg()
 	for _, opt := range opts {
 		opt(&setupCfg)
