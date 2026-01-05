@@ -115,19 +115,7 @@ export const PieChart = ({
           >
             {(pie) => (
               <>
-                {pie.arcs
-                  .sort((a, b) => {
-                    const aHasLinks = a.data.hasLinks && a.data.getLinks;
-                    const bHasLinks = b.data.hasLinks && b.data.getLinks;
-                    if (aHasLinks && !bHasLinks) {
-                      return -1;
-                    }
-                    if (!aHasLinks && bHasLinks) {
-                      return 1;
-                    }
-                    return 0;
-                  })
-                  .map((arc) => {
+                {pie.arcs.map((arc) => {
                     const color = arc.data.display.color ?? FALLBACK_COLOR;
                     const highlightState = getHighlightState(highlightedTitle, arc);
 
