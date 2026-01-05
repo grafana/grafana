@@ -3,7 +3,6 @@ package clientauth
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,14 +39,13 @@ func TestTokenExchangeRoundTripper_SetsAccessTokenHeader(t *testing.T) {
 	})
 
 	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewStaticAudienceProvider("test-audience"))
-	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
 	resp, err := rt.RoundTrip(req)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
 	// Clean up response
-	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
 
 	require.Equal(t, "Bearer test-token-123", capturedHeader)
@@ -63,7 +61,7 @@ func TestTokenExchangeRoundTripper_PropagatesExchangeError(t *testing.T) {
 	})
 
 	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("test-namespace"), NewStaticAudienceProvider("test-audience"))
-	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
 	resp, err := rt.RoundTrip(req)
 	require.Error(t, err)
@@ -113,11 +111,10 @@ func TestTokenExchangeRoundTripper_SendsCorrectAudienceAndNamespace(t *testing.T
 			})
 
 			rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider(tt.namespace), NewStaticAudienceProvider(tt.audience))
-			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
 			resp, err := rt.RoundTrip(req)
 			require.NoError(t, err)
-			_, _ = io.Copy(io.Discard, resp.Body)
 			_ = resp.Body.Close()
 
 			require.NotNil(t, exchanger.gotReq)
@@ -136,7 +133,7 @@ func TestTokenExchangeRoundTripper_DoesNotMutateOriginalRequest(t *testing.T) {
 	})
 
 	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewStaticAudienceProvider("audience"))
-	originalReq, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+	originalReq, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
 	// Ensure original request has no X-Access-Token header
 	originalReq.Header.Set("X-Custom-Header", "original-value")
@@ -144,7 +141,6 @@ func TestTokenExchangeRoundTripper_DoesNotMutateOriginalRequest(t *testing.T) {
 
 	resp, err := rt.RoundTrip(originalReq)
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
 
 	// Original request should not have been mutated
@@ -160,8 +156,9 @@ func TestTokenExchangeRoundTripper_PropagatesTransportError(t *testing.T) {
 	})
 
 	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("namespace"), NewStaticAudienceProvider("audience"))
-	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
+	//nolint:bodyclose
 	resp, err := rt.RoundTrip(req)
 	require.Error(t, err)
 	require.Nil(t, resp)
@@ -182,10 +179,9 @@ func TestNewTokenExchangeTransportWrapper(t *testing.T) {
 	wrapper := NewStaticTokenExchangeTransportWrapper(exchanger, "test-audience", "test-namespace")
 	wrappedTransport := wrapper(baseTransport)
 
-	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 	resp, err := wrappedTransport.RoundTrip(req)
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
 
 	require.Equal(t, "Bearer wrapped-token", capturedHeader)
@@ -240,10 +236,9 @@ func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 				tt.audienceProvider,
 			)
 
-			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
+			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 			resp, err := rt.RoundTrip(req)
 			require.NoError(t, err)
-			_, _ = io.Copy(io.Discard, resp.Body)
 			_ = resp.Body.Close()
 
 			require.Equal(t, tt.expectedHeader, capturedHeader)
@@ -252,31 +247,4 @@ func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 			require.Equal(t, tt.expectedNamespace, exchanger.gotReq.Namespace)
 		})
 	}
-}
-
-func TestBackwardCompatibility(t *testing.T) {
-	// Verify that the simple constructor still works exactly as before
-	exchanger := &fakeExchanger{resp: &authn.TokenExchangeResponse{Token: "token"}}
-
-	var capturedHeader string
-	transport := roundTripperFunc(func(r *http.Request) (*http.Response, error) {
-		capturedHeader = r.Header.Get("X-Access-Token")
-		rr := httptest.NewRecorder()
-		rr.WriteHeader(http.StatusOK)
-		return rr.Result(), nil
-	})
-
-	// Old constructor should work exactly as before
-	rt := newTokenExchangeRoundTripperWithStrategies(exchanger, transport, NewStaticNamespaceProvider("my-namespace"), NewStaticAudienceProvider("my-audience"))
-
-	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
-	resp, err := rt.RoundTrip(req)
-	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, resp.Body)
-	_ = resp.Body.Close()
-
-	// Should have Bearer prefix by default
-	require.Equal(t, "Bearer token", capturedHeader)
-	require.Equal(t, []string{"my-audience"}, exchanger.gotReq.Audiences)
-	require.Equal(t, "my-namespace", exchanger.gotReq.Namespace)
 }
