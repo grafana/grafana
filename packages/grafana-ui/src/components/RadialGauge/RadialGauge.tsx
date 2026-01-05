@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 
 import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -275,7 +276,11 @@ export function RadialGauge(props: RadialGaugeProps) {
   }
 
   return (
-    <div className={styles.vizWrapper} style={{ width, height }}>
+    <div
+      data-testid={selectors.components.Panels.Visualization.Gauge.Container}
+      className={styles.vizWrapper}
+      style={{ width, height }}
+    >
       {body}
     </div>
   );

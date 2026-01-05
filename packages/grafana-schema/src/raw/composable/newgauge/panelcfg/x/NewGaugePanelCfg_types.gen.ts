@@ -35,6 +35,7 @@ export interface Options extends common.SingleStatBaseOptions {
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
   sparkline?: boolean;
+  textMode?: ('auto' | 'value_and_name' | 'value' | 'name' | 'none');
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -48,4 +49,5 @@ export const defaultOptions: Partial<Options> = {
   showThresholdLabels: false,
   showThresholdMarkers: true,
   sparkline: true,
+  textMode: 'auto',
 };
