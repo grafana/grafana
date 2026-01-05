@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context) (resource.KVBackend, sqldb.DB) {
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) (resource.KVBackend, sqldb.DB) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -29,17 +29,21 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context) (resource.KVBackend,
 	db, err := eDB.Init(ctx)
 	require.NoError(t, err)
 
-	dialect := sqltemplate.DialectForDriver(db.DriverName())
-	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-		Dialect: dialect,
-		DB:      db,
-	})
-	require.NoError(t, err)
-
 	kvOpts := resource.KVBackendOptions{
 		KvStore: kv,
-		RvManager: rvManager,
 	}
+
+	if withRvManager {
+		dialect := sqltemplate.DialectForDriver(db.DriverName())
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      db,
+		})
+		require.NoError(t, err)
+
+		kvOpts.RvManager = rvManager
+	}
+
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
 	return backend, db
