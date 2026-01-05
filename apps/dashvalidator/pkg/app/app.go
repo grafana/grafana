@@ -61,7 +61,6 @@ func handleCheckRoute(
 	datasourceSvc datasources.DataSourceService,
 	pluginCtx *plugincontext.Provider,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
-
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, r *app.CustomRouteRequest) error {
 		logger := log.WithContext(ctx)
 		logger.Info("Received compatibility check request")
