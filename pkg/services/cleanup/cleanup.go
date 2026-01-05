@@ -260,15 +260,15 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 		return
 	}
 
-	// Set up the GroupVersionResource for shortURLs
+	// Set up the GroupVersionResource for snapshots
 	gvr := v0alpha1.SnapshotKind().GroupVersionResource()
 
 	// Expiration time is now
 	expirationTime := time.Now()
-	expirationTimestamp := expirationTime.Unix()
+	expirationTimestamp := expirationTime.UnixMilli()
 	deletedCount := 0
 
-	// List and delete expired shortURLs across all namespaces
+	// List and delete expired snapshots across all namespaces
 	orgs, err := srv.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		logger.Error("Failed to list organizations", "error", err.Error())
@@ -283,9 +283,9 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 			logger.Error("Failed to list snapshots", "error", err.Error())
 			return
 		}
-		// Check each shortURL for expiration
+		// Check each snapshot for expiration
 		for _, item := range snapshots.Items {
-			// Convert unstructured object to ShortURL struct
+			// Convert unstructured object to Snapshot struct
 			var snapshot v0alpha1.Snapshot
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &snapshot)
 			if err != nil {
@@ -294,11 +294,10 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 			}
 
 			// Only delete expired snapshots
-			if *snapshot.Spec.Expires < expirationTimestamp {
+			if snapshot.Spec.Expires != nil && *snapshot.Spec.Expires < expirationTimestamp {
 				namespace := snapshot.Namespace
 				name := snapshot.Name
 
-				// TODO: check this should delete the object + the blob object
 				err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
 				if err != nil {
 					// Check if it's a "not found" error, which is expected if the resource was already deleted
