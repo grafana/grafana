@@ -446,12 +446,10 @@ function getQueryForLoki(
 
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr +=
-      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}"';
+    expr += ' | logfmt | json | drop __error__, __error_details__ | trace_id="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr +=
-      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"';
+    expr += ' | logfmt | json | drop __error__, __error_details__ | span_id="${__span.spanId}"';
   }
 
   return {
