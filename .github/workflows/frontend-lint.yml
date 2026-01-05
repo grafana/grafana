@@ -169,6 +169,8 @@ jobs:
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
     - name: Generate OpenAPI specs
       run: |
         extract_error_message='ERROR! OpenAPI generation failed!'
