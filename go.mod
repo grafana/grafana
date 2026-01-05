@@ -87,7 +87,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20251212143239-491433b332b7 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20251231150637-b7821017d69f // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -181,6 +181,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
+	go.etcd.io/bbolt v1.4.2 // @grafana/grafana-search-and-storage
 	go.opentelemetry.io/collector/pdata v1.44.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.63.0 // @grafana/grafana-operator-experience-squad
@@ -603,7 +604,6 @@ require (
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zclconf/go-cty v1.16.3 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.etcd.io/bbolt v1.4.2 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.6 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.6 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.6 // indirect

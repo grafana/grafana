@@ -356,10 +356,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Use the v2 kubernetes API in the frontend for dashboards
-  */
-  kubernetesDashboardsV2?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -420,6 +416,10 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
+  /**
+  * Enable audit logging with Kubernetes under app platform
+  */
+  auditLoggingAppPlatform?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -534,6 +534,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -1192,6 +1196,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */

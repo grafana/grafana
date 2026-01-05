@@ -79,7 +79,6 @@ dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
-kubernetesDashboardsV2,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
@@ -95,6 +94,7 @@ kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
+auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
@@ -122,6 +122,7 @@ suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
+alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,false
@@ -267,6 +268,7 @@ jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false

@@ -2,6 +2,7 @@ import { Range } from 'uplot';
 
 import {
   applyNullInsertThreshold,
+  // colorManipulator,
   DataFrame,
   FieldConfig,
   FieldSparkline,
@@ -22,6 +23,7 @@ import {
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
+  // FieldColorModeId,
 } from '@grafana/schema';
 
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -112,8 +114,7 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   return [roundedMin, roundedMax];
 }
 
-// TODO: #112977 enable highlight index
-// const HIGHLIGHT_IDX_POINT_SIZE = 6;
+const HIGHLIGHT_IDX_POINT_SIZE = 6;
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
@@ -124,7 +125,9 @@ const defaultConfig: GraphFieldConfig = {
 
 export const prepareSeries = (
   sparkline: FieldSparkline,
-  fieldConfig?: FieldConfig<GraphFieldConfig>
+  _theme: GrafanaTheme2,
+  fieldConfig?: FieldConfig<GraphFieldConfig>,
+  _showHighlights?: boolean
 ): { frame: DataFrame; warning?: string } => {
   const frame = nullToValue(preparePlotFrame(sparkline, fieldConfig));
   if (frame.fields.some((f) => f.values.length <= 1)) {
@@ -136,16 +139,41 @@ export const prepareSeries = (
       frame,
     };
   }
+  // TODO:rgb(24, 24, 24) will address this.
+  // if (showHighlights && typeof sparkline.highlightLine === 'number') {
+  //   const highlightY = sparkline.highlightLine;
+  //   const colorMode = getFieldColorModeForField(sparkline.y);
+  //   const seriesColor = colorMode.getCalculator(sparkline.y, theme)(highlightY, 0);
+  //   frame.fields.push({
+  //     name: 'highlightLine',
+  //     type: FieldType.number,
+  //     values: new Array(frame.length).fill(highlightY),
+  //     config: {
+  //       color: {
+  //         mode: FieldColorModeId.Fixed,
+  //         fixedColor: colorManipulator.lighten(seriesColor, 0.5),
+  //       },
+  //       custom: {
+  //         lineStyle: {
+  //           fill: 'dash',
+  //           dash: [5, 2],
+  //         },
+  //       },
+  //     },
+  //     state: {},
+  //   });
+  // }
   return { frame };
 };
 
 export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  showHighlights?: boolean
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
-  // const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
+  const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
 
   builder.setCursor({
     show: false,
@@ -206,13 +234,14 @@ export const prepareConfig = (
 
     const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-    // TODO: #112977 enable highlight index and adjust padding accordingly
-    // const hasHighlightIndex = typeof sparkline.highlightIndex === 'number';
-    // if (hasHighlightIndex) {
-    //   builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
-    // }
+
+    const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
+    if (hasHighlightIndex) {
+      builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
+    }
+
     const pointsMode =
-      customConfig.drawStyle === GraphDrawStyle.Points // || hasHighlightIndex
+      customConfig.drawStyle === GraphDrawStyle.Points || hasHighlightIndex
         ? VisibilityMode.Always
         : customConfig.showPoints;
 
@@ -227,9 +256,8 @@ export const prepareConfig = (
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,
-      // TODO: #112977 enable highlight index
-      pointSize: /* hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : */ customConfig.pointSize,
-      // pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
+      pointSize: hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : customConfig.pointSize,
+      pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
       fillOpacity: customConfig.fillOpacity,
       fillColor: customConfig.fillColor,
       lineStyle: customConfig.lineStyle,

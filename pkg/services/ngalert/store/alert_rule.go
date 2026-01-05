@@ -642,6 +642,23 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			_ = rows.Close()
 		}()
 
+		opts := AlertRuleConvertOptions{}
+		if query.Compact {
+			opts.ExcludeAlertQueries = true
+			opts.ExcludeNotificationSettings = true
+			opts.ExcludeMetadata = true
+
+			if query.ReceiverName != "" || query.TimeIntervalName != "" {
+				// Need NotificationSettings for these filters
+				opts.ExcludeNotificationSettings = false
+			}
+
+			if query.HasPrometheusRuleDefinition != nil {
+				// Need Metadata for this filter
+				opts.ExcludeMetadata = false
+			}
+		}
+
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
 		var rulesFetched int64
@@ -653,12 +670,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			var converted ngmodels.AlertRule
-			if query.Compact {
-				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
-			} else {
-				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
-			}
+			converted, err := convertAlertRuleToModel(*rule, st.Logger, opts)
 
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
