@@ -128,18 +128,21 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _stopDraggingSync(_evt: PointerEvent) {
     const gridItem = this.state.draggingGridItem?.resolve();
     const wasDetached = this._itemDetachedFromSource;
+    // Capture these before cleanup since setTimeout runs after cleanup
+    const sourceDropTarget = this._sourceDropTarget;
+    const lastDropTarget = this._lastDropTarget;
 
     // Handle cross-layout or cross-tab drop
-    if (this._sourceDropTarget !== this._lastDropTarget || wasDetached) {
+    if (sourceDropTarget !== lastDropTarget || wasDetached) {
       // Wrapped in setTimeout to ensure that any event handlers are called
       // Useful for allowing react-grid-layout to remove placeholders, etc.
       setTimeout(() => {
         if (gridItem) {
           // Only remove from source if not already detached during tab switch
           if (!wasDetached) {
-            this._sourceDropTarget?.draggedGridItemOutside?.(gridItem);
+            sourceDropTarget?.draggedGridItemOutside?.(gridItem);
           }
-          this._lastDropTarget?.draggedGridItemInside?.(gridItem);
+          lastDropTarget?.draggedGridItemInside?.(gridItem);
         } else {
           const warningMessage = 'No grid item to drag';
           console.warn(warningMessage);
@@ -153,6 +156,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._clearTabActivationTimer();
     this._clearDragPreview();
+    this._lastDropTarget?.setIsDropTarget?.(false);
+    this._lastDropTarget = null;
+    this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
@@ -244,6 +250,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.removeEventListener('pointerup', this._onRowDragPointerUp);
     this._clearTabActivationTimer();
     this._clearDragPreview();
+    this._lastDropTarget?.setIsDropTarget?.(false);
+    this._lastDropTarget = null;
+    this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
     this._sourceRowsLayout = null;
     this._rowOffsetCaptured = false;

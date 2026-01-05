@@ -264,8 +264,10 @@ export class TabItem
         rowsLayout = new RowsLayoutManager({ rows: [row] });
       } else {
         // Convert existing layout and add the dropped row
+        // Use direct state update instead of addNewRow because the rowsLayout
+        // isn't connected to the scene yet, so dashboardEditActions won't work
         rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
-        rowsLayout.addNewRow(row);
+        rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
       }
 
       // Clear the parent reference from the old layout

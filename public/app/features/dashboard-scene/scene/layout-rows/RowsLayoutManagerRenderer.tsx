@@ -25,6 +25,9 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
 
+  // Only act as a drop target when empty (no rows)
+  const showAsDropTarget = rows.length === 0;
+
   const handleBeforeCapture = useCallback(
     (before: BeforeCapture) => {
       const row = rows.find((r) => r.state.key === before.draggableId);
@@ -75,7 +78,12 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
     >
       <Droppable droppableId={key!} direction="vertical">
         {(dropProvided) => (
-          <div className={styles.wrapper} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+          <div
+            className={styles.wrapper}
+            ref={dropProvided.innerRef}
+            {...dropProvided.droppableProps}
+            {...(showAsDropTarget ? { 'data-dashboard-drop-target-key': key } : {})}
+          >
             {rows.map((row) => (
               <RowWrapper row={row} manager={model} key={row.state.key!} />
             ))}
