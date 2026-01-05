@@ -3135,9 +3135,12 @@
       "table": "Table"
     },
     "welcome-header": {
+      "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
       "description-alert-rules": "Define the condition that must be met before an alert rule fires",
       "description-configure-firing-alert-instances-routed-contact": "Configure how firing alert instances are routed to contact points",
       "description-configure-receives-notifications": "Configure who receives notifications and how they are sent",
+      "href-text-alert-activity": "View alert activity",
+      "title-alert-activity": "Alert activity",
       "title-alert-rules": "Alert rules",
       "title-contact-points": "Contact points",
       "title-notification-policies": "Notification policies"
