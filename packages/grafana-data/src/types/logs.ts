@@ -273,7 +273,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   /**
    * Returns supplementary query types that data source supports.
    */
-  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  getSupportedSupplementaryQueryTypes(dsRequest?: DataQueryRequest<DataQuery>): SupplementaryQueryType[];
   /**
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If the provided query is not suitable for the provided supplementary query type, undefined should be returned.
@@ -283,7 +283,8 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
   datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
-  type: SupplementaryQueryType
+  type: SupplementaryQueryType,
+  dsRequest?: DataQueryRequest<DataQuery>
 ): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
     return false;
@@ -293,7 +294,7 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
     ('getDataProvider' in datasource || 'getSupplementaryRequest' in datasource) &&
     'getSupplementaryQuery' in datasource &&
     'getSupportedSupplementaryQueryTypes' in datasource &&
-    datasource.getSupportedSupplementaryQueryTypes().includes(type)
+    datasource.getSupportedSupplementaryQueryTypes(dsRequest).includes(type)
   );
 };
 

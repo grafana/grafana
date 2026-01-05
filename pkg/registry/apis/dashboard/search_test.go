@@ -818,6 +818,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"facet fields with custom limit": {
+			queryString: "facet=tags&facetLimit=500",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 500},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with limit exceeding max": {
+			queryString: "facet=tags&facetLimit=5000",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 1000},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 		"tag filter": {
 			queryString: "tag=tag1&tag=tag2",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -1102,4 +1134,8 @@ func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (
 }
 func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 	return nil
+}
+
+func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
 }

@@ -150,7 +150,12 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const oldName = useRef(name);
 
   return (
-    <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError} noMargin>
+    <Field
+      label={t('dashboard.edit-pane.variable.name', 'Name')}
+      invalid={!!nameError}
+      error={nameError}
+      noMargin={false}
+    >
       <Input
         id={id}
         ref={ref}

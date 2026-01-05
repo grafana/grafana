@@ -89,7 +89,7 @@ func TestTeamSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"email", "provisioned", "externalUID"}
+		expectedFields := []string{"title", "fields.email", "fields.provisioned", "fields.externalUID"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -283,4 +283,7 @@ func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (
 }
 func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 	return nil
+}
+func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
 }

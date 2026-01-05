@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaTeamBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &TeamBinding{}, &TeamBindingList{}, resource.WithKind("TeamBinding"),
+	schemaTeamBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewTeamBinding(), &TeamBindingList{}, resource.WithKind("TeamBinding"),
 		resource.WithPlural("teambindings"), resource.WithScope(resource.NamespacedScope))
 	kindTeamBinding = resource.Kind{
 		Schema: schemaTeamBinding,

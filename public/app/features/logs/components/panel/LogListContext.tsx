@@ -27,14 +27,14 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getSidebarState } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { LogLineTimestampResolution } from './LogLine';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListOptions, LogListFontSize } from './LogList';
-import { reportInteractionOnce } from './analytics';
+import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
@@ -241,11 +241,11 @@ export const LogListContextProvider = ({
     if (noInteractions) {
       return;
     }
-    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
+    collectInsights(logs, app, {
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
-      fieldSelectorOpen: getSidebarState(logOptionsStorageKey),
+      fieldSelectorOpen: getFieldSelectorState(logOptionsStorageKey),
       showTime,
       showUniqueLabels,
       syntaxHighlighting,

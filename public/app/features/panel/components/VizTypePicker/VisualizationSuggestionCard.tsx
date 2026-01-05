@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
-import { colorManipulator, GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
@@ -31,11 +31,16 @@ export function VisualizationSuggestionCard({
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(className, styles.vizBox),
+    className: cx(
+      className,
+      styles.vizBox,
+      config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox
+    ),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
+    tabIndex: -1, // selection is handled by parent container
     ...restProps,
-  };
+  } satisfies HTMLAttributes<HTMLButtonElement> & { 'data-testid': string };
 
   let content: ReactNode;
 
@@ -55,7 +60,12 @@ export function VisualizationSuggestionCard({
 
     content = (
       <button {...commonButtonProps}>
-        <div style={innerStyles} className={styles.renderContainer}>
+        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
+        <div
+          style={innerStyles}
+          className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}
+          {...{ inert: '' }}
+        >
           <PanelRenderer
             title=""
             data={data}
@@ -65,8 +75,6 @@ export function VisualizationSuggestionCard({
             options={preview.options}
             fieldConfig={preview.fieldConfig}
           />
-          {/* this prevents interaction with the underlying panel. */}
-          <div className={cx(styles.hoverPane, isSelected && styles.hoverPaneSelected)} />
         </div>
       </button>
     );
@@ -81,22 +89,8 @@ export function VisualizationSuggestionCard({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    hoverPane: css({
-      position: 'absolute',
-      top: -4,
-      left: -4,
-      right: -2,
-      bottom: -2,
-      borderRadius: theme.spacing(0.5),
-      background: 'transparent',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-    }),
-    hoverPaneSelected: css({
-      background: colorManipulator.alpha(theme.colors.text.primary, 0.1),
+    selectedSuggestion: css({
+      filter: `blur(1px) ${theme.isDark ? 'brightness(0.5)' : 'opacity(0.3)'}`,
     }),
     vizBox: css({
       position: 'relative',
@@ -147,6 +141,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+    }),
+    selectedBox: css({
+      border: `1px solid ${theme.colors.primary.border}`,
+      background: theme.colors.action.selected,
     }),
   };
 };

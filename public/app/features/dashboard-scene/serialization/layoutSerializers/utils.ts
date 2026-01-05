@@ -1,3 +1,4 @@
+import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataProvider,
@@ -39,6 +40,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -58,12 +60,22 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
+  // Extract __angularMigration data if present
+  // This data is used to run Angular panel migrations in v2 (e.g., singlestat -> stat)
+  const rawOptions = panel.spec.vizConfig.spec.options ?? {};
+  const rawAngularMigration = rawOptions.__angularMigration;
+  const angularMigration = isAngularMigrationData(rawAngularMigration) ? rawAngularMigration : undefined;
+
+  // Create clean options without __angularMigration (it's only for migration, not for the panel)
+  const options = { ...rawOptions };
+  delete options.__angularMigration;
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
-    options: panel.spec.vizConfig.spec.options,
+    options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
@@ -81,6 +93,12 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
+
+  // Set up Angular migration handler if migration data is present
+  // This enables proper migration of options from Angular panels (e.g., singlestat format/valueName)
+  if (angularMigration) {
+    vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
+  }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({
@@ -164,12 +182,15 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     return undefined;
   }
 
+  // Ensure all queries have unique refIds before converting to scene queries
+  const queriesWithUniqueRefIds = ensureUniqueRefIds(targets);
+
   let dataProvider: SceneDataProvider | undefined = undefined;
   const datasource = getPanelDataSource(panelKind);
 
   dataProvider = new SceneQueryRunner({
     datasource,
-    queries: targets.map(panelQueryKindToSceneQuery),
+    queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
@@ -339,6 +360,21 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
     uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
     type: dsList[defaultDatasource].meta.id,
   };
+}
+
+export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] {
+  // Adapter to make PanelQueryKind[] work with getNextRefId (which expects { refId }[])
+  const refIdAdapter = queries.map((q) => ({ refId: q.spec.refId }));
+
+  for (let i = 0; i < queries.length; i++) {
+    if (!queries[i].spec.refId) {
+      const newRefId = getNextRefId(refIdAdapter);
+      queries[i] = { ...queries[i], spec: { ...queries[i].spec, refId: newRefId } };
+      refIdAdapter[i] = { refId: newRefId };
+    }
+  }
+
+  return queries;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {

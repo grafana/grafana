@@ -3,10 +3,12 @@
   "compilerOptions": {
     "declaration": true,
     "jsx": "react-jsx",
+    "baseUrl": "./",
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "include": ["src/**/*.ts*"]

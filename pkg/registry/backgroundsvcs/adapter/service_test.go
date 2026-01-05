@@ -55,15 +55,9 @@ func TestServiceAdapter_ErrorHandling(t *testing.T) {
 
 		adapter := asNamedService(mockSvc)
 
-		t.Cleanup(func() {
-			adapter.StopAsync()
-			err := adapter.AwaitTerminated(context.Background())
-			require.ErrorIs(t, err, expectedErr)
-		})
-
 		err := adapter.StartAsync(context.Background())
 		require.NoError(t, err)
-		err = adapter.AwaitRunning(context.Background())
+		err = adapter.AwaitTerminated(context.Background())
 		require.ErrorIs(t, err, expectedErr)
 		require.True(t, mockSvc.runCalled)
 	})
@@ -95,14 +89,9 @@ func TestServiceAdapter_ErrorHandling(t *testing.T) {
 
 		adapter := asNamedService(mockSvc)
 
-		t.Cleanup(func() {
-			adapter.StopAsync()
-			err := adapter.AwaitTerminated(context.Background())
-			require.ErrorIs(t, err, expectedErr)
-		})
 		err := adapter.StartAsync(context.Background())
 		require.NoError(t, err)
-		err = adapter.AwaitRunning(context.Background())
+		err = adapter.AwaitTerminated(context.Background())
 		require.ErrorIs(t, err, expectedErr)
 		require.True(t, mockSvc.runCalled)
 	})

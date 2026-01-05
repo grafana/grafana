@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValueAlignmentFactors, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -10,12 +10,13 @@ import { getFormattedThresholds } from '../Gauge/utils';
 
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
-import { RadialColorDefs } from './RadialColorDefs';
 import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
+import { buildGradientColors } from './colors';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
+import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
@@ -26,7 +27,7 @@ export interface RadialGaugeProps {
    * Circle or gauge (partial circle)
    */
   shape?: RadialShape;
-  gradient?: RadialGradientMode;
+  gradient?: boolean;
   /**
    * Bar width is always relative to size of the gauge.
    * But this gives you control over the width relative to size.
@@ -34,12 +35,14 @@ export interface RadialGaugeProps {
    * Defaults to 0.4
    **/
   barWidthFactor?: number;
-  /** Adds a white spotlight for the end position */
-  spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
   roundedBars?: boolean;
   thresholdsBar?: boolean;
+  /**
+   * Specify if an endpoint marker should be shown at the end of the bar
+   */
+  endpointMarker?: 'point' | 'glow';
   /**
    * Number of segments depends on size of gauge but this
    * factor 1-10 gives you relative control
@@ -66,11 +69,8 @@ export interface RadialGaugeProps {
   showScaleLabels?: boolean;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
+  timeRange?: TimeRange;
 }
-
-export type RadialGradientMode = 'none' | 'auto';
-export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
-export type RadialShape = 'circle' | 'gauge';
 
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-radialgauge--docs
@@ -80,9 +80,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     width = 256,
     height = 256,
     shape = 'circle',
-    gradient = 'none',
+    gradient = false,
     barWidthFactor = 0.4,
-    spotlight = false,
     glowBar = false,
     glowCenter = false,
     textMode = 'auto',
@@ -92,12 +91,18 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
+    endpointMarker,
     onClick,
     values,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
   const styles = useStyles2(getStyles);
+
+  let effectiveTextMode = textMode;
+  if (effectiveTextMode === 'auto') {
+    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+  }
 
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
@@ -109,7 +114,8 @@ export function RadialGauge(props: RadialGaugeProps) {
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
     const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
-    const color = displayValue.display.color ?? 'gray';
+    const gradientStops = buildGradientColors(gradient, theme, displayValue);
+    const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
       width,
       height,
@@ -122,20 +128,12 @@ export function RadialGauge(props: RadialGaugeProps) {
       showScaleLabels
     );
 
-    const displayProcessor = getFieldDisplayProcessor(displayValue);
+    // FIXME: I want to move the ids for these filters into a context which the children
+    // can reference via a hook, rather than passing them down as props
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
-    const colorDefs = new RadialColorDefs({
-      gradient,
-      fieldDisplay: displayValue,
-      theme,
-      dimensions,
-      shape,
-      gaugeId,
-      displayProcessor,
-    });
 
-    if (spotlight && theme.isDark) {
+    if (endpointMarker === 'glow') {
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
@@ -159,7 +157,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           glowFilter={`url(#${glowFilterId})`}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
-          colorDefs={colorDefs}
+          shape={shape}
+          gradient={gradientStops}
         />
       );
     } else {
@@ -167,13 +166,16 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          colorDefs={colorDefs}
           angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
           roundedBars={roundedBars}
-          spotlightStroke={`url(#${spotlightGradientId})`}
           glowFilter={`url(#${glowFilterId})`}
+          endpointMarkerGlowFilter={`url(#${spotlightGradientId})`}
+          shape={shape}
+          gradient={gradientStops}
+          fieldDisplay={displayValue}
+          endpointMarker={endpointMarker}
         />
       );
     }
@@ -181,7 +183,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     // These elements are only added for first value / bar
     if (barIndex === 0) {
       if (glowBar) {
-        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} radius={dimensions.radius} />);
+        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} barWidth={dimensions.barWidth} />);
       }
 
       if (glowCenter) {
@@ -191,14 +193,14 @@ export function RadialGauge(props: RadialGaugeProps) {
       graphics.push(
         <RadialText
           key="radial-text"
-          vizCount={vizCount}
-          textMode={textMode}
+          textMode={effectiveTextMode}
           displayValue={displayValue.display}
           dimensions={dimensions}
           theme={theme}
           valueManualFontSize={props.valueManualFontSize}
           nameManualFontSize={props.nameManualFontSize}
           shape={shape}
+          sparkline={displayValue.sparkline}
         />
       );
 
@@ -233,7 +235,8 @@ export function RadialGauge(props: RadialGaugeProps) {
               angleRange={angleRange}
               roundedBars={roundedBars}
               glowFilter={`url(#${glowFilterId})`}
-              colorDefs={colorDefs}
+              shape={shape}
+              gradient={gradientStops}
             />
           );
         }
@@ -247,6 +250,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             theme={theme}
             color={color}
             shape={shape}
+            textMode={effectiveTextMode}
           />
         );
       }
@@ -272,21 +276,14 @@ export function RadialGauge(props: RadialGaugeProps) {
   }
 
   return (
-    <div className={styles.vizWrapper} style={{ width, height }}>
+    <div
+      data-testid={selectors.components.Panels.Visualization.Gauge.Container}
+      className={styles.vizWrapper}
+      style={{ width, height }}
+    >
       {body}
     </div>
   );
-}
-
-function getFieldDisplayProcessor(displayValue: FieldDisplay) {
-  if (displayValue.view && isNumber(displayValue.colIndex)) {
-    const dp = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex);
-    if (dp) {
-      return dp;
-    }
-  }
-
-  return getDisplayProcessor();
 }
 
 function getStyles(theme: GrafanaTheme2) {

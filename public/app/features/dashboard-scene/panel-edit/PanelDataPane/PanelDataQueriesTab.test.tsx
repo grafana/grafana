@@ -25,10 +25,17 @@ import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
+import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
-import { testDashboard, panelWithTransformations, panelWithQueriesOnly } from '../testfiles/testDashboard';
+import {
+  testDashboard,
+  panelWithTransformations,
+  panelWithQueriesOnly,
+  testDashboardV2,
+} from '../testfiles/testDashboard';
 
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
@@ -824,12 +831,105 @@ describe('PanelDataQueriesTab', () => {
         expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
       });
     });
+
+    describe('V2 schema behavior - panel datasource undefined but queries have datasource', () => {
+      it('should load datasource from first query for V2 panel with prometheus datasource', async () => {
+        // panel-1 has a query with prometheus datasource
+        const { queriesTab } = await setupV2Scene('panel-1');
+
+        // V2 panels have undefined panel-level datasource for non-mixed panels
+        expect(queriesTab.queryRunner.state.datasource).toBeUndefined();
+
+        // But the query has its own datasource
+        expect(queriesTab.queryRunner.state.queries[0].datasource).toEqual({
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+        });
+
+        // Should load the datasource from the first query
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-prometheus');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
+      });
+
+      it('should load datasource from first query for V2 panel with testdata datasource', async () => {
+        // panel-2 has a query with testdata datasource
+        const { queriesTab } = await setupV2Scene('panel-2');
+
+        // V2 panels have undefined panel-level datasource for non-mixed panels
+        expect(queriesTab.queryRunner.state.datasource).toBeUndefined();
+
+        // But the query has its own datasource
+        expect(queriesTab.queryRunner.state.queries[0].datasource).toEqual({
+          type: 'grafana-testdata-datasource',
+          uid: 'gdev-testdata',
+        });
+
+        // Should load the datasource from the first query
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+
+      it('should fall back to last used datasource when V2 query has no explicit datasource', async () => {
+        store.exists.mockReturnValue(true);
+        store.getObject.mockImplementation((key: string, def: unknown) => {
+          if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
+            return {
+              dashboardUid: 'v2-dashboard-uid',
+              datasourceUid: 'gdev-testdata',
+            };
+          }
+          return def;
+        });
+
+        // panel-3 has a query with NO explicit datasource (datasource.name is undefined)
+        const { queriesTab } = await setupV2Scene('panel-3');
+
+        // V2 panel with no explicit datasource on query should fall back to last used
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+
+      it('should use panel-level datasource when available (V1 behavior preserved)', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // V1 panels have panel-level datasource set
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+        });
+
+        // Should use the panel-level datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+    });
   });
 });
 
 async function setupScene(panelId: string) {
   const dashboard = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(dashboard, panelId)!;
+
+  const panelEditor = buildPanelEditScene(panel);
+  dashboard.setState({ editPanel: panelEditor });
+
+  deactivators.push(dashboard.activate());
+  deactivators.push(panelEditor.activate());
+
+  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  deactivators.push(queriesTab.activate());
+
+  await Promise.resolve();
+
+  return { panel, scene: dashboard, queriesTab };
+}
+
+// Setup V2 scene - uses transformSaveModelSchemaV2ToScene
+async function setupV2Scene(panelKey: string) {
+  const dashboard = transformSaveModelSchemaV2ToScene(testDashboardV2);
+
+  const vizPanels = (dashboard.state.body as DashboardLayoutManager).getVizPanels();
+  const panel = vizPanels.find((p) => p.state.key === panelKey)!;
 
   const panelEditor = buildPanelEditScene(panel);
   dashboard.setState({ editPanel: panelEditor });

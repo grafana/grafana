@@ -1,4 +1,4 @@
-import { render, waitFor, fireEvent, act, testWithFeatureToggles } from 'test/test-utils';
+import { act, fireEvent, render, testWithFeatureToggles } from 'test/test-utils';
 
 import { ExpressionQuery, ExpressionQueryType } from '../../types';
 
@@ -127,78 +127,6 @@ describe('SqlExpr with GenAI features', () => {
     queries: [],
   };
 
-  it('renders GenAI buttons with empty expression', async () => {
-    const customProps = { ...defaultProps, query: { ...defaultProps.query, expression: '' } };
-    const { findByText } = render(<SqlExpr {...customProps} />);
-    expect(await findByText('Generate suggestion')).toBeInTheDocument();
-    expect(await findByText('Explain query')).toBeInTheDocument();
-  });
-
-  it('renders GenAI buttons with non-empty expression', async () => {
-    const { findByText } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByText('Improve query')).toBeInTheDocument();
-    expect(await findByText('Explain query')).toBeInTheDocument();
-  });
-
-  it('renders "Improve query" when currentQuery differs from initialQuery', async () => {
-    const customProps = {
-      ...defaultProps,
-      query: { ...defaultProps.query, expression: 'SELECT * FROM A WHERE value > 10' },
-    };
-    const { findByText } = render(<SqlExpr {...customProps} />);
-    expect(await findByText('Improve query')).toBeInTheDocument();
-  });
-
-  it('renders View explanation button when shouldShowViewExplanation is true', async () => {
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    useSQLExplanations.mockImplementation((currentExpression: string) => ({
-      shouldShowViewExplanation: true,
-    }));
-
-    const { findByText } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByText('View explanation')).toBeInTheDocument();
-  });
-
-  it('renders Explain query button when shouldShowViewExplanation is false', async () => {
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    useSQLExplanations.mockImplementation((currentExpression: string) => ({
-      shouldShowViewExplanation: false,
-    }));
-
-    const { findByText } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByText('Explain query')).toBeInTheDocument();
-  });
-
-  it('renders SuggestionsDrawerButton when there are suggestions', async () => {
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({ suggestions: ['suggestion1', 'suggestion2'] }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('suggestions-badge')).toBeInTheDocument();
-  });
-
-  it('does not render SuggestionsDrawerButton when there are no suggestions', async () => {
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({ suggestions: [] }));
-
-    const { queryByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await waitFor(() => queryByTestId('suggestions-badge'))).not.toBeInTheDocument();
-  });
-
-  it('calls handleOpenExplanation when View explanation is clicked', async () => {
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    const mockHandleOpen = jest.fn();
-    useSQLExplanations.mockImplementation(() => ({
-      shouldShowViewExplanation: true,
-      handleOpenExplanation: mockHandleOpen,
-    }));
-
-    const { findByText } = render(<SqlExpr {...defaultProps} />);
-    const button = await findByText('View explanation');
-    fireEvent.click(button);
-    expect(mockHandleOpen).toHaveBeenCalled();
-  });
-
   it('renders suggestions drawer when isDrawerOpen is true', async () => {
     const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
     useSQLSuggestions.mockImplementation(() => ({
@@ -245,26 +173,26 @@ describe('Schema Inspector feature toggle', () => {
     });
 
     it('closes panel and shows reopen button when close button clicked', async () => {
-      const { queryByText, getByLabelText, findByText } = render(<SqlExpr {...defaultProps} />);
+      const { queryByText, getByText, findByText } = render(<SqlExpr {...defaultProps} />);
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
 
-      const closeButton = getByLabelText('Close schema inspector');
+      const closeButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
-      expect(await findByText('Inspect schema')).toBeInTheDocument();
+      expect(await findByText('Schema inspector')).toBeInTheDocument();
     });
 
-    it('reopens panel when inspect schema button clicked after closing', async () => {
-      const { queryByText, getByLabelText, getByText } = render(<SqlExpr {...defaultProps} />);
+    it('reopens panel when Open schema inspector button clicked after closing', async () => {
+      const { queryByText, getByText } = render(<SqlExpr {...defaultProps} />);
 
-      const closeButton = getByLabelText('Close schema inspector');
+      const closeButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(closeButton));
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
 
-      const reopenButton = getByText('Inspect schema');
+      const reopenButton = getByText('Schema inspector');
       await act(async () => fireEvent.click(reopenButton));
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
@@ -300,7 +228,7 @@ describe('Schema Inspector feature toggle', () => {
     it('does not render panel or button', () => {
       const { queryByText } = render(<SqlExpr {...defaultProps} />);
 
-      expect(queryByText('Inspect schema')).not.toBeInTheDocument();
+      expect(queryByText('Schema inspector')).not.toBeInTheDocument();
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
     });
   });

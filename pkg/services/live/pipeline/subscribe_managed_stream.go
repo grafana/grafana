@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
@@ -30,8 +30,8 @@ func (s *ManagedStreamSubscriber) Subscribe(ctx context.Context, vars Vars, _ []
 		logger.Error("Error getting managed stream", "error", err)
 		return model.SubscribeReply{}, 0, err
 	}
-	u, ok := livecontext.GetContextSignedUser(ctx)
-	if !ok {
+	u, err := identity.GetRequester(ctx)
+	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 	}
 	return stream.OnSubscribe(ctx, u, model.SubscribeEvent{

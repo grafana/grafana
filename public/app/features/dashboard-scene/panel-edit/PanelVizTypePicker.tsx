@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -23,7 +23,8 @@ export interface Props {
   data?: PanelData;
   showBackButton?: boolean;
   panel: VizPanel;
-  onChange: (options: VizTypeChangeDetails) => void;
+  editPreview: VizPanel;
+  onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
 }
 
@@ -41,9 +42,10 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, data, onChange, onClose, showBackButton }: Props) {
+export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton }: Props) {
   const styles = useStyles2(getStyles);
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+  const filterId = useId();
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,11 +98,14 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose, showBackBut
       </TabsBar>
       <ScrollContainer>
         <TabContent className={styles.tabContent}>
-          {listMode === VisualizationSelectPaneTab.Suggestions && (
-            <VisualizationSuggestions onChange={onChange} panel={panelModel} data={data} />
-          )}
-          {listMode === VisualizationSelectPaneTab.Visualizations && (
-            <Stack gap={1} direction="column">
+          <Stack gap={1} direction="column">
+            <Field
+              tabIndex={0}
+              className={styles.searchField}
+              noMargin
+              htmlFor={filterId}
+              aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+            >
               <Stack direction="row" gap={1}>
                 {showBackButton && (
                   <Button
@@ -115,20 +120,33 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose, showBackBut
                   </Button>
                 )}
                 <FilterInput
+                  id={filterId}
                   className={styles.filter}
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
                 />
               </Stack>
+            </Field>
+
+            {listMode === VisualizationSelectPaneTab.Suggestions && (
+              <VisualizationSuggestions
+                onChange={onChange}
+                panel={panelModel}
+                editPreview={editPreview}
+                data={data}
+                searchQuery={searchQuery}
+              />
+            )}
+            {listMode === VisualizationSelectPaneTab.Visualizations && (
               <VizTypePicker
                 pluginId={panel.state.pluginId}
                 searchQuery={searchQuery}
                 trackSearch={trackSearch}
                 onChange={onChange}
               />
-            </Stack>
-          )}
+            )}
+          </Stack>
         </TabContent>
       </ScrollContainer>
     </div>
@@ -143,9 +161,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     gap: theme.spacing(2),
   }),
-  searchRow: css({
-    display: 'flex',
-    marginBottom: theme.spacing(2),
+  searchField: css({
+    margin: theme.spacing(0.5, 0, 1, 0), // input glow with the boundary without this
   }),
   tabs: css({
     width: '100%',
