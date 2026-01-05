@@ -70,7 +70,9 @@ func (s *Seeder) Seed(ctx context.Context) error {
 	if len(previous) > 0 {
 		filtered := make(map[accesscontrol.SeedPermission]struct{}, len(previous))
 		for p := range previous {
-			if p.Action == pluginaccesscontrol.ActionAppAccess {
+			// Legacy plugin app access permissions (Origin set) are granted by default and managed outside seeding.
+			// Keep them out of the diff so seeding doesn't try to remove or "re-add" them on every run.
+			if p.Action == pluginaccesscontrol.ActionAppAccess && p.Origin != "" {
 				continue
 			}
 			if p.Origin != "" && !s.seededPlugins[p.Origin] {
