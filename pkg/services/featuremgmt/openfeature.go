@@ -21,7 +21,7 @@ const (
 type OpenFeatureConfig struct {
 	// ProviderType is either "static", "features-service", or "ofrep"
 	ProviderType string
-	// URL is the features-service or OFREP service URL (required for features-service + OFREP providers)
+	// URL is the remote provider's URL (required for features-service + OFREP providers)
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (optional, used for features-service + OFREP providers)
 	HTTPClient *http.Client
