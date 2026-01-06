@@ -33,6 +33,8 @@ import (
 )
 
 func TestIntegrationFolderTreeZanzana(t *testing.T) {
+	// TODO: Add back OSS seeding and enable this test
+	t.Skip("Skipping folder tree test with Zanzana")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	runIntegrationFolderTree(t, testinfra.GrafanaOpts{

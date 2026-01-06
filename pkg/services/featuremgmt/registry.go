@@ -2075,6 +2075,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "smoothingTransformation",
+			Description:  "Enables the ASAP smoothing transformation for time series data",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
 	}
 )
 

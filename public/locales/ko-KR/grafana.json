@@ -3124,9 +3124,12 @@
       "table": "표"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "경고 규칙이 발동되기 전에 충족되어야 하는 조건을 정의합니다",
       "description-configure-firing-alert-instances-routed-contact": "경고 발생 인스턴스가 연락처로 라우팅되는 방식을 구성합니다",
       "description-configure-receives-notifications": "알림을 받는 사람과 전송 방식을 구성합니다",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "경고 규칙",
       "title-contact-points": "연락처",
       "title-notification-policies": "알림 정책"
@@ -14338,6 +14341,17 @@
       },
       "name": {
         "series-to-rows": "계열에서 행으로"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -3295,6 +3295,19 @@
     },
     {
       "metadata": {
+        "name": "smoothingTransformation",
+        "resourceVersion": "1767349656275",
+        "creationTimestamp": "2026-01-02T10:27:36Z"
+      },
+      "spec": {
+        "description": "Enables the ASAP smoothing transformation for time series data",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-02-27T21:16:00Z"

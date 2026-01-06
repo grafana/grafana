@@ -3124,9 +3124,12 @@
       "table": "表格"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "定义警报规则触发前必须满足的条件",
       "description-configure-firing-alert-instances-routed-contact": "配置如何将触发的警报实例路由到联络点",
       "description-configure-receives-notifications": "配置接收通知的人员以及通知发送方式",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "警报规则",
       "title-contact-points": "联络点",
       "title-notification-policies": "通知策略"
@@ -14338,6 +14341,17 @@
       },
       "name": {
         "series-to-rows": "序列到行"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
