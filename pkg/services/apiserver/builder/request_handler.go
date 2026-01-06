@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	klog "k8s.io/klog/v2"
@@ -13,8 +14,27 @@ import (
 )
 
 // convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
+// It extracts path parameters from restful.Request and populates them in the request context
+// so that mux.Vars can read them (for backward compatibility with handlers that use mux.Vars)
 func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
+		// Extract path parameters from restful.Request and populate mux.Vars
+		// This is needed for backward compatibility with handlers that use mux.Vars(r)
+		vars := make(map[string]string)
+
+		// Get all path parameters from the restful.Request
+		// The restful.Request has PathParameters() method that returns a map
+		pathParams := req.PathParameters()
+		for key, value := range pathParams {
+			vars[key] = value
+		}
+
+		// Set the vars in the request context using mux.SetURLVars
+		// This makes mux.Vars(r) work correctly
+		if len(vars) > 0 {
+			req.Request = mux.SetURLVars(req.Request, vars)
+		}
+
 		handler(resp.ResponseWriter, req.Request)
 	}
 }

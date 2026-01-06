@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
@@ -41,25 +41,6 @@ const namespaceMismatchMsg = "rejecting request with namespace mismatch"
 var groupVersion = schema.GroupVersion{
 	Group:   "features.grafana.app",
 	Version: "v0alpha1",
-}
-
-// extractPathParam extracts a path parameter from the request URL path.
-// It looks for the segment after the given prefix in the path.
-// For example, extractPathParam("/namespaces/default/...", "/namespaces/") returns "default".
-func extractPathParam(urlPath, prefix string) string {
-	idx := strings.Index(urlPath, prefix)
-	if idx == -1 {
-		return ""
-	}
-	// Start after the prefix
-	start := idx + len(prefix)
-	// Find the next slash or end of string
-	end := strings.Index(urlPath[start:], "/")
-	if end == -1 {
-		// No trailing slash, take the rest of the path
-		return urlPath[start:]
-	}
-	return urlPath[start : start+end]
 }
 
 type APIBuilder struct {
@@ -263,8 +244,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
-	// Extract flagKey from path: /.../ofrep/v1/evaluate/flags/{flagKey}
-	flagKey := extractPathParam(r.URL.Path, "/flags/")
+	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		_ = tracing.Errorf(span, "flagKey parameter is required")
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
@@ -388,8 +368,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 	if user.GetNamespace() != "" {
 		namespace = user.GetNamespace()
 	} else {
-		// Extract namespace from path: /.../namespaces/{namespace}/...
-		namespace = extractPathParam(r.URL.Path, "/namespaces/")
+		namespace = mux.Vars(r)["namespace"]
 	}
 
 	// Read request body for namespace validation and tracing
