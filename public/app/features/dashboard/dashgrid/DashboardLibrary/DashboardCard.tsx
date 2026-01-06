@@ -28,6 +28,8 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
+  onCheckCompatibility?: (dashboard: PluginDashboard | GnetDashboard) => void;
+  showCompatibilityButton?: boolean;
 }
 
 function DashboardCardComponent({
@@ -40,6 +42,8 @@ function DashboardCardComponent({
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
+  onCheckCompatibility,
+  showCompatibilityButton,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -96,6 +100,25 @@ function DashboardCardComponent({
               name="info-circle"
               size="xl"
               aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
+            />
+          </Tooltip>
+        )}
+        {showCompatibilityButton && onCheckCompatibility && (
+          <Tooltip
+            content={t(
+              'dashboard-library.card.check-compatibility-tooltip',
+              'Check dashboard compatibility with your datasource'
+            )}
+            placement="top"
+          >
+            <Button
+              variant="secondary"
+              icon="check-circle"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCheckCompatibility(dashboard);
+              }}
+              aria-label={t('dashboard-library.card.check-compatibility-button', 'Check compatibility')}
             />
           </Tooltip>
         )}
