@@ -2,6 +2,8 @@ import { Icon, Stack, TextLink, Tooltip } from '@grafana/ui';
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
+import { isUngroupedRuleGroup } from '../../utils/rules';
+
 import { DataSourceIcon } from './DataSourceIcon';
 
 interface RuleLocationProps {
@@ -12,13 +14,10 @@ interface RuleLocationProps {
   application?: RulesSourceApplication;
 }
 
-const NoGroupPrefix = 'no_group_for_rule_';
-const isNoGroup = (group: string) => group.startsWith(NoGroupPrefix);
-
 export function RuleLocation({ namespace, group, groupUrl, rulesSource, application }: RuleLocationProps) {
   const isGrafanaApp = application === 'grafana';
   const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
-  const groupText = isNoGroup(group) ? 'Ungrouped' : group;
+  const groupText = isUngroupedRuleGroup(group) ? 'Ungrouped' : group;
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
