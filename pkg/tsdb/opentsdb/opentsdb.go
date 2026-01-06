@@ -215,6 +215,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			continue
 		}
 
+		defer func() {
+			if cerr := httpRes.Body.Close(); cerr != nil {
+				logger.Warn("failed to close response body", "error", cerr)
+			}
+		}()
+
 		queryRes, err := ParseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion)
 		if err != nil {
 			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
