@@ -98,7 +98,8 @@ Dynamic dashboards is currently in public preview. Grafana Labs offers limited s
 For information on the generally available dashboard creation experience, refer to the [documentation for the latest self-managed version of Grafana](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/).
 {{< /admonition >}}
 
-Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
+Dashboards and panels allow you to show your data in visual form.
+Each panel needs at least one query to display a visualization.
 
 **Before you begin:**
 
@@ -107,7 +108,32 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
 
+## The edit pane
+
+The edit pane allows you to make changes to the dashboard without leaving it.
+You can stay on the dashboard longer and only have to enter panel edit mode when you're ready to configure more granular settings.
+You can also [create and edit variables at this level using the content outline](#add-variables-using-the-content-outline).
+
+<!-- screenshot here maybe? -->
+
+You can dock, undock, and resize the edit pane.
+When the edit pane is closed, you can resize the sidebar so the icon names are visible.
+
+<!-- Screen recording here -->
+
+The sidebar includes the following options:
+
+| Option | View mode | Edit mode |
+| ------ | --------- | --------- |
+| Settings | | x |
+| Feedback | | x |
+| Export | x | x |
+| Content outline | x | x |
+| Dashboard insights | x | x |
+
 ## Create a dashboard
+
+<!-- confirm creation flow!!! -->
 
 To create a dashboard, follow these steps:
 
@@ -326,10 +352,10 @@ For example, in a dashboard:
 ## Configure show/hide rules
 
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
-For example, you might want to set a panel to be hidden if there's no data returned by a query or a tab to only be shown based on a variable being present.
+For example, you might want to set a panel to be hidden if there's no data returned by a query, or for a tab to only be shown based on a variable being present.
 
 {{< admonition type="note" >}}
-You can only configure show/hide rules for panels when the dashboard is using the **Auto grid** panel layout.
+You can only configure show/hide rules for panels in the **Auto grid** layout.
 {{< /admonition >}}
 
 To configure show/hide rules, follow these steps:
@@ -347,9 +373,12 @@ To configure show/hide rules, follow these steps:
 1. Select a rule type:
    - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
    - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
-   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time frame. Select or enter a time range.
+   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
 1. Configure the rule.
+
+   If you've set a hide rule, the panel, row, or tab isn't visible when the dashboard is in view mode. In edit mode, an icon indicating the panel, row, or tab isn't visible is displayed on the dashboard element.
+
 1. Under **Match rules**, select one of the following:
    - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
    - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
@@ -360,6 +389,54 @@ To configure show/hide rules, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Toggle off the edit mode switch.
+
+### Query result rule
+
+Show or hide a panel based on whether or not the query returns any results.
+The rule provides **Has data** and **No data** options, so you can choose to how or hide the panel based on the presence of data or no data.
+
+For example, if you have a dashboard with several panels and only want panels that return data to appear, set the rule as follows:
+
+- Panel visibility > Show
+- Query result > Has data
+
+You might also want to troubleshoot a dashboard with several panels to see which ones contain broken queries that aren't returning any results.
+In this case, you'd set the rule as follows:
+
+- Panel visibility > Show
+- Query result > No data
+
+### Template variable rule
+
+Show or hide the panel, row, or tab dynamically based on the variable value.
+You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
+
+- Equals
+- Not equals
+- Matches
+- Not matches
+
+You can add more variables on the fly without leaving the dashboard using the outline.
+For more information, refer to [Add variables using the content outline](#add-variables-using-the-content-outline).
+
+### Time range less than rule
+
+<!-- this looks only at the dashboard and the time range that you set for the rule, not the time of the element at all -->
+
+Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range.
+This allows you to toggle between two or more panels, rows, or tabs depending on the size of the time range.
+You can choose sensible time ranges for and only see data that's relevant for the time range.
+
+You can select from time ranges from **5 minutes** to **5 years**.
+
+For example...:
+
+Dashboard has time range of last 6 hours.
+Set panels to hide.
+Time range less than show/hide rule is 7 days.
+So when panel's rule time range is less than 7 days this panels don't show up.
+
+<!-- waiting for real life example and maybe the UI setting should change name -->
 
 ## Edit a dashboard
 
@@ -430,6 +507,10 @@ To navigate the dashboard using the outline, follow these steps:
 1. In the edit pane, expand the **Outline** section.
 1. Expand the outline to find the dashboard part to which you want to navigate.
 1. Click the tree item to navigate that part of the dashboard.
+
+### Add variables using the content outline
+
+
 
 ## Copy a dashboard
 
