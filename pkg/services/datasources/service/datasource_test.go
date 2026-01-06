@@ -77,10 +77,6 @@ func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, 
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (d *dataSourceMockRetriever) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
-	return d.res, nil
-}
-
 func TestIntegrationService_AddDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

@@ -122,8 +122,6 @@ type DataSourceRetriever interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
 	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
-	// GetAllDataSources gets all datasources.
-	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -192,7 +190,7 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 }
 
 func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
-	return s.retriever.GetAllDataSources(ctx, query)
+	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
 func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {

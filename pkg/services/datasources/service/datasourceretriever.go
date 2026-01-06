@@ -30,8 +30,3 @@ func (r *DataSourceRetrieverImpl) GetDataSource(ctx context.Context, query *data
 func (r *DataSourceRetrieverImpl) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
 	return r.store.GetDataSourceInNamespace(ctx, namespace, name, group)
 }
-
-// GetAllDataSources gets all datasources.
-func (r *DataSourceRetrieverImpl) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
-	return r.store.GetAllDataSources(ctx, query)
-}
