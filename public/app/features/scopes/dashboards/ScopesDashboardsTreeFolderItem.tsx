@@ -14,9 +14,11 @@ export interface ScopesDashboardsTreeFolderItemProps {
   folderPath: string[];
   folders: SuggestedNavigationsFoldersMap;
   onFolderUpdate: OnFolderUpdate;
+  subScopePath?: string[];
 }
 
 export function ScopesDashboardsTreeFolderItem({
+  subScopePath,
   folder,
   folderPath,
   folders,
@@ -26,7 +28,7 @@ export function ScopesDashboardsTreeFolderItem({
 
   // get scopesselector service
   const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
-
+  const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <div className={styles.row}>
@@ -46,18 +48,34 @@ export function ScopesDashboardsTreeFolderItem({
           {folder.loading && <Spinner inline size="sm" className={styles.loadingIcon} />}
         </button>
 
-        {folder.subScopeName && (
+        {folder.subScopeName && !folder.disableSubScopeSelection && (
           <IconButton
             className={styles.exchangeIcon}
             tooltip={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
               scope: folder.subScopeName || '',
             })}
             name="exchange-alt"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
               if (folder.subScopeName && scopesSelectorService) {
-                scopesSelectorService.changeScopes([folder.subScopeName]);
+                const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
+                // Check if the active scope is a child of the current folder's scope
+                const activeScope = activeSubScopePath?.[activeSubScopePath.length - 1];
+                const folderLocationInActivePath = activeSubScopePath?.indexOf(folder.subScopeName) ?? -1;
+
+                await scopesDashboardsService?.setNavigationScope(
+                  folderLocationInActivePath >= 0 ? folder.subScopeName : undefined,
+                  undefined,
+                  activeSubScopePath?.slice(folderLocationInActivePath + 1) ?? []
+                );
+                // Now changeScopes will skip fetchDashboards because navigationScope is set
+                scopesSelectorService.changeScopes(
+                  folderLocationInActivePath >= 0 && activeScope ? [activeScope] : [folder.subScopeName],
+                  undefined,
+                  undefined,
+                  false
+                );
               }
             }}
           />
@@ -66,7 +84,13 @@ export function ScopesDashboardsTreeFolderItem({
 
       {folder.expanded && (
         <div className={styles.children}>
-          <ScopesDashboardsTree folders={folders} folderPath={folderPath} onFolderUpdate={onFolderUpdate} />
+          <ScopesDashboardsTree
+            subScopePath={subScopePath}
+            subScope={folder.subScopeName}
+            folders={folders}
+            folderPath={folderPath}
+            onFolderUpdate={onFolderUpdate}
+          />
         </div>
       )}
     </div>

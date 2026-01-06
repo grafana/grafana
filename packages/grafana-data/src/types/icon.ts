@@ -288,6 +288,7 @@ export const availableIconsIndex = {
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
+  'tachometer-empty': true,
   'cmab-logo': true,
 };
 

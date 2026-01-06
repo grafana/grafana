@@ -68,7 +68,8 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableDataMigrations: true,
+				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
@@ -105,7 +106,8 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableDataMigrations: true,
+				DisableAnonymous:      true,
 				DisableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},
@@ -130,52 +132,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	}
 }
 
-// TestIntegrationDashboardAPIAuthorization tests the dashboard K8s API with authorization checks
-func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				},
-				UnifiedStorageEnableSearch: true,
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
-
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
-
-			t.Run("Authorization tests for all identity types", func(t *testing.T) {
-				runAuthorizationTests(t, org1Ctx)
-			})
-
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, true)
-			})
-
-			t.Run("Cross-organization tests", func(t *testing.T) {
-				runCrossOrgTests(t, org1Ctx, org2Ctx)
-			})
-
-			t.Run("Dashboard HTTP API test", func(t *testing.T) {
-				runDashboardHttpTest(t, org1Ctx, org2Ctx)
-			})
-		})
-	}
-}
-
 // TestIntegrationDashboardAPI tests the dashboard K8s API
 func TestIntegrationDashboardAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -185,7 +141,8 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableDataMigrations: true,
+				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},

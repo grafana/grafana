@@ -164,6 +164,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
+			Suggestions:     panel.Suggestions,
 			HideFromList:    panel.HideFromList,
 			ReleaseState:    string(panel.State),
 			Signature:       string(panel.Signature),
@@ -191,8 +192,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	isCloudMigrationTarget := hs.Cfg.CloudMigration.Enabled && hs.Cfg.CloudMigration.IsTarget
 	featureToggles := hs.Features.GetEnabled(c.Req.Context())
 	// this is needed for backwards compatibility with external plugins
 	// we should remove this once we can be sure that no external plugins rely on this
@@ -229,6 +229,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackWriteKey:                  hs.Cfg.RudderstackWriteKey,
 		RudderstackDataPlaneUrl:              hs.Cfg.RudderstackDataPlaneURL,
 		RudderstackSdkUrl:                    hs.Cfg.RudderstackSDKURL,
+		RudderstackV3SdkUrl:                  hs.Cfg.RudderstackV3SDKURL,
 		RudderstackConfigUrl:                 hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:           hs.Cfg.RudderstackIntegrationsURL,
 		AnalyticsConsoleReporting:            hs.Cfg.FrontendAnalyticsConsoleReporting,
@@ -260,6 +261,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginRestrictedAPIsBlockList:    hs.Cfg.PluginRestrictedAPIsBlockList,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationEnabled:            hs.Cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
 		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
 		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,

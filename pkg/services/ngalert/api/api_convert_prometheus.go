@@ -63,6 +63,9 @@ const (
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
 	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
 	defaultConfigIdentifier = "default"
+
+	// versionMessageHeader is the header that specifies an optional message for rule versions.
+	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
 
 var (
@@ -248,7 +251,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
 	provenance := getProvenance(c)
-	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, provenance)
+	filterOpts := &provisioning.FilterOptions{
+		NamespaceUIDs:               []string{folder.UID},
+		RuleGroups:                  []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+	}
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -368,6 +376,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
 	if datasourceUID == "" {
+		datasourceUID = srv.cfg.PrometheusConversion.DefaultDatasourceUID
+	}
+	if datasourceUID == "" {
 		return response.Err(errDatasourceUIDHeaderMissing)
 	}
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
@@ -407,6 +418,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		return errorToResponse(err)
 	}
 
+	versionMessage, err := parseVersionMessageHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse version message header", "error", err)
+		return errorToResponse(err)
+	}
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -444,12 +460,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
 			}
+
 			grafanaGroups = append(grafanaGroups, grafanaGroup)
 		}
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance)
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
@@ -854,6 +871,16 @@ func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, er
 func parseExtraLabelsHeader(c *contextmodel.ReqContext) (map[string]string, error) {
 	labelsStr := strings.TrimSpace(c.Req.Header.Get(extraLabelsHeader))
 	return parseKeyValuePairs(labelsStr, extraLabelsHeader)
+}
+
+// parseVersionMessageHeader obtains and validates the message header value.
+func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
+	str := strings.TrimSpace(c.Req.Header.Get(versionMessageHeader))
+	// Limit message to the same as the dashboards message.
+	if len(str) > 500 {
+		return "", errInvalidHeaderValue(versionMessageHeader, errors.New("must be less than 500 characters"))
+	}
+	return str, nil
 }
 
 func formatMergeMatchers(matchers amconfig.Matchers) string {

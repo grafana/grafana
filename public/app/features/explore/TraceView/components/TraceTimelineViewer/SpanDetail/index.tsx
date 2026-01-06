@@ -157,7 +157,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'ServiceNameAndLinks',
       display: 'flex',
       width: '100%',
-      marginBottom: '16px',
+      marginBottom: theme.spacing(1),
     }),
     operationName: css({
       label: 'SpanDetailOperationName',

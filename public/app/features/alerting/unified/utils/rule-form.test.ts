@@ -7,6 +7,7 @@ import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
@@ -20,6 +21,7 @@ import {
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
+  fixMissingRefIdsInExpressionModel,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
@@ -518,5 +520,72 @@ describe('getDefaultExpressions', () => {
     expect(result[1].refId).toBe('Y');
     expect(thresholdModel.refId).toBe('Y');
     expect(thresholdModel.expression).toBe('X');
+  });
+});
+
+describe('fixMissingRefIdsInExpressionModel', () => {
+  it('should return non-Grafana managed rules unchanged', () => {
+    const cloudAlertingRule: RulerAlertingRuleDTO = {
+      alert: 'CloudAlert',
+      expr: 'up == 0',
+      for: '5m',
+      labels: { severity: 'critical' },
+      annotations: { summary: 'Instance down' },
+    };
+
+    const result = fixMissingRefIdsInExpressionModel(cloudAlertingRule);
+
+    expect(result).toEqual(cloudAlertingRule);
+    expect(result).toBe(cloudAlertingRule); // should be the exact same reference
+  });
+
+  it('should copy refId from query to model when model.refId is missing in Grafana managed rules', () => {
+    const ruleWithMissingRefId: RulerGrafanaRuleDTO = {
+      grafana_alert: {
+        uid: 'test-uid',
+        title: 'Test Alert',
+        namespace_uid: 'namespace-uid',
+        rule_group: 'test-group',
+        condition: 'B',
+        no_data_state: GrafanaAlertStateDecision.NoData,
+        exec_err_state: GrafanaAlertStateDecision.Alerting,
+        is_paused: false,
+        data: [
+          {
+            refId: 'A',
+            datasourceUid: 'datasource-uid',
+            queryType: '',
+            relativeTimeRange: { from: 600, to: 0 },
+            // @ts-ignore
+            model: {
+              // refId is missing here
+              datasource: {
+                type: 'grafana-testdata-datasource',
+                uid: 'PD8C576611E62080A',
+              },
+            },
+          },
+          {
+            refId: 'B',
+            datasourceUid: ExpressionDatasourceUID,
+            queryType: '',
+            // @ts-ignore
+            model: {
+              // refId is missing here
+              type: ExpressionQueryType.reduce,
+              expression: 'A',
+            },
+          },
+        ],
+      },
+      for: '5m',
+      labels: {},
+      annotations: {},
+    };
+
+    const result = fixMissingRefIdsInExpressionModel(ruleWithMissingRefId);
+
+    expect(result.grafana_alert.data[0].model.refId).toBe('A');
+    expect(result.grafana_alert.data[1].model.refId).toBe('B');
   });
 });

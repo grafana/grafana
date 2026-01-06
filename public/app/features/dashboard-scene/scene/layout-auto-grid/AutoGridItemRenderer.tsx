@@ -1,12 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
+import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
@@ -17,8 +19,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
-    useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
@@ -29,18 +29,23 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       memo(
         ({
           item,
+          conditionalRendering,
           addDndContainer,
           isDragged,
           isDragging,
           isRepeat = false,
         }: {
           item: VizPanel;
+          conditionalRendering?: ConditionalRenderingGroup;
           addDndContainer: boolean;
           isDragged: boolean;
           isDragging: boolean;
           isRepeat?: boolean;
-        }) =>
-          isConditionallyHidden && !isEditing && !renderHidden ? null : (
+        }) => {
+          const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
+            useIsConditionallyHidden(conditionalRendering);
+
+          return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
@@ -78,23 +83,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 )
               }
             </div>
-          )
+          );
+        }
       ),
-    [
-      conditionalRenderingClass,
-      conditionalRenderingOverlay,
-      isLazy,
-      key,
-      model.containerRef,
-      styles,
-      isConditionallyHidden,
-      isEditing,
-      renderHidden,
-    ]
+    [model, isLazy, key, styles, isEditing]
   );
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
+    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
+    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
+    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   const isDragging = !!draggingKey;
@@ -102,10 +102,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   return (
     <>
-      <Wrapper item={body} addDndContainer={true} key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
-      {repeatedPanels.map((item) => (
+      <Wrapper
+        item={body}
+        conditionalRendering={model.state.conditionalRendering}
+        addDndContainer={true}
+        key={body.state.key!}
+        isDragged={isDragged}
+        isDragging={isDragging}
+      />
+      {repeatedPanels.map((item, idx) => (
         <Wrapper
           item={item}
+          conditionalRendering={model.state.repeatedConditionalRendering?.[idx]}
           addDndContainer={false}
           key={item.state.key!}
           isDragged={isDragged}
@@ -127,6 +135,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: `var(${DRAGGED_ITEM_WIDTH})`,
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
     opacity: 0.8,
+
+    // Unfortunately, we need to re-enforce the absolute position here. Otherwise, the position will be overwritten with
+    //  a relative position by .dashboard-visible-hidden-element
+    '&.dashboard-visible-hidden-element': {
+      position: 'absolute',
+    },
   }),
   draggedRepeatWrapper: css({
     visibility: 'hidden',

@@ -8,6 +8,7 @@ import { Button, Field, Select, Input } from '@grafana/ui';
 export interface Props {
   managedIdentityEnabled: boolean;
   azureEntraPasswordCredentialsEnabled: boolean;
+  userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
@@ -22,13 +23,25 @@ export const AzureCredentialsForm = (props: Props) => {
     azureCloudOptions,
     onCredentialsChange,
     disabled,
+    userIdentityEnabled,
   } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
+    const defaultAuthType = (() => {
+      if (managedIdentityEnabled) {
+        return 'msi';
+      }
+
+      if (userIdentityEnabled) {
+        return 'currentuser';
+      }
+
+      return 'clientsecret';
+    })();
     if (onCredentialsChange) {
       const updated: AzureCredentials = {
         ...credentials,
-        authType: selected.value || 'msi',
+        authType: selected.value || defaultAuthType,
       };
       onCredentialsChange(updated);
     }
@@ -131,6 +144,13 @@ export const AzureCredentialsForm = (props: Props) => {
       value: 'ad-password',
       label: t('azureauth.azure-credentials-form.auth-options-azure-entra', 'Azure Entra Password'),
     });
+
+    if (userIdentityEnabled) {
+      authTypeOptions.unshift({
+        value: 'currentuser',
+        label: 'Current User',
+      });
+    }
   }
 
   return (

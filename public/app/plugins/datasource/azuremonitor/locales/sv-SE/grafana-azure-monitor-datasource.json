@@ -17,7 +17,7 @@
       "label-subscription": "Prenumeration",
       "placeholder-resource-name": "namn",
       "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Redigera <2>resursens URI</2> manuellt. Stöder användning av flera mallvariabler (t.ex.: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Aggregeringsfunktion",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Grundläggande loggar",
-      "description-basic-logs": "",
+      "description-basic-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>basloggar</2>.",
       "label-enable-basic-logs": "Aktivera basloggar"
     },
     "config-editor": {

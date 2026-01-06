@@ -204,6 +204,9 @@ type Panel struct {
 	Options map[string]any `json:"options,omitempty"`
 	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
+	// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+	// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+	AutoMigrateFrom *string `json:"autoMigrateFrom,omitempty"`
 }
 
 // NewPanel creates a new Panel object.
@@ -619,7 +622,12 @@ func NewFieldColor() *FieldColor {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -637,6 +645,11 @@ const (
 	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
 	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
 	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
+	FieldColorModeIdContinuousViridis    FieldColorModeId = "continuous-viridis"
+	FieldColorModeIdContinuousMagma      FieldColorModeId = "continuous-magma"
+	FieldColorModeIdContinuousPlasma     FieldColorModeId = "continuous-plasma"
+	FieldColorModeIdContinuousInferno    FieldColorModeId = "continuous-inferno"
+	FieldColorModeIdContinuousCividis    FieldColorModeId = "continuous-cividis"
 	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
 	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
 	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
@@ -824,6 +837,8 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Determine whether regex applies to variable value or display text
+	RegexApplyTo *VariableRegexApplyTo `json:"regexApplyTo,omitempty"`
 	// Additional static options for query variable
 	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
 	// Ordering of static options in relation to options returned from data source for query variable
@@ -930,6 +945,15 @@ const (
 	VariableSortAlphabeticalCaseInsensitiveDesc VariableSort = 6
 	VariableSortNaturalAsc                      VariableSort = 7
 	VariableSortNaturalDesc                     VariableSort = 8
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+type VariableRegexApplyTo string
+
+const (
+	VariableRegexApplyToValue VariableRegexApplyTo = "value"
+	VariableRegexApplyToText  VariableRegexApplyTo = "text"
 )
 
 // Contains the list of annotations that are associated with the dashboard.

@@ -94,6 +94,7 @@
           "query": "label_values(up, instance)",
           "refresh": 2,
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "skipUrlSync": false,
           "sort": 1,
           "tagValuesQuery": "",
@@ -280,6 +281,32 @@
         {
           "current": {
             "selected": false,
+            "text": "false",
+            "value": "false"
+          },
+          "description": "Toggle feature on/off",
+          "hide": 0,
+          "label": "Enable Feature",
+          "name": "switch_var",
+          "options": [
+            {
+              "selected": false,
+              "text": "true",
+              "value": "true"
+            },
+            {
+              "selected": true,
+              "text": "false",
+              "value": "false"
+            }
+          ],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "switch"
+        },
+        {
+          "current": {
+            "selected": false,
             "text": "legacy_value",
             "value": "legacy_string_content"
           },
@@ -336,6 +363,7 @@
           },
           "refresh": 1,
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "skipUrlSync": false,
           "sort": 2,
           "tagValuesQuery": "",

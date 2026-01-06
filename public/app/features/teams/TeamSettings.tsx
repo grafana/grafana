@@ -1,5 +1,4 @@
 import { useForm } from 'react-hook-form';
-import { ConnectedProps, connect } from 'react-redux';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
@@ -10,22 +9,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { Team } from 'app/types/teams';
 
-import { updateTeam } from './state/actions';
+import { useUpdateTeam } from './hooks';
 
-const mapDispatchToProps = {
-  updateTeam,
-};
-
-const connector = connect(null, mapDispatchToProps);
-
-interface OwnProps {
+interface Props {
   team: Team;
 }
-export type Props = ConnectedProps<typeof connector> & OwnProps;
 
-export const TeamSettings = ({ team, updateTeam }: Props) => {
+const TeamSettings = ({ team }: Props) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
+  const [updateTeam] = useUpdateTeam();
 
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const {
@@ -43,7 +36,13 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   const onSubmit = async (formTeam: Team) => {
-    updateTeam(formTeam.name, formTeam.email || '');
+    return updateTeam({
+      uid: team.uid,
+      team: {
+        name: formTeam.name,
+        email: formTeam.email || '',
+      },
+    });
   };
 
   return (
@@ -103,4 +102,4 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
   );
 };
 
-export default connector(TeamSettings);
+export default TeamSettings;

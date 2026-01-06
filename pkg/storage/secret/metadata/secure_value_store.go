@@ -85,7 +85,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		latest, err := s.getLatestVersionAndCreatedAt(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+		latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 		if err != nil {
 			return fmt.Errorf("fetching latest secure value version: %w", err)
 		}
@@ -110,7 +110,13 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 			}
 			updatedAt := now
 
-			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, actorUID)
+			createdBy := actorUID
+			if latest.createdBy != "" {
+				createdBy = latest.createdBy
+			}
+			updatedBy := actorUID
+
+			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
 			if err != nil {
 				return fmt.Errorf("to create row: %w", err)
 			}
@@ -161,13 +167,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	return createdSecureValue, nil
 }
 
-type versionAndCreatedAt struct {
+type versionAndCreated struct {
 	createdAt int64
+	createdBy string
 	version   int64
 }
 
-func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreatedAt, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreatedAt", trace.WithAttributes(
+func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreated", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
@@ -181,38 +188,48 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Co
 
 	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
+		return versionAndCreated{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
+		return versionAndCreated{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("error executing query: %w", err)
+		return versionAndCreated{}, fmt.Errorf("error executing query: %w", err)
 	}
 
 	if !rows.Next() {
-		return versionAndCreatedAt{}, nil
+		return versionAndCreated{}, nil
 	}
 
 	var (
-		createdAt int64
-		version   int64
-		active    bool
+		createdAt       int64
+		createdBy       string
+		version         int64
+		active          bool
+		namespaceFromDB string
+		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &version, &active); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("scanning version from returned rows: %w", err)
+	if err := rows.Scan(&createdAt, &createdBy, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
+		return versionAndCreated{}, fmt.Errorf("scanning version and created from returned rows: %w", err)
+	}
+
+	if namespaceFromDB != namespace.String() || nameFromDB != name {
+		return versionAndCreated{}, fmt.Errorf("bug: expected to find version and created for namespace=%+v name=%+v but got for namespace=%+v name=%+v",
+			namespace, name, namespaceFromDB, nameFromDB)
 	}
 
 	if !active {
 		createdAt = 0
+		createdBy = ""
 	}
 
-	return versionAndCreatedAt{
+	return versionAndCreated{
 		createdAt: createdAt,
+		createdBy: createdBy,
 		version:   version,
 	}, nil
 }
@@ -255,6 +272,11 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	if err := res.Err(); err != nil {
 		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
 	}
+
+	if secureValue.Namespace != namespace.String() || secureValue.Name != name {
+		return secureValueDB{}, fmt.Errorf("bug: expected to read secure value %+v from namespace %+v, but got a different row", name, namespace)
+	}
+
 	return secureValue, nil
 }
 
@@ -362,6 +384,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 		if !row.Active {
 			return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
+		}
+
+		if row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to list secure values from namespace %+v but got one from namespace %+v", namespace.String(), row.Namespace)
 		}
 
 		secureValue, err := row.toKubernetes()
@@ -644,6 +670,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	secureValues := make([]secretv1beta1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
+		var leaseTokenDB string
 
 		err = rows.Scan(&row.GUID,
 			&row.Name, &row.Namespace, &row.Annotations,
@@ -653,10 +680,15 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
 			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
+			&leaseTokenDB,
 		)
 
 		if err != nil {
 			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
+		if leaseTokenDB != leaseToken {
+			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseToken)
 		}
 
 		secureValue, err := row.toKubernetes()

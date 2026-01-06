@@ -292,6 +292,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
         const conditionalRendering = tab.state.conditionalRendering;
         conditionalRendering?.clearParent();
+        // We need to clear the target since we don't want to point the original tab anymore (if it was set)
+        conditionalRendering?.setTarget(undefined);
 
         rows.push(
           new RowItem({
@@ -356,8 +358,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
-              rowConfig.isResizable ?? layout.state.grid.state.isResizable,
-              layout.state.grid.state.isLazy
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
           })
       );
@@ -387,5 +388,31 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
 
     return duplicateTitles;
+  }
+
+  public collapseAllRows() {
+    this.state.rows.forEach((row) => {
+      if (!row.getCollapsedState()) {
+        row.setCollapsedState(true);
+      }
+      row.state.repeatedRows?.forEach((repeatedRow) => {
+        if (!repeatedRow.getCollapsedState()) {
+          repeatedRow.setCollapsedState(true);
+        }
+      });
+    });
+  }
+
+  public expandAllRows() {
+    this.state.rows.forEach((row) => {
+      if (row.getCollapsedState()) {
+        row.setCollapsedState(false);
+      }
+      row.state.repeatedRows?.forEach((repeatedRow) => {
+        if (repeatedRow.getCollapsedState()) {
+          repeatedRow.setCollapsedState(false);
+        }
+      });
+    });
   }
 }

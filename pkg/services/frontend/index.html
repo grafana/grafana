@@ -79,6 +79,7 @@
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
             "Segoe UI Symbol";
+          line-height: 1; /* prevent shift when css loads in that changes the body line-height */
         }
 
         .fs-variant-loader, .fs-variant-error, .fs-custom-domain-error {
@@ -187,6 +188,7 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
+        const publicDashboardAccessToken = [[.PublicDashboardAccessToken]]
         // Grafana can only fail to load once
         // However, it can fail to load in multiple different places
         // To avoid double reporting the error, we use this boolean to check if we've already failed
@@ -239,6 +241,33 @@
 
         const CHECK_INTERVAL = 1 * 1000;
 
+        function getCookie(name) {
+          const cookies = document.cookie.split(";").map(c => c.trim());
+
+          for (const cookie of cookies) {
+            if (cookie.startsWith(name + "=")) {
+              return cookie.substring(name.length + 1);
+            }
+          }
+
+          return undefined;
+        }
+
+        function getSessionExpiration() {
+          const value = getCookie("grafana_session_expiry");
+          if (!value) {
+            return undefined;
+          }
+          const realExpiresSeconds = parseInt(value, 10);
+          const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
+          const expiration = new Date(expiresSeconds * 1000);
+          return expiration;
+        }
+
+        async function rotateSession() {
+          await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
+        }
+
         /**
          * Fetches boot data from the server. If it returns undefined, it should be retried later.
          * Will return a rejected promise on unrecoverable errors.
@@ -246,9 +275,15 @@
         async function fetchBootData() {
           const queryParams = new URLSearchParams(window.location.search);
 
+          let path = '/bootdata';
+          // call a special bootdata url with the public access token
+          // this is needed to set the access token and correct org for public dashboards on the ST backend
+          if (publicDashboardAccessToken) {
+            path += `/${publicDashboardAccessToken}`;
+          }
           // pass the search params through to the bootdata request
           // this allows for overriding the theme/language etc
-          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          const bootDataUrl = new URL(path, window.location.origin);
           for (const [key, value] of queryParams.entries()) {
             bootDataUrl.searchParams.append(key, value);
           }
@@ -295,6 +330,19 @@
         function loadBootData() {
           return new Promise((resolve, reject) => {
             const attemptFetch = async () => {
+              try {
+                const sessionExpiration = getSessionExpiration();
+                const now = new Date();
+
+                // If the session has expired, don't continue trying to fetch boot data
+                if (sessionExpiration && now >= sessionExpiration) {
+                  await rotateSession();
+                }
+              } catch (error) {
+                // Just ignore any errors in session rotation. The user can just log in again.
+                console.warn("Failed to rotate session", error);
+              }
+
               try {
                 const bootData = await fetchBootData();
 

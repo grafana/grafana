@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -232,7 +230,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -255,7 +253,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,
@@ -555,7 +553,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -622,7 +620,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -656,17 +654,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['dashboards', 'snapshots'],
       }),
-      calculateDashboardDiff: build.mutation<CalculateDashboardDiffApiResponse, CalculateDashboardDiffApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/calculate-diff`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['dashboards'],
-      }),
       postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
         invalidatesTags: ['dashboards'],
-      }),
-      getHomeDashboard: build.query<GetHomeDashboardApiResponse, GetHomeDashboardApiArg>({
-        query: () => ({ url: `/dashboards/home` }),
-        providesTags: ['dashboards'],
       }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
@@ -1648,7 +1638,12 @@ const injectedRtkApi = api
         invalidatesTags: ['teams'],
       }),
       getTeamById: build.query<GetTeamByIdApiResponse, GetTeamByIdApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.teamId}` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.teamId}`,
+          params: {
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
         providesTags: ['teams'],
       }),
       updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
@@ -2498,7 +2493,7 @@ export type RouteConvertPrometheusCortexPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusCortexDeleteRuleGroupApiResponse =
@@ -2535,7 +2530,7 @@ export type RouteConvertPrometheusPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusDeleteRuleGroupApiResponse =
@@ -2556,18 +2551,6 @@ export type SearchDashboardSnapshotsApiArg = {
   /** Limit the number of returned results */
   limit?: number;
 };
-export type CalculateDashboardDiffApiResponse = /** status 200 (empty) */ number[];
-export type CalculateDashboardDiffApiArg = {
-  body: {
-    base?: CalculateDiffTarget;
-    /** The type of diff to return
-        Description:
-        `basic`
-        `json` */
-    diffType?: 'basic' | 'json';
-    new?: CalculateDiffTarget;
-  };
-};
 export type PostDashboardApiResponse = /** status 200 (empty) */ {
   /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
   folderUid?: string;
@@ -2587,8 +2570,6 @@ export type PostDashboardApiResponse = /** status 200 (empty) */ {
 export type PostDashboardApiArg = {
   saveDashboardCommand: SaveDashboardCommand;
 };
-export type GetHomeDashboardApiResponse = /** status 200 (empty) */ GetHomeDashboardResponse;
-export type GetHomeDashboardApiArg = void;
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -3459,16 +3440,16 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
 export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
@@ -3490,6 +3471,7 @@ export type DeleteTeamByIdApiArg = {
 export type GetTeamByIdApiResponse = /** status 200 (empty) */ TeamDto;
 export type GetTeamByIdApiArg = {
   teamId: string;
+  accesscontrol?: boolean;
 };
 export type UpdateTeamApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -4400,11 +4382,6 @@ export type DashboardSnapshotDto = {
   name?: string;
   updated?: string;
 };
-export type CalculateDiffTarget = {
-  dashboardId?: number;
-  unsavedDashboard?: Json;
-  version?: number;
-};
 export type SaveDashboardCommand = {
   UpdatedAt?: string;
   dashboard?: Json;
@@ -4415,51 +4392,6 @@ export type SaveDashboardCommand = {
   message?: string;
   overwrite?: boolean;
   userId?: number;
-};
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type GetHomeDashboardResponse = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-} & {
-  redirectUri?: string;
 };
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
@@ -4551,6 +4483,45 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
 };
 export type DashboardFullWithMeta = {
   dashboard?: Json;
@@ -6060,6 +6031,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6071,10 +6043,8 @@ export type SearchTeamGroupsQueryResult = {
   totalCount?: number;
 };
 export type UpdateTeamCommand = {
-  Email?: string;
-  ExternalUID?: string;
-  ID?: number;
-  Name?: string;
+  email?: string;
+  name?: string;
 };
 export type TeamMemberDto = {
   auth_module?: string;
@@ -6636,10 +6606,7 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  useCalculateDashboardDiffMutation,
   usePostDashboardMutation,
-  useGetHomeDashboardQuery,
-  useLazyGetHomeDashboardQuery,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,

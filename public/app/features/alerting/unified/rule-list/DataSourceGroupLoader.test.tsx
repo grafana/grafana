@@ -17,6 +17,10 @@ import { fromRulerRuleAndGroupIdentifierV2 } from '../utils/rule-id';
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { createViewLinkFromIdentifier } from './DataSourceRuleListItem';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 

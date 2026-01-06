@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,6 +19,7 @@ import (
 // ValidationFunc is a function that validates migration results.
 
 type Validator interface {
+	Name() string
 	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
 }
 
@@ -27,7 +29,7 @@ type ResourceMigration struct {
 	migrator    UnifiedMigrator
 	resources   []schema.GroupResource
 	migrationID string
-	validator   Validator // Optional: custom validation logic for this migration
+	validators  []Validator // Optional: custom validation logic for this migration
 	log         log.Logger
 }
 
@@ -36,13 +38,13 @@ func NewResourceMigration(
 	migrator UnifiedMigrator,
 	resources []schema.GroupResource,
 	migrationID string,
-	validator Validator,
+	validators []Validator,
 ) *ResourceMigration {
 	return &ResourceMigration{
 		migrator:    migrator,
 		resources:   resources,
 		migrationID: migrationID,
-		validator:   validator,
+		validators:  validators,
 		log:         log.New("storage.unified.resource_migration." + migrationID),
 	}
 }
@@ -70,6 +72,17 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 	}
 
 	m.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", m.resources)
+
+	if mg.Dialect.DriverName() == migrator.SQLite {
+		// reuse transaction in SQLite to avoid "database is locked" errors
+		tx, err := sess.Tx()
+		if err != nil {
+			m.log.Error("Failed to get transaction from session", "error", err)
+			return fmt.Errorf("failed to get transaction: %w", err)
+		}
+		ctx = resource.ContextWithTransaction(ctx, tx.Tx)
+		m.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
+	}
 
 	for _, org := range orgs {
 		if err := m.migrateOrg(ctx, sess, org); err != nil {
@@ -106,6 +119,10 @@ func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, 
 		m.log.Error("Migration failed", "org_id", org.ID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, err)
 	}
+	if response.Error != nil {
+		m.log.Error("Migration reported error", "org_id", org.ID, "error", response.Error.String(), "duration", time.Since(startTime))
+		return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, fmt.Errorf("migration error: %s", response.Error.Message))
+	}
 
 	// Validate the migration results
 	if err := m.validateMigration(migrationCtx, sess, response); err != nil {
@@ -123,20 +140,22 @@ func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, 
 	return nil
 }
 
-// validateMigration calls the custom validation function if provided
+// validateMigration runs all validators in sequence
 func (m *ResourceMigration) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse) error {
-	if m.validator == nil {
-		m.log.Debug("No validation function provided, skipping validation")
+	if len(m.validators) == 0 {
+		m.log.Debug("No validators provided, skipping validation")
 		return nil
 	}
 
-	return m.validator.Validate(ctx, sess, response, m.log)
-}
+	for _, validator := range m.validators {
+		m.log.Debug("Running validator", "name", validator.Name(), "total", len(m.validators))
+		if err := validator.Validate(ctx, sess, response, m.log); err != nil {
+			return fmt.Errorf("validator %s failed: %w", validator.Name(), err)
+		}
+	}
 
-// LegacyTableInfo defines how to map a unified storage resource to its legacy table
-type LegacyTableInfo struct {
-	Table       string // Legacy table name (e.g., "dashboard", "playlist")
-	WhereClause string // WHERE clause template with org_id parameter (e.g., "org_id = ? and is_folder = false")
+	m.log.Debug("All validators passed", "count", len(m.validators))
+	return nil
 }
 
 func ParseOrgIDFromNamespace(namespace string) (int64, error) {

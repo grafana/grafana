@@ -424,6 +424,9 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
+	if errors.Is(err, model.ErrLibraryElementProvisionedFolder) {
+		return response.Error(http.StatusConflict, model.ErrLibraryElementProvisionedFolder.Error(), err)
+	}
 	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
 		return response.Error(http.StatusForbidden, err.Error(), err)
 	}

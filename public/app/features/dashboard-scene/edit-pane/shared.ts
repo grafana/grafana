@@ -14,7 +14,6 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
@@ -246,10 +245,29 @@ export const dashboardEditActions = {
     description: t('dashboard.variable.description.action', 'Change variable description'),
     prop: 'description',
   }),
-  changeVariableHideValue: makeEditAction<SceneVariable, 'hide'>({
-    description: t('dashboard.variable.hide.action', 'Change variable hide option'),
-    prop: 'hide',
-  }),
+  changeVariableHideValue({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'hide'>) {
+    const variableSet = source.parent;
+    const variablesBeforeChange =
+      variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.hide.action', 'Change variable hide option'),
+      source,
+      perform: () => {
+        source.setState({ hide: newValue });
+        // Updating the variables set since components that show/hide variables subscribe to the variable set, not the individual variables.
+        if (variableSet instanceof SceneVariableSet) {
+          variableSet.setState({ variables: [...(variableSet.state.variables ?? [])] });
+        }
+      },
+      undo: () => {
+        source.setState({ hide: oldValue });
+        if (variableSet instanceof SceneVariableSet && variablesBeforeChange) {
+          variableSet.setState({ variables: variablesBeforeChange });
+        }
+      },
+    });
+  },
 
   moveElement(props: MoveElementActionHelperProps) {
     const { movedObject, source, perform, undo } = props;
@@ -298,8 +316,4 @@ function makeEditAction<Source extends SceneObject, T extends keyof Source['stat
       },
     });
   };
-}
-
-export function undoRedoWasClicked(e: React.FocusEvent) {
-  return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
 }

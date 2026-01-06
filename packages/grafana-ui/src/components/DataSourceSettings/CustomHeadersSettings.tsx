@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { PureComponent } from 'react';
+import { memo, useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -25,10 +25,6 @@ export type CustomHeaders = CustomHeader[];
 export interface Props {
   dataSourceConfig: DataSourceSettings<any, any>;
   onChange: (config: DataSourceSettings) => void;
-}
-
-export interface State {
-  headers: CustomHeaders;
 }
 
 interface CustomHeaderRowProps {
@@ -98,150 +94,129 @@ const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: Custom
 
 CustomHeaderRow.displayName = 'CustomHeaderRow';
 
-export class CustomHeadersSettings extends PureComponent<Props, State> {
-  state: State = {
-    headers: [],
-  };
+export const CustomHeadersSettings = memo<Props>(({ dataSourceConfig, onChange }) => {
+  const [headers, setHeaders] = useState<CustomHeaders>(() => {
+    const { jsonData, secureJsonData, secureJsonFields } = dataSourceConfig;
+    return Object.keys(jsonData)
+      .sort()
+      .filter((key) => key.startsWith('httpHeaderName'))
+      .map((key, index) => {
+        return {
+          id: uniqueId(),
+          name: jsonData[key],
+          value: secureJsonData !== undefined ? secureJsonData[key] : '',
+          configured: (secureJsonFields && secureJsonFields[`httpHeaderValue${index + 1}`]) || false,
+        };
+      });
+  });
 
-  constructor(props: Props) {
-    super(props);
-    const { jsonData, secureJsonData, secureJsonFields } = this.props.dataSourceConfig;
-    this.state = {
-      headers: Object.keys(jsonData)
-        .sort()
-        .filter((key) => key.startsWith('httpHeaderName'))
-        .map((key, index) => {
-          return {
-            id: uniqueId(),
-            name: jsonData[key],
-            value: secureJsonData !== undefined ? secureJsonData[key] : '',
-            configured: (secureJsonFields && secureJsonFields[`httpHeaderValue${index + 1}`]) || false,
-          };
-        }),
-    };
-  }
-
-  updateSettings = () => {
-    const { headers } = this.state;
-
+  const updateSettings = (newHeaders: CustomHeaders) => {
     // we remove every httpHeaderName* field
     const newJsonData = Object.fromEntries(
-      Object.entries(this.props.dataSourceConfig.jsonData).filter(([key, val]) => !key.startsWith('httpHeaderName'))
+      Object.entries(dataSourceConfig.jsonData).filter(([key, val]) => !key.startsWith('httpHeaderName'))
     );
 
     // we remove every httpHeaderValue* field
     const newSecureJsonData = Object.fromEntries(
-      Object.entries(this.props.dataSourceConfig.secureJsonData || {}).filter(
-        ([key, val]) => !key.startsWith('httpHeaderValue')
-      )
+      Object.entries(dataSourceConfig.secureJsonData || {}).filter(([key, val]) => !key.startsWith('httpHeaderValue'))
     );
 
     // then we add the current httpHeader-fields
-    for (const [index, header] of headers.entries()) {
+    for (const [index, header] of newHeaders.entries()) {
       newJsonData[`httpHeaderName${index + 1}`] = header.name;
       if (!header.configured) {
         newSecureJsonData[`httpHeaderValue${index + 1}`] = header.value;
       }
     }
 
-    this.props.onChange({
-      ...this.props.dataSourceConfig,
+    onChange({
+      ...dataSourceConfig,
       jsonData: newJsonData,
       secureJsonData: newSecureJsonData,
     });
   };
 
-  onHeaderAdd = () => {
-    this.setState((prevState) => {
-      return { headers: [...prevState.headers, { id: uniqueId(), name: '', value: '', configured: false }] };
-    });
+  const onHeaderAdd = () => {
+    setHeaders((prevHeaders) => [...prevHeaders, { id: uniqueId(), name: '', value: '', configured: false }]);
   };
 
-  onHeaderChange = (headerIndex: number, value: CustomHeader) => {
-    this.setState(({ headers }) => {
-      return {
-        headers: headers.map((item, index) => {
-          if (headerIndex !== index) {
-            return item;
-          }
-          return { ...value };
-        }),
-      };
-    });
-  };
-
-  onHeaderReset = (headerId: string) => {
-    this.setState(({ headers }) => {
-      return {
-        headers: headers.map((h, i) => {
-          if (h.id !== headerId) {
-            return h;
-          }
-          return {
-            ...h,
-            value: '',
-            configured: false,
-          };
-        }),
-      };
-    });
-  };
-
-  onHeaderRemove = (headerId: string) => {
-    this.setState(
-      ({ headers }) => ({
-        headers: headers.filter((h) => h.id !== headerId),
-      }),
-      this.updateSettings
+  const onHeaderChange = (headerIndex: number, value: CustomHeader) => {
+    setHeaders((prevHeaders) =>
+      prevHeaders.map((item, index) => {
+        if (headerIndex !== index) {
+          return item;
+        }
+        return { ...value };
+      })
     );
   };
 
-  render() {
-    const { headers } = this.state;
-    const { dataSourceConfig } = this.props;
+  const onHeaderReset = (headerId: string) => {
+    setHeaders((prevHeaders) =>
+      prevHeaders.map((h) => {
+        if (h.id !== headerId) {
+          return h;
+        }
+        return {
+          ...h,
+          value: '',
+          configured: false,
+        };
+      })
+    );
+  };
 
-    return (
-      <Box marginBottom={5}>
+  const onHeaderRemove = (headerId: string) => {
+    setHeaders((prevHeaders) => {
+      const newHeaders = prevHeaders.filter((h) => h.id !== headerId);
+      updateSettings(newHeaders);
+      return newHeaders;
+    });
+  };
+
+  return (
+    <Box marginBottom={5}>
+      <Box marginBottom={0.5} position="relative">
+        <Stack direction="row" alignItems="baseline">
+          <h6>
+            <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-title">Custom HTTP Headers</Trans>
+          </h6>
+        </Stack>
+      </Box>
+      <div>
+        {headers.map((header, i) => (
+          <CustomHeaderRow
+            key={header.id}
+            header={header}
+            onChange={(h) => {
+              onHeaderChange(i, h);
+            }}
+            onBlur={() => updateSettings(headers)}
+            onRemove={onHeaderRemove}
+            onReset={onHeaderReset}
+          />
+        ))}
+      </div>
+      {!dataSourceConfig.readOnly && (
         <Box marginBottom={0.5} position="relative">
           <Stack direction="row" alignItems="baseline">
-            <h6>
-              <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-title">Custom HTTP Headers</Trans>
-            </h6>
+            <Button
+              variant="secondary"
+              icon="plus"
+              type="button"
+              onClick={(e) => {
+                onHeaderAdd();
+              }}
+            >
+              <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-add">Add header</Trans>
+            </Button>
           </Stack>
         </Box>
-        <div>
-          {headers.map((header, i) => (
-            <CustomHeaderRow
-              key={header.id}
-              header={header}
-              onChange={(h) => {
-                this.onHeaderChange(i, h);
-              }}
-              onBlur={this.updateSettings}
-              onRemove={this.onHeaderRemove}
-              onReset={this.onHeaderReset}
-            />
-          ))}
-        </div>
-        {!dataSourceConfig.readOnly && (
-          <Box marginBottom={0.5} position="relative">
-            <Stack direction="row" alignItems="baseline">
-              <Button
-                variant="secondary"
-                icon="plus"
-                type="button"
-                onClick={(e) => {
-                  this.onHeaderAdd();
-                }}
-              >
-                <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-add">Add header</Trans>
-              </Button>
-            </Stack>
-          </Box>
-        )}
-      </Box>
-    );
-  }
-}
+      )}
+    </Box>
+  );
+});
+
+CustomHeadersSettings.displayName = 'CustomHeadersSettings';
 
 export default CustomHeadersSettings;

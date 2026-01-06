@@ -79,10 +79,6 @@ const (
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
 
-	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger
-	FlagUnifiedRequestLog = "unifiedRequestLog"
-
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
@@ -183,6 +179,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesUnifiedStorageQuotas
+	// Adds support for Kubernetes unified storage quotas
+	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
+
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
@@ -243,6 +243,10 @@ const (
 	// Enables the UI to use certain backend-side filters
 	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
 
+	// FlagAlertingUIUseFullyCompatBackendFilters
+	// Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+	FlagAlertingUIUseFullyCompatBackendFilters = "alertingUIUseFullyCompatBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
@@ -271,9 +275,9 @@ const (
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
-	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+	// FlagAuditLoggingAppPlatform
+	// Enable audit logging with Kubernetes under app platform
+	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
 
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
@@ -330,6 +334,10 @@ const (
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
+
+	// FlagDashboardAdHocAndGroupByWrapper
+	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
 
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
@@ -563,6 +571,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagFetchRulesInCompactMode
+	// Add compact=true when fetching rules
+	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
+
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
@@ -606,10 +618,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagPostgresDSUsePGX
-	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagPostgresDSUsePGX = "postgresDSUsePGX"
-
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"
@@ -641,6 +649,10 @@ const (
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+
+	// FlagKubernetesExternalGroupMapping
+	// Routes external group mapping requests from /api to the /apis endpoint
+	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
@@ -742,10 +754,6 @@ const (
 	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 
-	// FlagNewPanelPadding
-	// Increases panel padding globally
-	FlagNewPanelPadding = "newPanelPadding"
-
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
@@ -754,6 +762,10 @@ const (
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
+
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
@@ -761,4 +773,12 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagOpentsdbBackendMigration
+	// Run queries through the data source backend
+	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
+
+	// FlagKubernetesAlertingHistorian
+	// Adds support for Kubernetes alerting historian APIs
+	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 )

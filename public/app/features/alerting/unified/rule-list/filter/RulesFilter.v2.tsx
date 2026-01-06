@@ -39,10 +39,14 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './savedSearchesSchema';
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
@@ -82,9 +86,22 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const styles = useStyles2(getStyles);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const { searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
+  const { filterState, searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
   const popupRef = useRef<HTMLDivElement>(null);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
+
+  // Feature toggle for saved searches
+  const savedSearchesEnabled = shouldUseSavedSearches();
+
+  // Saved searches hook with UserStorage persistence
+  const {
+    savedSearches,
+    isLoading: savedSearchesLoading,
+    saveSearch,
+    renameSearch,
+    deleteSearch,
+    setDefaultSearch,
+  } = useSavedSearches();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
@@ -97,6 +114,20 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     setValue('query', searchQuery);
   }, [searchQuery, setValue]);
 
+  // Apply saved search - triggers filtering (which updates search input and URL)
+  const handleApplySearch = useCallback(
+    (search: SavedSearch) => {
+      const parsedFilter = getSearchFilterFromQuery(search.query);
+      updateFilters(parsedFilter);
+
+      // Track analytics
+      trackSavedSearchApplied(search);
+    },
+    [updateFilters]
+  );
+
+  // Auto-apply of default search is handled in RuleListPage (before FilterView mounts)
+
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
     trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter, filterVariant: 'v2' });
@@ -104,7 +135,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    updateFilters(formAdvancedFiltersToRuleFilter(values));
+    updateFilters(formAdvancedFiltersToRuleFilter(values, filterState.freeFormWords));
     trackFilterButtonApplyClick(values, pluginsFilterEnabled);
     setIsPopupOpen(false);
   };
@@ -240,7 +271,21 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               {filterButtonLabel}
             </Button>
           </PopupCard>
-          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          {savedSearchesEnabled && (
+            <SavedSearches
+              savedSearches={savedSearches}
+              currentSearchQuery={searchQuery}
+              onSave={saveSearch}
+              onRename={renameSearch}
+              onDelete={deleteSearch}
+              onApply={handleApplySearch}
+              onSetDefault={setDefaultSearch}
+              isLoading={savedSearchesLoading}
+            />
+          )}
+          <Box marginLeft={2}>
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          </Box>
         </Stack>
       </Stack>
     </form>
@@ -439,13 +484,7 @@ function GroupField({
   groupPlaceholder: string;
   portalContainer?: HTMLElement;
 }) {
-  const { control, setValue } = useFormContext<AdvancedFilters>();
-
-  const wrappedOptions = useCallback(
-    (inputValue: string) =>
-      createThresholdAwareOptions(groupOptions, (value) => setValue('groupName', value), 'groupName')(inputValue),
-    [groupOptions, setValue]
-  );
+  const { control } = useFormContext<AdvancedFilters>();
 
   return (
     <>
@@ -458,7 +497,7 @@ function GroupField({
         render={({ field }) => (
           <Combobox<string>
             placeholder={groupPlaceholder}
-            options={wrappedOptions}
+            options={groupOptions}
             onChange={(option) => {
               if (!option?.infoOption) {
                 field.onChange(option?.value || null);
