@@ -50,4 +50,10 @@ func addUserAuthMigrations(mg *Migrator) {
 	mg.AddMigration("Add user_unique_id to user_auth", NewAddColumnMigration(userAuthV1, &Column{
 		Name: "external_uid", Type: DB_Text, Nullable: true,
 	}))
+
+	// Upgrade OAuth token columns from TEXT to MEDIUMTEXT to support large tokens
+	// TEXT has a limit of 65,535 bytes which can be exceeded by OAuth tokens with many groups/claims
+	mg.AddMigration("Update OAuth token columns to MEDIUMTEXT in user_auth", NewRawSQLMigration("").
+		Mysql("ALTER TABLE user_auth MODIFY COLUMN o_auth_access_token MEDIUMTEXT, MODIFY COLUMN o_auth_refresh_token MEDIUMTEXT, MODIFY COLUMN o_auth_id_token MEDIUMTEXT, MODIFY COLUMN o_auth_token_type MEDIUMTEXT;"),
+	)
 }
