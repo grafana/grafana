@@ -39,6 +39,9 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
       className={styles.container}
       aria-label={t('grafana-ui.users-indicator.container-label', 'Users indicator container')}
     >
+      {users.slice(0, limitReached ? limit : limit + 1).map((userView, idx, arr) => (
+        <UserIcon key={userView.user.name} userView={userView} zIndex={arr.length - idx} />
+      ))}
       {limitReached && (
         <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' } }} showTooltip={false}>
           {tooManyUsers
@@ -47,12 +50,6 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
             : `+${extraUsers}`}
         </UserIcon>
       )}
-      {users
-        .slice(0, limitReached ? limit : limit + 1)
-        .reverse()
-        .map((userView) => (
-          <UserIcon key={userView.user.name} userView={userView} />
-        ))}
     </div>
   );
 };
@@ -62,8 +59,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       display: 'flex',
       justifyContent: 'center',
-      flexDirection: 'row-reverse',
       marginLeft: theme.spacing(1),
+      isolation: 'isolate',
 
       '& > button': {
         marginLeft: theme.spacing(-1), // Overlay the elements a bit on top of each other

@@ -16,6 +16,8 @@ export interface UserIconProps {
   showTooltip?: boolean;
   /** An optional class name to be added to the icon element */
   className?: string;
+  /** An optional z-index for when multiple users are stacked */
+  zIndex?: number;
   /** onClick handler to be called when the icon is clicked */
   onClick?: () => void;
 }
@@ -59,6 +61,7 @@ const getUserInitials = (name?: string) => {
 export const UserIcon = ({
   userView,
   className,
+  zIndex,
   children,
   onClick,
   showTooltip = true,
@@ -74,6 +77,7 @@ export const UserIcon = ({
       onClick={onClick}
       className={cx(styles.container, onClick && styles.pointer, className)}
       aria-label={t('grafana-ui.user-icon.label', '{{name}} icon', { name: user.name })}
+      style={zIndex !== undefined ? { zIndex } : undefined}
     >
       {children ? (
         <div className={cx(styles.content, styles.textContent)}>{children}</div>
