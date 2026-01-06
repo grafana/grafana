@@ -65,7 +65,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		name string
 		fn   func(*testing.T, resource.StorageBackend, resource.StorageBackend, string, sqldb.DB)
 	}{
-		{TestKeyPathGeneration, runTestIntegrationBackendKeyPathGeneration},
+		{"key_path generation", runTestIntegrationBackendKeyPathGeneration},
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
 	}
 
