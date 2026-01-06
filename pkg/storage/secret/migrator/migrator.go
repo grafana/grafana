@@ -200,4 +200,24 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
 		Cols: []string{"lease_created"},
 	}))
+
+	encryptedValueTableUniqueKey := migrator.Index{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex}
+	updatedEncryptedValueTable := migrator.Table{
+		Name: TableNameEncryptedValue,
+		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true}, // Limit enforced by K8s.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false, IsPrimaryKey: true},
+			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
+			// {Name: "data_key_id", Type: migrator.DB_NVarchar, Length: 100, Nullable: false, Default: "''"}, // TODO: Not present until Grafana 12.3.
+		},
+		PrimaryKeys: []string{"namespace", "name", "version"},
+		// TODO: Not present until Grafana 12.3
+		//Indices: []*migrator.Index{
+		//	{Cols: []string{"data_key_id"}},
+		//},
+	}
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
 }
