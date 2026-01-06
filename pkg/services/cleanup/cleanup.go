@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
@@ -62,6 +63,7 @@ type CleanUpService struct {
 	orgService                org.Service
 	teamService               team.Service
 	dataSourceService         datasources.DataSourceService
+	dynamicClientFactory      func(*rest.Config) (dynamic.Interface, error)
 }
 
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
@@ -87,6 +89,9 @@ func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serve
 		orgService:                orgService,
 		teamService:               teamService,
 		dataSourceService:         dataSourceService,
+		dynamicClientFactory: func(c *rest.Config) (dynamic.Interface, error) {
+			return dynamic.NewForConfig(c)
+		},
 	}
 	return s
 }
@@ -254,7 +259,7 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 		return
 	}
 
-	client, err := dynamic.NewForConfig(restConfig)
+	client, err := srv.dynamicClientFactory(restConfig)
 	if err != nil {
 		logger.Error("Failed to create Kubernetes client", "error", err.Error())
 		return
@@ -397,7 +402,7 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 		return
 	}
 
-	client, err := dynamic.NewForConfig(restConfig)
+	client, err := srv.dynamicClientFactory(restConfig)
 	if err != nil {
 		logger.Error("Failed to create Kubernetes client", "error", err.Error())
 		return
