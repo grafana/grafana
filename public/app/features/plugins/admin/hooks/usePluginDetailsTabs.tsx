@@ -154,24 +154,21 @@ export const usePluginDetailsTabs = (
     return navModelChildren;
   }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen, loading]);
 
-  const navModel: NavModelItem = useMemo(
-    () => ({
-      text: plugin?.name ?? '',
-      img: plugin?.info.logos.small,
-      url: pathname,
-      children: [
-        {
-          text: PluginTabLabels.OVERVIEW,
-          icon: 'file-alt',
-          id: PluginTabIds.OVERVIEW,
-          url: `${pathname}?page=${PluginTabIds.OVERVIEW}`,
-          active: PluginTabIds.OVERVIEW === currentPageId,
-        },
-        ...navModelChildren,
-      ],
-    }),
-    [plugin?.name, plugin?.info.logos.small, pathname, currentPageId, navModelChildren]
-  );
+  const navModel: NavModelItem = {
+    text: plugin?.name ?? '',
+    img: plugin?.info.logos.small,
+    url: pathname,
+    children: [
+      {
+        text: PluginTabLabels.OVERVIEW,
+        icon: 'file-alt',
+        id: PluginTabIds.OVERVIEW,
+        url: `${pathname}?page=${PluginTabIds.OVERVIEW}`,
+        active: PluginTabIds.OVERVIEW === currentPageId,
+      },
+      ...navModelChildren,
+    ],
+  };
 
   return {
     error,
