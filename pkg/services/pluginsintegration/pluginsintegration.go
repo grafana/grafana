@@ -79,7 +79,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
-	coreplugins.ProvideCoreRegistry,
+	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 
 	pipeline.ProvideDiscoveryStage,
@@ -145,7 +145,7 @@ var WireSet = wire.NewSet(
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
 // extended.
 var WireExtensionSet = wire.NewSet(
-	coreplugins.ProvideCoreProvider,
+	coreplugin.ProvideCoreProvider,
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	ProvideClientWithMiddlewares,

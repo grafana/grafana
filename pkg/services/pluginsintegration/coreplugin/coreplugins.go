@@ -1,4 +1,4 @@
-package coreplugins
+package coreplugin
 
 import (
 	"context"

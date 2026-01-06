@@ -44,7 +44,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service)
 
 func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, ap pluginassets.Provider) *bootstrap.Bootstrap {
 	disableAlertingForTempoDecorateFunc := func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		if p.ID == coreplugins.Tempo && !cfg.Features.TempoAlertingEnabled {
+		if p.ID == coreplugin.Tempo && !cfg.Features.TempoAlertingEnabled {
 			p.Alerting = false
 		}
 		return p, nil
