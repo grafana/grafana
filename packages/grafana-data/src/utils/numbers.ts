@@ -25,5 +25,31 @@ export function roundDecimals(val: number, dec = 0) {
  * bad  for arbitrary floats:     371.499999999999 -> 12
  */
 export function guessDecimals(num: number) {
-  return (('' + num).split('.')[1] || '').length;
+  if (num === 0 || !Number.isFinite(num)) {
+    return 0;
+  }
+
+  const str = num.toString();
+  const parts = str.split('.');
+  if (parts.length === 1) {
+    if (str.indexOf('e-') !== -1) {
+      return parseInt(str.split('e-')[1], 10);
+    }
+    return 0;
+  }
+
+  const dotPart = parts[1];
+  const exponentIndex = dotPart.indexOf('e');
+  if (exponentIndex === -1) {
+    return dotPart.length;
+  }
+
+  const fraction = dotPart.substring(0, exponentIndex);
+  const exponent = parseInt(dotPart.substring(exponentIndex + 1), 10);
+
+  if (exponent < 0) {
+    return fraction.length + Math.abs(exponent);
+  }
+
+  return Math.max(0, fraction.length - exponent);
 }
