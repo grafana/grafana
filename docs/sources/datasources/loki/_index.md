@@ -99,7 +99,7 @@ The Loki data source provides the following capabilities:
 
 The following documentation helps you get started with the Loki data source:
 
-- [Configure the Loki data source](configure/configure-loki-data-source/)
+- [Configure the Loki data source](configure/)
 - [Loki query editor](query-editor/)
 - [Loki template variables](template-variables/)
 - [Troubleshoot the Loki data source](troubleshooting/)
@@ -121,7 +121,7 @@ After you configure the Loki data source, you can:
 - Add [annotations](ref:annotate-visualizations) to overlay log events on graphs
 - Set up [alerting](ref:alerting) to monitor your log data
 - Use [Explore](ref:explore) for ad-hoc log queries and analysis
-- Configure [derived fields](configure/configure-loki-data-source/#derived-fields) to link logs to traces or other data sources
+- Configure [derived fields](configure/#derived-fields) to link logs to traces or other data sources
 
 ## Community dashboards
 
@@ -140,7 +140,7 @@ For more information, refer to [Import a dashboard](ref:import-dashboard).
 
 Loki integrates with other Grafana data sources to provide full observability across logs, metrics, and traces:
 
-- **Tempo:** Use [derived fields](configure/configure-loki-data-source/#derived-fields) to create links from log lines to traces in Tempo, enabling seamless navigation from logs to distributed traces.
+- **Tempo:** Use [derived fields](configure/#derived-fields) to create links from log lines to traces in Tempo, enabling seamless navigation from logs to distributed traces.
 - **Prometheus and Mimir:** Display logs alongside metrics on the same dashboard to correlate application behavior with performance data.
 
 For more information about building observability workflows, refer to the [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/) and [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).
