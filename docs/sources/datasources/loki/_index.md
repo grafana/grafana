@@ -88,7 +88,7 @@ This data source supports Loki v2.9 and later.
 
 The Loki data source provides the following capabilities:
 
-- **Log queries:** Query and filter logs using [LogQL](/docs/loki/latest/logql/), Loki's query language inspired by PromQL.
+- **Log queries:** Query and filter logs using [LogQL](https://grafana.com/docs/loki/latest/logql/), Loki's query language inspired by PromQL.
 - **Metric queries:** Extract metrics from log data using LogQL metric queries, enabling you to count log events, calculate rates, and aggregate values.
 - **Live tailing:** Stream logs in real time as they're ingested into Loki.
 - **Derived fields:** Create links from log lines to external systems such as tracing backends, allowing you to jump directly from a log entry to a related trace.
@@ -104,12 +104,12 @@ The following documentation helps you get started with the Loki data source:
 - [Loki template variables](template-variables/)
 - [Troubleshoot the Loki data source](troubleshooting/)
 
-For more information about Loki itself, refer to the [Loki documentation](/docs/loki/latest/):
+For more information about Loki itself, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/):
 
-- [Get started with Loki](/docs/loki/latest/get-started/)
-- [Install Loki](/docs/loki/latest/installation/)
-- [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
-- [LogQL query language](/docs/loki/latest/logql/)
+- [Get started with Loki](https://grafana.com/docs/loki/latest/get-started/)
+- [Install Loki](https://grafana.com/docs/loki/latest/installation/)
+- [Loki best practices](https://grafana.com/docs/loki/latest/best-practices/#best-practices)
+- [LogQL query language](https://grafana.com/docs/loki/latest/logql/)
 
 ## Additional features
 
@@ -135,3 +135,12 @@ To import a community dashboard:
 1. Paste the dashboard ID and click **Load**.
 
 For more information, refer to [Import a dashboard](ref:import-dashboard).
+
+## Related data sources
+
+Loki integrates with other Grafana data sources to provide full observability across logs, metrics, and traces:
+
+- **Tempo:** Use [derived fields](configure/configure-loki-data-source/#derived-fields) to create links from log lines to traces in Tempo, enabling seamless navigation from logs to distributed traces.
+- **Prometheus and Mimir:** Display logs alongside metrics on the same dashboard to correlate application behavior with performance data.
+
+For more information about building observability workflows, refer to the [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/) and [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).
