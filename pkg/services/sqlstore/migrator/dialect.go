@@ -3,6 +3,7 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
