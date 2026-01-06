@@ -82,6 +82,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/import-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/import-dashboards/
+  loki-troubleshooting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/troubleshooting/
 ---
 
 # Loki data source
@@ -132,6 +137,8 @@ After you configure the Loki data source, you can:
 - Set up [alerting](ref:loki-alerting) to monitor your log data
 - Use [Explore](ref:explore) for ad-hoc log queries and analysis
 - Configure [derived fields](configure/#derived-fields) to link logs to traces or other data sources
+
+If you encounter issues, refer to [Troubleshoot issues with the Loki data source](ref:loki-troubleshooting).
 
 ## Community dashboards
 
