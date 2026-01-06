@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Loki
-title: Configure the Loki data source
+title: Loki data source
 weight: 800
 refs:
   data-source-management:
@@ -42,119 +42,96 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
+  visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  transformations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  import-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/import-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/import-dashboards/
 ---
 
 # Loki data source
 
-Grafana Loki is a set of components that can be combined into a fully featured logging stack.
-Unlike other logging systems, Loki is built around the idea of only indexing metadata about your logs: labels (just like Prometheus labels). Log data itself is then compressed and stored in chunks in object stores such as S3 or GCS, or even locally on a filesystem.
+Grafana Loki is a log aggregation system that stores and queries logs from your applications and infrastructure. Unlike traditional logging systems, Loki indexes only metadata (labels) about your logs rather than the full text. Log data is compressed and stored in object stores such as Amazon S3 or Google Cloud Storage, or locally on a filesystem.
 
-The following guides will help you get started with Loki:
-
-- [Getting started with Loki](/docs/loki/latest/get-started/)
-- [Install Loki](/docs/loki/latest/installation/)
-- [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
-- [Configure the Loki data source](/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
-- [LogQL](/docs/loki/latest/logql/)
-- [Loki query editor](query-editor/)
+You can use this data source to query, visualize, and alert on log data stored in Loki.
 
 ## Supported Loki versions
 
-This data source supports these versions of Loki:
+This data source supports Loki v2.9 and later.
 
-- v2.9+
+## Key capabilities
 
-## Adding a data source
+The Loki data source provides the following capabilities:
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management)
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+- **Log queries:** Query and filter logs using [LogQL](/docs/loki/latest/logql/), Loki's query language inspired by PromQL.
+- **Metric queries:** Extract metrics from log data using LogQL metric queries, enabling you to count log events, calculate rates, and aggregate values.
+- **Live tailing:** Stream logs in real time as they're ingested into Loki.
+- **Derived fields:** Create links from log lines to external systems such as tracing backends, allowing you to jump directly from a log entry to a related trace.
+- **Annotations:** Overlay log events on time series graphs to correlate logs with metrics.
+- **Alerting:** Create alert rules based on log queries to notify you when specific patterns or thresholds are detected.
 
-Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](query-editor/#apply-annotations).
+## Get started
 
-{{< admonition type="note" >}}
-To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
-{{< /admonition >}}
+The following documentation helps you get started with the Loki data source:
 
-## Provision the data source
+- [Configure the Loki data source](configure/configure-loki-data-source/)
+- [Loki query editor](query-editor/)
+- [Loki template variables](template-variables/)
+- [Troubleshoot the Loki data source](troubleshooting/)
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+For more information about Loki itself, refer to the [Loki documentation](/docs/loki/latest/):
 
-### Provisioning examples
+- [Get started with Loki](/docs/loki/latest/get-started/)
+- [Install Loki](/docs/loki/latest/installation/)
+- [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
+- [LogQL query language](/docs/loki/latest/logql/)
 
-```yaml
-apiVersion: 1
+## Additional features
 
-datasources:
-  - name: Loki
-    type: loki
-    access: proxy
-    url: http://localhost:3100
-    jsonData:
-      timeout: 60
-      maxLines: 1000
-```
+After you configure the Loki data source, you can:
 
-**Using basic authorization and a derived field:**
+- Create [visualizations](ref:visualizations) to display your log data
+- Configure and use [templates and variables](ref:variables) for dynamic dashboards
+- Add [transformations](ref:transformations) to process query results
+- Add [annotations](ref:annotate-visualizations) to overlay log events on graphs
+- Set up [alerting](ref:alerting) to monitor your log data
+- Use [Explore](ref:explore) for ad-hoc log queries and analysis
+- Configure [derived fields](configure/configure-loki-data-source/#derived-fields) to link logs to traces or other data sources
 
-You must escape the dollar (`$`) character in YAML values because it can be used to interpolate environment variables:
+## Community dashboards
 
-```yaml
-apiVersion: 1
+Grafana doesn't ship pre-configured dashboards with the Loki data source, but you can find community-contributed dashboards on [Grafana Dashboards](https://grafana.com/grafana/dashboards/?dataSource=loki). These dashboards provide ready-made visualizations for common Loki use cases.
 
-datasources:
-  - name: Loki
-    type: loki
-    access: proxy
-    url: http://localhost:3100
-    basicAuth: true
-    basicAuthUser: my_user
-    jsonData:
-      maxLines: 1000
-      derivedFields:
-        # Field with internal link pointing to data source in Grafana.
-        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-        - datasourceUid: my_jaeger_uid
-          matcherRegex: "traceID=(\\w+)"
-          name: TraceID
-          # url will be interpreted as query for the datasource
-          url: '$${__value.raw}'
-          # optional for URL Label to set a custom display label for the link.
-          urlDisplayLabel: 'View Trace'
+To import a community dashboard:
 
-        # Field with external link.
-        - matcherRegex: "traceID=(\\w+)"
-          name: TraceID
-          url: 'http://localhost:16686/trace/$${__value.raw}'
-    secureJsonData:
-      basicAuthPassword: test_password
-```
+1. Find a dashboard on [grafana.com/grafana/dashboards](https://grafana.com/grafana/dashboards/?dataSource=loki).
+1. Copy the dashboard ID.
+1. In Grafana, go to **Dashboards** > **New** > **Import**.
+1. Paste the dashboard ID and click **Load**.
 
-**Using a Jaeger data source:**
-
-In this example, the Jaeger data source's `uid` value should match the Loki data source's `datasourceUid` value.
-
-```
-datasources:
-    - name: Jaeger
-      type: jaeger
-      url: http://jaeger-tracing-query:16686/
-      access: proxy
-      # UID should match the datasourceUid in derivedFields.
-      uid: my_jaeger_uid
-```
-
-## Query the data source
-
-The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
-
-For details, refer to the [query editor documentation](query-editor/).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/).
+For more information, refer to [Import a dashboard](ref:import-dashboard).

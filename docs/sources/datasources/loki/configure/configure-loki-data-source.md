@@ -144,3 +144,72 @@ Select **Show example log message** to display a text area where you can enter a
 The new field with the link shown in log details:
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
+
+## Provision the data source
+
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+
+### Provisioning examples
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    jsonData:
+      timeout: 60
+      maxLines: 1000
+```
+
+**Using basic authorization and a derived field:**
+
+You must escape the dollar (`$`) character in YAML values because it can be used to interpolate environment variables:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    basicAuth: true
+    basicAuthUser: my_user
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          # url will be interpreted as query for the datasource
+          url: '$${__value.raw}'
+          # optional for URL Label to set a custom display label for the link.
+          urlDisplayLabel: 'View Trace'
+
+        # Field with external link.
+        - matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          url: 'http://localhost:16686/trace/$${__value.raw}'
+    secureJsonData:
+      basicAuthPassword: test_password
+```
+
+**Using a Jaeger data source:**
+
+In this example, the Jaeger data source's `uid` value should match the Loki data source's `datasourceUid` value.
+
+```
+datasources:
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-tracing-query:16686/
+      access: proxy
+      # UID should match the datasourceUid in derivedFields.
+      uid: my_jaeger_uid
+```
