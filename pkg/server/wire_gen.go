@@ -44,8 +44,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis"
@@ -193,10 +193,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	service6 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -371,7 +371,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	cacheService := localcache.ProvideService()
 	ossDataSourceRequestValidator := validations.ProvideValidator()
-	sourcesService := sources.ProvideService(cfg, pluginManagementCfg)
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
@@ -391,13 +391,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	validate := pipeline.ProvideValidationStage(pluginManagementCfg, validation, angularinspectorService)
+	tracer := otelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
 	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
 	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
 	elasticsearchService := elasticsearch.ProvideService(httpclientProvider)
-	tracer := otelTracer()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
 	lokiService := loki.ProvideService(httpclientProvider, tracer)
@@ -407,7 +407,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	testdatasourceService := testdatasource.ProvideService()
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
-	mssqlService := mssql.ProvideService(cfg)
+	mssqlService := mssql.ProvideService()
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
 	configProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
@@ -557,7 +557,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracingService, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	providerService := provider2.ProvideService(corepluginRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
@@ -581,7 +581,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader, featureToggles)
+	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -852,7 +852,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService, registerer)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
@@ -880,8 +880,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, sourcesService)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
@@ -1035,7 +1035,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	cacheService := localcache.ProvideService()
 	ossDataSourceRequestValidator := validations.ProvideValidator()
-	sourcesService := sources.ProvideService(cfg, pluginManagementCfg)
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
@@ -1055,13 +1055,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	validate := pipeline.ProvideValidationStage(pluginManagementCfg, validation, angularinspectorService)
+	tracer := otelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
 	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
 	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
 	elasticsearchService := elasticsearch.ProvideService(httpclientProvider)
-	tracer := otelTracer()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
 	lokiService := loki.ProvideService(httpclientProvider, tracer)
@@ -1071,7 +1071,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	testdatasourceService := testdatasource.ProvideService()
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
-	mssqlService := mssql.ProvideService(cfg)
+	mssqlService := mssql.ProvideService()
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
 	configProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
@@ -1221,7 +1221,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracingService, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	providerService := provider2.ProvideService(corepluginRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
@@ -1245,7 +1245,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader, featureToggles)
+	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1518,7 +1518,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService, registerer)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
@@ -1546,8 +1546,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, sourcesService)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
