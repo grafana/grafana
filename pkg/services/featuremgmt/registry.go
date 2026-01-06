@@ -2075,6 +2075,21 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "smoothingTransformation",
+			Description:  "Enables the ASAP smoothing transformation for time series data",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
+		{
+			Name:         "secretsManagementAppPlatformAwsKeeper",
+			Description:  "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+		},
 	}
 )
 

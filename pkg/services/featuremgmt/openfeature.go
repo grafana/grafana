@@ -19,11 +19,11 @@ const (
 
 // OpenFeatureConfig holds configuration for initializing OpenFeature
 type OpenFeatureConfig struct {
-	// ProviderType is either "static" or "goff"
+	// ProviderType is either "static", "goff", or "ofrep"
 	ProviderType string
-	// URL is the GOFF service URL (required for GOFF provider)
+	// URL is the GOFF or OFREP service URL (required for GOFF + OFREP providers)
 	URL *url.URL
-	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF provider)
+	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF + OFREP providers)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
 	StaticFlags map[string]bool
@@ -35,9 +35,9 @@ type OpenFeatureConfig struct {
 
 // InitOpenFeature initializes OpenFeature with the provided configuration
 func InitOpenFeature(config OpenFeatureConfig) error {
-	// For GOFF provider, ensure we have a URL
-	if config.ProviderType == setting.GOFFProviderType && (config.URL == nil || config.URL.String() == "") {
-		return fmt.Errorf("URL is required for GOFF provider")
+	// For GOFF + OFREP providers, ensure we have a URL
+	if (config.ProviderType == setting.GOFFProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
+		return fmt.Errorf("URL is required for GOFF + OFREP providers")
 	}
 
 	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
@@ -66,13 +66,17 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	}
 
 	var httpcli *http.Client
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		m, err := clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create token exchange middleware: %w", err)
+	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
+		var m *clientauthmiddleware.TokenExchangeMiddleware
+
+		if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
+			if err != nil {
+				return fmt.Errorf("failed to create token exchange middleware: %w", err)
+			}
 		}
 
-		httpcli, err = goffHTTPClient(m)
+		httpcli, err = createHTTPClient(m)
 		if err != nil {
 			return err
 		}
@@ -99,28 +103,35 @@ func createProvider(
 	staticFlags map[string]bool,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
-	if providerType != setting.GOFFProviderType {
-		return newStaticProvider(staticFlags)
+	if providerType == setting.GOFFProviderType || providerType == setting.OFREPProviderType {
+		if u == nil || u.String() == "" {
+			return nil, fmt.Errorf("feature provider url is required for GOFFProviderType + OFREPProviderType")
+		}
+
+		if providerType == setting.GOFFProviderType {
+			return newGOFFProvider(u.String(), httpClient)
+		}
+
+		if providerType == setting.OFREPProviderType {
+			return newOFREPProvider(u.String(), httpClient)
+		}
 	}
 
-	if u == nil || u.String() == "" {
-		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
-	}
-
-	return newGOFFProvider(u.String(), httpClient)
+	return newStaticProvider(staticFlags)
 }
 
-func goffHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
-	httpcli, err := sdkhttpclient.NewProvider().New(sdkhttpclient.Options{
+func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+	options := sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout: 10 * time.Second,
 		},
-		Middlewares: []sdkhttpclient.Middleware{
-			m.New([]string{featuresProviderAudience}),
-		},
-	})
+	}
+	if m != nil {
+		options.Middlewares = append(options.Middlewares, m.New([]string{featuresProviderAudience}))
+	}
 
+	httpcli, err := sdkhttpclient.NewProvider().New(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http client for openfeature: %w", err)
 	}

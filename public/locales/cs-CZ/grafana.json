@@ -3157,9 +3157,12 @@
       "table": "Tabulka"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definujte podmínku, která musí být splněna před spuštěním pravidla výstrahy",
       "description-configure-firing-alert-instances-routed-contact": "Nakonfigurujte způsob přesměrování instancí spouštění výstrah do kontaktních bodů",
       "description-configure-receives-notifications": "Nakonfigurujte, kdo obdrží oznámení a jak jsou odesílána",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Pravidla výstrah",
       "title-contact-points": "Kontaktní body",
       "title-notification-policies": "Zásady oznamování"
@@ -14506,6 +14509,17 @@
       },
       "name": {
         "series-to-rows": "Řady na řádky"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

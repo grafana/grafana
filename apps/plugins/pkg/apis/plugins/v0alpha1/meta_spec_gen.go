@@ -504,6 +504,7 @@ const (
 	MetaIncludeRoleAdmin  MetaIncludeRole = "Admin"
 	MetaIncludeRoleEditor MetaIncludeRole = "Editor"
 	MetaIncludeRoleViewer MetaIncludeRole = "Viewer"
+	MetaIncludeRoleNone   MetaIncludeRole = "None"
 )
 
 // +k8s:openapi-gen=true
