@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
 import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 /**
  * Represents a datasource mapping for compatibility checking.
@@ -19,8 +19,8 @@ export interface DatasourceMapping {
  * Request body for dashboard compatibility check API call
  */
 export interface CheckCompatibilityRequest {
-  /** Complete dashboard JSON object (v1 schema with panels array) */
-  dashboardJson: Dashboard;
+  /** Complete dashboard JSON object (supports both v1 and v2 schemas) */
+  dashboardJson: DashboardJson;
   /** Array of datasource mappings to check compatibility against */
   datasourceMappings: DatasourceMapping[];
 }
@@ -88,10 +88,13 @@ export interface CompatibilityCheckResult {
  * validation service, which extracts metrics from dashboard queries and checks
  * if those metrics exist in the target datasource(s).
  *
- * @param dashboardJson Complete dashboard JSON object (must be v1 schema)
+ * Note: The backend currently only supports v1 dashboards (with panels array).
+ * V2 dashboards (with elements) will be rejected by the backend with an appropriate error.
+ *
+ * @param dashboardJson Complete dashboard JSON object (v1 or v2 schema)
  * @param datasourceMappings Array of datasource mappings to validate against
  * @returns Promise resolving to compatibility check results
- * @throws CompatibilityCheckError if the API call fails
+ * @throws Error if the API call fails or dashboard schema is unsupported
  *
  * @example
  * ```typescript
@@ -105,7 +108,7 @@ export interface CompatibilityCheckResult {
  * ```
  */
 export async function checkDashboardCompatibility(
-  dashboardJson: Dashboard,
+  dashboardJson: DashboardJson,
   datasourceMappings: DatasourceMapping[]
 ): Promise<CompatibilityCheckResult> {
   // Get current organization ID from user context

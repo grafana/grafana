@@ -1,5 +1,6 @@
 import { BackendSrv, getBackendSrv } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
+import { DataQuery } from '@grafana/schema';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { checkDashboardCompatibility, CompatibilityCheckResult, DatasourceMapping } from './compatibilityApi';
 
@@ -23,46 +24,56 @@ const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =
     ...overrides,
   }) as unknown as BackendSrv;
 
+// Prometheus-specific query type (extends DataQuery)
+interface PrometheusQuery extends DataQuery {
+  expr: string;
+}
+
 // Test fixtures
-const createMockDashboard = (overrides: Partial<Dashboard> = {}): Dashboard => ({
-  title: 'Test Dashboard',
-  uid: 'test-uid',
-  schemaVersion: 39,
-  version: 1,
-  panels: [
-    {
-      id: 1,
-      type: 'graph',
-      title: 'CPU Usage',
-      datasource: {
-        type: 'prometheus',
-        uid: 'prometheus-uid-123',
-      },
-      targets: [
-        {
-          refId: 'A',
-          expr: 'rate(cpu_usage_total[5m])',
+const createMockDashboard = (overrides: Partial<DashboardJson> = {}): DashboardJson => {
+  // Create a minimal dashboard for testing purposes
+  // Panels array is intentionally minimal - only includes fields needed for compatibility check
+  const dashboard: DashboardJson = {
+    title: 'Test Dashboard',
+    uid: 'test-uid',
+    schemaVersion: 39,
+    version: 1,
+    panels: [
+      {
+        id: 1,
+        type: 'graph',
+        title: 'CPU Usage',
+        datasource: {
+          type: 'prometheus',
+          uid: 'prometheus-uid-123',
         },
-      ],
-    },
-    {
-      id: 2,
-      type: 'graph',
-      title: 'Memory Usage',
-      datasource: {
-        type: 'prometheus',
-        uid: 'prometheus-uid-123',
+        targets: [
+          {
+            refId: 'A',
+            expr: 'rate(cpu_usage_total[5m])',
+          } as PrometheusQuery,
+        ],
       },
-      targets: [
-        {
-          refId: 'A',
-          expr: 'memory_usage_bytes',
+      {
+        id: 2,
+        type: 'graph',
+        title: 'Memory Usage',
+        datasource: {
+          type: 'prometheus',
+          uid: 'prometheus-uid-123',
         },
-      ],
-    },
-  ],
-  ...overrides,
-});
+        targets: [
+          {
+            refId: 'A',
+            expr: 'memory_usage_bytes',
+          } as PrometheusQuery,
+        ],
+      },
+    ] as unknown as DashboardJson['panels'],
+    ...overrides,
+  };
+  return dashboard;
+};
 
 const createMockDatasourceMappings = (): DatasourceMapping[] => [
   {
