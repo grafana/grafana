@@ -199,6 +199,8 @@ To help create meaningful sections in your dashboard, you can group panels into 
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
 Also, tabs are included in the dashboard URL.
 
+Because both panel layout options are supported in rows and tabs, each of your groupings can have a different panel layout, allowing for maximum flexibility in your dashboards.
+
 You can nest:
 
 - Rows in rows
@@ -210,13 +212,11 @@ You can nest up to two levels deep.
 The following sections describe the configuration options for grouping panels into tabs and rows.
 While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
-   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
+   A dotted blue line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
 
 1. Set the [grouping configuration options](#grouping-configuration-options).
 1. When you're finished, click **Save** at the top-right corner of the dashboard.
@@ -244,31 +244,37 @@ The following table describes the options you can set for a row or tab.
 
 <!-- prettier-ignore-end -->
 
-#### Grouping layouts
+### Grouping layouts
 
-When you have a grouping configured, the **Layout** options depend on what element in the dashboard you have selected and the nesting level.
-You can only nest two levels so at most your dashboard four levels:
-Level 1 - dashboard
-Level 2 - grouping 1
-Level 3 - grouping 2
-Level 4 - panels
+When you have panels grouped into rows or tabs, the **Layout** options available depend on what element in the dashboard you have selected and the nesting level.
+You can only nest two levels so at most your dashboard four levels, which have the following layout options:
 
-At the panel level, there are no layout options.
-At the grouping 2 level, the layout options are related to how you arrange the panels (custom and autogrid--see above).
-At grouping 1 level and the dashboard level, the layout options allow you to select between rows and tabs. That's described in the following section.
+- **Panels**: No layout options
+- **Inner grouping**: Layout options are related to how you arrange the panels: **Custom** and **Auto grid** (refer to [Panel layouts](#panel-layouts)).
+- **Outer grouping**: Layout options allow you to choose between rows or tabs.
+- **Dashboard**: Layout options allow you to choose between rows or tabs.
 
-You can switch between rows and tabs by selecting the parent container and changing the grouping layout.
+You can switch between rows and tabs or update the panel layout by selecting the parent container, or next level up, and changing the layout selection.
 
-<!-- when i change the grouping after adding the groupings i can change the row to a tab-->
+### Ungroup panels
 
-<!--Greyed out ungrouoping and add buttons is really confusing -->
+You can remove groupings from the dashboard at any time without losing your panels.
+If you have nested groupings, removing the grouping closest to the dashboard level also automatically removes the grouping closest to the panels.
 
-#### Ungroup panels
+<!-- screenshot or recording here -->
 
-Ungrouping the first level ungrouops the second level automatically, but your panels always remain.
-Ungroup options are with tabs and under rows.
+To remove grouping, follow these steps:
 
-<!-- why are there two ungrouping options for tabs? -->
+1. Toggle on the edit mode switch.
+1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
+1. Click the grouping to bring it into focus.
+
+   A dotted blue line surrounds highlights the grouping.
+
+1. Click **Ungroup rows** or **Ungroup tabs**.
+1. Click **Save** at the top-right corner of the dashboard.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
 
 ## Configure repeat options
 
@@ -405,7 +411,7 @@ To move or resize, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
-## Navigate using the dashboard outline
+## Navigate using the content outline
 
 The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
