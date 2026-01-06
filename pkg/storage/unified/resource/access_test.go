@@ -159,6 +159,97 @@ func TestNamespaceMatching(t *testing.T) {
 	}
 }
 
+func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
+	mockClient := authlib.FixedAccessClient(true)
+	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+	t.Run("returns error when fallback is used", func(t *testing.T) {
+		ctx := WithFallback(context.Background())
+		req := authlib.BatchCheckRequest{
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "0",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          utils.VerbGet,
+					Namespace:     "stacks-1",
+					Name:          "test-dashboard",
+				},
+			},
+		}
+
+		_, err := client.BatchCheck(ctx, &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "fallback")
+	})
+
+	t.Run("works normally without fallback", func(t *testing.T) {
+		ctx := context.Background()
+		req := authlib.BatchCheckRequest{
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "0",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          utils.VerbGet,
+					Namespace:     "stacks-1",
+					Name:          "test-dashboard",
+				},
+			},
+		}
+
+		resp, err := client.BatchCheck(ctx, &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		require.Len(t, resp.Results, 1)
+		assert.True(t, resp.Results["0"].Allowed)
+	})
+
+	t.Run("returns error on namespace mismatch", func(t *testing.T) {
+		ctx := context.Background()
+		req := authlib.BatchCheckRequest{
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "0",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          utils.VerbGet,
+					Namespace:     "stacks-2", // Different namespace
+					Name:          "test-dashboard",
+				},
+			},
+		}
+
+		_, err := client.BatchCheck(ctx, &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, authlib.ErrNamespaceMismatch)
+	})
+
+	t.Run("allows non-RBAC resources by default", func(t *testing.T) {
+		// Use a client that would deny if checked
+		denyClient := authlib.FixedAccessClient(false)
+		client := NewAuthzLimitedClient(denyClient, AuthzOptions{})
+
+		ctx := context.Background()
+		req := authlib.BatchCheckRequest{
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "0",
+					Group:         "unknown.group",
+					Resource:      "unknown.resource",
+					Verb:          utils.VerbGet,
+					Namespace:     "stacks-1",
+					Name:          "test",
+				},
+			},
+		}
+
+		resp, err := client.BatchCheck(ctx, &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		require.Len(t, resp.Results, 1)
+		assert.True(t, resp.Results["0"].Allowed, "non-RBAC resources should be allowed by default")
+	})
+}
+
 // TestNamespaceMatchingFallback tests namespace matching in Check and Compile methods when fallback is used
 func TestNamespaceMatchingFallback(t *testing.T) {
 	// Create a mock client that always returns allowed=true

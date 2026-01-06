@@ -34,8 +34,11 @@ func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) er
 	return nil
 }
 
-func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
+func (nc NoopClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{
+		Results: make(map[string]authlib.BatchCheckResult),
+		Zookie:  authlib.NoopZookie{},
+	}, nil
 }
 
 func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
