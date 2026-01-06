@@ -1,8 +1,14 @@
-import { useCallback, useMemo } from 'react';
+import { ReactElement, useCallback, useMemo } from 'react';
 
 import { PluginExtensionPoints, RawTimeRange, getDefaultTimeRange, getTimeZone, locationUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
+import { Button } from '@grafana/ui';
+
+type Props = {
+  queries: DataQuery[];
+};
 
 const QUERYLESS_APPS = [
   'grafana-pyroscope-app',
@@ -11,33 +17,12 @@ const QUERYLESS_APPS = [
   'grafana-metricsdrilldown-app',
 ];
 
-export type PluginExtensionExploreContext = {
-  targets: DataQuery[];
-  timeRange: RawTimeRange;
-  timeZone: TimeZone;
-};
-
 /**
- * Creates the extension point context for drilldown actions.
- * @param queries - The data queries to include in the context
- * @returns The extension point context
+ * Renders a button to open queryless drilldown apps.
+ * Only displays when at least one queryless app extension is available.
  */
-export function createExtensionPointContext(queries: DataQuery[]): PluginExtensionExploreContext {
-  const range = getDefaultTimeRange();
-  return {
-    targets: queries,
-    timeRange: range.raw,
-    timeZone: getTimeZone(),
-  };
-}
-
-/**
- * Hook that returns queryless drilldown links and handlers.
- * @param queries - The data queries to use for the extension point context
- * @returns An object containing the queryless links and an onClick handler, or null if no links are available
- */
-export function useDrilldownExtensionPoint(queries: DataQuery[]) {
-  const context = useMemo(() => createExtensionPointContext(queries), [queries]);
+export function DrilldownExtensionPoint(props: Props): ReactElement | null {
+  const context = useExtensionPointContext(props);
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
@@ -46,19 +31,37 @@ export function useDrilldownExtensionPoint(queries: DataQuery[]) {
   const querylessLinks = useMemo(() => links.filter((link) => QUERYLESS_APPS.includes(link.pluginId)), [links]);
 
   const onClick = useCallback(() => {
-    if (!querylessLinks.length || !querylessLinks[0].path) {
+    const firstLink = querylessLinks[0];
+    if (!firstLink?.path) {
       return;
     }
-    global.open(locationUtil.assureBaseUrl(querylessLinks[0].path), '_blank');
+    global.open(locationUtil.assureBaseUrl(firstLink.path), '_blank');
   }, [querylessLinks]);
 
   if (!querylessLinks.length) {
     return null;
   }
 
-  return {
-    links: querylessLinks,
-    onClick,
-    primaryLink: querylessLinks[0],
-  };
+  return (
+    <Button variant="secondary" onClick={onClick}>
+      <Trans i18nKey="explore.queryless-apps-extensions.open-in-drilldown">Open in Drilldown</Trans>
+    </Button>
+  );
+}
+
+export type PluginExtensionExploreContext = {
+  targets: DataQuery[];
+  timeRange: RawTimeRange;
+  timeZone: TimeZone;
+};
+
+function useExtensionPointContext({ queries }: Props): PluginExtensionExploreContext {
+  return useMemo(() => {
+    const range = getDefaultTimeRange();
+    return {
+      targets: queries,
+      timeRange: range.raw,
+      timeZone: getTimeZone(),
+    };
+  }, [queries]);
 }
