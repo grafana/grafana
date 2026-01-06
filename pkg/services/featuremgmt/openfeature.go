@@ -37,7 +37,7 @@ type OpenFeatureConfig struct {
 func InitOpenFeature(config OpenFeatureConfig) error {
 	// For remote providers, ensure we have a URL
 	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
-		return fmt.Errorf("URL is required for features-service + OFREP providers")
+		return fmt.Errorf("URL is required for remote providers")
 	}
 
 	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
