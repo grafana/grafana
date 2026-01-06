@@ -5799,7 +5799,8 @@
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
     "community-error": "Failed to load community dashboards. Please try again.",
-    "community-error-title": "Error loading community dashboards",
+    "community-error-description": "Failed to load community dashboard.",
+    "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
       "auto-mapped_one": "{{count}} datasources were automatically configured:",
       "auto-mapped_other": "{{count}} datasources were automatically configured:",
