@@ -135,7 +135,7 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboard(dashboardPage, page, selectors, 'can hide a variable');
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // check the variable is visible in the dashboard
@@ -179,8 +179,8 @@ test.describe(
         value: 'foo',
         label: 'VariableUnderTest',
       };
+      await saveDashboard(dashboardPage, page, selectors, 'can hide a variable in controls menu');
 
-      await saveDashboard(dashboardPage, page, selectors);
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // check the variable is visible in the dashboard

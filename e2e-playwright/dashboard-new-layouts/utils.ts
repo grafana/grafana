@@ -103,8 +103,16 @@ export type Variable = {
   value: string;
 };
 
-export async function saveDashboard(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+export async function saveDashboard(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title?: string
+) {
   await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  if (title) {
+    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
+  }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
   await expect(page.getByText('Dashboard saved')).toBeVisible();
 }
