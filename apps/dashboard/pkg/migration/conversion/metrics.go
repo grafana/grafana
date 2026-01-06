@@ -189,6 +189,8 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 					"annotationsLost", math.Max(0, float64(sourceStats.annotationCount-targetStats.annotationCount)),
 					"linksLost", math.Max(0, float64(sourceStats.linkCount-targetStats.linkCount)),
 					"variablesLost", math.Max(0, float64(sourceStats.variableCount-targetStats.variableCount)),
+					"sourceJSONSize", sourceStats.jsonSize,
+					"targetJSONSize", targetStats.jsonSize,
 				)
 			}
 
@@ -222,11 +224,19 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			).Inc()
 
 			// Log success (debug level to avoid spam)
+			// Collect stats for logging
+			sourceStats := collectDashboardStats(a)
+			targetStats := collectDashboardStats(b)
+
 			// Build base log fields for success
 			successLogFields := []interface{}{
 				"sourceVersionAPI", sourceVersionAPI,
 				"targetVersionAPI", targetVersionAPI,
 				"dashboardUID", dashboardUID,
+				"panelCount", targetStats.panelCount,
+				"queryCount", targetStats.queryCount,
+				"sourceJsonSize", sourceStats.jsonSize,
+				"targetJsonSize", targetStats.jsonSize,
 			}
 
 			// Add schema version fields only if we have them (v0/v1 dashboards)

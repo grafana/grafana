@@ -1,6 +1,7 @@
 package conversion
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -82,6 +83,17 @@ type dashboardStats struct {
 	annotationCount int
 	linkCount       int
 	variableCount   int
+	jsonSize        int
+}
+
+// getJSONSize returns the size of an object when serialized to JSON
+// This is a generic way to detect content loss without knowing the specific structure
+func getJSONSize(v interface{}) int {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return 0
+	}
+	return len(data)
 }
 
 // countPanelsV0V1 counts panels in v0alpha1 or v1beta1 dashboard spec (unstructured JSON)
@@ -238,6 +250,7 @@ func collectStatsV0V1(spec map[string]interface{}) dashboardStats {
 		annotationCount: countAnnotationsV0V1(spec),
 		linkCount:       countLinksV0V1(spec),
 		variableCount:   countVariablesV0V1(spec),
+		jsonSize:        getJSONSize(spec),
 	}
 }
 
@@ -289,6 +302,7 @@ func collectStatsV2alpha1(spec dashv2alpha1.DashboardSpec) dashboardStats {
 		annotationCount: countAnnotationsV2(spec.Annotations),
 		linkCount:       countLinksV2(spec.Links),
 		variableCount:   countVariablesV2(spec.Variables),
+		jsonSize:        getJSONSize(spec),
 	}
 }
 
@@ -340,6 +354,7 @@ func collectStatsV2beta1(spec dashv2beta1.DashboardSpec) dashboardStats {
 		annotationCount: countAnnotationsV2beta1(spec.Annotations),
 		linkCount:       countLinksV2beta1(spec.Links),
 		variableCount:   countVariablesV2beta1(spec.Variables),
+		jsonSize:        getJSONSize(spec),
 	}
 }
 
@@ -398,6 +413,20 @@ func detectConversionDataLoss(sourceStats, targetStats dashboardStats, sourceFun
 			targetStats.variableCount,
 			sourceStats.variableCount-targetStats.variableCount,
 		))
+	}
+
+	// JSON size: detect significant decrease (>20%) which may indicate content loss
+	// This catches cases like text panel content being replaced with defaults
+	if sourceStats.jsonSize > 0 && targetStats.jsonSize > 0 {
+		decreasePercent := float64(sourceStats.jsonSize-targetStats.jsonSize) / float64(sourceStats.jsonSize) * 100
+		if decreasePercent > 20 {
+			errors = append(errors, fmt.Sprintf(
+				"JSON size decreased significantly: source=%d bytes, target=%d bytes (%.1f%% decrease, possible content loss)",
+				sourceStats.jsonSize,
+				targetStats.jsonSize,
+				decreasePercent,
+			))
+		}
 	}
 
 	if len(errors) > 0 {
