@@ -117,7 +117,7 @@ To create a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
-1. Under [**Layout**](#dashboard-layouts), choose one of the following options:
+1. Under [**Layout**](#panel-layouts), choose one of the following options:
    - **Custom** - Position and size panels individually. The default selection.
    - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
 
@@ -171,12 +171,14 @@ To create a dashboard, follow these steps:
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Toggle off the edit mode switch.
 
-## Dashboard layouts
+## Panel layouts
 
 There are two panel layout options available:
 
 - **Custom** - You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
 - **Auto grid** - Panels resize and fit to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
+
+Both layout options are supported in rows and tabs.
 
 ### Auto grid layout
 
@@ -185,7 +187,7 @@ There are default parameters to constrain the layout, and you can update these t
 
 - **Min column width** - Set the minimum width of the columns in the layout grid. Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
 - **Max columns** - Set the maximum number of columns that layout can have from 1-10.
-- **Row height** - Set the height of the rows in the layout grid. Coose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels..
+- **Row height** - Set the height of the rows in the layout grid. Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels..
 - **Fill screen** - Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
 
    {{< video-embed src="layout-fillscreen.mp4" >}}
@@ -200,7 +202,7 @@ Also, tabs are included in the dashboard URL.
 You can nest:
 
 - Rows in rows
-- Rows in rows
+- Rows in tabs
 - Tabs in rows
 
 You can nest up to two levels deep.
@@ -227,7 +229,7 @@ Select the grouping level to access the options to add more elements or to remov
 
 ### Grouping configuration options
 
-The following table describes the options you can set for a row.
+The following table describes the options you can set for a row or tab.
 
 <!-- prettier-ignore-start -->
 
@@ -236,17 +238,37 @@ The following table describes the options you can set for a row.
 | Title                    | Title of the row or tab.                                                    |
 | Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
 | Hide row header          | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
-| Layout                   | Select the layout of the grouping. Choose from: **Custom**, **Auto grid**, **Rows**, or **Tabs**. For more information, refer to [Layout](#layout). |
+| Layout                   | Select the layout of the grouping. Choose from **Rows** or **Tabs**. For more information, refer to [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
 
 <!-- prettier-ignore-end -->
 
-#### Layout
+#### Grouping layouts
 
-Grouping layout options depend on whether you're grouping rows, panels, or tabs and the nesting level.
+When you have a grouping configured, the **Layout** options depend on what element in the dashboard you have selected and the nesting level.
+You can only nest two levels so at most your dashboard four levels:
+Level 1 - dashboard
+Level 2 - grouping 1
+Level 3 - grouping 2
+Level 4 - panels
 
-TBD
+At the panel level, there are no layout options.
+At the grouping 2 level, the layout options are related to how you arrange the panels (custom and autogrid--see above).
+At grouping 1 level and the dashboard level, the layout options allow you to select between rows and tabs. That's described in the following section.
+
+You can switch between rows and tabs by selecting the parent container and changing the grouping layout.
+
+<!-- when i change the grouping after adding the groupings i can change the row to a tab-->
+
+<!--Greyed out ungrouoping and add buttons is really confusing -->
+
+#### Ungroup panels
+
+Ungrouping the first level ungrouops the second level automatically, but your panels always remain.
+Ungroup options are with tabs and under rows.
+
+<!-- why are there two ungrouping options for tabs? -->
 
 ## Configure repeat options
 
@@ -375,7 +397,7 @@ To move or resize, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. Do one of the following:
-   - Click the panel title and drag the panel to the new location.
+   - Click the panel title and drag the panel to the new location such as a new tab or row.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
 1. Click **Save**.
