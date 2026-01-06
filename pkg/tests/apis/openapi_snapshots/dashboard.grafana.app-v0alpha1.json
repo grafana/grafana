@@ -2169,6 +2169,43 @@
         ]
       }
     },
+    "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/settings": {
+      "get": {
+        "tags": [
+          "Snapshot"
+        ],
+        "description": "Get Snapshot sharing settings",
+        "operationId": "getSnapshotSettings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": "{\"snapshotsEnabled\":true,\"externalSnapshotURL\":\"https://externalurl.com\",\"externalSnapshotName\":\"external\",\"externalEnabled\":true}"
+              }
+            }
+          }
+        },
+        "x-grafana-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v0alpha1",
+          "kind": "SnapshotSharingOptions"
+        }
+      }
+    },
     "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/{name}": {
       "get": {
         "tags": [

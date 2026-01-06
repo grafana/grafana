@@ -7,9 +7,16 @@ type OpenTsdbQuery struct {
 }
 
 type OpenTsdbCommon struct {
-	Metric        string            `json:"metric"`
-	Tags          map[string]string `json:"tags"`
-	AggregateTags []string          `json:"aggregateTags"`
+	Metric            string               `json:"metric"`
+	Tags              map[string]string    `json:"tags"`
+	AggregateTags     []string             `json:"aggregateTags"`
+	Annotations       []OpenTsdbAnnotation `json:"annotations,omitempty"`
+	GlobalAnnotations []OpenTsdbAnnotation `json:"globalAnnotations,omitempty"`
+}
+
+type OpenTsdbAnnotation struct {
+	Description string  `json:"description"`
+	StartTime   float64 `json:"startTime"`
 }
 
 type OpenTsdbResponse struct {
