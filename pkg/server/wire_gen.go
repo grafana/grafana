@@ -176,7 +176,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
@@ -555,8 +555,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginsRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
-	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginsRegistry)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
 	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, retrieverService, acimplService, teamService, userService, actionSetService)
@@ -1215,8 +1215,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginsRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
-	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginsRegistry)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
 	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, retrieverService, acimplService, teamService, userService, actionSetService)
