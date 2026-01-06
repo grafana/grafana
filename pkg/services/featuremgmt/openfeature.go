@@ -35,7 +35,7 @@ type OpenFeatureConfig struct {
 
 // InitOpenFeature initializes OpenFeature with the provided configuration
 func InitOpenFeature(config OpenFeatureConfig) error {
-	// For features-service + OFREP providers, ensure we have a URL
+	// For remote providers, ensure we have a URL
 	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
 		return fmt.Errorf("URL is required for features-service + OFREP providers")
 	}
