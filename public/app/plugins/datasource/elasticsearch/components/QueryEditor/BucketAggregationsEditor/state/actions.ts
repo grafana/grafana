@@ -4,7 +4,7 @@ import {
   BucketAggregation,
   BucketAggregationType,
   BucketAggregationWithField,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+} from '../../../../dataquery.gen';
 
 export const addBucketAggregation = createAction<BucketAggregation['id']>('@bucketAggs/add');
 export const removeBucketAggregation = createAction<BucketAggregation['id']>('@bucketAggs/remove');

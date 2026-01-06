@@ -2,8 +2,7 @@ import {
   BucketAggregation,
   DateHistogram,
   ElasticsearchDataQuery,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+} from '../../../../dataquery.gen';
 import { defaultBucketAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
