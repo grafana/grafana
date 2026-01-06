@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,9 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	// ProvisioningErrorAnnotation is the annotation key used to store provisioning errors
+	ProvisioningErrorAnnotation = "__grafana_provisioning_error__"
+	// ProvisioningFailedSuffix is appended to the rule title when provisioning fails
+	ProvisioningFailedSuffix = " (Provisioning Failed)"
 )
 
 type AlertRuleProvisioner interface {
@@ -97,7 +106,47 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
 		_, err = prov.ruleService.UpdateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
 	}
+
+	// Handle validation errors gracefully - pause the rule instead of failing
+	if err != nil && prov.isReceiverValidationError(err) {
+		prov.logger.Warn("alert rule has invalid receiver reference, pausing rule",
+			"uid", rule.UID,
+			"org", rule.OrgID,
+			"title", rule.Title,
+			"error", err)
+
+		// Prepare the rule for graceful degradation
+		rule.IsPaused = true
+		// Append suffix to title for visibility in UI
+		if !strings.HasSuffix(rule.Title, ProvisioningFailedSuffix) {
+			rule.Title = rule.Title + ProvisioningFailedSuffix
+		}
+		if rule.Annotations == nil {
+			rule.Annotations = make(map[string]string)
+		}
+		rule.Annotations[ProvisioningErrorAnnotation] = err.Error()
+		// Clear invalid notification settings so the rule can be saved
+		rule.NotificationSettings = nil
+
+		// Retry saving the modified rule
+		_, _, getErr := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
+		if getErr != nil && errors.Is(getErr, alert_models.ErrAlertRuleNotFound) {
+			_, err = prov.ruleService.CreateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
+		} else if getErr == nil {
+			_, err = prov.ruleService.UpdateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
+		} else {
+			return getErr
+		}
+	}
+
 	return err
+}
+
+// isReceiverValidationError checks if the error is related to receiver/contact point validation
+func (prov *defaultAlertRuleProvisioner) isReceiverValidationError(err error) bool {
+	var receiverErr notifier.ErrorReceiverDoesNotExist
+	var timeIntervalErr notifier.ErrorTimeIntervalDoesNotExist
+	return errors.As(err, &receiverErr) || errors.As(err, &timeIntervalErr)
 }
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
