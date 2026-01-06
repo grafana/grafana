@@ -1,13 +1,10 @@
-import $ from 'jquery';
-import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
+import { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -68,7 +65,15 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       );
   }
 
-  private executeScript(result: any) {
+  private async executeScript(result: any) {
+    // Async-load dependencies used only in scripted dashboards to avoid them being in the main bundle, if not needed
+    const [jQuery, moment, lodash, kbn] = await Promise.all([
+      import('jquery'),
+      import('moment'),
+      import('lodash'),
+      import('app/core/utils/kbn'),
+    ]);
+
     const services = {
       dashboardSrv: getDashboardSrv(),
       datasourceSrv: getDatasourceSrv(),
@@ -90,12 +95,12 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       locationService.getSearchObject(),
       kbn,
       dateMath,
-      _,
+      lodash,
       moment,
       window,
       document,
-      $,
-      $,
+      jQuery,
+      jQuery,
       services
     );
 
