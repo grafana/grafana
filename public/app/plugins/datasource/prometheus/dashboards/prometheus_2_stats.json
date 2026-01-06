@@ -144,7 +144,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "{instance=\"localhost:9090\",job=\"prometheus\"}"
+              "options": "{instance=\"localhost:9090\",job=\"$job\"}"
             },
             "properties": [
               {
@@ -179,7 +179,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "sum(irate(prometheus_tsdb_head_samples_appended_total{job=\"prometheus\"}[$__rate_interval]))",
+          "expr": "sum(irate(prometheus_tsdb_head_samples_appended_total{job=\"$job\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "samples",
@@ -356,14 +356,14 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "sum(process_resident_memory_bytes{job=\"prometheus\"})",
+          "expr": "sum(process_resident_memory_bytes{job=\"$job\"})",
           "format": "time_series",
           "hide": false,
           "legendFormat": "p8s process resident memory",
           "refId": "D"
         },
         {
-          "expr": "process_virtual_memory_bytes{job=\"prometheus\"}",
+          "expr": "process_virtual_memory_bytes{job=\"$job\"}",
           "format": "time_series",
           "hide": false,
           "legendFormat": "virtual memory",
@@ -440,7 +440,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "prometheus_tsdb_wal_corruptions_total{job=\"prometheus\"}",
+          "expr": "prometheus_tsdb_wal_corruptions_total{job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "",
           "refId": "A"
@@ -524,14 +524,14 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "sum(prometheus_tsdb_head_active_appenders{job=\"prometheus\"})",
+          "expr": "sum(prometheus_tsdb_head_active_appenders{job=\"$job\"})",
           "format": "time_series",
           "legendFormat": "active_appenders",
           "metric": "",
           "refId": "A"
         },
         {
-          "expr": "sum(process_open_fds{job=\"prometheus\"})",
+          "expr": "sum(process_open_fds{job=\"$job\"})",
           "format": "time_series",
           "legendFormat": "open_fds",
           "refId": "B"
@@ -613,7 +613,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "{instance=\"localhost:9090\",interval=\"5s\",job=\"prometheus\"}"
+              "options": "{instance=\"localhost:9090\",interval=\"5s\",job=\"$job\"}"
             },
             "properties": [
               {
@@ -648,7 +648,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "prometheus_tsdb_blocks_loaded{job=\"prometheus\"}",
+          "expr": "prometheus_tsdb_blocks_loaded{job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "blocks",
           "refId": "A"
@@ -735,7 +735,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "prometheus_tsdb_head_chunks{job=\"prometheus\"}",
+          "expr": "prometheus_tsdb_head_chunks{job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "chunks",
           "refId": "A"
@@ -835,13 +835,13 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "prometheus_tsdb_head_gc_duration_seconds{job=\"prometheus\",quantile=\"0.99\"}",
+          "expr": "prometheus_tsdb_head_gc_duration_seconds{job=\"$job\",quantile=\"0.99\"}",
           "format": "time_series",
           "legendFormat": "duration-p99",
           "refId": "A"
         },
         {
-          "expr": "irate(prometheus_tsdb_head_gc_duration_seconds_count{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "irate(prometheus_tsdb_head_gc_duration_seconds_count{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "collections",
           "refId": "B"
@@ -942,26 +942,26 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(prometheus_tsdb_compaction_duration_bucket{job=\"prometheus\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(prometheus_tsdb_compaction_duration_bucket{job=\"$job\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "duration-{{p99}}",
           "refId": "A"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "irate(prometheus_tsdb_compactions_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "compactions",
           "refId": "B"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_failed_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "irate(prometheus_tsdb_compactions_failed_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "failed",
           "refId": "C"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_triggered_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "irate(prometheus_tsdb_compactions_triggered_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "triggered",
           "refId": "D"
@@ -1047,13 +1047,13 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "rate(prometheus_tsdb_reloads_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_reloads_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "reloads",
           "refId": "A"
         },
         {
-          "expr": "rate(prometheus_tsdb_reloads_failures_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_reloads_failures_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "hide": false,
           "legendFormat": "failures",
@@ -1140,7 +1140,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "prometheus_engine_query_duration_seconds{job=\"prometheus\", quantile=\"0.99\"}",
+          "expr": "prometheus_engine_query_duration_seconds{job=\"$job\", quantile=\"0.99\"}",
           "format": "time_series",
           "legendFormat": "{{slice}}_p99",
           "refId": "A"
@@ -1226,7 +1226,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "max(prometheus_rule_group_duration_seconds{job=\"prometheus\"}) by (quantile)",
+          "expr": "max(prometheus_rule_group_duration_seconds{job=\"$job\"}) by (quantile)",
           "format": "time_series",
           "legendFormat": "{{quantile}}",
           "refId": "A"
@@ -1312,13 +1312,13 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "rate(prometheus_rule_group_iterations_missed_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "rate(prometheus_rule_group_iterations_missed_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "missed",
           "refId": "B"
         },
         {
-          "expr": "rate(prometheus_rule_group_iterations_total{job=\"prometheus\"}[$__rate_interval])",
+          "expr": "rate(prometheus_rule_group_iterations_total{job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "iterations",
           "refId": "A"
