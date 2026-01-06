@@ -3,9 +3,11 @@ import * as React from 'react';
 
 import { ContextMenu } from '../ContextMenu/ContextMenu';
 
+export type OpenMenuFunction = <E extends HTMLElement>(e: React.KeyboardEvent<E> | React.MouseEvent<E>) => void;
+
 export interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
-  children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
+  children: (props: { openMenu: OpenMenuFunction }) => JSX.Element;
   /** A function that returns an array of menu items */
   renderMenuItems: () => React.ReactNode;
   /** On menu open focus the first element */
@@ -19,11 +21,19 @@ export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true 
     <>
       {children({
         openMenu: (e) => {
+          let x = 0;
+          let y = 0;
+          if ('pageX' in e) {
+            x = e.pageX;
+            y = e.pageY - window.scrollY;
+          } else if ('currentTarget' in e) {
+            const target = e.currentTarget;
+            const rect = target.getBoundingClientRect();
+            x = rect.left + rect.width / 2 + window.scrollX;
+            y = rect.top + rect.height / 2 + window.scrollY;
+          }
           setIsMenuOpen(true);
-          setMenuPosition({
-            x: e.pageX,
-            y: e.pageY - window.scrollY,
-          });
+          setMenuPosition({ x, y });
         },
       })}
 
