@@ -16,6 +16,9 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
+	// Initialize extra themes with the home path
+	pref.InitExtraThemes(cfg.HomePath)
+
 	return &Service{
 		store: &sqlStore{
 			db: db,
