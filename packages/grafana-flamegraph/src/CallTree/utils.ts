@@ -10,6 +10,8 @@ export interface CallTreeNode {
   depth: number; // Indentation level
   parentId?: string; // Parent node ID
   hasChildren: boolean; // Has expandable children
+  childCount: number; // Number of direct children
+  subtreeSize: number; // Total number of nodes in subtree (excluding self)
   levelItem: LevelItem; // Reference to original data
   subRows?: CallTreeNode[]; // Child nodes for react-table useExpanded
   isLastChild: boolean; // Whether this is the last child of its parent
@@ -80,6 +82,10 @@ export function buildCallTreeNode(
         })
       : undefined;
 
+  // Calculate child count and subtree size
+  const childCount = rootItem.children.length;
+  const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
+
   const node: CallTreeNode = {
     id: nodeId,
     label,
@@ -90,6 +96,8 @@ export function buildCallTreeNode(
     depth,
     parentId,
     hasChildren: rootItem.children.length > 0,
+    childCount,
+    subtreeSize,
     levelItem: rootItem,
     subRows,
     isLastChild: false, // Will be set by parent
