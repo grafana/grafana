@@ -1,4 +1,4 @@
-package coreplugin
+package coreplugins
 
 import (
 	"context"
@@ -14,6 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
@@ -92,6 +94,10 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 	}
 }
 
+func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider {
+	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
+}
+
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
@@ -156,7 +162,7 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {
-		return New(opts)
+		return coreplugin.New(opts)
 	}
 
 	return nil

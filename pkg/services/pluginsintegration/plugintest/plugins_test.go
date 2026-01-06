@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -171,7 +171,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	parca := parca.ProvideService(hcp)
 	zipkin := zipkin.ProvideService(hcp)
 	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, zipkin, jaeger)
+	coreRegistry := coreplugins.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, zipkin, jaeger)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 

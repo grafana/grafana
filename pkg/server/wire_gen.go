@@ -37,8 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	provider2 "github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	manager4 "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
@@ -178,6 +176,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
@@ -556,8 +555,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
-	providerService := provider2.ProvideService(corepluginRegistry)
+	corepluginsRegistry := coreplugins.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	backendFactoryProvider := coreplugins.ProvideCoreProvider(corepluginsRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
 	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, retrieverService, acimplService, teamService, userService, actionSetService)
@@ -573,7 +572,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
 	noop := provisionedplugins.NewNoop()
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, backendFactoryProvider, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err
@@ -1216,8 +1215,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	parcaService := parca.ProvideService(httpclientProvider)
 	zipkinService := zipkin.ProvideService(httpclientProvider)
 	jaegerService := jaeger.ProvideService(httpclientProvider)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
-	providerService := provider2.ProvideService(corepluginRegistry)
+	corepluginsRegistry := coreplugins.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, elasticsearchService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
+	backendFactoryProvider := coreplugins.ProvideCoreProvider(corepluginsRegistry)
 	processService := process.ProvideService()
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userService, orgService)
 	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, retrieverService, acimplService, teamService, userService, actionSetService)
@@ -1233,7 +1232,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
 	noop := provisionedplugins.NewNoop()
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, backendFactoryProvider, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err

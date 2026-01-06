@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -28,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -52,7 +52,7 @@ func TestIntegrationCallResource(t *testing.T) {
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil, nil,
+	coreRegistry := coreplugins.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
