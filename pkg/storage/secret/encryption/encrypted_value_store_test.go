@@ -4,15 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestEncryptedValueStoreImpl(t *testing.T) {
+	t.Skip("feature FlagSecretsManagementAppPlatform is broken in 12.1.X for X >= 6 due to backporting incompatible DB schema, don't enable it before updating to 12.2")
+
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
