@@ -62,6 +62,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  loki-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/alerting/
   annotate-visualizations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
@@ -124,7 +129,7 @@ After you configure the Loki data source, you can:
 - Configure and use [templates and variables](ref:variables) for dynamic dashboards
 - Add [transformations](ref:transformations) to process query results
 - Add [annotations](ref:loki-annotations) to overlay log events on graphs
-- Set up [alerting](ref:alerting) to monitor your log data
+- Set up [alerting](ref:loki-alerting) to monitor your log data
 - Use [Explore](ref:explore) for ad-hoc log queries and analysis
 - Configure [derived fields](configure/#derived-fields) to link logs to traces or other data sources
 
