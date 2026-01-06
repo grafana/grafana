@@ -10,7 +10,7 @@ manifest: {
 
 v0alpha1: {
     kinds: [annotationv0alpha1]
-	served: false
+    served: false
     routes: {
         namespaced: {
             "/tags": {
