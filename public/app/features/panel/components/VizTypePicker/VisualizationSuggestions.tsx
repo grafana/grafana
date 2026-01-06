@@ -135,6 +135,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
           options: suggestion.options,
           fieldConfig: suggestion.fieldConfig,
           withModKey: isPreview,
+          fromSuggestions: true,
         },
         isPreview ? editPreview : undefined
       );
