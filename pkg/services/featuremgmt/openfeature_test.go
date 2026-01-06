@@ -37,7 +37,7 @@ func TestCreateProvider(t *testing.T) {
 		{
 			name: "goff provider",
 			cfg: setting.OpenFeatureSettings{
-				ProviderType: setting.GOFFProviderType,
+				ProviderType: setting.FeaturesServiceProviderType,
 				URL:          u,
 				TargetingKey: "grafana",
 			},
@@ -45,12 +45,12 @@ func TestCreateProvider(t *testing.T) {
 				Namespace: "*",
 				Audiences: []string{"features.grafana.app"},
 			},
-			expectedProvider: setting.GOFFProviderType,
+			expectedProvider: setting.FeaturesServiceProviderType,
 		},
 		{
 			name: "goff provider with failing token exchange",
 			cfg: setting.OpenFeatureSettings{
-				ProviderType: setting.GOFFProviderType,
+				ProviderType: setting.FeaturesServiceProviderType,
 				URL:          u,
 				TargetingKey: "grafana",
 			},
@@ -58,7 +58,7 @@ func TestCreateProvider(t *testing.T) {
 				Namespace: "*",
 				Audiences: []string{"features.grafana.app"},
 			},
-			expectedProvider: setting.GOFFProviderType,
+			expectedProvider: setting.FeaturesServiceProviderType,
 			failSigning:      true,
 		},
 		{
@@ -115,7 +115,7 @@ func TestCreateProvider(t *testing.T) {
 			require.NoError(t, err, "failed to set provider")
 
 			switch tc.expectedProvider {
-			case setting.GOFFProviderType:
+			case setting.FeaturesServiceProviderType:
 				_, ok := provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 

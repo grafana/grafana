@@ -36,7 +36,7 @@ type OpenFeatureConfig struct {
 // InitOpenFeature initializes OpenFeature with the provided configuration
 func InitOpenFeature(config OpenFeatureConfig) error {
 	// For GOFF + OFREP providers, ensure we have a URL
-	if (config.ProviderType == setting.GOFFProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
+	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
 		return fmt.Errorf("URL is required for GOFF + OFREP providers")
 	}
 
@@ -66,10 +66,10 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	}
 
 	var httpcli *http.Client
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
+	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
 		var m *clientauthmiddleware.TokenExchangeMiddleware
 
-		if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
 			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
 			if err != nil {
 				return fmt.Errorf("failed to create token exchange middleware: %w", err)
@@ -103,12 +103,12 @@ func createProvider(
 	staticFlags map[string]bool,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
-	if providerType == setting.GOFFProviderType || providerType == setting.OFREPProviderType {
+	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
 		if u == nil || u.String() == "" {
-			return nil, fmt.Errorf("feature provider url is required for GOFFProviderType + OFREPProviderType")
+			return nil, fmt.Errorf("feature provider url is required for FeaturesServiceProviderType + OFREPProviderType")
 		}
 
-		if providerType == setting.GOFFProviderType {
+		if providerType == setting.FeaturesServiceProviderType {
 			return newGOFFProvider(u.String(), httpClient)
 		}
 
