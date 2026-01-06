@@ -14,9 +14,11 @@ import {
 
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import {
+  NO_GROUP_PREFIX,
   getRuleGroupLocationFromCombinedRule,
   getRuleGroupLocationFromRuleWithLocation,
   getRulePluginOrigin,
+  isUngroupedRuleGroup,
 } from './rules';
 
 describe('getRuleOrigin', () => {
@@ -121,5 +123,24 @@ describe('ruleGroupLocation', () => {
       namespaceName: 'abc123',
       groupName: 'group-1',
     });
+  });
+});
+
+describe('isUngroupedRuleGroup', () => {
+  it('should return true for group names starting with NO_GROUP_PREFIX', () => {
+    expect(isUngroupedRuleGroup('no_group_for_rule_abc123')).toBe(true);
+    expect(isUngroupedRuleGroup('no_group_for_rule_')).toBe(true);
+    expect(isUngroupedRuleGroup('no_group_for_rule_test-rule-uid')).toBe(true);
+  });
+
+  it('should return false for group names not starting with NO_GROUP_PREFIX', () => {
+    expect(isUngroupedRuleGroup('MyGroup')).toBe(false);
+    expect(isUngroupedRuleGroup('group-1')).toBe(false);
+    expect(isUngroupedRuleGroup('')).toBe(false);
+  });
+
+  it('should return false for group names that contain but do not start with NO_GROUP_PREFIX', () => {
+    expect(isUngroupedRuleGroup('prefix_no_group_for_rule_abc123')).toBe(false);
+    expect(isUngroupedRuleGroup('MyGroup_no_group_for_rule_')).toBe(false);
   });
 });
