@@ -16,7 +16,6 @@ export const createRootReducer = () => {
   });
 
   return (state: Parameters<typeof appReducer>[0], action: AnyAction) => {
-
     return appReducer(state, action);
   };
 };

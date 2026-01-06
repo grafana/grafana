@@ -1,9 +1,4 @@
-import {
-  Derivative,
-  ElasticsearchDataQuery,
-  ExtendedStats,
-  MetricAggregation,
-} from '../../../../dataquery.gen';
+import { Derivative, ElasticsearchDataQuery, ExtendedStats, MetricAggregation } from '../../../../dataquery.gen';
 import { defaultMetricAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
 import { changeEditorTypeAndResetQuery, initQuery } from '../../state';

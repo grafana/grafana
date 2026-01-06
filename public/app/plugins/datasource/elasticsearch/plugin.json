@@ -10,14 +10,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": [
-      "elasticsearch",
-      "datasource",
-      "database",
-      "logs",
-      "nosql",
-      "traces"
-    ],
+    "keywords": ["elasticsearch", "datasource", "database", "logs", "nosql", "traces"],
     "logos": {
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"

@@ -50,7 +50,7 @@ export const deepFreeze = <T>(obj: T): T => {
   return Object.freeze(obj);
 };
 
-interface ReducerTester<State> extends Given<State>, When<State>, Then<State> { }
+interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
   let reducerUnderTest: GrafanaReducer<State, AnyAction>;

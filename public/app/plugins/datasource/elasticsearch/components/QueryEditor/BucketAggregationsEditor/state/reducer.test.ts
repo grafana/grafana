@@ -1,8 +1,4 @@
-import {
-  BucketAggregation,
-  DateHistogram,
-  ElasticsearchDataQuery,
-} from '../../../../dataquery.gen';
+import { BucketAggregation, DateHistogram, ElasticsearchDataQuery } from '../../../../dataquery.gen';
 import { defaultBucketAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
