@@ -100,7 +100,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 func createProvider(
 	providerType string,
 	u *url.URL,
-	StaticFlags map[string]setting.FeatureToggle,
+	staticFlags map[string]setting.FeatureToggle,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
