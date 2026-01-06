@@ -51,7 +51,11 @@ export function PluginDetailsPage({
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
-  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
+  const {
+    navModel,
+    activePageId,
+    loading: isPluginConfigLoading,
+  } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
@@ -82,7 +86,7 @@ export function PluginDetailsPage({
   return (
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
       <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
-        <Page.Contents>
+        <Page.Contents isLoading={isPluginConfigLoading}>
           <TabContent className={styles.tabContent}>
             <PluginDetailsSignature plugin={plugin} className={styles.alert} />
             <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
