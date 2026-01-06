@@ -3,10 +3,14 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 )
 
 // Fetcher fetches available metrics from a Prometheus datasource
@@ -31,13 +35,22 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 	// Build the API URL
 	baseURL, err := url.Parse(datasourceURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid datasource URL: %w", err)
+		return nil, validator.NewValidationError(
+			validator.ErrCodeDatasourceConfig,
+			"invalid datasource URL",
+			http.StatusBadRequest,
+		).WithCause(err).WithDetail("url", datasourceURL)
 	}
 
 	// Prometheus metrics endpoint
 	apiPath, err := url.Parse("/api/v1/label/__name__/values")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse API path: %w", err)
+		// This should never happen with a hardcoded path, but handle it anyway
+		return nil, validator.NewValidationError(
+			validator.ErrCodeInternal,
+			"failed to parse API path",
+			http.StatusInternalServerError,
+		).WithCause(err)
 	}
 
 	fullURL := baseURL.ResolveReference(apiPath)
@@ -45,31 +58,91 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 	// Create the request
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, validator.NewValidationError(
+			validator.ErrCodeInternal,
+			"failed to create HTTP request",
+			http.StatusInternalServerError,
+		).WithCause(err)
 	}
 
 	// Execute the request using the provided authenticated client
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
+		// Check if it's a timeout error
+		if errors.Is(err, context.DeadlineExceeded) || strings.Contains(err.Error(), "timeout") {
+			return nil, validator.NewAPITimeoutError(fullURL.String(), err)
+		}
+		// Network or connection error - datasource is unreachable
+		return nil, validator.NewDatasourceUnreachableError("", datasourceURL, err)
 	}
 	defer resp.Body.Close()
 
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Prometheus API returned status %d: %s", resp.StatusCode, string(body))
+	// Read response body for error reporting
+	body, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		body = []byte("<unable to read response body>")
 	}
 
-	// Parse the response
+	// Check HTTP status code
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// Success - continue to parse response
+	case http.StatusUnauthorized, http.StatusForbidden:
+		// Authentication or authorization failure
+		return nil, validator.NewDatasourceAuthError("", resp.StatusCode).
+			WithDetail("url", fullURL.String()).
+			WithDetail("responseBody", string(body))
+	case http.StatusNotFound:
+		// Endpoint not found - might not be a valid Prometheus instance
+		return nil, validator.NewAPIUnavailableError(
+			resp.StatusCode,
+			string(body),
+			fmt.Errorf("endpoint not found - this may not be a valid Prometheus datasource"),
+		).WithDetail("url", fullURL.String())
+	case http.StatusTooManyRequests:
+		// Rate limiting
+		return nil, validator.NewValidationError(
+			validator.ErrCodeAPIRateLimit,
+			"Prometheus API rate limit exceeded",
+			http.StatusTooManyRequests,
+		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
+	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
+		// Upstream service is down or unavailable
+		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
+			WithDetail("url", fullURL.String())
+	default:
+		// Other error status codes
+		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
+			WithDetail("url", fullURL.String())
+	}
+
+	// Parse the response JSON
 	var promResp prometheusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&promResp); err != nil {
-		return nil, fmt.Errorf("failed to decode Prometheus response: %w", err)
+	if err := json.Unmarshal(body, &promResp); err != nil {
+		return nil, validator.NewAPIInvalidResponseError(
+			"response is not valid JSON",
+			err,
+		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
 	}
 
-	// Check Prometheus API status
+	// Check Prometheus API status field
 	if promResp.Status != "success" {
-		return nil, fmt.Errorf("Prometheus API returned error: %s", promResp.Error)
+		errorMsg := promResp.Error
+		if errorMsg == "" {
+			errorMsg = "unknown error"
+		}
+		return nil, validator.NewAPIInvalidResponseError(
+			fmt.Sprintf("Prometheus API returned error status: %s", errorMsg),
+			nil,
+		).WithDetail("url", fullURL.String()).WithDetail("prometheusError", errorMsg)
+	}
+
+	// Validate that we got data
+	if promResp.Data == nil {
+		return nil, validator.NewAPIInvalidResponseError(
+			"response missing 'data' field",
+			nil,
+		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
 	}
 
 	return promResp.Data, nil

@@ -106,8 +106,9 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 		// Validate queries
 		validationResult, err := v.ValidateQueries(ctx, dsQueries, ds)
 		if err != nil {
-			// Validation failed for this datasource, skip but could log
-			continue
+			// Validation failed for this datasource - return error to caller
+			// This could be a connection error, auth error, or other critical failure
+			return nil, fmt.Errorf("validation failed for datasource %s: %w", dsMapping.UID, err)
 		}
 
 		// Convert to DatasourceValidationResult

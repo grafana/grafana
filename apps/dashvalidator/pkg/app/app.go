@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"strings"
 )
 
 type DashValidatorConfig struct {
@@ -143,35 +144,80 @@ func handleCheckRoute(
 		logger.Info("Processing request", "dashboardTitle", req.DashboardJSON["title"], "numMappings", len(req.DatasourceMappings))
 
 		// Get namespace from request (needed for datasource lookup)
+		// Namespace format is typically "org-{orgID}"
 		namespace := r.ResourceIdentifier.Namespace
 
+		// Extract orgID from namespace for logging context
+		orgID := extractOrgIDFromNamespace(namespace)
+		logger = logger.With("orgID", orgID, "namespace", namespace)
+
 		for _, dsMapping := range req.DatasourceMappings {
+			dsLogger := logger.With("datasourceUID", dsMapping.UID, "datasourceType", dsMapping.Type)
+
 			// Convert optional name pointer to string
 			name := ""
 			if dsMapping.Name != nil {
 				name = *dsMapping.Name
+				dsLogger = dsLogger.With("datasourceName", name)
 			}
 
 			// Fetch datasource from Grafana using app-platform method
 			// Parameters: namespace, name (UID), group (datasource type)
 			ds, err := datasourceSvc.GetDataSourceInNamespace(ctx, namespace, dsMapping.UID, dsMapping.Type)
 			if err != nil {
-				logger.Error("Failed to get datasource", "namespace", namespace, "uid", dsMapping.UID, "type", dsMapping.Type, "error", err)
-				w.WriteHeader(http.StatusBadRequest)
+				dsLogger.Error("Failed to get datasource from namespace", "error", err)
+
+				// Check if it's a not found error vs other errors
+				errMsg := err.Error()
+				statusCode := http.StatusInternalServerError
+				userMsg := fmt.Sprintf("failed to retrieve datasource: %s", dsMapping.UID)
+
+				if strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "does not exist") {
+					statusCode = http.StatusNotFound
+					userMsg = fmt.Sprintf("datasource not found: %s (type: %s)", dsMapping.UID, dsMapping.Type)
+					dsLogger.Warn("Datasource not found in namespace")
+				}
+
+				w.WriteHeader(statusCode)
 				return json.NewEncoder(w).Encode(map[string]string{
-					"error": fmt.Sprintf("datasource not found: %s", dsMapping.UID),
+					"error": userMsg,
+					"code":  "datasource_error",
 				})
 			}
 
-			logger.Info("Retrieved datasource", "uid", ds.UID, "url", ds.URL, "type", ds.Type)
+			dsLogger.Info("Retrieved datasource", "url", ds.URL, "actualType", ds.Type)
+
+			// Validate that the datasource type matches the expected type
+			if ds.Type != dsMapping.Type {
+				dsLogger.Error("Datasource type mismatch",
+					"expectedType", dsMapping.Type,
+					"actualType", ds.Type)
+				w.WriteHeader(http.StatusBadRequest)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": fmt.Sprintf("datasource %s has type %s, expected %s", dsMapping.UID, ds.Type, dsMapping.Type),
+					"code":  "datasource_wrong_type",
+				})
+			}
+
+			// Validate that this is a supported datasource type
+			// For MVP, we only support Prometheus
+			if !isSupportedDatasourceType(ds.Type) {
+				dsLogger.Error("Unsupported datasource type", "type", ds.Type)
+				w.WriteHeader(http.StatusBadRequest)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": fmt.Sprintf("datasource type '%s' is not supported (currently only 'prometheus' is supported)", ds.Type),
+					"code":  "datasource_unsupported_type",
+				})
+			}
 
 			// Get authenticated HTTP transport for this datasource
 			transport, err := datasourceSvc.GetHTTPTransport(ctx, ds, httpClientProvider)
 			if err != nil {
-				logger.Error("Failed to get HTTP transport", "uid", ds.UID, "error", err)
+				dsLogger.Error("Failed to get HTTP transport for datasource", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return json.NewEncoder(w).Encode(map[string]string{
-					"error": fmt.Sprintf("failed to configure datasource transport: %s", dsMapping.UID),
+					"error": fmt.Sprintf("failed to configure authentication for datasource: %s", dsMapping.UID),
+					"code":  "datasource_config_error",
 				})
 			}
 
@@ -187,15 +233,35 @@ func handleCheckRoute(
 				URL:        ds.URL,
 				HTTPClient: httpClient, // Pass authenticated client
 			})
+
+			dsLogger.Debug("Datasource configured successfully for validation")
 		}
 
 		// Step 3: Validate dashboard compatibility
 		result, err := validator.ValidateDashboardCompatibility(ctx, validatorReq)
 		if err != nil {
 			logger.Error("Validation failed", "error", err)
-			w.WriteHeader(http.StatusInternalServerError)
+
+			// Check if it's a structured ValidationError with a specific status code
+			statusCode := http.StatusInternalServerError
+			errorCode := "validation_error"
+			errorMsg := fmt.Sprintf("validation failed: %v", err)
+
+			if validationErr := validator.GetValidationError(err); validationErr != nil {
+				statusCode = validationErr.StatusCode
+				errorCode = string(validationErr.Code)
+				errorMsg = validationErr.Message
+
+				// Log additional context from the error
+				for key, value := range validationErr.Details {
+					logger.Error("Validation error detail", key, value)
+				}
+			}
+
+			w.WriteHeader(statusCode)
 			return json.NewEncoder(w).Encode(map[string]string{
-				"error": fmt.Sprintf("validation failed: %v", err),
+				"error": errorMsg,
+				"code":  errorCode,
 			})
 		}
 
@@ -251,6 +317,25 @@ func convertToCheckResponse(result *validator.DashboardCompatibilityResult) chec
 	}
 
 	return response
+}
+
+// extractOrgIDFromNamespace extracts the org ID from a namespace string
+// Namespace format is typically "org-{orgID}"
+func extractOrgIDFromNamespace(namespace string) string {
+	parts := strings.Split(namespace, "-")
+	if len(parts) >= 2 && parts[0] == "org" {
+		return parts[1]
+	}
+	return "unknown"
+}
+
+// isSupportedDatasourceType checks if a datasource type is supported
+// For MVP, we only support Prometheus
+func isSupportedDatasourceType(dsType string) bool {
+	supportedTypes := map[string]bool{
+		"prometheus": true,
+	}
+	return supportedTypes[strings.ToLower(dsType)]
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
