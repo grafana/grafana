@@ -236,6 +236,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onClose={model.onToggleVizPicker}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          isNewPanel={isNewPanel}
         />
       )}
     </>
