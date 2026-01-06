@@ -125,6 +125,7 @@ CREATE TABLE `alert_instance` (
   `result_fingerprint` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `resolved_at` bigint DEFAULT NULL,
   `last_sent_at` bigint DEFAULT NULL,
+  `fired_at` bigint DEFAULT NULL,
   PRIMARY KEY (`rule_org_id`,`rule_uid`,`labels_hash`),
   KEY `IDX_alert_instance_rule_org_id_rule_uid_current_state` (`rule_org_id`,`rule_uid`,`current_state`),
   KEY `IDX_alert_instance_rule_org_id_current_state` (`rule_org_id`,`current_state`)
@@ -202,7 +203,7 @@ CREATE TABLE `alert_rule` (
   `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `dashboard_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `panel_id` bigint DEFAULT NULL,
-  `rule_group_idx` int NOT NULL DEFAULT '1',
+  `rule_group_idx` bigint DEFAULT NULL,
   `is_paused` tinyint(1) NOT NULL DEFAULT '0',
   `notification_settings` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `record` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -277,7 +278,7 @@ CREATE TABLE `alert_rule_version` (
   `for` bigint NOT NULL DEFAULT '0',
   `annotations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `rule_group_idx` int NOT NULL DEFAULT '1',
+  `rule_group_idx` bigint DEFAULT NULL,
   `is_paused` tinyint(1) NOT NULL DEFAULT '0',
   `notification_settings` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `record` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -320,6 +321,7 @@ CREATE TABLE `annotation` (
   `created` bigint DEFAULT '0',
   `updated` bigint DEFAULT '0',
   `epoch_end` bigint NOT NULL DEFAULT '0',
+  `dashboard_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `IDX_annotation_org_id_alert_id` (`org_id`,`alert_id`),
   KEY `IDX_annotation_org_id_type` (`org_id`,`type`),
@@ -1119,8 +1121,8 @@ CREATE TABLE `license_token` (
 CREATE TABLE `login_attempt` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `username` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ip_address` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created` int NOT NULL DEFAULT '0',
+  `ip_address` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `IDX_login_attempt_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1305,6 +1307,7 @@ CREATE TABLE `preferences` (
   `team_id` bigint DEFAULT NULL,
   `week_start` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `json_data` mediumtext COLLATE utf8mb4_unicode_ci,
+  `home_dashboard_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `IDX_preferences_org_id` (`org_id`),
   KEY `IDX_preferences_user_id` (`user_id`)
@@ -2110,7 +2113,8 @@ CREATE TABLE `user` (
   UNIQUE KEY `UQE_user_login` (`login`),
   UNIQUE KEY `UQE_user_email` (`email`),
   UNIQUE KEY `UQE_user_uid` (`uid`),
-  KEY `IDX_user_login_email` (`login`,`email`)
+  KEY `IDX_user_login_email` (`login`,`email`),
+  KEY `IDX_user_is_service_account_last_seen_at` (`is_service_account`,`last_seen_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
