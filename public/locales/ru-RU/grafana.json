@@ -3157,9 +3157,12 @@
       "table": "Таблица"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Задайте условие, которое должно быть выполнено до того, как автивируется правило оповещения.",
       "description-configure-firing-alert-instances-routed-contact": "Установите способ направления активных экземпляров оповещений в точки контакта.",
       "description-configure-receives-notifications": "Установите получателей уведомлений и способы их отправки.",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Правила оповещения",
       "title-contact-points": "Точки контакта",
       "title-notification-policies": "Политики уведомления"
@@ -14506,6 +14509,17 @@
       },
       "name": {
         "series-to-rows": "Ряды в строки"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
