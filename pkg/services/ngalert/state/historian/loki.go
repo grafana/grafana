@@ -41,6 +41,69 @@ const (
 	dfLabels = "labels"
 )
 
+// QueryResultBuilder is a builder for a data frame that represents query results from Loki.
+// It contains three fields: time (timestamp), line (JSON data), and labels (JSON labels).
+type QueryResultBuilder struct {
+	frame *data.Frame
+}
+
+// NewQueryResultBuilder creates a new QueryResultBuilder with the specified capacity.
+// The capacity is used to pre-allocate the underlying slices for better performance.
+func NewQueryResultBuilder(capacity int) *QueryResultBuilder {
+	frame := data.NewFrame("states")
+	lbls := data.Labels(map[string]string{})
+
+	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
+	// The format is composed of the following vectors:
+	//   1. `time` - timestamp - when the transition happened
+	//   2. `line` - JSON - the full data of the transition
+	//   3. `labels` - JSON - the labels associated with that state transition
+	times := make([]time.Time, 0, capacity)
+	lines := make([]json.RawMessage, 0, capacity)
+	labels := make([]json.RawMessage, 0, capacity)
+
+	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
+	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
+
+	return &QueryResultBuilder{frame: frame}
+}
+
+func (qr QueryResultBuilder) AddRowRaw(timestamp time.Time, line json.RawMessage, labels json.RawMessage) {
+	frame := qr.frame
+	frame.Fields[0].Append(timestamp)
+	frame.Fields[1].Append(line)
+	frame.Fields[2].Append(labels)
+}
+
+func (qr QueryResultBuilder) AddRow(timestamp time.Time, line LokiEntry, labels json.RawMessage) error {
+	lineBytes, err := json.Marshal(line)
+	if err != nil {
+		return err
+	}
+	qr.AddRowRaw(timestamp, lineBytes, labels)
+	return nil
+}
+
+// ToFrame converts the QueryResultBuilder back to a data.Frame.
+func (qr QueryResultBuilder) ToFrame() *data.Frame {
+	return qr.frame
+}
+
+func (qr QueryResultBuilder) AddWarn(s string) {
+	m := qr.frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		qr.frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, data.Notice{
+		Severity: data.NoticeSeverityWarning,
+		Text:     s,
+		Link:     "",
+		Inspect:  0,
+	})
+}
+
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
@@ -191,20 +254,7 @@ func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []st
 		totalLen += len(arr.Values)
 	}
 
-	// Create a new slice to store the merged elements.
-	frame := data.NewFrame("states")
-
-	// We merge all series into a single linear history.
-	lbls := data.Labels(map[string]string{})
-
-	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
-	// The format is composed of the following vectors:
-	//   1. `time` - timestamp - when the transition happened
-	//   2. `line` - JSON - the full data of the transition
-	//   3. `labels` - JSON - the labels associated with that state transition
-	times := make([]time.Time, 0, totalLen)
-	lines := make([]json.RawMessage, 0, totalLen)
-	labels := make([]json.RawMessage, 0, totalLen)
+	queryResult := NewQueryResultBuilder(totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res))
@@ -259,17 +309,10 @@ func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []st
 			pointers[minElStreamIdx]++
 			continue
 		}
-		times = append(times, time.Unix(0, tsNano))
-		labels = append(labels, lblsJson)
-		lines = append(lines, json.RawMessage(entryBytes))
+		queryResult.AddRowRaw(time.Unix(0, tsNano), entryBytes, lblsJson)
 		pointers[minElStreamIdx]++
 	}
-
-	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
-	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
-
-	return frame, nil
+	return queryResult.ToFrame(), nil
 }
 
 func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) lokiclient.Stream {
@@ -282,28 +325,11 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 
 	samples := make([]lokiclient.Sample, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !ShouldRecord(state) {
 			continue
 		}
 
-		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := LokiEntry{
-			SchemaVersion:  1,
-			Previous:       state.PreviousFormatted(),
-			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
-			Condition:      rule.Condition,
-			DashboardUID:   rule.DashboardUID,
-			PanelID:        rule.PanelID,
-			Fingerprint:    labelFingerprint(sanitizedLabels),
-			RuleTitle:      rule.Title,
-			RuleID:         rule.ID,
-			RuleUID:        rule.UID,
-			InstanceLabels: sanitizedLabels,
-		}
-		if state.State.State == eval.Error {
-			entry.Error = state.Error.Error()
-		}
+		entry := StateTransitionToLokiEntry(rule, state)
 
 		jsn, err := json.Marshal(entry)
 		if err != nil {
@@ -322,6 +348,28 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		Stream: labels,
 		Values: samples,
 	}
+}
+
+func StateTransitionToLokiEntry(rule history_model.RuleMeta, state state.StateTransition) LokiEntry {
+	sanitizedLabels := removePrivateLabels(state.Labels)
+	entry := LokiEntry{
+		SchemaVersion:  1,
+		Previous:       state.PreviousFormatted(),
+		Current:        state.Formatted(),
+		Values:         valuesAsDataBlob(state.State),
+		Condition:      rule.Condition,
+		DashboardUID:   rule.DashboardUID,
+		PanelID:        rule.PanelID,
+		Fingerprint:    labelFingerprint(sanitizedLabels),
+		RuleTitle:      rule.Title,
+		RuleID:         rule.ID,
+		RuleUID:        rule.UID,
+		InstanceLabels: sanitizedLabels,
+	}
+	if state.State.State == eval.Error && state.Error != nil {
+		entry.Error = state.Error.Error()
+	}
+	return entry
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {

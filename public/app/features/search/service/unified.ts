@@ -106,7 +106,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const qry = query.query ?? '*';
-    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    let uri = `${searchURI}?facet=tags&facetLimit=1000&query=${qry}&limit=1`;
     const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
     return resp.facets?.tags?.terms || [];
   }
