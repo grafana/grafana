@@ -20,14 +20,10 @@ type legacyTupleCollector func(ctx context.Context, orgID int64) (map[string]map
 type zanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error)
 
 type resourceReconciler struct {
-	name    string
-	legacy  legacyTupleCollector
-	zanzana zanzanaTupleCollector
-	client  zanzana.Client
-
-	// orphan cleanup (used for managed permissions only) - when the last managed permission for an object is removed,
-	// the DB collector stops returning that object, so the per-object reconciliation loop never runs and stale tuples can remain in Zanzana.
-	// we use this cleanup to remove those stale tuples from Zanzana.
+	name               string
+	legacy             legacyTupleCollector
+	zanzana            zanzanaTupleCollector
+	client             zanzana.Client
 	orphanObjectPrefix string
 	orphanRelations    []string
 }
@@ -35,14 +31,14 @@ type resourceReconciler struct {
 func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaCollector zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
 	r := resourceReconciler{name: name, legacy: legacy, zanzana: zanzanaCollector, client: client}
 
-	// only enable orphan cleanup for the managed-permissions reconcilers
+	// we only need to worry about orphaned tuples for reconcilers that use the managed permissions collector (i.e. dashboards & folders)
 	switch name {
 	case "managed folder permissions":
-		// prefix looks like `folder:`
-		r.orphanObjectPrefix = zanzana.TypeFolder + ":"
+		// prefix for folders is `folder:`
+		r.orphanObjectPrefix = fmt.Sprintf("%s:", zanzana.TypeFolder)
 		r.orphanRelations = append([]string{}, zanzana.RelationsFolder...)
 	case "managed dashboard permissions":
-		// prefix looks like `resource:dashboard.grafana.app/dashboards/`
+		// prefix for dashboards will be `resource:dashboard.grafana.app/dashboards/`
 		r.orphanObjectPrefix = zanzana.NewObjectEntry(zanzana.TypeResource, "dashboard.grafana.app", "dashboards", "", "") + "/"
 		r.orphanRelations = append([]string{}, zanzana.RelationsResouce...)
 	}
@@ -54,6 +50,15 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	info, err := claims.ParseNamespace(namespace)
 	if err != nil {
 		return err
+	}
+
+	// 0. Fetch all tuples currently stored in Zanzana. This will be used later on
+	// to cleanup orphaned tuples.
+	// This order needs to be kept (fetching from Zanzana first) to avoid accidentally
+	// cleaning up new tuples that were added after the legacy tuples were fetched.
+	allTuplesInZanzana, err := r.readAllTuples(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to read all tuples from zanzana for %s: %w", r.name, err)
 	}
 
 	// 1. Fetch grafana resources stored in grafana db.
@@ -108,10 +113,10 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		}
 	}
 
-	// remove stale managed-permission tuples for objects that disappeared from legacy output
-	// (needed when the last managed permission for a resource is removed)
+	// when the last managed permission for a resource is removed, the legacy results will no
+	// longer contain any tuples for that resource. this process cleans it up
 	if r.orphanObjectPrefix != "" && len(r.orphanRelations) > 0 {
-		orphans, err := r.collectOrphanDeletes(ctx, namespace, res)
+		orphans, err := r.collectOrphanDeletes(ctx, namespace, allTuplesInZanzana, res)
 		if err != nil {
 			return fmt.Errorf("failed to collect orphan deletes (%s): %w", r.name, err)
 		}
@@ -151,41 +156,43 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	return nil
 }
 
+// collectOrphanDeletes collects tuples that are no longer present in the legacy results
+// but still are present in zanzana. when that is the case, we need to delete the tuple from
+// zanzana. this will happen when the last managed permission for a resource is removed.
+// this is only used for dashboards and folders, as those are the only resources that use the managed permissions collector.
 func (r resourceReconciler) collectOrphanDeletes(
 	ctx context.Context,
 	namespace string,
-	legacy map[string]map[string]*openfgav1.TupleKey,
+	allTuplesInZanzana []*authzextv1.Tuple,
+	legacyReturnedTuples map[string]map[string]*openfgav1.TupleKey,
 ) ([]*openfgav1.TupleKeyWithoutCondition, error) {
 	seen := map[string]struct{}{}
 	out := []*openfgav1.TupleKeyWithoutCondition{}
 
-	// OpenFGA does not support "filter by relation only" with an empty object
-	// so we have to list all tuples (paginated) and filter them in-memory
-	all, err := r.readAllTuples(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	allowedRel := map[string]struct{}{}
+	// what relation types we are interested in cleaning up
+	relationsToCleanup := map[string]struct{}{}
 	for _, rel := range r.orphanRelations {
-		allowedRel[rel] = struct{}{}
+		relationsToCleanup[rel] = struct{}{}
 	}
 
-	for _, tuple := range all {
+	for _, tuple := range allTuplesInZanzana {
 		if tuple == nil || tuple.Key == nil {
 			continue
 		}
-		if _, ok := allowedRel[tuple.Key.Relation]; !ok {
+		// only cleanup the particular relation types we are interested in
+		if _, ok := relationsToCleanup[tuple.Key.Relation]; !ok {
 			continue
 		}
+		// only cleanup the particular object types we are interested in (either dashboards or folders)
 		if !strings.HasPrefix(tuple.Key.Object, r.orphanObjectPrefix) {
 			continue
 		}
-		// if legacy still has this object, it's not orphaned
-		if _, ok := legacy[tuple.Key.Object]; ok {
+		// if legacy returned this object, it's not orphaned
+		if _, ok := legacyReturnedTuples[tuple.Key.Object]; ok {
 			continue
 		}
-		key := tuple.Key.User + "|" + tuple.Key.Relation + "|" + tuple.Key.Object
+		// keep track of the tuples we have already seen and marked for deletion
+		key := fmt.Sprintf("%s|%s|%s", tuple.Key.User, tuple.Key.Relation, tuple.Key.Object)
 		if _, ok := seen[key]; ok {
 			continue
 		}
