@@ -9,6 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -35,11 +36,11 @@ func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaColl
 	switch name {
 	case "managed folder permissions":
 		// prefix for folders is `folder:`
-		r.orphanObjectPrefix = fmt.Sprintf("%s:", zanzana.TypeFolder)
+		r.orphanObjectPrefix = zanzana.NewObjectEntry(zanzana.TypeFolder, "", "", "", "")
 		r.orphanRelations = append([]string{}, zanzana.RelationsFolder...)
 	case "managed dashboard permissions":
 		// prefix for dashboards will be `resource:dashboard.grafana.app/dashboards/`
-		r.orphanObjectPrefix = zanzana.NewObjectEntry(zanzana.TypeResource, "dashboard.grafana.app", "dashboards", "", "") + "/"
+		r.orphanObjectPrefix = fmt.Sprintf("%s/", zanzana.NewObjectEntry(zanzana.TypeResource, dashboardV1.APIGroup, dashboardV1.DASHBOARD_RESOURCE, "", ""))
 		r.orphanRelations = append([]string{}, zanzana.RelationsResouce...)
 	}
 
