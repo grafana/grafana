@@ -129,6 +129,8 @@ linters:
             - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
+            - '**/pkg/tsdb/elasticsearch/*'
+            - '**/pkg/tsdb/elasticsearch/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages

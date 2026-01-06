@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Elasticsearch",
   "id": "elasticsearch",
+  "executable": "gpx_elasticsearch",
   "category": "logging",
   "info": {
     "description": "Open source logging & analytics database",
@@ -9,7 +10,14 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": ["elasticsearch", "datasource", "database", "logs", "nosql", "traces"],
+    "keywords": [
+      "elasticsearch",
+      "datasource",
+      "database",
+      "logs",
+      "nosql",
+      "traces"
+    ],
     "logos": {
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
@@ -27,7 +35,8 @@
         "name": "Documentation",
         "url": "https://grafana.com/docs/grafana/latest/datasources/elasticsearch/"
       }
-    ]
+    ],
+    "version": "%VERSION%"
   },
   "alerting": true,
   "annotations": true,
@@ -36,5 +45,9 @@
   "backend": true,
   "queryOptions": {
     "minInterval": true
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.6.0",
+    "plugins": []
   }
 }
