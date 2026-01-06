@@ -6571,8 +6571,8 @@
           "label": "Controls menu"
         },
         "hidden": {
-          "label": "Hidden",
-          "description": "Only visible in edit mode"
+          "description": "Only visible in edit mode",
+          "label": "Hidden"
         },
         "hidden-label": {
           "description": "Above the dashboard, but without showing the name of variable",
