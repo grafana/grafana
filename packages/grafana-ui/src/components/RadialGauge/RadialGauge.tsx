@@ -114,7 +114,7 @@ export function RadialGauge(props: RadialGaugeProps) {
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
     const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
-    const gradientStops = buildGradientColors(gradient, theme, displayValue);
+    const gradientStops = gradient ? buildGradientColors(theme, displayValue) : undefined;
     const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
       width,

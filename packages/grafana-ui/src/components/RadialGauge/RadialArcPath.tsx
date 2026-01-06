@@ -1,4 +1,4 @@
-import { useId, memo, HTMLAttributes, ReactNode } from 'react';
+import { useId, memo, HTMLAttributes, ReactNode, SVGProps } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
@@ -50,18 +50,13 @@ export const RadialArcPath = memo(
   }: RadialArcPathProps) => {
     const id = useId();
 
+    const isGradient = 'gradient' in rest;
+
     const { vizWidth, vizHeight, radius, centerX, centerY, barWidth } = dimensions;
     const pad = Math.ceil(Math.max(2, barWidth / 2)); // pad to cover stroke caps and glow in Safari
     const boxX = Math.round(centerX - radius - barWidth - pad);
     const boxY = Math.round(centerY - radius - barWidth - pad);
     const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
-
-    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
-    if ('color' in rest) {
-      bgDivStyle.backgroundColor = rest.color;
-    } else {
-      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
-    }
 
     const path = drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars);
 
@@ -76,9 +71,14 @@ export const RadialArcPath = memo(
     const dotRadius =
       endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
 
+    const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
+
+    const pathProps: SVGProps<SVGPathElement> = {};
     let barEndcapColors: [string, string] | undefined;
     let endpointMarks: ReactNode = null;
-    if ('gradient' in rest) {
+    if (isGradient) {
+      bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
+
       if (endpointMarker && (rest.gradient?.length ?? 0) > 0) {
         switch (endpointMarker) {
           case 'point':
@@ -119,28 +119,39 @@ export const RadialArcPath = memo(
       if (barEndcaps) {
         barEndcapColors = getBarEndcapColors(rest.gradient, fieldDisplay.display.percent);
       }
+
+      pathProps.fill = 'none';
+      pathProps.stroke = 'white';
+    } else {
+      bgDivStyle.backgroundColor = rest.color;
+
+      pathProps.fill = 'none';
+      pathProps.stroke = rest.color;
     }
+
+    const pathEl = (
+      <path d={path} strokeWidth={barWidth} strokeLinecap={roundedBars ? 'round' : 'butt'} {...pathProps} />
+    );
 
     return (
       <>
-        {/* FIXME: optimize this by only using clippath + foreign obj for gradients */}
-        <defs>
-          <mask id={id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
-            <rect x={boxX} y={boxY} width={boxSize} height={boxSize} fill="black" />
-            <path
-              d={path}
-              fill="none"
-              stroke="white"
-              strokeWidth={barWidth}
-              strokeLinecap={roundedBars ? 'round' : 'butt'}
-            />
-          </mask>
-        </defs>
+        {isGradient && (
+          <defs>
+            <mask id={id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+              <rect x={boxX} y={boxY} width={boxSize} height={boxSize} fill="black" />
+              {pathEl}
+            </mask>
+          </defs>
+        )}
 
         <g filter={glowFilter}>
-          <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
-            <div style={bgDivStyle} />
-          </foreignObject>
+          {isGradient ? (
+            <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+              <div style={bgDivStyle} />
+            </foreignObject>
+          ) : (
+            pathEl
+          )}
           {barEndcapColors?.[0] && <circle cx={xStart} cy={yStart} r={barWidth / 2} fill={barEndcapColors[0]} />}
           {barEndcapColors?.[1] && (
             <circle cx={xEnd} cy={yEnd} r={barWidth / 2} fill={barEndcapColors[1]} opacity={0.5} />
