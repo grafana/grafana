@@ -110,18 +110,13 @@ Each panel needs at least one query to display a visualization.
 
 ## The edit pane
 
+<!-- if the creation flow has changed, this should probably be a sub-section of edit and edit should be the second section -->
+
 The edit pane allows you to make changes to the dashboard without leaving it.
 You can stay on the dashboard longer and only have to enter panel edit mode when you're ready to configure more granular settings.
 You can also [create and edit variables at this level using the content outline](#add-variables-using-the-content-outline).
 
-<!-- screenshot here maybe? -->
-
-You can dock, undock, and resize the edit pane.
-When the edit pane is closed, you can resize the sidebar so the icon names are visible.
-
-<!-- Screen recording here -->
-
-The sidebar includes the following options:
+<!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
 
 | Option | View mode | Edit mode |
 | ------ | --------- | --------- |
@@ -129,7 +124,20 @@ The sidebar includes the following options:
 | Feedback | | x |
 | Export | x | x |
 | Content outline | x | x |
-| Dashboard insights | x | x |
+| Dashboard insights | x | x | -->
+
+The sidebar includes the following options:
+
+- Settings (edit mode only)
+- Feedback (edit mode only)
+- Export
+- Content outline
+- Dashboard insights
+
+You can dock, undock, and resize the edit pane.
+When the edit pane is closed, you can resize the sidebar so the icon names are visible.
+
+<!-- Screen recording here -->
 
 ## Create a dashboard
 
@@ -195,7 +203,7 @@ To create a dashboard, follow these steps:
 1. (Optional) In the edit pane, enter a title and description for the panel and set the panel transparency and repeat options, if applicable.
 1. Click **Configure** in either the edit pane or on the panel to the configuration process.
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
-1. Toggle off the edit mode switch.
+1. Click **Exit edit**.
 
 ## Panel layouts
 
@@ -222,8 +230,18 @@ There are default parameters to constrain the layout, and you can update these t
 ## Group panels
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
+
+Think of the dashboard as a series of nested containers: the dashboard is the largest container and it can contain panels, rows, or tabs.
+Rows and tabs are the next largest containers, and those containers can contain grids of panels.
+Rows and tabs—let you break up big dashboards or make one dashboard out of several smaller ones.
+
+Also, tabs are included in the dashboard URL. <!-- this feels like an orphan statement that needs to live elsewhere or just be an admoonition -->
+
+<!-- previous version - not sure if the containers analogy is actually helpful since it maybe bumps into the grouping language
+To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
 Also, tabs are included in the dashboard URL.
+-->
 
 Because both panel layout options are supported in rows and tabs, each of your groupings can have a different panel layout, allowing for maximum flexibility in your dashboards.
 
@@ -238,7 +256,9 @@ You can nest up to two levels deep.
 The following sections describe the configuration options for grouping panels into tabs and rows.
 While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
-1. Toggle on the edit mode switch.
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
 1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
@@ -291,7 +311,9 @@ If you have nested groupings, removing the grouping closest to the dashboard lev
 
 To remove grouping, follow these steps:
 
-1. Toggle on the edit mode switch.
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Click the grouping to bring it into focus.
 
@@ -317,7 +339,7 @@ To configure repeats, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
+1. Click **Edit**.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
@@ -335,7 +357,7 @@ To configure repeats, follow these steps:
 1. When you've finished setting the repeat option, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Toggle off the edit mode switch.
+1. Click **Exit edit**.
 
 ### Repeating rows and tabs and the Dashboard special data source
 
@@ -362,7 +384,7 @@ To configure show/hide rules, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
+1. Click **Edit**.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
@@ -388,7 +410,7 @@ To configure show/hide rules, follow these steps:
 1. When you've finished setting rules, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Toggle off the edit mode switch.
+1. Click **Exit edit**
 
 ### Query result rule
 
@@ -440,7 +462,7 @@ So when panel's rule time range is less than 7 days this panels don't show up.
 
 ## Edit a dashboard
 
-<!-- should this move to the last position just before copy? -->
+<!-- should this move to the last position just before copy? or after create -->
 
 When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
 For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
@@ -455,7 +477,7 @@ To edit dashboards, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
+1. Click **Edit**.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
@@ -468,7 +490,7 @@ To edit dashboards, follow these steps:
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Toggle off the edit mode switch.
+1. Click **Exit edit**
 
 ## Move or resize a panel
 
@@ -478,39 +500,44 @@ To move or resize, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
+1. Click **Edit**.
 1. Do one of the following:
-   - Click the panel title and drag the panel to the new location such as a new tab or row.
+   - Click the panel title and drag the panel to the new location such as a new tab or row or to a new position in a custom layout.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Toggle off the edit mode switch.
+1. Click **Exit edit**
 
 ## Navigate using the content outline
 
 The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
-By default, the outline is collapsed except for the part that's currently in focus.
+By default, the outline is collapsed.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
+<!-- update this -->
 
 To navigate the dashboard using the outline, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
-
-   The **Dashboard** edit pane opens on the right side of the dashboard.
-
-1. In the edit pane, expand the **Outline** section.
+1. Navigate to the dashboard you want to view.
+1. In the sidebar on the right side of the dashboard, click the **Content outline** icon to open it.
 1. Expand the outline to find the dashboard part to which you want to navigate.
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Add variables using the content outline
 
+You can add variables without leaving the dashboard using the content outline.
 
+To access the variables addition flow, follow these steps:
+
+1. Click **Edit**.
+1. Click the **Content outline** icon to open it.
+1. Click **Variables** in the outline.
+1. Click **+ Add variable**.
+1. Complete the rest of the steps to [add a variable without leaving the dashboard](#add-variables).
 
 ## Copy a dashboard
 
@@ -526,3 +553,19 @@ To make a copy of a dashboard, follow these steps:
 
 1. Click **Save**.
 
+## Add variables
+
+You can add variables without leaving the dashboard.
+
+To add variables, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **+ Add variable** button at the top of the dashboard.
+1. Choose a variable type from the list.
+1. Set the options for the variable.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
