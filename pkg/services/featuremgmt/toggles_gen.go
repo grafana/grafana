@@ -781,4 +781,8 @@ const (
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
+
+	// FlagSecretsManagementAppPlatformAwsKeeper
+	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
+	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
 )
