@@ -217,7 +217,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			sqliteConnParams.Add("_journal_mode", "WAL")
 		}
 
-		cnnstr = fmt.Sprintf("file:%s?%s", sqliteConnParams.Encode())
+		cnnstr = fmt.Sprintf("file:%s?%s", dbCfg.Path, sqliteConnParams.Encode())
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	default:
