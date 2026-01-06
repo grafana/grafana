@@ -19,11 +19,11 @@ const (
 
 // OpenFeatureConfig holds configuration for initializing OpenFeature
 type OpenFeatureConfig struct {
-	// ProviderType is either "static", "goff", or "ofrep"
+	// ProviderType is either "static", "features-service", or "ofrep"
 	ProviderType string
-	// URL is the GOFF or OFREP service URL (required for GOFF + OFREP providers)
+	// URL is the features-service or OFREP service URL (required for features-service + OFREP providers)
 	URL *url.URL
-	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF + OFREP providers)
+	// HTTPClient is a pre-configured HTTP client (optional, used for features-service + OFREP providers)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
 	StaticFlags map[string]bool
@@ -35,9 +35,9 @@ type OpenFeatureConfig struct {
 
 // InitOpenFeature initializes OpenFeature with the provided configuration
 func InitOpenFeature(config OpenFeatureConfig) error {
-	// For GOFF + OFREP providers, ensure we have a URL
+	// For features-service + OFREP providers, ensure we have a URL
 	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
-		return fmt.Errorf("URL is required for GOFF + OFREP providers")
+		return fmt.Errorf("URL is required for features-service + OFREP providers")
 	}
 
 	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
@@ -109,7 +109,7 @@ func createProvider(
 		}
 
 		if providerType == setting.FeaturesServiceProviderType {
-			return newGOFFProvider(u.String(), httpClient)
+			return newFeaturesServiceProvider(u.String(), httpClient)
 		}
 
 		if providerType == setting.OFREPProviderType {
