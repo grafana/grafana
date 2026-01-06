@@ -114,14 +114,12 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 
 	// when the last managed permission for a resource is removed, the legacy results will no
-	// longer contain any tuples for that resource. this process cleans it up
-	if r.orphanObjectPrefix != "" && len(r.orphanRelations) > 0 {
-		orphans, err := r.collectOrphanDeletes(ctx, namespace, allTuplesInZanzana, res)
-		if err != nil {
-			return fmt.Errorf("failed to collect orphan deletes (%s): %w", r.name, err)
-		}
-		deletes = append(deletes, orphans...)
+	// longer contain any tuples for that resource. this process cleans it up when applicable.
+	orphans, err := r.collectOrphanDeletes(ctx, namespace, allTuplesInZanzana, res)
+	if err != nil {
+		return fmt.Errorf("failed to collect orphan deletes (%s): %w", r.name, err)
 	}
+	deletes = append(deletes, orphans...)
 
 	if len(writes) == 0 && len(deletes) == 0 {
 		return nil
@@ -166,6 +164,10 @@ func (r resourceReconciler) collectOrphanDeletes(
 	allTuplesInZanzana []*authzextv1.Tuple,
 	legacyReturnedTuples map[string]map[string]*openfgav1.TupleKey,
 ) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	if r.orphanObjectPrefix == "" || len(r.orphanRelations) == 0 {
+		return []*openfgav1.TupleKeyWithoutCondition{}, nil
+	}
+
 	seen := map[string]struct{}{}
 	out := []*openfgav1.TupleKeyWithoutCondition{}
 
