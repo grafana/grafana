@@ -653,8 +653,12 @@ func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteReque
 	return nil
 }
 
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
+func (nc StubAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: nc.resourceResponses[item.Resource]}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {

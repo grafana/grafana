@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -297,35 +298,38 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		s.metrics.SecureValueListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv1beta1.APIGroup,
-		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
-		Namespace: namespace.String(),
-		Verb:      utils.VerbGet, // Why not VerbList?
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile checker: %w", err)
-	}
-
 	secureValuesMetadata, err := s.secureValueMetadataStorage.List(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("fetching secure values from storage: %+w", err)
 	}
 
+	// Convert slice to iter.Seq
+	candidates := func(yield func(secretv1beta1.SecureValue) bool) {
+		for _, m := range secureValuesMetadata {
+			if !yield(m) {
+				return
+			}
+		}
+	}
+
+	extractFn := func(sv secretv1beta1.SecureValue) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      sv.Name,
+			Folder:    "",
+			Verb:      utils.VerbGet, // Why not VerbList?
+			Group:     secretv1beta1.APIGroup,
+			Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
+			Namespace: namespace.String(),
+		}
+	}
+
 	out := make([]secretv1beta1.SecureValue, 0)
 
-	for _, metadata := range secureValuesMetadata {
-		// Check whether the user has permission to access this specific SecureValue in the namespace.
-		if !hasPermissionFor(metadata.Name, "") {
-			continue
+	for item, err := range authz.FilterAuthorized(ctx, s.accessClient, candidates, extractFn).Items {
+		if err != nil {
+			return nil, fmt.Errorf("failed to check authorization: %w", err)
 		}
-
-		out = append(out, metadata)
+		out = append(out, item)
 	}
 
 	return &secretv1beta1.SecureValueList{

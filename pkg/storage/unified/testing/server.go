@@ -517,6 +517,28 @@ func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req t
 	return types.CheckResponse{Allowed: m.allowed}, nil
 }
 
+func (m *mockAccessClient) BatchCheck(ctx context.Context, user types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
+	results := make(map[string]types.BatchCheckResult, len(req.Checks))
+
+	for _, check := range req.Checks {
+		allowed := m.allowed
+
+		// Check specific folder:verb mappings if provided
+		if m.allowedMap != nil {
+			key := fmt.Sprintf("%s:%s", check.Folder, check.Verb)
+			if a, exists := m.allowedMap[key]; exists {
+				allowed = a
+			}
+		}
+
+		results[check.CorrelationID] = types.BatchCheckResult{
+			Allowed: allowed,
+		}
+	}
+
+	return types.BatchCheckResponse{Results: results}, nil
+}
+
 func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 	if m.compileFn != nil {
 		return m.compileFn(user, req), types.NoopZookie{}, nil
