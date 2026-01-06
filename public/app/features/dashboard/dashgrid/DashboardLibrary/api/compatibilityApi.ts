@@ -1,0 +1,142 @@
+import { getBackendSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
+import { contextSrv } from 'app/core/services/context_srv';
+
+/**
+ * Represents a datasource mapping for compatibility checking.
+ * Maps dashboard datasource references to actual datasource instances.
+ */
+export interface DatasourceMapping {
+  /** Unique identifier of the datasource */
+  uid: string;
+  /** Type of datasource (e.g., 'prometheus', 'loki') */
+  type: string;
+  /** Optional human-readable name for display */
+  name?: string;
+}
+
+/**
+ * Request body for dashboard compatibility check API call
+ */
+export interface CheckCompatibilityRequest {
+  /** Complete dashboard JSON object (v1 schema with panels array) */
+  dashboardJson: Dashboard;
+  /** Array of datasource mappings to check compatibility against */
+  datasourceMappings: DatasourceMapping[];
+}
+
+/**
+ * Breakdown of compatibility metrics for a single query within a panel
+ */
+export interface QueryBreakdown {
+  /** Title of the panel containing this query */
+  panelTitle: string;
+  /** Numeric ID of the panel */
+  panelID: number;
+  /** Query reference ID (e.g., 'A', 'B', 'C') */
+  queryRefId: string;
+  /** Total number of metrics extracted from this query */
+  totalMetrics: number;
+  /** Number of metrics found in the datasource */
+  foundMetrics: number;
+  /** List of metric names that were not found */
+  missingMetrics: string[];
+  /** Compatibility score for this query (0-100) */
+  compatibilityScore: number;
+}
+
+/**
+ * Compatibility check result for a single datasource
+ */
+export interface DatasourceResult {
+  /** Unique identifier of the datasource */
+  uid: string;
+  /** Type of datasource */
+  type: string;
+  /** Optional human-readable name */
+  name?: string;
+  /** Total number of queries in the dashboard */
+  totalQueries: number;
+  /** Number of queries that were checked */
+  checkedQueries: number;
+  /** Total number of unique metrics extracted from all queries */
+  totalMetrics: number;
+  /** Number of metrics found in the datasource */
+  foundMetrics: number;
+  /** List of all missing metric names across all queries */
+  missingMetrics: string[];
+  /** Overall compatibility score for this datasource (0-100) */
+  compatibilityScore: number;
+  /** Detailed breakdown of compatibility per query */
+  queryBreakdown: QueryBreakdown[];
+}
+
+/**
+ * Overall compatibility check result
+ */
+export interface CompatibilityCheckResult {
+  /** Overall compatibility score across all datasources (0-100) */
+  compatibilityScore: number;
+  /** Results for each datasource checked */
+  datasourceResults: DatasourceResult[];
+}
+
+/**
+ * Checks dashboard compatibility with specified datasources.
+ *
+ * This function sends the dashboard JSON and datasource mappings to the backend
+ * validation service, which extracts metrics from dashboard queries and checks
+ * if those metrics exist in the target datasource(s).
+ *
+ * @param dashboardJson Complete dashboard JSON object (must be v1 schema)
+ * @param datasourceMappings Array of datasource mappings to validate against
+ * @returns Promise resolving to compatibility check results
+ * @throws CompatibilityCheckError if the API call fails
+ *
+ * @example
+ * ```typescript
+ * const result = await checkDashboardCompatibility(
+ *   { panels: [...], title: "My Dashboard" },
+ *   [{ uid: "prometheus-uid", type: "prometheus" }]
+ * );
+ *
+ * console.log(`Compatibility: ${result.compatibilityScore}%`);
+ * console.log(`Missing metrics: ${result.datasourceResults[0].missingMetrics}`);
+ * ```
+ */
+export async function checkDashboardCompatibility(
+  dashboardJson: Dashboard,
+  datasourceMappings: DatasourceMapping[]
+): Promise<CompatibilityCheckResult> {
+  // Get current organization ID from user context
+  const orgId = contextSrv.user.orgId;
+
+  // Construct namespace in the format expected by the backend: org-{orgID}
+  const namespace = `org-${orgId}`;
+
+  // Build request body matching backend schema
+  const requestBody: CheckCompatibilityRequest = {
+    dashboardJson,
+    datasourceMappings,
+  };
+
+  try {
+    // Make POST request to the dashboard validator app's /check endpoint
+    const response = await getBackendSrv().post<CompatibilityCheckResult>(
+      `/api/apps/dashvalidator/v1alpha1/${namespace}/check`,
+      requestBody,
+      {
+        // Disable automatic error alerts - we'll handle errors in the UI
+        showErrorAlert: false,
+      }
+    );
+
+    return response;
+  } catch (error) {
+    // Log error for debugging
+    console.error('Dashboard compatibility check failed:', error);
+
+    // Re-throw original error for caller to handle
+    throw error;
+  }
+}
