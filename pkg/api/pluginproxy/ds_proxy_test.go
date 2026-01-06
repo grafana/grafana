@@ -333,6 +333,47 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		})
 	})
 
+	t.Run("Plugin route with empty path", func(t *testing.T) {
+		routes := []*plugins.Route{
+			{
+				Path: "",
+				URL:  "https://www.google.com",
+			},
+		}
+
+		ds := &datasources.DataSource{
+			UID: "dsUID",
+		}
+
+		setUp := func() (*contextmodel.ReqContext, *http.Request) {
+			req, err := http.NewRequest("GET", "http://localhost/asd", nil)
+			require.NoError(t, err)
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
+			}
+			return ctx, req
+		}
+
+		t.Run("empty path", func(t *testing.T) {
+			ctx, _ := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
+			require.NoError(t, err)
+			err = proxy.validateRequest()
+			require.NoError(t, err)
+			assert.Equal(t, proxy.matchedRoute, routes[0])
+		})
+
+		t.Run("any path", func(t *testing.T) {
+			ctx, _ := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/v4/some/path")
+			require.NoError(t, err)
+			err = proxy.validateRequest()
+			require.NoError(t, err)
+			assert.Equal(t, proxy.matchedRoute, routes[0])
+		})
+	})
+
 	t.Run("Plugin with multiple routes for token auth", func(t *testing.T) {
 		routes := []*plugins.Route{
 			{

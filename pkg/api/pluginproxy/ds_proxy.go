@@ -300,16 +300,18 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		r1, err := plugins.CleanRelativePath(proxy.proxyPath)
-		if err != nil {
-			return err
-		}
-		r2, err := plugins.CleanRelativePath(route.Path)
-		if err != nil {
-			return err
-		}
-		if !strings.HasPrefix(r1, r2) {
-			continue
+		if route.Path != "" {
+			r1, err := plugins.CleanRelativePath(proxy.proxyPath)
+			if err != nil {
+				return err
+			}
+			r2, err := plugins.CleanRelativePath(route.Path)
+			if err != nil {
+				return err
+			}
+			if !strings.HasPrefix(r1, r2) {
+				continue
+			}
 		}
 
 		if !proxy.hasAccessToRoute(route) {
