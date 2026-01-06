@@ -41,7 +41,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
               <div
                 class="css-8nwx1l-singleValue css-0"
               >
-                Loading...
+                Projects
               </div>
               <div
                 class="css-1eu65zc"
