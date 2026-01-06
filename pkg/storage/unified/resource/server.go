@@ -1221,18 +1221,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	key := req.Options.Key
-	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		return err
-	}
-	if checker == nil {
-		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
-	}
 
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
@@ -1362,6 +1350,127 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	default:
 		since = req.Since
 	}
+
+	// Type to hold candidate events for batch authorization
+	type candidateWatchEvent struct {
+		event *WrittenEvent
+	}
+
+	// Type to hold authorized event with its fetched previous object
+	type authorizedEvent struct {
+		event    *WrittenEvent
+		previous *resourcepb.ReadResponse // nil if no previous or fetch failed
+	}
+
+	const maxBatchSize = 100
+
+	// processEventBatch authorizes and sends a batch of events.
+	// Errors are logged but never returned to keep the watch running.
+	processEventBatch := func(batch []*WrittenEvent) {
+		if len(batch) == 0 {
+			return
+		}
+
+		// Convert batch to iter.Seq for FilterAuthorized
+		candidates := func(yield func(candidateWatchEvent) bool) {
+			for _, event := range batch {
+				if !yield(candidateWatchEvent{event: event}) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(c candidateWatchEvent) authz.BatchCheckItem {
+			return authz.BatchCheckItem{
+				Name:      c.event.Key.Name,
+				Folder:    c.event.Folder,
+				Verb:      utils.VerbGet,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			}
+		}
+
+		// Step 1: Collect all authorized events
+		var authorizedEvents []authorizedEvent
+		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn).Items {
+			if err != nil {
+				s.log.Error("error during batch authorization", "error", err)
+				continue
+			}
+			authorizedEvents = append(authorizedEvents, authorizedEvent{event: item.event})
+		}
+
+		if len(authorizedEvents) == 0 {
+			return
+		}
+
+		// Step 2: Fetch previous objects concurrently for events that need them
+		var wg sync.WaitGroup
+		for i := range authorizedEvents {
+			if authorizedEvents[i].event.PreviousRV > 0 {
+				wg.Add(1)
+				go func(idx int) {
+					defer wg.Done()
+					event := authorizedEvents[idx].event
+					prevObj, readErr := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+					if readErr != nil {
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", readErr)
+						return
+					}
+					if prevObj.Error != nil {
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
+						return
+					}
+					if prevObj.ResourceVersion != event.PreviousRV {
+						s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+						return
+					}
+					authorizedEvents[idx].previous = prevObj
+				}(i)
+			}
+		}
+		wg.Wait()
+
+		// Step 3: Send all events in order
+		for _, authEvent := range authorizedEvents {
+			event := authEvent.event
+			value := event.Value
+			// remove the delete marker stored in the value for deleted objects
+			if event.Type == resourcepb.WatchEvent_DELETED {
+				value = []byte{}
+			}
+			resp := &resourcepb.WatchEvent{
+				Timestamp: event.Timestamp,
+				Type:      event.Type,
+				Resource: &resourcepb.WatchEvent_Resource{
+					Value:   value,
+					Version: event.ResourceVersion,
+				},
+			}
+			if authEvent.previous != nil {
+				resp.Previous = &resourcepb.WatchEvent_Resource{
+					Value:   authEvent.previous.Value,
+					Version: authEvent.previous.ResourceVersion,
+				}
+			}
+			if err := srv.Send(resp); err != nil {
+				s.log.Error("error sending watch event", "key", event.Key, "error", err)
+				continue
+			}
+
+			if s.storageMetrics != nil {
+				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+				if latencySeconds > 0 {
+					s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+				}
+			}
+		}
+	}
+
+	// Main event loop with batching
+	var batch []*WrittenEvent
 	for {
 		select {
 		case <-ctx.Done():
@@ -1369,57 +1478,40 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		case event, ok := <-stream:
 			if !ok {
+				// Process any remaining events in the batch before closing
+				processEventBatch(batch)
 				s.log.Debug("watch events closed")
 				return nil
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
+				batch = append(batch, event)
+			}
 
-				value := event.Value
-				// remove the delete marker stored in the value for deleted objects
-				if event.Type == resourcepb.WatchEvent_DELETED {
-					value = []byte{}
-				}
-				resp := &resourcepb.WatchEvent{
-					Timestamp: event.Timestamp,
-					Type:      event.Type,
-					Resource: &resourcepb.WatchEvent_Resource{
-						Value:   value,
-						Version: event.ResourceVersion,
-					},
-				}
-				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil {
-						// This scenario should never happen, but if it does, we should log it and continue
-						// sending the event without the previous object. The client will decide what to do.
-						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
-					} else {
-						if prevObj.ResourceVersion != event.PreviousRV {
-							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
-							return fmt.Errorf("resource version mismatch")
-						}
-						resp.Previous = &resourcepb.WatchEvent_Resource{
-							Value:   prevObj.Value,
-							Version: prevObj.ResourceVersion,
-						}
+			// Drain any additional events that are already available (non-blocking)
+			// Stop draining when we reach maxBatchSize to bound memory and latency
+			draining := true
+			for draining && len(batch) < maxBatchSize {
+				select {
+				case event, ok := <-stream:
+					if !ok {
+						// Process the batch before closing
+						processEventBatch(batch)
+						s.log.Debug("watch events closed")
+						return nil
 					}
-				}
-				if err := srv.Send(resp); err != nil {
-					return err
-				}
-
-				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+					s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+					if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+						batch = append(batch, event)
 					}
+				default:
+					draining = false
 				}
 			}
+
+			// Process the collected batch
+			processEventBatch(batch)
+			batch = batch[:0] // Reset batch for reuse
 		}
 	}
 }
